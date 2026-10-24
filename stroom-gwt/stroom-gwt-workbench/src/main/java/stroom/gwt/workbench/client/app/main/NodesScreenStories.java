@@ -187,7 +187,7 @@ public final class NodesScreenStories {
                 .injector(injector)
                 .uiConfig(UI_CONFIG)
                 .build();
-        final NodePresenter presenter = harness.addContent(injector.getNodePresenter());
+        final NodePresenter presenter = harness.show(injector.getNodePresenter());
         if (selectedNode != null) {
             // As NodeMonitoringPlugin does for an OpenNodeEvent with a node name
             presenter.setSelected(selectedNode);

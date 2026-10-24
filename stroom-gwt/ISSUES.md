@@ -1024,9 +1024,9 @@ create permissions, user access, user groups, pathways, query history and favour
 
 Checked by stories `App/Main/AppShell` `OpenedScreenTakesFocus` and `OpenedDocumentTakesFocus`,
 `App/Main/UserGroupsScreen` `ReadingOrder`, and `workbenchTest`'s focus check, which, after every
-story that shows a tab's screen (`ScreenHarness.addContent`) passes, focuses the screen as the tab
+story that shows a tab's screen (`ScreenHarness.show`) passes, focuses the screen as the tab
 pane does and fails the story unless the focus lands on one of its tab stops (`lib/focus-check.mjs`;
-pages shown on their own, such as sign in, use `ScreenHarness.addPage` and decide their own focus).
+pages shown on their own, such as sign in, use `ScreenHarness.showPage` and decide their own focus).
 Every screen passes. Screenshots changed only where a story opens a tab (the focus ring moves from
 the explorer to the opened document). Longer term, layouts built with CSS grid or flex keep DOM
 order and visual order together without `ReadingOrder`.

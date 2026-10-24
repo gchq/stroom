@@ -522,7 +522,7 @@ public final class SteppingScreenStories {
         final Meta meta = Meta.builder().id(1L).feedName("MY_FEED").typeName("Raw Events").build();
         harness.afterStartUp(() -> {
             final SteppingPresenter stepping = injector.getSteppingPresenter();
-            harness.addContent(stepping);
+            harness.show(stepping);
             // As PipelinePresenter loads the model and begins stepping a stream
             injector.getPipelineElementTypesFactory().get(stepping, types ->
                     injector.getPipelineModelFactory().get(stepping, pipeline, types, model -> {

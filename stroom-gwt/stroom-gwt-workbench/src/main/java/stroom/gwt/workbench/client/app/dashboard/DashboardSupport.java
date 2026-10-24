@@ -247,7 +247,7 @@ public final class DashboardSupport {
                             allowUpdate -> {
                                 presenter.setReadOnly(!allowUpdate);
                                 presenter.read(docRef, doc);
-                                harness.addContent(presenter);
+                                harness.show(presenter);
                                 // As Stroom's content pane does when it selects the tab
                                 ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), presenter);
                                 afterOpen.accept(presenter);

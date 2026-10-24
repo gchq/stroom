@@ -132,14 +132,17 @@ does.
 ```java
 final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
 final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-harness.afterStartUp(() -> harness.addContent(injector.getJobPresenter()));
+harness.afterStartUp(() -> harness.show(injector.getJobPresenter()));
 return harness.asWidget();
 ```
 
-A screen opened by an event is shown by registering the presenter as the event's handler and
-firing the event, as its listener would; a tab's content (not a popup) is added with
-`harness.addContent(presenter)`, which fills the canvas (the full page height, as Stroom's content
-pane does) and disposes the presenter on re-render.
+**One rule: the story's root owns whatever the story shows**, as an open tab's root does in
+Stroom, and disposes it, with everything it owns, on re-render and when the leak probe closes the
+screen. A tab's content (a component or a presenter) is shown with `harness.show(screen)`, which
+fills the canvas (the full page height, as Stroom's content pane does); a page shown on its own
+(sign in) with `harness.showPage(page)`. Anything else the story makes and shows itself (in a frame
+of its own, or as a dialog) is given to `harness.own(screen)`. A screen opened by an event is shown
+by adding a handler for the event and firing it, as its area's plugin would.
 
 Also on the harness, for what Stroom's app does around a screen:
 
@@ -155,9 +158,9 @@ Also on the harness, for what Stroom's app does around a screen:
 * **Menus**: the harness installs Stroom's `Menu`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
   'Actions...' menu, a grid's context menu) show Stroom's real menu on the page's body. Don't
   install another (menus would show twice).
-* **`closeOnCleanUp(popup)`** asks a popup to close on re-render as its Close button would
-  (`HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides the popups still
-  open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
+* **`ownPopup(popup)`** owns a popup as `own` does, and asks it to close on re-render as its
+  Close button would (`HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides
+  the popups still open. Use it for a popup that stops something only when asked to close, e.g. a polling timer
   cancelled in its `onHideRequest` (`UserTaskManagerPresenter`): the harness's own hiding
   (`HidePopupEvent`) skips `onHideRequest`, and the timer would keep polling the disposed
   dispatcher (a `console.warn` per request).
@@ -172,7 +175,7 @@ embedded document created from a pipeline property, `PipelinePlugin`'s 'Save Pip
 the plugins created from the story's ginjector (which must bind `ContentManager` as a singleton, as
 `AppModule` does). `StoryDocumentPlugins` does the rest: `register(harness, eventManager,
 plugins...)` unbinds them on re-render, `showOpenedTabs()` shows the tab a plugin opens
-(`OpenContentTabEvent`) with `addContent`, and `documentRoutes(builder, path, docJson)` answers a
+(`OpenContentTabEvent`) with `show`, and `documentRoutes(builder, path, docJson)` answers a
 plugin's `GET` and `PUT /{resource}/v1/{uuid}`. Without a plugin for the type, Stroom fails with
 "Cannot read properties of undefined (reading 'load')".
 
@@ -366,9 +369,9 @@ disposed through `StoryContext.addCleanUp`, before the preview removes what is l
    `StoryLocationManager` added;
 3. the popups the harness's `PopupManager` opened are hidden with Stroom's `HidePopupEvent`, which
    restores the focus (a dialog made for one use is then disposed);
-4. the story's clean ups run: `harness.addTimer(timer)`, `harness.addRegistration(registration)`,
-   `harness.disposeOnCleanUp(presenter)` and `harness.addCleanUp(runnable)`. Register anything the
-   story starts that outlives the rendering, e.g. a presenter shown in the canvas;
+4. the story's clean ups run: `harness.addTimer(timer)`, `harness.addRegistration(registration)`
+   and `harness.addCleanUp(runnable)`, and the story's root is disposed with what it owns
+   (`harness.show`, `harness.own`). Register anything the story starts that outlives the rendering;
 5. the event bus stops firing events and the security context reports being logged out, so
    anything else left over does nothing.
 
@@ -495,8 +498,8 @@ RestFixtures.builder()
   `PipelineStepping`), and RestyGWT generates code for every method of a resource interface used,
   so the types of all of them must be available.
 * A presenter registers its handlers when it is made, whether by GIN or with `new`, and keeps them
-  until it is disposed: give one the story makes to `harness.disposeOnCleanUp(presenter)` (or to
-  whatever owns it).
+  until it is disposed: show one the story makes with `harness.show(presenter)`, or give it to
+  `harness.own(presenter)` (or to whatever owns it).
 * Create the injector in `render` (`GWT.create(AppScreenGinjector.class)`), a new one each time:
   the harness refuses an injector another harness has used.
 * **Package-private or private Stroom methods** (e.g. `NodeGroupEditPresenter.show`, called only by
@@ -514,7 +517,7 @@ RestFixtures.builder()
   `Refreshable.refresh()`, which nothing does in a story, so they make one round of requests.
 * A screen with its own timer (`UserTaskManagerPresenter` polls every second) gets the same reply
   each poll (a route's single reply repeats); use a sequence (`get(path, first, second)`) when the
-  play needs the data to change. Stop the timer on re-render with `closeOnCleanUp(popup)` (or
+  play needs the data to change. Stop the timer on re-render with `ownPopup(popup)` (or
   `addTimer` if the story owns it).
 * A polling chat (Ask Stroom AI) uses a stateless `RestHandler` that replies with the messages
   after the request's `lastSeenMessageId`, as the server does (a repeated reply would add the
@@ -600,7 +603,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   shell, the explorer, the main menu or opening documents from the explorer.
   The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
   adds it to the story, as its listener puts it in the page, and it shows the explorer
-  (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.addContent(tabPane)`
+  (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
   instead. Its ginjector adds `ShellAppScreenModule` (the main view,
   `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
   cancels `MainPresenter`'s 30 second refresh timer on re-render. `MainPresenter` adds `GlobalKeyHandler` DOM handlers to the

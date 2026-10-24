@@ -93,7 +93,7 @@ public final class BrowseAnnotationsScreenStories {
             // As AnnotationBrowsePlugin opens the tab
             final BrowseAnnotationPresenter presenter = injector.getBrowseAnnotationPresenter();
             presenter.refresh();
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

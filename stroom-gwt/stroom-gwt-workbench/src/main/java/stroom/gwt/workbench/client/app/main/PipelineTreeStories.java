@@ -245,7 +245,7 @@ public final class PipelineTreeStories {
                         })
                         .taskMonitorFactory(tree)
                         .exec()));
-        harness.addContent(tree);
+        harness.show(tree);
         return harness.asWidget();
     }
 }

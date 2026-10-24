@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// The focus check: after a story that shows a screen (ScreenHarness.addContent) passes, the runner
+// The focus check: after a story that shows a screen (ScreenHarness.show) passes, the runner
 // focuses the screen as Stroom's tab pane does when it opens it (ContentFocus, through the page's
 // window.__workbenchContentFocus) and fails the story if the focus doesn't go into the screen, onto
 // something a keyboard user can use (WCAG 2.4.3, Focus Order: opening a screen takes the user to

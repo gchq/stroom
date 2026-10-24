@@ -246,7 +246,7 @@ public final class MetaBrowserStories {
                 .build();
         harness.afterStartUp(() -> {
             final MetaPresenter presenter = injector.getMetaPresenter();
-            harness.addContent(presenter);
+            harness.show(presenter);
             // As the data browser reads it, with no document: all unlocked streams
             presenter.read(null, null);
         });

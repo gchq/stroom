@@ -120,9 +120,10 @@ import java.util.function.Consumer;
 /// chained requests can only reach this dispatcher), its upload transport does the same for
 /// uploads and restores Stroom's default transport, Stroom's `UiConfigCache` stops refreshing,
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
-/// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers, handlers
-/// and presenters registered with [#addTimer(Timer)], [#addRegistration(HandlerRegistration)] and
-/// [#disposeOnCleanUp(MyPresenterWidget)] are stopped, and the event bus is switched off.
+/// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers and handlers
+/// registered with [#addTimer(Timer)] and [#addRegistration(HandlerRegistration)] are stopped, the
+/// story's root, which owns what the story shows ([#show(Component)], [#own(HasComponentNode)]), is
+/// disposed, and the event bus is switched off.
 public final class ScreenHarness {
 
     /// The name of the spy that records each REST request, as `METHOD /path?query body`.
@@ -160,15 +161,15 @@ public final class ScreenHarness {
     private final StoryLocationManager locationManager;
     private final PopupTracker<MyPresenterWidget<?>> popups = new PopupTracker<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
-    private final List<MyPresenterWidget<?>> closeOnCleanUp = new ArrayList<>();
+    private final List<MyPresenterWidget<?>> popupsToClose = new ArrayList<>();
     private final Map<String, Spy> spies = new HashMap<>();
     private final FlowPanel host = new FlowPanel();
     private boolean disposed;
     // Whether the leak check's probe is wanted (see LeakProbe)
     private final boolean probe;
-    // The scope of the presenters made while opening the screen, for the probe to dispose
-    // Owns the components the story shows (see addComponent), made when first needed
+    // The owner of the dialogs of what the story makes itself (see getAppRoot)
     private final AppRoot appRoot = new AppRoot();
+    // Owns what the story shows (see own), made when first needed
     private ComponentNode componentRoot;
     private Component shownComponent;
     private MyPresenterWidget<?> shownContent;
@@ -180,7 +181,7 @@ public final class ScreenHarness {
     private int probeWidgetMark;
     // The number of popups to close on clean up before the screen was opened, so that the probe's
     // close closes, and forgets, those its opening registered
-    private int probeCloseOnCleanUpMark;
+    private int probePopupsToCloseMark;
 
     private ScreenHarness(final Builder builder) {
         this.context = builder.context;
@@ -351,7 +352,7 @@ public final class ScreenHarness {
     /// The action isn't run if the story has rendered again meanwhile; a failure in it is reported
     /// as the story's error, as any other.
     ///
-    /// @param action What to do, e.g. create the screen and add it with [#addContent].
+    /// @param action What to do, e.g. create the screen and show it with [#show].
     public void afterStartUp(final Runnable action) {
         Objects.requireNonNull(action);
         final QuietTaskMonitorFactory taskMonitorFactory = new QuietTaskMonitorFactory();
@@ -367,7 +368,7 @@ public final class ScreenHarness {
                             final Runnable open = () -> {
                                 probeCleanUpMark = cleanUps.size();
                                 probeWidgetMark = host.getWidgetCount();
-                                probeCloseOnCleanUpMark = closeOnCleanUp.size();
+                                probePopupsToCloseMark = popupsToClose.size();
                                 action.run();
                             };
                             open.run();
@@ -396,44 +397,30 @@ public final class ScreenHarness {
 
     /// Shows a screen that Stroom shows in a tab (e.g. Jobs, Nodes, a document editor), filling
     /// the story's canvas, the full height of the page, as Stroom's content pane gives a tab's
-    /// content all its space. The presenter is unbound when the story renders again.
+    /// content all its space. The story's root ([#getComponentRoot()]) owns it, as [#own] does, so
+    /// it is disposed, with everything it owns, when the story renders again or the leak probe
+    /// closes it.
     ///
-    /// @param presenter The tab's presenter.
-    /// @param <P>       The presenter type.
-    /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P addContent(final P presenter) {
-        return fill(presenter, true);
+    /// @param screen The screen, a component or a presenter.
+    /// @param <C>    The screen's type.
+    /// @return The screen.
+    public <C extends Component> C show(final C screen) {
+        return fill(screen, true);
     }
 
     /// Shows a page that Stroom shows on its own, not in a tab (e.g. the sign in page), filling the
-    /// story's canvas as [#addContent] does. The page decides where its focus goes itself, so the
-    /// test runner's focus check, which focuses a screen as the tab pane does, doesn't apply. The
-    /// presenter is unbound when the story renders again.
+    /// story's canvas and owned as [#show] does. The page decides where its focus goes itself, so
+    /// the test runner's focus check, which focuses a screen as the tab pane does, doesn't apply.
     ///
-    /// @param presenter The page's presenter.
-    /// @param <P>       The presenter type.
-    /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P addPage(final P presenter) {
-        return fill(presenter, false);
+    /// @param page The page, a component or a presenter.
+    /// @param <C>  The page's type.
+    /// @return The page.
+    public <C extends Component> C showPage(final C page) {
+        return fill(page, false);
     }
 
-    /// Shows a component that Stroom shows in a tab (e.g. a document editor), filling the story's
-    /// canvas as [#addContent] does. The story's root ([#getComponentRoot()]) owns it, so it is
-    /// disposed, with everything it owns, when the story renders again or the leak probe closes it.
-    ///
-    /// @param component The component.
-    /// @param <C>       The component type.
-    /// @return The component.
-    public <C extends Component> C addComponent(final C component) {
-        getComponentRoot().adopt(component.getComponentNode());
-        fillWidget(component.asWidget(), component, true);
-        shownComponent = component;
-        shown = this;
-        return component;
-    }
-
-    /// For a play: the component the story shows (the last given to [#addComponent]), e.g. to act
-    /// on it as its owner does.
+    /// For a play: the screen the story shows (the last given to [#show] or [#showPage]), e.g. to
+    /// act on it as its owner does.
     ///
     /// @param <C> The component's type.
     /// @return The component.
@@ -446,8 +433,8 @@ public final class ScreenHarness {
         return (C) shown.shownComponent;
     }
 
-    /// For a play: the presenter the story shows (the last given to [#addContent] or
-    /// [#addPage]), e.g. to act on it as Stroom does (reading a document again when it is locked).
+    /// For a play: the presenter the story shows (the last given to [#show] or [#showPage]), e.g.
+    /// to act on it as Stroom does (reading a document again when it is locked).
     ///
     /// @param <P> The presenter's type.
     /// @return The presenter.
@@ -497,18 +484,15 @@ public final class ScreenHarness {
     }
 
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
-    private <P extends MyPresenterWidget<?>> P fill(final P presenter, final boolean tab) {
-        fillWidget(presenter.getWidget(), presenter, tab);
-        shownContent = presenter;
-        shown = this;
-        // The story's root owns it, as an open tab's root does in Stroom, so it is disposed with
-        // the story's clean ups (and when the leak probe closes it)
-        if (presenter instanceof final HasComponentNode hasComponentNode
-            && hasComponentNode.getComponentNode().parent() == null) {
-            getComponentRoot().adopt(hasComponentNode.getComponentNode());
-            return presenter;
+    private <C extends Component> C fill(final C screen, final boolean tab) {
+        own(screen);
+        fillWidget(screen.asWidget(), screen, tab);
+        shownComponent = screen;
+        if (screen instanceof final MyPresenterWidget<?> presenter) {
+            shownContent = presenter;
         }
-        return disposeOnCleanUp(presenter);
+        shown = this;
+        return screen;
     }
 
     private void fillWidget(final Widget widget, final Object focusContent, final boolean tab) {
@@ -559,8 +543,8 @@ public final class ScreenHarness {
     void probeClose(final boolean dispose) {
         // Popups that must be asked to close are, as their Close buttons would, and forgotten, else
         // the list would keep each opening's popup
-        for (int i = closeOnCleanUp.size() - 1; i >= probeCloseOnCleanUpMark; i--) {
-            final MyPresenterWidget<?> popup = closeOnCleanUp.remove(i);
+        for (int i = popupsToClose.size() - 1; i >= probePopupsToCloseMark; i--) {
+            final MyPresenterWidget<?> popup = popupsToClose.remove(i);
             runSafely("closing a popup", () -> HidePopupRequestEvent.builder(popup)
                     .action(DialogAction.CLOSE)
                     .fire());
@@ -626,35 +610,35 @@ public final class ScreenHarness {
         return registration;
     }
 
-    /// Releases a presenter the story makes when the story renders again (and when the leak
-    /// probe closes the screen), e.g. a dialog it shows or one shown in the story's widget: unless
-    /// something already owns it, the story's root owns it, so it is disposed with everything it
-    /// owns.
+    /// Has the story's root own something the story makes and shows itself (e.g. in a frame of its
+    /// own, or as a dialog), as an open tab's root does in Stroom, unless something already owns
+    /// it: it is disposed, with everything it owns, when the story renders again or the leak probe
+    /// closes the screen.
     ///
-    /// @param presenter The presenter.
-    /// @param <P>       The presenter type.
-    /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P disposeOnCleanUp(final P presenter) {
-        if (presenter instanceof final HasComponentNode hasComponentNode
-            && hasComponentNode.getComponentNode() != null
-            && hasComponentNode.getComponentNode().parent() == null) {
-            getComponentRoot().adopt(hasComponentNode.getComponentNode());
+    /// @param screen The component or presenter.
+    /// @param <C>    Its type.
+    /// @return It.
+    public <C extends HasComponentNode> C own(final C screen) {
+        final ComponentNode node = screen.getComponentNode();
+        if (node.parent() == null) {
+            getComponentRoot().adopt(node);
         }
-        return presenter;
+        return screen;
     }
 
-    /// Closes a popup when the story renders again as the user would, with its Close button (a
-    /// `HidePopupRequestEvent` with `DialogAction.CLOSE`), before the harness hides the popups that
-    /// are still open. Use it for a popup whose presenter stops something only when asked to
-    /// close, e.g. `UserTaskManagerPresenter`, which polls the server every second until its
-    /// `onHideRequest` cancels its timer (the harness's own hiding, with `HidePopupEvent`, skips
-    /// that). The REST requests made meanwhile are dropped, as the dispatcher is disposed first.
+    /// Owns a popup as [#own] does, and closes it as the user would, with its Close button (a
+    /// `HidePopupRequestEvent` with `DialogAction.CLOSE`), when the story renders again, before the
+    /// harness hides the popups that are still open. Use it for a popup whose presenter stops
+    /// something only when asked to close, e.g. `UserTaskManagerPresenter`, which polls the server
+    /// every second until its `onHideRequest` cancels its timer (the harness's own hiding, with
+    /// `HidePopupEvent`, skips that). The REST requests made meanwhile are dropped, as the
+    /// dispatcher is disposed first.
     ///
     /// @param popup The popup's presenter.
     /// @param <P>   The presenter type.
     /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P closeOnCleanUp(final P popup) {
-        closeOnCleanUp.add(Objects.requireNonNull(popup));
+    public <P extends MyPresenterWidget<?>> P ownPopup(final P popup) {
+        popupsToClose.add(own(Objects.requireNonNull(popup)));
         return popup;
     }
 
@@ -687,7 +671,7 @@ public final class ScreenHarness {
 
         // Close the popups that must be asked to close (e.g. to stop polling), as their Close
         // buttons would
-        for (final MyPresenterWidget<?> popup : closeOnCleanUp) {
+        for (final MyPresenterWidget<?> popup : popupsToClose) {
             runSafely("closing a popup", () -> HidePopupRequestEvent.builder(popup)
                     .action(DialogAction.CLOSE)
                     .fire());

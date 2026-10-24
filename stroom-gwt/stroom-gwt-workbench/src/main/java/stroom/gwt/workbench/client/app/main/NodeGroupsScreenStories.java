@@ -170,7 +170,7 @@ public final class NodeGroupsScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getNodeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getNodeGroupPresenter()));
         return harness.asWidget();
     }
 }

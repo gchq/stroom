@@ -86,7 +86,7 @@ final class SignInPages {
             final SignInPagePresenter<?> presenter = page.apply(injector, harness);
             shown[0] = presenter;
             // As its show() does, with the story as the page
-            harness.addPage(presenter);
+            harness.showPage(presenter);
             presenter.onShown();
         });
         return harness.asWidget();

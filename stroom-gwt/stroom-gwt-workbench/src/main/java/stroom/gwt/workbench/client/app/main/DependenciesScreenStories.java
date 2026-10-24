@@ -289,7 +289,7 @@ public final class DependenciesScreenStories {
             }
         }));
         harness.afterStartUp(() -> {
-            final DependenciesTabPresenter presenter = harness.addContent(injector.getDependenciesTabPresenter());
+            final DependenciesTabPresenter presenter = harness.show(injector.getDependenciesTabPresenter());
             // As DependenciesPlugin does
             harness.addRegistration(harness.getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(),
                     event -> {

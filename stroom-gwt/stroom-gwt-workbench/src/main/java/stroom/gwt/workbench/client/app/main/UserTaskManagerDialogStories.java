@@ -42,7 +42,7 @@ import java.util.List;
 /// The dialog polls: once a second, while it is open, it lists the nodes (`GET /node/v1/all`) and
 /// fetches the user's tasks from each (`GET /task/v1/user/{node}`), so the fixtures answer every
 /// poll with the same reply. Its timer only stops when the dialog is asked to close, so the story
-/// registers it with `ScreenHarness.closeOnCleanUp`. Terminating a task is
+/// registers it with `ScreenHarness.ownPopup`. Terminating a task is
 /// `POST /task/v1/terminate/{node}`, checked with the request spy. The presenter comes from GIN and
 /// is opened by its event, as its listener would.
 public final class UserTaskManagerDialogStories {
@@ -127,7 +127,7 @@ public final class UserTaskManagerDialogStories {
                 .build();
 
         // As the presenter's listener would; asked to close on re-render, to stop its polling
-        final UserTaskManagerPresenter presenter = harness.closeOnCleanUp(injector.getUserTaskManagerPresenter());
+        final UserTaskManagerPresenter presenter = harness.ownPopup(injector.getUserTaskManagerPresenter());
         harness.addRegistration(harness.getEventBus().addHandler(OpenUserTaskManagerEvent.getType(), presenter));
         // As the 'Task Manager' button does
         OpenUserTaskManagerEvent.fire(harness.getHasHandlers());

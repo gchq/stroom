@@ -98,7 +98,7 @@ public final class DatabaseTablesScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.addContent(injector.getDatabaseTablesMonitoringPresenter());
+        harness.show(injector.getDatabaseTablesMonitoringPresenter());
         return harness.asWidget();
     }
 }

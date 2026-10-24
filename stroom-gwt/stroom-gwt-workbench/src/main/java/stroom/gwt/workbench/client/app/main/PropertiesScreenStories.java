@@ -196,7 +196,7 @@ public final class PropertiesScreenStories {
                 // The warnings are shown in Stroom's real alert dialog
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getGlobalPropertyTabPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getGlobalPropertyTabPresenter()));
         return harness.asWidget();
     }
 }

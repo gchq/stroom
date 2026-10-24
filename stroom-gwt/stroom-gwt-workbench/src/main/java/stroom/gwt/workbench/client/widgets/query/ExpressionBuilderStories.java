@@ -896,8 +896,8 @@ public final class ExpressionBuilderStories {
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
-        harness.disposeOnCleanUp(presenter);
-        harness.disposeOnCleanUp(treePresenter);
+        harness.own(presenter);
+        harness.own(treePresenter);
         presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, dynamicFields));
         presenter.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
@@ -909,7 +909,7 @@ public final class ExpressionBuilderStories {
     private static Widget readOnly(final StoryContext context) {
         final ScreenHarness harness = harness(context);
         final ExpressionTreePresenter treePresenter = treePresenter(harness);
-        harness.disposeOnCleanUp(treePresenter);
+        harness.own(treePresenter);
         // As Stroom's read only views of an expression (e.g. ProcessorPresenter) do
         treePresenter.setSelectionModel(null);
         treePresenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
@@ -930,8 +930,8 @@ public final class ExpressionBuilderStories {
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
-        harness.disposeOnCleanUp(presenter);
-        harness.disposeOnCleanUp(treePresenter);
+        harness.own(presenter);
+        harness.own(treePresenter);
         presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
         presenter.setReadOnly(readOnly);
         presenter.read(populatedExpression());

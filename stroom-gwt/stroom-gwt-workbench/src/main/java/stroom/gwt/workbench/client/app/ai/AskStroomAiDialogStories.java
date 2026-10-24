@@ -251,7 +251,7 @@ public final class AskStroomAiDialogStories {
                                                       final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), presenter));
-        harness.disposeOnCleanUp(presenter);
+        harness.own(presenter);
         return presenter;
     }
 
@@ -263,14 +263,14 @@ public final class AskStroomAiDialogStories {
 
     private static void showDialog(final ScreenHarness harness, final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = showPresenter(harness, injector);
-        harness.closeOnCleanUp(presenter);
+        harness.ownPopup(presenter);
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
     }
 
     private static void showDialogWithContext(final ScreenHarness harness,
                                               final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = showPresenter(harness, injector);
-        harness.closeOnCleanUp(presenter);
+        harness.ownPopup(presenter);
         presenter.setContext(new GeneralTableContext("Orders table",
                 List.of("Order", "Total"),
                 List.of(List.of("1", "42"))));

@@ -249,7 +249,7 @@ public final class ProcessorProfilesScreenStories {
                 .build();
         harness.afterStartUp(() -> {
             final ProcessorProfilePresenter presenter = injector.getProcessorProfilePresenter();
-            harness.addContent(presenter);
+            harness.show(presenter);
             // As the content pane does when it shows a Refreshable tab
             presenter.refresh();
         });

@@ -441,7 +441,7 @@ public final class JobsScreenStories {
         harness.getEventBus().addHandler(OpenTaskManagerEvent.getType(), event ->
                 harness.spy(ON_SHOW_TASKS, "node=" + event.getNodeName() + ", task=" + event.getTaskName()));
 
-        harness.addContent(injector.getJobPresenter());
+        harness.show(injector.getJobPresenter());
         return harness.asWidget();
     }
 }

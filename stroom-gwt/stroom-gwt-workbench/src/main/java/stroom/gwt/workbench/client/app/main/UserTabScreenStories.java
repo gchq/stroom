@@ -213,7 +213,7 @@ public final class UserTabScreenStories {
         // Opened once Stroom has started (the tabs' lists read the UI config), as UserTabPlugin
         // opens a user's tab, or UserPlugin.open the signed in user's profile
         harness.afterStartUp(() -> {
-            final UserTabPresenter presenter = harness.addContent(injector.getUserTabPresenter());
+            final UserTabPresenter presenter = harness.show(injector.getUserTabPresenter());
             presenter.setUserRef(user != null
                     ? user
                     : harness.getSecurityContext().getUserRef());

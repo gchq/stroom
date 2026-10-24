@@ -79,8 +79,7 @@ public final class AskStroomAiChat {
     public AskStroomAiPresenter getPresenter() {
         if (presenter == null) {
             presenter = factory.get();
-            harness.disposeOnCleanUp(presenter);
-            harness.closeOnCleanUp(presenter);
+            harness.ownPopup(presenter);
         }
         return presenter;
     }

@@ -141,7 +141,7 @@ public final class LinkTabPanelStories {
 
         final StoryLinkTabPanelPresenter presenter = new StoryLinkTabPanelPresenter(eventBus,
                 new LinkTabPanelViewImpl(GWT.create(LinkTabPanelViewImpl.Binder.class)), contents, toolbar);
-        harness.disposeOnCleanUp(presenter);
+        harness.own(presenter);
         harness.addRegistration(presenter.getView().getTabBar()
                 .addShowMenuHandler(event -> eventBus.fireEvent(event)));
         for (final TabData tab : tabs) {

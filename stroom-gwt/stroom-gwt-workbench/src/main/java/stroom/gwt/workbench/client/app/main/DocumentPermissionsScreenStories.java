@@ -117,7 +117,7 @@ public final class DocumentPermissionsScreenStories {
         // has started (the list reads the UI config)
         harness.afterStartUp(() -> {
             final BatchDocumentPermissionsPresenter presenter =
-                    harness.addContent(injector.getBatchDocumentPermissionsPresenter());
+                    harness.show(injector.getBatchDocumentPermissionsPresenter());
             presenter.setExpression(ExpressionOperator.builder()
                     .addTerm(ExpressionTerm.builder()
                             .field(DocumentPermissionFields.DESCENDANTS.getFldName())

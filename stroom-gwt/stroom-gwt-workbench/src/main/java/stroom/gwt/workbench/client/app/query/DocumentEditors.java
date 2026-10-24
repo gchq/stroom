@@ -122,7 +122,7 @@ public final class DocumentEditors {
                         allowUpdate -> {
                             presenter.setReadOnly(!allowUpdate);
                             presenter.read(docRef, doc);
-                            harness.addContent(presenter);
+                            harness.show(presenter);
                             // As Stroom's content pane does when it selects the editor's tab
                             if (presenter instanceof TabData) {
                                 ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), (TabData) presenter);

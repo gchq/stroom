@@ -109,7 +109,7 @@ public final class TracesScreenStories {
             presenter.setPathway(null);
             presenter.setFilter(null);
             presenter.forceRefresh();
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

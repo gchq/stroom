@@ -235,7 +235,7 @@ public final class VisualisationAssetsStories {
         frame.getElement().getStyle().setProperty("width", "300px");
         harness.add(frame);
         harness.afterStartUp(() -> {
-            final DocumentAssetDropDownPresenter picker = harness.disposeOnCleanUp(
+            final DocumentAssetDropDownPresenter picker = harness.own(
                     injector.getDocumentAssetDropDownPresenter());
             picker.setDocument(VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build());
             frame.setWidget(picker.getWidget());
@@ -276,7 +276,7 @@ public final class VisualisationAssetsStories {
         harness.add(frame);
         // After start-up, as its editor reads the user's preferences
         harness.afterStartUp(() -> {
-            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.disposeOnCleanUp(
+            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.own(
                     injector.getVisualisationAssetsPresenter());
             for (final Widget toolbar : presenter.getDocumentButtons()) {
                 toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");

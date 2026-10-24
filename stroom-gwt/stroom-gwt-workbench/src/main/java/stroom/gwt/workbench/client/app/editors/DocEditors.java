@@ -194,7 +194,7 @@ public final class DocEditors {
                             allowUpdate -> {
                                 presenter.setReadOnly(!allowUpdate);
                                 presenter.read(docRef, doc);
-                                harness.addContent(presenter);
+                                harness.show(presenter);
                             },
                             error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
                             presenter);

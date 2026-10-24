@@ -145,8 +145,8 @@ public final class ContentTabPaneStories {
         paneOwner.adopt(pane.getComponentNode());
         harness.addCleanUp(paneOwner::dispose);
         harness.afterStartUp(() -> {
-            harness.addContent(pane);
-            StoryDocumentPlugins.closeOnCleanUp(harness, open(contentManager, eventBus, docRef, 0));
+            harness.show(pane);
+            StoryDocumentPlugins.closeTabOnCleanUp(harness, open(contentManager, eventBus, docRef, 0));
         });
         return harness.asWidget();
     }

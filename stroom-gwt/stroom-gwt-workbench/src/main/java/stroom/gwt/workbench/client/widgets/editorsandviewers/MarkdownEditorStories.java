@@ -176,7 +176,7 @@ public final class MarkdownEditorStories {
                 harness.getUiConfigCache(),
                 userPreferencesManager,
                 markdownConverter);
-        harness.disposeOnCleanUp(presenter);
+        harness.own(presenter);
 
         final Spy onChange = harness.fn(ON_CHANGE);
         harness.addRegistration(previewPresenter.addValueChangeHandler(event ->

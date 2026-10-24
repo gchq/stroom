@@ -194,7 +194,7 @@ public final class AccountsScreenStories {
 
         // Opened as AccountsPlugin.open opens it (refreshed), once Stroom has started (the grid
         // reads the UI config and formats dates with the user's preferences)
-        harness.afterStartUp(() -> harness.addContent(injector.getAccountsPresenter()).refresh());
+        harness.afterStartUp(() -> harness.show(injector.getAccountsPresenter()).refresh());
         return harness.asWidget();
     }
 }

@@ -107,7 +107,7 @@ public final class DataVolumesScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getFsVolumeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getFsVolumeGroupPresenter()));
         return harness.asWidget();
     }
 }

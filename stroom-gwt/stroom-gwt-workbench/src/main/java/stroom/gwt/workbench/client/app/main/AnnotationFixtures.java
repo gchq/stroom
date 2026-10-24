@@ -153,7 +153,7 @@ public final class AnnotationFixtures {
             final AnnotationPresenter presenter = injector.getAnnotationPresenter();
             presenter.setReadOnly(readOnly);
             presenter.read(annotation);
-            harness.addContent(presenter);
+            harness.show(presenter);
         }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
     }
 }

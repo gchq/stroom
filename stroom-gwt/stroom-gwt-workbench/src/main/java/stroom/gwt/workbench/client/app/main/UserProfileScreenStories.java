@@ -77,7 +77,7 @@ public final class UserProfileScreenStories {
                 .build();
         // Shown as UserTabPresenter shows its Info tab
         harness.afterStartUp(() -> {
-            final UserInfoPresenter presenter = harness.addContent(injector.getUserInfoPresenter());
+            final UserInfoPresenter presenter = harness.show(injector.getUserInfoPresenter());
             presenter.setUserRef(userRef);
         });
         return harness.asWidget();

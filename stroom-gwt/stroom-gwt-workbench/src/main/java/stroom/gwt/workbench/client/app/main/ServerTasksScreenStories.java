@@ -362,7 +362,7 @@ public final class ServerTasksScreenStories {
         // Opened once Stroom has started (the screen reads the UI config), as TaskManagerPlugin
         // opens it, with the name filter of an OpenTaskManagerEvent if there is one
         harness.afterStartUp(() -> {
-            final TaskManagerPresenter presenter = harness.addContent(injector.getTaskManagerPresenter());
+            final TaskManagerPresenter presenter = harness.show(injector.getTaskManagerPresenter());
             if (filter != null) {
                 presenter.changeNameFilter(filter);
             }

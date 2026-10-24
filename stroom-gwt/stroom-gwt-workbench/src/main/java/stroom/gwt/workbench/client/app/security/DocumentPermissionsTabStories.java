@@ -256,7 +256,7 @@ public final class DocumentPermissionsTabStories {
         // Stroom has started (the list reads the UI config)
         harness.afterStartUp(() -> {
             final DocumentUserPermissionsPresenter presenter =
-                    harness.addContent(injector.getDocumentUserPermissionsPresenter());
+                    harness.show(injector.getDocumentUserPermissionsPresenter());
             presenter.setDocRef(docRef);
         });
         return harness.asWidget();

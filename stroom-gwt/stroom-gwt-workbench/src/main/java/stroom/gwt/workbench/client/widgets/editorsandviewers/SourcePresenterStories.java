@@ -158,7 +158,7 @@ public final class SourcePresenterStories {
         // Stroom's Menu (for the source's context menus) is the harness's
 
         final SourcePresenter presenter = sourcePresenter(harness);
-        harness.disposeOnCleanUp(presenter);
+        harness.own(presenter);
 
         harness.fn(ON_BEGIN_STEPPING);
         harness.addRegistration(eventBus.addHandler(BeginPipelineSteppingEvent.getType(), event ->

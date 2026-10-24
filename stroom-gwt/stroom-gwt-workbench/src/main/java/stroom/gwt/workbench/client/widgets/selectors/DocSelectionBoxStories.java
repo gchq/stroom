@@ -244,7 +244,7 @@ public final class DocSelectionBoxStories {
             popup.setCaption(caption);
         }
         final DocSelectionBoxPresenter box = SelectorWidgets.docSelectionBox(harness, popup);
-        harness.disposeOnCleanUp(box);
+        harness.own(box);
         final Spy onChange = context.fn(ON_CHANGE);
         harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null
                 ? null

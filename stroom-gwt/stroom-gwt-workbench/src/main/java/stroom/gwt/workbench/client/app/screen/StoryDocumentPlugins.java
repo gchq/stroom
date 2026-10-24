@@ -81,8 +81,8 @@ public final class StoryDocumentPlugins {
     /// @return This set up.
     public StoryDocumentPlugins showOpenedTabs() {
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
-            harness.addContent((MyPresenterWidget<?>) event.getLayer());
-            closeOnCleanUp(harness, event.getTabData());
+            harness.show((MyPresenterWidget<?>) event.getLayer());
+            closeTabOnCleanUp(harness, event.getTabData());
         }));
         return this;
     }
@@ -93,7 +93,7 @@ public final class StoryDocumentPlugins {
     ///
     /// @param harness The story's harness.
     /// @param tabData The tab, as opened.
-    public static void closeOnCleanUp(final ScreenHarness harness, final TabData tabData) {
+    public static void closeTabOnCleanUp(final ScreenHarness harness, final TabData tabData) {
         harness.addCleanUp(() -> RequestCloseTabEvent.fire(harness.getHasHandlers(), tabData, true));
     }
 

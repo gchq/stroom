@@ -383,7 +383,7 @@ public final class CredentialsScreenStories {
         }
         final ScreenHarness harness = builder.build();
         // Shown as CredentialsPlugin shows it, once Stroom has started
-        harness.afterStartUp(() -> harness.addContent(injector.getCredentialsPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getCredentialsPresenter()));
         return harness.asWidget();
     }
 }

@@ -103,7 +103,7 @@ public final class SqlTemporalStoreSettingsStories {
         frame.getElement().getStyle().setProperty("height", "200px");
         harness.add(frame);
         harness.afterStartUp(() -> {
-            final SqlTemporalStoreSettingsPresenter presenter = harness.disposeOnCleanUp(
+            final SqlTemporalStoreSettingsPresenter presenter = harness.own(
                     injector.getSqlTemporalStoreSettingsPresenter());
             frame.setWidget(presenter.getWidget());
             // As its document's opener does

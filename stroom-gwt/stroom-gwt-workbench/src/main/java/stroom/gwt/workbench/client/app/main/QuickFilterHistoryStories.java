@@ -259,7 +259,7 @@ public final class QuickFilterHistoryStories {
                 .realAlerts()
                 .build();
         // As UsersPlugin.open opens it, refreshed
-        harness.addContent(injector.getUsersPresenter()).refresh();
+        harness.show(injector.getUsersPresenter()).refresh();
         return harness.asWidget();
     }
 

@@ -380,7 +380,7 @@ public final class DataReceiptRulesScreenStories {
                 harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(true));
             }
             final RuleSetPresenter presenter = injector.getRuleSetPresenter();
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

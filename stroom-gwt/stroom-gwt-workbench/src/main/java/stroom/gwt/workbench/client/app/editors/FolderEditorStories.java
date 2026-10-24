@@ -193,7 +193,7 @@ public final class FolderEditorStories {
                     folder.getType());
             host.setReadOnly(true);
             host.read(folder, folder);
-            harness.addContent(host);
+            harness.show(host);
         });
     }
 }

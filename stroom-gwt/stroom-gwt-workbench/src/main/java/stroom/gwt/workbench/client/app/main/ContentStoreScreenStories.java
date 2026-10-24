@@ -164,7 +164,7 @@ public final class ContentStoreScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getContentStorePresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getContentStorePresenter()));
         return harness.asWidget();
     }
 }

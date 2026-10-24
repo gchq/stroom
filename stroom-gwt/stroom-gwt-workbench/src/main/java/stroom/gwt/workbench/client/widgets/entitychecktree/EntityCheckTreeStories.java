@@ -101,7 +101,7 @@ public final class EntityCheckTreeStories {
         final EntityCheckTreeViewImpl view = new EntityCheckTreeViewImpl(
                 GWT.create(EntityCheckTreeViewImpl.Binder.class));
         final EntityCheckTreePresenter presenter = new EntityCheckTreePresenter(view, harness.getRestFactory());
-        harness.disposeOnCleanUp(presenter);
+        harness.own(presenter);
         presenter.refresh();
 
         final Label checked = new Label();

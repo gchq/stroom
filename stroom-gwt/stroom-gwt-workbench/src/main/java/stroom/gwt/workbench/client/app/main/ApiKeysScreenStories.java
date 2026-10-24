@@ -99,7 +99,7 @@ public final class ApiKeysScreenStories {
         // Opened as ApiKeysPlugin opens it (refreshed), once Stroom has started (the list reads the
         // UI config and formats dates with the user's preferences)
         harness.afterStartUp(() -> {
-            final ApiKeysPresenter presenter = harness.addContent(injector.getApiKeysPresenter());
+            final ApiKeysPresenter presenter = harness.show(injector.getApiKeysPresenter());
             presenter.refresh();
         });
         return harness.asWidget();

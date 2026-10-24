@@ -233,7 +233,7 @@ public final class ContentTemplatesScreenStories {
                 // The validation errors are shown in Stroom's real alert dialog
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getContentTemplateTabPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getContentTemplateTabPresenter()));
         return harness.asWidget();
     }
 }

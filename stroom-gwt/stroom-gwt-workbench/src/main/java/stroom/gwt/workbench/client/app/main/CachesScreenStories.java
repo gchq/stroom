@@ -131,7 +131,7 @@ public final class CachesScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        harness.addContent(injector.getCachePresenter());
+        harness.show(injector.getCachePresenter());
         return harness.asWidget();
     }
 }

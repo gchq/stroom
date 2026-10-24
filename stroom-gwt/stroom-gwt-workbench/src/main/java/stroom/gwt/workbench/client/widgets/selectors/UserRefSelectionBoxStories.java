@@ -160,7 +160,7 @@ public final class UserRefSelectionBoxStories {
 
     private static UserRefSelectionBoxPresenter box(final StoryContext context, final ScreenHarness harness) {
         final UserRefSelectionBoxPresenter box = SelectorWidgets.userRefSelectionBox(harness);
-        harness.disposeOnCleanUp(box);
+        harness.own(box);
         final Spy onChange = context.fn(ON_CHANGE);
         harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null
                 ? null

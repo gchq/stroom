@@ -188,7 +188,7 @@ public final class ProcessorFilterListStories {
             presenter.read(pipelineRef, pipelineDoc);
             presenter.setIsAdmin(true);
             presenter.setAllowUpdate(true);
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

@@ -1201,7 +1201,7 @@ public final class PipelineEditorStories {
                         harness.addRegistration(presenter.addDirtyListener(onDirty::call));
                         presenter.setReadOnly(readOnly);
                         presenter.read(DOC_REF, doc);
-                        harness.addContent(presenter);
+                        harness.show(presenter);
                     })
                     .taskMonitorFactory(presenter)
                     .exec();

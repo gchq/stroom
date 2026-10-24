@@ -67,7 +67,7 @@ import java.util.function.BiFunction;
 /// records the `SaveDocumentEvent` the host fires.
 ///
 /// `App/Dictionary/DictionaryEditorComponent` runs the same stories against the editor alone,
-/// owned by the story's root ([ScreenHarness#addComponent]) as its owner, and adds stories only it
+/// owned by the story's root ([ScreenHarness#show]) as its owner, and adds stories only it
 /// has: the document locked and unlocked while open, Save asking the owner to save, and closing the
 /// editor while a request is answered late (see `stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Phase 0).
 public final class DictionaryEditorStories {
@@ -473,7 +473,7 @@ public final class DictionaryEditorStories {
                         allowUpdate -> {
                             editor.setReadOnly(!allowUpdate);
                             editor.read(DOC_REF, doc);
-                            harness.addComponent(editor);
+                            harness.show(editor);
                         },
                         error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
                         taskMonitorFactory))
@@ -499,7 +499,7 @@ public final class DictionaryEditorStories {
                         allowUpdate -> {
                             presenter.setReadOnly(!allowUpdate);
                             presenter.read(DOC_REF, doc);
-                            harness.addContent(presenter);
+                            harness.show(presenter);
                         },
                         error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),
                         presenter))

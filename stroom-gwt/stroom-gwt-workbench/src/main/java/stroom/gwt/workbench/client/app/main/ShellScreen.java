@@ -119,7 +119,7 @@ final class ShellScreen {
     /// @param docRef The document.
     void startFullScreen(final DocRef docRef) {
         harness.addRegistration(harness.getEventBus().addHandler(ShowFullScreenEvent.getType(), event ->
-                harness.addContent(event.getPresenterWidget())));
+                harness.show(event.getPresenterWidget())));
         harness.afterStartUp(() -> {
             registerPlugins();
             OpenDocumentEvent.fire(harness.getHasHandlers(), docRef, true, true);
@@ -151,13 +151,13 @@ final class ShellScreen {
                 keyHandler,
                 navigation,
                 tabPane);
-        harness.disposeOnCleanUp(main);
+        harness.own(main);
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
         // As Stroom shows it for ShowMainEvent, once the user has logged in: its listener puts it in the
         // page (here, the story's), then it shows the explorer
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event -> {
-            harness.addContent(main);
+            harness.show(main);
             main.onShowMain(event);
         }));
     }

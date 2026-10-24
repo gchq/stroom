@@ -77,7 +77,7 @@ public final class WelcomeScreenStories {
                 harness.getUiConfigCache(),
                 harness.getDateTimeFormatter());
         // A tab's content, so shown in the story's canvas rather than as a popup
-        harness.add(harness.disposeOnCleanUp(presenter).getWidget());
+        harness.add(harness.own(presenter).getWidget());
         return harness.asWidget();
     }
 }

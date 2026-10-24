@@ -167,7 +167,7 @@ public final class ProcessorTaskListStories {
             final ProcessorTaskListPresenter presenter = injector.getProcessorTaskListPresenter();
             // As a folder's 'Active Tasks' tab reads it
             presenter.read(FOLDER, null);
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

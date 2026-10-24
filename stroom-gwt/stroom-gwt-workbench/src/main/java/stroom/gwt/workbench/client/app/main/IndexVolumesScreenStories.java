@@ -183,7 +183,7 @@ public final class IndexVolumesScreenStories {
             builder.realAlerts();
         }
         final ScreenHarness harness = builder.build();
-        harness.afterStartUp(() -> harness.addContent(injector.getIndexVolumeGroupPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getIndexVolumeGroupPresenter()));
         return harness.asWidget();
     }
 }

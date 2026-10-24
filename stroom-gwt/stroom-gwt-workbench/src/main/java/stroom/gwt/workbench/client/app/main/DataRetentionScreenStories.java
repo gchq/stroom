@@ -387,7 +387,7 @@ public final class DataRetentionScreenStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getDataRetentionPresenter()));
+        harness.afterStartUp(() -> harness.show(injector.getDataRetentionPresenter()));
         return harness.asWidget();
     }
 }

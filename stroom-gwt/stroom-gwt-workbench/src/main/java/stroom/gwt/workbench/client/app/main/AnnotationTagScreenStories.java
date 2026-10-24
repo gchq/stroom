@@ -163,7 +163,7 @@ public final class AnnotationTagScreenStories {
             presenter.setTabLabel(label);
             presenter.setAnnotationTagType(type);
             presenter.refresh();
-            harness.addContent(presenter);
+            harness.show(presenter);
         });
         return harness.asWidget();
     }

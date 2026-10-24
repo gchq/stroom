@@ -127,8 +127,8 @@ public final class DocPluginStories {
         injector.getXMLSchemaPlugin();
         // The tab the plugin opens is shown as the story's content, as the tab pane would show it
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
-            harness.addContent((MyPresenterWidget<?>) event.getLayer());
-            StoryDocumentPlugins.closeOnCleanUp(harness, event.getTabData());
+            harness.show((MyPresenterWidget<?>) event.getLayer());
+            StoryDocumentPlugins.closeTabOnCleanUp(harness, event.getTabData());
         }));
         // As the explorer does when the document is opened
         harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));

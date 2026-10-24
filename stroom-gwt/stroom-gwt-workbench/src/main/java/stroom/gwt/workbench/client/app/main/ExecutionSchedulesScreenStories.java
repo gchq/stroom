@@ -480,7 +480,7 @@ public final class ExecutionSchedulesScreenStories {
                 .appPermissions(permissions)
                 .realAlerts()
                 .build();
-        harness.afterStartUp(() -> harness.addContent(injector.getExecutionScheduleManager()));
+        harness.afterStartUp(() -> harness.show(injector.getExecutionScheduleManager()));
         return harness.asWidget();
     }
 }

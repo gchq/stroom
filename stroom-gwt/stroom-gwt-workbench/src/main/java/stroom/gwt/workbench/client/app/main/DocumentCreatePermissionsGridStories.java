@@ -134,7 +134,7 @@ public final class DocumentCreatePermissionsGridStories {
         harness.fn(ON_CHANGE);
         harness.afterStartUp(() -> {
             final DocumentCreatePermissionsListPresenter presenter =
-                    harness.addContent(injector.getDocumentCreatePermissionsListPresenter());
+                    harness.show(injector.getDocumentCreatePermissionsListPresenter());
             // The report: the explicit types, and Feed inherited from /System
             final Set<String> explicitTypes = new HashSet<>(List.of(explicit));
             presenter.setup(new DocumentUserPermissionsReport(null, explicitTypes, Collections.emptyMap(),

@@ -275,7 +275,7 @@ public final class UserAccessScreenStories {
         // Opened as UserAccessPlugin opens it (refreshed), once Stroom has started (it reads the
         // UI config for the identity provider)
         harness.afterStartUp(() -> {
-            final UserAccessPresenter presenter = harness.addContent(injector.getUserAccessPresenter());
+            final UserAccessPresenter presenter = harness.show(injector.getUserAccessPresenter());
             presenter.refresh();
         });
         return harness.asWidget();
