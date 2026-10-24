@@ -154,7 +154,7 @@ public final class FindInContentDialogStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As the presenter's listener would
+            // As NavigationPlugin would
             final FindInContentPresenter presenter = harness.own(injector.getFindInContentPresenter());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
                     presenter::onShow));

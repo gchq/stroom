@@ -154,7 +154,7 @@ final class ShellScreen {
         harness.own(main);
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
-        // As Stroom shows it for ShowMainEvent, once the user has logged in: its listener puts it in the
+        // As Stroom shows it for ShowMainEvent, once the user has logged in: MainScreens puts it in the
         // page (here, the story's), then it shows the explorer
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event -> {
             harness.show(main);
@@ -279,7 +279,7 @@ final class ShellScreen {
 
     // --------------------------------------------------------------------------------
 
-    /// Creates a value when it is first asked for, as a listener creates its presenter when its
+    /// Creates a value when it is first asked for, as a plugin creates a screen when its
     /// event first fires, and gives the same one after that.
     private static final class Lazy<T> implements Supplier<T> {
 

@@ -126,7 +126,7 @@ public final class ContentTabPaneStories {
                 .injector(injector)
                 .build();
         final EventBus eventBus = harness.getEventBus();
-        // The tab pane, registered for the content events as its listener would be
+        // The tab pane, registered for the content events as MainScreens registers it
         final ContentTabPanePresenter pane = injector.getContentTabPanePresenter();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));

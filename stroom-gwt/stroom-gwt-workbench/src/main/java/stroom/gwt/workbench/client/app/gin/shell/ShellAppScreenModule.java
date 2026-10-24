@@ -67,8 +67,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// ginjector binds).
 ///
 /// Plugins are left out, as in the other mirrors: the story gets them from the ginjector, which
-/// registers them. Presenters that Stroom binds with a listener are bound here without one: the
-/// story registers a presenter as its event's handler, as the listener would.
+/// registers them, and they add the handlers of the app-wide events that open their screens, as in
+/// Stroom.
 public class ShellAppScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

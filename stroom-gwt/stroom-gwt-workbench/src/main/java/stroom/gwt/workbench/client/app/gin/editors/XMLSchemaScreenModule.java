@@ -28,8 +28,8 @@ import stroom.xmlschema.client.view.XMLSchemaSettingsViewImpl;
 /// The presenter and view bindings of Stroom's `XMLSchemaModule`
 /// (`stroom/xmlschema/client/gin/XMLSchemaModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the listener would.
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
 public class XMLSchemaScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

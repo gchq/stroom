@@ -23,8 +23,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AlertModule`
 /// (`stroom/alert/client/gin/AlertModule.java`), without its plugins, app services and prompt.
-/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the listener would.
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
 public class AlertScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

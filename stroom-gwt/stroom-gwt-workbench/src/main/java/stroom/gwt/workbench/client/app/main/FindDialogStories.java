@@ -124,7 +124,7 @@ public final class FindDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        // As the presenter's listener would
+        // As NavigationPlugin would
         final FindPresenter presenter = injector.getFindPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindEvent.getType(), presenter));
         harness.afterStartUp(() -> ShowFindEvent.fire(harness.getHasHandlers()));

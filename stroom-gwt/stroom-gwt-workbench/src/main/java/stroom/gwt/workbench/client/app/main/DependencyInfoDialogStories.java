@@ -89,7 +89,7 @@ public final class DependencyInfoDialogStories {
                 .injector(injector)
                 .withoutStartupFixtures()
                 .build();
-        // As the presenter's listener would
+        // As DependenciesPlugin would
         final DependenciesInfoPresenter presenter = injector.getDependenciesInfoPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowDependenciesInfoDialogEvent.getType(), presenter));

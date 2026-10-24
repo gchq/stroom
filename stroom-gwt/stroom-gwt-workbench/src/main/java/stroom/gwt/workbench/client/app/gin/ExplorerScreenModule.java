@@ -36,8 +36,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The explorer presenter and view bindings of Stroom's `AppModule`
 /// (`stroom-app-gwt/.../stroom/app/client/gin/AppModule.java`), without the app shell.
-/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the listener would.
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
 public class ExplorerScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

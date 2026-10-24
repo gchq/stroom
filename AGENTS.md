@@ -162,18 +162,24 @@ Stroom expects Java 25 (Eclipse Temurin)
 
 New GWT screens, dialogs and tabs are components (`stroom.widget.component.client.Component`), not presenters (`MyPresenterWidget`).
 The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md`; the receive rules (`stroom.receive.rules.client.component`), the Dictionary editor and `FolderTabs` are worked examples.
+Every presenter is a component too (`MyPresenterWidget extends Component`), so the rules below for making, owning, registering and releasing apply to presenters as well.
 
 * **Make one.** Extend `Component`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
   A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
 
 * **Own what you show.** Whoever shows a component or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
   Something that isn't a component (a plugin, a manager, an app-wide helper) injects `AppRoot` and makes its dialogs with `appRoot.makeDialog(provider)`; a helper a presenter makes is given `() -> makeDialog(provider)` by it.
+  Providers are GIN's `com.google.inject.Provider`, not `javax.inject.Provider` (the client's JVM tests can't load javax's).
   Disposing an owner disposes everything it owns, depth first; never call `dispose()` yourself except on a root.
   Unowned components are counted in development builds, and the workbench leak check names them.
 
 * **Inputs and outputs.** Data comes in through methods named for what they do (`read(rules)`, `setFields(...)`), results go out through a callback its owner sets (`setOnChange(Runnable)`), or one passed to the call that starts it (`editor.edit(this, field, updated -> ...)`).
   A child never fires a bus event to reach its owner; use `listen(type, handler)` only for app-wide events, and `AlertEvent.fire...(this, ...)`, as a presenter does, for app-wide requests.
   Where several may listen (e.g. a reusable selection box), keep a `Listeners<T>` list and return the registration from `add...Listener(Consumer<T>)`.
+
+* **Register and release.** A handler on the app's event bus is `listen(type, handler)`; any other registration (a handler on a widget, a child's listener) is `own(registration)`.
+  Anything else to undo is registered where it is started, `onDispose(timer::cancel)`; there is no `onDispose()` to override.
+  Clean-ups run after what the component owns is disposed and its registrations removed, newest first.
 
 * **Dirty state.** When the user changes something a document holds, call `markChanged()`: the document (its `Contexts.DIRTY` tracker) works out again whether it is dirty.
 
@@ -196,6 +202,7 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
   There is no code splitting: everything is in the initial download.
 
 * **Test it.** Unit test what runs without a browser with JUnit (see `TestComponent`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+  In a story, the story's root owns whatever the story shows: `harness.show(screen)` fills the canvas with it, `harness.own(screen)` owns one the story shows itself (in a frame, or as a dialog), and `harness.ownPopup(popup)` also asks a popup to close, for one that stops polling only when asked (see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`).
 
 
 ## Generated and third party files

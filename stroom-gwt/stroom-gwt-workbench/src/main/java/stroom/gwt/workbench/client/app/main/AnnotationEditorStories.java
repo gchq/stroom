@@ -531,7 +531,7 @@ public final class AnnotationEditorStories {
                 // The confirmations are answered in Stroom's real dialog
                 .realAlerts()
                 .build();
-        // The annotation chooser, as its listener would show it
+        // The annotation chooser, as AnnotationEditSupport would show it
         final FindAnnotationPresenter findAnnotationPresenter = injector.getFindAnnotationPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(),
                 findAnnotationPresenter));

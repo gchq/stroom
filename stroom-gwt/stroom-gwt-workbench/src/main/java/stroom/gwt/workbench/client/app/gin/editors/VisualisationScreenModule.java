@@ -38,8 +38,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// (`stroom/visualisation/client/gin/VisualisationModule.java`) and of the document asset
 /// presenters its 'Assets' tab uses (`stroom/document/asset/client/gin/DocumentAssetModule.java`),
 /// without their plugins and app services.
-/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the listener would.
+/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
+/// the event, as the screen's area plugin does in Stroom.
 public class VisualisationScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

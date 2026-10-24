@@ -144,7 +144,7 @@ public final class DocInfoDialogStories {
                 .injector(injector)
                 .build();
 
-        // As the presenter's listener would
+        // As DocumentDialogScreens would
         final InfoDocumentPresenter presenter = injector.getInfoDocumentPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowInfoDocumentDialogEvent.getType(), presenter));

@@ -147,7 +147,7 @@ public final class CreateDocumentDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
-        // As the presenter's listener would
+        // As DocumentDialogScreens would
         final CreateDocumentPresenter presenter = injector.getCreateDocumentPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowCreateDocumentDialogEvent.getType(), presenter));

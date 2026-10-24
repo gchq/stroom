@@ -26,9 +26,9 @@ import java.util.function.Supplier;
 
 /// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiPresenter]) for the app events that open it,
 /// `AskStroomAiEvent` (a table's 'Ask Stroom AI' button) and `ShowAskStroomAiEvent` (the toolbar's
-/// AI toggle), as the presenter's listener does in Stroom.
+/// AI toggle), as `AskStroomAiScreens` does in Stroom.
 ///
-/// Like the listener, it creates the presenter only when the first of those events
+/// Like that, it creates the presenter only when the first of those events
 /// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The presenter reads its
 /// configuration from the user's preferences as it is created (`AskStroomAiClient.getConfig`), and
 /// when they have no `askStroomAiConfig` (Stroom's default preferences have none) it fetches the

@@ -602,7 +602,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `startFullScreen(docRef)` is Stroom's embedded view instead. Reuse it for any story about the
   shell, the explorer, the main menu or opening documents from the explorer.
   The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
-  adds it to the story, as its listener puts it in the page, and it shows the explorer
+  adds it to the story, as `MainScreens` puts it in the page, and it shows the explorer
   (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
   instead. Its ginjector adds `ShellAppScreenModule` (the main view,
   `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
@@ -644,7 +644,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
   with `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`. It creates the
-  presenter on the first event, as its listener does, i.e. after start-up.
+  presenter on the first event, as `AskStroomAiScreens` does, i.e. after start-up.
 
 ## Play functions
 
