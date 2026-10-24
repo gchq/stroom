@@ -283,6 +283,62 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void dataEntriesAreWrittenInTheDataTheirDataParentNames() {
+        // Asked for by the user: a tweet's mentions as <Data Name="mentions"><Data Name="mention" Value="..."/>...
+        // </Data>, which the schema allows (Data holds Data, each with a Name) and the mapping couldn't express.
+        final List<Object> fields = new ArrayList<>(LOGON);
+        fields.add(json("""
+                {"path": "EventDetail/Authenticate/Data", "data_parent": "mentions", "data_name": "mention",
+                 "repeat": true,
+                 "xpath": "for $w in tokenize(*[@key='text'], '\\\\s+')[starts-with(., '@')] \
+                return substring($w, 2)"}"""));
+        fields.add(json("""
+                {"path": "EventDetail/Authenticate/Data", "data_parent": "mentions/by", "data_name": "client",
+                 "field": "client"}"""));
+        final List<Map<String, Object>> common = plus(BASE.subList(0, 4), json("""
+                {"path": "EventSource/Device/HostName", "field": "host"}"""));
+        final XsltGenerator.Generated result = generate(mapping(with("input", "json", "common", common, "events",
+                List.of(rule("logon", List.of(), fields)))));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), """
+                <array xmlns="http://www.w3.org/2013/XSL/json"><map>
+                    <string key="time">2026-09-28T10:00:00.000Z</string><string key="host">h</string>\
+                <string key="user">dave</string><string key="text">@pat @lee hello</string>\
+                <string key="client">web</string>
+                </map><map>
+                    <string key="time">2026-09-28T10:01:00.000Z</string><string key="host">h</string>\
+                <string key="user">dave</string><string key="text">no one</string>
+                </map></array>""");
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        final XmlElement first = children(events, "Event").get(0);
+        final List<XmlElement> mentions = having(first, EVT, "Data", "Name", "mentions");
+        assertThat(mentions).singleElement().satisfies(container -> {
+            assertThat(container.get("Value")).isNull();
+            assertThat(children(container, "Data")).extracting(d -> d.get("Name") + "=" + d.get("Value"))
+                    .containsExactly("mention=pat", "mention=lee", "by=null");
+            assertThat(having(container, EVT, "Data", "Name", "client").getFirst().get("Value")).isEqualTo("web");
+        });
+        // No mentions and no client: no container either.
+        assertThat(having(children(events, "Event").get(1), EVT, "Data", "Name", "mentions")).isEmpty();
+    }
+
+    @Test
+    void aDataParentGoesWithAPathEndingInDataAndItsDataName() {
+        assertThatThrownBy(() -> FieldMapping.fromJson(json("""
+                {"path": "EventSource/User/Id", "data_parent": "x", "field": "user"}""")))
+                .hasMessageContaining("data_parent names the Data element(s) a Data entry is written in");
+        assertThatThrownBy(() -> FieldMapping.fromJson(json("""
+                {"path": "EventDetail/Authenticate/Data", "data_parent": "a//b", "data_name": "c", "field": "f"}""")))
+                .hasMessageContaining("data_parent");
+        // Written only when set, so a mapping without it dumps as the Python server's does.
+        assertThat(FieldMapping.fromJson(json("""
+                {"path": "EventDetail/Authenticate/Data", "data_name": "c", "field": "f"}""")).toJson(DumpMode.ALL))
+                .doesNotContainKey("data_parent");
+    }
+
+    @Test
     void eachFieldNeedsExactlyOneSource() {
         assertThatThrownBy(() -> mapping(with("common", json("""
                 [{"path": "EventSource/User/Id", "field": "user", "value": "x"}]"""))))

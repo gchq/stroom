@@ -17,9 +17,11 @@
 package stroom.ai.impl.tools.generation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /// A translation mapping: which input field (or constant) goes to which event-logging path, per kind of event,
 /// from which [XsltGenerator] writes the translation XSLT. Ported from the Stroom MCP server's `TranslationMapping`
@@ -199,7 +201,19 @@ public record TranslationMapping(String input,
                 .map(entry -> entry.dataName() == null || entry.dataName().isEmpty()
                         ? entry
                         : entry.withDataName(XsltNames.dataNameIn(entry.dataName(), style.dataNames())))
+                .map(this::parentInStyle)
                 .toList();
+    }
+
+    // The Data an entry is written in (data_parent, not in the Python model) named in the style too, as its own.
+    private FieldMapping parentInStyle(final FieldMapping entry) {
+        if (entry.dataParent() == null) {
+            return entry;
+        }
+        final String parent = Arrays.stream(entry.dataParent().split("/", -1))
+                .map(name -> XsltNames.dataNameIn(name, style.dataNames()))
+                .collect(Collectors.joining("/"));
+        return entry.withDataParent(parent);
     }
 
     /// @param events The event rules.
