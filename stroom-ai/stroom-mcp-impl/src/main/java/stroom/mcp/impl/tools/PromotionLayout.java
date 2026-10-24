@@ -58,7 +58,10 @@ class PromotionLayout {
     /// `_version_folders`: for each new version of a production document (copy_pipeline: `version_of`), a version
     /// subfolder beside its predecessor, named by the version in its own name (…-V1.1-Events: V1.1), so old and
     /// new are told apart at a glance (asked for by the user). Beside the predecessor, in its folder's parent,
-    /// when that folder is itself a version's. Documents given a destination of their own keep it.
+    /// when that folder is itself a version's. Documents given a destination of their own keep it, as do those
+    /// whose type is given one elsewhere than beside the predecessor: not in the Python server, where the version
+    /// went beside its predecessor anyway and the build's other documents to the folder given (seen: TWITTER's
+    /// V1.1 pipeline under /Feeds/Twitter, its XSLT and documentation under System/MCP Testing/Twitter).
     ///
     /// @param docs         The build's documents.
     /// @param destinations The destinations given, by type or document UUID.
@@ -89,6 +92,10 @@ class PromotionLayout {
             final String version = VERSION.matcher(last).matches()
                     ? parent + "/" + found.getLast()
                     : folder + "/" + found.getLast();
+            final String typeGiven = destinations.get(String.valueOf(doc.get("type")));
+            if (typeGiven != null && !placesMeant(folder, version).contains(normalised(typeGiven))) {
+                continue;
+            }
             out.put(uuid, version);
             beside.computeIfAbsent(folder, ignored -> new LinkedHashSet<>()).add(version);
         }
@@ -106,16 +113,8 @@ class PromotionLayout {
         final Map<String, Set<String>> joins = new LinkedHashMap<>();
         beside.forEach((folder, versions) -> {
             for (final String version : versions) {
-                final List<String> placesMeant = new ArrayList<>(List.of(folder, parentOf(version)));
-                if (folder.contains("/") && WriteGuard.ROLES.contains(folder.substring(folder.lastIndexOf('/') + 1))) {
-                    // The predecessor in a role subfolder its promotion kept (…/Acme/Indexing): the source's folder
-                    // is meant too (seen in e2e: v2's documentation and dashboard, given …/Acme, left out of
-                    // Indexing/v2).
-                    placesMeant.add(parentOf(folder));
-                }
-                for (final String place : placesMeant) {
-                    joins.computeIfAbsent(String.join("/", WriteGuard.folderParts(place)),
-                            ignored -> new LinkedHashSet<>()).add(version);
+                for (final String place : placesMeant(folder, version)) {
+                    joins.computeIfAbsent(place, ignored -> new LinkedHashSet<>()).add(version);
                 }
             }
         });
@@ -261,6 +260,22 @@ class PromotionLayout {
             end--;
         }
         return path.substring(0, end);
+    }
+
+    // The places that mean a version's folder: its predecessor's folder and the version folder's parent, as
+    // explorer paths from System.
+    private static List<String> placesMeant(final String folder, final String version) {
+        final List<String> meant = new ArrayList<>(List.of(folder, parentOf(version)));
+        if (folder.contains("/") && WriteGuard.ROLES.contains(folder.substring(folder.lastIndexOf('/') + 1))) {
+            // The predecessor in a role subfolder its promotion kept (…/Acme/Indexing): the source's folder is
+            // meant too (seen in e2e: v2's documentation and dashboard, given …/Acme, left out of Indexing/v2).
+            meant.add(parentOf(folder));
+        }
+        return meant.stream().map(PromotionLayout::normalised).toList();
+    }
+
+    private static String normalised(final String place) {
+        return String.join("/", WriteGuard.folderParts(place));
     }
 
     private static String parentOf(final String path) {
