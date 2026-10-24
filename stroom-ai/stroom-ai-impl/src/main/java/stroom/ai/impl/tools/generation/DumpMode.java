@@ -68,6 +68,19 @@ public enum DumpMode {
             return this;
         }
 
+        /// A field the port adds to the Stroom MCP server's model: written only when set, whatever the mode, so a
+        /// model without it dumps as the Python server's does.
+        ///
+        /// @param key   The field's name.
+        /// @param value Its value, or null.
+        /// @return This builder, with the field if it is set.
+        Builder putIfSet(final String key, final Object value) {
+            if (value != null) {
+                map.put(key, value);
+            }
+            return this;
+        }
+
         /// @param key          A field holding a model.
         /// @param value        The model, or null.
         /// @param defaultValue Its default.

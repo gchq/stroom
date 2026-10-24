@@ -461,8 +461,19 @@ public final class XsltReader {
                 rule.notes().add(at + ": xsl:sequence " + head(select, 80) + " not read");
             }
         } else if (child.is(XSL, "for-each")) {
-            final LeafReading leaf = new LeafReading(join(path, firstEventName(child)), null);
+            // A Data entry repeated in a named Data (data_parent, not in the Python model): known by its Name, as
+            // its entry is. Elsewhere read as the Python reader reads it, with no Data name.
+            final XmlElement first = firstEventElement(child);
+            final boolean inContainer = path.stream().anyMatch(step -> step.startsWith(LeafReading.CONTAINER));
+            final String dataName = inContainer && first != null && "Data".equals(first.localName())
+                    ? first.get("Name")
+                    : null;
+            final LeafReading leaf = new LeafReading(join(path, firstEventName(child)), dataName);
             leaf.setRepeat(String.join(" ", words(XmlSerialiser.toXml(child))));
+            if (dataName != null && child.childElements().size() == 1 && eachValue(first)) {
+                // The generator's repeated Data entry: a Data of each value the loop selects.
+                leaf.setRepeatSelect(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
+            }
             rule.leaves().add(leaf);
         } else if (!child.is(XSL, "variable")) {
             rule.notes().add(at + ": " + child.localName() + " not read");
@@ -477,7 +488,7 @@ public final class XsltReader {
                                          final XPathTreeParser parser) {
         final String name = child.localName();
         if ("Data".equals(name)) {
-            dataElement(child, path, scope, rule, parser);
+            dataElement(child, path, scope, templates, rule, parser);
             return;
         }
         final List<String> here = new ArrayList<>(path);
@@ -547,8 +558,18 @@ public final class XsltReader {
     private static void dataElement(final XmlElement element,
                                     final List<String> path,
                                     final Map<String, String> scope,
+                                    final Map<String, XmlElement> templates,
                                     final RuleReading rule,
                                     final XPathTreeParser parser) {
+        final boolean holdsData = element.childElements().stream()
+                .anyMatch(child -> !child.is(XSL, "attribute"));
+        if (holdsData) {
+            // A Data element holding Data entries (a mapping's data_parent): what it holds, read inside it.
+            final List<String> inside = new ArrayList<>(path);
+            inside.add(LeafReading.CONTAINER + element.get("Name"));
+            walk(element, inside, scope, templates, rule, parser);
+            return;
+        }
         final LeafReading leaf = new LeafReading(join(path, "Data"), element.get("Name"));
         final XmlElement attribute = element.childElements(XSL, "attribute").stream()
                 .filter(child -> "Value".equals(child.get("name")))
@@ -718,6 +739,26 @@ public final class XsltReader {
     // The first xsl element of that name below (lxml's find('.//xsl:name')).
     private static XmlElement descendant(final XmlElement parent, final String xslName) {
         return parent.iterElements(XSL, xslName).stream().filter(element -> element != parent).findFirst()
+                .orElse(null);
+    }
+
+    // A Data element whose Value is the loop's current value, as the generator writes it ({.} or xsl:attribute).
+    private static boolean eachValue(final XmlElement data) {
+        if (".".equals(PyText.strip(Objects.requireNonNullElse(data.get("Value"), "").replaceAll("^\\{|}$", "")))
+            && data.childElements().isEmpty()) {
+            return true;
+        }
+        return data.get("Value") == null && data.childElements().size() == 1
+               && data.childElements().getFirst().is(XSL, "attribute")
+               && "Value".equals(data.childElements().getFirst().get("name"))
+               && ".".equals(PyText.strip(Objects.requireNonNullElse(data.childElements().getFirst().get("select"),
+                "")));
+    }
+
+    private static XmlElement firstEventElement(final XmlElement loop) {
+        return loop.iterElements().stream()
+                .filter(element -> EVT.equals(element.namespace()))
+                .findFirst()
                 .orElse(null);
     }
 

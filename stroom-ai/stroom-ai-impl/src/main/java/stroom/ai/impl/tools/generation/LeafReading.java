@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,18 +27,36 @@ import java.util.Map;
 /// what they select), or the xsl:for-each repeating it.
 public final class LeafReading {
 
+    /// The step [XsltReader] puts in a path for a Data element holding Data entries: `Data@<its Name>`.
+    static final String CONTAINER = "Data@";
+
     private final String path;
     private final String dataName;
+    private final String dataParent;
     private String value;
     private String expr;
     private String repeat;
+    private String repeatSelect;
     private String guard;
 
-    /// @param path     Where the element goes, e.g. `EventDetail/Authenticate/User/Id`, or `.../@Attribute`.
+    /// @param path     Where the element goes, e.g. `EventDetail/Authenticate/User/Id`, or `.../@Attribute`; a
+    ///                 Data entry inside Data elements with a [#CONTAINER] step for each.
     /// @param dataName For a Data entry, its Name; else null.
     LeafReading(final String path, final String dataName) {
-        this.path = path;
+        final List<String> steps = new ArrayList<>();
+        final List<String> parents = new ArrayList<>();
+        for (final String step : path.split("/", -1)) {
+            if (step.startsWith(CONTAINER)) {
+                parents.add(step.substring(CONTAINER.length()));
+            } else {
+                steps.add(step);
+            }
+        }
+        this.path = String.join("/", steps);
         this.dataName = dataName;
+        this.dataParent = parents.isEmpty()
+                ? null
+                : String.join("/", parents);
     }
 
     /// @return Where the element goes.
@@ -48,6 +67,11 @@ public final class LeafReading {
     /// @return For a Data entry, its Name; else null.
     public String dataName() {
         return dataName;
+    }
+
+    /// @return For a Data entry inside Data elements, their Names, outermost first, `/`-separated; else null.
+    public String dataParent() {
+        return dataParent;
     }
 
     /// @return Its constant, or null.
@@ -85,14 +109,27 @@ public final class LeafReading {
         this.repeat = repeat;
     }
 
+    /// @return For a Data entry the generator repeats (one per value its xsl:for-each selects, each the current
+    /// value), what the loop selects, its variables replaced; else null.
+    public String repeatSelect() {
+        return repeatSelect;
+    }
+
+    /// @param repeatSelect What the loop repeating it selects, for a Data entry of each value.
+    void setRepeatSelect(final String repeatSelect) {
+        this.repeatSelect = repeatSelect;
+    }
+
     /// @param guard The test of the innermost xsl:if around it.
     void setGuard(final String guard) {
         this.guard = guard;
     }
 
-    /// @return What it is known by: its path and Data name.
+    /// @return What it is known by: its path and Data name (with the Data it is in, as [FieldMapping#dataKey()]).
     public List<String> key() {
-        return Arrays.asList(path, dataName);
+        return Arrays.asList(path, dataName == null || dataParent == null
+                ? dataName
+                : dataParent + "/" + dataName);
     }
 
     /// @param parser The parser of the XSLT it was read from.
@@ -117,6 +154,10 @@ public final class LeafReading {
         out.put("expr", expr);
         out.put("repeat", repeat);
         out.put("guard", guard);
+        if (dataParent != null) {
+            // Not in the Python reading, which had no Data inside Data.
+            out.put("data_parent", dataParent);
+        }
         return out;
     }
 }

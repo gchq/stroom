@@ -210,6 +210,13 @@ element, named after the field. Keep it when you change the element; the drafts 
 translation XSLT written by hand (`save_xslt`) whose records come out as `Unknown` doesn't step clean: only
 `build_translation_xslt` can agree Unknown with the user.
 
+Data holds Data: to group values, give the entries a `data_parent`, the Name of the Data they're written in.
+`{"path": "EventDetail/Create/Document/Data", "data_parent": "mentions", "data_name": "mention", "repeat": true,
+"field": "mentions"}` writes `<Data Name="mentions"><Data Name="mention" Value="..."/>...</Data>`, one `mention`
+per value; entries with the same `data_parent` share its Data, written only when one of them has a value.
+`"data_parent": "client/geo"` writes the entry in a `geo` Data inside `client`. Every Data has a Name, so each
+value is a named Data of its own: `<Data Value="tim"/>` without a Name isn't valid.
+
 ## Style
 
 The mapping's `style` decides how the XSLT reads. Take it from an XSLT style section in the standing instructions

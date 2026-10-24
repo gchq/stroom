@@ -168,12 +168,15 @@ public final class MappingChanges {
         }
     }
 
-    // A common entry is known by its path and Data name.
+    // A common entry is known by its path and Data name (with the Data it is in, as FieldMapping.dataKey()).
     private static List<String> commonKey(final Map<?, ?> entry) {
         final Object dataName = entry.get("data_name");
-        return List.of(str(entry.get("path")), JsonValues.truthy(dataName)
-                ? str(dataName)
-                : "");
+        final Object dataParent = entry.get("data_parent");
+        return List.of(str(entry.get("path")), !JsonValues.truthy(dataName)
+                ? ""
+                : JsonValues.truthy(dataParent)
+                        ? str(dataParent) + "/" + str(dataName)
+                        : str(dataName));
     }
 
     private static String said(final List<String> key) {

@@ -18,6 +18,7 @@ package stroom.mcp.impl.e2e;
 
 import stroom.util.json.JsonUtil;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -34,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// record stepped and each Event validated against the instance's event-logging schema and the quality checks. The
 /// XML sample carries a record no rule matches, which must come back as the generator's warning, not be dropped.
 ///
-/// Every one of the script's five mappings (firewall, csv, json, xml, syslog) is covered, one test each.
+/// Every one of the script's five mappings (firewall, csv, json, xml, syslog) is covered, one test each; and Data
+/// grouped in Data (data_parent), which the script doesn't have.
 @SuppressWarnings("unchecked")
 class TestE2eGenerator extends AbstractE2eTest {
 
@@ -46,6 +48,10 @@ class TestE2eGenerator extends AbstractE2eTest {
             "<logon><when>2026-09-28 12:02:00</when><who>judy</who><host>ws10</host><addr>10.0.2.10</addr>"
             + "<result>LOCKED</result></logon></logons>");
     private static final String FIREWALL_SAMPLE = textResource("firewall.csv");
+    private static final String NESTED_DATA_SAMPLE = "[{\"ts\": \"2026-09-28T11:00:00Z\", \"user\": \"dave\", "
+            + "\"host\": \"ws04\", \"src\": \"10.0.1.4\", \"id\": \"p1\", \"mentions\": [\"tim\", \"bob\"], "
+            + "\"city\": \"Leeds\"}, {\"ts\": \"2026-09-28T11:02:00Z\", \"user\": \"erin\", \"host\": \"ws05\", "
+            + "\"src\": \"10.0.1.5\", \"id\": \"p2\", \"mentions\": []}]";
     private static final Map<String, Object> ALLOW_DENY = Map.of("field", "action",
             "map", Map.of("ALLOW", "true", "DENY", "false"));
     private static final Map<String, Object> LOGIN = Map.of("field", "action",
@@ -96,6 +102,56 @@ class TestE2eGenerator extends AbstractE2eTest {
         } else {
             assertThat(sample).as("stepped clean: %s", groups).containsEntry("verdict", "clean");
         }
+        validEvents(pipelineUuid, raw, sample);
+    }
+
+    @Test
+    void dataGroupedInTheDataItsDataParentNamesStepsCleanAndValidates() {
+        // Asked for by the user: Data in Data (data_parent), a JSON array's values each a Data of the one named
+        // for them, and a Data two deep. A record with neither writes no container.
+        final List<Map<String, Object>> fields = new ArrayList<>(List.of(
+                Map.of("path", "EventDetail/TypeId", "value", "Post"),
+                Map.of("path", "EventDetail/Create/Document/Id", "field", "id"),
+                Map.of("path", "EventDetail/Create/Document/Data", "data_parent", "mentions",
+                        "data_name", "mention", "field", "mentions", "repeat", true),
+                Map.of("path", "EventDetail/Create/Document/Data", "data_parent", "client/geo",
+                        "data_name", "city", "field", "city")));
+        final Map<String, Object> mapping = Map.of("input", "json",
+                "common", common("ts", "yyyy-MM-dd'T'HH:mm:ssX", "host", "src", "user"),
+                "events", List.of(Map.of("name", "post", "fields", fields)));
+        final Map<String, Object> generated = json("build_translation_xslt", args("mapping", mapping,
+                "schema_version", VERSION));
+        assertThat(generated).as("generated from the mapping: %s", generated.get("problems"))
+                .containsEntry("ok", true);
+        final String build = "gen-nested-data";
+        final String feed = "GEN-NESTED-DATA";
+        createFeed(build, feed);
+        final long raw = upload(feed, NESTED_DATA_SAMPLE);
+        final Map<String, Object> xslt = json("save_xslt", args("build", build, "name", feed + "-Events",
+                "code", generated.get("xslt")));
+        final Map<String, Object> pipeline = json("create_pipeline", args("build", build, "name", feed + "-Events",
+                "template_uuid", templateUuid("translation", template("json")), "set_properties", List.of(
+                        docProperty("translationFilter", "xslt", (String) xslt.get("uuid"), "XSLT"),
+                        valueProperty("jsonParser", "addRootObject", false))));
+        final String pipelineUuid = (String) pipeline.get("uuid");
+        final Map<String, Object> sample = json("step_sample", args("pipeline_uuid", pipelineUuid,
+                "stream_ids", List.of(raw)));
+        assertThat(sample).as("stepped clean: %s", sample.get("groups")).containsEntry("verdict", "clean");
+
+        final List<String> events = validEvents(pipelineUuid, raw, sample).stream()
+                .map(output -> output.replaceAll(">\\s+<", "><"))
+                .toList();
+        assertThat(events).hasSize(2);
+        assertThat(events.getFirst()).contains("<Data Name=\"mentions\"><Data Name=\"mention\" Value=\"tim\"/>"
+                                               + "<Data Name=\"mention\" Value=\"bob\"/></Data>");
+        assertThat(events.getFirst()).contains("<Data Name=\"client\"><Data Name=\"geo\"><Data Name=\"city\" "
+                                               + "Value=\"Leeds\"/></Data></Data>");
+        assertThat(events.get(1)).doesNotContain("Name=\"mentions\"", "Name=\"client\"");
+    }
+
+    // Each record's Events, each checked valid against the schema and passing the quality checks.
+    private List<String> validEvents(final String pipelineUuid, final long raw, final Map<String, Object> sample) {
+        final List<String> events = new ArrayList<>();
         for (int record = 0; record < number(sample.get("records_stepped")); record++) {
             final String output = translationOutput(pipelineUuid, raw, record, 0);
             if (!output.contains("<Event>")) {
@@ -106,7 +162,9 @@ class TestE2eGenerator extends AbstractE2eTest {
                     .containsEntry("valid", true);
             assertThat(checked).as("record %s passes the quality checks: %s", record, checked.get("quality"))
                     .containsEntry("ok", true);
+            events.add(output);
         }
+        return events;
     }
 
     private static String sample(final String format) {

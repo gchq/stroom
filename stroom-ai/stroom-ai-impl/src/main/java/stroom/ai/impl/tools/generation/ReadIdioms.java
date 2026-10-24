@@ -285,6 +285,9 @@ final class ReadIdioms {
         base.put("path", leaf.path());
         if (XsltReader.truthy(leaf.dataName())) {
             base.put("data_name", leaf.dataName());
+            if (leaf.dataParent() != null) {
+                base.put("data_parent", leaf.dataParent());
+            }
         }
         if (leaf.value() != null) {
             base.put("value", leaf.value());

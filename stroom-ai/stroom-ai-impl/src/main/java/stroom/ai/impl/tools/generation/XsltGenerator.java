@@ -850,11 +850,24 @@ public final class XsltGenerator {
         }
         int dataAt = -1;
         int skip = 0;
+        final Set<String> containers = new HashSet<>();
         for (final Item item : list) {
             if (item.data() != null) {
                 dataAt++;
                 if (skip > 0) {
                     skip--;
+                    continue;
+                }
+                final FieldMapping data = item.data().entry();
+                if (data.dataParent() != null) {
+                    // Its container, with every entry of the node's written in it, where the first of them goes.
+                    final String outer = data.dataParent().split("/", 2)[0];
+                    if (containers.add(outer)) {
+                        emitContainer(parent, outer, node.data.stream()
+                                .map(EventNode.DataEntry::entry)
+                                .filter(e -> e.dataParent() != null && outer.equals(e.dataParent().split("/", 2)[0]))
+                                .toList(), enclosing);
+                    }
                     continue;
                 }
                 if (runs.containsKey(dataAt)) {
@@ -881,6 +894,52 @@ public final class XsltGenerator {
                 invoke(parent, templateFor(item.node()));
             } else {
                 emitElement(parent, item.node(), enclosing, inline);
+            }
+        }
+    }
+
+    // A Data element holding Data entries (their data_parent's outermost Name): written only when one of them has a
+    // value, each inside it, an entry with a deeper data_parent in a container of its own there.
+    private void emitContainer(final XmlElement parent,
+                               final String name,
+                               final List<FieldMapping> entries,
+                               final String enclosing) {
+        // A repeated entry's test is the values that have text: exists() over them, as an xpath giving several strings
+        // (not nodes) has no boolean value.
+        final List<String> tests = entries.stream()
+                .map(entry -> {
+                    final String test = leafTest(entry);
+                    return test != null && entry.repeat()
+                            ? "exists(" + test + ")"
+                            : test;
+                })
+                .toList();
+        final String test = tests.contains(null)
+                ? null
+                : String.join(" or ", new LinkedHashSet<>(tests));
+        final boolean guarded = isSet(test) && !test.equals(enclosing);
+        final XmlElement holder = guarded
+                ? parent.addElement(XSL, "if", "test", test)
+                : parent;
+        final XmlElement container = holder.addElement(EVT, "Data", "Name", name);
+        final Set<String> inner = new HashSet<>();
+        for (final FieldMapping entry : entries) {
+            final String[] parents = entry.dataParent().split("/", 2);
+            if (parents.length == 1) {
+                emitData(container, entry, guarded
+                        ? test
+                        : enclosing);
+            } else {
+                final String next = parents[1].split("/", 2)[0];
+                if (inner.add(next)) {
+                    emitContainer(container, next, entries.stream()
+                            .filter(e -> e.dataParent().contains("/"))
+                            .map(e -> e.withDataParent(e.dataParent().split("/", 2)[1]))
+                            .filter(e -> next.equals(e.dataParent().split("/", 2)[0]))
+                            .toList(), guarded
+                            ? test
+                            : enclosing);
+                }
             }
         }
     }
@@ -926,7 +985,7 @@ public final class XsltGenerator {
 
     // A Data entry written out in full, as a template would hold it: equal tokens write the same Data.
     private String dataToken(final FieldMapping entry) {
-        if (entry.repeat()) {
+        if (entry.repeat() || entry.dataParent() != null) {
             if (!tokenCache.containsKey(entry)) {
                 tokenCache.put(entry, "#repeat-" + repeatTokens++);     // a loop over values: never shared
             }
