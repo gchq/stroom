@@ -330,11 +330,16 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final BuildDocumentation.Placed placed = docs.documentationOf(request.build(), pipeline);
         // What each field means, as the agent described it from the sample (asked for by the user), kept with the
         // doc.
-        final Map<String, String> given = new LinkedHashMap<>(docs.keptDescriptions(placed.existing() != null
+        final DocRef previous = placed.existing() != null
                 ? placed.existing()
-                : placed.beside()));
+                : placed.beside();
+        final Map<String, String> given = new LinkedHashMap<>(docs.keptDescriptions(previous));
         given.putAll(request.descriptions());
-        final Descriptions described = new Descriptions(given, true, docs.vendorNotes(request.build()));
+        // Where each kept one's field came from: one whose field comes from elsewhere now is asked for again (the
+        // ones given in this call are of the fields as they are).
+        final Map<String, String> givenFrom = new LinkedHashMap<>(docs.keptDescriptionSources(previous));
+        givenFrom.keySet().removeAll(request.descriptions().keySet());
+        final Descriptions described = new Descriptions(given, givenFrom, true, docs.vendorNotes(request.build()));
         List<Long> streamIds = request.streamIds();
         if (kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind()) && !streamIds.isEmpty()) {
             // An events pipeline's own Events output, given in place of its raw sample (seen in VS Code): the raw
@@ -358,7 +363,21 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         }
         String body = request.body();
         String generated = null;
-        if (kept != null) {
+        // An XSLT edited since its mapping was kept: documented from the mapping, the section would say what the
+        // XSLT no longer writes (not in the Python server; seen: TWITTER's links, saved with save_xslt, left out,
+        // and its mentions shown joined as the mapping wrote them).
+        final Optional<String> edited = kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind())
+                ? mappingDrift.editDrift(kept)
+                : Optional.empty();
+        if (edited.isPresent() && !ownFieldMapping(body)) {
+            throw new ToolRefusal("Not written: the Field mapping section is generated from the mapping kept with "
+                                  + "the XSLT, and " + edited.get() + " Once the mapping says what the XSLT "
+                                  + "writes, call again. Or, if it can't, give a '## Field mapping' section of your "
+                                  + "own in markdown (a table of each element the XSLT writes, where it comes from "
+                                  + "and sample values, from read_document and a stepped sample): it is kept as "
+                                  + "written.");
+        }
+        if (kept != null && edited.isEmpty()) {
             if (streamIds.isEmpty()) {
                 throw new ToolRefusal(streamsNeeded(kept));
             }
@@ -371,6 +390,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             }
             if (!described.given().isEmpty()) {
                 generated = generated.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
+                if (!described.sources().isEmpty()) {
+                    generated += "\n\n" + FieldDocs.descriptionSourcesBlock(described.sources());
+                }
             }
             if (KeptMapping.TRANSLATION.equals(kept.kept().kind())) {
                 // What the user's documentation says each source field holds, where the build keeps notes from it.
@@ -656,6 +678,19 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         return value == null
                 ? null
                 : String.valueOf(value);
+    }
+
+    // Whether the markdown has a Field mapping section of its own: a table, not a placeholder for the generated one.
+    private static boolean ownFieldMapping(final String body) {
+        final int at = body.indexOf("## " + FIELD_MAPPING);
+        if (at < 0) {
+            return false;
+        }
+        final int next = body.indexOf("\n## ", at + 3);
+        final String section = next < 0
+                ? body.substring(at)
+                : body.substring(at, next);
+        return section.lines().anyMatch(line -> line.strip().startsWith("|"));
     }
 
     private static String first(final String text, final int count) {

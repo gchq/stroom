@@ -62,6 +62,9 @@ final class DocumentationWorld {
             pipelineShapes, translation.consent, indexSurveys, indexFields, translation.eventVersions,
             world.guard());
 
+    /// Whether a kept mapping is still what its XSLT is: as it is, unless a test says.
+    final GeneratedDrift drift = Mockito.mock(GeneratedDrift.class);
+
     DocumentationWorld() {
         Mockito.when(translation.streamReader.find(any(), anyInt(), anyBoolean()))
                 .thenReturn(new ResultPage<>(List.<MetaRow>of()));
@@ -74,7 +77,7 @@ final class DocumentationWorld {
     /// @return write_documentation, wired on the world.
     WriteDocumentationTool documentationTool() {
         return new WriteDocumentationTool(docs, sections, indexDocumentation, keptMappings, pipelineShapes,
-                Mockito.mock(GeneratedDrift.class), world.documentAccess, places, writes, world.guard(),
+                drift, world.documentAccess, places, writes, world.guard(),
                 translation.consent, translation.plan);
     }
 
