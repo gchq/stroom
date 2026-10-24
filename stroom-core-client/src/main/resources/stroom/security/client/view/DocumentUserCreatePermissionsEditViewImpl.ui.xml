@@ -12,6 +12,6 @@
             <g:Label ui:field="user"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="createPermissions" styleName="max"/>
-        <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus Button--contained-primary" text="Apply To Descendants"/>
+        <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus button--contained-primary" text="Apply To Descendants"/>
     </g:FlowPanel>
 </ui:UiBinder> 

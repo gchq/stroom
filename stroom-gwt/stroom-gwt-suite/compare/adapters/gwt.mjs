@@ -61,7 +61,7 @@ export const gwt = {
     if (!newPass) throw new Error('Password change is required but NEWPASS is not set.');
     await popup.locator(NEW_PASSWORD).fill(newPass);
     await popup.locator(CONFIRM_PASSWORD).fill(newPass);
-    // OK/Cancel are GWT div-buttons (`.Button__text`, no role) — click by text within the popup.
+    // OK/Cancel are GWT div-buttons (`.button__text`, no role) — click by text within the popup.
     await popup.getByText('OK', { exact: true }).first().click();
     return true;
   },

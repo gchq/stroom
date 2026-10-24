@@ -344,7 +344,7 @@ toolbar.separator();                  // a visual divider, still the same group
 save.setEnabled(dirty);
 ```
 
-- **Its own buttons.** A toolbar's buttons are `ToolbarButton` and `ToolbarToggleButton`: a `<button class="toolbar-button">` holding its icon (`toolbar-button__icon`), styled only by `toolbar.css`. They replaced the older icon buttons (`InlineSvgButton` and its toggle, whose `icon-button` and `face` markup and rules are gone), looking the same in every state (`Widgets/Buttons/ToolbarButtonStates`). They are real buttons: Enter and Space press them natively.
+- **Its own buttons.** A toolbar's buttons are `ToolbarButton` and `ToolbarToggleButton`: a `<button class="toolbar-button">` holding its icon (`toolbar-button__icon`), styled only by `toolbar-button.css`. They replaced the older icon buttons (`InlineSvgButton` and its toggle, whose `icon-button` and `face` markup and rules are gone), looking the same in every state (`Widgets/Buttons/ToolbarButtonStates`). They are real buttons: Enter and Space press them natively.
 - **One callback per button.** `ToolbarButton.setOnClick(Runnable)` and `ToolbarToggleButton.setOnToggle(Consumer<Boolean>)`: a single field, set when the button is made, replaced rather than added to, so there is no registration to keep or remove.
 - **One toggle type.** A toggle is one icon with a pressed state (`aria-pressed`, its only record of the state), named like any other button. `SvgToggleButton` is retired.
 - **No presets.** `Toolbar` takes no `Preset`, so the icon and the name a screen reader announces are visible where the button is made.
@@ -760,11 +760,11 @@ Not done yet: the column menu's Move and Resize items for keyboard users (agreed
 
 New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css`, `split-pane.css` and `tab-bar.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.
 
-- **BEM names.** A block is a widget, in lower-case kebab case (`toolbar`, `toolbar-row`, `focus-tooltip`); a part of it is `block__element` (`toolbar__separator`); a variant is `block--modifier` (e.g. a colour scheme). `Button.css` already uses this form, with capitalised blocks (`Button__content`, `Button--contained-green`), which stay as they are.
+- **BEM names.** A block is a widget, in lower-case kebab case (`toolbar`, `toolbar-row`, `focus-tooltip`); a part of it is `block__element` (`toolbar__separator`); a variant is `block--modifier` (e.g. a colour scheme). The button was renamed to this form in wave 1 of the component migration (24 October 2026): `button`, `button__content`, `button--contained-green`, in `button.css`.
 - **States come from ARIA attributes, not classes.** Where an ARIA attribute says what state an element is in, the CSS reads it, so what is shown always matches what a screen reader is told: `[aria-pressed="true"]`, `[aria-disabled="true"]`, `[aria-expanded="true"]`, `[aria-orientation="vertical"]`. Modifiers are only for variants that have no ARIA meaning, and for the rare state ARIA has no attribute for (e.g. `split-pane--resizing`, while a splitter is dragged), which the stylesheet says is one.
 - **One element per part, and no wrappers for effects.** Fills, borders and other decoration that only need a box are drawn with `::before` or `::after` (as `.icon-button::before` draws an icon button's hover, on and focus states), not with extra elements.
 - **Motion respects `prefers-reduced-motion`.** Anything that animates continuously (e.g. a spinner) stops when the user asks for less motion.
-- **Shared names stay.** Names used across many stylesheets or built into HTML by hand (`.icon-button`, its `.face`, `.button-container`) are not renamed; new code uses them as they are.
+- **Shared names stay.** Utility classes many blocks use (`max`, `form-control-border`, `allow-focus`, `sr-only`, the layout helpers) are not renamed; a block's own classes are renamed when its component converts (rule 10 of [Widget rules](#widget-rules)). The FAB's old `.face` is now `fab-button__face`.
 
 ## Interop during migration
 

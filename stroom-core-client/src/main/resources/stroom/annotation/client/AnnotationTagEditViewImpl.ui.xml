@@ -24,7 +24,7 @@
         </form:FormGroup>
 
         <b:Button ui:field="editPermissions"
-                  addStyleNames="allow-focus Button--contained-primary"
+                  addStyleNames="allow-focus button--contained-primary"
                   text="Change Permissions"/>
     </g:FlowPanel>
 </ui:UiBinder> 

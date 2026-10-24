@@ -22,10 +22,10 @@
         <g:SimplePanel ui:field="content" styleName="dialog__content"/>
         <g:FlowPanel styleName="dialog__buttons dialog__buttons--end">
             <b:Button ui:field="accept"
-                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-accept Button--contained-primary"
+                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-accept button--contained-primary"
                       text="Accept"/>
             <b:Button ui:field="reject"
-                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-reject Button--contained-secondary"
+                      addStyleNames="allow-focus resizableAcceptRejectContent-button resizableAcceptRejectContent-reject button--contained-secondary"
                       text="Reject"/>
         </g:FlowPanel>
     </g:FlowPanel>

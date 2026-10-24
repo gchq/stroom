@@ -42,7 +42,7 @@
        the 3:1 non-text one — --blue-500 is 3.12:1 on white and fails as text. The alias
        exists so these are not silently restyled by a future button redesign: if the
        button family moves to white-on-blue, point this at a value of its own instead. */
-    --floormap-accent__color: var(--button-default-primary__color);
+    --floormap-accent__color: var(--button--default-primary__color);
 
     /* Warning text on the FloorMap Event Store's settings tab, where enabling condense is
        offered. It is body text explaining a consequence, not a status badge, so it is held to
@@ -158,7 +158,7 @@
 }
 
 /* Neutral hover wash, matching the step and settings buttons beside it — NOT the
-   accent-tinted --button-default-primary__background-color--hover. That tint is the same
+   accent-tinted --button--default-primary__background-color--hover. That tint is the same
    hue as the text (40% blue-300 in the dark theme), so it collapses the label to 3.03:1
    on hover; no choice of blue fixes it, because lightening the text lightens the tint
    with it. The neutral wash holds 5.13:1 in both themes. */

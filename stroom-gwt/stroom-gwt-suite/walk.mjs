@@ -391,7 +391,7 @@ async function clickAffordance(label, timeout = 3000) {
       const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
-      const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
+      const el = [...scope.querySelectorAll('button, [role=button], .button')].find((b) => b.offsetWidth > 0 && !b.disabled
         && b.getAttribute('aria-disabled') !== 'true'
         && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted)
         && !b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
@@ -413,7 +413,7 @@ async function clickAffordance(label, timeout = 3000) {
       : []),
     root.locator(`button[title="${label}"]:not([disabled])`),
     root.locator(`button[aria-label="${label}"]:not([disabled])`),
-    root.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
+    root.locator('.button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
     ...(isColumnHeader(label) ? [] : [root.locator('[role=columnheader], th')
       .filter({ hasText: new RegExp(`^\\s*${esc}(\\s+\\d+)?\\s*$`) })]),
   ];
@@ -759,7 +759,7 @@ async function closeAllContentTabs() {
         const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
         return { caption: norm(t.textContent), w: Math.round(r.width), h: Math.round(r.height), vis: st.visibility, op: st.opacity, disp: st.display,
           root: root.className.toString().slice(0, 60),
-          buttons: [...root.querySelectorAll('button, [role=button], .Button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
+          buttons: [...root.querySelectorAll('button, [role=button], .button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
       });
     }).catch((e) => `threw: ${e.message.slice(0, 80)}`);
     console.log(`      (raw dialogs: ${JSON.stringify(raw)})`);
@@ -798,7 +798,7 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
       const t = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
       if (!t) return '';
       const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .Button').forEach((x) => x.remove());
+      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .button').forEach((x) => x.remove());
       return norm(c.textContent).slice(0, 160);
     })()`).catch(() => '');
     if (!confirmTexts.has(body)) { confirmTexts.add(body); console.log(`      (answered Confirm: "${body}")`); }
@@ -864,7 +864,7 @@ async function clickDialogButton(captionRe, labelRe) {
     const t = titles[titles.length - 1];
     if (!t) return null;
     const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-    const btn = [...root.querySelectorAll('button, [role=button], .Button')]
+    const btn = [...root.querySelectorAll('button, [role=button], .button')]
       .filter((b) => b.offsetWidth > 0 && b.offsetHeight > 0)
       .find((b) => lab.test(undouble(b.textContent || b.getAttribute('title') || '')));
     if (!btn) return null;
@@ -1052,7 +1052,7 @@ async function closeTop(childKind) {
       const t = titles[titles.length - 1];
       if (!t) return;
       const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
-      const btn = [...root.querySelectorAll('button, [role=button], .Button')]
+      const btn = [...root.querySelectorAll('button, [role=button], .button')]
         .find((b) => /^(cancel|close)$/i.test(undouble(b.textContent || b.getAttribute('title') || '')));
       if (btn) btn.click();
     })()`).catch(() => {});
@@ -2689,7 +2689,7 @@ async function walk(node, state, arrivedAt) {
     if (CHROME.has(label)) {
       const inExplorer = await page.evaluate((wanted) => {
         const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-        const els = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
+        const els = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0
           && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted || norm(b.textContent) === wanted));
         if (!els.length) return true;
         return els.every((b) => !!b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));

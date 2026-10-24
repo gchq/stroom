@@ -88,7 +88,7 @@ public final class ApiErrorAlertHostStories {
         final NodeResource nodeResource = GWT.create(NodeResource.class);
         final Button button = new Button();
         button.setText("Trigger API error");
-        button.addStyleName("Button--contained-primary");
+        button.addStyleName("button--contained-primary");
         // A request with no failure handler: RestFactory reports its error with DefaultErrorHandler
         button.addClickHandler(event -> harness.getRestFactory()
                 .create(nodeResource)

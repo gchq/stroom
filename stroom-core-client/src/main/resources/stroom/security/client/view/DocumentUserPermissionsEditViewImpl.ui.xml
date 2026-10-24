@@ -18,7 +18,7 @@
                         screenReaderText="Use, View, Edit, Delete or Owner. '[ none ]' removes it.">
             <l:SelectionBox ui:field="permission"/>
         </form:FormGroup>
-        <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus Button--contained-primary" text="Apply To Descendants"/>
-        <b:Button ui:field="editCreatePermissions" addStyleNames="allow-focus Button--contained-primary" text="Set Document Create Permissions"/>
+        <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus button--contained-primary" text="Apply To Descendants"/>
+        <b:Button ui:field="editCreatePermissions" addStyleNames="allow-focus button--contained-primary" text="Set Document Create Permissions"/>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -35,7 +35,7 @@ await closeDialogs(page);
 await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10000 });
 await page.waitForTimeout(3000);
 const firstOf = (type) => page.evaluate((t) => { const c = [...document.querySelectorAll('.explorerCell')].find((e) => e.offsetWidth > 0 && e.querySelector('.explorerCell-icon')?.getAttribute('title') === t); return c?.textContent.trim(); }, type);
-const buttons = () => page.evaluate(() => [...document.querySelectorAll('button, .Button, [role=button]')].filter((b) => b.offsetWidth > 0).map((b) => (b.getAttribute('title') || b.textContent.trim()).slice(0, 30) + (b.disabled ? '(d)' : '')));
+const buttons = () => page.evaluate(() => [...document.querySelectorAll('button, .button, [role=button]')].filter((b) => b.offsetWidth > 0).map((b) => (b.getAttribute('title') || b.textContent.trim()).slice(0, 30) + (b.disabled ? '(d)' : '')));
 const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0).map((e) => ({ caption: e.querySelector('.dialog__title')?.textContent.trim(), text: e.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) })));
 const name = await firstOf('Pipeline');
 console.log('pipeline:', name);

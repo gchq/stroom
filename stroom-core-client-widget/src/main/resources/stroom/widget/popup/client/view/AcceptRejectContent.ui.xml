@@ -21,9 +21,9 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog__content"/>
         <g:FlowPanel styleName="dialog__buttons dialog__buttons--end">
-            <b:Button ui:field="accept" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-accept Button--contained-primary"
+            <b:Button ui:field="accept" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-accept button--contained-primary"
                       text="Accept"/>
-            <b:Button ui:field="reject" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-reject Button--contained-secondary"
+            <b:Button ui:field="reject" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-reject button--contained-secondary"
                       text="Reject"/>
         </g:FlowPanel>
     </g:FlowPanel>

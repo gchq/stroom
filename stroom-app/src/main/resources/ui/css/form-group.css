@@ -33,7 +33,7 @@
     display: flex;
 }
 
-.form-group > .Button {
+.form-group > .button {
     align-self: flex-start;
     min-width: 200px;
 }

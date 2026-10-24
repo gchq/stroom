@@ -70,7 +70,7 @@
     line-height: 1;
     padding: 3px 8px;
     border-radius: 10px;
-    background-color: var(--button-contained__background-color);
+    background-color: var(--button--contained__background-color);
     color: var(--control__text-color);
     white-space: nowrap;
     align-self: center;
@@ -109,7 +109,7 @@
     bottom: 3px;
 }
 
-.askStroomAiViewImpl-bottom button.Button {
+.askStroomAiViewImpl-bottom button.button {
     min-width: 80px;
 }
 

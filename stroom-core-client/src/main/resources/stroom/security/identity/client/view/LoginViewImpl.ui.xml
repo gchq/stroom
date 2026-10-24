@@ -40,7 +40,7 @@
                 </form:FormGroup>
 
 
-                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="LoginViewSignInButton Button--contained-primary allow-focus"/>
+                <b:Button ui:field="signInButton" text="Sign In" addStyleNames="LoginViewSignInButton button--contained-primary allow-focus"/>
 
                 <g:Hyperlink ui:field="forgotPasswordLink" styleName="LoginViewForgotPassword">Forgot password?</g:Hyperlink>
 

@@ -46,7 +46,7 @@ const un = (t) => { const x = String(t ?? '').replace(/\s+/g, ' ').trim(); retur
 const press = async (want) => {
   const at = await page.evaluate(([w, dedupe]) => {
     const u = (t) => { const x = String(t ?? '').replace(/\s+/g, ' ').trim(); return new RegExp(dedupe).test(x) ? x.split(' ')[0] : x; };
-    const b = [...document.querySelectorAll('button, [role=button], .Button')].filter((e) => e.offsetWidth > 0)
+    const b = [...document.querySelectorAll('button, [role=button], .button')].filter((e) => e.offsetWidth > 0)
       .find((e) => u(e.getAttribute('title')) === w || u(e.textContent) === w);
     if (!b || b.disabled || b.classList.contains('disabled')) return null;
     const r = b.getBoundingClientRect();

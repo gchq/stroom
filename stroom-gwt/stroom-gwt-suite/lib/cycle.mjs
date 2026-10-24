@@ -93,7 +93,7 @@ export async function clickButton(page, label) {
       return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const matches = [...scope.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0 && !b.disabled
+    const matches = [...scope.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0 && !b.disabled
       && !b.classList.contains('disabled')
       // A toolbar button (ToolbarButton, 2026-10-12) disables with aria-disabled and stays focusable.
       && b.getAttribute('aria-disabled') !== 'true'
@@ -726,7 +726,7 @@ export function gridFilter(page) {
 export function morePages(page) {
   return page.evaluate(() => {
     const un = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0);
+    const btns = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0);
     return btns.some((b) => /^(Forward|Next|Last)$/i.test(un(b.getAttribute('title')) || un(b.textContent))
       && !b.disabled && !b.classList.contains('disabled') && b.getAttribute('aria-disabled') !== 'true');
   }).catch(() => false);

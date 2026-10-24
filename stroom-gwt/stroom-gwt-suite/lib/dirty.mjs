@@ -39,7 +39,7 @@ export function readSave(page) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const un = (t) => { const s = norm(t); return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     // The document's toolbar, NOT a dialog's — a dirty check is about the tab underneath.
-    const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
+    const btns = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0
       && !b.closest('.dialog'));
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');

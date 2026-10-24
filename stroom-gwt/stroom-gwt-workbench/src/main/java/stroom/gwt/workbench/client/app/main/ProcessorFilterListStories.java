@@ -149,7 +149,8 @@ public final class ProcessorFilterListStories {
                     play.expect(play.body()).not().toHaveTextContent(TextMatch.containing("▸"));
                     // The parent is an expanded arrow; the child is a leaf dot
                     play.expect(play.within(play.querySelectorAll(".expander-cell").nth(0))
-                            .querySelector(".svg-image__arrow-down.expander-cell__icon.expander-cell__icon--active")).not().toBeNull();
+                            .querySelector(".svg-image__arrow-down.expander-cell__icon--active"))
+                            .not().toBeNull();
                     play.expect(play.within(play.querySelectorAll(".expander-cell").nth(1))
                             .querySelector(".svg-image__dot")).not().toBeNull();
                     // Depth 1 is indented by GWT's 20px per level

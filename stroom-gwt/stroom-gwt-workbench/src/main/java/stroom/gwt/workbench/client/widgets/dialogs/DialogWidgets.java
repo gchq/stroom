@@ -28,9 +28,9 @@ import com.google.web.bindery.event.shared.EventBus;
 final class DialogWidgets {
 
     /// The class of a primary button.
-    static final String PRIMARY = "Button--contained-primary";
+    static final String PRIMARY = "button--contained-primary";
     /// The class of a secondary button.
-    static final String SECONDARY = "Button--contained-secondary";
+    static final String SECONDARY = "button--contained-secondary";
 
     private DialogWidgets() {
         // Static utility

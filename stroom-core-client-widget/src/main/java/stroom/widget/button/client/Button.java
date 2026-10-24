@@ -35,12 +35,12 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-/// A button (`Button.css`) with an optional icon and a busy spinner. Its markup is `Button.ui.xml`.
+/// A button (`button.css`) with an optional icon and a busy spinner. Its markup is `Button.ui.xml`.
 public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // While the busy spinner spins (Button.css), until it has shrunk away (as long as that takes)
-    private static final String SPINNING = "Button--spinning";
+    // While the busy spinner spins (button.css), until it has shrunk away (as long as that takes)
+    private static final String SPINNING = "button--spinning";
     private static final int SPINNER_FADE_MILLIS = 500;
 
     private final Parts parts;
@@ -96,20 +96,20 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         if (event.getTypeInt() == Event.ONCLICK) {
             if (event.getClientX() == 0 || event.getClientY() == 0) {
                 // If this is a click via a keypress then simulate mousedown in the center.
-                getElement().addClassName("Button--down");
+                getElement().addClassName("button--down");
                 final int x = parts.rippleContainer.getClientWidth() / 2;
                 final int y = parts.rippleContainer.getClientHeight() / 2;
                 ripple(x, y);
             }
         } else if (event.getTypeInt() == Event.ONMOUSEDOWN) {
-            getElement().addClassName("Button--down");
+            getElement().addClassName("button--down");
             final int x = getRelativeX(event, parts.rippleContainer);
             final int y = getRelativeY(event, parts.rippleContainer);
             ripple(x, y);
         } else if (event.getTypeInt() == Event.ONMOUSEUP ||
                 event.getTypeInt() == Event.ONMOUSEOUT ||
                 event.getTypeInt() == Event.ONKEYUP) {
-            getElement().removeClassName("Button--down");
+            getElement().removeClassName("button--down");
         }
 
         super.onBrowserEvent(event);
@@ -117,10 +117,10 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
     private void ripple(final int x, final int y) {
         final Element ripple = DOM.createDiv();
-        ripple.setClassName("ripple");
-        // Where the press was, which Button.css's .ripple uses
-        CssProperties.set(ripple, "--ripple__left", x + "px");
-        CssProperties.set(ripple, "--ripple__top", y + "px");
+        ripple.setClassName("button__ripple");
+        // Where the press was, which button.css's .button__ripple uses
+        CssProperties.set(ripple, "--button__ripple-left", x + "px");
+        CssProperties.set(ripple, "--button__ripple-top", y + "px");
         parts.rippleContainer.appendChild(ripple);
         new Timer() {
             @Override
@@ -131,7 +131,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     }
 
     /// Shows the button's busy spinner, which grows in, or shrinks it away. The spinner spins only
-    /// while it shows or shrinks away (`Button--spinning`), so an idle button's spinner costs nothing.
+    /// while it shows or shrinks away (`button--spinning`), so an idle button's spinner costs nothing.
     ///
     /// @param loading Whether the button's action is running.
     public void setLoading(final boolean loading) {
@@ -141,10 +141,10 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         }
         if (loading) {
             getElement().addClassName(SPINNING);
-            getElement().addClassName("Button--loading");
+            getElement().addClassName("button--loading");
             getElement().setAttribute("aria-busy", "true");
         } else {
-            getElement().removeClassName("Button--loading");
+            getElement().removeClassName("button--loading");
             getElement().removeAttribute("aria-busy");
             if (getElement().hasClassName(SPINNING)) {
                 stopSpinning = new Timer() {
@@ -163,9 +163,9 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         if (enabled) {
-            getElement().removeClassName("Button--disabled");
+            getElement().removeClassName("button--disabled");
         } else {
-            getElement().addClassName("Button--disabled");
+            getElement().addClassName("button--disabled");
         }
     }
 
@@ -176,7 +176,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     }
 
     public void setIcon(final SvgImage svgImage) {
-        parts.icon.addClassName("Button__icon--visible");
+        parts.icon.addClassName("button__icon--visible");
         parts.icon.setInnerHTML(svgImage.getSvg());
     }
 

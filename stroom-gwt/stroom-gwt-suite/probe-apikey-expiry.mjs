@@ -102,7 +102,7 @@ console.log('dialogs before OK:', JSON.stringify(await dialogs()));
 const okState = await page.evaluate(() => {
   const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
-  const btns = [...top.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0);
+  const btns = [...top.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0);
   // A GWT button's text is DOUBLED ("OK\nOK") — walk.mjs undoubles it before matching.
   const undouble = (t) => { const s = String(t ?? '').replace(/\s+/g, ' ').trim(); const h = s.slice(0, s.length / 2); return s.length % 2 === 0 && h === s.slice(s.length / 2) ? h.trim() : s; };
   // "OK\nOK" normalises to "OK OK", whose halves are not equal once a space is in the middle —

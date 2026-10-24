@@ -75,7 +75,7 @@ const HELPERS = `
     return t;
   };
   const labelOf = (el) => {
-    const inner = el.querySelector && el.querySelector('.Button__text, .tab-bar__label');
+    const inner = el.querySelector && el.querySelector('.button__text, .tab-bar__label');
     if (inner) return norm(inner.textContent);
     return undouble(el.getAttribute && el.getAttribute('title') ? el.getAttribute('title') : el.textContent);
   };
@@ -581,7 +581,7 @@ export async function readDialogs(page) {
         t.closest('[role=dialog]') ||
         t.closest('.dialog__layout, .dialog, .popupContent') ||
         t.parentElement;
-      const btns = [...root.querySelectorAll('button, [role=button], .Button')]
+      const btns = [...root.querySelectorAll('button, [role=button], .button')]
         .filter(visible)
         .map((b, i) => ({
           kind: 'button',
@@ -642,7 +642,7 @@ export async function closeDialogs(page, { attempts = 4 } = {}) {
           t.closest('[role=dialog]') ||
           t.closest('.dialog__layout, .dialog, .popupContent');
         if (!root) continue;
-        const btn = [...root.querySelectorAll('button, [role=button], .Button')].find((b) =>
+        const btn = [...root.querySelectorAll('button, [role=button], .button')].find((b) =>
           /^(cancel|close)$/i.test(labelOf(b)),
         );
         if (btn) btn.click();

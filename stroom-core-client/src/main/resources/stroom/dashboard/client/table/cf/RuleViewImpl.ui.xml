@@ -48,7 +48,7 @@
                         label="Custom Style"
                         helpText="Opens a dialog to set your own background and text colours for matching rows, for both light and dark themes.">
             <b:Button ui:field="editCustomStyle" text="Set Custom Style" width="200px"
-                      addStyleNames="allow-focus Button--contained-primary"/>
+                      addStyleNames="allow-focus button--contained-primary"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

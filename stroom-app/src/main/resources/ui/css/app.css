@@ -16,8 +16,7 @@
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
-@import url("Button.css");
-@import url("Button_Themes.css");
+@import url("button.css");
 @import url("stroom.css");
 /* Straight after stroom.css, where the text box rules it replaces were, so later rules still win */
 @import url("text-field.css");

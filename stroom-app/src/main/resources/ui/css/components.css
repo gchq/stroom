@@ -1647,7 +1647,7 @@
     height: 60px;
 }
 
-.AnalyticEmailDestinationViewImpl .Button {
+.AnalyticEmailDestinationViewImpl .button {
     width: 200px;
 }
 
@@ -1848,7 +1848,7 @@
     width: 100%;
 }
 /* Settings form */
-.gitrepo-settings-form button.Button {
+.gitrepo-settings-form button.button {
     width: 400px;
 }
 .gitrepo-settings-form input[type="text"] {

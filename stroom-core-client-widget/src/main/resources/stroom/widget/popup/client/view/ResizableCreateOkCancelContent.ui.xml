@@ -5,10 +5,10 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog__content"/>
            <g:FlowPanel styleName="dialog__buttons dialog__buttons--start">
-                <b:Button ui:field="create" addStyleNames="allow-focus Button--contained-green" text="New"/>
+                <b:Button ui:field="create" addStyleNames="allow-focus button--contained-green" text="New"/>
                 <g:FlowPanel styleName="dialog__button-group">
-                    <b:Button ui:field="ok" addStyleNames="allow-focus Button--contained-primary" text="OK"/>
-                    <b:Button ui:field="cancel" addStyleNames="allow-focus Button--contained-secondary" text="Cancel"/>
+                    <b:Button ui:field="ok" addStyleNames="allow-focus button--contained-primary" text="OK"/>
+                    <b:Button ui:field="cancel" addStyleNames="allow-focus button--contained-secondary" text="Cancel"/>
                 </g:FlowPanel>
             </g:FlowPanel>
     </g:FlowPanel>

@@ -124,7 +124,7 @@ const looseReported = new Set();
 /**
  * Collapse a label GWT has emitted twice.
  *
- * Dialog buttons are `.Button` divs, not `<button title=…>`, so `readButtons` falls back to
+ * Dialog buttons are `.button` divs, not `<button title=…>`, so `readButtons` falls back to
  * textContent — and GWT renders the caption in both a visible span and a second copy, giving
  * "Close Close", "OK OK" and "Set As Default For All UsersSet As Default For All Users". The first
  * crawl then looked for `button[title="Close Close"]`, found nothing, and recorded 17 affordances as
@@ -139,7 +139,7 @@ const looseReported = new Set();
  * `readButtons` picks headers up because they are clickable — that is how you sort — and GWT appends
  * the sort-order index to the text, giving "Display Name 1". They are genuine affordances (clicking
  * one sorts the grid, the case the screen profiles derive) but they are not `<button title=…>` or
- * `.Button`, so the click locator missed all five and recorded them as `vanished`.
+ * `.button`, so the click locator missed all five and recorded them as `vanished`.
  */
 const SORT_INDEX = /\s+\d+$/;
 const isColumnHeader = (label) => SORT_INDEX.test(label);
@@ -156,7 +156,7 @@ function undouble(label) {
 }
 
 /**
- * Click an affordance however it is built. GWT dialogs use `.Button` divs with no title attribute,
+ * Click an affordance however it is built. GWT dialogs use `.button` divs with no title attribute,
  * screens use real `<button title=…>`; a locator that knows only one of those misses half the UI.
  */
 async function clickAffordance(label, timeout = 3000) {
@@ -176,7 +176,7 @@ async function clickAffordance(label, timeout = 3000) {
       : []),
     page.locator(`button[title="${label}"]:not([disabled])`),
     page.locator(`button[aria-label="${label}"]:not([disabled])`),
-    page.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${label})(\\s*\\1)?\\s*$`) }),
+    page.locator('.button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${label})(\\s*\\1)?\\s*$`) }),
   ];
   for (const c of candidates) {
     if (await c.count().then((n) => n > 0).catch(() => false)) {
