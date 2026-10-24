@@ -2,6 +2,8 @@
 
 Proposed 24 October 2026, for agreement. The bottom-up order in which the GWT client moves to dumb components and controllers (see `COMPONENT_MODEL_DESIGN.md`, "Components, controllers and models"): every widget first, then composites, then dialogs and lists, then tabs, document editors, screens and the shell.
 
+> **Update, 24 October 2026:** `data_grid2` and `copy_and_paste` have been merged to master, and master into this branch, so nothing waits for them any more: waves 5, 6 and 10 can go in their turn, and the *In flight* column and the "Waits for" notes are history. Their renames are applied here (`DataGridWidget` is `DataGrid`; `PagerView`, `PagerViewWithHeading`, `WrapperView` and the rest of `stroom.data.grid.client` are in `stroom.widget.datagrid.client`; the old menu singleton is `MenuManager`, and `Menu` is the menu widget). `PagerView`, `PagerViewWithHeading`, `WrapperView` and the dialog chrome were moved from wave 3 to wave 5 only to wait for `data_grid2`; they may go back to wave 3.
+
 ## Done means, for every unit
 
 Agreed 24 October 2026. A unit is converted in its wave only when all of these hold; nothing is left for a later tidy.
