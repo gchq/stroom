@@ -160,49 +160,57 @@ Stroom expects Java 25 (Eclipse Temurin)
 
 ### GWT UI components
 
-New GWT screens, dialogs and tabs are controllers (`stroom.widget.component.client.Controller`), not presenters (`MyPresenterWidget`).
-The UI is being split into dumb components (a UiBinder template and its Java) and the controllers that wire them, Phase 7a in the design ("Components, controllers and models"); until the pilot is done, the rules below describe controllers, which still build their own widgets.
-The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md`; the receive rules (`stroom.receive.rules.client.component`), the Dictionary editor and `FolderTabs` are worked examples.
-Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
+A new GWT screen, dialog or tab is a **component** and a **controller**, not a presenter (`MyPresenterWidget`).
+The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md` ("Components, controllers and models"); the receipt rules (`stroom.receive.rules.client.component`) and the analytic notification's stream destination (`stroom.analytics.client.component`) are worked examples.
 
-* **Make one.** Extend `Controller`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
-  A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
+* **A component is dumb.** `Foo.java`, extending `stroom.widget.component.client.Component`, and its UiBinder template `Foo.ui.xml` (next to the Java in `stroom-core-client`; under `src/main/resources`, same package, in `stroom-core-client-widget`), with a `Binder` interface at the bottom of the class and a public no-arg constructor, so templates can use it and GIN can make it with no binding.
+  It holds the widgets, the layout, Stroom's CSS class names, ARIA roles and labels, and the visible text, in plain English, in the template wherever it can.
+  Data comes in through setters named for what they do (`setRules(rules)`, `setName(name)`), events go out through one callback each (`setOnChange(Runnable)`), and a set of actions is one enum with one callback (`setOnAction(Consumer<RuleAction>)`) and `setAvailableActions(...)`.
+  Repetition and conditions are in its Java (`setRules` adds a row per rule; `setVisible`).
+  It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
 
-* **Own what you show.** Whoever shows a component or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
-  Something that isn't a component (a plugin, a manager, an app-wide helper) injects `AppRoot` and makes its dialogs with `appRoot.makeDialog(provider)`; a helper a presenter makes is given `() -> makeDialog(provider)` by it.
+* **A controller wires it.** `FooController.java`, beside it, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.
+  Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller.
+  Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
+
+* **Smart parts attach.** A part that needs data (e.g. a document picker) is declared dumb in the template (`<dd:DropDownBox ui:field="feedBox"/>`), and the controller makes the part's controller and attaches it: `feedSelection = make(docSelectionProvider); feedSelection.attach(view.getFeedBox());`.
+  A presenter not yet split goes in a slot: the component has a setter for it (`setExpressionEditor(IsWidget)`), and the controller owns the presenter and passes its widget in.
+
+* **Own what you show.** Whoever shows a controller or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
+  Something that isn't a controller (a plugin, a manager, an app-wide helper) injects `AppRoot` and makes its dialogs with `appRoot.makeDialog(provider)`; a helper a controller makes is given `() -> makeDialog(provider)` by it.
   Providers are GIN's `com.google.inject.Provider`, not `javax.inject.Provider` (the client's JVM tests can't load javax's).
   Disposing an owner disposes everything it owns, depth first; never call `dispose()` yourself except on a root.
-  Unowned components are counted in development builds, and the workbench leak check names them.
+  Unowned controllers are counted in development builds, and the workbench leak check names them.
 
-* **Inputs and outputs.** Data comes in through methods named for what they do (`read(rules)`, `setFields(...)`), results go out through a callback its owner sets (`setOnChange(Runnable)`), or one passed to the call that starts it (`editor.edit(this, field, updated -> ...)`).
-  A child never fires a bus event to reach its owner; use `listen(type, handler)` only for app-wide events, and `AlertEvent.fire...(this, ...)`, as a presenter does, for app-wide requests.
-  Where several may listen (e.g. a reusable selection box), keep a `Listeners<T>` list and return the registration from `add...Listener(Consumer<T>)`.
+* **Inputs and outputs between controllers.** Data comes in through methods named for what they do (`read(rules)`, `setFields(...)`), results go out through a callback its owner sets (`setOnChange(Runnable)`), or one passed to the call that starts it (`editor.edit(this, field, updated -> ...)`).
+  A child never fires a bus event to reach its owner; use `listen(type, handler)` only for app-wide events, and `AlertEvent.fire...(this, ...)` for app-wide requests.
+  Where several may listen (e.g. a reusable picker), keep a `Listeners<T>` list and return the registration from `add...Listener(Consumer<T>)`.
 
-* **Register and release.** A handler on the app's event bus is `listen(type, handler)`; any other registration (a handler on a widget, a child's listener) is `own(registration)`.
+* **Register and release.** A handler on the app's event bus is `listen(type, handler)`; any other registration (a child's listener) is `own(registration)`.
   Anything else to undo is registered where it is started, `onDispose(timer::cancel)`; there is no `onDispose()` to override.
-  Clean-ups run after what the component owns is disposed and its registrations removed, newest first.
+  Clean-ups run after what the controller owns is disposed and its registrations removed, newest first.
 
-* **Dirty state.** When the user changes something a document holds, call `markChanged()`: the document (its `Contexts.DIRTY` tracker) works out again whether it is dirty.
+* **Dirty state.** When the user changes something a document holds, the controller calls `markChanged()`: the document (its `Contexts.DIRTY` tracker) works out again whether it is dirty.
 
-* **Context, not arguments.** Read-only, the task monitor and the document come from whatever owns the component: `watch(Contexts.READ_ONLY, readOnly -> ...)`, `context(Contexts.TASK_MONITOR)`.
+* **Context is pushed.** Read-only, the task monitor and the document come from whatever owns the controller: `watch(Contexts.READ_ONLY, view::setReadOnly)`, `context(Contexts.TASK_MONITOR)`. Components look nothing up.
   Don't take or pass on a `readOnly` argument: a document's opener calls `setReadOnly(...)` before `read(docRef, doc)`, and its parts follow it.
 
-* **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the component is disposed before the reply.
+* **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the controller is disposed before the reply.
 
-* **A dialog.** Make it for one use and show it with `ControllerDialog.showOnce(opener, dialog)`, which returns the popup's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
-  Give the dialog a method that shows it and takes a callback for its result (see `FieldEditor.edit`).
+* **A dialog.** The component is only the dialog's content. Its controller is made for one use and shows itself with `ControllerDialog.showOnce(opener, this)`, which returns the popup's `ShowPopupEvent.Builder` (caption, size, OK and Cancel); the opener owns it until it is hidden, then it is disposed.
+  Give the controller a method that shows it and takes a callback for its result (see `FieldEditorController.edit`).
 
-* **A tab body.** Show a component in a `LayerContainer` with `new ControllerLayer(component)`, or add it to a `TabbedController` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
+* **A tab body.** Show a controller in a `LayerContainer` with `new ControllerLayer(controller)`, or add it to a `TabbedController` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
 
 * **A document.** Extend `DocumentEditor<D>` (Save, Save As, read-only status and dirty state), add its tabs, and have its plugin's `createEditor()` return `new DocumentEditorHost<>(eventBus, editorProvider.get(), TYPE)`.
 
 * **App-wide screens.** A screen that opens on an app-wide event (e.g. Find on `ShowFindEvent`) is made when the event first fires, through a GIN `Provider`, by its area's plugin, which adds the event's handler in its constructor: `eventBus.addHandler(ShowFindEvent.getType(), event -> findPresenterProvider.get().onShow(event))`.
-  An area with no plugin in its GIN module has one small eager class for this (`DocumentDialogScreens`, `AskStroomAiScreens`, `CoreScreens`, `MainScreens`); the screen itself is bound with `bindPresenter(presenter, view, viewImpl)`, and has no listener class.
-  A dialog screen shows itself with a `show()` of its own (its `ShowPopupEvent`); nothing is "revealed".
+  An area with no plugin in its GIN module has one small eager class for this (`DocumentDialogScreens`, `AskStroomAiScreens`, `CoreScreens`, `MainScreens`).
   A presenter shows a child presenter through a setter on its view (`getView().setListView(listPresenter.getView())`); there are no slots.
   There is no code splitting: everything is in the initial download.
 
-* **Test it.** Unit test what runs without a browser with JUnit (see `TestController`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+* **Test it.** A `Composite` can't be made on the JVM, so components and controllers are tested with workbench stories: give each screen stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+  Unit test logic that runs without a browser with JUnit (see `TestController`), e.g. as a static method or a plain class beside the controller.
   In a story, the story's root owns whatever the story shows: `harness.show(screen)` fills the canvas with it, `harness.own(screen)` owns one the story shows itself (in a frame, or as a dialog), and `harness.ownPopup(popup)` also asks a popup to close, for one that stops polling only when asked (see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`).
 
 

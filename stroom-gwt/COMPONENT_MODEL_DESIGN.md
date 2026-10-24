@@ -6,16 +6,16 @@ kept up to date.
 
 ## Summary
 
-Replace GWTP's presenter lifecycle with an in-house **component model** in which a component owns the components it shows, and a parent and its children talk through **callbacks** rather than the event bus. Ownership, clean-up and cross-cutting state (read-only, task monitor) become structural, so authors stop wiring them by hand. A pilot in a separate package first duplicates one screen (the Dictionary editor) to prove the framework against the original. The change is then delivered inside our own `MyPresenterWidget` in phases, so the ~250 existing presenters keep working throughout and GWTP is removed last.
+Replace GWTP's presenter lifecycle with an in-house model of dumb **components** (a UiBinder template and its Java) wired by **controllers**, in which a controller owns the controllers it shows, and a parent and its children talk through **callbacks** rather than the event bus (see [Components, controllers and models](#components-controllers-and-models)). Ownership, clean-up and cross-cutting state (read-only, task monitor) become structural, so authors stop wiring them by hand. A pilot in a separate package first duplicates one screen (the Dictionary editor) to prove the framework against the original. The change is then delivered inside our own `MyPresenterWidget` in phases, so the ~250 existing presenters keep working throughout and GWTP is removed last.
 
 **Goals**
 
-- Nothing a component registers or creates outlives it; `PresenterScope` is retired.
+- Nothing a controller registers or creates outlives it; `PresenterScope` is retired.
 - Inputs go in through constructors and setters; outputs come back through callbacks. The event bus carries only app-wide events.
 - Read-only, the task monitor and the current document are set once and read by any descendant.
 - A new screen needs fewer pieces: no GIN module entry, and a separate view interface only when it earns its keep.
-- Every component can be shown in a workbench story without application scaffolding.
-- Old presenters and new components embed each other freely during the migration.
+- Every screen can be shown in a workbench story without application scaffolding.
+- Old presenters and new components and controllers embed each other freely during the migration.
 
 **Non-goals**
 
@@ -67,47 +67,49 @@ We take React's ownership and data-flow rules, not its rendering machinery. Each
 - **JSX.** UiBinder or plain widget code stays.
 - **A global store.** Data still lives in the component that loads it and is passed down.
 
-## Component model
+## Controllers and ownership
 
-> From Phase 7a (decided 24 October 2026), what this section calls a component, the smart class with an ownership node, is a **controller**, and a component is a dumb template and its Java (see [Components, controllers and models](#components-controllers-and-models)). The sections below keep their names until Phase 7a's step 4 rewrites them.
-
-A component is a widget plus an ownership node: it owns child components, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it.
+A controller (`stroom.widget.component.client.Controller`) is the smart half of a screen: it is given its component, wires it to data and behaviour, and holds an ownership node: it owns child controllers, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it. Every presenter is a controller too (`MyPresenterWidget extends Controller`) until the presenters go. A component (`stroom.widget.component.client.Component`, a `Composite`) has none of this: its handlers go with its widgets.
 
 ### The ownership node
 
-Ownership lives in a small class, `ComponentNode`, rather than in a base class. Both the new `Component` and the existing `MyPresenterWidget` hold one, so old presenters and new components sit in the same tree from day one.
+Ownership lives in a small class, `ControllerNode`, rather than in the base class, so presenters and controllers sit in the same tree.
 
 ```java
-public final class ComponentNode {
-    ComponentNode parent();
-    void adopt(ComponentNode child);        // child.parent = this; disposed with this
-    void release(ComponentNode child);      // dispose one child early (e.g. a replaced tab)
+public final class ControllerNode {
+    ControllerNode parent();
+    void adopt(ControllerNode child);       // child.parent = this; disposed with this
+    void release(ControllerNode child);     // dispose one child early (e.g. a replaced tab)
     void add(HandlerRegistration registration);
     void onDispose(Runnable cleanUp);       // not add(Runnable): a lambda would match both
     <T> T lookup(ContextKey<T> key);        // nearest ancestor that provides the key
     <T> void provide(ContextKey<T> key, ContextValue<T> value);
     <T> HandlerRegistration watch(ContextKey<T> key, Consumer<T> onChange);
     <T> Consumer<T> guard(Consumer<T> callback);
-    void markShared();                      // a singleton's node, which nothing may own
-    void dispose();                         // children (newest first), then registrations, then clean-ups
+    void dispose();                         // children (newest first), then watches, registrations, clean-ups
     boolean isDisposed();
 }
 ```
 
-`ComponentNode.root(name)` makes a root. A node is *connected* when it is a root or its owner is connected; watches report only once their node is connected, and are resolved again when a provider is added above them, so a component can watch in its constructor and a document can provide after owning its children.
+`ControllerNode.root(name)` makes a root. A node is *connected* when it is a root or its owner is connected; watches report only once their node is connected, and are resolved again when a provider is added above them, so a controller can watch in its constructor and a document can provide after owning its children.
 
-### The Component base class
+### The Controller base class
 
 ```java
-public abstract class Component implements IsWidget, HasComponentNode {
+public abstract class Controller implements IsWidget, HasControllerNode, HasHandlers {
 
-    // Ownership
-    protected final <C extends HasComponentNode> C own(C child);
-    protected final void release(HasComponentNode child);
+    // Its widget: its component (initWidget(view)); a controller attached to a part has none
+    protected final void initWidget(Widget widget);
+
+    // Making and owning
+    protected final <C extends HasControllerNode> C make(Provider<C> provider);         // made now, owned until this is disposed
+    protected final <P extends MyPresenterWidget<?>> P makeDialog(Provider<P> provider); // owned until hidden
+    protected final <C extends HasControllerNode> C own(C child);                        // one injected into the constructor
+    protected final void release(HasControllerNode child);                               // one replaced early
 
     // Registrations, all undone on dispose
     protected final <H> void listen(Type<H> type, H handler);        // app-wide event bus
-    protected final void own(HandlerRegistration registration);      // e.g. a widget's click handler
+    protected final void own(HandlerRegistration registration);      // e.g. a child's listener
     protected final void onDispose(Runnable cleanUp);                // timers, JS objects
     protected final <T> Consumer<T> guard(Consumer<T> callback);     // no-op once disposed (async results)
 
@@ -124,35 +126,37 @@ public abstract class Component implements IsWidget, HasComponentNode {
 }
 ```
 
+The plugins, managers and app-wide helpers, which are GIN singletons and not controllers, make their dialogs with `AppRoot.makeDialog(provider)`, a root that lasts as long as the page.
+
 ### Lifecycle
 
 | State | Entered when | Allowed | Hooks |
 | --- | --- | --- | --- |
-| Created | Constructor runs | Build widgets, `own()` children, set callbacks | none |
-| Owned | An owner calls `own()` | Context lookups and `watch()` resolve | none |
+| Created | Constructor runs | Fill its component, `make()` and `own()` children, set callbacks | none |
+| Owned | An owner calls `make()` or `own()` | Context lookups and `watch()` resolve | none |
 | Attached | Its widget is attached to the page | Focus, measure, start polling | `onAttach()` |
 | Detached | Its widget leaves the page | Keep state; stop polling | `onDetach()` |
-| Disposed | Its owner disposes it, or its owner is disposed | Nothing; callbacks wrapped by `guard()` are dropped | clean-ups run once |
+| Disposed | Its owner disposes it, or its owner is disposed | Nothing; callbacks wrapped by `guard()`, and REST replies for it (`RestFactory.owner`), are dropped | clean-ups run once |
 
-Attached and Detached alternate any number of times. Attach and detach come from GWT's own attach events (`Widget.addAttachHandler`, i.e. `Widget.onLoad()`/`onUnload()`), replacing GWTP's `onReveal()`/`onHide()`, which we rarely drive through slots anyway.
+Attached and Detached alternate any number of times. Attach and detach come from GWT's own attach events (`Widget.addAttachHandler`), replacing GWTP's `onReveal()`/`onHide()`.
 
 ### Rules
 
-1. **Whoever shows it, owns it.** A component that puts another's widget on screen calls `own()` on it. A component made from a GIN provider is owned the moment it is made: `own(editorProvider.get())`.
-2. **Roots are few and named.** The content area owns document tabs, the popup manager owns dialogs, and the application shell owns everything else. In a workbench story the story owns its components.
-3. **Shared things are never owned.** GIN singletons (services, plugins, the shell) are not components. A singleton presenter must not be passed to `own()`; in development builds this is an error.
-4. **Disposal is final.** A disposed component is never shown again; reopening a document makes new components.
-5. **Unowned is a bug.** In development builds a registry counts live components with no owner, and the workbench shows the count, so leaks are found in stories rather than in production.
+1. **Whoever shows it, owns it.** A controller that shows another makes it with `make(provider)` (or `makeDialog(provider)` for a dialog), or owns one injected into its constructor with `own()`.
+2. **Roots are few and named.** The content area owns document tabs (a root per tab), `AppRoot` owns the app-wide helpers' dialogs, and in a workbench story the story's root owns what it shows.
+3. **Shared things are never owned.** GIN singletons (services, plugins, the shell) are not controllers.
+4. **Disposal is final.** A disposed controller is never shown again; reopening a document makes new ones.
+5. **Unowned is a bug.** In development builds a registry counts live controllers with no owner (`ControllerChecks`), and the workbench leak check names them, so leaks are found in stories rather than in production.
 
 ## Callbacks and data flow
 
-A parent passes data down through constructors and setters and hears back through callbacks it supplies. A child never fires an event on the global bus to reach its parent, and a parent never listens on the bus for its own child.
+A parent passes data down through constructors and setters and hears back through callbacks it supplies. A child never fires an event on the global bus to reach its parent, and a parent never listens on the bus for its own child. The same holds between a controller and its component, and between a controller and the controllers it owns.
 
 ### Inputs
 
 - **Required collaborators** (services, the REST factory) come through the `@Inject` constructor.
 - **Data** comes through plain methods named for what they do: `setFields(List<QueryField>)`, `edit(QueryField)`. There is no generic `read(docRef, doc, readOnly)`; read-only comes from context (next section).
-- A component never reaches up to its parent; anything it needs is passed in or looked up in context.
+- A component never reaches up to anything; a controller looks up what it needs in context and passes it on.
 
 ### Outputs
 
@@ -169,15 +173,15 @@ fieldEditor.setOnChange(field -> {
 - **One-off results: a callback argument.** For dialogs and questions, the callback is passed to the call that starts it:
 
 ```java
-own(fieldEditDialog.get()).edit(field, updated -> fieldList.replace(field, updated));
+makeDialog(fieldEditorProvider).edit(this, "Edit Field", field, otherNames, updated -> fieldList.replace(field, updated));
 ```
 
-- **Several listeners: `Listeners<T>`.** A small owned list for the rare component with more than one listener. Each `add()` returns a registration that the listener's own component owns, so neither side can leak the other.
+- **Several listeners: `Listeners<T>`.** A small list for the rare component or controller with more than one listener. Each `add()` returns a registration that the listener's own controller owns, so neither side can leak the other.
 - Callback types are `Runnable`, `Consumer<T>` or a small named functional interface when a callback carries more than one value. No marker interfaces like `HasDirtyHandlers`.
 
 ### Dirty state
 
-Dirty state stops being an event chain. Each editable child is given an `onChange` callback, and the document component turns changes into its own dirty flag. Deep trees that would otherwise pass the callback through several layers look up a `DirtyTracker` from context (see Context).
+Dirty state stops being an event chain. Each editable child is given an `onChange` callback, and the document's controller turns changes into its own dirty flag. Deep trees that would otherwise pass the callback through several layers look up a `DirtyTracker` from context (see Context).
 
 ### What still uses the event bus
 
@@ -190,11 +194,11 @@ The bus is kept for messages that are genuinely app-wide, where the sender canno
 | Requests to app services: show an alert, open a document, show a popup | A dialog was confirmed or cancelled |
 | Session and security changes | Handlers added with `addHandlerToSource` on a child presenter |
 
-Bus handlers are always added through `listen()`, so they are removed with the component.
+Bus handlers are always added through `listen()`, so they are removed with the controller.
 
 ## Context
 
-A value set on one component is visible to every component it owns, however deep, without being passed through each layer. A lookup walks up the ownership tree to the nearest provider; changeable values notify watchers, and each watch is a registration the watcher owns.
+A value set on one controller is visible to every controller it owns, however deep, without being passed through each layer; a controller pushes what its component needs into it (`view.setReadOnly(readOnly)`). A lookup walks up the ownership tree to the nearest provider; changeable values notify watchers, and each watch is a registration the watcher owns.
 
 ```java
 public final class ContextKey<T> {
@@ -209,8 +213,8 @@ public final class ContextValue<T> {
 // The document provides
 provide(Contexts.READ_ONLY, readOnly);       // readOnly is a ContextValue<Boolean>
 
-// Any descendant reacts, now and whenever it changes
-watch(Contexts.READ_ONLY, nameBox::setReadOnly);
+// Any descendant controller reacts, now and whenever it changes, and tells its component
+watch(Contexts.READ_ONLY, view::setReadOnly);
 ```
 
 ### Standard keys
@@ -219,17 +223,17 @@ watch(Contexts.READ_ONLY, nameBox::setReadOnly);
 | --- | --- | --- | --- |
 | `READ_ONLY` | `Boolean`, changeable | The document, from its permissions and lock state; a nested editor may force `true` for its subtree | The `readOnly` argument of `read()` and per-view `setReadOnly` calls |
 | `TASK_MONITOR` | `TaskMonitorFactory` | The document tab or dialog that shows progress | `HasTaskMonitorFactory`, `setTaskMonitorFactory` chains, `instanceof` checks |
-| `DOCUMENT` | `DocRef` | The document component | Passing `docRef` to children that only need it for REST calls or links |
-| `DIRTY` | `DirtyTracker` | The document component | `DirtyEvent` chains from deep children |
+| `DOCUMENT` | `DocRef` | The document's controller | Passing `docRef` to children that only need it for REST calls or links |
+| `DIRTY` | `DirtyTracker` | The document's controller | `DirtyEvent` chains from deep children |
 
 Keys are few and documented in one class, `Contexts`. A feature may define its own key (for example the dashboard's current query) but must not use context for data a direct child could be given as an argument.
 
 ### Rules
 
 1. **Read-only only narrows.** A provider below the document may set `READ_ONLY` to `true` for its subtree but cannot make a read-only document editable.
-2. **Watch, don't poll.** Components react through `watch()`, which runs once immediately and again on every change, so a document locked or unlocked while open updates every field.
-3. **Lookups need an owner.** Context resolves once a component is owned. Watches registered in the constructor are held until then and applied on adoption.
-4. **Default values are safe.** `READ_ONLY` defaults to `true` and `TASK_MONITOR` to a no-op factory, so an unowned component in a test fails closed rather than editable.
+2. **Watch, don't poll.** Controllers react through `watch()`, which runs once immediately and again on every change, so a document locked or unlocked while open updates every field.
+3. **Lookups need an owner.** Context resolves once a controller is owned. Watches registered in the constructor are held until then and applied on adoption.
+4. **Default values are safe.** `READ_ONLY` defaults to `true` and `TASK_MONITOR` to a no-op factory, so an unowned controller in a test fails closed rather than editable.
 
 ## Lifetimes
 
@@ -855,6 +859,13 @@ Decisions:
 * **Base classes.** Today's smart `Component` (ownership, `listen`, REST owner, context) is renamed `Controller`, and `MyPresenterWidget` extends `Controller` until it goes. A new thin `Component` (a `Composite`, with no lifecycle) is the base of dumb components, and the home of shared helpers.
 * **Testing.** No view interfaces (as decided in Phase 0): controllers are tested with workbench stories, pure logic with JUnit.
 
+Added by the pilot (Phase 7a, 24 October 2026):
+
+* **A controller's widget is its component.** It calls `initWidget(view)`, so `ControllerDialog`, `ControllerLayer` and a presenter's view setter show it unchanged. A controller attached to a part (e.g. `DocSelectionController`) has no widget; it is made with `make(provider)` and only owned.
+* **A part not yet split goes in a slot.** Until a presenter is split, the component has a setter for it (`setExpressionEditor(IsWidget)`) and the controller owns the presenter and passes its widget in. A presenter used in many places can keep its API as a thin wrapper over its new controller (`DocSelectionBoxPresenter`) until its users move.
+* **A set of actions is one enum.** A component with several actions has one callback, `setOnAction(Consumer<RuleAction>)`, and one setter for those that apply now, `setAvailableActions(Set<RuleAction>)`; it disables them all while read only. Where the buttons go on another part's toolbar (a list's), the component is given that toolbar and adds them, with their icons, names and toolbar name.
+* **Templates live where the module keeps them.** Next to the Java in `stroom-core-client`; under `src/main/resources`, in the same package, in `stroom-core-client-widget`.
+
 ## Phased implementation
 
 A pilot, then eleven phases, each shippable on its own and each ending by deleting an old mechanism. The pilot proves the framework on a duplicated screen without changing existing code. Phases 1 and 2 then fix today's leak and read-only bugs before any screen is rewritten; Phase 3 is where the component and callback model becomes the way new screens are written. Phases 0 to 6 (done 23 October 2026) put every presenter on the component model and removed GWTP; Phase 7 simplifies the lifecycle API, and Phases 8 to 11 move the screens themselves to components, area by area, ending with no presenters at all.
@@ -1075,8 +1086,15 @@ Prove the split (see [Components, controllers and models](#components-controller
 
 1. Done (24 October 2026): `Component` renamed `Controller`, one mechanical commit; `MyPresenterWidget extends Controller`. With it `ComponentNode`, `HasComponentNode` (`getComponentNode`), `ComponentDialog`, `ComponentLayer`, `ComponentView`, `ComponentChecks` (the `stroom.componentChecks` property) and `TabbedComponent` became `Controller...`, and the framework's comments say controller. Kept: the package and GWT module (`stroom.widget.component`, which the dumb `Component` joins), the dashboard's unrelated `Component`, the pilot classes, story titles and the harness's method names. All 1,570 stories pass with the leak check.
 2. Done (24 October 2026): the thin `Component` base, a `Composite` with no lifecycle, in `stroom.widget.component.client`. Its one shared helper is `setReadOnly(boolean)` (final; `onReadOnlyChange` applies a change, called only when the value changes), so that a controller can push read-only to any component. No JUnit test: a `Composite` can't be made on the JVM (GWT's widget classes call `GWT.create` as they load), and implementing `IsWidget` instead, as `Controller` does, would lose what templates set on a widget (`styleName`, `visible`, DOM handlers); the pilot's stories test it.
-3. Pilot: split the receive rules screen and its `FieldEditor` dialog into components and controllers, and `DocSelectionBox` into a dumb box and a `DocSelectionController` attached to it, with their stories run with the leak check.
-4. Compare files, wiring and stories with before; revise the rules if needed; update this design and the authoring guide in `AGENTS.md`.
+3. Done (24 October 2026), one commit each, every one with its stories passing with the leak check (the last with all 1,571):
+   - The receipt rules' dialogs and Rules tab: `FieldEditor`, `RuleEditor` and `RuleSetSettings` (until then smart, one class each) are now dumb components, with `FieldEditorController`, `RuleEditorController` and `RuleSetSettingsController`. Validation, the obfuscation warning, the dialogs, the expression editor and the rule list (presenters, in slots) and read-only are the controllers'; the Rules tab's seven buttons are the component's (`RuleAction`, one callback), and are disabled by its `setReadOnly`, which the ReadOnly story checks.
+   - The document picker: `DropDownViewImpl`'s widget code became a dumb, template-usable `DropDownBox` (which the view now wraps, so the user and asset pickers are unchanged), and `DocSelectionBoxPresenter`'s logic became `DocSelectionController`, with `attach(box)` (its REST call now also has the controller as its owner). `DocSelectionBoxPresenter` is a thin wrapper over the controller, so its 46 users are unchanged.
+   - The attach pattern in a template: the analytic notification's stream destination (`AnalyticStreamDestinationPresenter`, its view interface, `ViewImpl` and `UiHandlers`, and its two GIN bindings) is now `AnalyticStreamDestination` (its template declares `<dd:DropDownBox ui:field="destinationFeed"/>`, and the Set Default button's title moved into it) and `AnalyticStreamDestinationController`, which makes a `DocSelectionController` and attaches it. A new story, `StreamDestinationFeedPicker`, checks the picker is attached.
+4. Done (24 October 2026): compared, the rules revised (the four added at the end of [Components, controllers and models](#components-controllers-and-models)), this design's model sections rewritten in its terms ([Controllers and ownership](#controllers-and-ownership)), and the authoring guide in `AGENTS.md` rewritten.
+   - **Files.** A screen that was a presenter (presenter, view interface, `ViewImpl`, template, `UiHandlers`, two GIN bindings) has fewer: the stream destination went from four Java files (258 lines) and a template to two (223 lines) and a template, and needs no binding. A screen that was already one smart class gains a file: each receipt rules part grew by its controller's header and fields, about 40 lines (the three went from 714 lines in three files to 953 in six, with the Rules tab's action enum).
+   - **Wiring.** The controller's constructor reads as a list of what the screen does (`view.setOnAction(this::onAction)`, `feedSelection.attach(view.getDestinationFeedBox())`); the component reads as its template's API. Nothing reaches across: no component looks anything up.
+   - **Stories.** None needed changing apart from the picker's construction (`new DropDownViewImpl()`); the template's text (titles) is checked where it was set in Java before.
+   - **Tests.** A `Composite` can't be made on the JVM, so components and controllers are tested in stories; logic worth a JUnit test (e.g. which rule actions apply) can be a static method or a plain class beside the controller.
 
 **Exit:** the pilot's screens pass their stories with the leak check, and the rules are written down. Phases 8 to 11 convert each screen into a component and a controller.
 
