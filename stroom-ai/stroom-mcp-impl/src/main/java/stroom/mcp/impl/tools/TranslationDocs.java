@@ -268,7 +268,7 @@ public class TranslationDocs {
             final XsltDoc made = read(ref, XsltDoc.class);
             String description = described(made.getDescription(), code, source, extra);
             description = history.pending(context.session(), description, null,
-                    NullSafe.nonBlankStringElse(change, "Created"), code);
+                    NullSafe.nonBlankStringElse(change, "Created"), code, !source.keeps());
             description = history.previewed(description, code);
             return write(XsltDoc.TYPE, made.copy().data(code).description(description).build());
         }, false, role);
@@ -335,7 +335,8 @@ public class TranslationDocs {
         final Map<String, Object> extra = new LinkedHashMap<>();
         description = described(description, code, source, extra);
         description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
-                doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data);
+                doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data,
+                !source.keeps());
         description = history.previewed(description, data);
         final XsltDoc saved = write(XsltDoc.TYPE, doc.copy().data(data).description(description).build());
         tagKept(saved, source.keeps());

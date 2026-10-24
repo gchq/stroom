@@ -98,13 +98,16 @@ class XsltHistory {
     /// @param previous    The XSLT as it was before this save, or null for a new one.
     /// @param change      What changed.
     /// @param code        The code saved.
+    /// @param hand        True if the code was written by hand, not generated from a mapping or plan.
     /// @return The description with the change pending.
     String pending(final ToolSession session,
                    final String description,
                    final XsltVersionHistory.Previous previous,
                    final String change,
-                   final String code) {
-        return XsltVersionHistory.withPending(description, previous, author(), change, by(session), now(), code);
+                   final String code,
+                   final boolean hand) {
+        return XsltVersionHistory.withPending(description, previous, author(), change, by(session), now(), code,
+                hand);
     }
 
     /// Who made a documentation change, as a doc's version control row names them (the Stroom MCP server's

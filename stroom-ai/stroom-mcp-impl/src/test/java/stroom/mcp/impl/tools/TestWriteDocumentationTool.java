@@ -182,6 +182,75 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void anXsltEditedSinceItsMappingIsNotDocumentedFromIt() {
+        // Seen: TWITTER's XSLT saved by hand (save_xslt) with mentions and links in Data arrays, and the Field
+        // mapping section generated from the mapping kept before them: links left out, mentions shown joined.
+        world.pipeline(BUILD, "Acme", "p");
+        final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", Map.of()));
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept));
+        Mockito.when(world.drift.editDrift(kept)).thenReturn(Optional.of("its XSLT was saved as written by hand "
+                                                                         + "(save_xslt) since its mapping was kept."));
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "pipeline_uuid", "p",
+                "markdown", "## Purpose and data\n\nTweets.\n\n## Field mapping\n\n(Generated on save.)\n",
+                "stream_ids", List.of(5), "change", "Created"));
+
+        // A placeholder isn't a section of its own.
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
+                .startsWith("Not written: the Field mapping section is generated from the mapping kept with the "
+                            + "XSLT, and its XSLT was saved as written by hand (save_xslt)")
+                .contains("give a '## Field mapping' section of your own");
+        Mockito.verifyNoInteractions(world.sections);
+
+        // One written from the XSLT is kept as it is.
+        args.put("markdown", "## Purpose and data\n\nTweets.\n\n## Field mapping\n\n| XPath | From |\n"
+                             + "| --- | --- |\n| `EventDetail/Create/Document/Data[@Name='links']` | text |\n");
+        final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(args));
+
+        assertThat(world.world.body(String.valueOf(made.get("uuid"))))
+                .contains("| `EventDetail/Create/Document/Data[@Name='links']` | text |");
+        assertThat(made).doesNotContainKey("field_mapping");
+        Mockito.verifyNoInteractions(world.sections);
+    }
+
+    @Test
+    void aDescriptionIsAskedForAgainOnceItsFieldComesFromElsewhere() {
+        // Seen: TWITTER's Description kept "the tweet's text, including mentions and links" after both were taken
+        // out of it.
+        world.pipeline(BUILD, "Acme", "p");
+        world.documentation(BUILD, "Acme", "d", "## Field mapping\n\n<!-- stroom-mcp field descriptions\n"
+                                                + "{\"Description\": \"The tweet's text.\", \"Id\": \"Its id.\"}\n-->"
+                                                + "\n\n<!-- stroom-mcp field description sources\n"
+                                                + "{\"Description\": \"text\", \"Id\": \"id\"}\n-->");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("index", Map.of())));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    final Descriptions described = inv.getArgument(6);
+                    described.of("Description", "replace(text, '@\\w+', '')", List.of("Facts"), "schema words");
+                    described.of("Id", "id", List.of("1"), "schema words");
+                    return "section";
+                });
+        final String call = "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", \"markdown\": \"## Purpose and data\\n"
+                            + "\\nx\\n\", \"change\": \"Changed\", \"stream_ids\": [5]";
+
+        final Map<String, Object> asked = world.call(tool, context, call + "}");
+
+        assertThat(asked).containsEntry("status", "needs_descriptions");
+        assertThat((List<?>) asked.get("fields")).singleElement().satisfies(field -> assertThat(stringMap(field))
+                .containsEntry("field", "Description")
+                .containsEntry("from", "replace(text, '@\\w+', '')")
+                .containsEntry("was", "The tweet's text."));
+        assertThat(String.valueOf(asked.get("hint"))).contains("describe it as it is now");
+
+        world.call(tool, context, call + ", \"field_descriptions\": {\"Description\": \"The tweet's text, its "
+                                  + "mentions taken out.\"}}");
+
+        // Kept with where it came from now.
+        assertThat(world.world.body("d")).contains("\"Description\": \"The tweet's text, its mentions taken out.\"")
+                .contains("<!-- stroom-mcp field description sources\n{\n \"Description\": \"replace(text, "
+                          + "'@\\\\w+', '')\",\n \"Id\": \"id\"\n}\n-->");
+    }
+
+    @Test
     void aNewDocumentationDocSaysPlainlyItWasCreated() {
         // Seen (Delinea SecretServer): a doc just created came back as updated: false, and the agent spent two or
         // three calls checking it had been written.
@@ -309,6 +378,11 @@ class TestWriteDocumentationTool {
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
         assertThat(tool.usesRunSlot()).isTrue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> stringMap(final Object value) {
+        return (Map<String, Object>) value;
     }
 
     private static KeptMappings.KeptXslt kept(final String kind, final Map<String, Object> payload) {
