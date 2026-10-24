@@ -62,7 +62,7 @@ public class RuleSetSettings extends Controller {
 
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
-    private final Provider<RuleEditor> ruleEditorProvider;
+    private final Provider<RuleEditorController> ruleEditorProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
     private final List<ReceiveDataRule> rules = new ArrayList<>();
 
@@ -88,7 +88,7 @@ public class RuleSetSettings extends Controller {
     public RuleSetSettings(final EventBus eventBus,
                            final RuleSetListPresenter listPresenter,
                            final ExpressionTreePresenter expressionPresenter,
-                           final Provider<RuleEditor> ruleEditorProvider) {
+                           final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
         this.listPresenter = own(listPresenter);
         this.expressionPresenter = own(expressionPresenter);
