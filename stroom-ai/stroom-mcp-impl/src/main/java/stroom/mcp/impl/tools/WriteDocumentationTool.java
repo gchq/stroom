@@ -128,6 +128,12 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder.
+        return true;
+    }
+
+    @Override
     public boolean usesRunSlot() {
         // It steps up to 200 records of the sample, or surveys an index.
         return true;

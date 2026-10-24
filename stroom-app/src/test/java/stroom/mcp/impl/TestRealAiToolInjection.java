@@ -98,6 +98,23 @@ class TestRealAiToolInjection extends AbstractAiIntegrationTest {
     }
 
     @Test
+    void noBuildToolsChangeAsksOnAnApprovalCardOnceTheChatHasReadData() {
+        final BuiltInTools builtInTools = injector.getInstance(BuiltInTools.class);
+        final Set<StroomTool> tools = injector.getInstance(Key.get(new TypeLiteral<Set<StroomTool>>() {
+        }));
+
+        // The build tools can only change what is in the build's folder, and nothing outside it changes until
+        // promote_build, which asks the user itself. (Asked for by the user: the cards came up on every write of an
+        // onboarding, as its data is always read first.) Arguments unknown, so each is judged as a call that changes.
+        final List<String> asking = tools.stream()
+                .filter(tool -> tool.getClass().getPackageName().equals("stroom.mcp.impl.tools"))
+                .map(tool -> tool.definition().name())
+                .filter(name -> builtInTools.changeNeedsApprovalAfterUntrustedContent(name, null))
+                .toList();
+        assertThat(asking).isEmpty();
+    }
+
+    @Test
     void theMcpEndpointListsTheToolsForAnAdministrator() {
         // The server is made as /mcp makes it, with its tools, forms, approvals and workspaces.
         assertThat(injector.getInstance(StroomMcpServer.class).sessionCount()).isZero();

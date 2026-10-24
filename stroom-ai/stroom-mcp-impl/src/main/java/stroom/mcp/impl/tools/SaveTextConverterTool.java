@@ -70,6 +70,12 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder.
+        return true;
+    }
+
+    @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.EDIT)
