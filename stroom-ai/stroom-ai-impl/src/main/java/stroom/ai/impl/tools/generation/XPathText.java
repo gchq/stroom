@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.PyText;
 
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// How the translation generator writes each kind of XPath expression, one method each, as the Stroom MCP server's
@@ -29,11 +28,8 @@ import java.util.stream.Collectors;
 /// (asked for by the user: one definition, not two that drift apart).
 public final class XPathText {
 
-    /// A time format with digits below the millisecond (microseconds, nanoseconds), rounded half up to the
-    /// event-logging schema's three digits.
-    public static final Pattern SUB_MS = Pattern.compile("S{4,}");
     /// Epoch values other than milliseconds, to milliseconds: seconds (a fraction kept), microseconds and
-    /// nanoseconds.
+    /// nanoseconds, cut to the millisecond.
     public static final Map<String, String> EPOCH_SCALE = Map.of("epoch_s", "* 1000", "epoch_us", "div 1000",
             "epoch_ns", "div 1000000");
     /// The epoch time formats.
@@ -212,19 +208,17 @@ public final class XPathText {
     /// @param format   A time format: a Java pattern, or one of [#EPOCH_FORMATS].
     /// @param timezone The time zone, or null.
     /// @param one      The value's expression.
-    /// @return The value as Stroom's ISO 8601 time, to the millisecond: finer digits rounded half up.
+    /// @return The value as Stroom's ISO 8601 time, to the millisecond: finer digits cut, not rounded, as an event's
+    /// time is never moved on (unlike the Stroom MCP server's, which rounded them half up: 23:59:59.9996 became the
+    /// next day; seen in eval case 31, an epoch_ns time a millisecond late). Stroom's format-date cuts a pattern's
+    /// digits below the millisecond itself.
     public static String timeExpression(final String format, final String timezone, final String one) {
         if ("epoch_ms".equals(format)) {
             return "stroom:format-date(string(" + one + "))";
         }
         if (EPOCH_SCALE.containsKey(format)) {
-            return "stroom:format-date(string(xs:integer(round(xs:decimal(" + one + ") " + EPOCH_SCALE.get(format)
+            return "stroom:format-date(string(xs:integer(floor(xs:decimal(" + one + ") " + EPOCH_SCALE.get(format)
                    + "))))";
-        }
-        if (SUB_MS.matcher(format).find()) {
-            return timeMsText(format, timezone == null
-                    ? ""
-                    : timezone, one);
         }
         return "stroom:format-date(" + one + ", " + literal(format) + (timezone != null && !timezone.isEmpty()
                 ? ", " + literal(timezone)
@@ -234,7 +228,8 @@ public final class XPathText {
     /// @param format   A time format with digits below the millisecond.
     /// @param timezone The time zone, or "".
     /// @param one      The value's expression.
-    /// @return The call of the XSLT's own function rounding to the millisecond.
+    /// @return The call of the XSLT's own function rounding to the millisecond, as earlier versions of the generator
+    /// wrote it (read back from XSLTs saved then).
     public static String timeMsText(final String format, final String timezone, final String one) {
         return "mcp:time-ms(string(" + one + "), " + literal(format) + ", " + literal(timezone) + ")";
     }
