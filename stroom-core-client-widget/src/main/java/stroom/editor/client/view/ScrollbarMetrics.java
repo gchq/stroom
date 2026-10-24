@@ -16,12 +16,11 @@
 
 package stroom.editor.client.view;
 
-import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
+/// Measures the browser's scroll bars, once: a box with scroll bars (`scrollbar-metrics`,
+/// `scrollbar-metrics.css`), out of sight, whose content is bigger than it.
 public final class ScrollbarMetrics {
 
     private static final SimplePanel inner = new SimplePanel();
@@ -48,13 +47,9 @@ public final class ScrollbarMetrics {
     }
 
     private static void calc() {
-        inner.setSize("200px", "200px");
+        inner.setStyleName("scrollbar-metrics__content");
         outer.setWidget(inner);
-        outer.setSize("100px", "100px");
-        outer.getElement().getStyle().setPosition(Position.FIXED);
-        outer.getElement().getStyle().setLeft(-1000, Unit.PX);
-        outer.getElement().getStyle().setTop(-1000, Unit.PX);
-        outer.getElement().getStyle().setOverflow(Overflow.SCROLL);
+        outer.setStyleName("scrollbar-metrics");
         RootPanel.get().add(outer);
 
         horizontalScrollBarWidth = 100 - outer.getElement().getClientHeight();

@@ -19,7 +19,6 @@ package stroom.widget.xsdbrowser.client.view;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -104,8 +103,6 @@ public class XSDDisplay extends Composite {
                         false),
                 map,
                 model,
-                null,
-                null,
                 null));
 
         midPanel.add(new XSDDisplayBox(
@@ -122,8 +119,6 @@ public class XSDDisplay extends Composite {
                         false),
                 map,
                 model,
-                null,
-                null,
                 null));
 
         final String targetNamespace = XMLUtil.getAttributeValue(
@@ -135,8 +130,7 @@ public class XSDDisplay extends Composite {
             title = title + targetNamespace;
         }
         final XSDDisplayBox box = new XSDDisplayBox(
-                "xsdBrowser-xsdTitleSchema", title, midPanel, map, model, node, null,
-                null);
+                "xsdBrowser-xsdTitleSchema", title, midPanel, map, model, node);
 
         return box;
     }
@@ -156,9 +150,7 @@ public class XSDDisplay extends Composite {
                 null,
                 map,
                 model,
-                node,
-                null,
-                null));
+                node));
 
         right.add(getTypeBox(right, map, typeNode));
 
@@ -220,9 +212,7 @@ public class XSDDisplay extends Composite {
                             null,
                             map,
                             model,
-                            node,
-                            null,
-                            null);
+                            node);
                 }
 
                 return new XSDDisplayBox(
@@ -239,9 +229,7 @@ public class XSDDisplay extends Composite {
                                 true),
                         map,
                         model,
-                        node,
-                        null,
-                        null);
+                        node);
             }
         }
 
@@ -297,13 +285,13 @@ public class XSDDisplay extends Composite {
             // Apply some overall styles to surround the content (the cells are aligned to the
             // middle by xsdbrowser.css).
             for (row = 0; row < layout.getRowCount(); row++) {
-                layout.setCellStyle(row, 0, "paddingLeft", "5px");
-                layout.setCellStyle(row, layout.getColumnCount() - 1, "paddingRight", "5px");
+                layout.addCellStyleName(row, 0, "xsdBrowser-nodeGrid__cell--start");
+                layout.addCellStyleName(row, layout.getColumnCount() - 1, "xsdBrowser-nodeGrid__cell--end");
             }
 
             if (layout.getRowCount() > 0) {
-                setRowStyle(layout, 0, "paddingTop", "3px");
-                setRowStyle(layout, layout.getRowCount() - 1, "paddingBottom", "3px");
+                addRowStyleName(layout, 0, "xsdBrowser-nodeGrid__cell--top");
+                addRowStyleName(layout, layout.getRowCount() - 1, "xsdBrowser-nodeGrid__cell--bottom");
             }
 
             // If we didn't add any rows then set the layout to null.
@@ -473,7 +461,7 @@ public class XSDDisplay extends Composite {
                 final FlowPanel fp = new FlowPanel();
                 fp.add(getImage(type));
                 fp.add(html);
-                fp.getElement().getStyle().setPosition(Position.RELATIVE);
+                fp.addStyleName("xsdBrowser-occurrence");
 
                 layout.setWidget(row, col, fp);
             } else {
@@ -519,7 +507,7 @@ public class XSDDisplay extends Composite {
                 if (showOccurance) {
                     final String occurance = node.getOccurance();
                     if (occurance != null) {
-                        lblOccurrence = new Label(node.getOccurance(), false);
+                        lblOccurrence = oneLineLabel(node.getOccurance());
                     }
                 }
             }
@@ -535,7 +523,7 @@ public class XSDDisplay extends Composite {
             }
 
             final Label lblType = valueType != null
-                    ? new Label(valueType, false)
+                    ? oneLineLabel(valueType)
                     : null;
 
             final int colCount = layout.getColumnCount();
@@ -585,9 +573,9 @@ public class XSDDisplay extends Composite {
                 layout.setWidget(row, colCount - 5, lblName);
             }
             if (lblOccurrence != null) {
-                layout.setWidget(row, colCount - 4, new Label("[", false));
+                layout.setWidget(row, colCount - 4, oneLineLabel("["));
                 layout.setWidget(row, colCount - 3, lblOccurrence);
-                layout.setWidget(row, colCount - 2, new Label("]", false));
+                layout.setWidget(row, colCount - 2, oneLineLabel("]"));
             }
             if (lblType != null) {
                 layout.setWidget(row, colCount - 1, lblType);
@@ -604,12 +592,12 @@ public class XSDDisplay extends Composite {
 
     private void addSeparator(final XSDNodeGrid layout) {
         // Add a row with a black border at the bottom.
-        setRowStyle(layout, layout.getRowCount() - 1, "borderBottom", "1px solid black");
+        addRowStyleName(layout, layout.getRowCount() - 1, "xsdBrowser-nodeGrid__cell--separator");
     }
 
-    private void setRowStyle(final XSDNodeGrid layout, final int row, final String name, final String value) {
+    private void addRowStyleName(final XSDNodeGrid layout, final int row, final String styleName) {
         if (row >= 0) {
-            layout.setRowStyle(row, name, value);
+            layout.addRowStyleName(row, styleName);
         }
     }
 
@@ -665,5 +653,12 @@ public class XSDDisplay extends Composite {
         }
 
         return null;
+    }
+
+    // A label kept on one line (xsdbrowser.css)
+    private static Label oneLineLabel(final String text) {
+        final Label label = new Label(text);
+        label.addStyleName("xsdBrowser-oneLine");
+        return label;
     }
 }

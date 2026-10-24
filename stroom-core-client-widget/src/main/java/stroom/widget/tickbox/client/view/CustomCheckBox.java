@@ -34,12 +34,12 @@ package stroom.widget.tickbox.client.view;
 
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.dom.client.Document;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
@@ -53,6 +53,9 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
@@ -62,17 +65,18 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HasDirectionalSafeHtml;
 import com.google.gwt.user.client.ui.HasName;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.HasWordWrap;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /**
  * A tick box: a check box with Stroom's drawn box and its label beside it.
  * <p>
- * It is the BEM block {@code tick-box} ({@code tick-box.css}): a {@code label} element holding a
- * native check box ({@code tick-box__input}, unseen, over the box, so it has the focus, the clicks and
- * the state), the box drawn for it ({@code tick-box__mark}) and its text ({@code tick-box__label}).
- * Clicking anywhere on it ticks it, as the label wraps the check box. Its states are the check box's:
- * checked, disabled and {@code aria-readonly}.
+ * It is the BEM block {@code tick-box} ({@code tick-box.css}, markup {@code CustomCheckBox.ui.xml}): a
+ * {@code label} element holding a native check box ({@code tick-box__input}, unseen, over the box, so
+ * it has the focus, the clicks and the state), the box drawn for it ({@code tick-box__mark}) and its
+ * text ({@code tick-box__label}). Clicking anywhere on it ticks it, as the label wraps the check box.
+ * Its states are the check box's: checked, disabled and {@code aria-readonly}.
  *
  * <p>
  * <h3>Built-in Bidi Text Support</h3>
@@ -81,22 +85,9 @@ import com.google.gwt.user.client.ui.Widget;
  * passing a DirectionEstimator parameter to the constructor, and is off by
  * default.
  * </p>
- *
- * <h3>CSS Style Rules</h3>
- * <dl>
- * <dt>.gwt-CheckBox</dt>
- * <dd>the outer element</dd>
- * <dt>.gwt-CheckBox-disabled</dt>
- * <dd>applied when Checkbox is disabled</dd>
- * </dl>
- *
- * <p>
- * <h3>Example</h3>
- * {@example com.google.gwt.examples.CheckBoxExample}
- * </p>
  */
 public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
-        HasWordWrap, HasDirectionalSafeHtml, HasDirectionEstimator,
+        HasDirectionalSafeHtml, HasDirectionEstimator,
         IsEditor<LeafValueEditor<Boolean>> {
 
     private static final String CHECK = "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" class=\"svg-inline--fa fa-check fa-w-16 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path fill=\"currentColor\" d=\"M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z\"></path></svg>";
@@ -104,7 +95,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     /// The tick drawn in the box, white on blue (also drawn by the grid's `TickBoxCell`).
     public static final String TICK_SVG = CHECK;
 
-    private static final String BLOCK = "tick-box";
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
             DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
@@ -116,24 +107,18 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
     private boolean readOnly;
+    private Consumer<Boolean> onChange;
 
     public CustomCheckBox() {
-        // A label element wrapping the check box, so its text names the tick box and clicking
-        // anywhere on it toggles the tick
-        super(DOM.createLabel());
-        setStyleName(BLOCK);
+        this(new Parts());
+    }
 
-        inputElem = InputElement.as(DOM.createInputCheck());
-        inputElem.setClassName(BLOCK + "__input");
-        checkmarkElem = Document.get().createSpanElement();
-        checkmarkElem.setClassName(BLOCK + "__mark");
+    private CustomCheckBox(final Parts parts) {
+        super(BINDER.createAndBindUi(parts));
+        inputElem = parts.input;
+        checkmarkElem = parts.mark;
+        labelElem = parts.label;
         checkmarkElem.setInnerHTML(CHECK);
-        labelElem = Document.get().createSpanElement();
-        labelElem.setClassName(BLOCK + "__label");
-
-        getElement().appendChild(inputElem);
-        getElement().appendChild(checkmarkElem);
-        getElement().appendChild(labelElem);
 
         // An id of its own, until setIdentity gives it one (e.g. for a form group's label)
         inputElem.setId(DOM.createUniqueId());
@@ -173,6 +158,13 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         return readOnly;
     }
 
+    /// @param onChange Told the new value when the user ticks or unticks it (or `setValue(value, true)`
+    ///                 changes it), or null for nothing.
+    public void setOnChange(final Consumer<Boolean> onChange) {
+        this.onChange = onChange;
+        ensureChangeHandling();
+    }
+
     @Override
     public void onBrowserEvent(final Event event) {
         // A click (or Space) on a read-only tick box mustn't change it: cancelling the click undoes
@@ -192,12 +184,23 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     @Override
     public HandlerRegistration addValueChangeHandler(
             final ValueChangeHandler<Boolean> handler) {
-        // Is this the first value change handler? If so, time to add handlers
+        ensureChangeHandling();
+        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    // The first change handler or callback adds the click handler that tells them
+    private void ensureChangeHandling() {
         if (!valueChangeHandlerInitialized) {
             ensureDomEventHandlers();
             valueChangeHandlerInitialized = true;
         }
-        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    private void fireChange(final Boolean value) {
+        ValueChangeEvent.fire(this, value);
+        if (onChange != null) {
+            onChange.accept(value);
+        }
     }
 
     @Override
@@ -296,11 +299,6 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         } else {
             return inputElem.isDefaultChecked();
         }
-    }
-
-    @Override
-    public boolean getWordWrap() {
-        return !WhiteSpace.NOWRAP.getCssName().equals(getElement().getStyle().getWhiteSpace());
     }
 
     /**
@@ -466,15 +464,8 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
             return;
         }
         if (fireEvents) {
-            ValueChangeEvent.fire(this, value);
+            fireChange(value);
         }
-    }
-
-    @Override
-    public void setWordWrap(final boolean wrap) {
-        getElement().getStyle().setWhiteSpace(wrap
-                ? WhiteSpace.NORMAL
-                : WhiteSpace.NOWRAP);
     }
 
     // Unlike other widgets the CheckBox sinks on its inputElement, not
@@ -500,27 +491,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
                     // Checkboxes always toggle their value, no need to compare
                     // with old value. Radio buttons are not so lucky, see
                     // overrides in RadioButton
-                    ValueChangeEvent.fire(CustomCheckBox.this, getValue());
+                    fireChange(getValue());
                 }
             }
         });
     }
-
-//    /**
-//     * <b>Affected Elements:</b>
-//     * <ul>
-//     * <li>-label = label next to checkbox.</li>
-//     * </ul>
-//     *
-//     * @see UIObject#onEnsureDebugId(String)
-//     */
-//    @Override
-//    protected void onEnsureDebugId(String baseID) {
-//        super.onEnsureDebugId(baseID);
-//        ensureDebugId(labelElem, baseID, "label");
-//        ensureDebugId(inputElem, baseID, "input");
-//        labelElem.setHtmlFor(inputElem.getId());
-//    }
 
     /**
      * This method is called when a widget is attached to the browser's document.
@@ -543,5 +518,29 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         // reference between it and the widget).
         DOM.setEventListener(inputElem, null);
         setValue(getValue());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template it changes; the label element itself is the template's root
+    static final class Parts {
+
+        @UiField
+        InputElement input;
+        @UiField
+        SpanElement mark;
+        @UiField
+        SpanElement label;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("CustomCheckBox.ui.xml")
+    interface Binder extends UiBinder<LabelElement, Parts> {
+
     }
 }

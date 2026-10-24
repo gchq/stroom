@@ -108,7 +108,8 @@ public class TracesListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.histogramWidget = new TraceHistogramWidget(dateTimeFormatter);
+        this.histogramWidget = new TraceHistogramWidget();
+        histogramWidget.setDateTimeFormatter(dateTimeFormatter);
 
         dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
@@ -163,7 +164,7 @@ public class TracesListPresenter
     }
 
     public void setHistogramZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
-        histogramWidget.setZoomHandler(zoomHandler);
+        histogramWidget.setOnZoom(zoomHandler);
     }
 
     @Override

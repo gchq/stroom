@@ -73,6 +73,16 @@
 	justify-content: center;
 }
 
+.xsdBrowser .boxTitle-text {
+	color: white;
+	white-space: nowrap;
+}
+
+/* The title of a box whose node can be selected */
+.xsdBrowser .boxTitle-selectable {
+	cursor: pointer;
+}
+
 .xsdBrowser .boxTitle {
 	width: 100%;
 	background: var(--xsdbrowser-title__background-color);
@@ -135,6 +145,7 @@
 /* The rows of a node's children, as wide as they need, each cell's content in its middle */
 .xsdBrowser .xsdBrowser-nodeGrid {
 	display: grid;
+	grid-template-columns: repeat(var(--xsd-node-grid__columns), auto);
 	width: max-content;
 }
 
@@ -147,6 +158,29 @@
    (e.g. the occurrences, when they aren't shown) still spaces out the columns either side of it */
 .xsdBrowser .xsdBrowser-nodeGrid__cell:empty::before {
 	content: "\00a0";
+}
+
+/* Space around the rows: before the first column, after the last, above the first row and below
+   the last */
+.xsdBrowser .xsdBrowser-nodeGrid__cell--start {
+	padding-left: 5px;
+}
+
+.xsdBrowser .xsdBrowser-nodeGrid__cell--end {
+	padding-right: 5px;
+}
+
+.xsdBrowser .xsdBrowser-nodeGrid__cell--top {
+	padding-top: 3px;
+}
+
+.xsdBrowser .xsdBrowser-nodeGrid__cell--bottom {
+	padding-bottom: 3px;
+}
+
+/* A line under the last row of a group, e.g. the attributes */
+.xsdBrowser .xsdBrowser-nodeGrid__cell--separator {
+	border-bottom: 1px solid black;
 }
 
 .xsdBrowser .displayTypeBox {
@@ -165,6 +199,11 @@
 	margin-left: 5px;
 }
 
+/* A label kept on one line, e.g. an occurrence or a constraint's value */
+.xsdBrowser .xsdBrowser-oneLine {
+	white-space: nowrap;
+}
+
 .xsdBrowser .nodeLabel {
 	margin-right: 5px;
 	cursor: pointer;
@@ -175,6 +214,11 @@
 .xsdBrowser .nodeLabelSelected {
   background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
   color: var(--row__text-color--selected) !important;
+}
+
+/* A node's image with its occurrences (e.g. 0..1) over it */
+.xsdBrowser .xsdBrowser-occurrence {
+	position: relative;
 }
 
 .xsdBrowser .occuranceLabel {

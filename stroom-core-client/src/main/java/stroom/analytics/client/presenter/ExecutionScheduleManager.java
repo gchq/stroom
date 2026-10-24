@@ -147,7 +147,7 @@ public class ExecutionScheduleManager
         createButtons();
 
         final HTML label = new HTML();
-        label.addStyleName("pager-paging pager-label");
+        label.addStyleName("paging-bar paging-bar__label");
         view.addInfoLabel(label);
         updateSelectionCountLabel();
 

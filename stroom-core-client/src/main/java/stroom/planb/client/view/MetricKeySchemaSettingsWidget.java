@@ -65,7 +65,7 @@ public class MetricKeySchemaSettingsWidget
     @Override
     public void setOnChange(final Runnable onChange) {
         super.setOnChange(onChange);
-        timeZoneWidget.setUiHandlers(onChange::run);
+        timeZoneWidget.setOnChange(onChange);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class MetricKeySchemaSettingsWidget
         keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
         temporalResolution.setReadOnly(readOnly);
-        timeZoneWidget.onReadOnly(readOnly);
+        timeZoneWidget.setReadOnly(readOnly);
     }
 
     private void onKeyTypeChange() {

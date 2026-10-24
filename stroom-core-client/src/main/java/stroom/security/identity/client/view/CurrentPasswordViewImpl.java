@@ -55,7 +55,7 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
 
     @Override
     public void focus() {
-        password.setFocus(true);
+        password.focus();
     }
 
     @Override

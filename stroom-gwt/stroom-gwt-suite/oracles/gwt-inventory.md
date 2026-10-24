@@ -87,7 +87,6 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DateTimeViewImpl.java` | stroom-core-client-widget | ViewImpl |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DayLabel.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DefaultCalendarView.java` | stroom-core-client-widget | View |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DefaultMonthSelector.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/IntlDateTimeFormat.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/MonthSelector.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/TimeBox.java` | stroom-core-client-widget | — |
@@ -606,7 +605,6 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/item/client/DecoratedItem.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/EventBinder.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionBox.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionBoxView.java` | stroom-core-client-widget | View |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionItem.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionList.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionListModel.java` | stroom-core-client-widget | Model |

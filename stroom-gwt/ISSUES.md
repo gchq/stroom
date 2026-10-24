@@ -507,6 +507,10 @@ each story re-run against both builds with the same runner options):
 * `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`: the Polled column counts the polls, so its
   number depends on how long the story ran. A fix: the screenshot is taken with polling stopped,
   or the column shows something that doesn't count.
+* `App/Visualisations/Tree` `Keyboard` and `ShowAndHide`: in wave 2's screenshot diffs (24 October 2026)
+  the focused node's tooltip ("nginx.conf", its path and value) was drawn, and in the baseline it
+  wasn't, with a line of the root node's focus ring. Like TopBar `Keyboard`, a tooltip shown on
+  focus depends on timing; nothing in wave 2 touched the visualisations.
 * `Widgets/Menu/MenuPanel` `TypeAhead` failed in every run with screenshots, on both builds
   (`expect(<div>).toHaveFocus() failed` after typing "re"). **Fixed** (data_grid2): those runs fix
   the page's `Date` (`--fixed-time`), and `TypeAhead` timed the pause between keys with it, so the
@@ -1473,6 +1477,15 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `SvgCell.css`, `svgCell-face`; and the unused classes `SvgIconCell`,
   `FindResultWithPermissionsCell` and `ToolTipCell` (which never closes its `<div>`). Delete them
   once removals are allowed.
+* ~~Selecting a node in the XSD browser's diagram highlights the whole grid it is in, not its row:
+  `XSDNodeLabel.setSelected` put `nodeLabelSelected` on the label's grandparent, the table row
+  until the node grid became a CSS grid (`9dc39a1829`), since when it is the whole grid (found
+  24 October 2026 in wave 2's audit)~~ Fixed: the class goes on the label's cell. A row's other
+  cells aren't highlighted with it, as the grid's rows are no longer elements; the XSD browser's
+  wave (8) can mark the row's cells if that is wanted.
+* Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
+  `pager-button` (`components.css`; nothing has either class). Delete them once removals are
+  allowed.
 
 * ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
   string to a template's `String` attribute, which escapes it again, so an apostrophe shows as

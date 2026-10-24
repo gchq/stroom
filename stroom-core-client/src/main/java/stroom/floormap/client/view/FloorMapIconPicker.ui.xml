@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The floor map's icon picker (floormap-icon-picker.css): a radio group, named by its row's label,
+  holding a cell per icon, added in Java from the list of icons.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="floormap-icon-picker" role="radiogroup"></div>
+</ui:UiBinder>

@@ -148,9 +148,9 @@ export function readPager(page, title) {
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const btn = [...scope.querySelectorAll(`button[title="${wanted}"]`)].find((b) => b.offsetWidth > 0);
-    const pager = btn?.closest('.pager-paging');
+    const pager = btn?.closest('.paging-bar');
     if (!pager) return null;
-    const labels = [...pager.querySelectorAll('.pager-label')].map((l) => norm(l.textContent));
+    const labels = [...pager.querySelectorAll('.paging-bar__label')].map((l) => norm(l.textContent));
     // title · from · "to" · to · "of" · of — the separators are labels too, and the title is the
     // grid's name. Read the three numbers by position around the separators.
     const toI = labels.findIndex((l) => l === 'to');

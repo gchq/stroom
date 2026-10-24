@@ -1,0 +1,5 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A radio group (radio-group.css): its options are added in Java, one per value -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+    <div class="radio-group" role="radiogroup"></div>
+</ui:UiBinder>

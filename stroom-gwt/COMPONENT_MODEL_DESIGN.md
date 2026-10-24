@@ -75,7 +75,7 @@ Written 24 October 2026, at the start of wave 1 (`COMPONENT_MIGRATION_ORDER.md`)
 2. **Outputs are callbacks.** One per event, set by its owner: `setOnClick(Runnable)`, `setOnChange(Consumer<T>)`. Where several may listen, a `Listeners<T>` list and `add...Listener(Consumer<T>)` returning a registration. A widely used widget keeps its GWT event (`ClickHandler`, `ValueChangeEvent`) beside the callback until its callers have moved, then it goes.
 3. **One read-only setter.** `setReadOnly(boolean)` means "shown, but can't be changed" (a dumb `Component` gets it from the base class, applied in `onReadOnlyChange`). `setEnabled(boolean)` stays only where it means something else (e.g. a mode not in use).
 4. **Focus** is `focus()`, not `setFocus(boolean)`.
-5. **Attributes through typed setters.** A template sets ARIA and the like with setters on the widget (`ariaLabel`, `placeholder`, `opensDialog`), so nothing is set by hand after the template is made.
+5. **Attributes through typed setters.** A template sets ARIA and the like with setters on the widget (`ariaLabel`, `placeholder`, `opensDialog`), so nothing is set by hand after the template is made. A plain text box is a `TextInput` (`stroom.widget.form.client`: `type`, `placeholder`, `role`, `ariaLabel`, `ariaHasPopup`, `ariaExpanded`) and a plain panel an `AriaPanel` (`stroom.widget.component.client`: `role`, `tabIndex`, `ariaLabel`, `ariaHasPopup`, `ariaHidden`, `ariaLive`), both added in wave 2; an element that needs no widget is plain HTML in a `g:HTMLPanel`, where any attribute can be written.
 6. **Markup in the template**, except the root of a single-element widget (a `ButtonBase`, or a `FlowPanel` or `Widget` subclass), whose block class and role are set in its constructor; a `PopupPanel`'s root; and cells, which use `SafeHtmlTemplates`.
 7. **No inline styles.** Fixed styles are Stroom CSS classes (BEM, in the block's own stylesheet under `stroom-app/src/main/resources/ui/css`); a runtime value is a custom property set with `CssProperties.set(element, "--block__property", value)` that a class uses. `setVisible` is fine.
 8. **Nothing smart.** No REST, event bus, context lookups or GIN-injected services, and nothing it owns: a widget that needs any of these is split into a box and a controller (as `DropDownBox` and `DocSelectionController`).
@@ -474,7 +474,7 @@ for that directory), so no screen needed editing.
   Input, renamed with it). Fields in configured HTML (the activity form) are named by wrapping them
   in their `<label>`: a field's `id` there is the id of the property it sets, so a label can't point
   at one.
-- **`LineColInput`** (`line-col-input`, `linecolinput.css`) is a text field for `line:column`; a
+- **`LineColInput`** (`line-col-input`, `line-col-input.css`) is a text field for `line:column`; a
   value that is no such position is marked invalid (`FieldValidity`), rather than turned red.
 
 Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAndReadonly`) and
@@ -547,7 +547,7 @@ replaces GWT's `RadioButton`, of which the floor map's layer style had three.
 - **Value.** `addItem(value, label[, title])`, then `getValue`, `setValue(value[, fireEvents])`
   and a value change handler, which a choice fires once (the browser fires `change` only on the
   radio button chosen).
-- **CSS.** `radio-button.css`: the BEM block `radio-group`, its `__option`, `__input` and `__label`.
+- **CSS.** `radio-group.css`: the BEM block `radio-group`, its `__option`, `__input` and `__label`.
   Every radio input looks the same, including those in an activity's form, which have no classes
   of their own.
 
@@ -678,7 +678,7 @@ A field with something drawn over its end (an icon box's icon, a password box's 
 - **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, Home and End open it at its first and last option, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
 - **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter), only highlighting, as a combobox's list does; Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it, and the focus goes back to the box. Tab closes it, leaving the value, and goes on to what follows the box (`TabOrder.focusNext`); Shift+Tab closes it and goes back to the box. (It once sent the focus to the page, leaving the list open.) Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
 - **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
-- **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
+- **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--read-only`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
 
 Stories `Widgets/Selectors/SelectionBox` (`SelectionBoxStories`): `KeysOpenTheList`, `AltUpChoosesTheOption`, `TypingJumpsToAnOption`, `TypingFiltersALongList` and `LongValue`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-box.mjs`): typing, Alt+Up, Space and Escape pressed for real, and typing into a long list's quick filter.
 
@@ -714,7 +714,7 @@ Every field for a moment in time is a `DateTimeBox` (`stroom.widget.datepicker.c
 - **Validity.** A box that doesn't allow expressions marks text that isn't a time invalid (`FieldValidity`) when it is left; `setOptional(true)` allows it to be empty.
 - **Its dialog.** A box makes its own dialog when first opened, shown on the app's event bus (`StaticEventBus`), unless given a provider (`setPopupProvider`, as the schedule screens do). The dialog's shortcuts (Today, Yesterday, Week Start; Now, Midnight, Midday) and each spinner's Reset are `LinkButton`s, at least 24px high (`date-time-view.css`).
 
-The calendar (`CustomDatePicker`, the block `calendar`, `calendar.css`) is its year and month rows (`DefaultMonthSelector`: a selection box and a Previous/Next toolbar each, `calendar__header`, `calendar__row`) above the month's days (`CalendarGrid`), a WAI-ARIA grid:
+The calendar (`CustomDatePicker`, the block `calendar`, `calendar.css`) is its year and month rows (in `CustomDatePicker.ui.xml`: a selection box and a Previous/Next toolbar each, `calendar__header`, `calendar__row`) above the month's days (`CalendarGrid`), a WAI-ARIA grid:
 
 - **Roles and names.** A `table` with `role="grid"`, named for the month it shows ("January 2024"); a header row of `columnheader`s (the short day name, its full name in `abbr`); each day a `gridcell` named by its full date in the browser's language ("Monday, 15 January 2024"). The chosen day is `aria-selected="true"`, today `aria-current="date"`; the days of the months before and after that fill the six weeks are `calendar__day--outside` (a modifier, as ARIA has no attribute for it). In a form group, the calendar is a `group` named by the label, as it has two form controls (Year and Month).
 - **Keys.** The grid is one tab stop, the focus on a day (a roving `tabindex`): the chosen day if it is in the month shown, else today if it is, else the same day of the month. Left and Right move a day, Up and Down a week, Home and End to the start and end of its week, Page Up and Page Down a month, Shift+Page Up and Shift+Page Down a year (keeping the day of the month, or the month's last day if it is shorter); moving to a day of another month shows that month. Moving doesn't choose: Enter, Space or a click chooses the day (a click on a day outside the month shows its month). The Year and Month toolbars change the month without choosing, moving the tab stop to the same day of the new month.

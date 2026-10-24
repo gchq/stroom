@@ -16,19 +16,24 @@
 
 package stroom.widget.histogram.client;
 
+import stroom.widget.util.client.CssProperties;
+
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
@@ -44,6 +49,9 @@ import java.util.function.Consumer;
  *         <li>Placeholder text when all bins are zero.</li>
  *     </ul>
  * </p>
+ * <p>
+ *     The BEM block {@code histogram-widget} ({@code histogram-widget.css}), its markup {@code HistogramWidget.ui.xml}.
+ * </p>
  */
 public class HistogramWidget extends Composite {
 
@@ -51,7 +59,7 @@ public class HistogramWidget extends Composite {
      * Height of the widget in pixels.
      *
      * <p>Must stay in step with the {@code height: 48px} in
-     * {@code stroom-histogram.css}: CSS lays the canvas element out, while this
+     * {@code histogram-widget.css}: CSS lays the canvas element out, while this
      * sizes its coordinate space. If the two disagree the browser scales the
      * drawing to fit, so the bars stretch or squash rather than looking wrong in
      * an obvious way.</p>
@@ -63,16 +71,16 @@ public class HistogramWidget extends Composite {
 
     /**
      * CSS custom properties holding the bar colours, defined per theme in
-     * {@code stroom-histogram.css} and resolved at draw time by
+     * {@code histogram-widget.css} and resolved at draw time by
      * {@link #themeColour}.
      */
-    private static final String BAR_COLOUR_PROPERTY = "--histogram-bar__color";
-    private static final String PEAK_COLOUR_PROPERTY = "--histogram-peak__color";
+    private static final String BAR_COLOUR_PROPERTY = "--histogram-widget__bar-color";
+    private static final String PEAK_COLOUR_PROPERTY = "--histogram-widget__peak-color";
 
     /**
      * Used when the CSS custom property cannot be resolved — an unstyled test
-     * harness, or a consumer whose page has not loaded {@code stroom-histogram.css}.
-     * Kept in step with the light theme's value in {@code stroom-histogram.css}, so a
+     * harness, or a consumer whose page has not loaded {@code histogram-widget.css}.
+     * Kept in step with the light theme's value in {@code histogram-widget.css}, so a
      * missing stylesheet degrades to the styled appearance rather than to invisible bars.
      */
     private static final String DEFAULT_BAR_COLOUR = "rgba(21,101,192,0.8)";
@@ -80,23 +88,28 @@ public class HistogramWidget extends Composite {
     private static final String TICK_COLOUR = "rgba(128,128,128,0.25)";
     private static final int TARGET_TICK_COUNT = 10;
 
-    private final FlowPanel container;
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String TOOLTIP_VISIBLE = "histogram-widget__tooltip--visible";
+
+    private final Widget container;
+    @UiField
+    FlowPanel wrapper;
+    @UiField
+    Label tooltip;
     private final Canvas canvas;
-    private final Label tooltip;
     private int[] bins;
     // Where each bin belongs across the widget; never null once data has been set.
     private HistogramLayout layout = HistogramLayout.even(1);
 
     // Called when the user clicks, with the fractional position [0..1]
-    private Consumer<Double> clickHandler;
+    private Consumer<Double> onClick;
 
     public HistogramWidget() {
-        container = new FlowPanel();
-        container.addStyleName("stroom-histogram-container");
+        container = BINDER.createAndBindUi(this);
 
         canvas = Canvas.createIfSupported();
         if (canvas != null) {
-            canvas.addStyleName("stroom-histogram-canvas");
+            canvas.addStyleName("histogram-widget__canvas");
             // Canvas pixels are opaque to assistive technology: without a role and
             // a name the whole distribution — and the per-bin counts the hover
             // tooltip reveals — simply do not exist for a screen-reader user.
@@ -106,14 +119,7 @@ public class HistogramWidget extends Composite {
             canvas.getElement().setAttribute("role", "img");
             updateTextAlternative();
 
-            tooltip = new Label();
-            tooltip.addStyleName("stroom-histogram-tooltip");
-
-            final FlowPanel wrapper = new FlowPanel();
-            wrapper.addStyleName("stroom-histogram-wrapper");
-            wrapper.add(canvas);
-            wrapper.add(tooltip);
-            container.add(wrapper);
+            wrapper.insert(canvas, 0);
 
             canvas.addDomHandler(this::onMouseMove, MouseMoveEvent.getType());
             //noinspection unused event
@@ -125,7 +131,7 @@ public class HistogramWidget extends Composite {
             // container sees it bubble up from whatever does have focus.
             container.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
         } else {
-            tooltip = null;
+            wrapper.setVisible(false);
         }
 
         initWidget(container);
@@ -156,9 +162,10 @@ public class HistogramWidget extends Composite {
         Scheduler.get().scheduleDeferred(this::draw);
     }
 
-    /** Sets the click handler - receives the fractional position [0..1]. */
-    public void setClickHandler(final Consumer<Double> handler) {
-        this.clickHandler = handler;
+    /// @param onClick Told where the user clicked, as a fraction of the width from 0 to 1, or null for
+    ///                nothing.
+    public void setOnClick(final Consumer<Double> onClick) {
+        this.onClick = onClick;
     }
 
     /**
@@ -186,7 +193,7 @@ public class HistogramWidget extends Composite {
      * itself, so that custom properties inherit down from whichever ancestor
      * carries the theme class.</p>
      *
-     * @param property the custom property name, e.g. {@code --histogram-bar__color}
+     * @param property the custom property name, e.g. {@code --histogram-widget__bar-color}
      * @param fallback returned when the property is absent or empty
      */
     private String themeColour(final String property, final String fallback) {
@@ -376,7 +383,7 @@ public class HistogramWidget extends Composite {
     // -----------------------------------------------------------------------
 
     private void onMouseMove(final MouseMoveEvent event) {
-        if (bins == null || bins.length == 0 || tooltip == null) {
+        if (bins == null || bins.length == 0) {
             return;
         }
         final int containerWidth = container.getOffsetWidth();
@@ -392,18 +399,16 @@ public class HistogramWidget extends Composite {
         // Position the tooltip horizontally centred on the cursor, within the canvas bounds.
         final int tooltipW = tooltip.getOffsetWidth();
         final int clampedX = Math.max(0, Math.min(containerWidth - tooltipW, relX - tooltipW / 2));
-        tooltip.getElement().getStyle().setLeft(clampedX, Unit.PX);
-        tooltip.addStyleName("stroom-histogram-tooltip--visible");
+        CssProperties.set(tooltip.getElement(), "--histogram-widget__tooltip-left", clampedX + "px");
+        tooltip.addStyleName(TOOLTIP_VISIBLE);
     }
 
     private void hideTooltip() {
-        if (tooltip != null) {
-            tooltip.removeStyleName("stroom-histogram-tooltip--visible");
-        }
+        tooltip.removeStyleName(TOOLTIP_VISIBLE);
     }
 
     private boolean isTooltipShowing() {
-        return tooltip != null && tooltip.getStyleName().contains("stroom-histogram-tooltip--visible");
+        return tooltip.getStyleName().contains(TOOLTIP_VISIBLE);
     }
 
     /**
@@ -421,7 +426,7 @@ public class HistogramWidget extends Composite {
     }
 
     private void onClick(final ClickEvent event) {
-        if (clickHandler == null) {
+        if (onClick == null) {
             return;
         }
 
@@ -430,6 +435,14 @@ public class HistogramWidget extends Composite {
             return;
         }
 
-        clickHandler.accept(Math.max(0, Math.min(1.0, event.getX() / (double) w)));
+        onClick.accept(Math.max(0, Math.min(1.0, event.getX() / (double) w)));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, HistogramWidget> {
+
     }
 }

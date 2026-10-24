@@ -19,6 +19,8 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.shared.FloorMapIcon;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -27,9 +29,9 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -51,15 +53,16 @@ import java.util.Map;
 /// native radio button, unseen, which its text names, so the grid is one tab stop with the arrow
 /// keys choosing between the icons, as any radio group's do: Left and Right the one before or after
 /// (the browser's own), and Up and Down the one above or below in the grid as it is laid out. The
-/// chosen icon and the focused one are drawn from the radio button's state (`stroom-floormap.css`).
-public class FloorMapIconPicker extends Composite {
+/// chosen icon and the focused one are drawn from the radio button's state
+/// (`floormap-icon-picker.css`). Its markup is `FloorMapIconPicker.ui.xml`.
+public class FloorMapIconPicker extends Widget {
 
     /// Size of each cell's icon in pixels.
     private static final int ICON_SIZE_PX = 30;
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "floormap-icon-picker";
 
-    private final FlowPanel grid = new FlowPanel();
     // The radio buttons share a name, which makes them one group to the browser
     private final String name = DOM.createUniqueId();
     private final Map<FloorMapIcon, InputElement> inputs = new EnumMap<>(FloorMapIcon.class);
@@ -67,25 +70,23 @@ public class FloorMapIconPicker extends Composite {
 
     private FloorMapIcon selected;
     private String colour;
-    private Runnable changeHandler;
+    private Runnable onChange;
 
     public FloorMapIconPicker() {
-        grid.setStyleName(BLOCK);
-        grid.getElement().setAttribute("role", "radiogroup");
+        setElement(BINDER.createAndBindUi(this));
         for (final FloorMapIcon icon : FloorMapIcon.values()) {
-            grid.getElement().appendChild(buildCell(icon));
+            getElement().appendChild(buildCell(icon));
         }
         // A radio button's change bubbles to the grid: only the one just chosen fires it
         //noinspection unused event
-        grid.addDomHandler(event -> {
+        addDomHandler(event -> {
             final FloorMapIcon icon = chosenIcon();
             if (icon != null && icon != selected) {
                 selected = icon;
                 fireChange();
             }
         }, ChangeEvent.getType());
-        grid.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
-        initWidget(grid);
+        addDomHandler(this::onKeyDown, KeyDownEvent.getType());
     }
 
     private Element buildCell(final FloorMapIcon icon) {
@@ -148,7 +149,7 @@ public class FloorMapIconPicker extends Composite {
 
     // How many icons there are in a row of the grid as it is laid out: those level with the first
     private int columns() {
-        final Element first = grid.getElement().getFirstChildElement();
+        final Element first = getElement().getFirstChildElement();
         if (first == null) {
             return 1;
         }
@@ -217,14 +218,22 @@ public class FloorMapIconPicker extends Composite {
         }
     }
 
-    /// Registers the handler run when the user picks an icon.
-    public void setChangeHandler(final Runnable changeHandler) {
-        this.changeHandler = changeHandler;
+    /// @param onChange Run when the user picks an icon, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     private void fireChange() {
-        if (changeHandler != null) {
-            changeHandler.run();
+        if (onChange != null) {
+            onChange.run();
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<DivElement, FloorMapIconPicker> {
+
     }
 }

@@ -292,7 +292,7 @@ public final class UserGroupsScreenStories {
 
     private static native JsArrayString pagerTexts() /*-{
         var texts = [];
-        var pagers = $doc.querySelectorAll(".pager-paging");
+        var pagers = $doc.querySelectorAll(".paging-bar");
         for (var i = 0; i < pagers.length; i++) {
             texts.push(pagers[i].textContent.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim());
         }

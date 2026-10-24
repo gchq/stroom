@@ -312,18 +312,18 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                   + "selection-box--cell\"><div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"
                   + "<input type=\"text\" class=\"text-field selection-box__input stroom-control "
-                  + "svg-icon-box__field\" style=\"opacity: 0\" role=\"combobox\" aria-haspopup=\"listbox\" "
+                  + "svg-icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
                   + "aria-expanded=\"false\" value=\"{1}\" aria-label=\"{2}\" readonly "
                   + "data-selection-box-cell=\"{3}\"></input></div>"
                   + "<div class=\"svg-icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
         SafeHtml box(SafeHtml rendered, String text, String name, String rowId, SafeHtml arrow);
 
         @Template("<div class=\"svg-icon-box svg-icon-box--drop-down svg-icon-box--read-only selection-box "
-                  + "selection-box--select-only selection-box--readonly selection-box--cell\">"
+                  + "selection-box--select-only selection-box--read-only selection-box--cell\">"
                   + "<div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"
                   + "<input type=\"text\" class=\"text-field selection-box__input stroom-control "
-                  + "svg-icon-box__field\" style=\"opacity: 0\" role=\"combobox\" aria-haspopup=\"listbox\" "
+                  + "svg-icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
                   + "aria-expanded=\"false\" aria-readonly=\"true\" value=\"{1}\" aria-label=\"{2}\" readonly "
                   + "data-selection-box-cell=\"{3}\"></input></div>"
                   + "<div class=\"svg-icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")

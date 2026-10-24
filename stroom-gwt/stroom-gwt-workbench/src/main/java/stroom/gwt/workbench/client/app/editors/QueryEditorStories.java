@@ -445,7 +445,7 @@ public final class QueryEditorStories {
                     // Stroom pages the level with its pager ('1 to 100 of 105'), replacing the page; there
                     // is no 'Show more' to append rows
                     play.expect(play.queryByText(TextMatch.startingWith("Show more"))).toBeNull();
-                    play.expect(play.querySelectorAll(".pager-paging").nth(0).textContent())
+                    play.expect(play.querySelectorAll(".paging-bar").nth(0).textContent())
                             .toSatisfy("shows '1 to 100 of 105'", text ->
                                     String.valueOf(text).replace('\u00a0', ' ').contains("1 to 100 of 105"));
                     play.click(play.getAllByRole("button", "Forward").nth(0));

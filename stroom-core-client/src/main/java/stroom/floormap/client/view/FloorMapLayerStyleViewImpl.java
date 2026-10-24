@@ -142,7 +142,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
 
         //noinspection unused event
         shapeBox.addValueChangeHandler(event -> fireChange());
-        iconPicker.setChangeHandler(this::fireChange);
+        iconPicker.setOnChange(this::fireChange);
         //noinspection unused event
         colourBox.addValueChangeHandler(event -> {
             // The icons preview in the layer's colour, so they follow the picker.

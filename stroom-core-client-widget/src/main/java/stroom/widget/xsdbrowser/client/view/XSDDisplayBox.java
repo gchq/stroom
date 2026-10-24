@@ -16,50 +16,70 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.util.client.DoubleSelectTester;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/// A box of the schema diagram: its title, which selects its node when clicked (or opens it when
+/// double clicked), then any content below it. Its markup is `XSDDisplayBox.ui.xml`.
 public class XSDDisplayBox extends Composite implements SelectableItem {
 
-    private final XSDDisplayBoxTitle boxTitle;
-    private final FlowPanel layout;
-    private final FlowPanel outerBox;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    FlowPanel box;
+    @UiField
+    ClickPanel title;
+    @UiField
+    SimplePanel image;
+    @UiField
+    Label titleText;
+
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private boolean selected;
 
-    public XSDDisplayBox(final String imageClassName, final String title, final Widget content,
-                         final SelectionMap selectionMap, final XSDModel model, final XSDNode node, final String width,
-                         final String height) {
+    /// @param imageClassName The class of the title's image, for the kind of node.
+    /// @param titleText      The title.
+    /// @param content        What the box shows below its title, or null for nothing.
+    /// @param selectionMap   Where the box is recorded as showing its node.
+    /// @param model          The schema, told when the box's node is selected.
+    /// @param node           The node the box shows, or null for a box that can't be selected.
+    public XSDDisplayBox(final String imageClassName,
+                         final String titleText,
+                         final Widget content,
+                         final SelectionMap selectionMap,
+                         final XSDModel model,
+                         final XSDNode node) {
+        initWidget(BINDER.createAndBindUi(this));
         selectionMap.addSelectionItem(node, this);
-        boxTitle = new XSDDisplayBoxTitle(imageClassName, title, model, node);
-        boxTitle.setStylePrimaryName("boxTitle");
+        image.addStyleName(imageClassName);
+        this.titleText.setText(titleText);
 
-        // The title, then any content below it taking the rest of the height, both centred
-        layout = new FlowPanel();
-        layout.setStyleName("box");
-        layout.add(boxTitle);
+        if (node != null) {
+            title.addStyleDependentName("selectable");
+            title.addClickHandler(event -> {
+                final boolean doubleClick = doubleClickTest.test(node);
+                model.setSelectedItem(node, doubleClick);
+            });
+            title.addDoubleClickHandler(event -> model.setSelectedItem(node, true));
+        }
 
+        // Any content below the title takes the rest of the height
         if (content != null) {
             final ScrollPanel scrollPanel = new ScrollPanel();
             scrollPanel.addStyleName("boxContent");
             scrollPanel.add(content);
-            layout.add(scrollPanel);
-            boxTitle.addStyleDependentName("noContent");
+            box.add(scrollPanel);
+            title.addStyleDependentName("noContent");
         }
-
-        outerBox = new FlowPanel();
-        outerBox.setStyleName("outerBox");
-        outerBox.add(layout);
-
-        if (width != null) {
-            outerBox.setWidth(width);
-        }
-        if (height != null) {
-            outerBox.setHeight(height);
-        }
-
-        initWidget(outerBox);
 
         setSelected(false);
     }
@@ -74,9 +94,17 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
         this.selected = selected;
 
         if (selected) {
-            boxTitle.addStyleDependentName("selected");
+            title.addStyleDependentName("selected");
         } else {
-            boxTitle.removeStyleDependentName("selected");
+            title.removeStyleDependentName("selected");
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, XSDDisplayBox> {
+
     }
 }

@@ -60,6 +60,8 @@ tab, presenter; complexity 2, effort S; used by 3.
 
 **Stays in Java:** setSelectedNode: documentation text and constraints from the node (XSDBrowserViewImpl.java:73-79).
 
+**Stylesheet (from wave 2).** `xsdbrowser.css` is this block's, and isn't BEM yet: rename it `xsd-browser.css`, with the block `xsd-browser` (now `xsdBrowser`) and its elements and modifiers in BEM form, e.g. `xsd-browser__box`, `xsd-browser__box-title` (`--selected`, `--selectable`, `--no-content`), `xsd-browser__node-grid` and its `__cell` modifiers, `xsd-browser__node-label`, `xsd-browser__occurrence`, and the diagram's images (`xsdBrowser-xsdTree01` to `11`, `xsdBrowser-xsdTitle*` and the node images). Wave 2 left the names as they were (so `XSDDisplay` and `XSDDisplayBox`, wave 2, use them) and added `boxTitle-text`, `boxTitle-selectable`, `xsdBrowser-occurrence`, `xsdBrowser-nodeGrid__cell--start`/`--end`/`--top`/`--bottom`/`--separator` and `--xsd-node-grid__columns` in the same style, to be renamed with the rest here.
+
 ## `TextPresenter`
 
 composite, presenter; complexity 4, effort L; used by 3.

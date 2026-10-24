@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.item.client;
+/*
+   The days of the week (stroom.processor.client.view.DaysWidget), named BEM style: one tick box
+   under another, with room for a focused one's focus ring.
+*/
 
-public interface SelectionBoxView<T, I extends SelectionItem> {
-
-    void setModel(SelectionListModel<T, I> model);
+.days-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
 }

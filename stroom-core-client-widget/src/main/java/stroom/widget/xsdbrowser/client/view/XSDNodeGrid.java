@@ -16,6 +16,8 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.util.client.CssProperties;
+
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -24,12 +26,13 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The rows of an XSD node's children, with the tree lines that join them, as a CSS grid of a
-/// fixed number of columns (`xsdbrowser.css`). It replaced a GWT `Grid` (an HTML table, used only
-/// for its layout), and keeps its cells in the page in the same order, a row at a time.
+/// The rows of an XSD node's children, with the tree lines that join them, as a CSS grid of a fixed
+/// number of columns (`xsdbrowser.css`, `--xsd-node-grid__columns`). It replaced a GWT `Grid` (an HTML
+/// table, used only for its layout), and keeps its cells in the page in the same order, a row at a
+/// time.
 ///
 /// Every cell of every row is made, empty until given a widget, so that a style set on a row
-/// (e.g. a border under it) runs the width of the grid.
+/// (e.g. a border under it, `xsdBrowser-nodeGrid__cell--separator`) runs the width of the grid.
 class XSDNodeGrid extends Composite {
 
     private static final String GRID = "xsdBrowser-nodeGrid";
@@ -43,8 +46,7 @@ class XSDNodeGrid extends Composite {
     XSDNodeGrid(final int columnCount) {
         this.columnCount = columnCount;
         panel.setStyleName(GRID);
-        panel.getElement().getStyle().setProperty("gridTemplateColumns",
-                "repeat(" + columnCount + ", auto)");
+        CssProperties.set(panel.getElement(), "--xsd-node-grid__columns", String.valueOf(columnCount));
         initWidget(panel);
     }
 
@@ -83,24 +85,22 @@ class XSDNodeGrid extends Composite {
         rows.get(row).get(col).setWidget(widget);
     }
 
-    /// Sets a style property on a cell.
+    /// Adds a class to a cell.
     ///
-    /// @param row   The cell's row.
-    /// @param col   The cell's column.
-    /// @param name  The property's name, e.g. `paddingLeft`.
-    /// @param value The property's value, e.g. `5px`.
-    void setCellStyle(final int row, final int col, final String name, final String value) {
-        rows.get(row).get(col).getElement().getStyle().setProperty(name, value);
+    /// @param row       The cell's row.
+    /// @param col       The cell's column.
+    /// @param styleName The class, e.g. `xsdBrowser-nodeGrid__cell--start`.
+    void addCellStyleName(final int row, final int col, final String styleName) {
+        rows.get(row).get(col).addStyleName(styleName);
     }
 
-    /// Sets a style property on every cell of a row.
+    /// Adds a class to every cell of a row.
     ///
-    /// @param row   The row.
-    /// @param name  The property's name, e.g. `borderBottom`.
-    /// @param value The property's value, e.g. `1px solid black`.
-    void setRowStyle(final int row, final String name, final String value) {
+    /// @param row       The row.
+    /// @param styleName The class, e.g. `xsdBrowser-nodeGrid__cell--separator`.
+    void addRowStyleName(final int row, final String styleName) {
         for (int col = 0; col < columnCount; col++) {
-            setCellStyle(row, col, name, value);
+            addCellStyleName(row, col, styleName);
         }
     }
 }

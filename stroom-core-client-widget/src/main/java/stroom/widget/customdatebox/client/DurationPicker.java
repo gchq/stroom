@@ -16,46 +16,47 @@
 
 package stroom.widget.customdatebox.client;
 
-import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
-import stroom.widget.form.client.AccessibleName;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// A duration: an amount (a value spinner, "Amount") and its unit (a selection box, "Unit"), side by
 /// side. In a form group, which all of Stroom's are in, the two are a `group` named by its label.
 ///
-/// Styled by `duration-picker.css`: `duration-picker`, `__amount`, `__unit`.
+/// Its markup is `DurationPicker.ui.xml`, styled by `duration-picker.css`: `duration-picker`,
+/// `__amount`, `__unit`.
 public class DurationPicker extends Composite implements HasValue<SimpleDuration>, Focus {
 
-    private static final String BLOCK = "duration-picker";
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final ValueSpinner time;
-    private final SelectionBox<TimeUnit> timeUnit;
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(time.addValueChangeHandler(event ->
-                    ValueChangeEvent.fire(DurationPicker.this, getValue())));
-            registerHandler(timeUnit.addValueChangeHandler(event ->
-                    ValueChangeEvent.fire(DurationPicker.this, getValue())));
-        }
-    };
+    @UiField
+    ValueSpinner time;
+    @UiField
+    SelectionBox<TimeUnit> timeUnit;
+    private Consumer<SimpleDuration> onChange;
 
     public DurationPicker() {
-        time = new ValueSpinner();
+        initWidget(BINDER.createAndBindUi(this));
+        // Its own children's handlers, which go with them
+        time.addValueChangeHandler(event -> fireChange());
+        timeUnit.addValueChangeHandler(event -> fireChange());
+
+        // Its bounds are longs, which a template can't give
         time.setMin(1);
         time.setMax(1000000);
-
-        timeUnit = new SelectionBox<>();
         timeUnit.addItem(TimeUnit.SECONDS);
         timeUnit.addItem(TimeUnit.MINUTES);
         timeUnit.addItem(TimeUnit.HOURS);
@@ -63,18 +64,19 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         timeUnit.addItem(TimeUnit.WEEKS);
         timeUnit.addItem(TimeUnit.MONTHS);
         timeUnit.addItem(TimeUnit.YEARS);
+    }
 
-        time.addStyleName(BLOCK + "__amount");
-        timeUnit.addStyleName(BLOCK + "__unit");
+    /// @param onChange Told the duration when the user changes its amount or its unit (or
+    ///                 `setValue(value, true)` sets it), or null for nothing.
+    public void setOnChange(final Consumer<SimpleDuration> onChange) {
+        this.onChange = onChange;
+    }
 
-        final FlowPanel flowPanel = new FlowPanel();
-        flowPanel.setStyleName(BLOCK);
-        flowPanel.add(time);
-        flowPanel.add(timeUnit);
-        initWidget(flowPanel);
-        // Named by the part they are, as the label of the field (a FormGroup) names the duration
-        AccessibleName.set(time, "Amount");
-        AccessibleName.set(timeUnit, "Unit");
+    private void fireChange() {
+        ValueChangeEvent.fire(this, getValue());
+        if (onChange != null) {
+            onChange.accept(getValue());
+        }
     }
 
     public void smallTimeMode() {
@@ -91,16 +93,6 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     @Override
     public void focus() {
         time.focus();
-    }
-
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
-    }
-
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
     }
 
     @Override
@@ -124,7 +116,7 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         // As setValue(value), which this once didn't call: it threw on null, and never fired
         setValue(value);
         if (fireEvents) {
-            ValueChangeEvent.fire(this, getValue());
+            fireChange();
         }
     }
 
@@ -146,5 +138,13 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     public void setReadOnly(final boolean readOnly) {
         time.setReadOnly(readOnly);
         timeUnit.setReadOnly(readOnly);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DurationPicker> {
+
     }
 }

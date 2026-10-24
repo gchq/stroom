@@ -114,7 +114,7 @@ public class SshKeySecretViewImpl
 
     @Override
     public void focus() {
-        passPhrase.setFocus(true);
+        passPhrase.focus();
     }
 
     public interface Binder extends UiBinder<Widget, SshKeySecretViewImpl> {

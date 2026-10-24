@@ -17,9 +17,12 @@
 package stroom.item.client;
 
 import stroom.svg.client.SvgIconBox;
+import stroom.widget.component.client.AriaPanel;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.util.client.SelectionType;
 import stroom.widget.util.client.TypedKey;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -27,16 +30,17 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// A box for choosing a value from a list, a WAI-ARIA combobox: its text box (`role="combobox"`) opens
@@ -46,22 +50,26 @@ import java.util.function.Supplier;
 /// and Enter or Alt+Up there chooses an option, and Escape closes it. Its drop-down arrow is an
 /// [SvgIconBox]'s.
 ///
-/// Styled by selection-box.css: `selection-box`, `selection-box__control`, `selection-box__value` and
-/// `selection-box__input`, and the modifiers `selection-box--select-only`, `selection-box--disabled`
-/// and `selection-box--readonly`.
+/// Its markup is `BaseSelectionBox.ui.xml`, styled by selection-box.css: `selection-box`,
+/// `selection-box__control`, `selection-box__value` and `selection-box__input`, and the modifiers
+/// `selection-box--select-only`, `selection-box--disabled` and `selection-box--read-only`.
 public class BaseSelectionBox<T, I extends SelectionItem>
         extends Composite
-        implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
+        implements Focus, HasValueChangeHandlers<T> {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     // The block's classes (selection-box.css)
     private static final String BLOCK = "selection-box";
     private static final String DISABLED = BLOCK + "--disabled";
-    private static final String READ_ONLY = BLOCK + "--readonly";
+    private static final String READ_ONLY = BLOCK + "--read-only";
     private static final String SELECT_ONLY = BLOCK + "--select-only";
 
-    private final SimplePanel renderBox;
-    private final TextBox textBox;
-    private final SvgIconBox svgIconBox;
+    @UiField
+    AriaPanel renderBox;
+    @UiField
+    TextInput textBox;
+    @UiField
+    SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
     private T value;
     private SelectionPopup<T, I> popup;
@@ -69,56 +77,47 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private boolean isEnabled = true;
     private boolean readOnly;
     private Supplier<SafeHtml> popupTextSupplier;
-
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(svgIconBox.addClickHandler(event -> togglePopup()));
-            registerHandler(textBox.addClickHandler(event -> onTextBoxClick()));
-            registerHandler(textBox.addKeyDownHandler(event -> onKeyDown(event.getNativeEvent())));
-            registerHandler(textBox.addValueChangeHandler(event ->
-                    ValueChangeEvent.fire(BaseSelectionBox.this, value)));
-        }
-    };
+    private Consumer<T> onChange;
 
     public BaseSelectionBox() {
-        textBox = new TextBox();
-        textBox.addStyleName(BLOCK + "__input stroom-control allow-focus");
-
-        renderBox = new SimplePanel();
-        renderBox.addStyleName(BLOCK + "__value stroom-control allow-focus");
-        // A picture of the value, which the text box (the named control) also holds, so screen
-        // readers don't read it twice
-        renderBox.getElement().setAttribute("aria-hidden", "true");
-        // The text box opens a list of the values to choose from
-        textBox.getElement().setAttribute("role", "combobox");
-        textBox.getElement().setAttribute("aria-haspopup", "listbox");
-        textBox.getElement().setAttribute("aria-expanded", "false");
-
-        final FlowPanel outer = new FlowPanel();
-        outer.addStyleName(BLOCK + "__control");
-        outer.add(renderBox);
-        outer.add(textBox);
-
-        svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName(BLOCK);
-        svgIconBox.setDropDownWidget(outer);
-
-        initWidget(svgIconBox);
-        setAllowTextEntry(false);
+        initWidget(BINDER.createAndBindUi(this));
+        // Its own children's handlers, which go with them
+        svgIconBox.addClickHandler(event -> togglePopup());
+        textBox.addClickHandler(event -> onTextBoxClick());
+        textBox.addKeyDownHandler(event -> onKeyDown(event.getNativeEvent()));
+        textBox.addValueChangeHandler(event -> fireChange());
     }
 
+    /// Lets the value be typed, rather than only chosen from the list. Only the text box shows in a
+    /// box that can be typed in, and only the picture of the value in one that can't
+    /// (`selection-box--select-only`, which opens its list when clicked).
+    ///
+    /// @param allowTextEntry Whether the value can be typed.
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         textBox.setReadOnly(readOnly || !allowTextEntry);
-        textBox.getElement().getStyle().setOpacity(allowTextEntry
-                ? 1
-                : 0);
-        renderBox.getElement().getStyle().setOpacity(allowTextEntry
-                ? 0
-                : 1);
-        // A box that can't be typed in opens its list when clicked (selection-box.css)
         svgIconBox.setStyleName(SELECT_ONLY, !allowTextEntry);
+    }
+
+    /// @param onChange Told the value chosen when the user chooses one (or `setValue(value, true)`
+    ///                 changes it), or null for nothing.
+    public void setOnChange(final Consumer<T> onChange) {
+        this.onChange = onChange;
+    }
+
+    /// Names the box for screen readers where no label names it, e.g. a box beside another field.
+    /// Bound to the `ariaLabel` attribute in ui.xml.
+    ///
+    /// @param ariaLabel The name, or null or blank for none.
+    public void setAriaLabel(final String ariaLabel) {
+        textBox.setAriaLabel(ariaLabel);
+    }
+
+    private void fireChange() {
+        ValueChangeEvent.fire(this, value);
+        if (onChange != null) {
+            onChange.accept(value);
+        }
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
@@ -167,17 +166,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         return this.isEnabled;
     }
 
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
-    }
-
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
-    }
-
-    @Override
+    /// @param model The values to choose from, and how each is shown.
     public void setModel(final SelectionListModel<T, I> model) {
         this.model = model;
     }
@@ -344,7 +333,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         renderBox.getElement().setInnerHTML(newHTML);
 
         if (fireEvents && changed) {
-            ValueChangeEvent.fire(this, value);
+            fireChange();
         }
     }
 
@@ -355,5 +344,15 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     @Override
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(final ValueChangeHandler<T> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Generic in its owner, as the box is
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<Widget, BaseSelectionBox> {
+
     }
 }

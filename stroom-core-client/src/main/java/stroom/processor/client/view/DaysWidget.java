@@ -21,22 +21,20 @@ import stroom.util.shared.time.Days;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
+/// The days of the week, a tick box each (`days-widget.css`, markup `DaysWidget.ui.xml`).
 public final class DaysWidget extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-
-    private final Widget widget;
 
     @UiField
     CustomCheckBox mon;
@@ -54,15 +52,26 @@ public final class DaysWidget extends Composite {
     CustomCheckBox sun;
 
     private final Set<Day> value = new HashSet<>();
+    private Consumer<Days> onChange;
 
     public DaysWidget() {
-        widget = BINDER.createAndBindUi(this);
-        initWidget(widget);
+        initWidget(BINDER.createAndBindUi(this));
+        listen(mon, Day.MONDAY);
+        listen(tue, Day.TUESDAY);
+        listen(wed, Day.WEDNESDAY);
+        listen(thu, Day.THURSDAY);
+        listen(fri, Day.FRIDAY);
+        listen(sat, Day.SATURDAY);
+        listen(sun, Day.SUNDAY);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    private void listen(final CustomCheckBox checkBox, final Day day) {
+        checkBox.setOnChange(ticked -> toggleDay(day));
+    }
+
+    /// @param onChange Told the days chosen when the user ticks or unticks one, or null for nothing.
+    public void setOnChange(final Consumer<Days> onChange) {
+        this.onChange = onChange;
     }
 
     /// Makes the days read only: they can be read and stay in the tab order, but can't be ticked
@@ -100,41 +109,6 @@ public final class DaysWidget extends Composite {
         update();
     }
 
-    @UiHandler("mon")
-    public void onMon(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.MONDAY);
-    }
-
-    @UiHandler("tue")
-    public void onTue(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.TUESDAY);
-    }
-
-    @UiHandler("wed")
-    public void onWed(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.WEDNESDAY);
-    }
-
-    @UiHandler("thu")
-    public void onThu(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.THURSDAY);
-    }
-
-    @UiHandler("fri")
-    public void onFri(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.FRIDAY);
-    }
-
-    @UiHandler("sat")
-    public void onSat(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.SATURDAY);
-    }
-
-    @UiHandler("sun")
-    public void onSun(final ValueChangeEvent<Boolean> e) {
-        toggleDay(Day.SUNDAY);
-    }
-
     private void toggleDay(final Day day) {
         if (value.contains(day)) {
             value.remove(day);
@@ -142,6 +116,9 @@ public final class DaysWidget extends Composite {
             value.add(day);
         }
         update();
+        if (onChange != null) {
+            onChange.accept(getValue());
+        }
     }
 
     private void update() {

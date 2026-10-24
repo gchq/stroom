@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's calendar, the [CustomDatePicker] of `stroom.widget.datepicker.client`
-/// (its `DefaultMonthSelector` and `CalendarGrid`), as shown in the date and time dialog
+/// (its year and month rows and its `CalendarGrid`), as shown in the date and time dialog
 /// (`DateTimeViewImpl`).
 ///
 /// The days are a WAI-ARIA grid named for its month, each day a `gridcell` named by its full date

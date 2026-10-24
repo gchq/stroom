@@ -16,7 +16,6 @@
 
 package stroom.query.client.view;
 
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
@@ -24,15 +23,17 @@ import stroom.widget.customdatebox.client.MomentJs;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
+/// A time zone: how it is given (local, UTC, an id or an offset), then the id or the offset as
+/// chosen. Its markup is `TimeZoneWidget.ui.xml`.
 public final class TimeZoneWidget extends Composite {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup userPreferencesTimeZoneId;
@@ -48,11 +49,13 @@ public final class TimeZoneWidget extends Composite {
     // The offset's minutes, which can't be set here, as browsers don't support minute offsets: kept
     // as they were set, so a time zone that has them keeps them
     private int timeZoneOffsetMinutes;
-    private ChangeUiHandlers uiHandlers;
+    private Runnable onChange;
 
-    @Inject
-    public TimeZoneWidget(final Binder binder) {
-        final Widget widget = binder.createAndBindUi(this);
+    public TimeZoneWidget() {
+        final Widget widget = BINDER.createAndBindUi(this);
+        timeZoneUse.setOnChange(use -> onPartChange());
+        timeZoneId.setOnChange(id -> onPartChange());
+        timeZoneOffsetHours.setOnChange(hours -> onPartChange());
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
@@ -145,10 +148,6 @@ public final class TimeZoneWidget extends Composite {
         userPreferencesTimeZoneOffset.setVisible(Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
-    public void onReadOnly(final boolean readOnly) {
-        setReadOnly(readOnly);
-    }
-
     /// Makes the time zone read only: it can be read and stays in the tab order, but none of its
     /// parts can be changed. It looks like the normal fields with their values greyed.
     ///
@@ -168,35 +167,24 @@ public final class TimeZoneWidget extends Composite {
         timeZoneOffsetHours.setEnabled(enabled);
     }
 
-    @UiHandler("timeZoneUse")
-    public void onTimeZoneUse(final ValueChangeEvent<Use> event) {
-        changeVisible();
-        fireChange();
-    }
-
-    @UiHandler("timeZoneId")
-    public void onTimeZoneId(final ValueChangeEvent<String> event) {
-        changeVisible();
-        fireChange();
-    }
-
-    @UiHandler("timeZoneOffsetHours")
-    public void onTimeZoneOffsetHours(final ValueChangeEvent<Long> event) {
+    // A part changed by the user: Use may show or hide the id or the offset
+    private void onPartChange() {
         changeVisible();
         fireChange();
     }
 
     private void fireChange() {
-        if (uiHandlers != null) {
-            uiHandlers.onChange();
+        if (onChange != null) {
+            onChange.run();
         }
     }
 
-    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+    /// @param onChange Run when the user changes any part of the time zone, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
-    public interface Binder extends UiBinder<Widget, TimeZoneWidget> {
+    interface Binder extends UiBinder<Widget, TimeZoneWidget> {
 
     }
 }

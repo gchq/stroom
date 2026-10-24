@@ -753,9 +753,9 @@ export async function filterGrid(page, text, settle) {
  */
 export function gridTotal(page) {
   return page.evaluate(() => {
-    const pager = [...document.querySelectorAll('.pager-paging')].find((p) => p.offsetWidth > 0);
+    const pager = [...document.querySelectorAll('.paging-bar')].find((p) => p.offsetWidth > 0);
     if (!pager) return null;
-    const labels = [...pager.querySelectorAll('.pager-label')].filter((e) => e.offsetWidth > 0);
+    const labels = [...pager.querySelectorAll('.paging-bar__label')].filter((e) => e.offsetWidth > 0);
     const last = labels[labels.length - 1];
     const m = /(-?[\d,]+)/.exec(String(last?.textContent ?? ''));
     return m ? Number(m[1].replace(/,/g, '')) : null;

@@ -198,8 +198,8 @@ public final class ElasticClusterEditorStories {
                     play.expect(play.querySelector(URLS)).not().toBeDisabled();
                     play.type(play.querySelector(URLS), "x");
                     play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
-                    // A read-only SelectionBox has the selection-box--readonly modifier
-                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--readonly");
+                    // A read-only SelectionBox has the selection-box--read-only modifier
+                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--read-only");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     // The tab says it is read only, as a status that screen readers announce
                     final Query note = play.getByText("Read only", ".docTab-readOnlyNote");

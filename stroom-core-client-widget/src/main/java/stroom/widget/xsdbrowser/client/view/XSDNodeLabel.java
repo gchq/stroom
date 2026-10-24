@@ -33,7 +33,6 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
                         final XSDNode refNode) {
         final Label label = new Label(title);
         label.addStyleName("nodeLabel");
-        label.getElement().setAttribute("unselectable", "on");
 
         selectionMap.addSelectionItem(node, this);
         selectionMap.addSelectionItem(refNode, this);
@@ -63,13 +62,14 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
     public void setSelected(final boolean selected) {
         this.selected = selected;
 
-        final Element td = getElement().getParentElement();
-        final Element tr = td.getParentElement();
+        // The label's cell of the grid (its grandparent is the whole grid, since the grid's rows
+        // are no longer elements of their own)
+        final Element cell = getElement().getParentElement();
 
         if (selected) {
-            tr.addClassName("nodeLabelSelected");
+            cell.addClassName("nodeLabelSelected");
         } else {
-            tr.removeClassName("nodeLabelSelected");
+            cell.removeClassName("nodeLabelSelected");
         }
     }
 }

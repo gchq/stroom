@@ -252,8 +252,8 @@ public final class OpenAiModelEditorStories {
                     // Read only, not disabled: the fields can be read and copied but not changed
                     play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toHaveAttribute("readonly"));
                     play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();
-                    // A read-only SelectionBox has the selection-box--readonly modifier
-                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--readonly");
+                    // A read-only SelectionBox has the selection-box--read-only modifier
+                    play.expect(play.querySelector(API_KEY)).toHaveClass("selection-box--read-only");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })

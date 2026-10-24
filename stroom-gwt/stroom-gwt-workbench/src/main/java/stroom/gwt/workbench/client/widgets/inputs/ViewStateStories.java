@@ -504,7 +504,7 @@ public final class ViewStateStories {
     }
 
     private static Widget timeZone() {
-        final TimeZoneWidget widget = new TimeZoneWidget(GWT.create(TimeZoneWidget.Binder.class));
+        final TimeZoneWidget widget = new TimeZoneWidget();
         widget.setTimeZoneUse(UserTimeZone.Use.ID);
         widget.setTimeZoneId("Europe/London");
         widget.changeVisible();

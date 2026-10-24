@@ -295,7 +295,7 @@ of closing it.
 ### Layer 4f — data variety · measurable, not yet measured
 The plan has said from the start that "a grid with three rows recorded proves the grid, not the paging"
 and then never returned to it. It is measurable: the pager renders its state inline as
-`&nbsp; 1 &nbsp;to&nbsp; 45 <input class="pager-textBox">`, so current page, page size and total are
+`&nbsp; 1 &nbsp;to&nbsp; 45 <input class="paging-bar__text-box">`, so current page, page size and total are
 all recoverable per screen — with an entity-aware parse, which is why a first attempt with a naive
 regex found nothing.
 

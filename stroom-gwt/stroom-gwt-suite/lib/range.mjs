@@ -28,9 +28,9 @@
 // So one gesture exercises eight handlers on a class every grid screen shares — two clicks, two key
 // presses and four focus/blur — and tests a behaviour nothing else reaches.
 //
-// The DOM is `Pager.ui.xml`: `.pager-paging` holding `.pager-label` captions and two hidden
-// `.pager-textBox` boxes. The labels all share one class, so `lblFrom` is identified by POSITION
-// relative to the boxes — it is the label immediately before the first `.pager-textBox` — rather
+// The DOM is `Pager.ui.xml`: `.paging-bar` holding `.paging-bar__label` captions and two hidden
+// `.paging-bar__text-box` boxes. The labels all share one class, so `lblFrom` is identified by POSITION
+// relative to the boxes — it is the label immediately before the first `.paging-bar__text-box` — rather
 // than by counting captions, which would break the moment a caption were added.
 
 /** The first visible pager's range, and where to click to edit it. */
@@ -60,9 +60,9 @@ export function readRange(page) {
     // Scope to the topmost dialog when one is up, so the pager under it is never even considered.
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document;
-    for (const pager of scope.querySelectorAll('.pager-paging')) {
+    for (const pager of scope.querySelectorAll('.paging-bar')) {
       if (!(pager.offsetWidth > 0)) continue;
-      const boxes = [...pager.querySelectorAll('.pager-textBox')];
+      const boxes = [...pager.querySelectorAll('.paging-bar__text-box')];
       if (boxes.length < 2) continue;
       const kids = [...pager.children];
       // `lblFrom` is the label immediately before the FIRST text box; `lblTo` the one before the
@@ -73,7 +73,7 @@ export function readRange(page) {
       const lblTo = i1 > 0 ? kids[i1 - 1] : null;
       if (!lblFrom || !lblTo) continue;
       // The "of N" caption is the last label with a number in it.
-      const labels = [...pager.querySelectorAll('.pager-label')].filter((e) => e.offsetWidth > 0);
+      const labels = [...pager.querySelectorAll('.paging-bar__label')].filter((e) => e.offsetWidth > 0);
       const of = labels.length ? num(labels[labels.length - 1].textContent) : null;
       // A label that something covers cannot be clicked, so there is nothing to assert about it.
       if (!hittable(lblFrom)) continue;
@@ -93,10 +93,10 @@ export function readRange(page) {
 
 /** The visible text boxes' values, once the range editor is open. */
 const boxValues = (page) => page.evaluate(() => {
-  const pager = [...document.querySelectorAll('.pager-paging')].find((p) => p.offsetWidth > 0
-    && [...p.querySelectorAll('.pager-textBox')].some((b) => b.offsetWidth > 0));
+  const pager = [...document.querySelectorAll('.paging-bar')].find((p) => p.offsetWidth > 0
+    && [...p.querySelectorAll('.paging-bar__text-box')].some((b) => b.offsetWidth > 0));
   if (!pager) return null;
-  const boxes = [...pager.querySelectorAll('.pager-textBox')];
+  const boxes = [...pager.querySelectorAll('.paging-bar__text-box')];
   const pt = (b) => {
     const r = b?.getBoundingClientRect();
     return r && r.width > 0 ? { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) } : null;

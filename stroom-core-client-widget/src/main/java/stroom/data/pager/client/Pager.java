@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class Pager extends AbstractPager {
 
-    private static Binder binder;
+    private static final Binder BINDER = GWT.create(Binder.class);
     @UiField
     ToolbarButton first;
     @UiField
@@ -51,7 +51,7 @@ public class Pager extends AbstractPager {
     ToolbarButton next;
     @UiField
     ToolbarButton last;
-    @UiField(provided = true)
+    @UiField
     RefreshButton refresh;
     @UiField
     Label lblTitle;
@@ -79,13 +79,7 @@ public class Pager extends AbstractPager {
     private final Set<FocusWidget> focussed = new HashSet<>();
 
     public Pager() {
-        if (binder == null) {
-            binder = GWT.create(Binder.class);
-        }
-
-        refresh = new RefreshButton();
-
-        initWidget(binder.createAndBindUi(this));
+        initWidget(BINDER.createAndBindUi(this));
 
         // Disable the buttons by default.
         setupButton(first);

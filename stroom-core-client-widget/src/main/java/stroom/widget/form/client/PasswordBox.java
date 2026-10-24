@@ -17,25 +17,29 @@
 package stroom.widget.form.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.FieldEnd;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasEnabled;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// A password box: a text box whose value is hidden, with a button over its end that shows and hides
 /// it. The button is named for what pressing it does ("Show password", then "Hide password"), and a
@@ -46,45 +50,36 @@ import com.google.gwt.user.client.ui.Widget;
 /// input is [#getInput()], e.g. to mark it invalid with [FieldValidity]. Something shown beside the
 /// button (e.g. the change password screen's length badge) is added with [#setBadge(Widget)].
 ///
-/// Styled by password-box.css: `password-box`, `password-box__input`, `password-box__end`,
-/// `password-box__badge`, `password-box__toolbar` and `password-box__status`.
+/// Its markup is `PasswordBox.ui.xml`, styled by password-box.css: `password-box`,
+/// `password-box__input`, `password-box__end`, `password-box__badge`, `password-box__toolbar` and
+/// `password-box__status`.
 public class PasswordBox extends Composite
         implements HasValue<String>, HasText, HasEnabled, HasKeyDownHandlers, HasKeyUpHandlers {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "password-box";
     private static final String WITH_BADGE = BLOCK + "--with-badge";
     private static final String TYPE = "type";
 
-    private final PasswordTextBox input = new PasswordTextBox();
-    private final FlowPanel end = new FlowPanel();
-    private final ToolbarButton revealButton;
-    private final Label status = new Label();
+    @UiField
+    PasswordTextBox input;
+    @UiField
+    FlowPanel end;
+    @UiField
+    ToolbarButton revealButton;
+    // Says that the password is shown or hidden, which the button's new name alone may not
+    @UiField
+    DivElement status;
     // Keeps the text clear of the button and any badge, whose width depends on its text
     private final FieldEnd fieldEnd;
     // What the box holds, as its button and announcements name it, e.g. "password" or "pass phrase"
     private String secretName = "password";
     private boolean shown;
+    private HandlerRegistration onChangeRegistration;
 
     public PasswordBox() {
-        input.addStyleName(BLOCK + "__input");
-
-        final Toolbar toolbar = new Toolbar("Password");
-        toolbar.addStyleName(BLOCK + "__toolbar");
-        revealButton = toolbar.button(SvgImage.EYE, "", this::toggleShown);
-
-        end.setStyleName(BLOCK + "__end");
-        end.add(toolbar);
-
-        // Says that the password is shown or hidden, which the button's new name alone may not
-        status.setStyleName(BLOCK + "__status");
-        status.getElement().setAttribute("aria-live", "polite");
-
-        final FlowPanel panel = new FlowPanel();
-        panel.setStyleName(BLOCK);
-        panel.add(input);
-        panel.add(end);
-        panel.add(status);
-        initWidget(panel);
+        initWidget(BINDER.createAndBindUi(this));
+        revealButton.setOnClick(this::toggleShown);
         fieldEnd = new FieldEnd(input.getElement(), end.getElement());
 
         update();
@@ -142,7 +137,7 @@ public class PasswordBox extends Composite
         if (this.shown != shown) {
             this.shown = shown;
             update();
-            status.setText("Your " + secretName + " is " + (shown
+            status.setInnerText("Your " + secretName + " is " + (shown
                     ? "shown"
                     : "hidden"));
         }
@@ -184,6 +179,18 @@ public class PasswordBox extends Composite
         return input.addValueChangeHandler(handler);
     }
 
+    /// @param onChange Told the new value when the user changes it (as a value change event is), or
+    ///                 null for nothing.
+    public void setOnChange(final Consumer<String> onChange) {
+        if (onChangeRegistration != null) {
+            onChangeRegistration.removeHandler();
+            onChangeRegistration = null;
+        }
+        if (onChange != null) {
+            onChangeRegistration = input.addValueChangeHandler(event -> onChange.accept(event.getValue()));
+        }
+    }
+
     @Override
     public String getText() {
         return input.getText();
@@ -213,9 +220,9 @@ public class PasswordBox extends Composite
         input.setReadOnly(readOnly);
     }
 
-    /// @param focused Whether the box's input has the focus.
-    public void setFocus(final boolean focused) {
-        input.setFocus(focused);
+    /// Puts the focus in the box.
+    public void focus() {
+        input.setFocus(true);
     }
 
     @Override
@@ -226,5 +233,13 @@ public class PasswordBox extends Composite
     @Override
     public HandlerRegistration addKeyUpHandler(final KeyUpHandler handler) {
         return input.addKeyUpHandler(handler);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, PasswordBox> {
+
     }
 }

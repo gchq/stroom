@@ -100,7 +100,7 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     @Override
     public void focus() {
-        password.setFocus(true);
+        password.focus();
     }
 
     @Override

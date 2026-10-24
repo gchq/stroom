@@ -115,7 +115,7 @@ public final class ReportEditorStories {
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
                     play.expect(play.within(play.getByText("File Type", "label").closest(".form-group"))
-                            .querySelector(".selection-box")).toHaveClass("selection-box--readonly");
+                            .querySelector(".selection-box")).toHaveClass("selection-box--read-only");
                     play.expect(play.getByRole("checkbox", "Send Empty Reports"))
                             .toHaveAttribute("aria-readonly", "true");
                     play.expect(picker(play, "Feed For Errors")).toHaveAttribute("aria-disabled", "true");

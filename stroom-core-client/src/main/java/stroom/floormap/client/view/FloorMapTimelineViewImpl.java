@@ -226,7 +226,7 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         // Build the histogram widget and place it inside the container.
         histogramWidget = new HistogramWidget();
         // Histogram click-to-seek — treat it like releasing the scrubber.
-        histogramWidget.setClickHandler(fraction -> {
+        histogramWidget.setOnClick(fraction -> {
             if (commitHandler != null) {
                 commitHandler.accept(fraction * 100.0);
             }

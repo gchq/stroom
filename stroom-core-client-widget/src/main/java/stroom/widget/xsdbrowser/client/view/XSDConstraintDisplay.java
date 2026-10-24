@@ -59,9 +59,9 @@ public class XSDConstraintDisplay extends Composite {
             Label lblRestrictionType = null;
 
             if (enumeration) {
-                lblRestrictionType = new Label("Enumeration", false);
+                lblRestrictionType = oneLineLabel("Enumeration");
             } else {
-                lblRestrictionType = new Label("Pattern", false);
+                lblRestrictionType = oneLineLabel("Pattern");
             }
             lblRestrictionType.addStyleName("restrictionType");
 
@@ -70,7 +70,7 @@ public class XSDConstraintDisplay extends Composite {
             layout.add(lblRestrictionType);
 
             for (final String value : list) {
-                layout.add(new Label(value, false));
+                layout.add(oneLineLabel(value));
             }
 
             final SimplePanel simplePanel = new SimplePanel();
@@ -81,5 +81,12 @@ public class XSDConstraintDisplay extends Composite {
         }
 
         return null;
+    }
+
+    // A label kept on one line (xsdbrowser.css)
+    private static Label oneLineLabel(final String text) {
+        final Label label = new Label(text);
+        label.addStyleName("xsdBrowser-oneLine");
+        return label;
     }
 }

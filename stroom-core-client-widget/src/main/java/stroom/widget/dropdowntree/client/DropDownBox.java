@@ -80,11 +80,6 @@ public class DropDownBox extends Component {
                 open(event.getNativeEvent());
             }
         }, KeyDownEvent.getType());
-        getElement().setTabIndex(0);
-        // To assistive technology it is a button that opens a dialog to choose the value it shows.
-        // A FormGroup names it with its label, followed by the value.
-        getElement().setAttribute("role", "button");
-        getElement().setAttribute("aria-haspopup", "dialog");
 
         SvgImageUtil.setSvgAsInnerHtml(ellipsesBtnPanel, SvgImage.ELLIPSES_HORIZONTAL);
 

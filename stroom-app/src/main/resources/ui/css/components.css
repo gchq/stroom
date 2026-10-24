@@ -297,40 +297,9 @@
     gap: var(--control__gap--horizontal);
 }
 
-.pager-paging {
-    position: relative;
-    text-align: right;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-content: center;
-    align-items: center;
-    justify-content: flex-end;
-}
-
 .pager-heading {
 
 
-}
-
-.pager-label {
-    display: inline-block;
-    margin: 0;
-    cursor: pointer;
-}
-
-.pager-textBox {
-    display: inline-block;
-    width: 42px;
-    height: 22px;
-    padding: 0;
-    margin: 0;
-    border: none;
-}
-
-.pager-space {
-    display: inline;
-    width: 8px;
 }
 
 .pager-button {
@@ -1531,14 +1500,6 @@
 
 .queryHelp-details {
     overflow: hidden;
-}
-
-/* The days of the week, one tick box under another, with room for a focused one's focus ring */
-.days {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
 }
 
 .editNodeTagsAllTagsFrmGrp,

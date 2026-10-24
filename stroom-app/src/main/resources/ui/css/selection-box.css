@@ -59,8 +59,18 @@
 }
 
 /* A box that can't be typed in opens its list when clicked, so the whole box shows it can be */
-.selection-box--select-only:not(.selection-box--disabled):not(.selection-box--readonly) .selection-box__input {
+.selection-box--select-only:not(.selection-box--disabled):not(.selection-box--read-only) .selection-box__input {
     cursor: pointer;
+}
+
+/* Only the text box shows in a box that can be typed in, and only the value's picture in one that
+   can't (the text box, unseen over it, still takes the focus and the clicks) */
+.selection-box--select-only .selection-box__input {
+    opacity: 0;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__value {
+    opacity: 0;
 }
 
 /* Disabled: the filled field with no border that every disabled control has, drawn by the value (the
@@ -76,7 +86,7 @@
 }
 
 /* Read only: the normal field with its value greyed */
-.selection-box--readonly .selection-box__value {
+.selection-box--read-only .selection-box__value {
     color: var(--control__text-color--readonly);
 }
 

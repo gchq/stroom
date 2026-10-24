@@ -38,22 +38,27 @@ import java.util.function.BiConsumer;
  * A compact bar strip showing trace counts per equal time-bucket over the selected window, rendered
  * as absolutely-positioned percentage-height divs. Clicking a bar zooms the time range to that
  * bucket via the registered handler.
+ * <p>
+ * The BEM block {@code trace-histogram-widget} ({@code trace-histogram-widget.css}). Every bar is as wide as the
+ * others ({@code --trace-histogram-widget__bar-width}, on the plot); each has its place and height
+ * ({@code --trace-histogram-widget__bar-index}, {@code --trace-histogram-widget__bar-height}).
  */
 public class TraceHistogramWidget extends Composite {
 
+    private static final String BLOCK = "trace-histogram-widget";
+
     private final HTML panel = new HTML();
-    private final DateTimeFormatter dateTimeFormatter;
+    private DateTimeFormatter dateTimeFormatter;
     private TraceHistogram data;
     private boolean rendered;
-    private BiConsumer<Long, Long> zoomHandler;
+    private BiConsumer<Long, Long> onZoom;
 
-    public TraceHistogramWidget(final DateTimeFormatter dateTimeFormatter) {
-        this.dateTimeFormatter = dateTimeFormatter;
-        panel.addStyleName("trace-histogram");
+    public TraceHistogramWidget() {
+        panel.addStyleName(BLOCK);
         initWidget(panel);
 
         panel.addMouseDownHandler(e -> {
-            if (zoomHandler == null || data == null || !data.isAvailable() || !drillable()
+            if (onZoom == null || data == null || !data.isAvailable() || !drillable()
                     || !MouseUtil.isPrimary(e.getNativeEvent())) {
                 return;
             }
@@ -65,7 +70,7 @@ public class TraceHistogramWidget extends Composite {
                 if (index >= 0) {
                     final long start = data.getFromMs() + (long) index * data.getBucketWidthMs();
                     final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs() - 1);
-                    zoomHandler.accept(start, end);
+                    onZoom.accept(start, end);
                 }
             }
         });
@@ -77,8 +82,16 @@ public class TraceHistogramWidget extends Composite {
         return data != null && data.isDrillable();
     }
 
-    public void setZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
-        this.zoomHandler = zoomHandler;
+    /// @param dateTimeFormatter Formats the times of the bars' tooltips and the axis, in the user's
+    ///                          preferred form. Set before the data.
+    public void setDateTimeFormatter(final DateTimeFormatter dateTimeFormatter) {
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// @param onZoom Told the start and end of a bar's time when the user clicks it, to narrow the
+    ///               time range to it, or null for nothing.
+    public void setOnZoom(final BiConsumer<Long, Long> onZoom) {
+        this.onZoom = onZoom;
     }
 
     public void setData(final TraceHistogram data) {
@@ -110,38 +123,44 @@ public class TraceHistogramWidget extends Composite {
         final long finalMax = max;
         final int n = counts.size();
         final double barWidthPct = 100D / n;
+        final String plotClass = drillable()
+                ? BLOCK + "__plot"
+                : BLOCK + "__plot " + BLOCK + "__plot--min";
         final HtmlBuilder hb = new HtmlBuilder();
 
         hb.div(y -> {
-            y.div(NumberUtil.formatInt((int) finalMax), Attribute.className("histogram-ylabel"));
-            y.div("0", Attribute.className("histogram-ylabel"));
-        }, Attribute.className("histogram-yaxis"));
+            y.div(NumberUtil.formatInt((int) finalMax), Attribute.className(BLOCK + "__y-label"));
+            y.div("0", Attribute.className(BLOCK + "__y-label"));
+        }, Attribute.className(BLOCK + "__y-axis"));
 
         hb.div(plot -> {
             for (int i = 0; i < n; i++) {
                 final long count = counts.get(i) == null ? 0L : counts.get(i);
-                final double leftPct = i * barWidthPct;
                 final double heightPct = count == 0 ? 0D : count * 100D / finalMax;
                 final long start = data.getFromMs() + (long) i * data.getBucketWidthMs();
                 final long end = Math.min(data.getToMs(), start + data.getBucketWidthMs());
                 final String title = dateTimeFormatter.format(start) + " – "
                         + dateTimeFormatter.format(end) + ": " + count;
-                final String minHeight = count > 0 ? " min-height: 3px;" : "";
+                // A bar with any traces can be seen however few it has
+                final String barClass = count > 0
+                        ? BLOCK + "__bar " + BLOCK + "__bar--filled"
+                        : BLOCK + "__bar";
                 plot.div("",
-                        Attribute.className("histogram-bar"),
+                        Attribute.className(barClass),
                         Attribute.title(title),
                         new Attribute("data-bucket-index", String.valueOf(i)),
-                        Attribute.style("left: " + leftPct + "%; width: " + barWidthPct
-                                + "%; height: " + heightPct + "%;" + minHeight));
+                        Attribute.style("--trace-histogram-widget__bar-index: " + i
+                                + "; --trace-histogram-widget__bar-height: " + heightPct + "%"));
             }
-        }, Attribute.className(drillable() ? "histogram-plot" : "histogram-plot histogram-plot--min"));
+        }, Attribute.className(plotClass),
+                Attribute.style("--trace-histogram-widget__bar-width: " + barWidthPct + "%"));
 
         hb.div(x -> {
             x.div(dateTimeFormatter.format(data.getFromMs(), "HH:mm:ss.SSS"),
-                    Attribute.className("histogram-xlabel"));
+                    Attribute.className(BLOCK + "__x-label"));
             x.div(dateTimeFormatter.format(data.getToMs(), "HH:mm:ss.SSS"),
-                    Attribute.className("histogram-xlabel"));
-        }, Attribute.className("histogram-xaxis"));
+                    Attribute.className(BLOCK + "__x-label"));
+        }, Attribute.className(BLOCK + "__x-axis"));
 
         panel.setHTML(hb.toSafeHtml());
     }
@@ -155,7 +174,7 @@ public class TraceHistogramWidget extends Composite {
                   + " or less to view the trace histogram"
                 : "Select a narrower time range to view the trace histogram";
         final HtmlBuilder hb = new HtmlBuilder();
-        hb.div(h -> h.append(text), Attribute.className("histogram-hint"));
+        hb.div(h -> h.append(text), Attribute.className(BLOCK + "__hint"));
         return hb.toSafeHtml();
     }
 

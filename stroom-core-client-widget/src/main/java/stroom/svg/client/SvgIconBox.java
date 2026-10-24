@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -90,6 +91,15 @@ public class SvgIconBox extends Component {
     public void setDropDownWidget(final Widget widget) {
         setWidget(widget, SvgImage.ARROW_DOWN);
         addStyleName(DROP_DOWN_CLASS_NAME);
+    }
+
+    /// Puts a field in the box with a drop-down arrow, from a template:
+    /// `<svg:SvgIconBox><svg:dropDown><g:TextBox/></svg:dropDown></svg:SvgIconBox>`.
+    ///
+    /// @param widget The field, or a widget holding it (its first input is the field).
+    @UiChild(tagname = "dropDown", limit = 1)
+    public void addDropDown(final Widget widget) {
+        setDropDownWidget(widget);
     }
 
     /// @param onIconClick Run when the icon is clicked, unless the box is read only.

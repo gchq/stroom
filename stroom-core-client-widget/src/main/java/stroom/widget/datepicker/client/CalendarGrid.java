@@ -56,36 +56,23 @@ public final class CalendarGrid extends Widget {
     private static final String OUTSIDE_CLASS_NAME = DAY_CLASS_NAME + "--outside";
     private static final int CELL_COUNT = DateTimeModel.WEEKS_IN_MONTH * DateTimeModel.DAYS_IN_WEEK;
 
-    private final CustomDatePicker datePicker;
+    private final TableSectionElement head;
     private final List<TableCellElement> cells = new ArrayList<>(CELL_COUNT);
     // The day shown in each cell, at midnight UTC
     private final List<UTCDate> dates = new ArrayList<>(CELL_COUNT);
     // The day with the roving tab stop (and the focus, while the grid has it), at midnight UTC
     private UTCDate focusDate;
+    private CustomDatePicker datePicker;
 
-    /// @param datePicker The calendar the grid belongs to, which holds the month shown and the
-    ///                   chosen day.
-    CalendarGrid(final CustomDatePicker datePicker) {
-        this.datePicker = datePicker;
-
+    /// Makes the grid, for a template; its calendar gives it itself ([#setDatePicker]).
+    public CalendarGrid() {
         final Document document = Document.get();
         final TableElement table = document.createTableElement();
         table.setClassName(GRID_CLASS_NAME);
         table.setAttribute("role", "grid");
 
-        final TableSectionElement head = document.createTHeadElement();
-        final TableRowElement headRow = document.createTRElement();
-        for (int column = 0; column < DateTimeModel.DAYS_IN_WEEK; column++) {
-            final int dayOfWeek = (column + CalendarUtil.getStartingDayOfWeek()) % DateTimeModel.DAYS_IN_WEEK;
-            final TableCellElement weekday = document.createTHElement();
-            weekday.setClassName(WEEKDAY_CLASS_NAME);
-            weekday.setAttribute("scope", "col");
-            // The full name, for screen readers, as the column's header
-            weekday.setAttribute("abbr", getModel().formatDayOfWeekLong(dayOfWeek));
-            weekday.setInnerText(getModel().formatDayOfWeek(dayOfWeek));
-            headRow.appendChild(weekday);
-        }
-        head.appendChild(headRow);
+        // The weekdays' names, filled in once it has its calendar (setDatePicker)
+        head = document.createTHeadElement();
         table.appendChild(head);
 
         final TableSectionElement body = document.createTBodyElement();
@@ -106,6 +93,28 @@ public final class CalendarGrid extends Widget {
 
         setElement(table);
         sinkEvents(Event.ONCLICK | Event.ONKEYDOWN);
+    }
+
+    /// @param datePicker The calendar the grid belongs to, which holds the month shown and the
+    ///                   chosen day.
+    void setDatePicker(final CustomDatePicker datePicker) {
+        if (this.datePicker != null) {
+            throw new IllegalStateException("The grid already has its calendar");
+        }
+        this.datePicker = datePicker;
+        final Document document = Document.get();
+        final TableRowElement headRow = document.createTRElement();
+        for (int column = 0; column < DateTimeModel.DAYS_IN_WEEK; column++) {
+            final int dayOfWeek = (column + CalendarUtil.getStartingDayOfWeek()) % DateTimeModel.DAYS_IN_WEEK;
+            final TableCellElement weekday = document.createTHElement();
+            weekday.setClassName(WEEKDAY_CLASS_NAME);
+            weekday.setAttribute("scope", "col");
+            // The full name, for screen readers, as the column's header
+            weekday.setAttribute("abbr", getModel().formatDayOfWeekLong(dayOfWeek));
+            weekday.setInnerText(getModel().formatDayOfWeek(dayOfWeek));
+            headRow.appendChild(weekday);
+        }
+        head.appendChild(headRow);
     }
 
     /// Shows the picker's month, keeping the day with the tab stop in it: the day it was on, if
