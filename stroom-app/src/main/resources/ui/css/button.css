@@ -19,33 +19,33 @@
    block--modifier), with its variants' colours for each theme (once a separate Button_Themes.css).
 */
 :root {
-  --button__color: #24292e;
-  --button__background-color: #fafbfc;
-  --button__border-color: rgba(27, 31, 35, 0.15);
-  --button__shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
-  --button__inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --button__background-color--hover: #f3f4f6;
-  --button__border-color--hover: rgba(27, 31, 35, 0.15);
+  --button__base-color: #24292e;
+  --button__base-background-color: #fafbfc;
+  --button__base-border-color: rgba(27, 31, 35, 0.15);
+  --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --button__base-background-color--hover: #f3f4f6;
+  --button__base-border-color--hover: rgba(27, 31, 35, 0.15);
 }
 
 .stroom-theme-dark {
-  --button__color: #fff;
-  --button__background-color: #454545;
-  --button__border-color: #2f2f2f;
-  --button__shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
-  --button__inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --button__background-color--hover: #505050;
-  --button__border-color--hover: #666;
+  --button__base-color: #fff;
+  --button__base-background-color: #454545;
+  --button__base-border-color: #2f2f2f;
+  --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --button__base-background-color--hover: #505050;
+  --button__base-border-color--hover: #666;
 }
 
 .stroom-theme-dark2 {
-  --button__color: #fff;
-  --button__background-color: #2f3540;
-  --button__border-color: #14161b;
-  --button__shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
-  --button__inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --button__background-color--hover: #383d49;
-  --button__border-color--hover: #14161b;
+  --button__base-color: #fff;
+  --button__base-background-color: #2f3540;
+  --button__base-border-color: #14161b;
+  --button__base-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --button__base-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --button__base-background-color--hover: #383d49;
+  --button__base-border-color--hover: #14161b;
 }
 
 /*
@@ -180,9 +180,9 @@ General button styles
 
 
 
-  color: var(--button__color);
-  background-color: var(--button__background-color);
-  border-color: var(--button__border-color);
+  color: var(--button__base-color);
+  background-color: var(--button__base-background-color);
+  border-color: var(--button__base-border-color);
   transition: .2s cubic-bezier(0.3, 0, 0.5, 1);
   transition-property: color,background-color,border-color;
   overflow: hidden;
@@ -192,13 +192,13 @@ General button styles
 
 
 .button:focus {
-  /*border-color: var(--button__focus-border-color); */
+  /*border-color: var(--button__base-focus-border-color); */
   /*outline: none; */
-  /*box-shadow: var(--button__focus-shadow); */
+  /*box-shadow: var(--button__base-focus-shadow); */
 
-  /*border-color: var(--button__focus-border-color); */
+  /*border-color: var(--button__base-focus-border-color); */
   /*outline: none; */
-  /*box-shadow: var(--button__focus-shadow); */
+  /*box-shadow: var(--button__base-focus-shadow); */
 
   /*background-color: var(--control__background-color); */
   /*color: var(-control__text-color); */
@@ -220,10 +220,10 @@ General button styles
      if the button has focus but the browser wouldn't normally
      show default focus styles */
 
-  /*border-color: var(--button__border-color); */
+  /*border-color: var(--button__base-border-color); */
   outline: 0;
   box-shadow: none;
-  border-color: var(--button__border-color) !important;
+  border-color: var(--button__base-border-color) !important;
 
   /*border-color: #2196f3; */
   /*outline: 0; */
@@ -236,18 +236,18 @@ General button styles
   /*box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(var(--button--default__color),.6); */
 }
 .button:focus-visible {
-  /*border-color: var(--button__focus-border-color); */
+  /*border-color: var(--button__base-focus-border-color); */
   /*outline: none; */
-  /*box-shadow: var(--button__focus-shadow); */
+  /*box-shadow: var(--button__base-focus-shadow); */
 }
 
 .button:hover {
 /*
   text-decoration: none;
-    border-color: var(--button__border-color--hover);
+    border-color: var(--button__base-border-color--hover);
     */
 
-  background-color: var(--button__background-color--hover);
+  background-color: var(--button__base-background-color--hover);
   transition-duration: .1s;
 }
 
@@ -258,8 +258,8 @@ General button styles
 }
 
 .button.button--disabled:focus {
-  border-color: var(--button__border-color);
-  box-shadow: var(--button__shadow),var(--button__inset-shadow);
+  border-color: var(--button__base-border-color);
+  box-shadow: var(--button__base-shadow),var(--button__base-inset-shadow);
 }
 
 .button.button--loading {
@@ -308,7 +308,7 @@ General button styles
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--button__shadow),var(--button__inset-shadow);
+  box-shadow: var(--button__base-shadow),var(--button__base-inset-shadow);
   border-radius: 5px;
   gap: 0.2rem;
 }
@@ -323,7 +323,7 @@ Default buttons
  */
 .button--default {
   padding: .375rem .5rem;
-  color: var(--button__color);
+  color: var(--button__base-color);
 }
 
 .button--default.button--selected {
@@ -364,7 +364,7 @@ Default buttons
 
 .button--default.button--disabled:focus {
   box-shadow: none;
-  border-color: var(--button__border-color);
+  border-color: var(--button__base-border-color);
 }
 
 
