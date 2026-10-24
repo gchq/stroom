@@ -422,8 +422,12 @@ public final class HandEdits {
                                          final String input,
                                          final Map<String, PlanField> out) {
         final String path = PyText.str(e.get("path"));
+        // With the Data it is in (data_parent, not in the Python model), so entries of one name in two don't meet.
+        final String parent = JsonValues.truthy(e.get("data_parent"))
+                ? PyText.str(e.get("data_parent")) + "/"
+                : "";
         final String label = rule + ": " + path + (JsonValues.truthy(e.get("data_name"))
-                ? " [" + PyText.str(e.get("data_name")) + "]"
+                ? " [" + parent + PyText.str(e.get("data_name")) + "]"
                 : "");
         final List<String> inputs = new ArrayList<>();
         if (JsonValues.truthy(e.get("field"))) {

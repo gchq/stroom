@@ -258,18 +258,18 @@ final class EventTrees {
         final EventNode tree = new EventNode(null, "Event");
         final Map<List<String>, FieldMapping> byKey = new LinkedHashMap<>();
         for (final FieldMapping entry : m.common()) {
-            byKey.put(Arrays.asList(entry.strippedPath(), entry.dataName()), entry);
+            byKey.put(Arrays.asList(entry.strippedPath(), entry.dataKey()), entry);
         }
         for (final FieldMapping entry : rule.fields()) {
-            byKey.put(Arrays.asList(entry.strippedPath(), entry.dataName()), entry);
+            byKey.put(Arrays.asList(entry.strippedPath(), entry.dataKey()), entry);
         }
         typeIdFallback(rule, byKey);
         for (final Map.Entry<List<String>, FieldMapping> keyed : byKey.entrySet()) {
             final String path = keyed.getKey().get(0);
-            final String dataName = keyed.getKey().get(1);
             final FieldMapping entry = keyed.getValue();
+            final String dataName = entry.dataName();
             final String where = "[" + rule.name() + "] " + path + (isSet(dataName)
-                    ? " (Data " + dataName + ")"
+                    ? " (Data " + entry.dataKey() + ")"
                     : "");
             final List<Child> chain;
             try {
