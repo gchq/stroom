@@ -69,7 +69,7 @@ import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories
 import stroom.gwt.workbench.client.widgets.editorsandviewers.TextPresenterStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.XsdBrowserStories;
 import stroom.gwt.workbench.client.widgets.entitychecktree.EntityCheckTreeStories;
-import stroom.gwt.workbench.client.widgets.feedback.ProgressBarStories;
+import stroom.gwt.workbench.client.widgets.feedback.SourceProgressBarStories;
 import stroom.gwt.workbench.client.widgets.feedback.SpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.TaskCounterStories;
 import stroom.gwt.workbench.client.widgets.formatdatetime.FormatDateTimeStories;
@@ -311,8 +311,8 @@ public final class WidgetsStories {
         PopoverStories.addTo(registry);
         // Widgets/PopupPositioner/Popup contract
         PopupContractStories.addTo(registry);
-        // Widgets/Feedback/ProgressBar
-        ProgressBarStories.addTo(registry);
+        // Widgets/Feedback/SourceProgressBar
+        SourceProgressBarStories.addTo(registry);
         // Widgets/Feedback/Spinner
         SpinnerStories.addTo(registry);
         // Widgets/Feedback/TaskCounter

@@ -32,12 +32,12 @@ import java.util.function.Consumer;
 
 /// A bar showing which section of some data is shown (e.g. the part of a stream in the editor) of
 /// how much, as a window on a track; a click on the track asks for the section there. The BEM block
-/// `progress-bar` (`progress-bar.css`), its markup `ProgressBar.ui.xml`.
+/// `source-progress-bar` (`source-progress-bar.css`), its markup `SourceProgressBar.ui.xml`.
 ///
 /// The window is blue while it can be moved, grey while it can't (`--disabled`), green when it
 /// shows everything (`--complete`) and amber when the size isn't known (`--unbounded`), its size then
 /// a guess a bit bigger than what is known, which shrinks as more is seen.
-public class ProgressBar extends Component {
+public class SourceProgressBar extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String TITLE_PREFIX = "Section of the source data visible in the editor";
@@ -46,10 +46,10 @@ public class ProgressBar extends Component {
     private static final double UNCERTAINTY_FACTOR_MAX = 3;
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
-    private static final String COMPLETE = "progress-bar__window--complete";
-    private static final String DISABLED = "progress-bar__window--disabled";
-    private static final String UNBOUNDED = "progress-bar__window--unbounded";
-    private static final String CLICKABLE = "progress-bar__track--clickable";
+    private static final String COMPLETE = "source-progress-bar__window--complete";
+    private static final String DISABLED = "source-progress-bar__window--disabled";
+    private static final String UNBOUNDED = "source-progress-bar__window--unbounded";
+    private static final String CLICKABLE = "source-progress-bar__track--clickable";
     private static final NumberFormat DEFAULT_PERCENT_FORMAT = NumberFormat.getFormat("0.0");
 
     @UiField
@@ -62,7 +62,7 @@ public class ProgressBar extends Component {
     private double uncertaintyFactor = UNCERTAINTY_FACTOR_MAX;
     private Consumer<Double> onClick;
 
-    public ProgressBar() {
+    public SourceProgressBar() {
         initWidget(BINDER.createAndBindUi(this));
         track.addDomHandler(this::onTrackClick, ClickEvent.getType());
     }
@@ -154,8 +154,8 @@ public class ProgressBar extends Component {
         final double rangeFromPct = getRangeFromPct();
         final double windowSizePct = getWindowAsPercentage();
 
-        CssProperties.set(window.getElement(), "--progress-bar__from", rangeFromPct + "%");
-        CssProperties.set(window.getElement(), "--progress-bar__width", windowSizePct + "%");
+        CssProperties.set(window.getElement(), "--source-progress-bar__from", rangeFromPct + "%");
+        CssProperties.set(window.getElement(), "--source-progress-bar__width", windowSizePct + "%");
 
         final String state;
         final String title;
@@ -209,7 +209,7 @@ public class ProgressBar extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, ProgressBar> {
+    interface Binder extends UiBinder<Widget, SourceProgressBar> {
 
     }
 }

@@ -44,7 +44,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.progress.client.component.ProgressBar;
+import stroom.widget.progress.client.component.SourceProgressBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -256,7 +256,7 @@ public final class SourceViewerStories {
                         GWT.create(ClassificationWrapperViewImpl.Binder.class),
                         new ClassificationLabel(harness.getUiConfigCache())),
                 EditorWidgets.textPresenter(eventBus),
-                new ProgressBar(),
+                new SourceProgressBar(),
                 new MarkerListPresenter(eventBus, new WrapperViewImpl()),
                 // Only used to open the source in a new tab, which the workbench doesn't have
                 null,

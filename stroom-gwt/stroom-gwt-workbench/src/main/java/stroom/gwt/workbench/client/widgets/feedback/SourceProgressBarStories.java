@@ -22,20 +22,20 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.progress.client.Progress;
-import stroom.widget.progress.client.component.ProgressBar;
+import stroom.widget.progress.client.component.SourceProgressBar;
 
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [ProgressBar], the sliding window progress bar of the source editor.
-public final class ProgressBarStories {
+/// Stories for Stroom's [SourceProgressBar], the sliding window progress bar of the source editor.
+public final class SourceProgressBarStories {
 
     private static final String ON_CLICK = "onClick";
     private static final double CLICKABLE_UPPER_BOUND = 500.0;
 
-    private ProgressBarStories() {
+    private SourceProgressBarStories() {
         // Static utility
     }
 
@@ -44,22 +44,22 @@ public final class ProgressBarStories {
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
         // The stories render fixed progress
-        registry.component("Widgets/Feedback/ProgressBar", ProgressBarStories.class)
+        registry.component("Widgets/Feedback/SourceProgressBar", SourceProgressBarStories.class)
                 .layout(StoryLayout.PADDED)
                 // A simple percentage progress bar at 65% (not clickable, so in the disabled colour)
-                .story("Basic", context -> width400(progressBar(Progress.simplePercentage(65.0))))
+                .story("Basic", context -> width400(sourceProgressBar(Progress.simplePercentage(65.0))))
                 // A sliding window: showing 200-350 of a 0-1000 range
                 .story("SlidingWindow", context -> width400(
-                        progressBar(Progress.boundedRange(1000.0, 200.0, 350.0))))
+                        sourceProgressBar(Progress.boundedRange(1000.0, 200.0, 350.0))))
                 // Clickable: click to move the visible window; the clicked % is shown
-                .story("Clickable", ProgressBarStories::clickable)
+                .story("Clickable", SourceProgressBarStories::clickable)
                 // Complete: the full range is visible, shown green
                 .story("Complete", context -> width400(
-                        progressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0))));
+                        sourceProgressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0))));
     }
 
     private static Widget clickable(final StoryContext context) {
-        final ProgressBar bar = progressBar(Progress.boundedRange(CLICKABLE_UPPER_BOUND, 100.0, 200.0));
+        final SourceProgressBar bar = sourceProgressBar(Progress.boundedRange(CLICKABLE_UPPER_BOUND, 100.0, 200.0));
         final Label display = new Label("Click the bar…");
         display.getElement().getStyle().setProperty("marginTop", "8px");
         display.getElement().getStyle().setProperty("fontSize", "12px");
@@ -76,8 +76,8 @@ public final class ProgressBarStories {
         return panel;
     }
 
-    private static ProgressBar progressBar(final Progress progress) {
-        final ProgressBar bar = new ProgressBar();
+    private static SourceProgressBar sourceProgressBar(final Progress progress) {
+        final SourceProgressBar bar = new SourceProgressBar();
         bar.setProgress(progress);
         return bar;
     }

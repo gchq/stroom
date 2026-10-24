@@ -52,7 +52,7 @@ import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.progress.client.Progress;
-import stroom.widget.progress.client.component.ProgressBar;
+import stroom.widget.progress.client.component.SourceProgressBar;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -117,7 +117,7 @@ public class DataPresenter
     private final ControllerLayer htmlLayer;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
-    private final ProgressBar progressBar;
+    private final SourceProgressBar sourceProgressBar;
     private final MarkerListPresenter markerListPresenter;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
@@ -165,7 +165,7 @@ public class DataPresenter
                          final DataView dataView,
                          final ClassificationWrapperView classificationWrapperView,
                          final TextPresenter textPresenter,
-                         final ProgressBar progressBar,
+                         final SourceProgressBar sourceProgressBar,
                          final MarkerListPresenter markerListPresenter,
                          final SourceTabPlugin sourceTabPlugin,
                          final UiConfigCache uiConfigCache,
@@ -182,7 +182,7 @@ public class DataPresenter
         this.htmlLayer = new ControllerLayer(htmlPane);
         this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
-        this.progressBar = progressBar;
+        this.sourceProgressBar = sourceProgressBar;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
         this.uiConfigCache = uiConfigCache;
@@ -216,8 +216,8 @@ public class DataPresenter
                 openSourcePresenter());
         dataView.setSourceLinkVisible(true, true);
         dataView.setNavigatorView(itemNavigatorPresenter.getView());
-        dataView.setProgressView(progressBar);
-        progressBar.setVisible(false);
+        dataView.setProgressView(sourceProgressBar);
+        sourceProgressBar.setVisible(false);
 
         own(dataView.getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
@@ -298,7 +298,7 @@ public class DataPresenter
                 } else {
 //                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
-                    dataView.setProgressView(progressBar);
+                    dataView.setProgressView(sourceProgressBar);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -382,7 +382,7 @@ public class DataPresenter
 
             final FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
 
-            progressBar.setVisible(true);
+            sourceProgressBar.setVisible(true);
 
             // Don't want to confuse the user so the prog bar need to be based on the char/byte content,
             // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
@@ -392,7 +392,7 @@ public class DataPresenter
                 && dataRange.getOptByteOffsetFrom().isPresent()
                 && dataRange.getOptByteOffsetTo().isPresent()) {
                 // progress based on know byte size and byte offsets
-                progressBar.setProgress(Progress.boundedRange(
+                sourceProgressBar.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalBytes() - 1, // count to zero based bound
                         dataRange.getByteOffsetFrom(),
                         dataRange.getByteOffsetTo()));
@@ -401,22 +401,22 @@ public class DataPresenter
                        && dataRange.getCharOffsetFrom() != null
                        && dataRange.getCharOffsetTo() != null) {
                 // progress based on known char count and char offsets
-                progressBar.setProgress(Progress.boundedRange(
+                sourceProgressBar.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalCharacterCount().getCount() - 1, // count to zero based bound
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             } else if (dataRange.getCharOffsetFrom() != null
                        && dataRange.getCharOffsetTo() != null) {
                 // progress based on unknown char count and char offsets
-                progressBar.setProgress(Progress.unboundedRange(
+                sourceProgressBar.setProgress(Progress.unboundedRange(
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             } else {
                 dumpRangeInfo(fetchDataResult);
-                progressBar.setVisible(false);
+                sourceProgressBar.setVisible(false);
             }
         } else {
-            progressBar.setVisible(false);
+            sourceProgressBar.setVisible(false);
         }
     }
 
@@ -1022,7 +1022,7 @@ public class DataPresenter
         } else {
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, true);
-            dataView.setProgressView(progressBar);
+            dataView.setProgressView(sourceProgressBar);
             refreshProgressBar(result != null);
             itemNavigatorPresenter.refreshNavigator();
             refreshHighlights(result);
@@ -1315,7 +1315,7 @@ public class DataPresenter
 
         void setNavigatorView(final ItemNavigatorView itemNavigatorView);
 
-        void setProgressView(IsWidget progressBar);
+        void setProgressView(IsWidget sourceProgressBar);
     }
 
 

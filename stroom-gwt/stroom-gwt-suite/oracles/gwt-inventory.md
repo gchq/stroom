@@ -992,7 +992,7 @@ _1679 files._
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/TextPresenterStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/XsdBrowserStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/entitychecktree/EntityCheckTreeStories.java` | stroom-gwt | — |
-| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/ProgressBarStories.java` | stroom-gwt | — |
+| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/SourceProgressBarStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/SpinnerStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/TaskCounterStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/formatdatetime/FormatDateTimeStories.java` | stroom-gwt | — |

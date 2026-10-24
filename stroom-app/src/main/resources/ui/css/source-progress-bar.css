@@ -15,20 +15,20 @@
  */
 
 /*
-   A progress bar (stroom.widget.progress.client.component.ProgressBar), named BEM style: its track
+   A progress bar (stroom.widget.progress.client.component.SourceProgressBar), named BEM style: its track
    (the whole of the data) holding its window (the section shown, placed and sized by
-   --progress-bar__from and --progress-bar__width). The window's colour says what it can do: blue
+   --source-progress-bar__from and --source-progress-bar__width). The window's colour says what it can do: blue
    while it can be moved, grey while it can't (--disabled), green when it shows everything
    (--complete), amber when the size isn't known (--unbounded).
 */
 
-.progress-bar {
+.source-progress-bar {
     position: relative;
     height: 10px;
     padding: 2px;
 }
 
-.progress-bar__track {
+.source-progress-bar__track {
     position: relative;
     background-color: var(--control__background-color);
     width: 100%;
@@ -40,10 +40,10 @@
     overflow: hidden;
 }
 
-.progress-bar__window {
+.source-progress-bar__window {
     position: absolute;
-    left: var(--progress-bar__from, 0);
-    width: var(--progress-bar__width, 0);
+    left: var(--source-progress-bar__from, 0);
+    width: var(--source-progress-bar__width, 0);
     background-color: var(--blue-600);
     height: 100%;
     min-width: 3px;
@@ -51,19 +51,19 @@
     border-radius: .25rem;
 }
 
-.progress-bar__window--disabled {
+.source-progress-bar__window--disabled {
     background-color: var(--grey-700);
 }
 
-.progress-bar__window--complete {
+.source-progress-bar__window--complete {
     background-color: #15a32c;
 }
 
-.progress-bar__window--unbounded {
+.source-progress-bar__window--unbounded {
     background-color: var(--amber-400);
 }
 
 /* A track that can be clicked to move the window there */
-.progress-bar__track--clickable {
+.source-progress-bar__track--clickable {
     cursor: pointer;
 }

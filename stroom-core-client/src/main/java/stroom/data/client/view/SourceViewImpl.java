@@ -131,9 +131,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setProgressView(final IsWidget progressBar) {
-        if (progressBar != null) {
-            progressBarPanel.setWidget(progressBar.asWidget());
+    public void setProgressView(final IsWidget sourceProgressBar) {
+        if (sourceProgressBar != null) {
+            progressBarPanel.setWidget(sourceProgressBar.asWidget());
         } else {
             progressBarPanel.clear();
         }

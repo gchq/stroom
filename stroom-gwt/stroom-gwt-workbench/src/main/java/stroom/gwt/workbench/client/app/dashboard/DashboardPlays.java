@@ -47,6 +47,9 @@ final class DashboardPlays {
 
     /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".QueryViewImpl .query-buttons__button";
+    // The run button's modifiers while its query is idle and while it runs (query-buttons.css)
+    static final String QUERY_RUN_BUTTON_IDLE = "query-buttons__button--play";
+    static final String QUERY_RUN_BUTTON_RUNNING = "query-buttons__button--stop";
 
     /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
     static final String DESIGN_MODE = "Design Mode";
@@ -94,7 +97,8 @@ final class DashboardPlays {
     static void runQuery(final Play play, final int index) {
         // Waits until it is a run button: while a query is still running it is a stop button, so
         // under load a second run (e.g. after changing a filter) could stop the first instead
-        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index)).toHaveClass("query-buttons__button--play"));
+        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index))
+                .toHaveClass(QUERY_RUN_BUTTON_IDLE));
         play.click(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index));
     }
 
