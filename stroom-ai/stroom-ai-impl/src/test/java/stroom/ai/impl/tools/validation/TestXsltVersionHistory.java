@@ -129,6 +129,24 @@ class TestXsltVersionHistory {
     }
 
     @Test
+    void testCodeSavedAsWrittenByHandIsNotWhatTheToolsGenerated() {
+        // Seen: TWITTER's XSLT saved by hand with save_xslt was taken for an earlier generator's code.
+        final String generated = XsltVersionHistory.withPending("", null, "p", "Created", "by", DAY1, CODE);
+        final String hand = XsltVersionHistory.withPending(generated, null, "p", "Mentions", "by", DAY1, CHANGED,
+                true);
+
+        assertThat(XsltVersionHistory.lastSaved(hand, CHANGED).orElseThrow().hand()).isTrue();
+        assertThat(XsltVersionHistory.untouched(hand, CHANGED)).contains(true);
+        assertThat(XsltVersionHistory.asGenerated(hand, CHANGED)).contains(false);
+        assertThat(XsltVersionHistory.asGenerated(generated, CODE)).contains(true);
+        assertThat(XsltVersionHistory.asGenerated(generated, CHANGED)).contains(false);
+        assertThat(XsltVersionHistory.asGenerated("", CODE)).isEmpty();
+        // A generated save's entry is as the Python server writes it.
+        assertThat(generated).doesNotContain("\"hand\"");
+        assertThat(hand).contains("\"hand\":true");
+    }
+
+    @Test
     void testARowHoldsNoColumnSeparatorOrLineBreak() {
         final String pending = XsltVersionHistory.withPending("", null, "p", "a -- b | c\nd", "", DAY1, CODE);
         assertThat(XsltVersionHistory.history(XsltVersionHistory.consolidate(pending, CODE, DAY1)).getFirst()

@@ -97,6 +97,36 @@ class TestGeneratedDrift {
     }
 
     @Test
+    void anXsltSavedAsWrittenByHandIsAnEditNotAnEarlierGenerator() {
+        // Seen: TWITTER's mentions and links saved with save_xslt over a generated XSLT were taken for an earlier
+        // generator's code, regenerating it from the mapping (undoing them) was offered, and the documentation was
+        // generated from the mapping without them.
+        final TranslationMapping mapping = TranslationWorld.parsed();
+        final String edited = generate(mapping).replaceFirst("<Generator>vpnd</Generator>", "");
+        final String handSaved = XsltVersionHistory.withPending("", null, "pk", "Created", world.history.madeBy(),
+                DAY, edited, true);
+
+        final String said = translationDrift(mapping, edited, handSaved).orElseThrow();
+        assertThat(said).startsWith("its XSLT was saved as written by hand (save_xslt) since its mapping was kept")
+                .contains("build_translation_xslt uuid='x-1' changes=")
+                .contains("data_parent")
+                .contains("Never regenerate it from the mapping as it is")
+                .doesNotContain("(no mapping) regenerates it")
+                .contains("- <Generator>vpnd</Generator>");
+        assertThat(editDrift(mapping, edited, handSaved)).contains(said);
+        // Edited in Stroom since: an edit too.
+        assertThat(editDrift(mapping, edited, XsltVersionHistory.withPending("", null, "pk", "Created",
+                world.history.madeBy(), DAY, generate(mapping)))).isPresent();
+        // Only the generator changed since: not an edit, documented from the mapping as before.
+        final Map<String, Object> styled = TranslationWorld.mapping();
+        styled.put("style", Map.of("variables", "top", "data_values", "attribute"));
+        final String old = generate(TranslationMapping.parse(styled));
+        assertThat(editDrift(mapping, old, XsltVersionHistory.withPending("", null, "pk", "Created",
+                "stroom-mcp 0.16.42", DAY, old))).isEmpty();
+        assertThat(editDrift(mapping, generate(mapping), handSaved)).isEmpty();
+    }
+
+    @Test
     void aMappingThatNoLongerGeneratesIsSaid() {
         final Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("schema_version", TranslationWorld.VERSION);
@@ -155,6 +185,16 @@ class TestGeneratedDrift {
         payload.put("mapping", TranslationWorld.kept(mapping));
         final XsltDoc xslt = XsltDoc.builder().uuid("x-1").name("Acme").data(code).description(description).build();
         return drift.drift(new KeptMappings.KeptXslt(new KeptMapping.Kept("translation", payload),
+                "translationFilter", xslt));
+    }
+
+    private Optional<String> editDrift(final TranslationMapping mapping, final String code,
+                                       final String description) {
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("schema_version", TranslationWorld.VERSION);
+        payload.put("mapping", TranslationWorld.kept(mapping));
+        final XsltDoc xslt = XsltDoc.builder().uuid("x-1").name("Acme").data(code).description(description).build();
+        return drift.editDrift(new KeptMappings.KeptXslt(new KeptMapping.Kept("translation", payload),
                 "translationFilter", xslt));
     }
 
