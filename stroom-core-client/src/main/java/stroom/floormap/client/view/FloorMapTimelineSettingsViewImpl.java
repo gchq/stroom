@@ -23,7 +23,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,7 +51,7 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
     @UiField
     DateTimeBox endDateTimeBox;
     @UiField
-    CustomCheckBox loopCheckBox;
+    TickBox loopCheckBox;
     @UiField
     Button showAllButton;
 
@@ -69,7 +69,7 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
         // reach even if it were one. Name them directly instead.
         FloorMapAria.group(startDateTimeBox, "Timeline start date and time");
         FloorMapAria.group(endDateTimeBox, "Timeline end date and time");
-        // labelInnerControl, not label: CustomCheckBox's root is a label.tick-box
+        // labelInnerControl, not label: TickBox's root is a label.tick-box
         // wrapping the real <input>, so a name written to the widget itself lands on
         // the wrapper and ARIA drops it — the checkbox was announced unnamed. Not
         // group() either, which would describe one checkbox as a group of controls.

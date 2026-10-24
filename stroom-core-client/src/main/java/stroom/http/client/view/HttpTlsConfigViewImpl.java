@@ -21,7 +21,7 @@ import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -49,9 +49,9 @@ public class HttpTlsConfigViewImpl
     @UiField
     SelectionBox<Credential> trustStore;
     @UiField
-    CustomCheckBox trustSelfSignedCertificates;
+    TickBox trustSelfSignedCertificates;
     @UiField
-    CustomCheckBox verifyHostname;
+    TickBox verifyHostname;
     @UiField
     TextArea supportedProtocols;
     @UiField

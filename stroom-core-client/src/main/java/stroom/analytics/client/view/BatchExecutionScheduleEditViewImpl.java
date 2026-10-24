@@ -34,7 +34,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -56,49 +56,49 @@ public final class BatchExecutionScheduleEditViewImpl
     @UiField
     FormGroup nameForm;
     @UiField
-    CustomCheckBox nameEnable;
+    TickBox nameEnable;
 
     @UiField
-    CustomCheckBox enabledBox;
+    TickBox enabledBox;
     @UiField
     FormGroup enabledForm;
     @UiField
-    CustomCheckBox enabledEnable;
+    TickBox enabledEnable;
 
     @UiField
     SelectionBox<String> nodeBox;
     @UiField
     FormGroup nodeForm;
     @UiField
-    CustomCheckBox nodeEnable;
+    TickBox nodeEnable;
 
     @UiField
     ScheduleBox scheduleBox;
     @UiField
     FormGroup scheduleForm;
     @UiField
-    CustomCheckBox scheduleEnable;
+    TickBox scheduleEnable;
 
     @UiField
     DateTimeBox startTimeBox;
     @UiField
     FormGroup startTimeForm;
     @UiField
-    CustomCheckBox startTimeEnable;
+    TickBox startTimeEnable;
 
     @UiField
     DateTimeBox endTimeBox;
     @UiField
     FormGroup endTimeForm;
     @UiField
-    CustomCheckBox endTimeEnable;
+    TickBox endTimeEnable;
 
     @UiField
     SimplePanel runAsUserBox;
     @UiField
     FormGroup runAsUserForm;
     @UiField
-    CustomCheckBox runAsUserEnable;
+    TickBox runAsUserEnable;
 
     @UiField
     Button applySelectionButton;

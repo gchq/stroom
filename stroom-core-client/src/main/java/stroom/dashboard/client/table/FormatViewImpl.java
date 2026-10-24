@@ -23,7 +23,7 @@ import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -83,13 +83,13 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     ValueSpinner decimalPlaces;
     @UiField
-    CustomCheckBox separate;
+    TickBox separate;
     @UiField
-    CustomCheckBox usePreferences;
+    TickBox usePreferences;
     @UiField
     SelectionBox<String> format;
     @UiField
-    CustomCheckBox custom;
+    TickBox custom;
     @UiField
     TextBox text;
     @UiField
@@ -101,7 +101,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     ValueSpinner timeZoneOffsetMinutes;
     @UiField
-    CustomCheckBox wrap;
+    TickBox wrap;
 
     @Inject
     public FormatViewImpl(final Binder binder) {

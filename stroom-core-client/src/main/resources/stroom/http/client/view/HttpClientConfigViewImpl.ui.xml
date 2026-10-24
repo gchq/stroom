@@ -33,13 +33,13 @@
         </form:FormGroup>
         <form:FormGroup helpText="Whether cookies set by a server are kept and sent back to it on later requests. Some endpoints use a cookie to hold a session, e.g. after signing in, so requests to them need cookies. Default is unticked."
                         screenReaderText="Keeps and sends back server cookies. Default is unticked.">
-            <tickbox:CustomCheckBox ui:field="cookiesEnabled"
+            <tickbox:TickBox ui:field="cookiesEnabled"
                                     identity="httpClientCookiesEnabled"
                                     label="Cookies Enabled"/>
         </form:FormGroup>
         <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default is ticked."
                         screenReaderText="Some endpoints redirect to authenticate. Default is ticked.">
-            <tickbox:CustomCheckBox ui:field="followRedirects"
+            <tickbox:TickBox ui:field="followRedirects"
                                     identity="httpClientFollowRedirects"
                                     label="Follow Redirects"/>
         </form:FormGroup>

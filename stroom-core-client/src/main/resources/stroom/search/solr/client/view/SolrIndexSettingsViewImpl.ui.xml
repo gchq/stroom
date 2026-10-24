@@ -23,7 +23,7 @@
         </form:FormGroup>
         <form:FormGroup helpText="Whether to find the Solr Cloud cluster through its ZooKeeper hosts rather than the Solr URLs. Only used when the instance type is Solr Cloud."
                         screenReaderText="Solr Cloud only. Uses the ZooKeeper hosts below.">
-            <t:CustomCheckBox ui:field="useZk" identity="solrIndexSettingsUseZK" label="Use ZK"/>
+            <t:TickBox ui:field="useZk" identity="solrIndexSettingsUseZK" label="Use ZK"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsZKHosts" label="ZooKeeper Hosts"
                         helpText="ZooKeeper hosts for the Solr Cloud cluster, one per line, in the form host:port, e.g. zk1.example.com:2181. Needed when the instance type is Solr Cloud and 'Use ZK' is ticked."

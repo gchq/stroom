@@ -21,7 +21,7 @@ import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.shared.NodeInclusionBehaviour;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -43,7 +43,7 @@ public class NodeGroupEditViewImpl
     @UiField
     TextBox name;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     SelectionBox<NodeInclusionBehaviour> nodeInclusionBehaviour;
     @UiField

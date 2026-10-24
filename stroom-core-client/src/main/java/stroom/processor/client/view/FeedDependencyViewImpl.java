@@ -22,7 +22,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -39,11 +39,11 @@ public class FeedDependencyViewImpl extends ViewImpl implements FeedDependencyVi
     @UiField
     SimplePanel feedDependencies;
     @UiField
-    CustomCheckBox minProcessingDelayEnabled;
+    TickBox minProcessingDelayEnabled;
     @UiField
     DurationPicker minProcessingDelay;
     @UiField
-    CustomCheckBox maxProcessingDelayEnabled;
+    TickBox maxProcessingDelayEnabled;
     @UiField
     DurationPicker maxProcessingDelay;
 

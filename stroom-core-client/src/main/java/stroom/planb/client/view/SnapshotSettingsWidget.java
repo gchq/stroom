@@ -17,7 +17,7 @@
 package stroom.planb.client.view;
 
 import stroom.planb.shared.SnapshotSettings;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,11 +34,11 @@ import com.google.inject.Inject;
 public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
     @UiField
-    CustomCheckBox useSnapshotsForLookup;
+    TickBox useSnapshotsForLookup;
     @UiField
-    CustomCheckBox useSnapshotsForGet;
+    TickBox useSnapshotsForGet;
     @UiField
-    CustomCheckBox useSnapshotsForQuery;
+    TickBox useSnapshotsForQuery;
 
     @Inject
     public SnapshotSettingsWidget(final Binder binder) {

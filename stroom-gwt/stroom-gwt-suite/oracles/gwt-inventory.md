@@ -110,7 +110,7 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/form/client/FormLabel.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/form/client/HelpHTML.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/linecolinput/client/LineColInput.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/tickbox/client/view/CustomCheckBox.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/tickbox/client/view/TickBox.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/valuespinner/client/Spinner.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/valuespinner/client/ValueSpinner.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/datepicker/client/DateTimeViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |

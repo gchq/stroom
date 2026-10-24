@@ -80,7 +80,7 @@
                             this area its own colour.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="fillRow" addStyleNames="dock-container-horizontal align-center">
-                        <t:CustomCheckBox ui:field="fillDefaultCheck" label="Default" addStyleNames="{style.fillDefault}"/>
+                        <t:TickBox ui:field="fillDefaultCheck" label="Default" addStyleNames="{style.fillDefault}"/>
                         <colour:ColourBox ui:field="fillBox" />
                     </g:FlowPanel>
                 </form:FormGroup>

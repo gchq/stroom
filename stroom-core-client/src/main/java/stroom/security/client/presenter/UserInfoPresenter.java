@@ -24,7 +24,7 @@ import stroom.security.shared.UserResource;
 import stroom.util.shared.UserRef;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -102,6 +102,6 @@ public class UserInfoPresenter
 
         void setReadOnly(boolean isReadOnly);
 
-        CustomCheckBox getIsEnabledTickBox();
+        TickBox getIsEnabledTickBox();
     }
 }

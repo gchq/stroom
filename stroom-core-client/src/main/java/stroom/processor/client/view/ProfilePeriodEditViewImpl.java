@@ -20,7 +20,7 @@ import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePerio
 import stroom.util.shared.time.Days;
 import stroom.widget.datepicker.client.TimeBox;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -43,11 +43,11 @@ public class ProfilePeriodEditViewImpl
     @UiField
     TimeBox endTime;
     @UiField
-    CustomCheckBox limitNodeThreads;
+    TickBox limitNodeThreads;
     @UiField
     ValueSpinner maxNodeThreads;
     @UiField
-    CustomCheckBox limitClusterThreads;
+    TickBox limitClusterThreads;
     @UiField
     ValueSpinner maxClusterThreads;
 

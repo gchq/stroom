@@ -18,7 +18,7 @@ package stroom.processor.client.view;
 
 import stroom.util.shared.time.Day;
 import stroom.util.shared.time.Days;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -37,19 +37,19 @@ public final class DaysWidget extends Composite {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    CustomCheckBox mon;
+    TickBox mon;
     @UiField
-    CustomCheckBox tue;
+    TickBox tue;
     @UiField
-    CustomCheckBox wed;
+    TickBox wed;
     @UiField
-    CustomCheckBox thu;
+    TickBox thu;
     @UiField
-    CustomCheckBox fri;
+    TickBox fri;
     @UiField
-    CustomCheckBox sat;
+    TickBox sat;
     @UiField
-    CustomCheckBox sun;
+    TickBox sun;
 
     private final Set<Day> value = new HashSet<>();
     private Consumer<Days> onChange;
@@ -65,7 +65,7 @@ public final class DaysWidget extends Composite {
         listen(sun, Day.SUNDAY);
     }
 
-    private void listen(final CustomCheckBox checkBox, final Day day) {
+    private void listen(final TickBox checkBox, final Day day) {
         checkBox.setOnChange(ticked -> toggleDay(day));
     }
 
@@ -79,7 +79,7 @@ public final class DaysWidget extends Composite {
     ///
     /// @param readOnly Whether the days are read only.
     public void setReadOnly(final boolean readOnly) {
-        for (final CustomCheckBox day : days()) {
+        for (final TickBox day : days()) {
             day.setReadOnly(readOnly);
         }
     }
@@ -88,12 +88,12 @@ public final class DaysWidget extends Composite {
     ///
     /// @param enabled Whether the days can be changed.
     public void setEnabled(final boolean enabled) {
-        for (final CustomCheckBox day : days()) {
+        for (final TickBox day : days()) {
             day.setEnabled(enabled);
         }
     }
 
-    private List<CustomCheckBox> days() {
+    private List<TickBox> days() {
         return List.of(mon, tue, wed, thu, fri, sat, sun);
     }
 
@@ -131,7 +131,7 @@ public final class DaysWidget extends Composite {
         update(sun, Day.SUNDAY);
     }
 
-    private void update(final CustomCheckBox checkBox, final Day day) {
+    private void update(final TickBox checkBox, final Day day) {
         checkBox.setValue(value.contains(day));
     }
 

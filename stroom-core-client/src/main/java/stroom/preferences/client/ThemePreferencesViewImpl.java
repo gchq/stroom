@@ -21,7 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.visualisation.shared.VisPalette;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,9 +47,9 @@ public final class ThemePreferencesViewImpl
     @UiField
     SelectionBox<String> fontSize;
     @UiField
-    CustomCheckBox enableTransparency;
+    TickBox enableTransparency;
     @UiField
-    CustomCheckBox hideConditionalStyles;
+    TickBox hideConditionalStyles;
     @UiField
     SelectionBox<String> visualisationPalette;
 

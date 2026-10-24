@@ -20,7 +20,7 @@ import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerV
 import stroom.docref.HasDisplayValue;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,7 +39,7 @@ public class SelectionHandlerViewImpl
     @UiField
     SimplePanel layout;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     SimplePanel currentSelection;
 

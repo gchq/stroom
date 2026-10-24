@@ -23,7 +23,7 @@ import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.item.client.SelectionBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -54,7 +54,7 @@ public class AiConfigGeneralViewImpl
     @UiField
     ValueSpinner maxHistorySafetyCapMessages;
     @UiField
-    CustomCheckBox enableDebugDetail;
+    TickBox enableDebugDetail;
 
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {

@@ -22,7 +22,7 @@ import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -51,9 +51,9 @@ public class BasicTableSettingsViewImpl
     @UiField
     SelectionBox<Component> query;
     @UiField
-    CustomCheckBox extractValues;
+    TickBox extractValues;
     @UiField
-    CustomCheckBox useDefaultExtractionPipeline;
+    TickBox useDefaultExtractionPipeline;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -61,9 +61,9 @@ public class BasicTableSettingsViewImpl
     @UiField
     ValueSpinner pageSize;
     @UiField
-    CustomCheckBox showDetail;
+    TickBox showDetail;
     @UiField
-    CustomCheckBox overrideMaxStringFieldLength;
+    TickBox overrideMaxStringFieldLength;
     @UiField
     ValueSpinner maxStringFieldLength;
 

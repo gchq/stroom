@@ -17,7 +17,7 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -516,7 +516,7 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     private String getTickBoxLabel() {
-        return childWidget instanceof final CustomCheckBox tickBox
+        return childWidget instanceof final TickBox tickBox
                 ? tickBox.getLabel()
                 : null;
     }

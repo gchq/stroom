@@ -19,7 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,9 +41,9 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     SimplePanel dataSource;
     @UiField
-    CustomCheckBox queryOnOpen;
+    TickBox queryOnOpen;
     @UiField
-    CustomCheckBox autoRefresh;
+    TickBox autoRefresh;
     @UiField
     TextBox refreshInterval;
 

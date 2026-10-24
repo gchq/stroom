@@ -24,7 +24,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -54,7 +54,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextArea solrUrls;
     @UiField
-    CustomCheckBox useZk;
+    TickBox useZk;
     @UiField
     TextArea zkHosts;
     @UiField

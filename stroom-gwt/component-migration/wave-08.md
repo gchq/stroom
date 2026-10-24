@@ -150,7 +150,7 @@ tab, presenter; complexity 1, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| XMLSchemaSettingsViewImpl.ui.xml:37 | component-declaration | CustomCheckBox and FormGroup already declared; the view stops exposing its TextBox/CustomCheckBox getters (XMLSchemaSettingsPresenter.java:49-59) |
+| XMLSchemaSettingsViewImpl.ui.xml:37 | component-declaration | TickBox and FormGroup already declared; the view stops exposing its TextBox/TickBox getters (XMLSchemaSettingsPresenter.java:49-59) |
 
 **Stays in Java:** field values.
 
@@ -480,7 +480,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| FeedSettingsViewImpl.ui.xml:16,22-68 | component-declaration | CustomCheckBox, SelectionBox x7 and FormGroup already declared; the view stops exposing them (getDataFormat() etc.) and gets read/write plus setters for the option lists |
+| FeedSettingsViewImpl.ui.xml:16,22-68 | component-declaration | TickBox, SelectionBox x7 and FormGroup already declared; the view stops exposing them (getDataFormat() etc.) and gets read/write plus setters for the option lists |
 
 **Stays in Java:** option lists: FORMATS (FeedSettingsPresenter.java:83-84), encodings (:116-117), volume groups (:138), stream types (:157), FeedStatus values (:170): data; feed status enabled by receipt check mode (:178).
 
@@ -514,7 +514,7 @@ tab, presenter; complexity 2, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ThemePreferencesViewImpl.ui.xml:13-41 | component-declaration | SelectionBox x5, CustomCheckBox x2 and FormGroup already declared; keep |
+| ThemePreferencesViewImpl.ui.xml:13-41 | component-declaration | SelectionBox x5, TickBox x2 and FormGroup already declared; keep |
 
 **Stays in Java:** fixed item text "Comfortable", "Compact" (ThemePreferencesViewImpl.java:60-61) and "Small", "Medium", "Large" (:63-65): SelectionBox items cannot be declared in a template; VisPalette display values (:68), themes (:95), fonts (:125): data.
 
@@ -532,7 +532,7 @@ tab, tidy; complexity 2, effort S; used by 3.
 | --- | --- | --- |
 | TimePreferencesViewImpl.java:86-87 | aria | accessibleName="Hours" / accessibleName="Minutes" on the two ValueSpinners in place of AccessibleName.set (needs ValueSpinner.setAccessibleName from the wave-2 contract) |
 | TimePreferencesViewImpl.java:113 | structure | visible="false" on <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"> |
-| TimePreferencesViewImpl.ui.xml:14-41 | component-declaration | SelectionBox x3, CustomCheckBox, ValueSpinner x2 and FormGroup already declared; keep |
+| TimePreferencesViewImpl.ui.xml:14-41 | component-declaration | SelectionBox x3, TickBox, ValueSpinner x2 and FormGroup already declared; keep |
 
 **Stays in Java:** Use values, standard formats and time zone ids (TimePreferencesViewImpl.java:88-97): data; spinner bounds and steps (:99-110): behaviour; Custom text enabled state and zone group visibility (:150-151, :212-218).
 
@@ -555,7 +555,7 @@ tab, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | AiConfigGeneralPresenter.java:53 / AiConfigGeneralViewImpl.ui.xml:12 | component-declaration | <d:DropDownBox ui:field="modelRef"/> in place of the SimplePanel and setModelRefSelection(View); DocSelectionController attached with OpenAIModelDoc.TYPE and USE (:54-55) |
-| AiConfigGeneralViewImpl.ui.xml:17-42 | component-declaration | SelectionBox x2, ValueSpinner, CustomCheckBox and FormGroup already declared; keep |
+| AiConfigGeneralViewImpl.ui.xml:17-42 | component-declaration | SelectionBox x2, ValueSpinner, TickBox and FormGroup already declared; keep |
 
 **Stays in Java:** DockType and DockLocation items (AiConfigGeneralViewImpl.java:63-70): data; spinner bounds (:73-74); prompt texts and values from the config.
 
@@ -578,7 +578,7 @@ tab, presenter; complexity 2, effort M; used by 3.
 | ReportSettingsViewImpl.java:65 | aria | title="Set as the default error feed for all users" on <b:Button ui:field="setDefaultErrorFeed"> |
 | ReportSettingsPresenter.java:56 / ReportSettingsViewImpl.ui.xml:26 | component-declaration | <d:DropDownBox ui:field="aiSummaryModel"/>; DocSelectionController with OpenAIModelDoc.TYPE and USE (:57-59) |
 | AbstractSettingsPresenter.java:44 / ReportSettingsViewImpl.ui.xml:37 | component-declaration | <d:DropDownBox ui:field="errorFeed"/>; DocSelectionController with FeedDoc.TYPE and VIEW |
-| ReportSettingsViewImpl.ui.xml:12-40 | component-declaration | SelectionBox, CustomCheckBox x2, Button and FormGroup already declared; keep |
+| ReportSettingsViewImpl.ui.xml:12-40 | component-declaration | SelectionBox, TickBox x2, Button and FormGroup already declared; keep |
 
 **Stays in Java:** file types (ReportSettingsViewImpl.java:62): data; Set Default visibility for administrators and read-only state; values read and written through the ReportSettings DTO.
 
@@ -661,7 +661,7 @@ tab, presenter; complexity 2, effort M; used by 2.
 | --- | --- | --- |
 | AnalyticSettingsViewImpl.java:65 | aria | title="Set as the default error feed for all users" on <b:Button ui:field="setDefaultErrorFeed"> |
 | AbstractSettingsPresenter.java:44 / AnalyticSettingsViewImpl.ui.xml:33 | component-declaration | <d:DropDownBox ui:field="errorFeed"/> in place of the SimplePanel and setErrorFeedView(View); DocSelectionController attached with FeedDoc.TYPE and VIEW (:42-43) |
-| AnalyticSettingsViewImpl.ui.xml:13-34 | component-declaration | SelectionBox x2, CustomCheckBox, Button and FormGroup already declared; keep |
+| AnalyticSettingsViewImpl.ui.xml:13-34 | component-declaration | SelectionBox x2, TickBox, Button and FormGroup already declared; keep |
 
 **Stays in Java:** level and status items from enums (AnalyticSettingsViewImpl.java:61,63): data; Set Default visible only for administrators (AbstractSettingsPresenter.java:46), enabled by read-only; default error feed lookup from ui config (:55-76).
 
@@ -679,7 +679,7 @@ tab, presenter; complexity 2, effort S; used by 3.
 | --- | --- | --- |
 | PathwaysSettingsPresenter.java:57 / PathwaysSettingsViewImpl.ui.xml:9 | component-declaration | <d:DropDownBox ui:field="traceStore"/>; DocSelectionController attached |
 | PathwaysSettingsPresenter.java:61 / PathwaysSettingsViewImpl.ui.xml:12 | component-declaration | <d:DropDownBox ui:field="infoFeed"/>; DocSelectionController attached |
-| PathwaysSettingsViewImpl.ui.xml:16-29 | component-declaration | DurationPicker, CustomCheckBox x4 and FormGroup already declared; keep |
+| PathwaysSettingsViewImpl.ui.xml:16-29 | component-declaration | DurationPicker, TickBox x4 and FormGroup already declared; keep |
 
 **Stays in Java:** default tolerance value (PathwaysSettingsViewImpl.java:64,90); read-only state (:137-138), values.
 
@@ -718,7 +718,7 @@ composite, presenter; complexity 3, effort M; used by 5.
 | --- | --- | --- |
 | TableBuilderProcessingViewImpl.java:73 | aria | icon="REFRESH" on <b:Button ui:field="refresh" text="Refresh"> |
 | TableBuilderProcessingViewImpl.java:168 / .ui.xml:43 | structure | <g:HTML ui:field="info" styleName="default-min-sizes form-control-border overflow-auto"/> in place of the SimplePanel filled with new HTML(info); Java calls info.setHTML |
-| TableBuilderProcessingViewImpl.ui.xml:13-44 | component-declaration | CustomCheckBox, SelectionBox, DateTimeBox x2 (wave 4, controllers attached), DurationPicker x2, Button and FormGroup already declared; keep |
+| TableBuilderProcessingViewImpl.ui.xml:13-44 | component-declaration | TickBox, SelectionBox, DateTimeBox x2 (wave 4, controllers attached), DurationPicker x2, Button and FormGroup already declared; keep |
 
 **Stays in Java:** node list (TableBuilderProcessingViewImpl.java:96) and info HTML: data; read-only state (:172-178); node REST and info refresh in the controller.
 
@@ -736,7 +736,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 | --- | --- | --- |
 | CredentialSettingsViewImpl.ui.xml:33-35 / CredentialSettingsPresenter.java:70 | component-declaration | the five wave-7 secret components (UsernamePasswordSecret, AccessTokenSecret, SshKeySecret, KeyStoreSecret, KeyStoreFileSecret) declared in the secret FormGroup, visible="false", in place of <g:SimplePanel ui:field="secret"> and setSecretView(View); the controller shows the one for the type and attaches each one's controller |
 | CredentialSettingsPresenter.java:62 | component-declaration | <datetimebox:DateTimeBox ui:field="expiryTime"> stays declared; the wave-4 DateTimeBoxController is attached by the controller instead of setPopupProvider(Provider<DateTimePopup>) |
-| CredentialSettingsViewImpl.ui.xml:13,18,31 | component-declaration | CustomCheckBox, SelectionBox and FormGroup already declared; keep |
+| CredentialSettingsViewImpl.ui.xml:13,18,31 | component-declaration | TickBox, SelectionBox and FormGroup already declared; keep |
 
 **Stays in Java:** CredentialSettingsViewImpl.java:89-95 type list sorted by display value (data); setExistingCredential / setKeyStorePath / updateState visibility and enabled states (CredentialSettingsViewImpl.java:149-168); CredentialSettingsPresenter.java:124-128 rename warning text built from the names.
 

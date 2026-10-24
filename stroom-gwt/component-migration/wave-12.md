@@ -38,7 +38,7 @@ tab, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | UserInfoViewImpl.java:60-62 | structure | displayName/subjectId/fullName setReadOnly(true) -> readOnly="true" on the three <g:TextBox> (always read only, not state) |
-| UserInfoViewImpl.ui.xml:64 | component-declaration | <tickbox:CustomCheckBox ui:field="isEnabledTickBox" label="Enabled"/> and the FormGroups are already declared (waves 1-2) |
+| UserInfoViewImpl.ui.xml:64 | component-declaration | <tickbox:TickBox ui:field="isEnabledTickBox" label="Enabled"/> and the FormGroups are already declared (waves 1-2) |
 
 **Stays in Java:** UserInfoViewImpl.java:72-82 the visibility of three groups and the subject id group's label/help/screen reader text switching between user ("Unique Identifier") and group ("Group Name") (from the UserRef); UserInfoViewImpl.java:85-88 values from the UserRef; UserInfoViewImpl.java:96 setReadOnly: fix the inverted flag while splitting (setEnabled(isReadOnly) with UserInfoPresenter passing hasPermissionToEdit()); the dumb setReadOnly(true) must mean read only, and the controller passes !hasPermissionToEdit().
 
@@ -287,7 +287,7 @@ composite, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | FeedDependencyViewImpl.ui.xml:12 + FeedDependencyPresenter (view.setFeedDependencyList) | component-declaration | <p:FeedDependencyList ui:field="feedDependencies" addStyleNames="max"/> (wave 10) instead of the SimplePanel slot |
-| FeedDependencyViewImpl.ui.xml:17-34 | component-declaration | CustomCheckBox (wave 2) and DurationPicker (wave 2) are already declared; nothing more to move |
+| FeedDependencyViewImpl.ui.xml:17-34 | component-declaration | TickBox (wave 2) and DurationPicker (wave 2) are already declared; nothing more to move |
 
 **Stays in Java:** FeedDependencyViewImpl.java:69-110 the delay values, their defaults (30 minutes, 1 day) when none is set, and the pickers' enabled state following their tick boxes; FeedDependencyPresenter.java dialog caption "Set Feed Dependencies", size and OK/Cancel (the controller shows the dialog).
 
@@ -306,7 +306,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 | GitRepoSettingsViewImpl.ui.xml:16,23 | text | remove the 'Lorem ipsum' placeholder text in the two Labels (always replaced at runtime by setContentStoreName/setContentPackName) |
 | GitRepoSettingsViewImpl.ui.xml:74-77 | structure | remove the commented-out credentials Button |
 | GitRepoSettingsViewImpl.ui.xml:8 + components.css:2005-2016 | css-class | the form's button and field widths already come from .gitrepo-settings-form rules (no inline styles); keep the class |
-| GitRepoSettingsViewImpl.ui.xml:73 | component-declaration | SelectionBox, CustomCheckBox, Button, FormGroup are already declared; HttpClientConfig and GitRepoCommitDialog are dialogs the controller opens, so not declared |
+| GitRepoSettingsViewImpl.ui.xml:73 | component-declaration | SelectionBox, TickBox, Button, FormGroup are already declared; HttpClientConfig and GitRepoCommitDialog are dialogs the controller opens, so not declared |
 
 **Stays in Java:** GitRepoSettingsViewImpl.java:101-146 values from the document; GitRepoSettingsViewImpl.java:183-247 content-pack vs plain repository visibility/enabled state, and the push controls' titles switching between AUTO_PUSH_TITLE/PUSH_TITLE and the reason pushing is unavailable (state). The default titles in the template stay as they are; Read-only state (GitRepoSettingsViewImpl.java:169-174); Push/pull/check-for-updates REST flows and alerts (controller).
 
@@ -548,7 +548,7 @@ dialog, presenter; complexity 4, effort L; used by 3.
 | ProcessorEditViewImpl.ui.xml:15 + ProcessorEditPresenter.java (view.setExpressionView) | component-declaration | <q:EditExpression ui:field="expression" addStyleNames="max default-min-sizes"/> (wave 7) instead of the SimplePanel slot |
 | ProcessorEditViewImpl.ui.xml:58 + ProcessorEditPresenter.java (view.setRunAsUserView) | component-declaration | <dd:DropDownBox ui:field="runAsUser"/> (wave 6, stroom.security.client.component) instead of the SimplePanel slot; the controller attaches UserRefSelectionController with FindUserContext.RUN_AS |
 | ProcessorEditViewImpl.java:78-79 | structure | maxProcessingTasks min/max: min="0" max="..." on the ValueSpinner only if UiBinder parses long attributes (setMin/setMax take long; no template sets them today) and the ProcessorFilter constants are duplicated knowingly; else stays in the component's constructor |
-| ProcessorEditViewImpl.ui.xml:20-62 | component-declaration | DateTimeBox (wave 4), ValueSpinner, SelectionBox, CustomCheckBox, DurationPicker, Button are already declared |
+| ProcessorEditViewImpl.ui.xml:20-62 | component-declaration | DateTimeBox (wave 4), ValueSpinner, SelectionBox, TickBox, DurationPicker, Button are already declared |
 
 **Stays in Java:** ProcessorEditViewImpl.java:81 default max task creation delay (30 s) and the enabled state from its tick box; Field values from the filter; the profile list model (ProcessorProfileListModel, controller); Dialog caption ("Add Filter"/"Edit Filter" chosen by existingFilter), size and OK handling (controller); FeedDependenciesEditor (unit 402) is a dialog the controller opens, not declared.
 

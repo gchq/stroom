@@ -19,7 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -39,9 +39,9 @@ public class LayoutConstraintViewImpl extends ViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox fitWidth;
+    TickBox fitWidth;
     @UiField
-    CustomCheckBox fitHeight;
+    TickBox fitHeight;
 
     private final EventBus eventBus = new SimpleEventBus();
 

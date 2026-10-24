@@ -21,7 +21,7 @@ import stroom.planb.shared.DurationSetting;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,7 +34,7 @@ import com.google.inject.Inject;
 public class CondenseSettingsWidget extends AbstractSettingsWidget implements CondenseSettingsView {
 
     @UiField
-    CustomCheckBox condenseEnabled;
+    TickBox condenseEnabled;
     @UiField
     FormGroup condenseAgePanel;
     @UiField

@@ -35,7 +35,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.View;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -233,7 +233,7 @@ public class FeedSettingsPresenter
 
         TextBox getClassification();
 
-        CustomCheckBox getReference();
+        TickBox getReference();
 
         SelectionBox<String> getDataEncoding();
 

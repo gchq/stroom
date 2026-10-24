@@ -58,10 +58,10 @@
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Shows the data as a formatted web page (HTML) rather than plain text. Use it when Pipeline turns the data into HTML. Stepping is not available when this is ticked. Default is not ticked.">
-            <v:CustomCheckBox ui:field="showAsHtml" identity="basicTextSettingsShowAsHTML" label="Show As HTML"/>
+            <v:TickBox ui:field="showAsHtml" identity="basicTextSettingsShowAsHTML" label="Show As HTML"/>
         </form:FormGroup>
         <form:FormGroup helpText="Adds a button to the text pane that opens the selected record in the stepper. You need the Stepping permission, and it does not apply when Show As HTML is ticked. Default is not ticked.">
-            <v:CustomCheckBox ui:field="showStepping" identity="basicTextSettingsShowStepping" label="Show Stepping"/>
+            <v:TickBox ui:field="showStepping" identity="basicTextSettingsShowStepping" label="Show Stepping"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

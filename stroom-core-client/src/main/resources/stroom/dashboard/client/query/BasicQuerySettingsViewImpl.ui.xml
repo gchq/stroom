@@ -17,10 +17,10 @@
             <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Runs the query automatically when the dashboard is opened. When not ticked, results appear only after you run the query. Default is not ticked.">
-            <v:CustomCheckBox ui:field="queryOnOpen" identity="basicQuerySettingsQueryOnOpen" label="Query On Open"/>
+            <v:TickBox ui:field="queryOnOpen" identity="basicQuerySettingsQueryOnOpen" label="Query On Open"/>
         </form:FormGroup>
         <form:FormGroup helpText="Re-runs the query regularly while the dashboard is open, waiting Refresh Interval after each run finishes. The first run still needs Query On Open or a manual run. Default is not ticked.">
-            <v:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
+            <v:TickBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
                         helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."

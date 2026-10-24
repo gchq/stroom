@@ -23,7 +23,7 @@ import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -43,7 +43,7 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     @UiField
     SelectionBox<StatisticRollUpType> rollUpType;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
 
     @Inject
     public StatisticsDataSourceSettingsViewImpl(final Binder binder) {
@@ -78,7 +78,7 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     }
 
     @Override
-    public CustomCheckBox getEnabled() {
+    public TickBox getEnabled() {
         return enabled;
     }
 

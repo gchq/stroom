@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -189,7 +189,7 @@ public final class FormGroupStories {
                     final FormGroup formGroup = new FormGroup();
                     formGroup.setIdentity("fg-tick");
                     formGroup.setHelpText(TICK_HELP);
-                    final CustomCheckBox tickBox = new CustomCheckBox();
+                    final TickBox tickBox = new TickBox();
                     tickBox.setLabel("Follow Redirects");
                     formGroup.add(tickBox);
                     formGroup.getElement().setAttribute("data-testid", "fg-tick-group");

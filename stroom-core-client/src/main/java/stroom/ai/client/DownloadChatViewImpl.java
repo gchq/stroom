@@ -18,7 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -30,7 +30,7 @@ public class DownloadChatViewImpl extends ViewImpl implements DownloadChatView {
     private final Widget widget;
 
     @UiField
-    CustomCheckBox includeDataContexts;
+    TickBox includeDataContexts;
 
     @Inject
     public DownloadChatViewImpl(final Binder binder) {

@@ -19,7 +19,7 @@ package stroom.dashboard.client.input;
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -47,11 +47,11 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     @UiField
     TextArea values;
     @UiField
-    CustomCheckBox useDictionary;
+    TickBox useDictionary;
     @UiField
     SimplePanel dictionary;
     @UiField
-    CustomCheckBox allowTextEntry;
+    TickBox allowTextEntry;
 
     @Inject
     public BasicListInputSettingsViewImpl(final Binder binder) {

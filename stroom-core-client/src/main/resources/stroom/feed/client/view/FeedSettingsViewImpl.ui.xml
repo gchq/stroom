@@ -13,7 +13,7 @@
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReferenceFeed"
                         helpText="Tick if this feed contains reference data, used for reference data lookups.">
-            <tickbox:CustomCheckBox ui:field="reference" label="Reference Feed"/>
+            <tickbox:TickBox ui:field="reference" label="Reference Feed"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus"
                         label="Feed Status"

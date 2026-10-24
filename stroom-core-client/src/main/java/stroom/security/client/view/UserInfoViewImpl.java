@@ -21,7 +21,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -46,7 +46,7 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
     @UiField
     TextBox fullName;
     @UiField
-    CustomCheckBox isEnabledTickBox;
+    TickBox isEnabledTickBox;
     @UiField
     FormGroup enabledFormGroup;
 
@@ -97,7 +97,7 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
     }
 
     @Override
-    public CustomCheckBox getIsEnabledTickBox() {
+    public TickBox getIsEnabledTickBox() {
         return isEnabledTickBox;
     }
 

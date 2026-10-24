@@ -26,7 +26,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -49,7 +49,7 @@ public class TableBuilderProcessingViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     SelectionBox<String> node;
     @UiField

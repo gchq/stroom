@@ -21,7 +21,7 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,7 +35,7 @@ public class DurationViewImpl extends ViewImpl implements DurationView {
     private final Widget widget;
 
     @UiField
-    CustomCheckBox forever;
+    TickBox forever;
     @UiField
     DurationPicker durationPicker;
 

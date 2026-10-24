@@ -414,7 +414,7 @@ tab, presenter; complexity 2, effort M; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | BasicQuerySettingsViewImpl.ui.xml:17 + BasicQuerySettingsViewImpl.java:81-86 setDataSourceSelectionView | component-declaration | <dd:DropDownBox ui:field="dataSource" addStyleNames="w-100"/> in place of the SimplePanel slot; the controller does make(docSelectionControllerProvider).attach(view.getDataSource()) instead of owning a DocSelectionBoxPresenter (DocSelectionBox, wave 8) |
-| BasicQuerySettingsViewImpl.ui.xml:20,23 | component-declaration | <v:CustomCheckBox ui:field="queryOnOpen"/> and "autoRefresh" already declared (wave 2): keep them, and use setOnChange instead of ValueChangeEvent |
+| BasicQuerySettingsViewImpl.ui.xml:20,23 | component-declaration | <v:TickBox ui:field="queryOnOpen"/> and "autoRefresh" already declared (wave 2): keep them, and use setOnChange instead of ValueChangeEvent |
 | BasicQuerySettingsViewImpl.ui.xml:7-29 | component-declaration | FormGroup (wave 1) already declared with label, helpText and screenReaderText: keep them as they are |
 
 **Stays in Java:** BasicQuerySettingsViewImpl.java:67 id.setText(id) (component id, data); BasicQuerySettingsViewImpl.java:77 name.setText(name) (data); BasicQuerySettingsViewImpl.java:115 refreshInterval.setText(...) (data).
@@ -432,7 +432,7 @@ tab, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | BasicListInputSettingsViewImpl.ui.xml:31 + BasicListInputSettingsViewImpl.java:119-120 setDictionaryView | component-declaration | <dd:DropDownBox ui:field="dictionary" addStyleNames="w-100"/> in place of the SimplePanel slot; the controller attaches a DocSelectionController (DocSelectionBox, wave 8) instead of owning a DocSelectionBoxPresenter |
-| BasicListInputSettingsViewImpl.ui.xml:26,34 | component-declaration | CustomCheckBox useDictionary and allowTextEntry already declared (wave 2); use setOnChange |
+| BasicListInputSettingsViewImpl.ui.xml:26,34 | component-declaration | TickBox useDictionary and allowTextEntry already declared (wave 2); use setOnChange |
 | BasicListInputSettingsViewImpl.ui.xml:26 | aria | identity="basicListInputSettingsExtractValues" on useDictionary -> basicListInputSettingsUseDictionary (fixed text that names the wrong field) |
 
 **Stays in Java:** BasicListInputSettingsViewImpl.java:73 id.setText(id) (data); BasicListInputSettingsViewImpl.java:83 name.setText(name) (data).
@@ -478,7 +478,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 | BasicEmbeddedQuerySettingsViewImpl.ui.xml:25 + BasicEmbeddedQuerySettingsViewImpl.java:100-105 setQuerySelectionView | component-declaration | <dd:DropDownBox ui:field="queryRef" addStyleNames="w-100"/> in place of the SimplePanel slot; the controller attaches a DocSelectionController (DocSelectionBox, wave 8) |
 | BasicEmbeddedQuerySettingsViewImpl.ui.xml:27 | component-declaration | Button copyQuery already declared (wave 1); setOnClick in place of BasicEmbeddedQuerySettingsUiHandlers. DocSelectionPopup (wave 8) is a popup opened by the controller and is not declared. |
 | BasicEmbeddedQuerySettingsViewImpl.ui.xml:9,13,18,22,30,35,38,43 | aria | identity values copied from other forms (basicQuerySettingsId, basicQuerySettingsName, basicQuerySettingsLocal, basicQuerySettingsQueryRef, basicQuerySettingsQueryOnOpen, basicQuerySettingsAutoRefresh, basicQuerySettingsRefreshInterval, basicTableSettingsPageSize) -> basicEmbeddedQuerySettings*: fixed text that repeats the ids of BasicQuerySettings and BasicTableSettings |
-| BasicEmbeddedQuerySettingsViewImpl.ui.xml:18,29,34,46 | component-declaration | CustomCheckBox x3 and ValueSpinner (wave 2) already declared; kept, with setOnChange |
+| BasicEmbeddedQuerySettingsViewImpl.ui.xml:18,29,34,46 | component-declaration | TickBox x3 and ValueSpinner (wave 2) already declared; kept, with setOnChange |
 
 **Stays in Java:** BasicEmbeddedQuerySettingsViewImpl.java:86, 96, 151 id, name and refresh interval text (data); BasicEmbeddedQuerySettingsViewImpl.java:120 queryRefFormGroup section--disabled (state class); BasicEmbeddedQuerySettingsViewImpl.java:121 copyQuery.setEnabled(!reference) (state).
 
@@ -500,7 +500,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | stroom/dashboard/client/text/BasicTextSettingsViewImpl.ui.xml:58 | component-declaration | Replace <g:SimplePanel ui:field="pipeline"/> with <dd:DropDownBox ui:field="pipeline" addStyleNames="w-100"/> (wave 8 DocSelectionBox when it lands); the controller does make(docSelectionControllerProvider).attach(view.getPipelineBox()) instead of BasicTextSettingsPresenter.java:54-62 (setIncludedTypes(PipelineDoc.TYPE) and setRequiredPermissions(USE) go on the controller) |
-| stroom/dashboard/client/text/BasicTextSettingsViewImpl.ui.xml:8-65 | component-declaration | FormGroup, SelectionBox x8, CustomCheckBox x2 are already declared; keep them |
+| stroom/dashboard/client/text/BasicTextSettingsViewImpl.ui.xml:8-65 | component-declaration | FormGroup, SelectionBox x8, TickBox x2 are already declared; keep them |
 
 **Stays in Java:** SelectionBox items (Any, blank and the table/column lists) set from the dashboard context: BasicTextSettingsViewImpl.java:47-48 constants and setTableList/setColumns; id label text (setId) and name text: data; table change callback (was BasicTextSettingsUiHandlers.onTableChange) wired by the controller.
 
@@ -522,7 +522,7 @@ tab, presenter; complexity 3, effort M; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | BasicTableSettingsViewImpl.ui.xml:29 | component-declaration | <dd:DropDownBox ui:field="pipeline" addStyleNames="w-100"/> (wave 8 DocSelectionBox) with DocSelectionController attached |
-| BasicTableSettingsViewImpl.ui.xml:9-50 | component-declaration | FormGroup, SelectionBox, CustomCheckBox and ValueSpinner are already declared; keep |
+| BasicTableSettingsViewImpl.ui.xml:9-50 | component-declaration | FormGroup, SelectionBox, TickBox and ValueSpinner are already declared; keep |
 
 **Stays in Java:** query list, values, pipeline enabled per Extract Values / Use Default: state; max results, page size: data.
 

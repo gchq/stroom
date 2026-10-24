@@ -27,7 +27,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -50,7 +50,7 @@ public class ScheduledProcessEditViewImpl
     @UiField
     TextBox name;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     SelectionBox<String> node;
     @UiField

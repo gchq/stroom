@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.View;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -83,6 +83,6 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
 
         TextBox getSchemaGroup();
 
-        CustomCheckBox getDeprecated();
+        TickBox getDeprecated();
     }
 }

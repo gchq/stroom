@@ -23,7 +23,7 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.ColumnRef;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -72,9 +72,9 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     SimplePanel pipeline;
     @UiField
-    CustomCheckBox showAsHtml;
+    TickBox showAsHtml;
     @UiField
-    CustomCheckBox showStepping;
+    TickBox showStepping;
 
     @Inject
     public BasicTextSettingsViewImpl(final Binder binder) {

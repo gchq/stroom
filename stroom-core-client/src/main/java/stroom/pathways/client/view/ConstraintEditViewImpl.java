@@ -20,7 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.shared.pathway.ConstraintValueType;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,7 +39,7 @@ public class ConstraintEditViewImpl extends ViewImpl implements ConstraintEditVi
     @UiField
     TextBox value;
     @UiField
-    CustomCheckBox optional;
+    TickBox optional;
 
     @Inject
     public ConstraintEditViewImpl(final Binder binder) {

@@ -19,14 +19,14 @@
                         identity="cfRuleEnabledState"
                         helpText="Tick to enable this rule. When unticked, this rule is ignored."
                         screenReaderText="When unticked, this rule is ignored.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
+            <tickbox:TickBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         label="Hide Matching Rows"
                         helpText="When ticked, rows matching this rule are not shown in the table."
                         screenReaderText="When ticked, matching rows are not shown.">
-            <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
+            <tickbox:TickBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
@@ -55,14 +55,14 @@
                         identity="cfRuleTextBoldState"
                         label="Make Text Bold"
                         helpText="When ticked, the text of matching rows is shown in bold.">
-            <tickbox:CustomCheckBox ui:field="textBold" identity="cfRuleTextBold" label="Bold"/>
+            <tickbox:TickBox ui:field="textBold" identity="cfRuleTextBold" label="Bold"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleTextItalicState"
                         label="Make Text Italic"
                         helpText="When ticked, the text of matching rows is shown in italics.">
-            <tickbox:CustomCheckBox ui:field="textItalic" identity="cfRuleTextItalic" label="Italic"/>
+            <tickbox:TickBox ui:field="textItalic" identity="cfRuleTextItalic" label="Italic"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

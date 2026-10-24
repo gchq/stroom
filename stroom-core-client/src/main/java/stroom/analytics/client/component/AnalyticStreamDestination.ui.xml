@@ -19,7 +19,7 @@
         <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible"
                         helpText="For streaming rules, write detections to the feed of the stream being processed instead of the destination feed. Disabled and ignored for other processing types."
                         screenReaderText="Streaming rules only. Writes detections to the source stream's feed.">
-            <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)"/>
+            <tickbox:TickBox ui:field="useSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -21,7 +21,7 @@ import stroom.planb.shared.RetentionSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,7 +34,7 @@ import com.google.inject.Inject;
 public class RetentionSettingsWidget extends AbstractSettingsWidget implements RetentionSettingsView {
 
     @UiField
-    CustomCheckBox retentionEnabled;
+    TickBox retentionEnabled;
     @UiField
     FormGroup retentionAgePanel;
     @UiField
@@ -50,7 +50,7 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiField
     FormGroup useStateTimePanel;
     @UiField
-    CustomCheckBox useStateTime;
+    TickBox useStateTime;
 
     private boolean useStateTimeVisible = true;
     private boolean checkIntervalVisible;

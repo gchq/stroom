@@ -22,7 +22,7 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -41,9 +41,9 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @UiField
     FormGroup downloadAll;
     @UiField
-    CustomCheckBox downloadAllTables;
+    TickBox downloadAllTables;
     @UiField
-    CustomCheckBox sample;
+    TickBox sample;
     @UiField
     ValueSpinner percent;
 

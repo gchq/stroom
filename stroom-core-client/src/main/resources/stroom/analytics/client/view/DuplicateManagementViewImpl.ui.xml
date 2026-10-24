@@ -8,16 +8,16 @@
             <form:FormGroup identity="rememberNotifications"
                             helpText="Store the duplicate check column values of each notification in the duplicate check store so they can be viewed in the duplicates list."
                             screenReaderText="Stored values can be viewed in the duplicates list.">
-                <tickbox:CustomCheckBox ui:field="rememberNotifications" label="Remember Notifications"/>
+                <tickbox:TickBox ui:field="rememberNotifications" label="Remember Notifications"/>
             </form:FormGroup>
             <form:FormGroup identity="suppressDuplicateNotifications"
                             helpText="Do not send a notification if its values in the duplicate check columns match one already stored. Values are stored automatically while this is ticked."
                             screenReaderText="Skips notifications that match a stored one.">
-                <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications" label="Suppress Duplicate Notifications"/>
+                <tickbox:TickBox ui:field="suppressDuplicateNotifications" label="Suppress Duplicate Notifications"/>
             </form:FormGroup>
             <form:FormGroup identity="chooseColumns"
                             screenReaderText="If unticked, grouped columns, or else all columns, are compared.">
-                <tickbox:CustomCheckBox ui:field="chooseColumns" label="Choose Columns"/>
+                <tickbox:TickBox ui:field="chooseColumns" label="Choose Columns"/>
                 <form:HelpHTML>
                     <p>If ticked, enter the column names in the Columns field to define which columns will be
                         used for de-duplication of notifications. If unticked, the grouped columns are used, or all

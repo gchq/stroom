@@ -22,7 +22,7 @@
         </form:FormGroup>
         <form:FormGroup helpText="Whether statistics are recorded in this store. When unticked, statistics sent to it are dropped, and a pipeline that writes to it fails."
                         screenReaderText="When unticked, nothing is recorded.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="statisticsSettingsEnabled" label="Enabled"/>
+            <tickbox:TickBox ui:field="enabled" identity="statisticsSettingsEnabled" label="Enabled"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

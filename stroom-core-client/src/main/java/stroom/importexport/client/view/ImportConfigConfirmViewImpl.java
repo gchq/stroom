@@ -20,7 +20,7 @@ import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportC
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -39,13 +39,13 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @UiField
     SimplePanel dataGridView;
     @UiField
-    CustomCheckBox enableFilters;
+    TickBox enableFilters;
     @UiField
     DateTimeBox enableFrom;
     @UiField
-    CustomCheckBox useImportNames;
+    TickBox useImportNames;
     @UiField
-    CustomCheckBox useImportFolders;
+    TickBox useImportFolders;
     @UiField
     SimplePanel rootFolder;
 

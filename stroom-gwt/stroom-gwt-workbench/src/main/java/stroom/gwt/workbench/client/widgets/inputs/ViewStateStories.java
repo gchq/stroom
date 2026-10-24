@@ -61,7 +61,7 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.linecolinput.client.LineColInput;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -158,8 +158,8 @@ public final class ViewStateStories {
                 new Row("List (selection box)", ViewStateStories::selectionBox,
                         w -> selectionBoxOf(w).setReadOnly(true),
                         w -> selectionBoxOf(w).setEnabled(false)),
-                new Row("Tick box", ViewStateStories::tickBox, w -> ((CustomCheckBox) w).setReadOnly(true),
-                        w -> ((CustomCheckBox) w).setEnabled(false)),
+                new Row("Tick box", ViewStateStories::tickBox, w -> ((TickBox) w).setReadOnly(true),
+                        w -> ((TickBox) w).setEnabled(false)),
                 new Row("Document picker", PickerField::new, w -> ((PickerField) w).view.setReadOnly(true),
                         w -> ((PickerField) w).view.setEnabled(false)),
                 new Row("Date and time", () -> dateTimeBox(harness), w -> ((DateTimeBox) w).setReadOnly(true),
@@ -281,7 +281,7 @@ public final class ViewStateStories {
     // Controls that name themselves (their own label, or names for their parts)
     private static boolean hasOwnName(final Widget widget) {
         return widget instanceof LabelledField
-               || widget instanceof CustomCheckBox
+               || widget instanceof TickBox
                || widget instanceof DaysWidget
                || widget instanceof DurationPicker
                || widget instanceof TimeZoneWidget;
@@ -469,7 +469,7 @@ public final class ViewStateStories {
     }
 
     private static Widget tickBox() {
-        final CustomCheckBox tickBox = new CustomCheckBox();
+        final TickBox tickBox = new TickBox();
         tickBox.setLabel("Send Empty Reports");
         tickBox.setValue(true);
         return tickBox;

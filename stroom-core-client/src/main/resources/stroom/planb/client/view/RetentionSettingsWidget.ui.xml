@@ -9,7 +9,7 @@
         <form:FormGroup
                 helpText="Deletes data once it is older than the Retain For period. Default is unticked."
                 screenReaderText="Deletes data older than Retain For. Default is unticked.">
-            <tickbox:CustomCheckBox ui:field="retentionEnabled"
+            <tickbox:TickBox ui:field="retentionEnabled"
                                     identity="retentionEnabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup ui:field="retentionCheckIntervalPanel"
@@ -38,7 +38,7 @@
                         identity="useStateTimePanel"
                         helpText="Measures the age of data from its own state time rather than from when it was added to the store. Default is unticked."
                         screenReaderText="Age is measured from state time, not insert time.">
-            <tickbox:CustomCheckBox ui:field="useStateTime"
+            <tickbox:TickBox ui:field="useStateTime"
                                     identity="useStateTime" label="Use State Time"/>
         </form:FormGroup>
     </g:FlowPanel>

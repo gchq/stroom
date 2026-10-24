@@ -24,7 +24,7 @@ import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -46,7 +46,7 @@ public class AnalyticSettingsViewImpl
     @UiField
     SelectionBox<AnalyticRuleStatus> status;
     @UiField
-    CustomCheckBox includeRuleDocumentation;
+    TickBox includeRuleDocumentation;
     @UiField
     SimplePanel errorFeed;
     @UiField

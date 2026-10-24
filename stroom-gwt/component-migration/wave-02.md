@@ -6,30 +6,30 @@ Give the shared value widgets and layout widgets setOnChange callbacks and one r
 
 ## CSS and template notes for the wave
 
-- Cross-cutting, decide before wave 2: UiBinder can't write role, aria-*, tabindex, type or placeholder on a g: widget element (the only ways in templates today are plain HTML in a g:HTMLPanel, see SpinnerLarge.ui.xml, or a typed setter, as CustomCheckBox.setAriaLabel and PasswordBox.setPlaceholder). This wave uses three ways: (1) a template whose root is an element (UiBinder<DivElement/InputElement, X> with setElement) for widgets that extend Widget (ColourBox, RadioGroup, FloorMapIconPicker); (2) plain elements in a g:HTMLPanel for parts that need no widget (ValueSpinner arrows/feedback/status, PasswordBox status, QuickFilter description/error); (3) small shared widgets with setters for the rest. Proposed names, all free in all_simple_names.json: stroom.widget.component.client.AriaPanel (a FlowPanel with setRole, setTabIndex, setAriaLabel, setAriaHasPopup, setAriaHidden, setAriaLive) for DropDownBox's root and SelectionBox's renderBox; stroom.widget.form.client.TextInput (a TextBox with setType, setPlaceholder, setRole, setAriaHasPopup, setAriaExpanded) for the inputs in QuickFilter, ValueSpinner and BaseSelectionBox.
-- Add setAriaLabel(String) (template attribute ariaLabel) to ValueSpinner and BaseSelectionBox, as CustomCheckBox has, so that AccessibleName.set(...) calls in DurationPicker.java:76-77 and DefaultMonthSelector.java:116,139 become template attributes.
+- Cross-cutting, decide before wave 2: UiBinder can't write role, aria-*, tabindex, type or placeholder on a g: widget element (the only ways in templates today are plain HTML in a g:HTMLPanel, see SpinnerLarge.ui.xml, or a typed setter, as TickBox.setAriaLabel and PasswordBox.setPlaceholder). This wave uses three ways: (1) a template whose root is an element (UiBinder<DivElement/InputElement, X> with setElement) for widgets that extend Widget (ColourBox, RadioGroup, FloorMapIconPicker); (2) plain elements in a g:HTMLPanel for parts that need no widget (ValueSpinner arrows/feedback/status, PasswordBox status, QuickFilter description/error); (3) small shared widgets with setters for the rest. Proposed names, all free in all_simple_names.json: stroom.widget.component.client.AriaPanel (a FlowPanel with setRole, setTabIndex, setAriaLabel, setAriaHasPopup, setAriaHidden, setAriaLive) for DropDownBox's root and SelectionBox's renderBox; stroom.widget.form.client.TextInput (a TextBox with setType, setPlaceholder, setRole, setAriaHasPopup, setAriaExpanded) for the inputs in QuickFilter, ValueSpinner and BaseSelectionBox.
+- Add setAriaLabel(String) (template attribute ariaLabel) to ValueSpinner and BaseSelectionBox, as TickBox has, so that AccessibleName.set(...) calls in DurationPicker.java:76-77 and DefaultMonthSelector.java:116,139 become template attributes.
 - SvgIconBox (wave 1) needs a template form of setDropDownWidget (e.g. @UiChild or a dropDown="true" attribute) before BaseSelectionBox can declare it.
 - Hiding: there is no Stroom utility hidden class in ui/css. UIObject.setVisible (GWT's own inline display:none) isn't counted as an inline style; SplitPane's own getStyle().setDisplay calls become BEM modifiers (split-pane__pane--hidden, split-pane__splitter--hidden) in split-pane.css.
 - Reused classes in this wave: sr-only (spinner.css:126), allow-focus, stroom-control (stroom.css:576), max (stroom.css:793), form (form.css:42), days (components.css:1655), pager-* (components.css:294-336). New classes go in the block's own CSS file: selection-box.css, split-pane.css, xsdbrowser.css, editor.css (scrollbar-metrics), stroom-histogram.css, pathways.css, tick-box.css only if word wrap is kept.
 - Custom property naming follows the existing --block__thing form (e.g. --split-pane__splitter-size): --split-pane__tracks, --xsd-node-grid__columns, --stroom-histogram__tooltip-left, --trace-histogram__bar-width/-index/-height.
 - Record corrections: Spinner.ui.xml (stroom-core-client/src/main/resources/stroom/main/client/view) belongs to stroom.main.client.view.Spinner (MainToolbar), not the ValueSpinner unit; DropDownBox and ValueSpinner don't declare FormGroup (they look up their parent FormGroup); DurationPicker should declare ValueSpinner and SelectionBox (same wave, so convert after them); PasswordBox and QuickFilter should declare Toolbar and ToolbarButton; TraceHistogramWidget has one inline style (Attribute.style, TraceHistogramWidget.java:134) the record counted as 0; DropDownBox's template is already beside its Java.
 
-## `CustomCheckBox`
+## `TickBox`
 
 widget, tidy; complexity 2, effort M; used by 67.
 
-- **Component:** `stroom.widget.tickbox.client.view.CustomCheckBox`
+- **Component:** `stroom.widget.tickbox.client.view.TickBox`
 - **Controller:** `none`
 - **Template:** `none` → `none (built in Java because it extends ButtonBase, which needs its root element in super(...) before a UiBinder can bind `this`; the three children are fixed and stay as constants)`
-- **Goes:** HasWordWrap implementation: getWordWrap/setWordWrap (CustomCheckBox.java:99, 302-304, 474-478) have no callers (the wordWrap template uses are on g:Label), so drop them with their inline style; `Keep ValueChangeEvent/HasValue beside a new setOnChange(Consumer<Boolean>) until its ~67 callers move (rule 5)`; `setEnabled stays beside setReadOnly only if disabled is kept as a distinct state`
+- **Goes:** HasWordWrap implementation: getWordWrap/setWordWrap (TickBox.java:99, 302-304, 474-478) have no callers (the wordWrap template uses are on g:Label), so drop them with their inline style; `Keep ValueChangeEvent/HasValue beside a new setOnChange(Consumer<Boolean>) until its ~67 callers move (rule 5)`; `setEnabled stays beside setReadOnly only if disabled is kept as a distinct state`
 - **Names:** Keeps its name and package; unique in all_simple_names.json.
 
 | Inline style | Code | Kind | Replacement |
 | --- | --- | --- | --- |
-| CustomCheckBox.java:303 | `getElement().getStyle().getWhiteSpace() in getWordWrap()` | static | Deleted with HasWordWrap (no callers). If wrapping control is wanted later: modifier .tick-box--nowrap { white-space: nowrap; } in tick-box.css |
-| CustomCheckBox.java:475 | `getElement().getStyle().setWhiteSpace(wrap ? NORMAL : NOWRAP)` | static | Deleted with HasWordWrap (no callers); else .tick-box--nowrap in tick-box.css |
+| TickBox.java:303 | `getElement().getStyle().getWhiteSpace() in getWordWrap()` | static | Deleted with HasWordWrap (no callers). If wrapping control is wanted later: modifier .tick-box--nowrap { white-space: nowrap; } in tick-box.css |
+| TickBox.java:475 | `getElement().getStyle().setWhiteSpace(wrap ? NORMAL : NOWRAP)` | static | Deleted with HasWordWrap (no callers); else .tick-box--nowrap in tick-box.css |
 
-**Stays in Java:** CustomCheckBox.java:123-136 label root, input, mark and label spans with tick-box, tick-box__input, __mark, __label: ButtonBase(Element) takes the root in super(), so no UiBinder owner yet; fixed, kept as BLOCK constants; CustomCheckBox.java:130 TICK_SVG inner HTML: shared with TickBoxCell (public constant TICK_SVG); CustomCheckBox.java:139 unique id: generated; CustomCheckBox.java:165 aria-readonly: state; CustomCheckBox.java:231 label text and :248 aria-label: set by callers' templates (label=, ariaLabel= attributes already work); CustomCheckBox.java:391 value attribute: data.
+**Stays in Java:** TickBox.java:123-136 label root, input, mark and label spans with tick-box, tick-box__input, __mark, __label: ButtonBase(Element) takes the root in super(), so no UiBinder owner yet; fixed, kept as BLOCK constants; TickBox.java:130 TICK_SVG inner HTML: shared with TickBoxCell (public constant TICK_SVG); TickBox.java:139 unique id: generated; TickBox.java:165 aria-readonly: state; TickBox.java:231 label text and :248 aria-label: set by callers' templates (label=, ariaLabel= attributes already work); TickBox.java:391 value attribute: data.
 
 ## `PasswordBox`
 
@@ -242,7 +242,7 @@ widget, tidy; complexity 1, effort S; used by 1.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DaysWidget.ui.xml:6-12 | component-declaration | seven CustomCheckBox (this wave) already declared with label text; days class is components.css:1655 |
+| DaysWidget.ui.xml:6-12 | component-declaration | seven TickBox (this wave) already declared with label text; days class is components.css:1655 |
 
 **Stays in Java:** The ticks: data; the @UiHandler ValueChangeEvent handlers (DaysWidget.java:103-137) become the widget's setOnChange output.
 

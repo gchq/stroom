@@ -20,7 +20,7 @@ import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPrefer
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -37,7 +37,7 @@ public final class KeyBindingPreferencesViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enableCharacterKeyShortcuts;
+    TickBox enableCharacterKeyShortcuts;
     @UiField
     QuickFilter quickFilter;
     @UiField

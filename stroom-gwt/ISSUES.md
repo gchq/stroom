@@ -1282,7 +1282,7 @@ with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a
 
 **Confirmed** (a search of the client code, 22 October 2026). Leaving out layout panels, text
 (`Label`, `HTML`), the forked text boxes (`TextBox`, `TextArea`: the Text inputs component) and the
-Stroom components that wrap a native element (`Button`, `CustomCheckBox`, `ColourBox`,
+Stroom components that wrap a native element (`Button`, `TickBox`, `ColourBox`,
 `CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`).
 
 Decided on 2026-10-22: change only what stops a keyboard or screen reader user, and only without
@@ -1817,7 +1817,7 @@ These were found by the review and fixed in the same change:
 * **The batch schedule editor's tick boxes had no names**: each field has a tick box beside it
   that chooses whether the field is changed, with no visible label, so a screen reader read seven
   unnamed tick boxes. Each is now named for its field, e.g. "Change Schedule Name", through a new
-  `ariaLabel` attribute on `CustomCheckBox` (`app-main-executionschedulesscreen--batch-edit`).
+  `ariaLabel` attribute on `TickBox` (`app-main-executionschedulesscreen--batch-edit`).
 * **Ten different disabled looks**: icons, icon buttons, menu items, tick boxes, grid icons and
   the FAB now share one opacity (`--disabled-opacity`, 0.4) in the theme's colour, rather than 0 to
   0.5 and black that was near invisible in the dark theme; hard-coded greys use the theme's
@@ -2247,7 +2247,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `gwt-PasswordTextBox`), and every quick filter is named for what it filters, not only by its
   placeholder ("Filter users and groups", "Filter API keys", a selection box's list's "Filter" and
   the box's name, and so on).
-* **Two tick boxes that didn't match, neither BEM** (`CustomCheckBox`, `TickBoxCell`): a form's
+* **Two tick boxes that didn't match, neither BEM** (`TickBox`, `TickBoxCell`): a form's
   tick box (`SimpleTickBox`, a `checkbox-container` div around its check box and box, then a
   separate label) and a grid's (`tickBox-*`, an SVG tick on Bootstrap's darker blue, its half-tick
   an inner div) had different markup, stylesheets and blues. Both are now the BEM block `tick-box`

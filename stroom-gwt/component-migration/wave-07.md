@@ -12,7 +12,7 @@ Convert the regular stacks in one pass each: the 17 Plan B leaf settings widgets
 - New floor map classes all go in stroom-floormap.css: stroom-floormap-canvas-focus--crosshair; floormap-layer-row--dragging, --drop-above, --drop-below (box-shadow with var(--blue-500), which is the #2196f3 used today); floormap-layer-lock--locked; floormap-layer-eye--off and --dim; floormap-layer-name--off and --dim; stroom-floormap-measure-label; stroom-floormap-grid__line--minor, __line--major, __background (using the existing --floormap-grid__* tokens at :26-29).
 - Custom properties follow the existing --block__part naming (--expression-tree__bracket, --floormap-grid__major-stroke): --expression-item__left/__top (expression-item.css:28), --pipeline-path__pulse-delay (pipeline-path.css:360, :497), --floormap-scale-bar__width, --floormap-gesture-readout__left/__top, --floormap-hover-tooltip__left/__top.
 - Rename editExpressionViewImpl-expressionTree (components.css:288 and :743) to expression-editor__tree with the merged ExpressionEditor.
-- UiBinder can't set role or aria-* on a widget. This wave uses raw elements in an HTMLPanel (ui:field Element, HTMLPanel.add(widget, element) where boxes go inside) for ExpressionTreePanel's tree, PipelinePathBar's toolbar and live region, and the floor map live regions and SVG container. For named controls, an ariaLabel setter like CustomCheckBox.setAriaLabel is missing on SelectionBox, BaseSelectionBox, DateTimeBox, SuggestBox and Button; until it exists AccessibleName.set stays in Java (TermEditor, FloorMapSetScale, FloorMapTimelineSettings).
+- UiBinder can't set role or aria-* on a widget. This wave uses raw elements in an HTMLPanel (ui:field Element, HTMLPanel.add(widget, element) where boxes go inside) for ExpressionTreePanel's tree, PipelinePathBar's toolbar and live region, and the floor map live regions and SVG container. For named controls, an ariaLabel setter like TickBox.setAriaLabel is missing on SelectionBox, BaseSelectionBox, DateTimeBox, SuggestBox and Button; until it exists AccessibleName.set stays in Java (TermEditor, FloorMapSetScale, FloorMapTimelineSettings).
 - Placeholders: PasswordBox has placeholder and secretName for templates; g:TextBox and g:TextArea have no placeholder setter and live in the protected com/google/gwt directory, so their placeholders stay in Java (SshKey, KeyStoreFile, FloorMapGroupEdit, FloorMapSetScale).
 
 ## `AbstractPlanBSettingsPresenter`
@@ -147,7 +147,7 @@ composite, tidy; complexity 2, effort S; used by 1.
 | stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapGroupEditViewImpl.java:123 | css-class | <g:Label ui:field="summary" styleName="floormap-group-edit-summary"/> |
 | stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapGroupEditViewImpl.java:67-68 | component-declaration | ColourBox (its declares list) in the template rather than new ColourBox() |
 
-**Stays in Java:** Filter placeholder and aria-label (:106, :110): g:TextBox has neither setter; aria-labelledby links with generated ids (:98-99, :118-120); Member rows: CustomCheckBox per candidate with label and id title, detail labels and the absent state (:177-211); Summary text from the counts (:250-252).
+**Stays in Java:** Filter placeholder and aria-label (:106, :110): g:TextBox has neither setter; aria-labelledby links with generated ids (:98-99, :118-120); Member rows: TickBox per candidate with label and id title, detail labels and the absent state (:177-211); Summary text from the counts (:250-252).
 
 ## `GeneralSettingsWidget`
 
@@ -768,7 +768,7 @@ widget, smart widget; complexity 4, effort L; used by 2.
 | stroom-core-client/src/main/java/stroom/query/client/TermEditor.java:131-132 | text | <g:Label ui:field="andLabel" styleName="termEditor-label" wordWrap="false" text=" and " visible="false"/> |
 | stroom-core-client/src/main/java/stroom/query/client/TermEditor.java:653-656 | css-class | <g:Label ui:field="fieldTypeLabel" styleName="termEditor-label fieldType" visible="false"/> |
 | stroom-core-client/src/main/java/stroom/query/client/TermEditor.java:119-130 | component-declaration | <dd:DropDownBox ui:field="docRef" addStyleNames="termEditor-item docRef termEditor-item--doc" visible="false"/> and <dd:DropDownBox ui:field="userRef" addStyleNames="termEditor-item docRef" visible="false"/>, replacing the DocSelectionBoxPresenter and UserRefSelectionBoxPresenter widgets |
-| stroom-core-client/src/main/java/stroom/query/client/TermEditor.java:606, :618, :624, :640 | aria | Names Field, Condition, Value/From/To, Date/From/To as ariaLabel="..." attributes once BaseSelectionBox, SelectionBox, SuggestBox and DateTimeBox have an ariaLabel setter (CustomCheckBox's is the model); until then AccessibleName.set stays |
+| stroom-core-client/src/main/java/stroom/query/client/TermEditor.java:606, :618, :624, :640 | aria | Names Field, Condition, Value/From/To, Date/From/To as ariaLabel="..." attributes once BaseSelectionBox, SelectionBox, SuggestBox and DateTimeBox have an ariaLabel setter (TickBox's is the model); until then AccessibleName.set stays |
 
 **Stays in Java:** Which boxes show for a field's type and condition (setVisible), and condition-wide (:339); Field type label text and title from the field (:349-354); Values written into the boxes (:439, :523-531); Condition items and the condition filter; Field filter tooltip built from the configured help URL (:607-610); Row element for the item box's looks (getRow).
 
@@ -784,7 +784,7 @@ composite, tidy; complexity 2, effort S; used by 1.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapTimelineSettingsViewImpl.java:76-79 | aria | ariaLabel="Loop Playback" on <tickbox:CustomCheckBox ui:field="loopCheckBox"> (template line 28); CustomCheckBox.setAriaLabel names its input, replacing FloorMapAria.labelInnerControl and its Console.error fallback |
+| stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapTimelineSettingsViewImpl.java:76-79 | aria | ariaLabel="Loop Playback" on <tickbox:TickBox ui:field="loopCheckBox"> (template line 28); TickBox.setAriaLabel names its input, replacing FloorMapAria.labelInnerControl and its Console.error fallback |
 
 **Stays in Java:** DateTimeBox popup provider (:63-64): injected, so the controller passes it in; Group names on the two DateTimeBoxes (:70-71) until DateTimeBox has an ariaLabel setter; Show All enabled state and the date and loop values.
 

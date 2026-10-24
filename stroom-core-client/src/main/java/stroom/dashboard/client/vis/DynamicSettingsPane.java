@@ -24,7 +24,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.json.client.JSONArray;
@@ -165,7 +165,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
                 }
             }
         } else if ("boolean".equals(type)) {
-            final CustomCheckBox ctrl = createBooleanBox(id);
+            final TickBox ctrl = createBooleanBox(id);
             widget = ctrl;
 
             if (defaultValue != null) {
@@ -300,8 +300,8 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return ctrl;
     }
 
-    private CustomCheckBox createBooleanBox(final String id) {
-        final CustomCheckBox ctrl = new CustomCheckBox();
+    private TickBox createBooleanBox(final String id) {
+        final TickBox ctrl = new TickBox();
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override

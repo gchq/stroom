@@ -19,7 +19,7 @@ package stroom.planb.client.view;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,11 +38,11 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     @UiField
     FormGroup synchroniseMergePanel;
     @UiField
-    CustomCheckBox synchroniseMerge;
+    TickBox synchroniseMerge;
     @UiField
     FormGroup overwritePanel;
     @UiField
-    CustomCheckBox overwrite;
+    TickBox overwrite;
 
     private boolean writeOptionsVisible = true;
 

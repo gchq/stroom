@@ -21,7 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,35 +44,35 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     @UiField
     TextBox defaultValue;
     @UiField
-    CustomCheckBox stored;
+    TickBox stored;
     @UiField
-    CustomCheckBox indexed;
+    TickBox indexed;
     @UiField
-    CustomCheckBox uninvertible;
+    TickBox uninvertible;
     @UiField
-    CustomCheckBox docValues;
+    TickBox docValues;
     @UiField
-    CustomCheckBox multiValued;
+    TickBox multiValued;
     @UiField
-    CustomCheckBox required;
+    TickBox required;
     @UiField
-    CustomCheckBox omitNorms;
+    TickBox omitNorms;
     @UiField
-    CustomCheckBox omitTermFreqAndPositions;
+    TickBox omitTermFreqAndPositions;
     @UiField
-    CustomCheckBox omitPositions;
+    TickBox omitPositions;
     @UiField
-    CustomCheckBox termVectors;
+    TickBox termVectors;
     @UiField
-    CustomCheckBox termPositions;
+    TickBox termPositions;
     @UiField
-    CustomCheckBox termOffsets;
+    TickBox termOffsets;
     @UiField
-    CustomCheckBox termPayloads;
+    TickBox termPayloads;
     @UiField
-    CustomCheckBox sortMissingFirst;
+    TickBox sortMissingFirst;
     @UiField
-    CustomCheckBox sortMissingLast;
+    TickBox sortMissingLast;
 
     @Inject
     public SolrIndexFieldEditViewImpl(final Binder binder) {

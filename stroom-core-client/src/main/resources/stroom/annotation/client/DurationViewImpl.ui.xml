@@ -6,7 +6,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel>
         <form:FormGroup helpText="Keep this annotation for ever, so retention never deletes it. When ticked, Retain For is disabled.">
-            <tickbox:CustomCheckBox ui:field="forever" identity="annotationRetentionKeepForever" label="Keep Forever"/>
+            <tickbox:TickBox ui:field="forever" identity="annotationRetentionKeepForever" label="Keep Forever"/>
         </form:FormGroup>
         <form:FormGroup identity="annotationRetainFor" label="Retain For"
                         helpText="How long to keep the annotation, measured from when it was created. Disabled when Keep Forever is ticked."

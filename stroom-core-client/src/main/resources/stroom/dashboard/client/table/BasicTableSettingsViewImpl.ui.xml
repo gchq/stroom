@@ -19,10 +19,10 @@
             <i:SelectionBox ui:field="query" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Gets column values from the original events using the extraction pipeline, so you can show fields the index does not store. When not ticked, only values stored in the index are available. Default is ticked.">
-            <tickbox:CustomCheckBox ui:field="extractValues" identity="basicTableSettingsExtractValues" label="Extract Values"/>
+            <tickbox:TickBox ui:field="extractValues" identity="basicTableSettingsExtractValues" label="Extract Values"/>
         </form:FormGroup>
         <form:FormGroup helpText="Uses the data source's own default extraction pipeline (e.g. the one set on the index) rather than the one chosen in Extraction Pipeline, which is then disabled. Default is not ticked.">
-            <tickbox:CustomCheckBox ui:field="useDefaultExtractionPipeline" identity="basicTableSettingsUseDefaultExtractionPipeline" label="Use Default Extraction Pipeline"/>
+            <tickbox:TickBox ui:field="useDefaultExtractionPipeline" identity="basicTableSettingsUseDefaultExtractionPipeline" label="Use Default Extraction Pipeline"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline"
                         helpText="Pipeline used to extract field values when Extract Values is ticked and Use Default Extraction Pipeline is not. You need Use permission on the pipeline.">
@@ -39,11 +39,11 @@
             <valuespinner:ValueSpinner ui:field="pageSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup helpText="When the table is grouped, also shows the rows that make up each group beneath the group's row. When not ticked, only the grouped rows are shown. Default is not ticked.">
-            <tickbox:CustomCheckBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
+            <tickbox:TickBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsOverrideMaxStringFieldLength"
                         helpText="Sets your own limit, in the box below, on how many characters of each text value this table keeps. Longer values are cut short and a warning is shown. When not ticked, the system limit applies (normally 1,000). Default is not ticked.">
-            <tickbox:CustomCheckBox ui:field="overrideMaxStringFieldLength" label="Override Maximum String Field Length"/>
+            <tickbox:TickBox ui:field="overrideMaxStringFieldLength" label="Override Maximum String Field Length"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsMaxStringFieldLength">
             <valuespinner:ValueSpinner ui:field="maxStringFieldLength" width="200px"/>

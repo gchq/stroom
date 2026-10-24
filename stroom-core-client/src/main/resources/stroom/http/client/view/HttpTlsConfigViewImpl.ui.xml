@@ -34,12 +34,12 @@
             <l:SelectionBox ui:field="trustStore"/>
         </form:FormGroup>
         <form:FormGroup helpText="Trust a server certificate that is self-signed (one with no issuing certificate authority), even if it is not in the Trust Store. Other certificates must still be trusted by the Trust Store. Default is not ticked.">
-            <tickbox:CustomCheckBox ui:field="trustSelfSignedCertificates"
+            <tickbox:TickBox ui:field="trustSelfSignedCertificates"
                                     identity="httpTlsConfigTrustSelfSignedCertificates"
                                     label="Trust Self Signed Certificates"/>
         </form:FormGroup>
         <form:FormGroup helpText="Check that the host name in the server's certificate matches the host being connected to. Untick only for testing, as it makes the connection less secure. Default is ticked.">
-            <tickbox:CustomCheckBox ui:field="verifyHostname"
+            <tickbox:TickBox ui:field="verifyHostname"
                                     identity="httpTlsConfigVerifyHostname"
                                     label="Verify Host Name"/>
         </form:FormGroup>

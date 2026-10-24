@@ -82,7 +82,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ResultStoreSettingsViewImpl.ui.xml:18,21,35,38 | component-declaration | CustomCheckBox (wave 2) and FormGroup (wave 1) already declared; nothing else to move (no Java markup) |
+| ResultStoreSettingsViewImpl.ui.xml:18,21,35,38 | component-declaration | TickBox (wave 2) and FormGroup (wave 1) already declared; nothing else to move (no Java markup) |
 
 **Stays in Java:** field values and validation messages (ResultStoreSettingsPresenter.java:93-131); caption (ResultStoreSettingsPresenter.java:60): passed in by the caller.
 
@@ -980,7 +980,7 @@ dialog, presenter; complexity 3, effort M; used by 6.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| AnalyticNotificationEditViewImpl.java:60 | structure | enabled.setValue(true) becomes value="true" on <tickbox:CustomCheckBox ui:field="enabled"> (:20) |
+| AnalyticNotificationEditViewImpl.java:60 | structure | enabled.setValue(true) becomes value="true" on <tickbox:TickBox ui:field="enabled"> (:20) |
 | AnalyticNotificationEditViewImpl.java:61-63 | structure | min="1" max="1000" value="1" on <v:ValueSpinner ui:field="maxNotifications"> (:31). ValueSpinner.setMin/setMax exist (ValueSpinner.java:397,407) |
 | AnalyticNotificationEditPresenter.java:179-188 / template :16 | component-declaration | Declare both destinations in place of the destinationContainer SimplePanel: <an:AnalyticStreamDestination ui:field="streamDestination" addStyleNames="form-group" visible="false"/> (already a component) and <an:AnalyticEmailDestination ui:field="emailDestination" addStyleNames="form-group" visible="false"/> (wave 8). Their controllers attach to them |
 
@@ -1162,7 +1162,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | ReplaceSecretViewImpl.ui.xml:21 | component-declaration | <datetimebox:DateTimeBox ui:field="expiryTime"/> already declared; its popup provider (ReplaceSecretPresenter.java:61 setPopupProvider) is replaced by make(dateTimeBoxControllerProvider).attach(view.getExpiryTime()) (DateTimeBox, wave 4) |
-| ReplaceSecretViewImpl.ui.xml:15 | component-declaration | <chk:CustomCheckBox ui:field="credsExpire"/> already declared (wave 2); FormGroup (wave 1) already declared |
+| ReplaceSecretViewImpl.ui.xml:15 | component-declaration | <chk:TickBox ui:field="credsExpire"/> already declared (wave 2); FormGroup (wave 1) already declared |
 
 **Stays in Java:** warning text (ReplaceSecretViewImpl.java:68): built from the credential's name; secret slot <g:SimplePanel ui:field="secret"> (ReplaceSecretViewImpl.ui.xml:10): which secret component (KeyStoreSecret, KeyStoreFileSecret, AccessToken, SshKey, UsernamePassword, wave 7) is chosen at runtime by credential type through SecretPresenters, so it cannot be declared statically; expiry enabled/disabled state (ReplaceSecretViewImpl.java:103-106); caption "Replace <type> Secret" (ReplaceSecretPresenter.java:100): built from data.
 
@@ -1190,7 +1190,7 @@ dialog, presenter; complexity 4, effort L; used by 3.
 | FloorMapObjectEditViewImpl.java:229-242 | aria | controlNames="Position X in metres, Position Y in metres" (ui.xml:119), "Width in metres, Height in metres" (ui.xml:135), "Scale X, as a multiple of natural size, Scale Y, as a multiple of natural size" (ui.xml:154; commas inside a name need FormGroup to accept another separator or shorter names), "Rotation in degrees, counter-clockwise" (ui.xml:167) |
 | FloorMapObjectEditViewImpl.java:244-245 | aria | aria-hidden units: make the "m" suffixes plain <span class="floormap-object-edit__unit" aria-hidden="true">m</span> in an HTMLPanel row instead of g:Label + FloorMapAria.hide |
 | FloorMapObjectEditViewImpl.java:182 | structure | setAreaFieldsVisible(false): visible="false" on fillGroup, opacityGroup, verticesGroup (ui.xml:74,88,97) |
-| FloorMapObjectEditViewImpl.java:183 | structure | fillDefaultCheck starts ticked: value="true" on <t:CustomCheckBox ui:field="fillDefaultCheck"> |
+| FloorMapObjectEditViewImpl.java:183 | structure | fillDefaultCheck starts ticked: value="true" on <t:TickBox ui:field="fillDefaultCheck"> |
 | FloorMapObjectEditViewImpl.java:180 | component-declaration | DateTimeBox (ui.xml:116, wave 4) keeps its declaration; setPopupProvider goes to make(dateTimeBoxControllerProvider).attach(...) |
 
 **Stays in Java:** field values, matrix and size maths (FloorMapObjectEditViewImpl.java:300-698); size/scale group visibility (FloorMapObjectEditViewImpl.java:314-315) and area fields visibility (423-425): depend on the object; enabled state (FloorMapObjectEditViewImpl.java:703-716); caption (FloorMapObjectEditPresenter.java:316).

@@ -342,5 +342,5 @@ widget, tidy; complexity 3, effort M; used by 1.
 | --- | --- | --- |
 | DynamicSettingsPane.java:54-56 | structure | <g:FlowPanel ui:field="outer" styleName="max form"/> as the template's root |
 
-**Stays in Java:** DynamicSettingsPane.java:73-97 one FormGroup per control, with label, required, help text and feedback from the visualisation's JSON (data); DynamicSettingsPane.java:100-329 the controls (SelectionBox, TextBox, DateTimeBox, ValueSpinner, CustomCheckBox) and their w-100 classes (:184,215,248,276) and min/max/steps, made per JSON control, so they can't be declared; DynamicSettingsPane.java:428-458 FieldControl choices and feedback.
+**Stays in Java:** DynamicSettingsPane.java:73-97 one FormGroup per control, with label, required, help text and feedback from the visualisation's JSON (data); DynamicSettingsPane.java:100-329 the controls (SelectionBox, TextBox, DateTimeBox, ValueSpinner, TickBox) and their w-100 classes (:184,215,248,276) and min/max/steps, made per JSON control, so they can't be declared; DynamicSettingsPane.java:428-458 FieldControl choices and feedback.
 

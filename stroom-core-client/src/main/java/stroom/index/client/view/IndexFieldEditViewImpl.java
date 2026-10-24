@@ -24,7 +24,7 @@ import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,15 +45,15 @@ public class IndexFieldEditViewImpl
     @UiField
     TextBox name;
     @UiField
-    CustomCheckBox stored;
+    TickBox stored;
     @UiField
-    CustomCheckBox indexed;
+    TickBox indexed;
     @UiField
-    CustomCheckBox positions;
+    TickBox positions;
     @UiField
     SelectionBox<AnalyzerType> analyser;
     @UiField
-    CustomCheckBox caseSensitive;
+    TickBox caseSensitive;
     @UiField
     SimplePanel denseVectorOptions;
 

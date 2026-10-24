@@ -510,7 +510,7 @@ hasn't been tried with a screen reader.
 
 The tick box is the BEM block `tick-box` (`tick-box.css`), in two forms that look the same:
 
-- **The widget** (`CustomCheckBox`): a `label` element wrapping a native check box
+- **The widget** (`TickBox`): a `label` element wrapping a native check box
   (`tick-box__input`, unseen and over the box, so it has the focus, the clicks and the state), the
   box drawn for it (`tick-box__mark`) and its text (`tick-box__label`). The label wraps the check
   box, so its text names it and clicking anywhere on it ticks it, with no `for` and no id needed.

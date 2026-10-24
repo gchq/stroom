@@ -20,7 +20,7 @@ import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.Du
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,11 +38,11 @@ public class DuplicateManagementViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox rememberNotifications;
+    TickBox rememberNotifications;
     @UiField
-    CustomCheckBox suppressDuplicateNotifications;
+    TickBox suppressDuplicateNotifications;
     @UiField
-    CustomCheckBox chooseColumns;
+    TickBox chooseColumns;
     @UiField
     TextBox columns;
     @UiField

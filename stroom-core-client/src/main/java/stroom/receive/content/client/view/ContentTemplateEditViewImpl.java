@@ -23,7 +23,7 @@ import stroom.receive.content.shared.TemplateType;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -53,7 +53,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     @UiField
     FormGroup copyDependenciesFormGroup;
     @UiField
-    CustomCheckBox copyDependenciesCheckBox;
+    TickBox copyDependenciesCheckBox;
     @UiField
     SimplePanel pipeline;
     @UiField

@@ -21,7 +21,7 @@ import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroup
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -71,7 +71,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
     private final Label summary = new Label();
 
     /// Checkbox per candidate id, in display order, so selection can be read back.
-    private final Map<String, CustomCheckBox> checkBoxesById = new LinkedHashMap<>();
+    private final Map<String, TickBox> checkBoxesById = new LinkedHashMap<>();
 
     /// The row widget per candidate id, so the filter can hide and show rows.
     private final Map<String, Widget> rowsById = new LinkedHashMap<>();
@@ -178,7 +178,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         final FlowPanel row = new FlowPanel();
         row.addStyleName("floormap-group-edit-member");
 
-        final CustomCheckBox checkBox = new CustomCheckBox();
+        final TickBox checkBox = new TickBox();
         checkBox.setLabel(candidate.getName());
         checkBox.setValue(selected);
         //noinspection unused e
@@ -215,7 +215,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         // Every row is consulted, including any the filter is currently hiding —
         // an out-of-view tick is still a member.
         final List<String> selected = new ArrayList<>();
-        for (final Map.Entry<String, CustomCheckBox> entry : checkBoxesById.entrySet()) {
+        for (final Map.Entry<String, TickBox> entry : checkBoxesById.entrySet()) {
             if (Boolean.TRUE.equals(entry.getValue().getValue())) {
                 selected.add(entry.getKey());
             }

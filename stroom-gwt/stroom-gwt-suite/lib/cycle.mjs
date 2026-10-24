@@ -142,9 +142,9 @@ export async function fillField(page, label, text) {
 
 /**
  * Click the tick box labelled `label`: the one inside the FormGroup of that label, or a
- * `CustomCheckBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
+ * `TickBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
  * FormGroup with none, as Node Group's "Enabled" is). GWT renders a tick box as a div, not as a
- * bare checkbox (the CustomCheckBox's input is hidden), so the click has to land on the div.
+ * bare checkbox (the TickBox's input is hidden), so the click has to land on the div.
  */
 export async function clickTickBox(page, label) {
   const box = await page.evaluate(([wanted]) => {
@@ -168,7 +168,7 @@ export async function clickTickBox(page, label) {
 
 /**
  * Is the tick box labelled `label` ticked? Found as `clickTickBox` finds it; null when there is none.
- * A `CustomCheckBox` keeps its state on a hidden input, a `TickBoxCell` in its class names.
+ * A `TickBox` keeps its state on a hidden input, a `TickBoxCell` in its class names.
  */
 export async function readTick(page, label) {
   return page.evaluate(([wanted]) => {

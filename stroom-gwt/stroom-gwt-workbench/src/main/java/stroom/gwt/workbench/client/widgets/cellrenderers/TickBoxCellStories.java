@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 /// Stories for Stroom's [TickBoxCell], the tick box of its grids and trees (the form tick box,
-/// `CustomCheckBox`, is in `Widgets/Inputs/TickBox`).
+/// `TickBox`, is in `Widgets/Inputs/TickBox`).
 ///
 /// Each row's tick box is ticked or not, and the header's is half-ticked when some of the rows are
 /// ticked but not all, as `ColumnSelectionPresenter` builds them. Clicking the header ticks all the

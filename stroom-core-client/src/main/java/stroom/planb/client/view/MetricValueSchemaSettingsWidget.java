@@ -19,7 +19,7 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricValueSchema;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,15 +35,15 @@ public class MetricValueSchemaSettingsWidget
     @UiField
     SelectionBox<MaxValueSize> maxValue;
     @UiField
-    CustomCheckBox storeLatestValue;
+    TickBox storeLatestValue;
     @UiField
-    CustomCheckBox storeMin;
+    TickBox storeMin;
     @UiField
-    CustomCheckBox storeMax;
+    TickBox storeMax;
     @UiField
-    CustomCheckBox storeCount;
+    TickBox storeCount;
     @UiField
-    CustomCheckBox storeSum;
+    TickBox storeSum;
 
     @Inject
     public MetricValueSchemaSettingsWidget(final Binder binder) {

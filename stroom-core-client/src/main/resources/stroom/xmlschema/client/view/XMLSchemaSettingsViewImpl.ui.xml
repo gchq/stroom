@@ -21,7 +21,7 @@
         </form:FormGroup>
         <form:FormGroup helpText="Whether the schema is out of date. Data that names a deprecated schema is still validated against it, but each use gives a warning, so it can be moved to a newer schema."
                         screenReaderText="Still used, but gives a warning.">
-            <tickbox:CustomCheckBox ui:field="deprecated" identity="xmlSchemaSettingDeprecated" label="Deprecated"/>
+            <tickbox:TickBox ui:field="deprecated" identity="xmlSchemaSettingDeprecated" label="Deprecated"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

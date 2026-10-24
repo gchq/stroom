@@ -27,7 +27,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="ignoreCaseContainer"
                         helpText="Treats upper and lower case letters as the same when comparing with Value. Only used when Condition is Contains, Does not contain, Equals or Not equals. Default is ticked.">
-            <v:CustomCheckBox ui:field="ignoreCase" identity="xPathFilterIgnoreCase" label="Ignore Case"/>
+            <v:TickBox ui:field="ignoreCase" identity="xPathFilterIgnoreCase" label="Ignore Case"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

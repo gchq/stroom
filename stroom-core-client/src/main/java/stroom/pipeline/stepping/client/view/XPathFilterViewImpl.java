@@ -22,7 +22,7 @@ import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -50,7 +50,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     TextBox value;
     @UiField
-    CustomCheckBox ignoreCase;
+    TickBox ignoreCase;
 
     @Inject
     public XPathFilterViewImpl(final Binder binder) {

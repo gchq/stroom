@@ -17,12 +17,12 @@
         <form:FormGroup identity="analyticNotificationEnabled"
                         helpText="Whether this notification is sent. Untick it to stop sending without losing its settings. Default is ticked."
                         screenReaderText="Untick to stop sending this notification.">
-            <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
+            <tickbox:TickBox ui:field="enabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticNotificationLimitNotifications"
                         helpText="Stop sending once Maximum Notifications have been sent. Sending starts again after the Resume Notifications After period, or when Stroom restarts. Default is unticked."
                         screenReaderText="Stops sending after Maximum Notifications is reached.">
-            <tickbox:CustomCheckBox ui:field="limitNotifications" label="Limit Notifications"/>
+            <tickbox:TickBox ui:field="limitNotifications" label="Limit Notifications"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticNotificationMaxNotifications"
                         label="Maximum Notifications"

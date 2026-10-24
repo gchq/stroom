@@ -21,7 +21,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.SelectionBox;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -52,7 +52,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView {
     @UiField
     TextBox schemaVersion;
     @UiField
-    CustomCheckBox reference;
+    TickBox reference;
     @UiField
     SelectionBox<String> volumeGroup;
 
@@ -72,7 +72,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView {
     }
 
     @Override
-    public CustomCheckBox getReference() {
+    public TickBox getReference() {
         return reference;
     }
 

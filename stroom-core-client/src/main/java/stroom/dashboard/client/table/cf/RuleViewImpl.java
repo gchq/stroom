@@ -25,7 +25,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -47,17 +47,17 @@ public class RuleViewImpl extends ViewWithUiHandlers<RuleUiHandlers> implements 
     @UiField
     SimplePanel expression;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
-    CustomCheckBox hide;
+    TickBox hide;
     @UiField
     SelectionBox<ConditionalFormattingType> formattingType;
     @UiField
     SelectionBox<ConditionalFormattingStyle> formattingStyle;
     @UiField
-    CustomCheckBox textBold;
+    TickBox textBold;
     @UiField
-    CustomCheckBox textItalic;
+    TickBox textItalic;
     @UiField
     SimplePanel example;
     @UiField

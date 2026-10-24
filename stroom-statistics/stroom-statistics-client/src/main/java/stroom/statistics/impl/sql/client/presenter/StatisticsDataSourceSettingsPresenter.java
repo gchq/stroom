@@ -26,7 +26,7 @@ import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -82,6 +82,6 @@ public class StatisticsDataSourceSettingsPresenter
 
         void setPrecision(EventStoreTimeIntervalEnum precision);
 
-        CustomCheckBox getEnabled();
+        TickBox getEnabled();
     }
 }

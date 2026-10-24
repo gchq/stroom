@@ -21,7 +21,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -47,7 +47,7 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     TextBox name;
     @UiField
-    CustomCheckBox referenceExistingQuery;
+    TickBox referenceExistingQuery;
     @UiField
     FormGroup queryRefFormGroup;
     @UiField
@@ -55,9 +55,9 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     Button copyQuery;
     @UiField
-    CustomCheckBox queryOnOpen;
+    TickBox queryOnOpen;
     @UiField
-    CustomCheckBox autoRefresh;
+    TickBox autoRefresh;
     @UiField
     TextBox refreshInterval;
     @UiField

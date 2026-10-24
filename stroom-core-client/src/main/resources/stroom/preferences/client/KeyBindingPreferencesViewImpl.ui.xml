@@ -8,7 +8,7 @@
         <form:FormGroup identity="userPreferencesEnableCharacterKeyShortcuts" addStyleNames="dock-min"
                         helpText="Tick to use shortcuts made only of character keys, such as W and K to move up a list, or G then U to go to the user preferences. Untick to turn them off, e.g. if you use speech input and say them by accident. Shortcuts with Ctrl, Alt or Meta, and the arrow keys, still work. Default is ticked unless an administrator has changed the defaults."
                         screenReaderText="Shortcuts made only of letter, number or punctuation keys, such as W or G then U.">
-            <tickbox:CustomCheckBox ui:field="enableCharacterKeyShortcuts" label="Enable Character Key Shortcuts"/>
+            <tickbox:TickBox ui:field="enableCharacterKeyShortcuts" label="Enable Character Key Shortcuts"/>
         </form:FormGroup>
         <g:SimplePanel styleName="dock-min">
             <view:QuickFilter ui:field="quickFilter"/>

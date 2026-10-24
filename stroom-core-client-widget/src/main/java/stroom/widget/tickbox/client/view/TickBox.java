@@ -72,7 +72,7 @@ import java.util.function.Consumer;
 /**
  * A tick box: a check box with Stroom's drawn box and its label beside it.
  * <p>
- * It is the BEM block {@code tick-box} ({@code tick-box.css}, markup {@code CustomCheckBox.ui.xml}): a
+ * It is the BEM block {@code tick-box} ({@code tick-box.css}, markup {@code TickBox.ui.xml}): a
  * {@code label} element holding a native check box ({@code tick-box__input}, unseen, over the box, so
  * it has the focus, the clicks and the state), the box drawn for it ({@code tick-box__mark}) and its
  * text ({@code tick-box__label}). Clicking anywhere on it ticks it, as the label wraps the check box.
@@ -86,7 +86,7 @@ import java.util.function.Consumer;
  * default.
  * </p>
  */
-public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
+public class TickBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
         HasDirectionalSafeHtml, HasDirectionEstimator,
         IsEditor<LeafValueEditor<Boolean>> {
 
@@ -109,11 +109,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     private boolean readOnly;
     private Consumer<Boolean> onChange;
 
-    public CustomCheckBox() {
+    public TickBox() {
         this(new Parts());
     }
 
-    private CustomCheckBox(final Parts parts) {
+    private TickBox(final Parts parts) {
         super(BINDER.createAndBindUi(parts));
         inputElem = parts.input;
         checkmarkElem = parts.mark;
@@ -539,7 +539,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     // --------------------------------------------------------------------------------
 
 
-    @UiTemplate("CustomCheckBox.ui.xml")
+    @UiTemplate("TickBox.ui.xml")
     interface Binder extends UiBinder<LabelElement, Parts> {
 
     }

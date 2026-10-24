@@ -27,7 +27,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -94,7 +94,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     @UiField
     FormGroup fillGroup;
     @UiField
-    CustomCheckBox fillDefaultCheck;
+    TickBox fillDefaultCheck;
     @UiField
     ColourBox fillBox;
     @UiField

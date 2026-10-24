@@ -19,7 +19,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,11 +34,11 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @UiField
     ValueSpinner priority;
     @UiField
-    CustomCheckBox autoPriority;
+    TickBox autoPriority;
     @UiField
-    CustomCheckBox reprocess;
+    TickBox reprocess;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     DateTimeBox minMetaCreateTimeMs;
     @UiField

@@ -21,7 +21,7 @@ import stroom.security.identity.client.presenter.EditAccountUiHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -52,11 +52,11 @@ public class EditAccountViewImpl
     @UiField
     FormGroup neverExpiresGroup;
     @UiField
-    CustomCheckBox neverExpires;
+    TickBox neverExpires;
     @UiField
     FormGroup enabledGroup;
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
     FormGroup inactiveGroup;
     @UiField

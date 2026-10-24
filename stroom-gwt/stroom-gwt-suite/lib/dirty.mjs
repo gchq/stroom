@@ -86,7 +86,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       return `${t.length}:${t.slice(0, 120)}`;
     };
     /**
-     * A `CustomCheckBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
+     * A `TickBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
      * `checked` is the state. Reading only `input[type=checkbox]` found the hidden input, which has
      * no size, so all 56 of its value handlers were `needs-value`. Disabled or read-only ones can't be
      * driven. It is named by its own label ("Enabled"), or by its input's `aria-label` when it stands
@@ -130,7 +130,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
         continue;
       }
       // A tick box is usually a div whose CLASS carries the state (TickBoxCell), but a form's own
-      // checkbox is a real `input.checkbox` (CustomCheckBox) whose class never changes and whose
+      // checkbox is a real `input.checkbox` (TickBox) whose class never changes and whose
       // `checked` does. Reading the class for both made every form checkbox look like a control
       // that refused to move, while its document went dirty — so read whichever actually varies.
       if (ownTick) {

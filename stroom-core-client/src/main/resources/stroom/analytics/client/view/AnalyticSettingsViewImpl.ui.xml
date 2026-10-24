@@ -23,7 +23,7 @@
         <form:FormGroup identity="includeRuleDocumentation"
                         helpText="Include the rule's documentation in the detections it produces, including those sent by email. Untick to keep the documentation inside Stroom."
                         screenReaderText="Adds the rule's documentation to its detections, including emails.">
-            <tickbox:CustomCheckBox ui:field="includeRuleDocumentation" label="Include Rule Documentation"/>
+            <tickbox:TickBox ui:field="includeRuleDocumentation" label="Include Rule Documentation"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticProcessingErrorFeed"

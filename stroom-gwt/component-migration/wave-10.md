@@ -446,7 +446,7 @@ tab, presenter; complexity 3, effort M; used by 5.
 | KeyBindingPreferencesPresenter.java:86 | aria | toolbar name="Keyboard shortcut actions" |
 | KeyBindingPreferencesPresenter.java:87-93 | component-declaration | <v:ToolbarButton> ADD "Add Shortcut", EDIT "Change Shortcut", DELETE "Remove Shortcut", UNDO "Reset Action to Default Shortcuts", HISTORY "Reset All Shortcuts to Defaults" |
 
-**Stays in Java:** KeyBindingPreferencesPresenter.java:122-136 status column text (Built in / Default / Changed, turned off) built from data; button enabled states (296); KeyShortcutRecorder (wave 9) opened by the controller with makeDialog, not declared; CustomCheckBox and FormGroup already declared in the template.
+**Stays in Java:** KeyBindingPreferencesPresenter.java:122-136 status column text (Built in / Default / Changed, turned off) built from data; button enabled states (296); KeyShortcutRecorder (wave 9) opened by the controller with makeDialog, not declared; TickBox and FormGroup already declared in the template.
 
 ## `KeyboardShortcutsPresenter`
 

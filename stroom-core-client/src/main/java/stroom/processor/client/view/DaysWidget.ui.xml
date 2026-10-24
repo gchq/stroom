@@ -4,12 +4,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="days-widget">
-        <tickbox:CustomCheckBox ui:field="mon" label="Monday"/>
-        <tickbox:CustomCheckBox ui:field="tue" label="Tuesday"/>
-        <tickbox:CustomCheckBox ui:field="wed" label="Wednesday"/>
-        <tickbox:CustomCheckBox ui:field="thu" label="Thursday"/>
-        <tickbox:CustomCheckBox ui:field="fri" label="Friday"/>
-        <tickbox:CustomCheckBox ui:field="sat" label="Saturday"/>
-        <tickbox:CustomCheckBox ui:field="sun" label="Sunday"/>
+        <tickbox:TickBox ui:field="mon" label="Monday"/>
+        <tickbox:TickBox ui:field="tue" label="Tuesday"/>
+        <tickbox:TickBox ui:field="wed" label="Wednesday"/>
+        <tickbox:TickBox ui:field="thu" label="Thursday"/>
+        <tickbox:TickBox ui:field="fri" label="Friday"/>
+        <tickbox:TickBox ui:field="sat" label="Saturday"/>
+        <tickbox:TickBox ui:field="sun" label="Sunday"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -18,7 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,18 +35,18 @@ public class ResultStoreSettingsViewImpl extends ViewImpl implements ResultStore
     @UiField
     TextBox searchProcessTimeToLive;
     @UiField
-    CustomCheckBox searchProcessDestroyOnTabClose;
+    TickBox searchProcessDestroyOnTabClose;
     @UiField
-    CustomCheckBox searchProcessDestroyOnWindowClose;
+    TickBox searchProcessDestroyOnWindowClose;
 
     @UiField
     TextBox storeTimeToIdle;
     @UiField
     TextBox storeTimeToLive;
     @UiField
-    CustomCheckBox storeDestroyOnTabClose;
+    TickBox storeDestroyOnTabClose;
     @UiField
-    CustomCheckBox storeDestroyOnWindowClose;
+    TickBox storeDestroyOnWindowClose;
 
     @Inject
     public ResultStoreSettingsViewImpl(final Binder binder) {

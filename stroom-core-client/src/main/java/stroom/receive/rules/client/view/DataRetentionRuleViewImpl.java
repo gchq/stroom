@@ -22,7 +22,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -44,7 +44,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     @UiField
     TextBox name;
     @UiField
-    CustomCheckBox forever;
+    TickBox forever;
     @UiField
     FormGroup retainLabel;
     @UiField

@@ -12,7 +12,7 @@ Collapse each small dialog (presenter, view interface and ViewImpl) into one com
 - New dialog__button-cell { width: 45%; } in dialog.css, for the two button cells in ExecutionScheduleRunNow.ui.xml (516). BatchExecutionScheduleEditViewImpl.ui.xml:76,79 has the same cells.
 - CustomRowStyleEditor (454): add width: 200px to .cf-light-example/.cf-dark-example (conditional-formatting.css:465,469, used only there). Add .cf-colour-swatch--custom using --cf-swatch__background-color and --cf-swatch__color for the user's colours. The grid's SafeHtml swatches (ConditionalFormattingSwatchUtil) stay.
 - ARIA and placeholders that can't go in a template yet: Stroom's TextBox and TextArea copies (stroom-core-client-widget/src/main/java/com/google/gwt/user/client/ui, protected, needs human approval) have no accessibleName or placeholder setter. This affects DependenciesInfo (347), KeyShortcutRecorder (416, placeholder "Press keys") and QueryInfoDialog (547). ValueSpinner (Stroom's own, wave 2) needs setAccessibleName for ColumnFormat's Hours and Minutes (445) and NewProperty's Value (696).
-- Template attribute limits: ValueSpinner.setValue is overloaded (Integer, Long), so default values stay in Java. min, max, minStep, maxStep and enabled can be attributes. CustomCheckBox value="true" and Button icon="OK" (an SvgImage enum) can too.
+- Template attribute limits: ValueSpinner.setValue is overloaded (Integer, Long), so default values stay in Java. min, max, minStep, maxStep and enabled can be attributes. TickBox value="true" and Button icon="OK" (an SvgImage enum) can too.
 - Where an ARIA attribute goes on something that isn't a widget property (aria-live on KeyShortcutRecorder's message; role="region", aria-label and tabindex on CommonAlert's detail), use a plain <div ui:field> element inside a g:HTMLPanel.
 - info-layout (components.css:58) is shared by DependenciesInfo (347) and InfoDocument (768). DependenciesInfo sets it with setStyleName on a TextArea, which drops text-field. The text field rule is addStyleNames, so compare screenshots.
 - Class names with no CSS rule, which can be dropped when the templates move: stepping-buttons (StepControlViewImpl.ui.xml:4), XPathFilterViewImpl (XPathFilterViewImpl.ui.xml:7), visualisation-assets-add-dialog (both document asset templates).
@@ -459,7 +459,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | --- | --- | --- |
 | ProfilePeriodEditViewImpl.java:57-58 | structure | <valuespinner:ValueSpinner ui:field="maxNodeThreads" min="0" max="1000000" .../> |
 | ProfilePeriodEditViewImpl.java:59-60 | structure | <valuespinner:ValueSpinner ui:field="maxClusterThreads" min="0" max="1000000" .../> |
-| ProfilePeriodEditPresenter.java:50-51 | component-declaration | TimeBox x2 are declared (ui.xml:20,26); their popup provider set in Java becomes wave 4's TimeBoxController attached to each (make(provider).attach(view.getStartTime())). DaysWidget, CustomCheckBox x2, ValueSpinner x2, FormGroup: checked, already declared |
+| ProfilePeriodEditPresenter.java:50-51 | component-declaration | TimeBox x2 are declared (ui.xml:20,26); their popup provider set in Java becomes wave 4's TimeBoxController attached to each (make(provider).attach(view.getStartTime())). DaysWidget, TickBox x2, ValueSpinner x2, FormGroup: checked, already declared |
 
 **Stays in Java:** Max threads spinners enabled by their tick boxes (ProfilePeriodEditViewImpl.java:101,122,137,142): state; Values; 'Invalid start/end time' warnings (controller).
 
@@ -511,7 +511,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | SolrIndexFieldEditViewImpl.ui.xml:89 | structure | Remove <g:HTML ui:field="synchState" styleName="dock-min"/>: no @UiField binds it and nothing sets it |
-| SolrIndexFieldEditViewImpl.ui.xml:11,21,30-86 | component-declaration | Checked: SelectionBox (type, fieldType), CustomCheckBox (15 ticks) and FormGroup are already declared in the template |
+| SolrIndexFieldEditViewImpl.ui.xml:11,21,30-86 | component-declaration | Checked: SelectionBox (type, fieldType), TickBox (15 ticks) and FormGroup are already declared in the template |
 
 **Stays in Java:** Field use items LuceneFieldTypes.FIELD_TYPES (SolrIndexFieldEditViewImpl.java:81) and Solr field types read from Solr (setFieldTypes :285-288): lists in Java; Every field value.
 
@@ -613,7 +613,7 @@ dialog, presenter; complexity 3, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ConstraintEditViewImpl.ui.xml:12,18 | component-declaration | Checked: SelectionBox, CustomCheckBox and FormGroup are already declared |
+| ConstraintEditViewImpl.ui.xml:12,18 | component-declaration | Checked: SelectionBox, TickBox and FormGroup are already declared |
 
 **Stays in Java:** Type items ConstraintValueType.values() (ConstraintEditViewImpl.java:47); Name, type, value text and optional values.
 
@@ -629,7 +629,7 @@ dialog, presenter; complexity 1, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DurationViewImpl.ui.xml:9,14 | component-declaration | Checked: CustomCheckBox and DurationPicker (wave 2) and FormGroup are already declared |
+| DurationViewImpl.ui.xml:9,14 | component-declaration | Checked: TickBox and DurationPicker (wave 2) and FormGroup are already declared |
 
 **Stays in Java:** Default of 5 years when there is none (DurationViewImpl.java:51-53); Retain For enabled unless Keep Forever (:50,76): state.
 
@@ -646,7 +646,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | IndexFieldEditViewImpl.ui.xml:40 / IndexFieldEditViewImpl.java:149-151 / IndexFieldEditPresenter.java:54-56 | component-declaration | <ix:DenseVectorField ui:field="denseVectorOptions"/> (wave 8, stroom.index.client.component) in place of the SimplePanel slot; the controller attaches DenseVectorFieldController |
-| IndexFieldEditViewImpl.ui.xml:11,17,21-38 | component-declaration | Checked: SelectionBox x2, CustomCheckBox x4 and FormGroup are already declared |
+| IndexFieldEditViewImpl.ui.xml:11,17,21-38 | component-declaration | Checked: SelectionBox x2, TickBox x4 and FormGroup are already declared |
 
 **Stays in Java:** Type and analyser items (IndexFieldEditViewImpl.java:64-65); Dense vector options visible for DENSE_VECTOR only (IndexFieldEditPresenter.java:139): state; Values.
 
@@ -663,9 +663,9 @@ dialog, presenter; complexity 1, effort S; used by 6.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | ProcessChoiceViewImpl.java:53-54 | structure | <v:ValueSpinner ui:field="priority" min="1" max="100"/> (setMin/setMax take long) |
-| ProcessChoiceViewImpl.java:57 | structure | <tickbox:CustomCheckBox ui:field="autoPriority" ... value="true"/> |
-| ProcessChoiceViewImpl.java:59 | structure | <tickbox:CustomCheckBox ui:field="enabled" ... value="true"/> |
-| ProcessChoiceViewImpl.ui.xml:12,15,18,21,26,31 | component-declaration | Checked: ValueSpinner, CustomCheckBox x3, DateTimeBox x2 and FormGroup are already declared; once wave 4's DateTimeBoxController exists the controller attaches it to each DateTimeBox |
+| ProcessChoiceViewImpl.java:57 | structure | <tickbox:TickBox ui:field="autoPriority" ... value="true"/> |
+| ProcessChoiceViewImpl.java:59 | structure | <tickbox:TickBox ui:field="enabled" ... value="true"/> |
+| ProcessChoiceViewImpl.ui.xml:12,15,18,21,26,31 | component-declaration | Checked: ValueSpinner, TickBox x3, DateTimeBox x2 and FormGroup are already declared; once wave 4's DateTimeBoxController exists the controller attaches it to each DateTimeBox |
 
 **Stays in Java:** Priority's default 10 (ProcessChoiceViewImpl.java:55): ValueSpinner.setValue is overloaded (Integer, Long) so it can't be a template attribute; the controller sets it; Max create time set to now when specific items are selected or Reprocess changes (ProcessChoicePresenter.java:40, ProcessChoiceViewImpl.java:113-114): state.
 

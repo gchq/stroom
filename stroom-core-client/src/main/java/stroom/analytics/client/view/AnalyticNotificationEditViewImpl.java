@@ -23,7 +23,7 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -42,9 +42,9 @@ public class AnalyticNotificationEditViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enabled;
+    TickBox enabled;
     @UiField
-    CustomCheckBox limitNotifications;
+    TickBox limitNotifications;
     @UiField
     ValueSpinner maxNotifications;
     @UiField

@@ -16,16 +16,16 @@
             <d:DurationPicker ui:field="temporalOrderingTolerance"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysInfoAllowPathwayCreation" label="Allow Pathway Creation">
-            <tickbox:CustomCheckBox ui:field="allowPathwayCreation"/>
+            <tickbox:TickBox ui:field="allowPathwayCreation"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysInfoAllowPathwayMutation" label="Allow Pathway Mutation">
-            <tickbox:CustomCheckBox ui:field="allowPathwayMutation"/>
+            <tickbox:TickBox ui:field="allowPathwayMutation"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysInfoAllowConstraintCreation" label="Allow Constraint Creation">
-            <tickbox:CustomCheckBox ui:field="allowConstraintCreation"/>
+            <tickbox:TickBox ui:field="allowConstraintCreation"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysInfoAllowConstraintMutation" label="Allow Constraint Mutation">
-            <tickbox:CustomCheckBox ui:field="allowConstraintMutation"/>
+            <tickbox:TickBox ui:field="allowConstraintMutation"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysProcessingNode" label="Processing Node">
             <g:TextBox ui:field="processingNode"/>

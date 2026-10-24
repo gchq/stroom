@@ -20,13 +20,13 @@
         </form:FormGroup>
         <form:FormGroup ui:field="formatUseSeparator"
                         helpText="Groups the digits of large numbers with a comma every three digits, e.g. 1,234,567. Default is not ticked.">
-            <v:CustomCheckBox ui:field="separate" identity="formatUseSeparator" label="Use Separator (,)"/>
+            <v:TickBox ui:field="separate" identity="formatUseSeparator" label="Use Separator (,)"/>
         </form:FormGroup>
 
         <!-- Date time settings -->
         <form:FormGroup ui:field="formatUsePreferences"
                         helpText="Shows dates using the date and time format and time zone from your user preferences. Untick to choose them here with Format, Custom Format and Time Zone. Default is ticked.">
-            <v:CustomCheckBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
+            <v:TickBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format"
                         helpText="Date and time format to use, chosen from a list of standard formats. Ignored when Use Preferences is ticked."
@@ -35,7 +35,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="formatCustom"
                         helpText="Uses your own pattern from Custom Format in place of the Format list, which is then ignored. Ticked automatically when the saved pattern is not one of the standard formats.">
-            <v:CustomCheckBox ui:field="custom" identity="formatCustom" label="Custom"/>
+            <v:TickBox ui:field="custom" identity="formatCustom" label="Custom"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format"
                         helpText="Your own date and time pattern, e.g. dd/MM/yyyy HH:mm. Used only when Custom is ticked."
@@ -62,7 +62,7 @@
         </form:FormGroup>
 
         <form:FormGroup helpText="Wraps long values in this column onto several lines, so the whole value shows. When not ticked, values stay on one line and are cut off at the column edge. Default is not ticked.">
-            <v:CustomCheckBox ui:field="wrap" identity="formatWrapText" label="Wrap Text"/>
+            <v:TickBox ui:field="wrap" identity="formatWrapText" label="Wrap Text"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

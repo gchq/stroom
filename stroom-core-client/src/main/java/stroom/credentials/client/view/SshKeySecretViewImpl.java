@@ -20,7 +20,7 @@ import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretVie
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,7 +41,7 @@ public class SshKeySecretViewImpl
     @UiField
     TextArea privateKey;
     @UiField
-    CustomCheckBox verifyHosts;
+    TickBox verifyHosts;
     @UiField
     TextArea knownHosts;
 

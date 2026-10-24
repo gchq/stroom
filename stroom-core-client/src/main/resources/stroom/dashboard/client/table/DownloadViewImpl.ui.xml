@@ -11,10 +11,10 @@
         </form:FormGroup>
         <form:FormGroup ui:field="downloadAll"
                         helpText="Downloads every table that uses the same query, each on its own sheet of one Excel file, not just this table. Only available when File Type is Excel. Default is not ticked.">
-          <view:CustomCheckBox ui:field="downloadAllTables" identity="searchDownloadAllTables" label="Download All Tables"/>
+          <view:TickBox ui:field="downloadAllTables" identity="searchDownloadAllTables" label="Download All Tables"/>
         </form:FormGroup>
         <form:FormGroup helpText="Downloads a random sample of the rows rather than all of them. Set the size with Sample Size (%). Default is not ticked.">
-            <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>
+            <view:TickBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>
         </form:FormGroup>
         <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)"
                         helpText="Approximate percentage of rows to include in a sample download, from 1 to 100. Used only when Sample Only is ticked."

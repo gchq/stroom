@@ -28,7 +28,7 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.core.client.Scheduler;
@@ -64,7 +64,7 @@ public class EditApiKeyViewImpl
     @UiField
     SelectionBox<HashAlgorithm> hashAlgorithmSelectionBox;
     @UiField
-    CustomCheckBox enabledCheckBox;
+    TickBox enabledCheckBox;
 
     @UiField
     FormGroup prefixFormGroup;

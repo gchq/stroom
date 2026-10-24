@@ -745,7 +745,7 @@ Measured on the r10 evidence (`handlers 758/1546`): 239 handlers are `needs-valu
 | widget | needs-value | needs-key |
 | --- | ---: | ---: |
 | `SelectionBox` | 68 | |
-| `CustomCheckBox` | 56 | |
+| `TickBox` | 56 | |
 | `TextBox` / `PasswordTextBox` / `TextArea` | 16 | 33 |
 | `ValueSpinner` | 16 | |
 | `QuickFilter` | 12 | 2 |
@@ -776,8 +776,8 @@ for the unreached presenters (`door-preconditions.md`).
 
 **Trial t1 (Monitoring, dialog fields driven):** 107 fields driven against r11's 18, 100 passing, no
 dialog lost — but only `value 75 -> 77`. The scope was right and the reader was wrong:
-`CustomCheckBox` renders a visible `.SimpleTickBox` around a hidden `input.checkbox`, and the reader
-looked only for the input, found it zero-sized and skipped the field; so all 56 `CustomCheckBox`
+`TickBox` renders a visible `.SimpleTickBox` around a hidden `input.checkbox`, and the reader
+looked only for the input, found it zero-sized and skipped the field; so all 56 `TickBox`
 value handlers were invisible to the driver wherever they were. Batch Edit Schedules showed it: its
 seven per-field "enable" boxes stand outside any FormGroup, named only by `ariaLabel` ("Change
 Schedule Name"), and each enables a field that is disabled, hence unread, when the form opens. Now:
@@ -849,7 +849,7 @@ at its limit on the screens it reaches: the remaining handlers are `unreached` 2
 `handlers 808 -> 812`, `ok 62 -> 65`, `ok-blocked 18 -> 14`.
 
 * The 8 existing cycles re-ran. Annotation comments, failing since 2026-10-05, now passes (the
-  annotation tag rename fix). Node group's "Enabled" is a self-labelled `CustomCheckBox`, which
+  annotation tag rename fix). Node group's "Enabled" is a self-labelled `TickBox`, which
   `clickTickBox` didn't find; it now does.
 * New: credentials (create needs a user name and password; `createFields`/`editFields`),
   a global property (`stroom.ui.aboutHtml`, the edit shape with an `overrideTick`: tick "Set Database

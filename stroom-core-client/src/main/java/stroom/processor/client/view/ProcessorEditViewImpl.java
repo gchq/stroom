@@ -27,7 +27,7 @@ import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -61,11 +61,11 @@ public class ProcessorEditViewImpl
     @UiField
     SelectionBox<String> profile;
     @UiField
-    CustomCheckBox maxTaskCreationDelayEnabled;
+    TickBox maxTaskCreationDelayEnabled;
     @UiField
     DurationPicker maxTaskCreationDelay;
     @UiField
-    CustomCheckBox export;
+    TickBox export;
     @UiField
     SimplePanel runAsUser;
     @UiField

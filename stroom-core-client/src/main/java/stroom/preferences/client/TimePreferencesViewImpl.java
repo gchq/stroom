@@ -24,7 +24,7 @@ import stroom.widget.customdatebox.client.MomentJs;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -67,7 +67,7 @@ public final class TimePreferencesViewImpl
     @UiField
     SelectionBox<String> format;
     @UiField
-    CustomCheckBox custom;
+    TickBox custom;
     @UiField
     TextBox text;
     @UiField

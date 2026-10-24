@@ -23,7 +23,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,13 +47,13 @@ public class PathwaysSettingsViewImpl
     @UiField
     DurationPicker temporalOrderingTolerance;
     @UiField
-    CustomCheckBox allowPathwayCreation;
+    TickBox allowPathwayCreation;
     @UiField
-    CustomCheckBox allowPathwayMutation;
+    TickBox allowPathwayMutation;
     @UiField
-    CustomCheckBox allowConstraintCreation;
+    TickBox allowConstraintCreation;
     @UiField
-    CustomCheckBox allowConstraintMutation;
+    TickBox allowConstraintMutation;
     @UiField
     TextBox processingNode;
 

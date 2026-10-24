@@ -23,7 +23,7 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -53,7 +53,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TextArea yamlValue;
     @UiField
-    CustomCheckBox useOverride;
+    TickBox useOverride;
     @UiField
     TextArea databaseValue;
     @UiField
@@ -65,11 +65,11 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Label source;
     @UiField
-    CustomCheckBox requireRestart;
+    TickBox requireRestart;
     @UiField
-    CustomCheckBox requireUiRestart;
+    TickBox requireUiRestart;
     @UiField
-    CustomCheckBox readOnly;
+    TickBox readOnly;
     // TODO This toolbar doesn't appear to be used. Probably not needed as the effectiveValueToolbar
     //  does the job of showing what values are effective on the nodes.
     @UiField

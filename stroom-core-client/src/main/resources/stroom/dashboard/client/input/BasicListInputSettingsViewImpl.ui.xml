@@ -23,7 +23,7 @@
             <g:TextArea ui:field="values" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Fills the list with the words from the dictionary chosen in Dictionary, in place of the words typed in Values. Default is not ticked.">
-            <v:CustomCheckBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues"
+            <v:TickBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues"
                               label="Use Dictionary"/>
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsDictionary" label="Dictionary"
@@ -31,7 +31,7 @@
             <g:SimplePanel ui:field="dictionary" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Lets users type their own value as well as pick one from the list. When not ticked, only values in the list can be chosen. Default is not ticked.">
-            <v:CustomCheckBox ui:field="allowTextEntry" identity="basicListInputSettingsAllowTextEntry"
+            <v:TickBox ui:field="allowTextEntry" identity="basicListInputSettingsAllowTextEntry"
                               label="Allow Text Entry"/>
         </form:FormGroup>
     </g:FlowPanel>
