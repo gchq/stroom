@@ -18,9 +18,9 @@ package stroom.data.client.view;
 
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -78,12 +78,8 @@ public class ClassificationLabel extends Composite {
         }
 
         // The colour is set as a CSS variable, so the stylesheet can pick black or white text to suit it
-        setStyleProperty(classification.getElement(), BACKGROUND_COLOUR_PROPERTY, colour);
+        CssProperties.set(classification.getElement(), BACKGROUND_COLOUR_PROPERTY, colour);
     }
-
-    private static native void setStyleProperty(final Element element, final String name, final String value) /*-{
-        element.style.setProperty(name, value);
-    }-*/;
 
     public interface Binder extends UiBinder<Widget, ClassificationLabel> {
 

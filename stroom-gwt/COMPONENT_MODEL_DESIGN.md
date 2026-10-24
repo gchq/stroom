@@ -67,6 +67,20 @@ We take React's ownership and data-flow rules, not its rendering machinery. Each
 - **JSX.** UiBinder or plain widget code stays.
 - **A global store.** Data still lives in the component that loads it and is passed down.
 
+## Widget rules
+
+Written 24 October 2026, at the start of wave 1 (`COMPONENT_MIGRATION_ORDER.md`). Every dumb widget, from the smallest leaf up, meets these, so that any template can declare it and any controller can drive it the same way:
+
+1. **Template-usable.** A public no-arg constructor (or a `@UiConstructor` whose arguments are template attributes), and its own `Binder` made with `GWT.create`, never injected. Settings a template needs are setters UiBinder can call: `boolean`, `int`, `double`, `String` or an enum (UiBinder has no `long` parser, so a `long` setting also gets an `int` setter of its own name).
+2. **Outputs are callbacks.** One per event, set by its owner: `setOnClick(Runnable)`, `setOnChange(Consumer<T>)`. Where several may listen, a `Listeners<T>` list and `add...Listener(Consumer<T>)` returning a registration. A widely used widget keeps its GWT event (`ClickHandler`, `ValueChangeEvent`) beside the callback until its callers have moved, then it goes.
+3. **One read-only setter.** `setReadOnly(boolean)` means "shown, but can't be changed" (a dumb `Component` gets it from the base class, applied in `onReadOnlyChange`). `setEnabled(boolean)` stays only where it means something else (e.g. a mode not in use).
+4. **Focus** is `focus()`, not `setFocus(boolean)`.
+5. **Attributes through typed setters.** A template sets ARIA and the like with setters on the widget (`ariaLabel`, `placeholder`, `opensDialog`), so nothing is set by hand after the template is made.
+6. **Markup in the template**, except the root of a single-element widget (a `ButtonBase`, or a `FlowPanel` or `Widget` subclass), whose block class and role are set in its constructor; a `PopupPanel`'s root; and cells, which use `SafeHtmlTemplates`.
+7. **No inline styles.** Fixed styles are Stroom CSS classes (BEM, in the block's own stylesheet under `stroom-app/src/main/resources/ui/css`); a runtime value is a custom property set with `CssProperties.set(element, "--block__property", value)` that a class uses. `setVisible` is fine.
+8. **Nothing smart.** No REST, event bus, context lookups or GIN-injected services, and nothing it owns: a widget that needs any of these is split into a box and a controller (as `DropDownBox` and `DocSelectionController`).
+9. **State as setters, not task monitors.** A widget that shows work in progress (a refresh button's spin) has `setRefreshing(boolean)`; whatever owns it turns its task monitor into those calls.
+
 ## Controllers and ownership
 
 A controller (`stroom.widget.component.client.Controller`) is the smart half of a screen: it is given its component, wires it to data and behaviour, and holds an ownership node: it owns child controllers, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it. Every presenter is a controller too (`MyPresenterWidget extends Controller`) until the presenters go. A component (`stroom.widget.component.client.Component`, a `Composite`) has none of this: its handlers go with its widgets.

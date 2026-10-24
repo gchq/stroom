@@ -27,6 +27,7 @@ import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -1537,12 +1538,12 @@ public class DataGrid<R> extends Widget
 
     private void applyWidths() {
         if (profile.hasCells()) {
-            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
-            DataGridDom.setCssVariable(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
+            CssProperties.set(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
+            CssProperties.set(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
         } else {
             // A list is as wide as what it is in, its last column taking the rest of the width
-            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toListTemplate());
-            DataGridDom.setCssVariable(getElement(),
+            CssProperties.set(getElement(), "--data-grid__columns", columnModel.toListTemplate());
+            CssProperties.set(getElement(),
                     "--data-grid__total-width",
                     "max(100%, " + columnModel.getListMinWidth() + "px)");
         }

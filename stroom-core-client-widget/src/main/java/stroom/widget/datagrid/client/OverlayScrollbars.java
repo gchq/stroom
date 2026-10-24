@@ -17,6 +17,7 @@
 package stroom.widget.datagrid.client;
 
 import stroom.widget.datagrid.client.model.ScrollThumb;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
@@ -140,8 +141,8 @@ final class OverlayScrollbars {
 
         if (SCROLL_TIMELINE) {
             // The scroll-driven animations move the thumbs from 0 to their travel.
-            DataGridDom.setCssVariable(root, "--data-grid__v-travel", v.getTravel() + "px");
-            DataGridDom.setCssVariable(root, "--data-grid__h-travel", h.getTravel() + "px");
+            CssProperties.set(root, "--data-grid__v-travel", v.getTravel() + "px");
+            CssProperties.set(root, "--data-grid__h-travel", h.getTravel() + "px");
         }
         // Also place the thumbs directly. A running scroll-driven animation overrides this, but
         // where animations are turned off (e.g. the test runner's screenshots) it is what shows.

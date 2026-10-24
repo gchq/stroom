@@ -22,6 +22,7 @@ import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.RowWritePlan;
 import stroom.widget.datagrid.client.model.VirtualWindow;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.cell.client.Cell.Context;
@@ -190,7 +191,7 @@ final class GridRows<R> {
         final int end;
         if (grid.isRenderedVirtual()) {
             final double rowH = getOneLineRowHeight();
-            DataGridDom.setCssVariable(grid.getElement(), "--data-grid__row-height", rowH + "px");
+            CssProperties.set(grid.getElement(), "--data-grid__row-height", rowH + "px");
             final VirtualWindow window = VirtualWindow.compute(
                     scroller.getScrollTop(),
                     Math.max(0, scroller.getClientHeight() - grid.getHeaderHeight()),
@@ -210,7 +211,7 @@ final class GridRows<R> {
             grid.setStyleName("data-grid--contain", contain);
             if (contain) {
                 // The height assumed for rows not yet laid out
-                DataGridDom.setCssVariable(grid.getElement(),
+                CssProperties.set(grid.getElement(),
                         "--data-grid__row-height",
                         getOneLineRowHeight() + "px");
             }
