@@ -27,6 +27,7 @@ Short, concrete rules the agent can apply and you can check:
 - The acting account goes in EventSource/User/Id; the account acted on goes in the event detail's User.
 - Host names are lower case and without the domain (ws01, not WS01.corp.example).
 - Keep the vendor's event code in EventDetail/TypeId, and a short description in EventDetail/Description.
+- EventDetail/TypeId is <Category>-<Action>, e.g. User-Login (where the source has no single event code).
 
 ## Time
 - Sources without a time zone are UTC.

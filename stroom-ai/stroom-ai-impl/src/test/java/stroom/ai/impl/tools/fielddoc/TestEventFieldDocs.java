@@ -74,7 +74,13 @@ class TestEventFieldDocs {
         final String text = EventFieldDocs.fieldMappingMarkdown(golden(mapping), SCHEMA, events == null
                 ? null
                 : EventFieldDocs.sampledEvents(outputs), layout, null);
-        assertThat(text).isEqualTo(FieldDocFixtures.golden("fielddoc/" + expected));
+        assertThat(text).isEqualTo(withoutExtractedFields(FieldDocFixtures.golden("fielddoc/" + expected)));
+    }
+
+    // The Python text without its Extracted fields section, which the port leaves to the XSLT (asked for by the
+    // user).
+    private static String withoutExtractedFields(final String python) {
+        return python.replaceAll("(?s)### Extracted fields\n\n.*?\n\n(?=###|\\z)", "");
     }
 
     @Test
@@ -227,11 +233,14 @@ class TestEventFieldDocs {
     }
 
     @Test
-    void documentationNamesTheExtractedFields() {
-        // From test_extract.py.
+    void theExtractionsAreLeftToTheXslt() {
+        // test_extract.py has the documentation list them; asked for by the user, the port doesn't: a long list of
+        // regexes is more than documentation needs, and the XSLT holds them. The fields they give are still named
+        // where they are read.
         final String text = EventFieldDocs.fieldMappingMarkdown(golden("extract-mapping.json"), SCHEMA);
-        assertThat(text).startsWith("### Extracted fields").contains(
-                "- `ts`, `user`, `action`, `desc`: parsed from `message` with `^(\\S+) (\\S+) (\\S+) (.*)$`");
+        assertThat(text).startsWith("### Common fields")
+                .doesNotContain("Extracted fields", "parsed from")
+                .contains("| `EventSource/User/Id` | An identifier for the user. | `user` |");
     }
 
     @Test
