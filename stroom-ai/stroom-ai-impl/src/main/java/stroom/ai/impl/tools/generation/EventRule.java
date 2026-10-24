@@ -119,7 +119,8 @@ public record EventRule(String name,
         }
         final Set<List<String>> have = new HashSet<>();
         for (final FieldMapping entry : entries) {
-            have.add(Arrays.asList(entry.strippedPath(), entry.dataName()));
+            // With the Data it is in (data_parent): one of the name in another Data isn't this one.
+            have.add(Arrays.asList(entry.strippedPath(), entry.dataKey()));
         }
         final List<FieldMapping> expanded = new ArrayList<>(entries);
         for (final String field : data) {
