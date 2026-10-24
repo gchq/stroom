@@ -531,6 +531,18 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testExecute_anErrorFailsTheRunAndGoesOnUp() {
+        // Seen: a class Stroom couldn't load, its jar rewritten under the running node; the run was left RUNNING
+        // until its heartbeats stopped, then taken for one whose node had stopped.
+        assertThatThrownBy(() -> runManager.execute(run, r -> {
+            throw new NoClassDefFoundError("stroom/mcp/impl/tools/DocumentationVersions");
+        }, () -> false)).isInstanceOf(NoClassDefFoundError.class);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.FAILED), isNull(),
+                eq("java.lang.NoClassDefFoundError: stroom/mcp/impl/tools/DocumentationVersions"));
+    }
+
+    @Test
     void testExecute_terminated() {
         runManager.execute(run, r -> {
             throw new TaskTerminatedException();
