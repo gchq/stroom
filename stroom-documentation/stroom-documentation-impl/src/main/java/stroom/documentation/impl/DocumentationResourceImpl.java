@@ -25,6 +25,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -38,11 +39,15 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 @AutoLogged
 class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<DocumentationDoc> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentationResourceImpl.class);
+    // What no file name may hold on the common file systems.
+    private static final Pattern NOT_IN_FILE_NAMES = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
+    private static final String DEFAULT_FILE_NAME = "documentation";
 
     private final Provider<DocumentationStore> documentationStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -79,21 +84,32 @@ class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<
     }
 
     @Override
-    public ResourceGeneration download(final DocRef dictionaryRef) {
-        // Get dictionary.
-        final DocumentationDoc documentationDoc = documentationStoreProvider.get().readDocument(dictionaryRef);
+    public ResourceGeneration download(final DocRef documentationRef) {
+        final DocumentationDoc documentationDoc = documentationStoreProvider.get().readDocument(documentationRef);
         if (documentationDoc == null) {
-            throw new EntityServiceException("Unable to find dictionary");
+            throw new EntityServiceException("Unable to find documentation");
         }
 
-        final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
+        // Markdown, named after the document (it was 'dictionary.txt', copied from the dictionary's download).
+        final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile(
+                fileName(documentationDoc.getName()));
         final Path tempFile = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            Files.writeString(tempFile, documentationDoc.getData(), StreamUtil.DEFAULT_CHARSET);
+            Files.writeString(tempFile, NullSafe.string(documentationDoc.getData()), StreamUtil.DEFAULT_CHARSET);
         } catch (final IOException e) {
-            LOGGER.error("Unable to download Dictionary", e);
+            LOGGER.error("Unable to download documentation", e);
             throw new UncheckedIOException(e);
         }
         return new ResourceGeneration(resourceKey, new ArrayList<>());
+    }
+
+    /// @param docName The document's name, or null.
+    /// @return The name of the file it is downloaded as: its name, with what no file name may hold replaced, as
+    /// markdown; `documentation.md` if it has no name.
+    static String fileName(final String docName) {
+        final String name = NOT_IN_FILE_NAMES.matcher(NullSafe.string(docName)).replaceAll("_").strip();
+        return (name.isEmpty()
+                ? DEFAULT_FILE_NAME
+                : name) + ".md";
     }
 }
