@@ -268,6 +268,21 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .build();
     }
 
+    // The table a Visualisation pane of the name is linked to, or null if there is no such pane: changes to a chart
+    // are proposed for its table, so a pane's name is taken for its table's.
+    private AiTabSearch linkedTable(final int chatId, final StoredTabSnapshot tab, final String paneName) {
+        final UnsavedPart part = tabSnapshots.part(chatId, tab, AiTabSnapshotPart.DASHBOARD).orElse(null);
+        if (part == null) {
+            return null;
+        }
+        return DashboardComponents.find(DashboardComponents.parse(part.text()).stream()
+                        .filter(pane -> DashboardComponents.VISUALISATION.equals(pane.type()))
+                        .toList(), paneName)
+                .map(Component::table)
+                .map(linked -> CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), linked))
+                .orElse(null);
+    }
+
     // An embedded query's search, in a dashboard tab: its results are a StroomQL query's.
     static boolean isEmbeddedQuery(final AiTabSearch search) {
         return search.getLive() instanceof QueryTableContext || search.getResults() instanceof QueryTableContext;
@@ -303,7 +318,10 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         if (!documentAccess.canView(dashboard)) {
             return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
-        final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), component);
+        final AiTabSearch named = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), component);
+        final AiTabSearch table = named != null
+                ? named
+                : linkedTable(chatId, tab, component);
         if (table == null) {
             return ToolResult.text(
                     "The dashboard has no table or embedded query '" + component + "'. Its tables and embedded "

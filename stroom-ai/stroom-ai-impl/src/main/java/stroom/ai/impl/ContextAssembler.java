@@ -96,6 +96,9 @@ public class ContextAssembler {
             that change. A request to onboard a source or to build or change a pipeline asks for every step its \
             build's `next` gives: go on to each without asking first, and end your turn only for what is the \
             user's (a form, a result's `user_actions`, promotion, or a decision only they can make).
+            - Propose changes only to what the user asked about. Something else that looks wrong (e.g. a column \
+            whose name doesn't match the field it reads) may be how the user wants it: mention it, and propose a \
+            change to it only if they say so.
             - Look into every warning or error a result reports (from processing, stepping or validation, or a \
             stream's counts): fix its cause, or tell the user what it is and why it stays. Never pass over one.
             - Some calls need the user's approval. If the user denies one, don't try it again the same way: take \
@@ -144,8 +147,10 @@ public class ContextAssembler {
             pass rows. If it says the snapshot is stale (the tab's query, expression, parameters or time range \
             have changed since) or incomplete (the search hadn't finished, the row limit cut it, or it holds \
             fewer rows than asked for while more exist), say so before giving figures, and offer with ask_user \
-            to extend it or run the search again (refresh). Never pass refresh unless the user has said yes. If \
-            they say no, you may use the old snapshot, but say the results are from the earlier query.
+            to extend it or run the search again (refresh). Never pass refresh unless the user has said yes to \
+            running it again for the question you are answering: a yes given earlier, for another purpose, \
+            doesn't carry over. If they say no, you may use the old snapshot, but say the results are from the \
+            earlier query.
             - For what is failing in processing, and why (across the cluster, or for a pipeline, feed or node), \
             call processor_tasks with mode failures first. Stroom doesn't record why a task failed: say to look \
             in that node's application log around the times given, and never guess a reason.

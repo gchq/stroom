@@ -24,9 +24,11 @@ import stroom.ai.impl.vis.ChartLibraries.InstalledVisualisation;
 import stroom.ai.impl.vis.ChartRole;
 import stroom.ai.impl.vis.D3Visualisation;
 import stroom.ai.impl.vis.StyleSetting;
+import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -41,6 +43,14 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
 
     static final String NAME = "list_visualisations";
     static final int MAX_LISTED = 100;
+
+    // How a kind's chart behaves, and can be tuned with options, beyond its style settings.
+    private static final Map<ChartKind, String> TUNING = Map.of(ChartKind.GRAPH,
+            "Layout (echarts): force-directed, animating as it settles (up to 500 nodes); nodes can be dragged, "
+            + "and the graph zooms and pans. Tune its physics with options {\"seriesDefaults\": {\"force\": "
+            + "{...}}}: repulsion (default 160, 80 over 100 nodes), edgeLength (default [40, 140], [20, 80] over "
+            + "100 nodes), gravity (default 0.1), friction (ECharts' 0.6; lower keeps nodes moving longer), "
+            + "initLayout (\"circular\" starts the nodes on a ring) and layoutAnimation (true or false).");
 
     private final ChartLibraries chartLibraries;
 
@@ -129,7 +139,14 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
             sb.append("Style settings (echarts): ").append(kind.styleSettings().stream()
                     .map(ListVisualisationsTool::describe)
                     .collect(Collectors.joining("; "))).append("\n");
+            NullSafe.consume(TUNING.get(kind), tuning -> sb.append(tuning).append("\n"));
         }
+        sb.append("\nOptions (echarts): for what the style settings can't do, ECharts option overrides as a JSON "
+                  + "object, with top-level keys ").append(String.join(", ", VisualisationPlan.OPTION_KEYS.stream()
+                        .sorted()
+                        .toList()))
+                .append(" (seriesDefaults is merged into every series). They are one setting: giving options "
+                        + "again replaces all of them, so keep the ones wanted.\n");
 
         final List<InstalledVisualisation> installed = chartLibraries.listVisualisations();
         sb.append("\n# Visualisations in Stroom\n\n");

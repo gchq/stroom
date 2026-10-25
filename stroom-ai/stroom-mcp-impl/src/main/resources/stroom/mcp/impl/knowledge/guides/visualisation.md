@@ -67,6 +67,11 @@ table and chart. `current_results` snapshots its results by its name, as a table
   renames it to `name`, saved at once (the user needs Edit permission on it), keeping its pane and place; the pane
   keeps its name unless you give `componentName`. Only charts Stroom AI generated can be replaced.
 - The content pack's D3 Visualisations take only their own settings, by their own ids.
+- A setting a chart's Visualisation doesn't have (one generated before the setting was added, e.g. `nodeColours`)
+  can't be set on its pane: replace the chart (`replace`, the same kind) to regenerate it with every setting.
+- A network graph's node colours: `nodeColours` group (by its `sourceGroup`/`targetGroup` columns) or node (each
+  node its own colour). Its layout animates by default; `list_visualisations` gives the `seriesDefaults.force`
+  options that tune its physics.
 
 ## Notes
 

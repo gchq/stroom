@@ -297,7 +297,7 @@ Takes a snapshot of the rows of a table of results shown in the tab the user att
 {
   "properties" : {
     "refresh" : {
-      "description" : "Optional. Run the search again, as the tab now stands, and take a new snapshot. Only with the user's yes.",
+      "description" : "Optional. Run the search again, as the tab now stands, and take a new snapshot. Only with the user's yes to running it again, for this question.",
       "type" : "boolean"
     },
     "rows" : {
@@ -1739,6 +1739,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "maxValues" : {
           "description" : "The value for maxValues, as text.",
+          "type" : "string"
+        },
+        "nodeColours" : {
+          "description" : "The value for nodeColours, as text.",
           "type" : "string"
         },
         "showLabels" : {
