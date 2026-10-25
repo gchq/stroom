@@ -1519,6 +1519,11 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   * ~~The schedule dialog asked the server for its times twice as it opened (older).~~ Once.
   * ~~`IconBox.setOpensDialog(false)` took away an `aria-haspopup` its field had set itself.~~ Only
     what it added.
+* After wave 4 and its audit, `App/Visualisations/Tree` `Keyboard`'s screenshot differs from the
+  baseline (taken after wave 3's audit) every run, alone or in the full run: the host-drawn data
+  tooltip ("nginx.conf", Path, Value) is 1px further left. Nothing else in it moves. Wave 4 didn't
+  touch the visualisations; not yet traced (found 25 October 2026). `Tree` `ShowAndHide` and
+  `WordCloud` `Keyboard` differed in the full run but not alone (timing).
 * Batch Edit Schedules' `validate` (`BatchExecutionScheduleEditPresenter`) tells its caller `false`
   after every check, even after `true` (found 25 October 2026 in wave 4's audit; older). Harmless
   today, as `ExecutionScheduleManager` acts only on `true`; fix when the dialog converts.
