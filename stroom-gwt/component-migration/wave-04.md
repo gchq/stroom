@@ -4,6 +4,50 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Split the widgets that open their own presenter dialogs, or reach services or the bus themselves, into a dumb box and a controller or callback, following the DropDownBox and DocSelectionController pilot. The date, time and schedule popups become component dialogs. The navigators invert to callbacks. ClassificationLabel takes its colours from outside, and VisFrame and CustomFileUpload lose their bus and transport coupling.
 
+## Done (25 October 2026)
+
+All 17 units, in nine commits after one for the shared widgets' template support. What was decided
+on the way, where it differs from the plans below:
+
+- **Shared widgets.** `IconBox` takes `icon`, its field as a child (`<svg:field>`) and
+  `opensDialog`; `Button` takes `opensDialog` and `role`; `ValueSpinner` takes `minValue` and
+  `maxValue` (`int`, as UiBinder can't parse `long`); `ValueSpinner`, `LineColInput` and
+  `BaseSelectionBox` take `accessibleName`. A field that says it opens a dialog itself keeps saying
+  so when it goes in an `IconBox`.
+- **Boxes ask, controllers answer.** `TimeBox`, `DateTimeBox`, `ScheduleBox` and
+  `TimeRangeSelector` only ask for their dialog (`setOnOpenPicker`); a `TimeBoxController`,
+  `DateTimeBoxController`, `ScheduleBoxController` or `TimeRangeSelectorController` attached by the
+  screen's controller opens a one-use `TimePickerController`, `DateTimePickerController`,
+  `SchedulePickerController` or `TimeRangePickerController`. Every one of the 19 date-time box
+  users attaches one, so `DateTimeBox`'s `StaticEventBus` fallback is gone, as is the time range
+  selector's: the query expression editor's term editor gets a `Provider<DateTimeBoxController>`
+  through its view, and `DynamicSettingsPane` hands its date boxes to its owner
+  (`setOnDateTimeBoxAdded`). Their `ValueChangeEvent`s stay beside the new `setOnChange` until their
+  callers move (rule 5).
+- **The schedule box's checks make no dialog.** `ScheduleBoxController` checks the schedule with
+  the server itself (`validate`), and makes a dialog only when one is opened; the job screens'
+  `JobNodeListHelper` opens one per change through a provider.
+- **`CustomFileUpload` is `FileChooser`** (block `file-chooser`), and its upload, task monitor and
+  reply parsing are `FileChooserController`'s. The upload transport stays a static hook on the
+  controller, set only by the workbench. The file input is a plain `<input type="file" hidden>`,
+  and `FormGroup` now skips an element with the `hidden` attribute, as it skipped one hidden inline.
+- **The navigators share `NavigatorAction`** (first, previous, next, last, refresh, select). Each
+  component shows what it is given (`show(HasItems)`, `show(HasCharacterData)`, which it only
+  reads); its controller acts on it and opens the selection dialog.
+- **One `classification-label` block**, with `--one-line` for the text panes' banners;
+  `ClassificationLabelController` gives a label its colours. `ClassificationWrapper` is a `View`
+  too, as `DataPresenter` shows it as its view until it converts.
+- **Tests on the JVM** cover the pure parts: the label colours, the upload's reply, the character
+  range's checks (with OK and Cancel), and the location link's guard and text. New stories:
+  `Widgets/Editors & Viewers/ItemNavigator`, `Widgets/Inputs/DynamicSettingsPane`, the time and
+  schedule boxes' OK, Cancel and read-only paths, `SourcePresenter` `SetRange`,
+  `ExecutionSchedulesScreen` `EditStartTimeWithDialog` and `QueryEditor` `TimeRangeQuickSetting`.
+
+Found and fixed on the way (in `ISSUES.md`): the Select Record dialog's spinner had no name; the
+time dialog's hour hid without its label. Left: `DynamicSettingsPane.setReadOnly` and `setOnChange`
+are for its owner (`BasicVisSettingsPresenter`) to use when it converts; the unused CSS is listed in
+`ISSUES.md`; `VisFrame` stays in wave 5, where the order puts it.
+
 ## CSS and template notes for the wave
 
 - Custom-property helper: ClassificationLabel (JSNI setStyleProperty), FieldEnd, DataGridDom and SplitPane each set CSS custom properties with their own element.style.setProperty JSNI; one shared helper in stroom.widget.util.client (e.g. CssProperties.set(element, name, value) / remove) would serve every dynamic style in later waves too.

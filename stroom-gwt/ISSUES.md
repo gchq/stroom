@@ -1534,9 +1534,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * A `PopupType.POPUP` given a size (`PopupUtil`) still sets an inline width and height on its
   content (found 25 October 2026 in wave 3's audit): a class wouldn't beat the content's own width
   rules as the inline size does. Fix it as the popups' contents convert (menus, lists).
-* `CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
+* ~~`CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
   2026 in wave 3's audit): it is only ever hidden, and the code that would show it is commented
-  out. Delete the field and the commented-out code once removals are allowed.
+  out.~~ Gone in wave 4: the `CharacterNavigatorController` that replaces it has no progress bar.
 * A dialog's New button (`CreateOkCancelContent`) shows its busy spinner on Cancel, not on itself,
   while the screen handles it (found 24 October 2026 in wave 3; as it was in
   `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
@@ -1582,8 +1582,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 * Rename hides its dialog before the request is sent, and the document permission dialogs
   close once a failed change is dismissed, so both lose what was entered if the request fails.
-* `TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
-  and second groups.
+* ~~`TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
+  and second groups.~~ Fixed in wave 4: `TimePicker.setHourVisible` hides the hour's form group.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
   defaults to Dialog while the config default is Dock.
 * Solr's ZooKeeper Path is a single value shown in a multi-line text area.

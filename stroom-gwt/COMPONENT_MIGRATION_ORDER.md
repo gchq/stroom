@@ -251,6 +251,8 @@ Each unit's plan (names, template, what goes, every inline style and its replace
 
 Split the widgets that open their own presenter dialogs, or reach services or the bus themselves, into a dumb box and a controller or callback, following the DropDownBox and DocSelectionController pilot. The date, time and schedule popups become component dialogs. The navigators invert to callbacks. ClassificationLabel takes its colours from outside, and VisFrame and CustomFileUpload lose their bus and transport coupling.
 
+> **Done, 25 October 2026**: all 17 units (`VisFrame`, which the table lists in wave 5, stays there). The boxes (`TimeBox`, `DateTimeBox`, `ScheduleBox`, `TimeRangeSelector`) only ask for their dialogs, and a controller attached by each screen opens a one-use picker controller (`TimePicker`, `DateTimePicker`, `SchedulePicker`, `TimeRangePicker`); every date-time box user attaches one, so the `StaticEventBus` fallbacks are gone. `CustomFileUpload` is `FileChooser` with a `FileChooserController`; the navigators share `NavigatorAction`; `ClassificationLabel` has one `classification-label` block. What was decided on the way, and what is left, is at the top of [`component-migration/wave-04.md`](component-migration/wave-04.md).
+
 **Why now.** The input widgets from wave 2 are now dumb. DateTimeBox (19 callers) and ScheduleBox are what stop the floor map, credential and scheduling views from being used in templates: those views inject a Provider<DateTimePopup> only to pass it on. Removing the StaticEventBus fallbacks here closes a hidden smart dependency.
 
 **Risks.**
