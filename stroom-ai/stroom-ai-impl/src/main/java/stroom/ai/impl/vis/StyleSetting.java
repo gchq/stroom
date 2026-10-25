@@ -48,6 +48,13 @@ public enum StyleSetting {
     NODE_COLOURS("nodeColours", "Node Colours", Control.SELECTION, "group", List.of("group", "node"), null, null,
             "group colours nodes by their sourceGroup and targetGroup columns (one colour if neither is mapped), "
             + "with a legend; node gives each node its own colour"),
+    COLOUR_SCALE("colourScale", "Colour Scale", Control.SELECTION, "blue",
+            List.of("blue", "green", "red", "purple", "orange", "heat"), null, null,
+            "the colours from the smallest value to the largest; heat runs from yellow to red"),
+    BINS("bins", "Bins", Control.NUMBER, "0", List.of(), 0, 200,
+            "how many ranges the values are counted in; 0 chooses from how many rows there are"),
+    ORIENT("orient", "Direction", Control.SELECTION, "horizontal", List.of("horizontal", "vertical"), null, null,
+            "flows run left to right (horizontal) or top to bottom (vertical)"),
     SHOW_LABELS_OFF("showLabels", "Show Labels", Control.BOOLEAN, "false", List.of(), null, null,
             "shows each value on the chart"),
     SHOW_LABELS_ON("showLabels", "Show Labels", Control.BOOLEAN, "true", List.of(), null, null,

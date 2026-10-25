@@ -37,7 +37,7 @@ if (!window.visualisations) {
     "use strict";
 
     var ADAPTER_VERSION = "1";
-    var KINDS = ["bar", "line", "pie", "scatter", "graph"];
+    var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord"];
     // Stroom puts its own refresh button over the top-right corner of a dashboard's visualisation, so nothing
     // that can be clicked or read is put within this many pixels of the right edge at the top.
     var STROOM_BUTTON_SPACE = 36;
@@ -1355,12 +1355,541 @@ if (!window.visualisations) {
         return colours;
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Grids of values: heatmap and calendar
+    // ------------------------------------------------------------------------------------------
+
+    // The colours a value runs through, smallest to largest; a dark theme's smallest is dark rather than pale.
+    var COLOUR_SCALES = {
+        blue: ["#e8f1fb", "#6baed6", "#08519c"],
+        green: ["#e8f5e9", "#74c476", "#1b7a3a"],
+        red: ["#fdecea", "#fb6a4a", "#a50f15"],
+        purple: ["#f3e8fb", "#9e9ac8", "#54278f"],
+        orange: ["#fff3e0", "#fd8d3c", "#a63603"],
+        heat: ["#ffffcc", "#fd8d3c", "#bd0026"]
+    };
+
+    function valueScale(settings, style, min, max) {
+        var name = String(textSetting(settings, "colourScale") || "blue").toLowerCase();
+        var colours = (COLOUR_SCALES[name] || COLOUR_SCALES.blue).slice();
+        if (style.dark && name !== "heat") {
+            colours[0] = "#26303b";
+        }
+        return {
+            type: "continuous",
+            min: isFinite(min) ? min : 0,
+            max: isFinite(max) && max > min ? max : (isFinite(min) ? min + 1 : 1),
+            orient: "horizontal",
+            left: "center",
+            bottom: 0,
+            itemHeight: 120,
+            itemWidth: 10,
+            calculable: false,
+            inRange: {color: colours},
+            textStyle: {color: style.subtleText},
+            formatter: function (value) {
+                return formatNumber(value);
+            }
+        };
+    }
+
+    // Puts labels in their natural order when they were drawn from dates or numbers.
+    function sortNatural(labels, fields, id) {
+        var type = fields.type(id);
+        if (type === "DATE_TIME" || type === "NUMBER") {
+            labels.sort(function (a, b) {
+                return toNumber(fields.rawOf(id, a)) - toNumber(fields.rawOf(id, b));
+            });
+        }
+        return labels;
+    }
+
+    function heatmapModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["x", "y", "value"]);
+        var xs = [];
+        var ys = [];
+        var seenX = {};
+        var seenY = {};
+        var sums = {};
+        var nonNumeric = 0;
+        var duplicates = 0;
+        rows.forEach(function (row) {
+            var value = toNumber(fields.value(row, "value"));
+            if (isNaN(value)) {
+                nonNumeric++;
+                return;
+            }
+            var x = fields.label(row, "x", prefs);
+            var y = fields.label(row, "y", prefs);
+            if (!seenX[x]) {
+                seenX[x] = true;
+                xs.push(x);
+            }
+            if (!seenY[y]) {
+                seenY[y] = true;
+                ys.push(y);
+            }
+            var key = x + "\u0000" + y;
+            if (sums[key] !== undefined) {
+                duplicates++;
+                sums[key] += value;
+            } else {
+                sums[key] = value;
+            }
+        });
+        addDropped(report, "value not a number", nonNumeric);
+        if (duplicates > 0) {
+            report.warnings.push(duplicates + " rows shared an x and y with another row and were added up");
+        }
+        sortNatural(xs, fields, "x");
+        sortNatural(ys, fields, "y");
+
+        var data = [];
+        var min = Infinity;
+        var max = -Infinity;
+        ys.forEach(function (y) {
+            xs.forEach(function (x) {
+                var value = sums[x + "\u0000" + y];
+                if (value !== undefined) {
+                    data.push([x, y, value]);
+                    min = Math.min(min, value);
+                    max = Math.max(max, value);
+                }
+            });
+        });
+        report.series = 1;
+        report.points = data.length;
+        var showLabels = boolSetting(settings, "showLabels", false);
+
+        return {
+            tooltip: {
+                trigger: "item",
+                formatter: function (params) {
+                    return escapeHtml(params.value[0] + ", " + params.value[1] + ": " + formatNumber(params.value[2]));
+                }
+            },
+            visualMap: valueScale(settings, style, min, max),
+            matrix: {
+                x: {data: xs},
+                y: {data: ys},
+                top: 16,
+                bottom: 44,
+                left: 16,
+                right: STROOM_BUTTON_SPACE
+            },
+            // A cell selects its x and y.
+            selectAt: function (seriesIndex, dataIndex) {
+                var cell = data[dataIndex];
+                return cell ? fields.selection([["x", fields.rawOf("x", cell[0])], ["y", fields.rawOf("y", cell[1])]])
+                    : null;
+            },
+            series: [{
+                type: "heatmap",
+                coordinateSystem: "matrix",
+                data: data,
+                label: {
+                    show: showLabels,
+                    color: style.text,
+                    formatter: function (params) {
+                        return formatNumber(params.value[2]);
+                    }
+                }
+            }]
+        };
+    }
+
+    // The most years a calendar shows, the latest ones.
+    var MAX_CALENDAR_YEARS = 5;
+
+    function calendarModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["date", "value"]);
+        var sums = {};
+        var days = [];
+        var dayValue = {};
+        var badDate = 0;
+        var nonNumeric = 0;
+        rows.forEach(function (row) {
+            var ms = toNumber(fields.value(row, "date"));
+            if (isNaN(ms)) {
+                badDate++;
+                return;
+            }
+            var value = toNumber(fields.value(row, "value"));
+            if (isNaN(value)) {
+                nonNumeric++;
+                return;
+            }
+            var day = formatTime(ms, "YYYY-MM-DD", prefs.timeZone);
+            if (sums[day] === undefined) {
+                sums[day] = 0;
+                days.push(day);
+                dayValue[day] = ms;
+            }
+            sums[day] += value;
+        });
+        addDropped(report, "date not a date", badDate);
+        addDropped(report, "value not a number", nonNumeric);
+        days.sort();
+
+        var years = [];
+        days.forEach(function (day) {
+            var year = day.substring(0, 4);
+            if (years.indexOf(year) < 0) {
+                years.push(year);
+            }
+        });
+        if (years.length > MAX_CALENDAR_YEARS) {
+            report.warnings.push((years.length - MAX_CALENDAR_YEARS) + " earlier years were left out");
+            years = years.slice(years.length - MAX_CALENDAR_YEARS);
+            days = days.filter(function (day) {
+                return years.indexOf(day.substring(0, 4)) >= 0;
+            });
+        }
+        var min = Infinity;
+        var max = -Infinity;
+        days.forEach(function (day) {
+            min = Math.min(min, sums[day]);
+            max = Math.max(max, sums[day]);
+        });
+        report.series = years.length;
+        report.points = days.length;
+
+        // Within a year, only the days its data covers; else a calendar a year.
+        var calendars = years.length === 1
+            ? [{range: [days[0], days[days.length - 1]]}]
+            : years.map(function (year) {
+                return {range: year};
+            });
+        var height = 150;
+        var series = calendars.map(function (calendar, index) {
+            calendar.top = 24 + index * height;
+            calendar.left = 40;
+            calendar.right = STROOM_BUTTON_SPACE;
+            calendar.cellSize = ["auto", 14];
+            calendar.itemStyle = {borderColor: style.border, borderWidth: 1, color: "transparent"};
+            calendar.splitLine = {lineStyle: {color: style.subtleText}};
+            calendar.dayLabel = {color: style.subtleText};
+            calendar.monthLabel = {color: style.subtleText};
+            calendar.yearLabel = {color: style.subtleText};
+            return {
+                type: "heatmap",
+                coordinateSystem: "calendar",
+                calendarIndex: index,
+                data: days.filter(function (day) {
+                    return years.length === 1 || day.substring(0, 4) === years[index];
+                }).map(function (day) {
+                    return [day, sums[day]];
+                })
+            };
+        });
+
+        return {
+            tooltip: {
+                trigger: "item",
+                formatter: function (params) {
+                    return escapeHtml(params.value[0] + ": " + formatNumber(params.value[1]));
+                }
+            },
+            visualMap: valueScale(settings, style, min, max),
+            calendar: calendars,
+            // A day selects its date, as the table has it.
+            selectAt: function (seriesIndex, dataIndex) {
+                var day = series[seriesIndex] && series[seriesIndex].data[dataIndex];
+                return day ? fields.selection([["date", dayValue[day[0]]]]) : null;
+            },
+            series: series
+        };
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Histogram
+    // ------------------------------------------------------------------------------------------
+
+    // The most ranges a histogram counts in.
+    var MAX_BINS = 200;
+
+    function histogramModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["value"]);
+        var values = [];
+        var nonNumeric = 0;
+        rows.forEach(function (row) {
+            var value = toNumber(fields.value(row, "value"));
+            if (isNaN(value)) {
+                nonNumeric++;
+                return;
+            }
+            var series = fields.has("series") ? fields.label(row, "series", prefs) : (fields.column("value") || "Rows");
+            values.push([value, series]);
+        });
+        addDropped(report, "value not a number", nonNumeric);
+
+        var min = Infinity;
+        var max = -Infinity;
+        values.forEach(function (value) {
+            min = Math.min(min, value[0]);
+            max = Math.max(max, value[0]);
+        });
+        // Sturges' rule when not set.
+        var bins = intSetting(settings, "bins", 0, 0, MAX_BINS) ||
+            Math.min(50, Math.max(1, Math.ceil(Math.log(Math.max(1, values.length)) / Math.LN2 + 1)));
+        if (!(max > min)) {
+            bins = 1;
+        }
+        var width = bins > 0 && max > min ? (max - min) / bins : 1;
+        var labels = [];
+        for (var i = 0; i < bins; i++) {
+            var from = min + i * width;
+            labels.push(formatNumber(from) + " – " + formatNumber(i === bins - 1 ? max : from + width));
+        }
+
+        var counts = {};
+        var seriesNames = [];
+        var seriesTotals = {};
+        values.forEach(function (value) {
+            var bin = max > min ? Math.min(bins - 1, Math.floor((value[0] - min) / width)) : 0;
+            if (!counts[value[1]]) {
+                counts[value[1]] = [];
+                for (var b = 0; b < bins; b++) {
+                    counts[value[1]].push(0);
+                }
+                seriesNames.push(value[1]);
+                seriesTotals[value[1]] = 0;
+            }
+            counts[value[1]][bin]++;
+            seriesTotals[value[1]]++;
+        });
+        var keep = limitSeries(seriesTotals, intSetting(settings, "maxSeries", 20, 1, 500));
+        if (keep) {
+            report.warnings.push((seriesNames.length - Object.keys(keep).length) +
+                " series beyond Max Series were left out");
+            seriesNames = seriesNames.filter(function (name) {
+                return keep[name];
+            });
+        }
+        report.series = seriesNames.length;
+        report.points = values.length;
+        var stack = boolSetting(settings, "stack", false);
+        var showLabels = boolSetting(settings, "showLabels", false);
+        var legendShown = seriesNames.length > 1;
+
+        return {
+            legend: legendOption(settings, legendShown, style),
+            grid: gridOption(settings, legendShown),
+            tooltip: {trigger: "axis", axisPointer: {type: "shadow"}},
+            xAxis: categoryAxis(textSetting(settings, "xAxisName") || fields.column("value"), labels, style),
+            yAxis: valueAxis(textSetting(settings, "yAxisName") || "Rows", style, "value", prefs),
+            series: seriesNames.map(function (name) {
+                return {
+                    type: "bar",
+                    name: name,
+                    data: counts[name],
+                    stack: stack ? "total" : undefined,
+                    barCategoryGap: "4%",
+                    label: {show: showLabels, position: stack ? "inside" : "top", color: style.text}
+                };
+            })
+        };
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Flows and links: Sankey and chord diagrams
+    // ------------------------------------------------------------------------------------------
+
+    // Links between nodes from the rows: their values added up (1 a row if there is no value column), links from a
+    // node to itself left out, and only the maxNodes nodes with the most flowing through them kept.
+    function linkTotals(rows, fields, settings, prefs, report, valueId) {
+        var hasValue = fields.has(valueId);
+        var links = {};
+        var linkKeys = [];
+        var nodeTotals = {};
+        var missing = 0;
+        var selfLinks = 0;
+        var badValue = 0;
+        rows.forEach(function (row) {
+            var sourceValue = fields.value(row, "source");
+            var targetValue = fields.value(row, "target");
+            if (isBlank(sourceValue) || isBlank(targetValue)) {
+                missing++;
+                return;
+            }
+            var source = fields.label(row, "source", prefs);
+            var target = fields.label(row, "target", prefs);
+            if (source === target) {
+                selfLinks++;
+                return;
+            }
+            var value = hasValue ? toNumber(fields.value(row, valueId)) : 1;
+            if (isNaN(value) || value < 0) {
+                badValue++;
+                return;
+            }
+            var key = source + "\u0000" + target;
+            if (!links[key]) {
+                links[key] = {source: source, target: target, value: 0};
+                linkKeys.push(key);
+            }
+            links[key].value += value;
+            nodeTotals[source] = (nodeTotals[source] || 0) + value;
+            nodeTotals[target] = (nodeTotals[target] || 0) + value;
+        });
+        addDropped(report, "source or target empty", missing);
+        addDropped(report, "source and target the same", selfLinks);
+        addDropped(report, (fields.column(valueId) || valueId) + " not a number or negative", badValue);
+
+        var nodeNames = Object.keys(nodeTotals).sort(function (a, b) {
+            return nodeTotals[b] - nodeTotals[a];
+        });
+        var maxNodes = intSetting(settings, "maxNodes", 300, 2, 5000);
+        if (nodeNames.length > maxNodes) {
+            report.warnings.push((nodeNames.length - maxNodes) + " nodes with the least flowing through them were " +
+                "left out (Max Nodes)");
+            nodeNames = nodeNames.slice(0, maxNodes);
+        }
+        var kept = {};
+        nodeNames.forEach(function (name) {
+            kept[name] = true;
+        });
+        return {
+            nodeNames: nodeNames,
+            links: linkKeys.map(function (key) {
+                return links[key];
+            }).filter(function (link) {
+                return kept[link.source] && kept[link.target];
+            })
+        };
+    }
+
+    // What a click on a node or link selects: the node itself (node), or the link's two ends.
+    function networkSelectAt(fields, network) {
+        return function (seriesIndex, dataIndex, dataType) {
+            if (dataType === "edge") {
+                var link = network.links[dataIndex];
+                return link ? fields.selection([["source", fields.rawOf("source", link.source)],
+                    ["target", fields.rawOf("target", link.target)]]) : null;
+            }
+            var name = network.nodeNames[dataIndex];
+            if (name === undefined) {
+                return null;
+            }
+            var raw = fields.rawOf("source", name);
+            return fields.selection([["node", raw === name ? fields.rawOf("target", name) : raw]]);
+        };
+    }
+
+    function sankeyModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["source", "target"]);
+        var network = linkTotals(rows, fields, settings, prefs, report, "value");
+        // A Sankey diagram can't draw a loop: the strongest flows are kept, and one that would close a loop left
+        // out.
+        var next = {};
+
+        function reaches(from, to, seen) {
+            if (from === to) {
+                return true;
+            }
+            if (seen[from]) {
+                return false;
+            }
+            seen[from] = true;
+            return (next[from] || []).some(function (node) {
+                return reaches(node, to, seen);
+            });
+        }
+
+        var looping = 0;
+        network.links = network.links.slice().sort(function (a, b) {
+            return b.value - a.value;
+        }).filter(function (link) {
+            if (reaches(link.target, link.source, {})) {
+                looping++;
+                return false;
+            }
+            (next[link.source] = next[link.source] || []).push(link.target);
+            return true;
+        });
+        addDropped(report, "flow would close a loop", looping);
+        var linked = {};
+        network.links.forEach(function (link) {
+            linked[link.source] = true;
+            linked[link.target] = true;
+        });
+        network.nodeNames = network.nodeNames.filter(function (name) {
+            return linked[name];
+        });
+        report.series = 1;
+        report.nodes = network.nodeNames.length;
+        report.links = network.links.length;
+        report.points = network.links.length;
+        var vertical = String(textSetting(settings, "orient") || "horizontal").toLowerCase() === "vertical";
+        var showLabels = boolSetting(settings, "showLabels", true);
+
+        return {
+            tooltip: {trigger: "item"},
+            selectAt: networkSelectAt(fields, network),
+            series: [{
+                type: "sankey",
+                orient: vertical ? "vertical" : "horizontal",
+                left: 16,
+                right: vertical ? STROOM_BUTTON_SPACE : 120,
+                top: vertical ? 40 : 16,
+                bottom: vertical ? 40 : 16,
+                nodeGap: 8,
+                emphasis: {focus: "adjacency"},
+                lineStyle: {color: "gradient", opacity: 0.35},
+                label: {show: showLabels, color: style.text, position: vertical ? "bottom" : "right"},
+                data: network.nodeNames.map(function (name) {
+                    return {name: name};
+                }),
+                links: network.links.map(function (link) {
+                    return {source: link.source, target: link.target, value: link.value};
+                })
+            }]
+        };
+    }
+
+    function chordModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["source", "target"]);
+        var network = linkTotals(rows, fields, settings, prefs, report, "weight");
+        report.series = 1;
+        report.nodes = network.nodeNames.length;
+        report.links = network.links.length;
+        report.points = network.links.length;
+        var showLabels = boolSetting(settings, "showLabels", true);
+
+        return {
+            tooltip: {trigger: "item"},
+            color: distinctColours(network.nodeNames.length, style),
+            selectAt: networkSelectAt(fields, network),
+            series: [{
+                type: "chord",
+                top: 24,
+                bottom: 24,
+                left: 24,
+                right: STROOM_BUTTON_SPACE,
+                emphasis: {focus: "adjacency"},
+                label: {show: showLabels, color: style.text},
+                lineStyle: {color: "source", opacity: 0.5},
+                data: network.nodeNames.map(function (name) {
+                    return {name: name};
+                }),
+                links: network.links.map(function (link) {
+                    return {source: link.source, target: link.target, value: link.value};
+                })
+            }]
+        };
+    }
+
     var MODELS = {
         bar: barModel,
         line: lineModel,
         pie: pieModel,
         scatter: scatterModel,
-        graph: graphModel
+        graph: graphModel,
+        heatmap: heatmapModel,
+        calendar: calendarModel,
+        histogram: histogramModel,
+        sankey: sankeyModel,
+        chord: chordModel
     };
 
     function newReport(kind) {
