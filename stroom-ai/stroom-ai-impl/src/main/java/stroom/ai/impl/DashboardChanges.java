@@ -98,10 +98,22 @@ public final class DashboardChanges {
     public static final String RENAME = "rename";
     /// Changes one of a component's settings, as its Settings dialog has them (see [DashboardSettings]).
     public static final String SET_SETTING = "set_setting";
+    /// Filters a query's search, or a table's rows, by what is selected in a chart: its terms compare fields (or
+    /// columns) with what the chart's selection holds, and drop out while nothing is selected.
+    public static final String ADD_SELECTION_FILTER = "add_selection_filter";
+    /// For add_selection_filter: filters a query's search, re-run as the selection changes, so every table it feeds
+    /// (the chart's own too) narrows.
+    public static final String QUERY_FILTER = "query";
+    /// For add_selection_filter: filters a table's rows; the chart stays whole.
+    public static final String TABLE_FILTER = "table";
+    /// For add_selection_filter, what it filters.
+    public static final List<String> FILTER_MODES = List.of(QUERY_FILTER, TABLE_FILTER);
+    /// The most terms one selection filter may have.
+    public static final int MAX_FILTER_TERMS = 10;
     /// The operations, in the order they are described to the model.
     public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, MOVE_COLUMN,
             HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE, ADD_TEXT, ADD_VIS, SET_VIS_SETTINGS,
-            RENAME, SET_SETTING, ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
+            ADD_SELECTION_FILTER, RENAME, SET_SETTING, ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
     /// The most tables one proposal may add.
     public static final int MAX_TABLES = 10;
     /// The deepest an expression may nest, and the most items it may have, as read back from a stored change.
@@ -184,7 +196,8 @@ public final class DashboardChanges {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
             if (SET_EXPRESSION.equals(change.op()) || RENAME.equals(change.op())
-                || SET_SETTING.equals(change.op()) || SET_VIS_SETTINGS.equals(change.op())) {
+                || SET_SETTING.equals(change.op()) || SET_VIS_SETTINGS.equals(change.op())
+                || ADD_SELECTION_FILTER.equals(change.op())) {
                 // Of the table's query, or of a component: checked against the dashboard's components.
                 checked.add(change);
                 continue;
@@ -432,6 +445,9 @@ public final class DashboardChanges {
         }
         if (ADD_VIS.equals(op) || SET_VIS_SETTINGS.equals(op)) {
             return visChange(op, map, name, table, prefix);
+        }
+        if (ADD_SELECTION_FILTER.equals(op)) {
+            return selectionFilterChange(map, prefix);
         }
         if (ADD_FORMAT_RULE.equals(op)) {
             return formatRule(map, query, position, table, prefix);
@@ -858,6 +874,60 @@ public final class DashboardChanges {
         return null;
     }
 
+    // A selection filter: the component it filters (target), the chart whose selection filters it (chart, kept as
+    // name), whether it filters a query's search or a table's rows (mode, kept as value), all or any of its terms
+    // (match, kept as filter), and each term's field or column and the selection key it is compared with (terms,
+    // kept as settings). The components are resolved, and the filter built, once the dashboard is known.
+    private static Change selectionFilterChange(final Map<?, ?> map, final String prefix) {
+        final String target = text(map, "target", prefix);
+        final String chart = text(map, "chart", prefix);
+        if (target == null || chart == null) {
+            throw new IllegalArgumentException(prefix + "add_selection_filter needs the target (the query, embedded "
+                                               + "query or table to filter) and the chart (the Visualisation "
+                                               + "component whose selection filters it).");
+        }
+        final String mode = text(map, "mode", prefix);
+        if (mode == null || !FILTER_MODES.contains(mode)) {
+            throw new IllegalArgumentException(prefix + "add_selection_filter needs mode: query (filters a query's "
+                                               + "search, re-run as the selection changes, so every table it feeds, "
+                                               + "the chart's own too, narrows) or table (filters one table's rows; "
+                                               + "the chart stays whole). Ask the user which if they haven't said.");
+        }
+        final String match = NullSafe.nonBlankStringElse(text(map, "match", prefix), "all");
+        if (!"all".equals(match) && !"any".equals(match)) {
+            throw new IllegalArgumentException(prefix + "match must be all or any.");
+        }
+        if (!(map.get("terms") instanceof final List<?> terms) || terms.isEmpty()
+            || terms.size() > MAX_FILTER_TERMS) {
+            throw new IllegalArgumentException(prefix + "add_selection_filter needs terms: 1 to " + MAX_FILTER_TERMS
+                                               + " objects, each a field (a query field, or a table column for a "
+                                               + "table filter) and the selection key whose value it must equal "
+                                               + "(e.g. category).");
+        }
+        final Map<String, String> fields = new LinkedHashMap<>();
+        for (final Object item : terms) {
+            final String field = item instanceof final Map<?, ?> term
+                    ? text(term, "field", prefix)
+                    : null;
+            final String selection = item instanceof final Map<?, ?> term
+                    ? text(term, "selection", prefix)
+                    : null;
+            if (field == null || selection == null) {
+                throw new IllegalArgumentException(prefix + "each term needs a field and a selection.");
+            }
+            if (fields.put(field, selection) != null) {
+                throw new IllegalArgumentException(prefix + "'" + field + "' is in two terms.");
+            }
+        }
+        return Change.builder(ADD_SELECTION_FILTER)
+                .target(target)
+                .name(chart)
+                .value(mode)
+                .filter(match)
+                .settings(fields)
+                .build();
+    }
+
     private static String text(final Map<?, ?> map, final String key, final String prefix) {
         final Object value = map.get(key);
         if (value == null) {
@@ -1090,6 +1160,14 @@ public final class DashboardChanges {
                     }
                     yield "Change visualisation '" + target + "': " + String.join(", ", parts);
                 }
+                case ADD_SELECTION_FILTER -> "Filter " + (QUERY_FILTER.equals(value)
+                        ? "the search of '" + target + "'"
+                        : "the rows of '" + target + "'") + " by what is selected in chart '" + name + "': "
+                                              + String.join("any".equals(filter)
+                        ? " or "
+                        : " and ", NullSafe.map(settings).entrySet().stream()
+                        .map(term -> term.getKey() + " = its " + term.getValue())
+                        .toList());
                 case RENAME -> "Rename " + (target == null
                         ? "this table"
                         : "'" + target + "'") + " to '" + name + "'";

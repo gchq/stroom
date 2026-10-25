@@ -43,6 +43,23 @@ A network graph sizes each node by its number of connections (its degree) and dr
 weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a
 `count()` as the weight; links between the same pair are added up, and links from a node to itself are left out.
 
+## Filtering by a chart
+
+Clicking a chart Stroom AI generated (a slice, bar, point, link or node) selects it; clicking it again, or empty
+space, clears it. Other components can be filtered by the selection with an `add_selection_filter` change in
+`propose_dashboard_change`, naming the `target` to filter, the `chart`, and `terms` pairing a field with what the
+selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
+
+- `mode` query filters the target query's search (a classic Query's or an Embedded Query's), which re-runs as the
+  selection changes: every table it feeds narrows, the chart's own too, a drill-down. Its fields are the query's
+  data source fields, so the chart's column must read a field as it is (not e.g. a `formatDate()` of one).
+- `mode` table filters one table's rows (or an Embedded Query's results) and the chart stays whole, e.g. clicking
+  a slice to list its events in a detail table. Its fields are the table's columns.
+- Unless the user has said which, ask them (`ask_user`), saying what each does.
+- A network graph's node selects `node`: to filter by it at either end of a link, give a term for each end with
+  `match` any.
+- With nothing selected, the filter's terms drop out and the target shows everything.
+
 ## Embedded queries
 
 A dashboard's Embedded Query component runs StroomQL (shown in the dashboard's description) with its own results

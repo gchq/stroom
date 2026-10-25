@@ -61,6 +61,14 @@ public final class TableChange {
     /// Changes an embedded query's StroomQL ([#getTargetId()]) to [#getValue()], and runs it, if it is still
     /// [#getRef()] (the text it was planned against), so a change made since isn't written over.
     public static final String SET_QUERY = "set_query";
+    /// Adds a selection handler to a component ([#getTargetId()]): the filter [#getQuery()], whose values name a
+    /// chart's selection, e.g. `${component.vis-1.selection.category}`. [#getValue()] says what it filters: a
+    /// query's search (`query`, re-run with it) or a table's rows (`table`).
+    public static final String ADD_SELECTION_FILTER = "add_selection_filter";
+    /// For add_selection_filter: filters the query's search.
+    public static final String QUERY_FILTER = "query";
+    /// For add_selection_filter: filters a table's rows.
+    public static final String TABLE_FILTER = "table";
     /// For add_vis: in a new pane below the table (the default).
     public static final String BELOW = "below";
     /// For add_vis: as a tab beside the table.

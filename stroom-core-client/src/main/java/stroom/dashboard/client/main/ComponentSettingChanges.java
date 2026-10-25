@@ -20,13 +20,16 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.RandomId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,6 +99,54 @@ public final class ComponentSettingChanges {
                 query.setExpression(querySettings.getExpression());
             }
         }
+    }
+
+    /// Adds a selection handler to a component, so a chart's selection filters it: a query's search (re-run with the
+    /// filter as the selection changes), or a table's rows (an embedded query takes either).
+    ///
+    /// @param component  The query, embedded query or table.
+    /// @param mode       What it filters: [TableChange#QUERY_FILTER] or [TableChange#TABLE_FILTER].
+    /// @param expression The filter, whose values name the chart's selection.
+    /// @return Why it couldn't be added, or null if it was.
+    static String addSelectionFilter(final Component component,
+                                     final String mode,
+                                     final ExpressionOperator expression) {
+        if (!(component instanceof final AbstractComponentPresenter<?> presenter)) {
+            return "The component can't be filtered.";
+        }
+        if (expression == null) {
+            return "The filter can't be read.";
+        }
+        final ComponentSelectionHandler handler = ComponentSelectionHandler.builder()
+                .id(RandomId.createId(5))
+                .expression(expression)
+                .enabled(true)
+                .build();
+        final boolean query = TableChange.QUERY_FILTER.equals(mode);
+        final ComponentSettings current = presenter.getSettings();
+        final ComponentSettings changed;
+        if (current instanceof final TableComponentSettings table && !query) {
+            changed = table.copy().selectionFilter(with(table.getSelectionFilter(), handler)).build();
+        } else if (current instanceof final QueryComponentSettings settings && query) {
+            changed = settings.copy().selectionQuery(with(settings.getSelectionQuery(), handler)).build();
+        } else if (current instanceof final EmbeddedQueryComponentSettings embedded) {
+            changed = query
+                    ? embedded.copy().selectionQuery(with(embedded.getSelectionQuery(), handler)).build()
+                    : embedded.copy().selectionFilter(with(embedded.getSelectionFilter(), handler)).build();
+        } else {
+            return query
+                    ? "Only a query's search can be filtered by a query filter."
+                    : "Only a table's rows can be filtered by a table filter.";
+        }
+        presenter.applySettings(changed);
+        return null;
+    }
+
+    private static List<ComponentSelectionHandler> with(final List<ComponentSelectionHandler> handlers,
+                                                        final ComponentSelectionHandler handler) {
+        final List<ComponentSelectionHandler> list = new ArrayList<>(NullSafe.list(handlers));
+        list.add(handler);
+        return list;
     }
 
     /// Changes one of a component's settings.
