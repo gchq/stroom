@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
 import stroom.ai.impl.tools.indexing.TemplateCheck.DocValue;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.util.shared.NullSafe;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +56,9 @@ public final class IndexFieldDocs {
     private static final String CONVENTIONS = "/stroom/mcp/impl/knowledge/conventions/";
 
     private static final String RECORDS = "records:2";
+    private static final String IN_SAMPLE = "In sample";
+    // What FieldDocs.actionOf gives a path that skips the action element (EventDetail//...).
+    private static final String ANY_ACTION = "";
     // An index Stroom did not build may hold raw records, not events.
     private static final Map<String, String> DOCUMENT_IDS = Map.of(
             "StreamId", "The id of the stream the document came from.",
@@ -200,58 +204,201 @@ public final class IndexFieldDocs {
                                            final List<String> head,
                                            final String layout,
                                            final Map<String, Double> population) {
-        final Map<String, List<List<String>>> byAction = new LinkedHashMap<>();
+        return indexTables(rows, head, layout, population, null);
+    }
+
+    /// [#indexTables(List, List, String, Map)], with each field only some events have under each event type whose
+    /// events have it. Not in the Stroom MCP server, whose common fields held every field not of an action element
+    /// and every one read from whichever action element the event has (EventDetail/*/User/Id,
+    /// EventDetail//Data[@Name='x']), though only some kinds of event have them (seen: source.ip, in 40% of the
+    /// events, user.target.*, the object's and folder's fields). Common fields are then only those every event of
+    /// the sample has, without the In sample column; one no event of the sample has is under "Not in the
+    /// sample".
+    ///
+    /// @param rows       The rows, each with its event-logging path.
+    /// @param head       The table's head.
+    /// @param layout     [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param population The share of events (%) each event path is populated in, or null.
+    /// @param byAction   The share of all events (%) each path is populated in, by the action element of the
+    ///                   events that have it, or null: then only a field read from whichever action element is
+    ///                   placed (by its paths' own action elements), and those not of an action element stay common.
+    /// @return The tables' lines.
+    public static List<String> indexTables(final List<IndexRow> rows,
+                                           final List<String> head,
+                                           final String layout,
+                                           final Map<String, Double> population,
+                                           final Map<String, Map<String, Double>> byAction) {
+        // The action elements' own fields, then those placed under them.
+        final Map<String, List<List<String>>> own = new LinkedHashMap<>();
+        final Map<String, Set<String>> sources = new LinkedHashMap<>();
+        final Map<String, List<List<String>>> placed = new LinkedHashMap<>();
+        final List<List<String>> common = new ArrayList<>();
+        final List<List<String>> notInSample = new ArrayList<>();
         for (final IndexRow row : rows) {
             final String action = FieldDocs.actionOf(row.source());
-            if (action != null) {
-                byAction.computeIfAbsent(action, k -> new ArrayList<>()).add(row.cells());
+            final boolean anyAction = ANY_ACTION.equals(action) || isAnyAction(row.source());
+            if (action != null && !anyAction) {
+                own.computeIfAbsent(action, k -> new ArrayList<>()).add(row.cells());
+                sources.computeIfAbsent(action, k -> new LinkedHashSet<>()).add(FieldDocs.anyActionPath(
+                        row.source()));
+                continue;
             }
+            if (!anyAction && (population == null || everyEvent(row.cells()) || byAction == null)) {
+                common.add(row.cells());
+                continue;
+            }
+            final Map<String, Double> shares = byAction != null
+                    ? sharesIn(row.source(), byAction)
+                    : sharesByAction(row.source(), population);
+            if (shares.isEmpty()) {
+                notInSample.add(row.cells());
+            }
+            shares.forEach((each, share) -> {
+                placed.computeIfAbsent(each, k -> new ArrayList<>()).add(withShare(row.cells(), share));
+                // An action element's grouping counts what is read from whichever action element, not what is
+                // outside them (EventSource's, which nearly every kind of event has, would make them all alike).
+                if (anyAction) {
+                    sources.computeIfAbsent(each, k -> new LinkedHashSet<>()).add(FieldDocs.anyActionPath(
+                            row.source()));
+                }
+            });
         }
-        if (FieldDocs.COMPACT.equals(layout) || byAction.isEmpty()) {
+        final Set<String> actions = new LinkedHashSet<>(own.keySet());
+        actions.addAll(placed.keySet());
+        if (FieldDocs.COMPACT.equals(layout) || (actions.isEmpty() && notInSample.isEmpty())) {
             return table(head, rows.stream().map(IndexRow::cells).toList());
         }
         final List<String> lines = new ArrayList<>(List.of("### Common fields", "", "Any kind of event can have "
                                                                                     + "these: from EventTime, "
                                                                                     + "EventSource, the event type, "
                                                                                     + "and the ids.", ""));
-        lines.addAll(table(head, rows.stream()
-                .filter(r -> FieldDocs.actionOf(r.source()) == null)
-                .map(IndexRow::cells)
-                .toList()));
-        lines.addAll(List.of("", "### Event types", "", "Each from the action element that kind of event has: only "
-                                                        + "those events have them.", ""));
-        final Map<String, Set<String>> sources = new LinkedHashMap<>();
-        for (final String action : byAction.keySet()) {
-            sources.put(action, rows.stream()
-                    .filter(r -> action.equals(FieldDocs.actionOf(r.source())))
-                    .map(r -> FieldDocs.anyActionPath(r.source()))
-                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+        // With a sample, a table of what every event has: its In sample column would say nothing.
+        final int inSample = head.indexOf(IN_SAMPLE);
+        if (population != null && inSample >= 0 && common.stream().allMatch(IndexFieldDocs::everyEvent)) {
+            lines.addAll(table(without(head, inSample), common.stream().map(cells -> without(cells, inSample))
+                    .toList()));
+        } else {
+            lines.addAll(table(head, common));
         }
-        for (final List<String> actions : FieldDocs.similarGroups(sources)) {
-            final List<String> shares = new ArrayList<>();
-            for (final String action : actions) {
-                final Double share = Objects.requireNonNullElse(population, Map.<String, Double>of()).entrySet()
-                        .stream()
-                        .filter(e -> e.getKey().startsWith("EventDetail/" + action + "/"))
-                        .map(Map.Entry::getValue)
-                        .max(Double::compare)
-                        .orElse(null);
-                if (share != null) {
-                    shares.add(PyText.formatG(share) + "%" + (actions.size() > 1
-                            ? " (" + action + ")"
-                            : ""));
+        if (!actions.isEmpty()) {
+            lines.addAll(List.of("", "### Event types", "", "Each from the action element that kind of event has: "
+                                                            + "only those events have them.", ""));
+            final Map<String, Set<String>> signatures = new LinkedHashMap<>();
+            actions.forEach(action -> signatures.put(action, sources.getOrDefault(action, Set.of())));
+            for (final List<String> group : FieldDocs.similarGroups(signatures)) {
+                final List<String> shares = new ArrayList<>();
+                for (final String action : group) {
+                    final Double share = Objects.requireNonNullElse(population, Map.<String, Double>of())
+                            .entrySet()
+                            .stream()
+                            .filter(e -> e.getKey().startsWith("EventDetail/" + action + "/"))
+                            .map(Map.Entry::getValue)
+                            .max(Double::compare)
+                            .orElse(null);
+                    if (share != null) {
+                        shares.add(PyText.formatG(share) + "%" + (group.size() > 1
+                                ? " (" + action + ")"
+                                : ""));
+                    }
                 }
-            }
-            lines.add("#### " + String.join(", ", actions));
-            lines.add("");
-            if (!shares.isEmpty()) {
-                lines.add("In " + String.join(", ", shares) + " of the sample's events.");
+                lines.add("#### " + String.join(", ", group));
+                lines.add("");
+                if (!shares.isEmpty()) {
+                    lines.add("In " + String.join(", ", shares) + " of the sample's events.");
+                    lines.add("");
+                }
+                final List<List<String>> cells = new ArrayList<>();
+                group.forEach(action -> cells.addAll(own.getOrDefault(action, List.of())));
+                group.forEach(action -> cells.addAll(placed.getOrDefault(action, List.of())));
+                lines.addAll(table(head, once(cells)));
                 lines.add("");
             }
-            lines.addAll(table(head, actions.stream().flatMap(a -> byAction.get(a).stream()).toList()));
-            lines.add("");
+            lines.removeLast();
         }
-        return lines.subList(0, lines.size() - 1);
+        if (!notInSample.isEmpty()) {
+            lines.addAll(List.of("", "### Not in the sample", "", "No event of the sample has these, so it doesn't "
+                                                                  + "show which kinds of event carry them.", ""));
+            lines.addAll(table(head, notInSample));
+        }
+        return lines;
+    }
+
+    // Each action element whose events have the source, with that share of all events.
+    private static Map<String, Double> sharesIn(final String source,
+                                                final Map<String, Map<String, Double>> byAction) {
+        final Map<String, Double> shares = new LinkedHashMap<>();
+        byAction.forEach((action, paths) -> {
+            final Double share = FieldPlans.populationOf(source, paths);
+            if (share != null && share > 0) {
+                shares.put(action, share);
+            }
+        });
+        return shares;
+    }
+
+    // A source read from whichever action element the event has: EventDetail/*/... or EventDetail//...
+    private static boolean isAnyAction(final String source) {
+        final String path = PyText.strip(NullSafe.string(source), "/");
+        return path.startsWith("EventDetail/*/") || path.startsWith("EventDetail//");
+    }
+
+    // Each action element the sample's events have the source under, with its share of events: the paths it
+    // matches under that action summed (an event has one action element), at most 100.
+    private static Map<String, Double> sharesByAction(final String source, final Map<String, Double> population) {
+        final Map<String, Double> shares = new LinkedHashMap<>();
+        if (population == null) {
+            return shares;
+        }
+        population.forEach((path, share) -> {
+            final String action = FieldDocs.actionOf(path);
+            if (action != null && !ANY_ACTION.equals(action) && share != null && share > 0
+                && FieldPlans.sourceMatches(source, path)) {
+                shares.merge(action, share, (a, b) -> Math.min(100.0, a + b));
+            }
+        });
+        return shares;
+    }
+
+    // Each field once: one read from whichever action element the event has, under several of a section's, with
+    // their shares added (an event has one action element).
+    private static List<List<String>> once(final List<List<String>> rows) {
+        final Map<String, List<String>> byField = new LinkedHashMap<>();
+        for (final List<String> row : rows) {
+            final List<String> seen = byField.get(row.getFirst());
+            if (seen == null) {
+                byField.put(row.getFirst(), row);
+            } else if (seen.size() > 4 && seen.get(4).endsWith("% of events") && row.get(4).endsWith("% of events")) {
+                final double sum = Math.min(100.0, share(seen.get(4)) + share(row.get(4)));
+                byField.put(row.getFirst(), withShare(seen, sum));
+            }
+        }
+        return List.copyOf(byField.values());
+    }
+
+    private static double share(final String cell) {
+        return Double.parseDouble(cell.substring(0, cell.indexOf('%')));
+    }
+
+    // True if the row's In sample cell (the fifth, given a sample) says every event has it.
+    private static boolean everyEvent(final List<String> cells) {
+        return cells.size() > 4 && ("always".equals(cells.get(4)) || "100% of events".equals(cells.get(4)));
+    }
+
+    private static List<String> without(final List<String> cells, final int index) {
+        final List<String> out = new ArrayList<>(cells);
+        if (index < out.size()) {
+            out.remove(index);
+        }
+        return out;
+    }
+
+    // The row with its In sample cell (the fifth, given a sample) as the action's share.
+    private static List<String> withShare(final List<String> cells, final double share) {
+        final List<String> out = new ArrayList<>(cells);
+        if (out.size() > 4 && out.get(4).endsWith("% of events")) {
+            out.set(4, PyText.formatG(share) + "% of events");
+        }
+        return out;
     }
 
     /// `grouped_fields`: the plan's fields for the table: the document's ids and time field first, then grouped by
@@ -296,6 +443,30 @@ public final class IndexFieldDocs {
                                                    final EventSchema schema,
                                                    final String layout,
                                                    final Descriptions described) {
+        return indexFieldMappingMarkdown(plan, population, null, documents, schema, layout, described);
+    }
+
+    /// [#indexFieldMappingMarkdown(FieldPlan, Map, List, EventSchema, String, Descriptions)], with each field only
+    /// some events have under each event type whose events have it
+    /// ([#indexTables(List, List, String, Map, Map)]).
+    ///
+    /// @param plan       The index plan.
+    /// @param population The share of the sample's events (%) each event path is populated in, or null for no
+    ///                   sample.
+    /// @param byAction   The share of all events (%) each path is populated in, by the action element of the
+    ///                   events that have it, or null.
+    /// @param documents  The documents the pipeline wrote from the sample, or null.
+    /// @param schema     The event-logging schema, or null.
+    /// @param layout     [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described  The field descriptions, or null for none.
+    /// @return The section's text, ending with a new line.
+    public static String indexFieldMappingMarkdown(final FieldPlan plan,
+                                                   final Map<String, Double> population,
+                                                   final Map<String, Map<String, Double>> byAction,
+                                                   final List<Map<String, List<String>>> documents,
+                                                   final EventSchema schema,
+                                                   final String layout,
+                                                   final Descriptions described) {
         final Descriptions descriptions = described == null
                 ? new Descriptions()
                 : described;
@@ -315,7 +486,7 @@ public final class IndexFieldDocs {
         final List<String> head = new ArrayList<>(List.of("Index field", "Description", "Type",
                 "From (event-logging path)"));
         if (sampled) {
-            head.add("In sample");
+            head.add(IN_SAMPLE);
         }
         if (documents != null) {
             head.add("Sample values");
@@ -367,7 +538,7 @@ public final class IndexFieldDocs {
                     ? ""
                     : f.source(), cells));
         }
-        lines.addAll(indexTables(rows, head, layout, population));
+        lines.addAll(indexTables(rows, head, layout, population, byAction));
         return String.join("\n", lines) + "\n";
     }
 

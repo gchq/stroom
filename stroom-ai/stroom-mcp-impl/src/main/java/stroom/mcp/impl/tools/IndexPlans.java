@@ -161,8 +161,8 @@ class IndexPlans {
     ///
     /// @param plan      The plan.
     /// @param populated How often the sample populates each event path (%), or null when no streams were read.
-    /// @return `plan`, `problems`, `rendered`, with the sample `populated_paths_not_mapped` and `field_mapping`,
-    /// `ecs_check` when it departs from ECS, and `hint`.
+    /// @return `plan`, `problems`, `rendered`, with the sample `populated_paths_not_mapped`, `fields_not_in_sample`
+    /// (if any) and `field_mapping`, `ecs_check` when it departs from ECS, and `hint`.
     Map<String, Object> reply(final FieldPlan plan, final Map<String, Double> populated) {
         try {
             memory.keepPlan(plan);
@@ -180,6 +180,10 @@ class IndexPlans {
         if (populated != null) {
             // Network paths once, whichever action: one field for a source address, not one per Permit and Deny.
             reply.put("populated_paths_not_mapped", IndexingHelpers.populatedNotMapped(plan, populated));
+            final List<String> empty = IndexingHelpers.plannedNotPopulated(plan, populated);
+            if (!empty.isEmpty()) {
+                reply.put("fields_not_in_sample", empty);
+            }
             reply.put("field_mapping", IndexFieldDocs.indexFieldMappingMarkdown(plan, populated, null, null,
                     FieldDocs.BY_EVENT_TYPE, null));
         }
@@ -187,7 +191,11 @@ class IndexPlans {
         if (!departures.isEmpty()) {
             reply.put("ecs_check", departures);
         }
-        reply.put("hint", IndexingHelpers.PLAN_HINT);
+        reply.put("hint", IndexingHelpers.PLAN_HINT + (reply.containsKey("fields_not_in_sample")
+                ? " fields_not_in_sample: no event of the sample has their source, so the index never gets them as "
+                  + "the Events stand: leave each out (changes= with remove), or, if the events should carry it, "
+                  + "have the translation write it first."
+                : ""));
         return reply;
     }
 
