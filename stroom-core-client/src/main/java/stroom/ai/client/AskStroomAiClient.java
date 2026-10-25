@@ -25,6 +25,7 @@ import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
@@ -63,6 +64,8 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
+import stroom.visualisation.shared.VisualisationDoc;
+import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -78,6 +81,7 @@ public class AskStroomAiClient {
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
@@ -490,6 +494,39 @@ public class AskStroomAiClient {
                 .onSuccess(doc -> restFactory
                         .create(DASHBOARD_RESOURCE)
                         .method(res -> res.update(docRef.getUuid(), doc.copy().dashboardConfig(config).build()))
+                        .onSuccess(consumer)
+                        .onFailure(errorHandler)
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec())
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Gives a Visualisation the user has just created the chart the agent planned: its vis class, script,
+    /// settings and description.
+    ///
+    /// @param docRef             The new Visualisation.
+    /// @param create             What to put in it.
+    /// @param consumer           Given the Visualisation once saved.
+    /// @param errorHandler       Told if it couldn't be saved.
+    /// @param taskMonitorFactory Shows that it is being saved.
+    void setVisualisation(final DocRef docRef,
+                          final AiCreateVisualisation create,
+                          final Consumer<VisualisationDoc> consumer,
+                          final RestErrorHandler errorHandler,
+                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
+                .onSuccess(doc -> restFactory
+                        .create(VISUALISATION_RESOURCE)
+                        .method(res -> res.update(docRef.getUuid(), doc.copy()
+                                .functionName(create.getFunctionName())
+                                .scriptRef(create.getScriptRef())
+                                .settings(create.getSettings())
+                                .description(create.getDescription())
+                                .build()))
                         .onSuccess(consumer)
                         .onFailure(errorHandler)
                         .taskMonitorFactory(taskMonitorFactory)

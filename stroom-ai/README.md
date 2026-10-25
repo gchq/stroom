@@ -776,14 +776,16 @@ Planned, not yet built.
 * **The remaining dashboard widget types.** The agent can create a dashboard (a query, a table and a data
   preview), change its tables, a classic query's expression, formatting and component settings, and add
   tables as tabs and Text widgets below them. Still to come:
-  * Visualisations: adding one from a Visualisation already in Stroom, set up for a table's columns (its
-    `field` settings mapped to columns, its other settings given values), and changing an existing one's
-    settings. On a StroomQL dashboard, the `show` clause already does this.
-  * New visualisations from scratch: a Visualisation document with its Script and settings. Stroom ships no
-    chart libraries itself; the visualisations content pack provides them as Scripts (D3 3.4.8, so its
-    version 3 API, with Chroma, Leaflet, Underscore and shared helper scripts). A script runs in the
-    dashboard's visualisation frame, which isn't sandboxed, so it would have the user's Stroom session: it
-    would have to be reviewed before it is created, and tried against a snapshot of the table's rows first.
+  * Visualisations (proof of concept, built): `list_visualisations` and `propose_visualisation` chart a table on
+    the attached dashboard, or a StroomQL query, as a bar, line, pie, scatter or network graph. With ECharts
+    (installed by an administrator as a Script doc), Stroom generates the Visualisation from a fixed template,
+    drawn by its own adapter script (`stroom-ai-impl` resource `vis/echarts-generic.js`, created beside ECharts on
+    first use), so no code from the model ever runs in the visualisation frame; a "Create visualisation" button
+    opens Stroom's New Visualisation dialog in the dashboard's folder, then adds it below the table (or to the
+    query's `show` clause), unsaved. With the content pack's D3 Visualisations, the agent wires the existing one
+    to the table with `add_vis`. `set_vis_settings` tailors a chart's columns and style. Each chart sends a render
+    report (`stroom.report` in `vis.js`), shown in the chat and in the dashboard's description. See the
+    `visualisation` guide. Still to come: other libraries (Chart.js, Highcharts), and sandboxing the frame.
   * The other widgets: the inputs (text, list, key-value), the table filter, the Embedded Query's settings,
     and their links to tables and queries; and laying out widgets beyond a tab beside a table or a pane
     below it.

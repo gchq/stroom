@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -87,6 +88,10 @@ public class UserActions {
     /// Opens Stroom's New Dashboard dialog with a suggested name; once created, the dashboard is given a query, a
     /// table and optionally a data preview, built from the StroomQL (only from Stroom's own propose_dashboard tool).
     public static final String CREATE_DASHBOARD = "create_dashboard";
+    /// Opens Stroom's New Visualisation dialog with a suggested name in the dashboard's (or query's) folder; once
+    /// created, the Visualisation is given a chart the agent planned, drawn with ECharts, and is added to the
+    /// dashboard (or the query's `show` clause), unsaved (only from Stroom's own propose_visualisation tool).
+    public static final String CREATE_VISUALISATION = "create_visualisation";
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -213,6 +218,9 @@ public class UserActions {
                         : Optional.empty();
                 case CREATE_DASHBOARD -> builtIn.contains(map)
                         ? createDashboard(id, map, expiresMs)
+                        : Optional.empty();
+                case CREATE_VISUALISATION -> builtIn.contains(map)
+                        ? createVisualisation(id, map, expiresMs)
                         : Optional.empty();
                 default -> Optional.empty();
             };
@@ -382,6 +390,53 @@ public class UserActions {
                         : truncate(description, MAX_DETAILS_CHARS),
                 null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name, null, null,
                 new UserActionRecord.NewDashboard(queryType, preview, List.copyOf(outline))));
+    }
+
+    /// A button that opens Stroom's New Visualisation dialog with the suggested name, for a chart planned for a
+    /// dashboard or StroomQL query the user may see. The plan is kept as JSON in `request`, the dashboard or query
+    /// in `doc` and the suggested name in `name`; it is read and checked again when the button is clicked.
+    private Optional<UserActionRecord> createVisualisation(final String id,
+                                                           final Map<?, ?> map,
+                                                           final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String name = NullSafe.get(string(map.get("name")), String::strip);
+        final String planJson = string(map.get("plan"));
+        if (named == null
+            || !(DashboardDoc.TYPE.equals(named.getType()) || QueryDoc.TYPE.equals(named.getType()))
+            || name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS || hasControlCharacters(name)
+            || planJson == null || planJson.length() > MAX_REQUEST_CHARS) {
+            return Optional.empty();
+        }
+        final VisualisationPlan plan;
+        try {
+            plan = VisualisationPlan.fromJson(planJson);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> "Dropping a visualisation that can't be read: " + e.getMessage());
+            return Optional.empty();
+        }
+        if (plan.isQuery() != QueryDoc.TYPE.equals(named.getType())) {
+            return Optional.empty();
+        }
+        final DocRef target = lookup.find(named).orElse(null);
+        if (target == null) {
+            return Optional.empty();
+        }
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = plan.isReplacement()
+                ? "Replace visualisation '" + plan.replace().visualisation().getName() + "' with a "
+                  + plan.chartKind().displayName().toLowerCase(Locale.ROOT) + " of table '" + plan.table()
+                  + "', renamed '" + name + "' (saved at once), in pane '" + plan.replace().componentName()
+                  + "' of dashboard '" + target.getName() + "'"
+                : "Create visualisation '" + name + "' (" + plan.chartKind().displayName() + ") "
+                  + (plan.isQuery()
+                        ? "and show it with query '" + target.getName() + "'"
+                        : "and add it to dashboard '" + target.getName() + "', drawing table '" + plan.table()
+                          + "'");
+        return Optional.of(new UserActionRecord(id, CREATE_VISUALISATION, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, target, plan.toJson(), List.of(), expiresMs, Status.PENDING, null, name));
     }
 
     /// A button that opens a review of a change to a stepping element's code, for an element whose document exists

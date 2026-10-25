@@ -45,6 +45,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
@@ -356,7 +357,96 @@ class TestProposeDashboardChangeTool {
         return (Map<String, Object>) value;
     }
 
+    @Test
+    void aVisualisationIsAddedWithItsNameAndSettingsChecked() {
+        visualisation("vis-uuid", "Bar chart");
+
+        final String result = run(List.of(Map.of("op", "add_vis", "name", "Users", "visualisation", "vis-uuid",
+                "settings", Map.of("category", "UserId"), "placement", "tab")));
+
+        assertThat(result).contains("- Add a visualisation 'Users' (Bar chart) as a tab beside this table, with "
+                                    + "category 'UserId'");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action.get("changes"))
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
+                .singleElement()
+                .satisfies(change -> assertThat(asMap(change))
+                        .containsEntry("op", "add_vis")
+                        .containsEntry("doc", Map.of("type", "Visualisation", "uuid", "vis-uuid", "name",
+                                "Bar chart"))
+                        .containsEntry("settings", Map.of("category", "UserId"))
+                        .containsEntry("placement", "tab")));
+    }
+
+    @Test
+    void aVisualisationMustBeOneTheUserCanViewWithItsControlsAndTheTablesColumns() {
+        visualisation("vis-uuid", "Bar chart");
+
+        final String result = run(List.of(
+                Map.of("op", "add_vis", "name", "Users", "visualisation", "nope"),
+                Map.of("op", "add_vis", "name", "preview", "visualisation", "vis-uuid",
+                        "settings", Map.of("category", "userid")),
+                Map.of("op", "add_vis", "name", "Types", "visualisation", "vis-uuid",
+                        "settings", Map.of("colour", "red"))));
+
+        assertThat(result)
+                .startsWith("No change was proposed")
+                .contains("Change 1 (add_vis): no Visualisation you can view has the UUID 'nope'.")
+                .contains("Change 2 (add_vis): the dashboard already has a component 'preview'.")
+                .contains("Change 2 (add_vis): control 'category' takes a column of table 'Events', which has no "
+                          + "column 'userid' (did you mean 'UserId'?). Its columns are: UserId, EventType.")
+                .contains("Change 3 (add_vis): Visualisation 'Bar chart' has no control 'colour'. Its controls "
+                          + "are: category (field), value (field).");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aVisualisationsSettingsAreChangedOnTheComponentTheDashboardHas() {
+        final String withVis = SETTINGS + "## Visualisation 'Chart' (id vis-1)\n"
+                               + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
+                               + "Linked table: 'Events'\n"
+                               + "Vis settings: {\"category\":\"UserId\"}\n"
+                               + "Render report: {\"rendered\":true}\n";
+        dashboardTab(false, withVis);
+        visualisation("vis-uuid", "Bar chart");
+
+        final String result = run(List.of(
+                Map.of("op", "set_vis_settings", "target", "chart", "settings", Map.of("value", "EventType")),
+                Map.of("op", "set_vis_settings", "target", "Preview", "settings", Map.of("value", "EventType"))));
+
+        assertThat(result).contains("Change 2 (set_vis_settings): the dashboard has no Visualisation component "
+                                    + "'Preview'. Its Visualisation components are: Visualisation 'Chart'.");
+
+        final String offered = run(List.of(Map.of("op", "set_vis_settings", "target", "chart",
+                "settings", Map.of("value", "EventType"))));
+
+        assertThat(offered).contains("- Change visualisation 'chart': set value 'EventType'");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            // The render report, which changes as it renders, is left out of the hash.
+            assertThat(action).containsEntry("snapshot_hash", AiTabSnapshotPart.hashText(
+                    withVis.replace("Render report: {\"rendered\":true}\n", "")));
+            assertThat(asMap(((List<?>) action.get("changes")).getFirst()))
+                    .containsEntry("target_id", "vis-1")
+                    .doesNotContainKey("doc");
+        });
+    }
+
+    // A Visualisation the user can view, with two field controls.
+    private void visualisation(final String uuid, final String name) {
+        final VisualisationDoc doc = VisualisationDoc.builder()
+                .uuid(uuid)
+                .name(name)
+                .settings("{\"tabs\":[{\"name\":\"Data\",\"controls\":[{\"id\":\"category\",\"type\":"
+                          + "\"field\"},{\"id\":\"value\",\"type\":\"field\"}]}]}")
+                .build();
+        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class))
+                .thenReturn(Optional.of(doc));
+    }
+
     private void dashboardTab(final boolean cut) {
+        dashboardTab(cut, SETTINGS);
+    }
+
+    private void dashboardTab(final boolean cut, final String settings) {
         final DashboardTableContext live = new DashboardTableContext("Dashboard 'Logons'", null,
                 DashboardSearchRequest.builder()
                         .search(Search.builder().dataSourceRef(INDEX).build())
@@ -367,7 +457,7 @@ class TestProposeDashboardChangeTool {
                 null, "h", 0L, List.of(), List.of(table), null);
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
         Mockito.when(tabSnapshots.part(CHAT, snapshot, AiTabSnapshotPart.DASHBOARD))
-                .thenReturn(Optional.of(new UnsavedPart(SETTINGS, cut, "/tabs/1/dashboard.md")));
+                .thenReturn(Optional.of(new UnsavedPart(settings, cut, "/tabs/1/dashboard.md")));
     }
 
     private String run(final List<? extends Map<String, ?>> changes) {

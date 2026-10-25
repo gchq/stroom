@@ -197,6 +197,35 @@ final class ResultsRequests {
                 .build());
     }
 
+    /// @param context A table's search request.
+    /// @return The type of each column's format (e.g. NUMBER, DATE_TIME), by column name, for a dashboard table;
+    /// none for a query, whose columns' formats aren't in its request.
+    static Map<String, String> columnFormats(final AskStroomAiContext context) {
+        final Map<String, String> formats = new LinkedHashMap<>();
+        for (final Column column : columns(context)) {
+            if (column.getName() != null) {
+                formats.put(column.getName(), column.getFormat() != null && column.getFormat().getType() != null
+                        ? column.getFormat().getType().name()
+                        : "GENERAL");
+            }
+        }
+        return formats;
+    }
+
+    /// The expressions of a dashboard table's columns, by column name.
+    ///
+    /// @param context The table's search request.
+    /// @return Each column's expression, by name; none for a query's table or a column without one.
+    static Map<String, String> columnExpressions(final AskStroomAiContext context) {
+        final Map<String, String> expressions = new LinkedHashMap<>();
+        for (final Column column : columns(context)) {
+            if (column.getName() != null && column.getExpression() != null) {
+                expressions.put(column.getName(), column.getExpression());
+            }
+        }
+        return expressions;
+    }
+
     // The columns of a dashboard table's search request, or none for a query.
     private static List<Column> columns(final AskStroomAiContext context) {
         if (!(context instanceof final DashboardTableContext dashboard) || dashboard.getSearchRequest() == null) {

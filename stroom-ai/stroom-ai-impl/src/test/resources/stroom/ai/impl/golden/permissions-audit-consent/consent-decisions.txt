@@ -23,6 +23,7 @@
 - grep (read-only, reads untrusted content): RUN in every situation
 - jq (read-only, reads untrusted content): RUN in every situation
 - list_data_sources (read-only, reads untrusted content): RUN in every situation
+- list_visualisations (read-only, reads only trusted content): RUN in every situation
 - ls (read-only, reads untrusted content): RUN in every situation
 - memory (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}
 - pipeline (read-only, reads untrusted content): RUN in every situation
@@ -33,6 +34,7 @@
 - propose_documentation_change (read-only, reads untrusted content): RUN in every situation
 - propose_query (read-only, reads untrusted content): RUN in every situation
 - propose_query_change (read-only, reads untrusted content): RUN in every situation
+- propose_visualisation (read-only, reads untrusted content): RUN in every situation
 - read_document (read-only, reads untrusted content): RUN in every situation
 - read_file (read-only, reads untrusted content): RUN in every situation
 - read_turn (read-only, reads untrusted content): RUN in every situation

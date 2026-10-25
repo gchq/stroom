@@ -59,6 +59,7 @@ import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
@@ -113,8 +114,10 @@ public class VisPresenter
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
     private final VisFrame visFrame;
+    private final VisContextFactory visContextFactory;
 
     private VisFunction currentFunction;
+    private String lastRenderReport;
     private VisFunction loadedFunction;
     private SearchModel currentSearchModel;
     private JSONObject possibleSettings;
@@ -136,8 +139,10 @@ public class VisPresenter
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
                         final RestFactory restFactory,
-                        final CurrentPreferences currentPreferences) {
+                        final CurrentPreferences currentPreferences,
+                        final VisContextFactory visContextFactory) {
         super(eventBus, view, settingsPresenterProvider);
+        this.visContextFactory = visContextFactory;
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
@@ -150,6 +155,7 @@ public class VisPresenter
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(visSelectionModel);
+        visFrame.setReportHandler(this::onRenderReport);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
@@ -162,6 +168,11 @@ public class VisPresenter
     public void setLayerVisible(final boolean fade, final boolean visible) {
         super.setLayerVisible(fade, visible);
         Layer.setLayerVisible(visFrame.getElement(), fade, visible);
+        if (visible) {
+            // A tab's layer is made visible after its layout is resized, so place the frame over the pane again
+            // once the pane is laid out where it now shows.
+            Scheduler.get().scheduleDeferred(this::onResize);
+        }
     }
 
     @Override
@@ -200,8 +211,13 @@ public class VisPresenter
         scriptCache.bind();
         visFrame.bind();
 
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
+        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
+            visFrame.setClassName(getClassName(event.getTheme()));
+            // Redraw so the visualisation picks up any change to the theme or time display.
+            if (currentData != null) {
+                refreshVisualisation();
+            }
+        }));
 
         registerHandler(getView().getRefreshButton().addClickHandler(e -> setPause(!pause, true)));
     }
@@ -467,6 +483,10 @@ public class VisPresenter
                                               + getVisSettings().getVisualisation());
                         }
 
+                        // The settings were combined before these were loaded, so without the controls' default
+                        // values: combine them again, as the visualisation is first drawn with them.
+                        currentSettings = getJSONSettings();
+
                         // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
                         restFactory
                                 .create(DOCUMENT_ASSET_RESOURCE)
@@ -672,7 +692,25 @@ public class VisPresenter
     }
 
     private void refreshVisualisation() {
-        visFrame.setData(getDashboardContext().getComponents().getContext(), currentSettings, currentData);
+        visFrame.setData(visContextFactory.create(), currentSettings, currentData);
+    }
+
+    private void onRenderReport(final String reportJson) {
+        lastRenderReport = reportJson;
+        final DashboardContext dashboardContext = getDashboardContext();
+        VisRenderReportEvent.fire(
+                this,
+                getVisSettings().getVisualisation(),
+                dashboardContext != null
+                        ? dashboardContext.getDashboardDocRef()
+                        : null,
+                getId(),
+                reportJson);
+    }
+
+    /// @return The latest render report the visualisation sent, as JSON, or null if it hasn't sent one.
+    public String getLastRenderReport() {
+        return lastRenderReport;
     }
 
     @Override

@@ -50,6 +50,8 @@ import stroom.config.global.api.GlobalConfigReader;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.dashboard.impl.DashboardService;
+import stroom.dashboard.impl.script.ScriptStore;
+import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
@@ -89,6 +91,7 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
@@ -533,6 +536,10 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
                 bind(DocFinder.class).toInstance(docFinder);
                 bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
+                bind(ScriptStore.class).toInstance(Mockito.mock(ScriptStore.class));
+                bind(VisualisationStore.class).toInstance(Mockito.mock(VisualisationStore.class));
+                bind(DocumentPermissionService.class)
+                        .toInstance(Mockito.mock(DocumentPermissionService.class));
                 bind(SchemaPool.class).toInstance(Mockito.mock(SchemaPool.class));
                 bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
                 bind(StroomEventLoggingService.class).toInstance(eventLoggingService);
