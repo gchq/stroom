@@ -70,6 +70,18 @@ class TestVisRenderReports {
     }
 
     @Test
+    void keepsWhetherSomethingIsSelectedButNotWhat() {
+        // So the agent can tell a click on the chart is what filters the dashboard, without seeing data values.
+        assertThat(VisRenderReports.sanitise(Map.of("status", "empty", "selected", true)))
+                .containsEntry("selected", true);
+        assertThat(VisRenderReports.sanitise(Map.of("status", "empty", "selected", "Morgan Chen")))
+                .doesNotContainKey("selected");
+        // And whether its rows reached the row limit.
+        assertThat(VisRenderReports.sanitise(Map.of("status", "ok", "truncated", true)))
+                .containsEntry("truncated", true);
+    }
+
+    @Test
     void dropsReasonsTheAdapterDoesntGive() {
         final Map<String, Object> report = Map.of(
                 "status", "ok",

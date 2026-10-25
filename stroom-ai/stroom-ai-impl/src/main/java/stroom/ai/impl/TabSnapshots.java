@@ -205,6 +205,77 @@ public class TabSnapshots {
         return Optional.empty();
     }
 
+    /// The latest tab attached to one of the chat's questions (or a message steering one), of one of the given
+    /// types, for saying which document to attach again when the latest question has none, or another.
+    ///
+    /// @param chatId The chat.
+    /// @param types  The document types wanted (e.g. Dashboard), or empty for any.
+    /// @return The snapshot, if there is one that may still be used, of a document the user can still view.
+    public Optional<StoredTabSnapshot> latestOfType(final int chatId, final Set<String> types) {
+        for (final AiChatMessage message : aiService.getMessages(chatId).reversed()) {
+            if ((message.getMessageType() == AiMessageType.USER_MESSAGE
+                 || message.getMessageType() == AiMessageType.STEER_MESSAGE)
+                && message.getAttachmentId() != null) {
+                final Optional<StoredTabSnapshot> snapshot = read(message.getAttachmentId())
+                        .filter(found -> found.docRef() != null
+                                         && (types.isEmpty() || types.contains(found.docRef().getType()))
+                                         && documentAccess.canView(found.docRef()));
+                if (snapshot.isPresent()) {
+                    return snapshot;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /// What a tool that works on the attached tab says when the latest question has no tab of a kind it works on:
+    /// that it isn't attached, and which document to ask the user to attach (the one attached earlier, if there
+    /// was one), or to ask which one they mean.
+    ///
+    /// @param attached The tab attached to the latest question, or null if none is.
+    /// @param earlier  The latest tab of a kind the tool works on attached to an earlier question, or null.
+    /// @param kind     What the tool works on, e.g. "dashboard".
+    /// @param outcome  What didn't happen, e.g. "no change was proposed".
+    /// @return What the model is told.
+    public static String notAttached(final StoredTabSnapshot attached,
+                                     final StoredTabSnapshot earlier,
+                                     final String kind,
+                                     final String outcome) {
+        final DocRef doc = NullSafe.get(attached, StoredTabSnapshot::docRef);
+        final StringBuilder sb = new StringBuilder(doc == null
+                ? "No tab is attached to this question"
+                : "The tab attached to this question is " + named(doc) + ", not a " + kind)
+                .append(", so ").append(outcome).append(". ");
+        if (earlier != null) {
+            sb.append(named(earlier.docRef())).append(" (uuid ").append(earlier.docRef().getUuid())
+                    .append(") was attached to an earlier question: its files in ").append(folder(earlier))
+                    .append(" show it as it was then, and this needs it as it is now. Tell the user its tab isn't ")
+                    .append("attached any more, and ask them to open ").append(named(earlier.docRef()))
+                    .append(" and attach its tab (+ by the chat's input), then ask again; or, if they mean ")
+                    .append("another ").append(kind).append(", to attach that one.");
+        } else {
+            sb.append("No ").append(kind).append(" has been attached to this chat, so it isn't known which one ")
+                    .append("the user means: ask them which, and to open it and attach its tab (+ by the chat's ")
+                    .append("input), then ask again.");
+        }
+        return sb.toString();
+    }
+
+    /// @param earlier The latest tab attached to an earlier question.
+    /// @return The note given with a question sent without a tab: which tab was attached before, and that its files
+    /// show it as it was then.
+    public static String detachedNote(final StoredTabSnapshot earlier) {
+        return "[No tab is attached to this question. " + named(earlier.docRef()) + " (uuid "
+               + earlier.docRef().getUuid() + ") was attached to an earlier question: its files in "
+               + folder(earlier) + " show it as it was then, not as it is now. To propose a change to it, chart "
+               + "it or read its current results, ask the user to attach its tab again (+ by the chat's input), "
+               + "saying which one. If it isn't clear what the question is about, ask.]";
+    }
+
+    private static String named(final DocRef docRef) {
+        return docRef.getType() + " '" + NullSafe.string(docRef.getName()) + "'";
+    }
+
     /// @param chatId The chat.
     /// @param docRef A document.
     /// @param part   The name of one of a snapshot's parts, e.g. [AiTabSnapshotPart#DATA].

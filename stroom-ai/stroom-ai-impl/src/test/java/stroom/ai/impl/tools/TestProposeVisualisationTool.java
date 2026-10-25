@@ -602,13 +602,62 @@ class TestProposeVisualisationTool {
     }
 
     @Test
+    void clickFilteringIsOfferedWhenTheChartAndDataCanFilter() {
+        // A bar's category reads a field as it is: the search can be filtered by it, or a table's rows.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.BAR,
+                Map.of("category", "User", "value", "Count"), Map.of("User", "${UserId}", "Count", "count()"),
+                Map.of(), false, "Events"))
+                .contains("a click on it selects category (column 'User')")
+                .contains("the search of the query feeding 'Events' by field(s) UserId (by category)")
+                .contains("or a table's rows by column(s) User")
+                .contains("propose it only once they've created the chart");
+
+        // Columns made by an expression can only filter a table's rows.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.GRAPH,
+                Map.of("source", "User A", "target", "User B"),
+                Map.of("User A", "if(${a} < ${b}, ${a}, ${b})", "User B", "if(${a} < ${b}, ${b}, ${a})"),
+                Map.of(), false, "Pairs"))
+                .contains("node (a node's name, from either end)")
+                .contains("the rows of table 'Pairs' or another table by column(s)")
+                .doesNotContain("the search of the query");
+
+        // Not offered where nothing could be filtered: a histogram's bars select nothing, a StroomQL Query has
+        // nothing else to filter, and a chart with no clicked column mapped selects nothing.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.HISTOGRAM, Map.of("value", "Bytes",
+                "series", "Host"), Map.of(), Map.of(), false, "Events")).isEmpty();
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.BAR, Map.of("category", "User"),
+                Map.of("User", "${UserId}"), Map.of(), true, "Events")).isEmpty();
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.SCATTER, Map.of("size", "Bytes"),
+                Map.of(), Map.of(), false, "Events")).isEmpty();
+    }
+
+    @Test
+    void aTimeSeriesChartOffersFilteringByATimeRange() {
+        // A line chart whose x is a Date Time column reading a field: its range tool can filter the search by it.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.LINE,
+                Map.of("x", "Time", "y", "Count", "series", "Host"), Map.of("Time", "${EventTime}"),
+                Map.of("Time", "DATE_TIME"), false, "Events"))
+                .contains("Its time axis has a range tool")
+                .contains("selection range keeps what is within (the query's field EventTime, or a table's date "
+                          + "column, e.g. 'Time')");
+
+        // Not when x isn't a date (a category axis has no range tool).
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.LINE,
+                Map.of("x", "Day", "y", "Count", "series", "Host"), Map.of("Day", "${Day}"),
+                Map.of("Day", "TEXT"), false, "Events"))
+                .doesNotContain("range tool");
+    }
+
+    @Test
     void withoutAnAttachedDashboardOrQueryNothingIsProposed() {
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.empty());
-        assertThat(call(graphArgs())).isEqualTo(ProposeVisualisationTool.NOT_ATTACHED);
+        assertThat(call(graphArgs())).startsWith("No tab is attached to this question, so no chart can be proposed. "
+                                                 + "No dashboard or StroomQL query has been attached to this chat");
 
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(new StoredTabSnapshot(5, 1,
                 new DocRef("XSLT", "x", "X"), "/", "X", null, false, null, "h", 0L, List.of(), List.of(), null)));
-        assertThat(call(graphArgs())).isEqualTo(ProposeVisualisationTool.NOT_ATTACHED);
+        assertThat(call(graphArgs())).startsWith("The tab attached to this question is XSLT 'X', not a dashboard or "
+                                                 + "StroomQL query, so no chart can be proposed.");
         assertThat(takeUserActions()).isEmpty();
     }
 
