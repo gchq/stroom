@@ -1643,6 +1643,49 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "description" : "Optional. True to add the chart as a new one when the table already has a chart Stroom AI generated, once the user has chosen that over replacing it.",
       "type" : "boolean"
     },
+    "charts" : {
+      "description" : "Echarts on a dashboard only. Several charts at once, of any kinds and tables (e.g. a gauge per column, or a line per metric), up to 12, offered with one 'Create visualisations' button: the user picks one folder and each is created, named as given. Give these instead of kind and columns (and give layout).",
+      "items" : {
+        "properties" : {
+          "columns" : {
+            "description" : "The table column for each input, as the top-level columns takes them.",
+            "properties" : { },
+            "required" : [ ],
+            "type" : "object"
+          },
+          "componentName" : {
+            "description" : "Optional. Its pane's name.",
+            "type" : "string"
+          },
+          "kind" : {
+            "description" : "The chart kind.",
+            "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge" ],
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "The new Visualisation's name, saying what it shows.",
+            "type" : "string"
+          },
+          "options" : {
+            "description" : "Optional. Option overrides as a JSON object.",
+            "type" : "string"
+          },
+          "style" : {
+            "description" : "Optional style settings, as the top-level style takes them.",
+            "properties" : { },
+            "required" : [ ],
+            "type" : "object"
+          },
+          "table" : {
+            "description" : "Optional. The table it draws, when the dashboard has several.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind", "columns", "name" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
     "columns" : {
       "description" : "The table column for each of the chart kind's inputs, by input. list_visualisations gives each kind's inputs. Give the column names exactly as the table has them.",
       "properties" : {
@@ -1707,8 +1750,13 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     },
     "kind" : {
-      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight).",
-      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord" ],
+      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped).",
+      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge" ],
+      "type" : "string"
+    },
+    "layout" : {
+      "description" : "With charts: how they are arranged on the dashboard: row (side by side), column (one below another), grid (rows of up to 3) or tabs (stacked as tabs in one pane). Ask the user unless they have said.",
+      "enum" : [ "row", "column", "grid", "tabs" ],
       "type" : "string"
     },
     "library" : {
@@ -1744,6 +1792,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for averageLine, as text.",
           "type" : "string"
         },
+        "bands" : {
+          "description" : "The value for bands, as text.",
+          "type" : "string"
+        },
         "bins" : {
           "description" : "The value for bins, as text.",
           "type" : "string"
@@ -1764,6 +1816,14 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for doughnut, as text.",
           "type" : "string"
         },
+        "gaugeMax" : {
+          "description" : "The value for gaugeMax, as text.",
+          "type" : "string"
+        },
+        "gaugeMin" : {
+          "description" : "The value for gaugeMin, as text.",
+          "type" : "string"
+        },
         "horizontal" : {
           "description" : "The value for horizontal, as text.",
           "type" : "string"
@@ -1778,6 +1838,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "logScale" : {
           "description" : "The value for logScale, as text.",
+          "type" : "string"
+        },
+        "maxGauges" : {
+          "description" : "The value for maxGauges, as text.",
           "type" : "string"
         },
         "maxNodes" : {
@@ -1865,7 +1929,7 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     }
   },
-  "required" : [ "library", "kind", "columns", "summary" ],
+  "required" : [ "library", "summary" ],
   "type" : "object"
 }
 

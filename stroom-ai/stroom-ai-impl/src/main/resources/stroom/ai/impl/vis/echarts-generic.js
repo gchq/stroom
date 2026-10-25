@@ -37,7 +37,10 @@ if (!window.visualisations) {
     "use strict";
 
     var ADAPTER_VERSION = "1";
-    var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord"];
+    var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord",
+        "gauge"];
+    // A gauge's bands: below the first band's start, then the first band, then above the second.
+    var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
     // Stroom puts its own refresh button over the top-right corner of a dashboard's visualisation, so nothing
     // that can be clicked or read is put within this many pixels of the right edge at the top.
     var STROOM_BUTTON_SPACE = 36;
@@ -1017,6 +1020,129 @@ if (!window.visualisations) {
         };
     }
 
+    // A number from a decimal setting, or the default if it is blank or isn't one.
+    function decimalSetting(settings, id, defaultValue) {
+        var value = toNumber(settings[id]);
+        return isNaN(value) ? defaultValue : value;
+    }
+
+    // The smallest round number (1, 2 or 5 times a power of ten) at least as large as a value, for a gauge's top.
+    function niceCeil(value) {
+        if (!(value > 0)) {
+            return 1;
+        }
+        var power = Math.pow(10, Math.floor(Math.log(value) / Math.LN10));
+        var steps = [1, 2, 5, 10];
+        for (var i = 0; i < steps.length; i++) {
+            if (value <= steps[i] * power) {
+                return steps[i] * power;
+            }
+        }
+        return 10 * power;
+    }
+
+    // A gauge's coloured bands from the Bands setting, e.g. "70,90": green below 70, amber to 90, red above, as
+    // ECharts takes them (each band's end as a fraction of the range). One colour if blank or unreadable.
+    function gaugeBands(text, min, max) {
+        var cuts = String(text || "").split(",").map(function (part) {
+            return toNumber(part);
+        }).filter(function (value) {
+            return !isNaN(value) && value > min && value < max;
+        }).sort(function (a, b) {
+            return a - b;
+        }).slice(0, GAUGE_BAND_COLOURS.length - 1);
+        var bands = cuts.map(function (cut, i) {
+            return [(cut - min) / (max - min), GAUGE_BAND_COLOURS[i]];
+        });
+        bands.push([1, cuts.length ? GAUGE_BAND_COLOURS[cuts.length] : GAUGE_BAND_COLOURS[0]]);
+        return bands;
+    }
+
+    // A dial per row (or per name, when a name column is mapped: a name's values are added up), laid out in a grid.
+    function gaugeModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["value"]);
+        var named = fields.has("name");
+        var sums = {};
+        var names = [];
+        var nonNumeric = 0;
+        rows.forEach(function (row) {
+            var value = toNumber(fields.value(row, "value"));
+            if (isNaN(value)) {
+                nonNumeric++;
+                return;
+            }
+            var name = named ? fields.label(row, "name", prefs) : fields.column("value");
+            if (sums[name] === undefined) {
+                sums[name] = 0;
+                names.push(name);
+            } else if (!named) {
+                // Without a name column, a gauge shows one value: the first row's.
+                return;
+            }
+            sums[name] += value;
+        });
+        addDropped(report, "value not a number", nonNumeric);
+        if (!named && rows.length > 1) {
+            report.warnings.push("Only the first row is shown: map a name column for a gauge per row, or group "
+                + "the table to one row (e.g. max() of the column)");
+        }
+        var maxGauges = intSetting(settings, "maxGauges", 6, 1, 24);
+        if (names.length > maxGauges) {
+            report.warnings.push("Only the first " + maxGauges + " of " + names.length + " gauges are drawn "
+                + "(Max Gauges)");
+        }
+        names = names.slice(0, maxGauges);
+
+        var min = decimalSetting(settings, "gaugeMin", 0);
+        var largest = names.reduce(function (most, name) {
+            return Math.max(most, sums[name]);
+        }, min);
+        var max = decimalSetting(settings, "gaugeMax", NaN);
+        if (isNaN(max) || max <= min) {
+            max = min + niceCeil(largest - min);
+        }
+        var bands = gaugeBands(textSetting(settings, "bands"), min, max);
+        var columns = Math.ceil(Math.sqrt(names.length || 1));
+        var gridRows = Math.ceil((names.length || 1) / columns);
+        var radius = Math.min(100 / columns, 100 / gridRows) * 0.42;
+        var format = function (value) {
+            return prefs.formatValue(value);
+        };
+
+        report.series = names.length;
+        report.points = names.length;
+        return {
+            tooltip: {trigger: "item", formatter: function (params) {
+                return escapeHtml(params.name + ": " + format(params.value));
+            }},
+            // A gauge selects its name, when a name column is mapped.
+            selectAt: function (seriesIndex) {
+                var name = names[seriesIndex];
+                return named && name !== undefined ? fields.selection([["name", fields.rawOf("name", name)]]) : null;
+            },
+            series: names.map(function (name, i) {
+                var column = i % columns;
+                var row = Math.floor(i / columns);
+                return {
+                    type: "gauge",
+                    name: name,
+                    min: min,
+                    max: max,
+                    radius: radius + "%",
+                    center: [((column + 0.5) * 100 / columns) + "%", ((row + 0.55) * 100 / gridRows) + "%"],
+                    axisLine: {lineStyle: {width: 10, color: bands}},
+                    axisTick: {lineStyle: {color: style.subtleText}},
+                    splitLine: {lineStyle: {color: style.subtleText}},
+                    axisLabel: {color: style.subtleText, distance: 14, formatter: format},
+                    pointer: {itemStyle: {color: style.text}},
+                    title: {show: true, color: style.text, offsetCenter: [0, "70%"]},
+                    detail: {color: style.text, fontSize: 16, offsetCenter: [0, "40%"], formatter: format},
+                    data: [{name: name, value: sums[name]}]
+                };
+            })
+        };
+    }
+
     function scatterModel(rows, fields, settings, prefs, style, report) {
         requireFields(fields, ["x", "y"]);
         var xType = axisFor(fields.type("x")) === "time" ? "time" : "value";
@@ -1955,7 +2081,8 @@ if (!window.visualisations) {
         calendar: calendarModel,
         histogram: histogramModel,
         sankey: sankeyModel,
-        chord: chordModel
+        chord: chordModel,
+        gauge: gaugeModel
     };
 
     function newReport(kind) {

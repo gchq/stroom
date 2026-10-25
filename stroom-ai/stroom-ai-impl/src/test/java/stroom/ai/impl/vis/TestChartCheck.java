@@ -148,6 +148,26 @@ class TestChartCheck {
     }
 
     @Test
+    void aGaugeWithoutANameShowsOneRow() {
+        final List<TableColumn> columns = List.of(new TableColumn("Host", "TEXT"),
+                new TableColumn("Max Bytes", "NUMBER"));
+        final Sample sample = new Sample(List.of("Host", "Max Bytes"),
+                List.of(List.of("a", "10"), List.of("b", "20")));
+
+        final Result unnamed = ChartCheck.check(ChartKind.GAUGE, Map.of("value", "Max Bytes"), Map.of(), columns,
+                sample);
+        assertThat(unnamed.ok()).isTrue();
+        assertThat(unnamed.warnings()).anySatisfy(warning -> assertThat(warning)
+                .contains("A gauge without a name column shows only the first of the 2+ rows"));
+
+        // With a name column, a gauge each.
+        final Result named = ChartCheck.check(ChartKind.GAUGE, Map.of("value", "Max Bytes", "name", "Host"),
+                Map.of(), columns, sample);
+        assertThat(named.stats()).containsEntry("gauges", 2);
+        assertThat(named.warnings()).noneSatisfy(warning -> assertThat(warning).contains("gauge"));
+    }
+
+    @Test
     void anIntervalGivesAFewDozenToAFewHundredPoints() {
         assertThat(ChartCheck.intervalFunction(Duration.ofDays(6 * 365))).contains("floorMonth");
         assertThat(ChartCheck.intervalFunction(Duration.ofDays(400))).contains("floorWeek");

@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -646,6 +647,79 @@ class TestProposeVisualisationTool {
                 Map.of("x", "Day", "y", "Count", "series", "Host"), Map.of("Day", "${Day}"),
                 Map.of("Day", "TEXT"), false, "Events"))
                 .doesNotContain("range tool");
+    }
+
+    @Test
+    void severalChartsAreOfferedTogetherAndAChartTheDataCantMakeIsLeftOut() {
+        final Map<String, Object> args = chartsArgs();
+
+        // How to arrange them is asked first.
+        assertThat(call(args)).startsWith("No charts were offered yet: ask the user (ask_user) how to arrange the 3 "
+                                          + "charts on the dashboard");
+        assertThat(takeUserActions()).isEmpty();
+
+        args.put(ProposeVisualisationTool.LAYOUT_ARG, ProposeVisualisationTool.TABS);
+        final String result = call(args);
+
+        assertThat(result)
+                .contains("shown a 'Create visualisations' button for 2 chart(s)")
+                .contains("'Messages by sender': a bar chart of 'Links' (category = 'From', value = 'Count')")
+                .contains("stacked as tabs in one pane")
+                .contains("Left out (tell the user why, and the fix):\n- Chart 3 ('Nope'): the table 'Links' "
+                          + "can't make this bar chart");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            assertThat(action).containsEntry("action", UserActions.CREATE_VISUALISATIONS);
+            final List<?> charts = (List<?>) action.get(ProposeVisualisationTool.CHARTS_ARG);
+            assertThat(charts).hasSize(2);
+            final VisualisationPlan first = VisualisationPlan.fromJson((String) ((Map<?, ?>) charts.get(0))
+                    .get("plan"));
+            final VisualisationPlan second = VisualisationPlan.fromJson((String) ((Map<?, ?>) charts.get(1))
+                    .get("plan"));
+            assertThat(first.placement()).isEqualTo(VisualisationPlan.BELOW);
+            assertThat(second.placement()).isEqualTo(VisualisationPlan.WITH);
+            assertThat(second.chartKind()).isEqualTo(ChartKind.PIE);
+        });
+    }
+
+    @Test
+    void severalChartsAreGeneratedWithEChartsOnly() {
+        final Map<String, Object> args = chartsArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+
+        assertThat(call(args)).startsWith("No charts were offered: several charts at once are generated with "
+                                          + "ECharts");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aLayoutPlacesEachChartAfterItsTablesFirst() {
+        assertThat(IntStream.range(0, 5)
+                .mapToObj(i -> ProposeVisualisationTool.placement(ProposeVisualisationTool.GRID, i)))
+                .containsExactly(VisualisationPlan.BELOW, VisualisationPlan.RIGHT, VisualisationPlan.RIGHT,
+                        VisualisationPlan.UNDER, VisualisationPlan.RIGHT);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.ROW, 1)).isEqualTo(
+                VisualisationPlan.RIGHT);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.COLUMN, 1)).isEqualTo(
+                VisualisationPlan.UNDER);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.TABS, 1)).isEqualTo(
+                VisualisationPlan.WITH);
+    }
+
+    // Three charts of table 'Links': two it can make and one naming a column it doesn't have.
+    private static Map<String, Object> chartsArgs() {
+        return mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.SUMMARY_ARG, "Messages by sender and by recipient.",
+                ProposeVisualisationTool.CHARTS_ARG, List.of(
+                        mapOf(ProposeVisualisationTool.KIND_ARG, "bar",
+                                ProposeVisualisationTool.COLUMNS_ARG, mapOf("category", "From", "value", "Count"),
+                                ProposeVisualisationTool.NAME_ARG, "Messages by sender"),
+                        mapOf(ProposeVisualisationTool.KIND_ARG, "pie",
+                                ProposeVisualisationTool.COLUMNS_ARG, mapOf("name", "To", "value", "Count"),
+                                ProposeVisualisationTool.NAME_ARG, "Messages by recipient"),
+                        mapOf(ProposeVisualisationTool.KIND_ARG, "bar",
+                                ProposeVisualisationTool.COLUMNS_ARG, mapOf("category", "Nope", "value", "Count"),
+                                ProposeVisualisationTool.NAME_ARG, "Nope")));
     }
 
     @Test

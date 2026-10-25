@@ -57,6 +57,10 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
+import stroom.explorer.shared.ExplorerServiceCreateRequest;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -82,6 +86,7 @@ public class AskStroomAiClient {
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
@@ -511,6 +516,30 @@ public class AskStroomAiClient {
     /// @param consumer           Given the Visualisation once saved.
     /// @param errorHandler       Told if it couldn't be saved.
     /// @param taskMonitorFactory Shows that it is being saved.
+    /// Creates a Visualisation in a folder, as the New Visualisation dialog does (the server checks the user may
+    /// create there), then gives it a chart Stroom AI planned.
+    ///
+    /// @param folder             The folder.
+    /// @param create             The chart, with the Visualisation's name.
+    /// @param consumer           Given the new Visualisation once it has the chart.
+    /// @param errorHandler       Told if either step fails.
+    /// @param taskMonitorFactory Shows the work in progress.
+    void createVisualisation(final ExplorerNode folder,
+                             final AiCreateVisualisation create,
+                             final Consumer<DocRef> consumer,
+                             final RestErrorHandler errorHandler,
+                             final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.create(new ExplorerServiceCreateRequest(VisualisationDoc.TYPE, create.getName(),
+                        folder, PermissionInheritance.DESTINATION)))
+                .onSuccess(node -> setVisualisation(node.getDocRef(), create,
+                        doc -> consumer.accept(node.getDocRef()), errorHandler, taskMonitorFactory))
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     void setVisualisation(final DocRef docRef,
                           final AiCreateVisualisation create,
                           final Consumer<VisualisationDoc> consumer,

@@ -75,6 +75,12 @@ public final class TableChange {
     public static final String BELOW = "below";
     /// For add_vis: as a tab beside the table.
     public static final String TAB = "tab";
+    /// For add_vis, of several charts added together: in a new pane to the right of the one added before it.
+    public static final String RIGHT = "right";
+    /// For add_vis, of several charts added together: in a new pane below the first of the row before it.
+    public static final String UNDER = "under";
+    /// For add_vis, of several charts added together: as a tab in the pane of the one added before it.
+    public static final String WITH = "with";
     /// Renames a component, and so its tab.
     public static final String RENAME = "rename";
     /// Changes one of a component's settings.

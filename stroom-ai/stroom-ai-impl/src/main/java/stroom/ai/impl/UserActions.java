@@ -25,6 +25,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.shared.QueryDoc;
 import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -92,6 +93,10 @@ public class UserActions {
     /// created, the Visualisation is given a chart the agent planned, drawn with ECharts, and is added to the
     /// dashboard (or the query's `show` clause), unsaved (only from Stroom's own propose_visualisation tool).
     public static final String CREATE_VISUALISATION = "create_visualisation";
+    /// Creates several planned Visualisations in one folder the user picks, and adds them to a dashboard.
+    public static final String CREATE_VISUALISATIONS = "create_visualisations";
+    /// The most Visualisations one create_visualisations button creates.
+    static final int MAX_VISUALISATIONS = 12;
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -218,6 +223,9 @@ public class UserActions {
                         : Optional.empty();
                 case CREATE_DASHBOARD -> builtIn.contains(map)
                         ? createDashboard(id, map, expiresMs)
+                        : Optional.empty();
+                case CREATE_VISUALISATIONS -> builtIn.contains(map)
+                        ? createVisualisations(id, map, expiresMs)
                         : Optional.empty();
                 case CREATE_VISUALISATION -> builtIn.contains(map)
                         ? createVisualisation(id, map, expiresMs)
@@ -446,6 +454,59 @@ public class UserActions {
                         ? null
                         : truncate(summary, MAX_DETAILS_CHARS),
                 null, null, target, plan.toJson(), List.of(), expiresMs, Status.PENDING, null, name));
+    }
+
+    /// A button that creates several charts planned for a dashboard's tables, in one folder the user picks, for a
+    /// dashboard the user may see. The charts (each a name and a plan) are kept as JSON in `request`; they are read
+    /// and checked again when the button is clicked. Each is a new chart of a dashboard table: none replaces one,
+    /// nor goes in a query's show clause.
+    private Optional<UserActionRecord> createVisualisations(final String id,
+                                                            final Map<?, ?> map,
+                                                            final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        if (named == null || !DashboardDoc.TYPE.equals(named.getType())
+            || !(map.get("charts") instanceof final List<?> charts) || charts.isEmpty()
+            || charts.size() > MAX_VISUALISATIONS) {
+            return Optional.empty();
+        }
+        final List<Map<String, String>> kept = new ArrayList<>();
+        final List<String> kinds = new ArrayList<>();
+        for (final Object item : charts) {
+            if (!(item instanceof final Map<?, ?> chart)) {
+                return Optional.empty();
+            }
+            final String name = NullSafe.get(string(chart.get("name")), String::strip);
+            final String planJson = string(chart.get("plan"));
+            if (name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS || hasControlCharacters(name)
+                || planJson == null || planJson.length() > MAX_REQUEST_CHARS / MAX_VISUALISATIONS) {
+                return Optional.empty();
+            }
+            final VisualisationPlan plan;
+            try {
+                plan = VisualisationPlan.fromJson(planJson);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(() -> "Dropping visualisations that can't be read: " + e.getMessage());
+                return Optional.empty();
+            }
+            if (plan.isQuery() || plan.isReplacement()) {
+                return Optional.empty();
+            }
+            kept.add(Map.of("name", name, "plan", plan.toJson()));
+            kinds.add(plan.chartKind().displayName().toLowerCase(Locale.ROOT));
+        }
+        final DocRef target = lookup.find(named).orElse(null);
+        if (target == null) {
+            return Optional.empty();
+        }
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Create " + kept.size() + " visualisations (" + String.join(", ", kinds)
+                             + ") and add them to dashboard '" + target.getName() + "'";
+        return Optional.of(new UserActionRecord(id, CREATE_VISUALISATIONS, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, target, JsonUtil.writeValueAsString(kept, false), List.of(), expiresMs,
+                Status.PENDING, null, null));
     }
 
     /// A button that opens a review of a change to a stepping element's code, for an element whose document exists

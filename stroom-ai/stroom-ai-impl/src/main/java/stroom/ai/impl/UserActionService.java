@@ -44,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -160,6 +161,7 @@ public class UserActionService {
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
             case UserActions.CREATE_DASHBOARD -> createDashboard(chatId, action);
             case UserActions.CREATE_VISUALISATION -> createVisualisation(chatId, action);
+            case UserActions.CREATE_VISUALISATIONS -> createVisualisations(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
@@ -293,6 +295,32 @@ public class UserActionService {
                         ? "Rewrote Visualisation '" + create.getReplaced().getName() + "' for the new chart"
                         : "Opened the New Visualisation dialog", true);
         return AiUserActionResult.createVisualisation(create);
+    }
+
+    /// Lets the browser create several planned charts: each one's Visualisation settings, built again from its plan
+    /// now, with the ECharts adapter put in place if it isn't. The browser asks the user for one folder, creates a
+    /// Visualisation for each there (checking their permission to create in it), and adds them to the dashboard,
+    /// unsaved. As it creates nothing the user sees, the button can be used again.
+    private AiUserActionResult createVisualisations(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard no longer exists, or you can't see it.";
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final List<AiCreateVisualisation> creates = new ArrayList<>();
+        try {
+            for (final Object item : JsonUtil.readValue(action.request(), List.class)) {
+                final Map<?, ?> chart = (Map<?, ?>) item;
+                creates.add(visualisationActions.prepare(action.doc(), String.valueOf(chart.get("name")),
+                        String.valueOf(chart.get("plan"))));
+            }
+        } catch (final IllegalStateException | ClassCastException e) {
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
+            return new AiUserActionResult(false, e.getMessage(), null);
+        }
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
+                "Asked where to create " + creates.size() + " Visualisations", true);
+        return AiUserActionResult.createVisualisations(creates);
     }
 
     /// Lets the browser apply a proposed code change to a stepping element's editor, unsaved, if the user may edit
