@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.ai.impl.tools.ChatModelNames;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -97,8 +98,10 @@ final class TranslationWorld {
             world::records);
     final KeptCode keptCode = new KeptCode(eventVersions);
     final HandEditGate handEditGate = new HandEditGate(keptCode, consent);
+    // The model each chat runs on: none unless a test says.
+    final ChatModelNames chatModelNames = Mockito.mock(ChatModelNames.class);
     final XsltHistory history = new XsltHistory(securityContext, () -> new BuildInfo(0L, "7.13.0", 0L),
-            Clock.fixed(Instant.parse("2026-10-22T00:00:00Z"), ZoneOffset.UTC));
+            () -> chatModelNames, Clock.fixed(Instant.parse("2026-10-22T00:00:00Z"), ZoneOffset.UTC));
     final RequiredImports requiredImports = new RequiredImports(agentInstructions, world::guard, () -> docFinder,
             world.documentAccess);
     final LookupAgreements lookups = new LookupAgreements(consent);
