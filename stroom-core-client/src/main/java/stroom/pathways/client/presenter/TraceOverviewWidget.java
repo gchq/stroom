@@ -46,19 +46,22 @@ import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
@@ -73,10 +76,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/// A trace's overview: a timeline of its spans, with a window on it that can be dragged and resized,
+/// above a waterfall of the spans in the window, as a tree that opens and closes, and a panel of a
+/// chosen span's details. A trace too large to show whole is shown a page of spans at a time, with a
+/// pager. Its frame is in `TraceOverviewWidget.ui.xml`; the trace itself is drawn as HTML, again on
+/// every change, styled by `pathways.css` (with custom properties for the positions and sizes).
 public class TraceOverviewWidget extends Composite implements TaskMonitorFactory {
 
-    private final HTML panel = new HTML();
-    private final HasHandlers hasHandlers;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    HTML panel;
     private Trace trace;
     /** Lookup of spanId -&gt; Span for resolving clicks on span rows. */
     private final Map<String, Span> spanById = new HashMap<>();
@@ -108,6 +118,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // vertically compressed to fill the strip so none are clipped.
     private static final int SPAN_INFO_MIN_WIDTH = 240;
     private static final int WATERFALL_MIN_WIDTH = 240;
+    // The strip's height, as .timeline-bar (pathways.css) has it
     private static final int OVERVIEW_STRIP_PX = 40;
     private static final int OVERVIEW_ROW_PX = 3;   // fixed row stride when the set fits
     private static final int OVERVIEW_BAR_PX = 2;   // bar height at the fixed stride
@@ -127,9 +138,13 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // The traces-list pager widget, driven by a lightweight HasRows adapter (the detail waterfall isn't a
     // cell widget, so we bridge the pager's offset/range model to our page fetches). suppressRangeEvent
     // guards against the range changes we push back into the adapter re-triggering a fetch.
-    private final Pager pager = new Pager();
+    @UiField
+    Pager pager;
     private final TracePagerRows pagerRows = new TracePagerRows();
-    private final FlowPanel pagerBar = new FlowPanel();
+    @UiField
+    FlowPanel pagerBar;
+    @UiField
+    Toolbar expandControls;
     private boolean suppressRangeEvent;
     // In-flight span-fetch count driving this widget's own pager refresh spinner (see createTaskMonitor).
     private int taskCount;
@@ -158,33 +173,16 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                    Consumer<TraceSpanPage> onLoaded);
     }
 
-    public TraceOverviewWidget(final HasHandlers hasHandlers) {
-        this.hasHandlers = hasHandlers;
-        // A vertical stack: the pager bar (top, right-aligned, above the timeline) then the trace content.
-        final FlowPanel root = new FlowPanel();
-        root.addStyleName("trace-overview-root");
-
-        pagerBar.addStyleName("trace-pager-bar");
-        pagerBar.setVisible(false);
+    /// Makes an overview showing no trace.
+    public TraceOverviewWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         pager.setDisplay(pagerRows);
         // Expand/collapse-level buttons on the LEFT, the pager on the RIGHT (CSS space-between).
-        final Toolbar expandControls = new Toolbar("Group levels");
-        expandControls.addStyleName("trace-expand-controls");
         groupLevelButtons = new GroupLevelButtons(expandControls, this::effectiveSelection, () -> maxDepth,
                 selection -> {
                     groupSelection = selection;
                     onSelectionChanged();
                 });
-        pagerBar.add(expandControls);
-        pagerBar.add(pager);
-        root.add(pagerBar);
-
-
-        // Lets the CSS lay the widget out as a fixed timeline/header above a
-        // vertically-scrollable operation list (see .trace-overview in pathways.css).
-        panel.addStyleName("trace-overview");
-        root.add(panel);
-        initWidget(root);
 
         // A pager button changes the adapter's range; page it (unless it's our own sync write-back).
         pagerRows.addRangeChangeHandler(event -> {
@@ -199,7 +197,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 
             final Element element = e.getNativeEvent().getEventTarget().cast();
             if (ElementUtil.findParent(element, "docRefLinkContainer", 5) != null) {
-                CopyTextUtil.onClick(e.getNativeEvent(), hasHandlers);
+                CopyTextUtil.onClick(e.getNativeEvent());
                 // Only the copy icon (or a right-click menu) consumes the event; a plain click on the value
                 // text still falls through, so clicking an operation name opens the Span Info panel.
                 if (ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5) != null
@@ -613,14 +611,15 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
             while (pct < 100) {
                 final long t = time;
                 div.span(s -> s.append(NanoTime.ofNanos(t).toString()),
-                        Attribute.style("left: " + pct + "%;"));
+                        Attribute.style("--timeline-marker__left: " + pct + "%;"));
                 pct += pctInc;
                 time += bigChunk;
             }
 
             // Add last marker if we think there is room.
             if (pct - pctInc < 90) {
-                div.span(s -> s.append(extents.totalDuration.toString()), Attribute.style("left: 100%;"));
+                div.span(s -> s.append(extents.totalDuration.toString()),
+                        Attribute.className("timeline-header__end"));
             }
 
             div.append(SafeHtmlUtil.NBSP);
@@ -652,7 +651,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
             }
         }, Attribute.className("timeline-bar"),
                 Attribute.id("timelineBar"),
-                Attribute.style("height: " + OVERVIEW_STRIP_PX + "px;" + style));
+                Attribute.style(style));
     }
 
     private int forestSize(final List<Span> spans) {
@@ -719,44 +718,37 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                 Attribute.title(span.getName() + " (" + span.duration() + ")"),
                 new Attribute("data-span-id", span.getSpanId()),
                 Attribute.style(
-                        "left: " + leftPct + "%; width: " + widthPct +
-                        "%; background-color: rgb(255, 140, 66); top: " + topPx +
-                        "px; height: " + barH + "px; opacity: 0.9; position: absolute;" +
-                        " border-radius: 1px; min-width: 1px;"));
+                        "--timeline-span__left: " + leftPct + "%; --timeline-span__width: " + widthPct +
+                        "%; --timeline-span__top: " + topPx + "px; --timeline-span__height: " + barH + "px;"));
     }
 
     private void appendTimeSlider(final HtmlBuilder hb) {
+        final double startPct = (100D / extents.totalDuration.getNanos()) * windowStart.getNanos();
+        final double endPct = (100D / extents.totalDuration.getNanos()) * windowEnd.getNanos();
         hb.div(div -> {
-
-            final double startPct = (100D / extents.totalDuration.getNanos()) * windowStart.getNanos();
-            final double endPct = (100D / extents.totalDuration.getNanos()) * windowEnd.getNanos();
-
             div.div("",
-                    Attribute.className("time-dim-overlay"),
-                    Attribute.id("leftDimOverlay"),
-                    Attribute.style("left: 0%; width: " + startPct + "%;"));
+                    Attribute.className("time-dim-overlay time-dim-overlay--before"),
+                    Attribute.id("leftDimOverlay"));
             div.div("",
-                    Attribute.className("time-dim-overlay"),
-                    Attribute.id("rightDimOverlay"),
-                    Attribute.style("left: " + endPct + "%; width: " + (100 - endPct) + "%;"));
+                    Attribute.className("time-dim-overlay time-dim-overlay--after"),
+                    Attribute.id("rightDimOverlay"));
             div.div("",
                     Attribute.className("time-range-overlay"),
-                    Attribute.id("timeRangeOverlay"),
-                    Attribute.style("left: " + startPct + "%; width: " + (endPct - startPct) + "%;"));
+                    Attribute.id("timeRangeOverlay"));
             div.div(dim -> div.div(d -> d.append(formatHandleTime(windowStart)),
                             Attribute.className("slider-label"),
                             Attribute.id("startLabel")),
-                    Attribute.className("time-slider"),
-                    Attribute.id("startSlider"),
-                    Attribute.style("left: " + startPct + "%;"));
+                    Attribute.className("time-slider time-slider--start"),
+                    Attribute.id("startSlider"));
             div.div(dim -> div.div(d -> d.append(formatHandleTime(windowEnd)),
                             Attribute.className("slider-label"),
                             Attribute.id("endLabel")),
-                    Attribute.className("time-slider"),
-                    Attribute.id("endSlider"),
-                    Attribute.style("left: " + endPct + "%;"));
+                    Attribute.className("time-slider time-slider--end"),
+                    Attribute.id("endSlider"));
 
-        }, Attribute.className("time-slider-container"));
+        }, Attribute.className("time-slider-container"),
+                // Where the window starts and ends, which the overlays and sliders are placed by
+                Attribute.style("--time-slider__start: " + startPct + "%; --time-slider__end: " + endPct + "%;"));
     }
 
     private void appendButtons(final HtmlBuilder hb) {
@@ -861,16 +853,16 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 //                ", bigWidthPct=" + bigWidthPct +
 //                ", smallWidthPct=" + smallWidthPct);
 
-        return "background-size:" +
+        // The grid's spacing and offsets, which .timeline-bar and .grid-lines draw their lines by
+        return "--grid-lines__big-size: " +
                bigWidthPct +
-               "% 100%, " +
+               "%; --grid-lines__small-size: " +
                smallWidthPct +
-               "% 100%;" +
-               "background-position:" +
+               "%; --grid-lines__big-offset: " +
                bigOffsetPct +
-               "% 0, " +
+               "%; --grid-lines__small-offset: " +
                smallOffsetPct +
-               "% 0;";
+               "%;";
     }
 
 
@@ -1022,7 +1014,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
             nameHtml.span(name, Attribute.className("operation-name"), Attribute.title(name));
             CopyTextUtil.render(name, nameHtml.toSafeHtml(), c, false);
         }, Attribute.className("operation-content"),
-                Attribute.style("padding-left: " + (depth * 30) + "px;"));
+                Attribute.style("--operation__depth: " + depth + ";"));
     }
 
     // The expander cell: a clickable +/- for a span with children (▾ open, ▸ collapsed), or a leaf spacer
@@ -1074,10 +1066,11 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                         : "span-bar span-http";
                 c.div("",
                         Attribute.className(barClass),
-                        Attribute.style("left: " + leftPct + "%; width: " + widthPct + "%;"));
+                        Attribute.style("--span-bar__left: " + leftPct
+                                        + "%; --span-bar__width: " + widthPct + "%;"));
                 c.span(span.duration().toString(),
                         Attribute.className("duration"),
-                        Attribute.style("left: " + (leftPct + widthPct) + "%;"));
+                        Attribute.style("--span-bar__end: " + (leftPct + widthPct) + "%;"));
             }
         }, Attribute.className("waterfall-container"));
     }
@@ -1252,10 +1245,15 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                         }, Attribute.className("span-info-attr"));
                     });
                 }
-            }, Attribute.className("span-info-body"));
+            }, Attribute.className("span-info-body"),
+                    // It scrolls when it is taller than the panel, so, as the operation list, it is
+                    // a named region that takes the focus, so that the keyboard can scroll it
+                    new Attribute("tabindex", "0"),
+                    new Attribute("role", "region"),
+                    new Attribute("aria-label", "Span info"));
         }, Attribute.className("span-info-panel"),
                 Attribute.id("spanInfo"),
-                Attribute.style("width: " + spanInfoWidth + "px;"));
+                Attribute.style("--span-info__width: " + spanInfoWidth + "px;"));
     }
 
     private void appendInfoRow(final HtmlBuilder hb, final String key, final String value) {
@@ -1356,6 +1354,10 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         public void fireEvent(final GwtEvent<?> event) {
             handlerManager.fireEvent(event);
         }
+    }
+
+    interface Binder extends UiBinder<Widget, TraceOverviewWidget> {
+
     }
 
     private static class Extents {

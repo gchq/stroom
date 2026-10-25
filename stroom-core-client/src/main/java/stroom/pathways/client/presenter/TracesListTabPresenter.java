@@ -27,7 +27,6 @@ import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
-import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
@@ -72,7 +71,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         own(timeRangeSelectorController).attach(timeRangeSelector);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
-        traceOverviewWidget = new TraceOverviewWidget(this);
+        traceOverviewWidget = new TraceOverviewWidget();
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);

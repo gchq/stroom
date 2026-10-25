@@ -1579,6 +1579,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
   `character-navigator.css` and `item-selection.css`). Delete them once removals are allowed.
+* ~~A trace's Span Info details (`TraceOverviewWidget`'s `span-info-body`) scroll but couldn't be
+  reached with the keyboard, so couldn't be scrolled without a mouse (found 25 October 2026 in wave
+  6, by a new story's accessibility check; older).~~ Fixed: a named region that takes the focus, as
+  the operation list is (`App/Main/TracesScreen` `SpanInfo`).
+* `TraceOverviewWidget` draws the trace as HTML again on every change, so the operation list's
+  fixed heading ("Service & Operation") and its region's role and name are in that HTML, not its
+  template (found 25 October 2026, in wave 6). They can move to the template if the list's frame is
+  split from its rows.
 * Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals

@@ -23,6 +23,9 @@ import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -93,6 +96,28 @@ public final class TracesScreenStories {
                             RequestMatcher.post("/traces/v2/getSpans")
                                     .withJsonBodyContaining("{\"traceId\": \"t1\"}")
                                     .toSpyMatcher());
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // A span's row is indented by its depth; a click on it shows its Span Info, at the
+                // panel's starting width, and a secondary click on its name shows the Copy menu
+                .story("SpanInfo", TracesScreenStories::render)
+                .withPlay(play -> {
+                    play.click(play.findByText("GET /api/things"));
+                    final Query child = play.findByText("db query", ".operation-name");
+                    play.expect(play.getByText("GET /api/things", ".operation-name").closest(".operation-content"))
+                            .toHaveStyle("padding-left", "0px");
+                    play.expect(child.closest(".operation-content")).toHaveStyle("padding-left", "30px");
+
+                    play.click(child);
+                    play.expect(play.findByText("Span Info")).toBeInTheDocument();
+                    play.expect(play.querySelector(".span-info-panel")).toHaveStyle("width", "340px");
+                    // Its details scroll, so the keyboard reaches them (they couldn't be scrolled)
+                    play.expect(play.getByRole("region", "Span info")).toHaveAttribute("tabindex", "0");
+
+                    play.rightClick(play.getByText("db query", ".operation-name"));
+                    final Play screen = play.screen();
+                    play.expect(screen.findByText("Copy", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
+                    play.keyboard("{Escape}");
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

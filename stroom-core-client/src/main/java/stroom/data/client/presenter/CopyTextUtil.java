@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.Clipboard;
@@ -137,6 +138,15 @@ public class CopyTextUtil {
         onClick(e, hasHandlers, null);
     }
 
+    /// Copies a value, as [#onClick(NativeEvent, HasHandlers)] does, for a widget with no event bus
+    /// (e.g. a trace's overview): its menu (a secondary click's Copy) is asked for with a
+    /// [MenuRequest] from the element clicked, which the page's relay shows.
+    ///
+    /// @param e The mouse down on a value rendered by [#render].
+    public static void onClick(final NativeEvent e) {
+        onClick(e, null, null);
+    }
+
     public static void onClick(final NativeEvent e,
                                final HasHandlers hasHandlers,
                                final Consumer<String> insertHandler) {
@@ -175,12 +185,17 @@ public class CopyTextUtil {
                                 .command(() -> insertHandler.accept(text.trim()))
                                 .build());
                     }
-                    ShowMenuEvent
-                            .builder()
-                            .name(getValueMenuName(text))
-                            .items(menuItems)
-                            .popupPosition(new PopupPosition(e.getClientX(), e.getClientY()))
-                            .fire(hasHandlers);
+                    final PopupPosition popupPosition = new PopupPosition(e.getClientX(), e.getClientY());
+                    if (hasHandlers != null) {
+                        ShowMenuEvent
+                                .builder()
+                                .name(getValueMenuName(text))
+                                .items(menuItems)
+                                .popupPosition(popupPosition)
+                                .fire(hasHandlers);
+                    } else {
+                        MenuRequest.fire(element, getValueMenuName(text), menuItems, popupPosition);
+                    }
                 }
             }
         }

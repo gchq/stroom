@@ -131,18 +131,27 @@
 
 .timeline-header span {
     position: absolute;
+    left: var(--timeline-marker__left);
     font-size: 10px;
     color: var(--text-color--muted);
     padding: 5px 0;
     transform: translate(-50%, 0%);
 }
 
+/* The last marker, the trace's whole duration, at its end */
+.timeline-header span.timeline-header__end {
+    left: 100%;
+}
+
 .timeline-controls {
     position: relative;
 }
 
+/* The grid's lines are spaced and offset by the time shown (--grid-lines__*, set by
+   TraceOverviewWidget.computeGridStyle) */
 .timeline-bar {
     min-height: 40px;
+    height: 40px;
     background-color: #2d2d2d;
     border-radius: 2px;
     position: relative;
@@ -151,8 +160,21 @@
     background-image:
        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%;
-    background-position: 0 0, 0 0;
+    background-size: var(--grid-lines__big-size, 100%) 100%, var(--grid-lines__small-size, 100%) 100%;
+    background-position: var(--grid-lines__big-offset, 0) 0, var(--grid-lines__small-offset, 0) 0;
+}
+
+/* A span in the timeline, placed by its time and its row (--timeline-span__*) */
+.timeline-span {
+    position: absolute;
+    left: var(--timeline-span__left);
+    width: var(--timeline-span__width);
+    top: var(--timeline-span__top);
+    height: var(--timeline-span__height);
+    background-color: rgb(255, 140, 66);
+    opacity: 0.9;
+    border-radius: 1px;
+    min-width: 1px;
 }
 
 .time-slider-container {
@@ -171,6 +193,18 @@
     pointer-events: none;
 }
 
+/* Before and after the window, which starts and ends at --time-slider__start and __end (set on
+   .time-slider-container), as its overlay and sliders are placed */
+.time-dim-overlay--before {
+    left: 0%;
+    width: var(--time-slider__start);
+}
+
+.time-dim-overlay--after {
+    left: var(--time-slider__end);
+    width: calc(100% - var(--time-slider__end));
+}
+
 .time-slider {
     position: absolute;
     width: 8px;
@@ -184,8 +218,12 @@
     margin-left: -4px;
 }
 
-.time-slider#startSlider {
+.time-slider--start {
+    left: var(--time-slider__start);
+}
 
+.time-slider--end {
+    left: var(--time-slider__end);
 }
 
 .time-slider::after {
@@ -225,6 +263,8 @@
 */
 .time-range-overlay {
     position: absolute;
+    left: var(--time-slider__start);
+    width: calc(var(--time-slider__end) - var(--time-slider__start));
     top: 0;
     bottom: 0;
     border-radius: 2px;
@@ -291,8 +331,8 @@
     background-image:
        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%;
-    background-position: 0 0, 0 0;
+    background-size: var(--grid-lines__big-size, 100%) 100%, var(--grid-lines__small-size, 100%) 100%;
+    background-position: var(--grid-lines__big-offset, 0) 0, var(--grid-lines__small-offset, 0) 0;
 }
 
 .section-header {
@@ -372,7 +412,7 @@
 .span-info-panel {
     position: relative;
     flex: 0 0 auto;
-    width: 340px;             /* base; overridden by an inline width when resized */
+    width: var(--span-info__width, 340px); /* as wide as it is dragged to */
     min-width: 0;
     min-height: 0;
     display: flex;
@@ -481,12 +521,14 @@
     padding-right: 50px;
 }
 
+/* Indented by its span's depth in the tree (--operation__depth) */
 .operation-content {
     display: flex;
     align-items: center;
     width: 400px;
     position: relative;
     flex-shrink: 0;
+    padding-left: calc(var(--operation__depth, 0) * 30px);
 }
 
 .expand-icon {
@@ -553,8 +595,12 @@
     flex-grow: 1;
 }
 
+/* Placed by its span's time in the window (--span-bar__left and __width), with its duration after it
+   (--span-bar__end) */
 .span-bar {
     position: absolute;
+    left: var(--span-bar__left);
+    width: var(--span-bar__width);
     top: 50%;
     transform: translateY(-50%);
     height: 6px;
@@ -575,6 +621,7 @@
     color: #888;
     font-size: 11px;
     position: absolute;
+    left: var(--span-bar__end);
     top: 50%;
     transform: translateY(-50%);
     margin-left: 2px;
