@@ -274,6 +274,12 @@ public class ContextAssembler {
             data (a snapshot's column types, and the table's grouping): those it can make now, with the columns \
             each would map; those it could make after a table change, naming the change; and those that don't \
             suit it. Keep it short, and offer the likeliest.
+            - Asked for several charts (e.g. a gauge per numeric column, a line per metric), work out the items \
+            from the request and a snapshot (column types, names, a column's values), listing them and asking \
+            if the rule is vague; one chart per item, or one chart of them all when that reads better. For a \
+            summary (the max of each column), propose the aggregate table change first. Then one \
+            propose_visualisation with charts (up to 12) and a layout, asking the user how to arrange them \
+            unless they have said.
             - Asked why a chart shows nothing (or an error), check in turn: its render report (status, rows, \
             droppedRows, warnings, error; selected true means something is clicked on it); the rows of its \
             table (current_results); that table's filters, grouping and query; and the selection filters on the \

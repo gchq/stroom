@@ -87,8 +87,10 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
@@ -280,6 +282,7 @@ public class AskStroomAiPresenter
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider;
+    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
     private final ContentManager contentManager;
     private final LocationManager locationManager;
     private final DateTimeFormatter dateTimeFormatter;
@@ -442,6 +445,7 @@ public class AskStroomAiPresenter
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider,
+                                final Provider<DocSelectionPopup> docSelectionPopupProvider,
                                 final ContentManager contentManager,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter,
@@ -457,6 +461,7 @@ public class AskStroomAiPresenter
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.commandErrorPresenterProvider = commandErrorPresenterProvider;
+        this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.contentManager = contentManager;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
@@ -3037,6 +3042,12 @@ public class AskStroomAiPresenter
                 showReplacement(messageId, actionId, result.getCreateVisualisation());
                 return;
             }
+            if (result.isDone() && NullSafe.hasItems(result.getCreateVisualisations())) {
+                // The button can be used again, as the user may cancel the folder dialog.
+                button.removeAttribute("disabled");
+                createVisualisations(messageId, actionId, result.getCreateVisualisations());
+                return;
+            }
             if (result.isDone() && result.getCreateVisualisation() != null) {
                 // The button can be used again, as the user may cancel the dialog.
                 button.removeAttribute("disabled");
@@ -3123,6 +3134,101 @@ public class AskStroomAiPresenter
                             error -> showError(error, "Unable to set up " + visualisation.getName(), null),
                             getView());
                 });
+    }
+
+    /// Asks the user for one folder (the dashboard's, by default), creates a Visualisation there for each chart
+    /// planned together, named as the agent suggested, gives each its chart, then adds them all to the dashboard in
+    /// one change, arranged as planned, unsaved. Nothing is created unless the user picks a folder.
+    private void createVisualisations(final int messageId,
+                                      final String actionId,
+                                      final List<AiCreateVisualisation> creates) {
+        final DocSelectionPopup chooser = docSelectionPopupProvider.get();
+        chooser.setCaption("Folder For " + creates.size() + " New Visualisations");
+        chooser.setIncludedTypes(ExplorerConstants.FOLDER_TYPE);
+        chooser.setAllowFolderSelection(true);
+        chooser.setRequiredPermissions(DocumentPermission.VIEW);
+        final ExplorerNode suggested = creates.get(0).getFolder();
+        if (suggested != null) {
+            chooser.setSelectedEntityReference(suggested.getDocRef());
+        }
+        chooser.show(folder -> {
+            if (folder != null) {
+                createNextVisualisation(messageId, actionId, creates,
+                        ExplorerNode.builder().docRef(folder).build(), new ArrayList<>());
+            }
+        });
+    }
+
+    // Creates the next of several Visualisations, in turn; once all are, adds them to the dashboard. If one can't be
+    // created, those already created are still added, and the user is told which weren't.
+    private void createNextVisualisation(final int messageId,
+                                         final String actionId,
+                                         final List<AiCreateVisualisation> creates,
+                                         final ExplorerNode folder,
+                                         final List<DocRef> created) {
+        if (created.size() == creates.size()) {
+            wireVisualisations(messageId, actionId, creates, created);
+            return;
+        }
+        final AiCreateVisualisation create = creates.get(created.size());
+        askStroomAiClient.createVisualisation(folder, create,
+                visualisation -> {
+                    created.add(visualisation);
+                    createNextVisualisation(messageId, actionId, creates, folder, created);
+                },
+                error -> {
+                    showError(error, "Unable to create Visualisation '" + create.getName() + "'", null);
+                    if (!created.isEmpty()) {
+                        wireVisualisations(messageId, actionId, creates.subList(0, created.size()), created);
+                    }
+                },
+                getView());
+    }
+
+    // Adds several Visualisations the user has just created to the dashboard they were planned for, in one change
+    // (each chart linked to its own table), arranged as planned; then waits for each one's render report.
+    private void wireVisualisations(final int messageId,
+                                    final String actionId,
+                                    final List<AiCreateVisualisation> creates,
+                                    final List<DocRef> created) {
+        final AiCreateVisualisation first = creates.get(0);
+        final List<TableChange> changes = new ArrayList<>();
+        for (int i = 0; i < created.size(); i++) {
+            final AiCreateVisualisation create = creates.get(i);
+            final DocRef visualisation = created.get(i);
+            awaitedRenderReports.put(visualisation.getUuid(), new AwaitedReport(messageId, actionId,
+                    visualisation.getName()));
+            changes.add(TableChange.builder(TableChange.ADD_VIS)
+                    .name(create.getComponentName())
+                    .table(first.getTableId() != null && first.getTableId().equals(create.getTableId())
+                            ? null
+                            : create.getTableName())
+                    .doc(visualisation)
+                    .value(create.getComponentSettings())
+                    .placement(create.getPlacement())
+                    .build());
+        }
+        final String done = "Created " + created.size() + " Visualisations";
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                first.getTarget(),
+                first.getTableId(),
+                first.getTableName(),
+                changes,
+                first.getSnapshotHash(),
+                onResult -> onResult.accept(null),
+                () -> showUserActionStatus(messageId, actionId, "DONE",
+                        done + " and added them to the dashboard, not saved. Save the dashboard to keep them."),
+                message -> {
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, done + ", but they couldn't be added to the dashboard: "
+                                                  + message + "\nAdd each with a Visualisation pane linked to its "
+                                                  + "table.", null);
+                    }
+                },
+                dashboardUndoKey(messageId, actionId));
+        if (!event.isHandled()) {
+            AlertEvent.fireWarn(this, done + ", but the dashboard can't be opened here to add them.", null);
+        }
     }
 
     // Puts a Visualisation the user has just created in the show clause of an embedded query on the dashboard it was

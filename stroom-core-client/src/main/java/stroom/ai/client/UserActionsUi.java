@@ -48,6 +48,7 @@ final class UserActionsUi {
     /// A chart the agent planned, drawn with ECharts, which the button opens Stroom's New Visualisation dialog to
     /// create, then adds to the dashboard (or the query's show clause), unsaved.
     static final String CREATE_VISUALISATION = "create_visualisation";
+    static final String CREATE_VISUALISATIONS = "create_visualisations";
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
@@ -174,6 +175,8 @@ final class UserActionsUi {
             return "Create dashboard…";
         } else if (CREATE_VISUALISATION.equals(action)) {
             return "Create visualisation…";
+        } else if (CREATE_VISUALISATIONS.equals(action)) {
+            return "Create visualisations…";
         } else if (APPLY_CODE_CHANGE.equals(action) || APPLY_DOCUMENTATION_CHANGE.equals(action)) {
             return "Review and apply…";
         } else if (APPLY_QUERY_CHANGE.equals(action)) {
