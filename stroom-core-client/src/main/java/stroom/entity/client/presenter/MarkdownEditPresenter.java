@@ -54,8 +54,8 @@ public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
         implements HasDirtyHandlers, HasToolbar {
 
-    // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-light-theme
-    // selectivity added into to stop it conflicting with the dark theme.
+    // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-theme-light (the
+    // page's theme class) selectivity added into to stop it conflicting with the dark theme.
     private static final String MARKDOWN_FRAME_ID = "markdown-frame";
 
     private final MarkdownPreviewPresenter markdownPreviewPresenter;
