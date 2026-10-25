@@ -220,8 +220,8 @@ class FieldMappingSections {
         final StringBuilder section = new StringBuilder("Its XSLT keeps no CEF plan: this is the mapping its lines "
                                                         + "imply, each key matched to the Event value it carries in "
                                                         + "the sample, and the header as the first line has it.\n\n")
-                .append(plan.markdown(CefLines.examplesFrom(plan, stepped.lines(), given), FieldDocs.BY_EVENT_TYPE,
-                        null));
+                .append(plan.markdown(CefLines.examplesFrom(plan, stepped.lines(), given), given,
+                        FieldDocs.BY_EVENT_TYPE, null));
         final List<String> problems = (List<String>) reviewed.get("problems");
         if (!NullSafe.isEmptyCollection(problems)) {
             section.append("\n### Problems in its lines\n\n");
@@ -388,8 +388,9 @@ class FieldMappingSections {
                                   + "streams " + streamIds + " gave no CEF lines. Its stream_ids are the Events "
                                   + "streams it sends (wait_for_processing on the events pipeline lists them).");
         }
-        String section = plan.markdown(CefLines.examplesFrom(plan, stepped.lines(),
-                stepped.events().stream().filter(Objects::nonNull).toList()), layout, described);
+        final List<XmlElement> sampled = stepped.events().stream().filter(Objects::nonNull).toList();
+        String section = plan.markdown(CefLines.examplesFrom(plan, stepped.lines(), sampled), sampled, layout,
+                described);
         final Optional<String> drift = mappingDrift.planDrift(kept);
         if (drift.isPresent()) {
             section += "\nNote: " + capitalised(beforeDiffers(drift.get())) + "\n";
