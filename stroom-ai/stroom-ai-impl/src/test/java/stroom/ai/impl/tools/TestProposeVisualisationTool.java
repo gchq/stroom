@@ -452,7 +452,7 @@ class TestProposeVisualisationTool {
 
         assertThat(call(graphArgs()))
                 .startsWith("No chart was offered: ECharts isn't installed in Stroom.")
-                .contains("from an Apache ECharts release, version 5 or later.")
+                .contains("from an Apache ECharts release, version 6 or later.")
                 .contains("No other charting library is installed either.")
                 .doesNotContain("library d3");
 
@@ -461,7 +461,7 @@ class TestProposeVisualisationTool {
                 "dev-uuid", "echarts-dev")));
 
         assertThat(call(graphArgs()))
-                .contains("Script 'echarts-dev' doesn't hold an ECharts 5 or later build")
+                .contains("Script 'echarts-dev' doesn't hold an ECharts 6 or later build")
                 .contains("offer the user a D3 chart instead (library d3)");
         assertThat(takeUserActions()).isEmpty();
     }
