@@ -1089,11 +1089,10 @@ public class AskStroomAiPresenter
                 final String title = NullSafe.isBlankString(status.getTitle())
                         ? "A chat"
                         : "\u201c" + status.getTitle() + "\u201d";
-                if (status.isNeedsYou() && (was == null || !was.isNeedsYou())) {
+                if (AiChatNotices.needsYouAgain(was, status)) {
                     BrowserNotifications.show("Stroom AI needs you", title + " is waiting for your answer.",
                             "stroom-ai-" + status.getChatId());
-                } else if (status.isUnread() && !status.isBusy() && !status.isNeedsYou()
-                           && was != null && (was.isBusy() || !was.isUnread())) {
+                } else if (AiChatNotices.hasAnswered(was, status)) {
                     BrowserNotifications.show("Stroom AI has answered", title + " has finished.",
                             "stroom-ai-" + status.getChatId());
                 }

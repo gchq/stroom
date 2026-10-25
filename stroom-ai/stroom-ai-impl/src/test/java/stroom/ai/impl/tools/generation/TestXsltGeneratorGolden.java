@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +46,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// The files were made by running the server's generator (`make_golden.py` over the calls recorded while its test
 /// suite ran); they are not regenerated from the Java side.
 class TestXsltGeneratorGolden {
+
+    private static final Pattern WRITTEN_TWICE = Pattern.compile(
+            "^\\[[^\\]]*\\] '[^']*' is written as .* and as Data '");
+
 
     private static final String DIRECTORY = "/stroom/ai/impl/golden/generation";
 
@@ -70,6 +75,11 @@ class TestXsltGeneratorGolden {
                 (String) golden.get("version"), Boolean.TRUE.equals(golden.get("mark_rules")));
         final Map<String, Object> result = new LinkedHashMap<>(generated.toMap());
         result.remove("xslt");
+        // The port also warns of a field written to an element and as Data in one rule (see EventTrees'
+        // writtenTwice), which the Python server didn't.
+        result.put("warnings", generated.warnings().stream()
+                .filter(warning -> !WRITTEN_TWICE.matcher(warning).find())
+                .toList());
         // The one wording the port changes: XsltSafety (ported before) says "the tools" where the server said "the
         // server" of the functions it refuses.
         final String expected = PyJson.dumps(golden.get("result"), 1)

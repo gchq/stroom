@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.StreamReader;
@@ -52,10 +53,12 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -115,6 +118,10 @@ final class TranslationWorld {
     // The same messages, as the consent tests read them.
     final List<String> shown = asked;
     boolean forms;
+    // As in the chat: a form's first asking stops the call (the run waits for the user), and the same call, made
+    // again, gets the answer.
+    boolean waitsForUser;
+    private final Set<String> waited = new HashSet<>();
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final Map<String, String> files = new LinkedHashMap<>();
 
@@ -189,6 +196,9 @@ final class TranslationWorld {
                                             final String intro,
                                             final Map<String, Object> form) {
                         asked.add(intro);
+                        if (waitsForUser && waited.add(callId)) {
+                            throw new AiChatRunManager.WaitingForUserException("Waiting for " + callId);
+                        }
                         return answers.entrySet().stream()
                                 .filter(answer -> intro.startsWith(answer.getKey()))
                                 .findFirst()

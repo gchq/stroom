@@ -32,6 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /// What the draft mapping's tests share: the event-logging schemas, JSON written as the Python tests write it, and
 /// the Stroom MCP server's own results kept as fixtures.
 class DraftFixtures {
@@ -177,5 +179,35 @@ class DraftFixtures {
     /// @return A mutable list of them.
     static List<String> list(final String... texts) {
         return new ArrayList<>(List.of(texts));
+    }
+
+    /// Each rule's Data as the port drafts it, from what the rule's own records hold, where the Python server gave
+    /// every rule the whole rest (see DraftMapping's held): checks the port's is a subset of the Python server's,
+    /// then cuts the Python server's to it, so the rest of the draft compares as it was.
+    ///
+    /// @param port   The port's mapping.
+    /// @param python The Python server's mapping, cut.
+    @SuppressWarnings("unchecked")
+    static void asTheRulesRecordsHold(final Object port, final Object python) {
+        if (!(port instanceof final Map<?, ?> portMapping)
+            || !(python instanceof final Map<?, ?> pythonMapping)
+            || !(portMapping.get("events") instanceof final List<?> portRules)
+            || !(pythonMapping.get("events") instanceof final List<?> pythonRules)
+            || portRules.size() != pythonRules.size()) {
+            return;
+        }
+        for (int i = 0; i < portRules.size(); i++) {
+            final List<Object> portFields = (List<Object>) ((Map<String, Object>) portRules.get(i)).get("fields");
+            final List<Object> pythonFields = (List<Object>) ((Map<String, Object>) pythonRules.get(i)).get("fields");
+            if (portFields == null || pythonFields == null) {
+                continue;
+            }
+            final List<Object> portData = portFields.stream()
+                    .filter(f -> ((Map<?, ?>) f).containsKey("data_name"))
+                    .toList();
+            assertThat(pythonFields).as("rule %s's Data, as the Python server drafted it", i)
+                    .containsAll(portData);
+            pythonFields.removeIf(f -> ((Map<?, ?>) f).containsKey("data_name") && !portData.contains(f));
+        }
     }
 }

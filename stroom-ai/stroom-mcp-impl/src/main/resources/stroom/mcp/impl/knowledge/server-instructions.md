@@ -35,7 +35,10 @@ recommend first and marked as recommended, and the user's own answer allowed unl
 Without such a tool, ask in your answer: one numbered question per decision, each with what you recommend. Either
 way, where a result gives the options, their order or labels, or says to recommend none, keep to it. Ask only what
 you can't decide from the result, the standing instructions or what the user has said, and not what a form from this
-server will ask; then carry on with their answers. A request to paste something (an index template, a sample) is
+server will ask; then carry on with their answers. Ask each stage's decisions when that stage starts, not before: the indexing
+backend, cluster, index template (or the index to follow) and field naming are stage 2's, asked by its own tools
+(get_field_conventions) once `next` reaches stage 2; during stage 1 ask only what the translation needs (seen: the
+backend asked alongside the Environment, before the translation was written). A request to paste something (an index template, a sample) is
 not such a question: ask for it in your answer and end your turn. Whatever is for the user (a question, a template
 to review, a choice) goes in your answer, never only in your thinking: clients collapse thinking, and the user
 doesn't see it (seen: a question asked only there went unanswered).
