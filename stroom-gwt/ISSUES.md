@@ -1569,6 +1569,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   4 of 6, so no commit makes it; wave 4 only makes it likelier (more work as the story starts, a
   guess). `Tree` `ShowAndHide` and `WordCloud` `Keyboard` differed in the full run but not alone.
   A screenshot diff should allow it, or the tooltip be placed on whole pixels.
+* `App/Main/TopBar` `Keyboard`'s screenshot differed in a full run (found 25 October 2026, in wave
+  6): the tooltip under the top bar's menu button, beside the focused button, was drawn differently
+  (436 pixels). Unchanged alone, twice; a tooltip timing, as for `Tree` `Keyboard` above.
 * Batch Edit Schedules' `validate` (`BatchExecutionScheduleEditPresenter`) tells its caller `false`
   after every check, even after `true` (found 25 October 2026 in wave 4's audit; older). Harmless
   today, as `ExecutionScheduleManager` acts only on `true`; fix when the dialog converts.

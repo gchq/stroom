@@ -15,7 +15,7 @@
  */
 
 /*
-   A picker (stroom.widget.dropdowntree.client.view.DropDownViewImpl, the document and user
+   A picker (stroom.widget.dropdowntree.client.DropDownBox, the document and user
    pickers), named BEM style (block, block__element): a button showing the chosen value
    (drop-down__value), with the "…" icon at its end (drop-down__icon). A problem with the value is
    shown as a form shows what is wrong with a field: the picker is aria-invalid, and the message is in

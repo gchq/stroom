@@ -57,8 +57,6 @@ import stroom.editor.client.presenter.SingleLineEditorPresenter;
 import stroom.editor.client.presenter.SingleLineEditorView;
 import stroom.editor.client.view.EditorViewImpl;
 import stroom.editor.client.view.SingleLineEditorViewImpl;
-import stroom.widget.dropdowntree.client.view.DropDownView;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 
@@ -122,7 +120,6 @@ public class StreamStoreModule extends PluginModule {
 
         bind(ProcessorTaskListPresenter.class);
 
-        bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
     }
 }

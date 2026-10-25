@@ -23,13 +23,12 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DropDownViewImpl]: a label and an ellipsis button that open a popup (e.g.
+/// Stories for Stroom's [DropDownBox]: a label and an ellipsis button that open a popup (e.g.
 /// the explorer tree of a document selection box).
 public final class DropDownSelectorStories {
 
@@ -52,8 +51,8 @@ public final class DropDownSelectorStories {
                 .layout(StoryLayout.CENTERED)
                 // Basic drop-down whose label updates when "opened" (the popup is stubbed)
                 .story("Basic", context -> {
-                    final DropDownViewImpl view = view(context, "My Pipeline", false, true);
-                    return minWidth(view.asWidget());
+                    final DropDownBox box = box(context, "My Pipeline", false, true);
+                    return minWidth(box);
                 })
                 .withPlay(play -> {
                     // A button that opens a dialog, named by the value it shows
@@ -67,12 +66,12 @@ public final class DropDownSelectorStories {
                 })
                 // Disabled - non-interactive, greyed out
                 .story("Disabled", context -> {
-                    final DropDownViewImpl view = view(context, "Disabled", false, false);
-                    // As Stroom's presenters (e.g. DocSelectionBoxPresenter.setEnabled) do: the view
-                    // greys out and tells assistive technology, and the presenter ignores the view's
-                    // showPopup. It stays focusable.
-                    view.setEnabled(false);
-                    return minWidth(view.asWidget());
+                    final DropDownBox box = box(context, "Disabled", false, false);
+                    // As Stroom's controllers (e.g. DocSelectionController.setEnabled) do: the box
+                    // greys out and tells assistive technology, and the controller ignores its
+                    // requests to open. It stays focusable.
+                    box.setEnabled(false);
+                    return minWidth(box);
                 })
                 .withPlay(play -> {
                     final Query picker = play.getByRole("button", TextMatch.containing("Disabled"));
@@ -83,7 +82,7 @@ public final class DropDownSelectorStories {
                 })
                 // A problem with the value: the message under the picker (a line of its own, as it isn't
                 // in a form group), the full one its tooltip and what a screen reader reads
-                .story("Warning", context -> minWidth(view(context, "Selected item", true, true).asWidget()))
+                .story("Warning", context -> minWidth(box(context, "Selected item", true, true)))
                 .withPlay(play -> {
                     final Query picker = play.getByRole("button", TextMatch.startingWith("Selected item"));
                     play.expect(picker).toHaveAttribute("aria-invalid", "true");
@@ -95,24 +94,23 @@ public final class DropDownSelectorStories {
                 });
     }
 
-    private static DropDownViewImpl view(final StoryContext context,
-                                         final String text,
-                                         final boolean hasWarning,
-                                         final boolean enabled) {
-        final DropDownViewImpl view = new DropDownViewImpl();
-        view.setText(text);
+    private static DropDownBox box(final StoryContext context,
+                                   final String text,
+                                   final boolean hasWarning,
+                                   final boolean enabled) {
+        final DropDownBox box = new DropDownBox();
+        box.setText(text);
         if (hasWarning) {
-            view.setProblem(PROBLEM, FULL_PROBLEM);
+            box.setProblem(PROBLEM, FULL_PROBLEM);
         }
         final Spy onOpen = context.fn(ON_OPEN);
-        final DropDownUiHandlers handlers = () -> {
+        box.setOnOpen(() -> {
             if (enabled) {
                 onOpen.call();
-                view.setText("(popup would open)");
+                box.setText("(popup would open)");
             }
-        };
-        view.setUiHandlers(handlers);
-        return view;
+        });
+        return box;
     }
 
     /// Equivalent of `<div style={{minWidth: 240}}>`.

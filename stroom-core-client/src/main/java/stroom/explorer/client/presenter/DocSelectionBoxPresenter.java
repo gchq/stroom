@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.security.shared.DocumentPermission;
-import stroom.widget.dropdowntree.client.view.DropDownView;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 /// [DocSelectionController] attached to the view's picker, which it owns. A screen split into a
 /// component and a controller declares the picker (`DropDownBox`) in its template and attaches a
 /// [DocSelectionController] itself.
-public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView> implements Focus {
+public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownBox> implements Focus {
 
     /// Shown when no document is chosen.
     public static final String NONE_DISPLAY_VALUE = DocSelectionController.NONE_DISPLAY_VALUE;
@@ -46,14 +46,14 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView> im
 
     @Inject
     public DocSelectionBoxPresenter(final EventBus eventBus,
-                                    final DropDownView view,
+                                    final DropDownBox view,
                                     final ExplorerPopupPresenter explorerPopupPresenter,
                                     final RestFactory restFactory) {
         super(eventBus, view);
         controller = own(new DocSelectionController(eventBus, explorerPopupPresenter, restFactory));
         // This presenter's own task monitor, if it is given one, else its owner's
         controller.setTaskMonitorFactory(this);
-        controller.attach(view.getBox());
+        controller.attach(view);
     }
 
     @Override

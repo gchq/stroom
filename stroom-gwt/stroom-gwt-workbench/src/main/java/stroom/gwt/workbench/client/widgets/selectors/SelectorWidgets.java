@@ -25,7 +25,7 @@ import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -71,7 +71,7 @@ public final class SelectorWidgets {
     }
 
     /// Creates a document selection box: Stroom's [DocSelectionBoxPresenter] with its
-    /// `DropDownViewImpl` and explorer popup.
+    /// `DropDownBox` and explorer popup.
     ///
     /// @param harness The story's harness.
     /// @return The presenter.
@@ -88,13 +88,13 @@ public final class SelectorWidgets {
     public static DocSelectionBoxPresenter docSelectionBox(final ScreenHarness harness,
                                                            final ExplorerPopupPresenter popup) {
         return new DocSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownViewImpl(),
+                new DropDownBox(),
                 popup,
                 harness.getRestFactory());
     }
 
     /// Creates a user selection box: Stroom's [UserRefSelectionBoxPresenter] with its
-    /// `DropDownViewImpl` and a [UserRefSelectionController] with its user popup.
+    /// `DropDownBox` and a [UserRefSelectionController] with its user popup.
     ///
     /// @param harness The story's harness.
     /// @return The presenter.
@@ -106,7 +106,7 @@ public final class SelectorWidgets {
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness));
         return new UserRefSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownViewImpl(),
+                new DropDownBox(),
                 new UserRefSelectionController(popup));
     }
 

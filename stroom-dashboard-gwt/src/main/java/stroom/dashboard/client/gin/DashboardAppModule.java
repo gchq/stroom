@@ -61,8 +61,6 @@ import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.dropdowntree.client.view.DropDownView;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -96,7 +94,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 FullScreenView.class,
                 FullScreenViewImpl.class);
 
-        bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
 

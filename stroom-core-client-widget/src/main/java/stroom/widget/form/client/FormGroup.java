@@ -478,7 +478,7 @@ public class FormGroup extends Composite implements HasWidgets {
         return FORM_CONTROL_TAGS.contains(element.getTagName().toLowerCase(Locale.ROOT));
     }
 
-    // A control that opens a dialog to choose a value, e.g. a document picker (DropDownViewImpl)
+    // A control that opens a dialog to choose a value, e.g. a document picker (DropDownBox)
     private static boolean isPicker(final Element element) {
         return BUTTON_ROLE.equals(element.getAttribute(ROLE))
                && !NullSafe.isBlankString(element.getAttribute(ARIA_HAS_POPUP));

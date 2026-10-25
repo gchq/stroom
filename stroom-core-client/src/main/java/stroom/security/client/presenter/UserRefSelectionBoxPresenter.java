@@ -19,7 +19,7 @@ package stroom.security.client.presenter;
 import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
-import stroom.widget.dropdowntree.client.view.DropDownView;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -33,16 +33,16 @@ import java.util.function.Consumer;
 /// [UserRefSelectionController] attached to the view's picker, which it owns. A screen split into a
 /// component and a controller declares the picker (`DropDownBox`) in its template and attaches a
 /// [UserRefSelectionController] itself.
-public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView> implements Focus {
+public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownBox> implements Focus {
 
     private final UserRefSelectionController controller;
 
     @Inject
     public UserRefSelectionBoxPresenter(final EventBus eventBus,
-                                        final DropDownView view,
+                                        final DropDownBox view,
                                         final UserRefSelectionController controller) {
         super(eventBus, view);
-        this.controller = own(controller).attach(view.getBox());
+        this.controller = own(controller).attach(view);
     }
 
     @Override

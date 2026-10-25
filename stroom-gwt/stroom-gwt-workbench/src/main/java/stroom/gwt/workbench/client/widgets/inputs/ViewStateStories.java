@@ -53,7 +53,7 @@ import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
@@ -156,8 +156,8 @@ public final class ViewStateStories {
                         w -> selectionBoxOf(w).setEnabled(false)),
                 new Row("Tick box", ViewStateStories::tickBox, w -> ((TickBox) w).setReadOnly(true),
                         w -> ((TickBox) w).setEnabled(false)),
-                new Row("Document picker", PickerField::new, w -> ((PickerField) w).view.setReadOnly(true),
-                        w -> ((PickerField) w).view.setEnabled(false)),
+                new Row("Document picker", PickerField::new, w -> ((PickerField) w).box.setReadOnly(true),
+                        w -> ((PickerField) w).box.setEnabled(false)),
                 new Row("Date and time", () -> dateTimeBox(harness), w -> ((DateTimeBox) w).setReadOnly(true),
                         w -> ((DateTimeBox) w).setEnabled(false)),
                 new Row("Time", ViewStateStories::timeBox, w -> ((TimeBox) w).setReadOnly(true),
@@ -533,14 +533,14 @@ public final class ViewStateStories {
     // --------------------------------------------------------------------------------
 
 
-    // A document picker's view (as DocSelectionBoxPresenter uses it), as a widget
+    // A document picker (as DocSelectionBoxPresenter shows it), as a widget
     private static final class PickerField extends Composite {
 
-        private final DropDownViewImpl view = new DropDownViewImpl();
+        private final DropDownBox box = new DropDownBox();
 
         private PickerField() {
-            view.setText("My Pipeline");
-            initWidget(view.asWidget());
+            box.setText("My Pipeline");
+            initWidget(box);
         }
     }
 
