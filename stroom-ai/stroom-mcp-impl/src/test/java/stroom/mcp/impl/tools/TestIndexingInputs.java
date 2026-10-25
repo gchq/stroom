@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.StreamSummaries;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -39,5 +41,14 @@ class TestIndexingInputs {
         // The drafting's population is left as it was.
         assertThat(IndexingInputs.population(summary)).containsOnlyKeys("EventDetail/View/Data/@Value");
         assertThat(IndexingInputs.populationWithDataNames(Map.of())).isEmpty();
+    }
+
+    @Test
+    void theTypeIdsOfEachActionElementAreRead() {
+        final Map<String, Object> summary = Map.of(StreamSummaries.TYPE_IDS_BY_ACTION,
+                Map.of("View", Map.of("Secret-View", 9.2)));
+
+        assertThat(IndexingInputs.byAction(summary).typeIds()).isEqualTo(Map.of("View", Map.of("Secret-View", 9.2)));
+        assertThat(IndexingInputs.byAction(Map.of()).typeIds()).isEmpty();
     }
 }

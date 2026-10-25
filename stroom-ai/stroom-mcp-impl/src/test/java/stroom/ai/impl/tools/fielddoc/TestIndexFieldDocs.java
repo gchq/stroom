@@ -334,10 +334,18 @@ class TestIndexFieldDocs {
         byAction.put("View", Map.of("EventTime/TimeCreated", 40.0, "EventSource/Device/HostName", 40.0,
                 "EventSource/Client/IPAddress", 10.0, "EventSource/User/Id", 40.0, "EventDetail/TypeId", 40.0));
 
-        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, byAction, null, null,
-                FieldDocs.BY_EVENT_TYPE, null);
+        final Map<String, Map<String, Double>> typeIds = new LinkedHashMap<>();
+        typeIds.put("Authenticate", Map.of("User-Login", 40.0, "User-Logout", 20.0));
+        typeIds.put("View", Map.of("Secret-View", 40.0));
+        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population,
+                new IndexFieldDocs.ByAction(byAction, typeIds), null, null, FieldDocs.BY_EVENT_TYPE, null);
 
         assertThat(commonFields(text)).containsExactly("StreamId", "@timestamp", "host.name", "event.code");
+        // Which kinds of event each section is, by TypeId, most first (seen: nothing said a section was
+        // Secret-View's).
+        assertThat(text.split("#### Authenticate")[1].split("\n\n\\| Index field")[0])
+                .contains("TypeIds: `User-Login` (40%), `User-Logout` (20%).");
+        assertThat(text).contains("#### View\n\nTypeIds: `Secret-View` (40%).");
         // Each one's source in every event, or the server's own id.
         final Map<String, String> sources = new LinkedHashMap<>();
         plan.fields().forEach(field -> sources.put(field.name(), field.source()));
@@ -377,7 +385,8 @@ class TestIndexFieldDocs {
                     List.of("2026-10-01T10:00:00.000Z")));
 
             final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, Map.of("EventTime/TimeCreated", 100.0),
-                    Map.of(), documents, Map.of("user.target.name", List.of("Patel, Priya", "Lee, Sam")), null,
+                    new IndexFieldDocs.ByAction(Map.of(), Map.of()), documents, Map.of("user.target.name",
+                            List.of("Patel, Priya", "Lee, Sam")), null,
                     FieldDocs.BY_EVENT_TYPE, null);
 
             assertThat(text.split("### Not in the sample")[1]).as(backend)
@@ -417,8 +426,8 @@ class TestIndexFieldDocs {
         byAction.put("View", Map.of("EventDetail/View/Data[@Name='secret_id']/@Value", 40.0,
                 "EventSource/Client/IPAddress", 15.0));
 
-        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, byAction, null, null,
-                FieldDocs.BY_EVENT_TYPE, null);
+        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population,
+                new IndexFieldDocs.ByAction(byAction, Map.of()), null, null, FieldDocs.BY_EVENT_TYPE, null);
 
         assertThat(text.lines().filter(line -> line.strip().equals("####"))).isEmpty();
         // Only what every event has is common.
