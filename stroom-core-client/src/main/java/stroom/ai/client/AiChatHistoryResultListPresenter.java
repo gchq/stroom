@@ -110,7 +110,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
 
         // A striped list of a page of results, the one with the focus chosen; Enter, or a double
         // click, opens it, and Up on the first goes back to the filter
-        resultList = FindResultLists.create(this,
+        resultList = FindResultLists.create(
                 "Chats",
                 new AiChatCell(dateTimeFormatter),
                 selectionModel,

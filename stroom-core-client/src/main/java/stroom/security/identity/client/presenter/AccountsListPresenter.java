@@ -93,7 +93,7 @@ public class AccountsListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
-        this.dataGrid = new DataGrid<>(this, 1000);
+        this.dataGrid = new DataGrid<>(1000);
         // Rows keyed by id, so a row whose values change is still the same row
         this.dataGrid.setKeyProvider(Account::getId);
         this.dataGrid.setTableName("Accounts");

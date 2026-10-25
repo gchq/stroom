@@ -16,7 +16,9 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.DomRequests;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -38,17 +40,20 @@ public final class MenuRequest {
     private final PopupPosition popupPosition;
     private final Element opener;
     private final boolean allowCloseOnMoveLeft;
+    private final HidePopupEvent.Handler onHide;
 
     private MenuRequest(final String name,
                         final List<Item> items,
                         final PopupPosition popupPosition,
                         final Element opener,
-                        final boolean allowCloseOnMoveLeft) {
+                        final boolean allowCloseOnMoveLeft,
+                        final HidePopupEvent.Handler onHide) {
         this.name = name;
         this.items = items;
         this.popupPosition = popupPosition;
         this.opener = opener;
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
+        this.onHide = onHide;
     }
 
     /// Asks for a menu to be shown.
@@ -61,7 +66,23 @@ public final class MenuRequest {
                             final String name,
                             final List<Item> items,
                             final PopupPosition popupPosition) {
-        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition, null, false));
+        fire(source, name, items, popupPosition, null);
+    }
+
+    /// Asks for a menu to be shown, as [#fire(Element, String, List, PopupPosition)] does, and to be
+    /// told when it closes, e.g. to put back a field's selection that opening it changed.
+    ///
+    /// @param source        The element the menu is for, which the request bubbles up from.
+    /// @param name          The menu's accessible name, or null for none.
+    /// @param items         The menu's items.
+    /// @param popupPosition Where the menu is shown, e.g. at the pointer.
+    /// @param onHide        What is told when the menu closes, or null for nothing.
+    public static void fire(final Element source,
+                            final String name,
+                            final List<Item> items,
+                            final PopupPosition popupPosition,
+                            final HidePopupEvent.Handler onHide) {
+        DomRequests.send(source, EVENT, new MenuRequest(name, items, popupPosition, null, false, onHide));
     }
 
     /// Asks for a menu to be shown, opened by a button (see [ShowMenuEvent.Builder#opener]), which the
@@ -93,7 +114,9 @@ public final class MenuRequest {
                                       final List<Item> items,
                                       final PopupPosition popupPosition,
                                       final boolean allowCloseOnMoveLeft) {
-        dispatch(opener, EVENT, new MenuRequest(name, items, popupPosition, opener, allowCloseOnMoveLeft));
+        DomRequests.send(opener,
+                EVENT,
+                new MenuRequest(name, items, popupPosition, opener, allowCloseOnMoveLeft, null));
     }
 
     /// Shows the menus that widgets on the page ask for, by firing a [ShowMenuEvent] for each.
@@ -102,8 +125,7 @@ public final class MenuRequest {
     ///                 `fireEvent`.
     /// @return The registration that stops the relay.
     public static HandlerRegistration relay(final HasHandlers handlers) {
-        final Object listener = listen(EVENT, handlers);
-        return () -> unlisten(EVENT, listener);
+        return DomRequests.<MenuRequest>receive(EVENT, request -> show(request, handlers));
     }
 
     private static void show(final MenuRequest request, final HasHandlers handlers) {
@@ -115,22 +137,9 @@ public final class MenuRequest {
         if (request.opener != null) {
             builder.opener(request.opener);
         }
+        if (request.onHide != null) {
+            builder.onHide(request.onHide);
+        }
         builder.fire(handlers);
     }
-
-    private static native void dispatch(Element source, String type, MenuRequest request) /*-{
-        source.dispatchEvent(new CustomEvent(type, {bubbles: true, detail: request}));
-    }-*/;
-
-    private static native Object listen(String type, HasHandlers handlers) /*-{
-        var listener = $entry(function (event) {
-            @stroom.widget.menu.client.presenter.MenuRequest::show(*)(event.detail, handlers);
-        });
-        $doc.addEventListener(type, listener);
-        return listener;
-    }-*/;
-
-    private static native void unlisten(String type, Object listener) /*-{
-        $doc.removeEventListener(type, listener);
-    }-*/;
 }

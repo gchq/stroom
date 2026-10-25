@@ -40,7 +40,6 @@ import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
@@ -105,7 +104,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     };
 
     public SelectionList() {
-        cellTable = new DataGrid<>(new SimpleEventBus(), 100);
+        cellTable = new DataGrid<>(100);
         cellTable.setProfile(DataGridProfile.LISTBOX);
         // An option with no text (e.g. the blank one that clears a value) is named None
         cellTable.setRowName(item -> NullSafe.isBlankString(item.getLabel())

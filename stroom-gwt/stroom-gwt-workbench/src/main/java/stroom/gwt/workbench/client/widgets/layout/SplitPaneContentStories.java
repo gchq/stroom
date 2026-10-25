@@ -202,7 +202,7 @@ public final class SplitPaneContentStories {
                 // the pane either side of it, or restores them, so a pane can be resized without
                 // dragging (WCAG 2.5.7); Alt+M is hinted on the item it would do
                 .story("SplitterMenu", context -> {
-                    StoryPopups.create(context).withMenuRequests();
+                    StoryPopups.create(context).withPageRequests();
                     final SplitPane pane = thin("300px, *", "Properties, Content");
                     pane.add(SplitPaneContent.block("Properties", "properties", true));
                     pane.add(SplitPaneContent.block("Content", "content", false));

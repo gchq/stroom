@@ -133,7 +133,7 @@ public class ExecutionScheduleManager
         this.expressionValidator = expressionValidator;
 
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Execution Schedules");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager

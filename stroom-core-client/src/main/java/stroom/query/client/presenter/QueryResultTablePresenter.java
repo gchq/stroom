@@ -190,7 +190,7 @@ public class QueryResultTablePresenter
         annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Query Results");
         // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
         dataGrid.setVirtual(true);

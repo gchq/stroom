@@ -233,7 +233,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(this);
         annotationManager.setTaskMonitorFactory(this);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
         dataGrid.setVirtual(true);
         dataGrid.addStyleName("TablePresenter");

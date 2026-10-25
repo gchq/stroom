@@ -19,7 +19,6 @@ package stroom.widget.datagrid.client;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
 import java.util.function.Consumer;
@@ -40,7 +39,6 @@ public final class FindResultLists {
 
     /// Makes a list of results.
     ///
-    /// @param eventBus       The application event bus.
     /// @param name           The list's name, for assistive technology, e.g. "Documents found".
     /// @param cell           Draws a result.
     /// @param selectionModel The selection model: the result with the focus is chosen.
@@ -48,13 +46,12 @@ public final class FindResultLists {
     /// @param onUpFromFirst  What Up on the first result does, e.g. focusing the filter, or null.
     /// @param <T>            The type of a result.
     /// @return The list.
-    public static <T> DataGrid<T> create(final HasHandlers eventBus,
-                                               final String name,
-                                               final Cell<T> cell,
-                                               final MultiSelectionModelImpl<T> selectionModel,
-                                               final Consumer<T> onOpen,
-                                               final Runnable onUpFromFirst) {
-        final DataGrid<T> list = new DataGrid<>(eventBus, PAGE_SIZE);
+    public static <T> DataGrid<T> create(final String name,
+                                         final Cell<T> cell,
+                                         final MultiSelectionModelImpl<T> selectionModel,
+                                         final Consumer<T> onOpen,
+                                         final Runnable onUpFromFirst) {
+        final DataGrid<T> list = new DataGrid<>(PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(name);
         list.setStriped(true);

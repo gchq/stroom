@@ -114,7 +114,7 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        dataGrid = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         dataGrid.setTableName("Import Items");
         // An import can hold many thousands of items, all on one page: draw only those in view
         dataGrid.setVirtual(true);

@@ -75,7 +75,7 @@ public class ScheduledProcessHistoryListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         request = ExecutionHistoryRequest.builder().build();
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Scheduled Process History");
         dataGrid.setMultiLine(true);
         selectionModel = new MultiSelectionModelImpl<>();

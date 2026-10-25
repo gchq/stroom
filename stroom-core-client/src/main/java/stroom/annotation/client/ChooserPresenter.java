@@ -66,7 +66,7 @@ public class ChooserPresenter<T>
         // A list of values to choose from: moving through it chooses nothing; a click, Enter or Space
         // chooses a value, which the caller acts on (and closes the chooser), even the one chosen
         // already. Escape goes on to the popup, which closes
-        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         // As high as its values, up to the chooser's height (its max-height), then scrolling
         list.setFitContent(true);

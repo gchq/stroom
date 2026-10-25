@@ -95,7 +95,7 @@ public class ProcessorTaskListPresenter
         own(tooltipPresenter);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Processor Tasks");
         view.setDataWidget(dataGrid);
 

@@ -61,7 +61,7 @@ public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortc
     public KeyboardShortcutsPresenter(final EventBus eventBus,
                                       final KeyboardShortcutsView view) {
         super(eventBus, view);
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName(CAPTION);
         dataGrid.addDefaultSelectionModel(false);
         dataGrid.addResizableColumn(

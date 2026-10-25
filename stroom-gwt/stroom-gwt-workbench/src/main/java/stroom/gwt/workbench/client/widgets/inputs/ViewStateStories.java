@@ -62,7 +62,6 @@ import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -302,7 +301,7 @@ public final class ViewStateStories {
     // A grid of jobs: enabled, name, maximum tasks and an action, editable or as read-only screens
     // draw it (a borderless tick, a plain number and a disabled action)
     private static Widget grid(final ScreenHarness harness, final boolean editable) {
-        final DataGrid<Job> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Job> grid = new DataGrid<>();
         grid.addColumn(DataGridUtil.updatableTickBoxColumnBuilder(
                                 TickBoxState.createTickBoxFunc(Job::isEnabled), editable)
                         .enabledWhen(Job::isEnabled)

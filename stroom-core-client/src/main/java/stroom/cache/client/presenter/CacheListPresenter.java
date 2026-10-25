@@ -77,7 +77,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
 
-        final DataGrid<CacheIdentity> dataGrid = new DataGrid<>(this);
+        final DataGrid<CacheIdentity> dataGrid = new DataGrid<>();
         // Rows keyed by name, so a row whose values change is still the same row
         dataGrid.setKeyProvider(CacheIdentity::getCacheName);
         dataGrid.setTableName("Caches");

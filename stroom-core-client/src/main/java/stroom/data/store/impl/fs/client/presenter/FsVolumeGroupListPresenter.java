@@ -56,7 +56,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                       final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(row -> row.getGroup().getId());
         dataGrid.setTableName("FS Volume Groups");

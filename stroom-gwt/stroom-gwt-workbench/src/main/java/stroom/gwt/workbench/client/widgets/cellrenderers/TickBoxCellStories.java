@@ -28,7 +28,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -133,7 +132,7 @@ public final class TickBoxCellStories {
     private static Widget grid(final StoryContext context, final boolean updatable, final String... ticked) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Set<String> selected = new LinkedHashSet<>(List.of(ticked));
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
 

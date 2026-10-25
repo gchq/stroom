@@ -17,7 +17,10 @@
 package stroom.widget.datagrid.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.OpenHyperlinkRequest;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
@@ -42,7 +45,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -106,8 +108,6 @@ public class DataGrid<R> extends Widget
 
     /// The page size for grids that show a very large list on one page.
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
-
-    private final HasHandlers globalEventBus;
 
     // The column model holds sizing; headers and wrapping are kept alongside it by column.
     private final ColumnModel<Column<R, ?>> columnModel = new ColumnModel<>();
@@ -199,6 +199,8 @@ public class DataGrid<R> extends Widget
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
     private boolean hasContextMenu = true;
+    // How many handle the grid's links (addHyperlinkHandler)
+    private int hyperlinkHandlerCount;
     private String tableName;
     private String emptyMessage;
 
@@ -215,19 +217,18 @@ public class DataGrid<R> extends Widget
     // Listeners added outside GWT's event system.
     private final List<JavaScriptObject> nativeListeners = new ArrayList<>();
 
-    /// Create a grid with the default page size.
-    ///
-    /// @param globalEventBus The application event bus.
-    public DataGrid(final HasHandlers globalEventBus) {
-        this(globalEventBus, DEFAULT_LIST_PAGE_SIZE);
+    /// Create a grid with the default page size, e.g. one a template declares. What it asks of the
+    /// app (its context menu, a link from it, asking Stroom AI about it) goes up the page as
+    /// requests (`MenuRequest`, `OpenHyperlinkRequest`, `AskStroomAiTableRequest`) to the page's
+    /// relays.
+    public DataGrid() {
+        this(DEFAULT_LIST_PAGE_SIZE);
     }
 
     /// Create a grid.
     ///
-    /// @param globalEventBus The application event bus.
-    /// @param pageSize       The page size.
-    public DataGrid(final HasHandlers globalEventBus, final int pageSize) {
-        this.globalEventBus = globalEventBus;
+    /// @param pageSize The page size.
+    public DataGrid(final int pageSize) {
         this.pageState = new PageState<>(pageSize);
         this.sortList = new ColumnSortList(() -> {
             headersDirty = true;
@@ -1184,12 +1185,25 @@ public class DataGrid<R> extends Widget
     /// @param handler The handler.
     /// @return The registration.
     public HandlerRegistration addHyperlinkHandler(final HyperlinkEvent.Handler handler) {
-        return addHandler(handler, HyperlinkEvent.getType());
+        final HandlerRegistration registration = addHandler(handler, HyperlinkEvent.getType());
+        hyperlinkHandlerCount++;
+        return () -> {
+            registration.removeHandler();
+            hyperlinkHandlerCount--;
+        };
     }
 
-    /// @return The application event bus passed to the constructor.
-    public HasHandlers getGlobalEventBus() {
-        return globalEventBus;
+    /// Opens a link from a cell, e.g. from the context menu: as a click on it does, with the
+    /// grid's [HyperlinkEvent] if something handles it (a dashboard's table, which adds the
+    /// dashboard it is in), else with an [OpenHyperlinkRequest] for the app to open it.
+    ///
+    /// @param hyperlink The link.
+    void followHyperlink(final Hyperlink hyperlink) {
+        if (hyperlinkHandlerCount > 0) {
+            HyperlinkEvent.fire(this, hyperlink, new DefaultTaskMonitorFactory(this));
+        } else {
+            OpenHyperlinkRequest.fire(getElement(), hyperlink);
+        }
     }
 
     // --------------------------------------------------------------------------------

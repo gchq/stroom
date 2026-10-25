@@ -108,7 +108,7 @@ public class PipelineReferenceListPresenter
         super(eventBus, view);
         this.refCells = own(refCells);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Pipeline References");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

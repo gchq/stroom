@@ -70,7 +70,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

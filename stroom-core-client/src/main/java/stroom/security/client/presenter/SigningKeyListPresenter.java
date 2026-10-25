@@ -63,7 +63,7 @@ public class SigningKeyListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         this.dataGrid.setKeyProvider(SigningKeyRow::getId);
         this.dataGrid.setTableName("Signing Keys");

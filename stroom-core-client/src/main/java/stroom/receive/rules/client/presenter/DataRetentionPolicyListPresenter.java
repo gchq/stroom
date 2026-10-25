@@ -66,7 +66,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                                             final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by rule number (their position): a tick rebuilds them
         dataGrid.setKeyProvider(DataRetentionRule::getRuleNumber);
         dataGrid.setTableName("Data Retention Rules");

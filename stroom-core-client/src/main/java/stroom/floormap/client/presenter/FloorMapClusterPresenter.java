@@ -116,7 +116,7 @@ public class FloorMapClusterPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Cluster Members");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapClusterMember::getId);

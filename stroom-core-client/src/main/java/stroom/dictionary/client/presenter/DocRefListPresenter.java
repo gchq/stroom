@@ -44,7 +44,7 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
                                final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Document References");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

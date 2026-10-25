@@ -105,7 +105,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
 
-        tree = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        tree = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         tree.setProfile(DataGridProfile.TREE);
         // The explorer's cells draw their own padding; a long name scrolls the tree sideways
         tree.setCellPadding(false);

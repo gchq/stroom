@@ -82,7 +82,7 @@ public class ConstraintListPresenter
 //        view.setDataView(pagerView);
 //        view.setUiHandlers(this);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by name, unique, so an edited row is still the same row
         dataGrid.setKeyProvider(Constraint::getName);
         dataGrid.setTableName("Constraints");

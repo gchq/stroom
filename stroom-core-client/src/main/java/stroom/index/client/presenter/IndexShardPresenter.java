@@ -102,7 +102,7 @@ public class IndexShardPresenter
         super(eventBus, view);
         own(tooltipPresenter);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so the keyboard row survives a refresh
         dataGrid.setKeyProvider(IndexShard::getId);
         dataGrid.setTableName("Index Shards");

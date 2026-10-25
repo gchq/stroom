@@ -106,7 +106,7 @@ public class PropertyListPresenter
         super(eventBus, view);
         this.refCells = own(refCells);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by element and property name: an edit replaces the row
         dataGrid.setKeyProvider(property -> property.getElement() + ":" + property.getName());
         dataGrid.setTableName("Pipeline Properties");

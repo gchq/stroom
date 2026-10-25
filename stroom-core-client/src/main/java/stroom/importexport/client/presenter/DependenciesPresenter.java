@@ -93,7 +93,7 @@ public class DependenciesPresenter
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this, 100);
+        dataGrid = new DataGrid<>(100);
         // Rows keyed by the documents they link
         dataGrid.setKeyProvider(row -> NullSafe.get(row.getFrom(), DocRef::getUuid)
                                        + ">"

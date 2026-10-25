@@ -62,7 +62,7 @@ public class ProfilePeriodListPresenter
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by uuid: an edit replaces the row
         dataGrid.setKeyProvider(ProfilePeriod::getUuid);
         dataGrid.setTableName("Profile Periods");

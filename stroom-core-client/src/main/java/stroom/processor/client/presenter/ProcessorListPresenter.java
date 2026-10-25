@@ -116,7 +116,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         this.refCells = own(refCells);
         own(tooltipPresenter);
 
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Processors");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -33,7 +33,6 @@ import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -120,7 +119,7 @@ public final class InfoPopoverCellStories {
                 tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition, anchor);
             }
         };
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>();
         grid.setFitContent(true);
         grid.setFitWidth(true);
         grid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

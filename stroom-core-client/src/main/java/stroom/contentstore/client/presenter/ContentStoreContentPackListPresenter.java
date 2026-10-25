@@ -78,7 +78,7 @@ public class ContentStoreContentPackListPresenter
                                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         // Rows keyed by their pack: each fetch brings new rows
         this.dataGrid.setKeyProvider(ContentStoreContentPackWithDynamicState::getContentPack);
         this.dataGrid.setTableName("Content Packs");

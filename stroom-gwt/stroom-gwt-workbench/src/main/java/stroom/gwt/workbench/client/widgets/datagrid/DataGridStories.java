@@ -42,7 +42,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
@@ -272,6 +271,13 @@ public final class DataGridStories {
                 // Right-click a row: the grid's own menu (Copy, Export Table, Ask Stroom AI About)
                 .story("ContextMenu", ColumnInteractionGrids::contextMenu)
                 .withPlay(ColumnInteractionGrids::contextMenuPlay)
+                // A link's menu items go where a click on it goes: to what handles the grid's links
+                // (as a dashboard's table, which adds its dashboard; they skipped it, so a dashboard
+                // opened from the menu had no parent), or, with nothing handling them, to the app
+                .story("LinkMenuThroughTheGrid", context -> ColumnInteractionGrids.linkMenuGrid(context, true))
+                .withPlay(play -> ColumnInteractionGrids.linkMenuPlay(play, true))
+                .story("LinkMenuToTheApp", context -> ColumnInteractionGrids.linkMenuGrid(context, false))
+                .withPlay(play -> ColumnInteractionGrids.linkMenuPlay(play, false))
 
                 // Row height and virtualisation
 
@@ -683,7 +689,7 @@ public final class DataGridStories {
     }
 
     private static Widget pager(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), PAGER_PAGE_SIZE);
+        final DataGrid<Person> grid = new DataGrid<>(PAGER_PAGE_SIZE);
         grid.setWidth("100%");
         grid.setHeight("100%");
         addPlainColumns(grid);
@@ -697,8 +703,7 @@ public final class DataGridStories {
     }
 
     private static Widget manyRows(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(),
-                DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        final DataGrid<Person> grid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
@@ -820,7 +825,7 @@ public final class DataGridStories {
     }
 
     private static Widget toggleKeepsPosition(final StoryContext context) {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), TOGGLE_ROWS);
+        final DataGrid<Person> grid = new DataGrid<>(TOGGLE_ROWS);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
@@ -848,7 +853,7 @@ public final class DataGridStories {
     }
 
     private static Widget percentColumns(final StoryContext context) {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addPercentColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", 25);
@@ -864,7 +869,7 @@ public final class DataGridStories {
     // Grids and columns
 
     private static DataGrid<Person> personGrid() {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         return grid;
@@ -958,7 +963,7 @@ public final class DataGridStories {
     /// The notes grid: Name fixed at 300, then Value and Description filling 30/70 with a minimum
     /// of 200, as `PropertyListPresenter`'s.
     private static DataGrid<Note> noteGrid(final boolean multiLine) {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", NOTE_COLUMN_WIDTH);
@@ -972,7 +977,7 @@ public final class DataGridStories {
     }
 
     private static DataGrid<Note> noteGridWithoutFill() {
-        final DataGrid<Note> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Note::getName).build(), "Name", NOTE_COLUMN_WIDTH);

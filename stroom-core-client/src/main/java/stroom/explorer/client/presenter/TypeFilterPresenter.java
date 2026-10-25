@@ -78,7 +78,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         // arrows move, and Space, Enter or a press ticks or unticks the type with the focus, Ctrl+A
         // all of them. As wide as its longest type and as high as its types, up to the popup's
         // size, then scrolling. Escape goes on to the popup, which closes
-        list = new DataGrid<>(this, DataGrid.DEFAULT_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.DEFAULT_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Document types");
         list.setFitContent(true);

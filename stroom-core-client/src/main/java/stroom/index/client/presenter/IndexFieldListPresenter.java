@@ -94,7 +94,7 @@ public class IndexFieldListPresenter
         view.setUiHandlers(this);
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by name, unique in an index
         dataGrid.setKeyProvider(IndexFieldImpl::getFldName);
         dataGrid.setTableName("Index Fields");

@@ -57,7 +57,7 @@ public class StatisticsCustomMaskListPresenter
                                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Statistics Custom Masks");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

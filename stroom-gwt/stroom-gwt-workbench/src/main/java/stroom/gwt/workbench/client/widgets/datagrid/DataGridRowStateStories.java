@@ -38,7 +38,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -172,7 +171,7 @@ public final class DataGridRowStateStories {
 
     // The grid, with a row for each state, put in their states once drawn
     private static Widget newGrid(final Section section) {
-        final DataGrid<RowState> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<RowState> grid = new DataGrid<>();
         grid.setAccessibleName(section.title + ", new");
         addColumns(grid::addResizableColumn, grid::addColumn, grid::addColumn);
         final MultiSelectionModelImpl<RowState> selectionModel = grid.addDefaultSelectionModel(true);

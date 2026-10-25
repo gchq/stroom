@@ -20,7 +20,6 @@ import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Value;
-import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
@@ -29,7 +28,6 @@ import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
@@ -423,7 +421,7 @@ public final class BehaviourStories {
 
     private static final class NewGrid implements GridAdapter {
 
-        private final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), ROWS);
+        private final DataGrid<Person> grid = new DataGrid<>(ROWS);
 
         private NewGrid(final boolean virtual, final boolean padded) {
             grid.setWidth("100%");

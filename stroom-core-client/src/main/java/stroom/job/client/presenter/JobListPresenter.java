@@ -66,7 +66,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        final DataGrid<JobWrapper> dataGrid = new DataGrid<>(this);
+        final DataGrid<JobWrapper> dataGrid = new DataGrid<>();
         dataGrid.setTableName("Jobs");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

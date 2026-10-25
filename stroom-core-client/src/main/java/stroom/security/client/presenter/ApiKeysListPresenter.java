@@ -109,7 +109,7 @@ public class ApiKeysListPresenter
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;
         this.pagerView = pagerView;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("API Keys");
         // A tick or refresh brings new rows (their equals compares every field), so keep the row by its id
         this.dataGrid.setKeyProvider(HashedApiKey::getId);

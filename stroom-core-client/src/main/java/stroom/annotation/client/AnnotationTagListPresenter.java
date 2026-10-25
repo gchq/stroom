@@ -58,7 +58,7 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Annotation Tags");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

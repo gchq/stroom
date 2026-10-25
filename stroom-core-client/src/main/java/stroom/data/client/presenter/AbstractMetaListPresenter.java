@@ -23,9 +23,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
 import stroom.data.client.component.RefCellsController;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -143,7 +140,7 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Streams");
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);

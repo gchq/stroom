@@ -47,7 +47,7 @@ public class SelectionHandlerListPresenter
                                          final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ComponentSelectionHandler::getId);
         dataGrid.setTableName("Selection Handlers");

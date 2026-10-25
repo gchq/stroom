@@ -51,7 +51,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> {
                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ConditionalFormattingRule::getId);
         dataGrid.setTableName("Conditional Formatting Rules");

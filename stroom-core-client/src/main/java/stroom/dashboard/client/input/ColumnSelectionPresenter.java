@@ -64,7 +64,7 @@ public class ColumnSelectionPresenter
                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Column Selection");
         view.setDataWidget(dataGrid);
 

@@ -38,7 +38,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -357,7 +356,7 @@ public final class DataGridKeyboardStories {
             rows.add(new Row(name));
         }
 
-        final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Row> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setAccessibleName("Processors");

@@ -97,7 +97,7 @@ public class PathwayListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by name, unique in the document
         dataGrid.setKeyProvider(Pathway::getName);
         dataGrid.setTableName("Pathways");

@@ -74,7 +74,7 @@ final class SplitPaneContent {
     /// @return The pager and grid.
     static Widget table(final String testId) {
         final DataGrid<String[]> grid =
-                new DataGrid<>(new SimpleEventBus(), DataGrid.DEFAULT_LIST_PAGE_SIZE);
+                new DataGrid<>(DataGrid.DEFAULT_LIST_PAGE_SIZE);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[0]).build(), "Name", 200);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[1]).build(), "Role", 120);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[2]).build(), "Notes", 400);

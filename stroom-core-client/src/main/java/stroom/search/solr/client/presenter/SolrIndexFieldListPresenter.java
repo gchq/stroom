@@ -82,7 +82,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(SolrIndexField::getFldName);
         dataGrid.setTableName("Solr Index Fields");

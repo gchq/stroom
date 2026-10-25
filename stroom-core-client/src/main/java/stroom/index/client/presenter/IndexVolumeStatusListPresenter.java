@@ -67,7 +67,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(IndexVolume::getId);
         dataGrid.setTableName("Index Volumes");

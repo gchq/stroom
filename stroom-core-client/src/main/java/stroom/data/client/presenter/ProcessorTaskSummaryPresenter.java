@@ -84,7 +84,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by their group, not their count, which changes
         dataGrid.setKeyProvider(summary -> NullSafe.get(summary.getPipeline(), DocRef::getUuid)
                                            + ":" + summary.getFeed()

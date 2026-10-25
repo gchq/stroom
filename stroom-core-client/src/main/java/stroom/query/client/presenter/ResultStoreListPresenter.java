@@ -72,7 +72,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
-        final DataGrid<ResultStoreInfo> dataGrid = new DataGrid<>(this);
+        final DataGrid<ResultStoreInfo> dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ResultStoreInfo::getQueryKey);
         dataGrid.setTableName("Result Stores");

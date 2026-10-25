@@ -34,7 +34,6 @@ import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -138,7 +137,7 @@ public final class DocumentTypeCellStories {
         // In the order the types were given in
         final List<DocumentType> types = new ArrayList<>(states.keySet());
 
-        final DataGrid<DocumentType> list = new DataGrid<>(new SimpleEventBus(), DataGrid.DEFAULT_LIST_PAGE_SIZE);
+        final DataGrid<DocumentType> list = new DataGrid<>(DataGrid.DEFAULT_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Document types");
         list.setFitContent(true);

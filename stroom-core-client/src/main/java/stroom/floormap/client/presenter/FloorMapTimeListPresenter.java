@@ -82,7 +82,7 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Fact Times");
         // The list holds one fact's entries, one per time
         dataGrid.setKeyProvider(TemporalEntry::getEffectiveTimeMs);

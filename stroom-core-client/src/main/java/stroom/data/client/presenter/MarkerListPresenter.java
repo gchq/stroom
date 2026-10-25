@@ -66,7 +66,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
     public MarkerListPresenter(final EventBus eventBus,
                                final WrapperView view) {
         super(eventBus, view);
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Markers");
         dataGrid.setMultiLine(true);
         // A severity's summary row is keyed by its severity (there is one of each), so it is still the

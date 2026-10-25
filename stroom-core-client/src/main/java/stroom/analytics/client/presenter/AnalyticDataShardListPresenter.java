@@ -86,7 +86,7 @@ public class AnalyticDataShardListPresenter
         this.nodeClient = nodeClient;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows come from every node, so are keyed by node and path
         dataGrid.setKeyProvider(shard -> shard.getNode() + ":" + shard.getPath());
         dataGrid.setTableName("Analytic Data Shards");

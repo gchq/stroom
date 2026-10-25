@@ -70,7 +70,7 @@ public class FeedDependencyListPresenter
         this.refCells = own(refCells);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Feed Dependencies");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

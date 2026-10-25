@@ -25,6 +25,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.presenter.PromptPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.alert.client.view.PromptViewImpl;
+import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.event.client.StaticEventBus;
@@ -38,6 +39,7 @@ import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.rest.TimerReplyScheduler;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.AppPermission;
@@ -239,6 +241,9 @@ public final class ScreenHarness {
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
         // CorePresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
+        // and the links and Stroom AI questions they ask for (a data grid's context menu's)
+        addCleanUp(OpenHyperlinkRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
+        addCleanUp(AskStroomAiTableRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
 
         // Record alerts and confirmations, and optionally show them as Stroom does
         eventBus.addHandler(AlertEvent.getType(), event -> spy(ALERT_SPY, describe(event)));

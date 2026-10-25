@@ -32,7 +32,6 @@ import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -310,7 +309,7 @@ public final class DataGridRowUpdateStories {
         for (final String name : NAMES.subList(0, 3)) {
             rows.add(new ChoiceRow(name, 1, "Name"));
         }
-        final DataGrid<ChoiceRow> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<ChoiceRow> grid = new DataGrid<>();
         grid.setKeyProvider(row -> row.name);
         grid.addColumn(DataGridUtil.textColumnBuilder((ChoiceRow row) -> row.name).build(), "Name", 100);
         grid.addColumn(DataGridUtil.textColumnBuilder((ChoiceRow row) -> String.valueOf(row.count)).build(),
@@ -502,7 +501,7 @@ public final class DataGridRowUpdateStories {
 
     private static final class NewGrid implements Grid {
 
-        private final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
+        private final DataGrid<Row> grid = new DataGrid<>();
 
         private NewGrid() {
             // A row is the same row while its name is, as a screen's key provider says, so a changed

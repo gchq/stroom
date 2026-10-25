@@ -64,7 +64,7 @@ public class ActivityListPresenter
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id: each refresh fetches new rows
         dataGrid.setKeyProvider(Activity::getId);
         dataGrid.setTableName("Activities");

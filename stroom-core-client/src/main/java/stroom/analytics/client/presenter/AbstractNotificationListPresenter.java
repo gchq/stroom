@@ -74,7 +74,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Notifications");
         // An edit replaces the row (their equals compares every field), so keep the row by its uuid
         dataGrid.setKeyProvider(NotificationConfig::getUuid);

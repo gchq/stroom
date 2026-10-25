@@ -96,7 +96,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                                   final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // One row per node, keyed by its name
         dataGrid.setKeyProvider(CacheInfo::getNodeName);
         dataGrid.setTableName("Cache Nodes");

@@ -58,7 +58,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.nodeGroupClient = nodeGroupClient;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id: a tick fetches the groups again as new rows
         dataGrid.setKeyProvider(NodeGroup::getId);
         dataGrid.setTableName("Node Groups");

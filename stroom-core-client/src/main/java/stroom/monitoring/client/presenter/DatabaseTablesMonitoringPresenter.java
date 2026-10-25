@@ -59,7 +59,7 @@ public class DatabaseTablesMonitoringPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(this, 1000);
+        dataGrid = new DataGrid<>(1000);
         // Rows keyed by database and table
         dataGrid.setKeyProvider(row -> row.getDb() + "." + row.getTable());
         dataGrid.setTableName("Database Tables");

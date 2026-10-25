@@ -107,7 +107,7 @@ public class UserListPresenter
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

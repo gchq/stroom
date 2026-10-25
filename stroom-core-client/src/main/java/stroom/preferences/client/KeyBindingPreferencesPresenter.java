@@ -77,7 +77,7 @@ public final class KeyBindingPreferencesPresenter
         this.keyShortcutRecorderPresenter = keyShortcutRecorderPresenter;
         view.setUiHandlers(this);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Keyboard Shortcuts");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

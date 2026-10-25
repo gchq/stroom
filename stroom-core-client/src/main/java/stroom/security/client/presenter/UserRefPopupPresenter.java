@@ -109,7 +109,7 @@ public class UserRefPopupPresenter
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Users");
         dataGrid.setAccessibleName("Users and groups");
         selectionModel = new MultiSelectionModelImpl<>();

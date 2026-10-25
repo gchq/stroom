@@ -517,6 +517,10 @@ each story re-run against both builds with the same runner options):
   (24 October 2026, after the renames that followed wave 2): a view key's turn ended 4 to 5.4
   away from where it should (`toBeLessThan(0.5)`). Run on its own it passed. The simulation keeps
   moving under a full run's load; nothing in that change touched the visualisations.
+* `Widgets/Date & Time/ScheduleBox` `QuickSettingsAreGroupedButtons`: in a full run (25 October
+  2026, wave 5's data grid) the Change Schedule dialog was drawn 1px lower than in the baseline,
+  every part of it; run on its own three times it matched the baseline each time. The dialog has
+  no grid in it, so its centring rounds either way under a full run's load.
 * `Widgets/Menu/MenuPanel` `TypeAhead` failed in every run with screenshots, on both builds
   (`expect(<div>).toHaveFocus() failed` after typing "re"). **Fixed** (data_grid2): those runs fix
   the page's `Date` (`--fixed-time`), and `TypeAhead` timed the pause between keys with it, so the

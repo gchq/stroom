@@ -33,7 +33,6 @@ import stroom.widget.menu.client.presenter.Separator;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -181,7 +180,7 @@ public final class DocRefCellStories {
                 .docRefFunction(docRef -> docRef)
                 .build();
 
-        final DataGrid<DocRef> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<DocRef> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

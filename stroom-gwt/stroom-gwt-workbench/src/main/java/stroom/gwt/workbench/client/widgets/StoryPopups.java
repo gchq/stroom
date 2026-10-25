@@ -21,8 +21,10 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.presenter.PromptPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.alert.client.view.PromptViewImpl;
+import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.help.client.presenter.HelpManager;
@@ -35,6 +37,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
@@ -97,13 +100,19 @@ public final class StoryPopups {
         return this;
     }
 
-    /// Shows the menus that widgets with no event bus ask for (e.g. a split pane's splitter, with
-    /// `MenuRequest`), as Stroom's main presenter does, with [#withMenus]'s menus.
+    /// Passes on what widgets with no event bus ask of the app, as Stroom's core presenter does:
+    /// the menus they ask for (e.g. a split pane's splitter's, or a data grid's context menu, with
+    /// `MenuRequest`), shown with [#withMenus]'s menus, and the links they open
+    /// (`OpenHyperlinkRequest`) and the tables they ask Stroom AI about (`AskStroomAiTableRequest`),
+    /// fired as events on [#getEventBus()].
     ///
     /// @return This, for chaining.
-    public StoryPopups withMenuRequests() {
+    public StoryPopups withPageRequests() {
         withMenus();
-        cleanUps.add(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
+        final HasHandlers handlers = event -> eventBus.fireEvent(event);
+        cleanUps.add(MenuRequest.relay(handlers)::removeHandler);
+        cleanUps.add(OpenHyperlinkRequest.relay(handlers)::removeHandler);
+        cleanUps.add(AskStroomAiTableRequest.relay(handlers)::removeHandler);
         return this;
     }
 

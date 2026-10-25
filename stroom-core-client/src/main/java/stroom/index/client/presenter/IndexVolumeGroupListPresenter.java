@@ -54,7 +54,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
                                          final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Index Volume Groups");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

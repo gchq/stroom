@@ -36,9 +36,7 @@ import stroom.util.shared.Expander;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Timer;
@@ -204,8 +202,9 @@ final class InteractiveCellGrids {
 
     static Widget textFieldGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final DataGrid<Person> grid = new DataGrid<>(popups.getEventBus()::fireEvent);
+        // The grid asks for its context menu with a MenuRequest
+        StoryPopups.create(context).withPageRequests();
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setTableName("People");
@@ -243,7 +242,7 @@ final class InteractiveCellGrids {
                 new TreeRow("Bob Smith", 1, true));
         final Set<String> expanded = new HashSet<>();
 
-        final DataGrid<TreeRow> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<TreeRow> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
@@ -305,7 +304,7 @@ final class InteractiveCellGrids {
     static Widget actionMenuGrid(final StoryContext context) {
         final Spy onAction = context.fn(ON_ACTION);
         // The cell asks for its menu with a MenuRequest, which the relay shows
-        StoryPopups.create(context).withMenuRequests();
+        StoryPopups.create(context).withPageRequests();
         final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
@@ -337,7 +336,7 @@ final class InteractiveCellGrids {
     }
 
     private static DataGrid<Person> grid() {
-        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         return grid;

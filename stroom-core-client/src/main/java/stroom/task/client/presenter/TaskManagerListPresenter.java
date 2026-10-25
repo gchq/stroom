@@ -88,7 +88,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -160,7 +159,7 @@ public class TaskManagerListPresenter
         this.feedClient = feedClient;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGrid<>(this, 1000);
+        dataGrid = new DataGrid<>(1000);
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 

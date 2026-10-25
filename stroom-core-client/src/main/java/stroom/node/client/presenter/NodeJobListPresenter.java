@@ -85,7 +85,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final NodeClient nodeClient) {
         super(eventBus, view);
         this.nodeClient = nodeClient;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Node Jobs");
         this.dataGrid.setAccessibleName("Node jobs");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);

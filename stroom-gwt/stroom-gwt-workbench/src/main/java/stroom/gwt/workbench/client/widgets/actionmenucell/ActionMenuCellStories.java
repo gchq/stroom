@@ -30,7 +30,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -128,7 +127,7 @@ public final class ActionMenuCellStories {
 
     private static Widget actionMenuCell(final StoryContext context, final List<Item> items) {
         // The cell asks for its menu with a MenuRequest, which the relay shows
-        StoryPopups.create(context).withMenuRequests();
+        StoryPopups.create(context).withPageRequests();
         final ActionMenuCell<String> cell = new ActionMenuCell<>(row -> items);
         return new CellWidget<>(cell, ROW);
     }
@@ -136,8 +135,8 @@ public final class ActionMenuCellStories {
     // A one-row grid of a name column and the cell's, as Stroom's lists show it
     private static Widget actionMenuGrid(final StoryContext context, final List<Item> items) {
         // The cell asks for its menu with a MenuRequest, which the relay shows
-        StoryPopups.create(context).withMenuRequests();
-        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        StoryPopups.create(context).withPageRequests();
+        final DataGrid<String> grid = new DataGrid<>();
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String row) -> row).build(), "Name", 150);
         grid.addColumn(DataGridUtil.columnBuilder(
                                 (String row) -> row,

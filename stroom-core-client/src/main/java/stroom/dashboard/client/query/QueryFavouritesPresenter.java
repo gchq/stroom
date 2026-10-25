@@ -88,7 +88,7 @@ public class QueryFavouritesPresenter
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
-        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(NAME);
         list.addColumn(DataGridUtil.columnBuilder((StoredQuery query) -> query,

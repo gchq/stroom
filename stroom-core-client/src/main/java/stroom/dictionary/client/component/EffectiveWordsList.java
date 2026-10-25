@@ -69,7 +69,7 @@ public class EffectiveWordsList extends Controller {
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by word, so a row whose values change is still the same row
         dataGrid.setKeyProvider(Word::getWord);
         dataGrid.setTableName("Words");

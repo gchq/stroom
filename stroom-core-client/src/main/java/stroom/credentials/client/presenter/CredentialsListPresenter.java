@@ -145,7 +145,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
 
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);

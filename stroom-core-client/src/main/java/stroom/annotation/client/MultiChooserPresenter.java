@@ -66,7 +66,7 @@ public class MultiChooserPresenter<T>
         // A list of values, each ticked or not: the arrows move, and Space, Enter or a press ticks or
         // unticks the value with the focus. As high as its values, up to the chooser's height, then
         // scrolling. Escape goes on to the popup, which closes
-        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setFitContent(true);
         list.addStyleName("multiChooser");

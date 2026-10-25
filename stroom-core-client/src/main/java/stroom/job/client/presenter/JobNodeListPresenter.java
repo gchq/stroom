@@ -97,7 +97,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         this.dataGrid.setTableName("Job Nodes");
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);

@@ -32,7 +32,6 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
@@ -90,7 +89,7 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
             template = GWT.create(Template.class);
         }
 
-        grid = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        grid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         grid.setProfile(DataGridProfile.TREE);
         // The cells draw their own padding, as the explorer's do; a long name scrolls the tree sideways
         grid.setCellPadding(false);

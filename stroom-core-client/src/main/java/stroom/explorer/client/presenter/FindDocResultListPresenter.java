@@ -79,7 +79,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
         // A striped list of a page of results, the one with the focus chosen; Enter, or a double
         // click, opens it, and Up on the first goes back to the filter
         selectionModel = new MultiSelectionModelImpl<>();
-        resultList = FindResultLists.create(this,
+        resultList = FindResultLists.create(
                 "Documents found",
                 new FindResultCell(),
                 selectionModel,

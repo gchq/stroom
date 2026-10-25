@@ -50,7 +50,7 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
                                          final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ProcessorProfile::getId);
         dataGrid.setTableName("Processor Profiles");

@@ -25,9 +25,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -96,7 +93,7 @@ public final class BenchmarkStories {
         final int pageSize = Math.max(rowCount, 1);
 
         final double start = now();
-        grid = new DataGrid<>(new SimpleEventBus(), pageSize);
+        grid = new DataGrid<>(pageSize);
         grid.setVirtual("virtual".equals(kind));
         addColumns(grid);
         if (selection) {

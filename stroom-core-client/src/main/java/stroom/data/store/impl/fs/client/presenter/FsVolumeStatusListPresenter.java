@@ -71,7 +71,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FsVolume::getId);
         dataGrid.setTableName("FS Volumes");

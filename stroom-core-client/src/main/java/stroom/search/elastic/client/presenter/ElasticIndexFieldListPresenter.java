@@ -52,7 +52,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ElasticIndexField::getFldName);
         dataGrid.setTableName("Elastic Index Fields");

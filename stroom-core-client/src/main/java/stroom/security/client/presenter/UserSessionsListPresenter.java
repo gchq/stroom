@@ -72,7 +72,7 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         this.dataGrid.setKeyProvider(SessionDetails::getSessionHandle);
         this.dataGrid.setTableName("Sessions");

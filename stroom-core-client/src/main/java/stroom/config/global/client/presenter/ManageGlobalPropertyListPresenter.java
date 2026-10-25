@@ -116,7 +116,7 @@ public class ManageGlobalPropertyListPresenter
                                              final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by name: each node's reply rebuilds the rows
         dataGrid.setKeyProvider(ConfigPropertyRow::getNameAsString);
         dataGrid.setTableName("Properties");

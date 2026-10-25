@@ -19,8 +19,10 @@ package stroom.core.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
@@ -55,6 +57,9 @@ public class CorePresenter extends MyPresenterWidget<CoreView>
         // Here, as both Stroom and the standalone dashboard show this, and only Stroom shows its
         // main presenter
         own(MenuRequest.relay(this));
+        // and the links and Stroom AI questions they ask for (e.g. a data grid's context menu's)
+        own(OpenHyperlinkRequest.relay(this));
+        own(AskStroomAiTableRequest.relay(this));
         this.securityContext = securityContext;
         this.urlParameters = urlParameters;
     }

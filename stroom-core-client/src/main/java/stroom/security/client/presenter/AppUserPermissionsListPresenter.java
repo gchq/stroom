@@ -99,7 +99,7 @@ public class AppUserPermissionsListPresenter
         this.pagerView = pagerView;
         this.uiConfigCache = uiConfigCache;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("User Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =

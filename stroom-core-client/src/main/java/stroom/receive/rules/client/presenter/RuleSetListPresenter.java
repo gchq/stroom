@@ -45,7 +45,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
                                 final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // A rule has no id: its number is its position, which an edit keeps but a move changes
         dataGrid.setKeyProvider(ReceiveDataRule::getRuleNumber);
         dataGrid.setTableName("Receive Rules");

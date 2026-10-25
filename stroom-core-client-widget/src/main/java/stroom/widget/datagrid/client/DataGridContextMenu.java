@@ -17,26 +17,23 @@
 package stroom.widget.datagrid.client;
 
 import stroom.ai.shared.GeneralTableContext;
-import stroom.data.client.event.AskStroomAiEvent;
+import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.datagrid.client.model.TableText;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.Separator;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionModel;
@@ -112,13 +109,14 @@ final class DataGridContextMenu<R> {
                 .children(getAiItems(rowIndex, colIndex))
                 .build());
 
-        final ShowMenuEvent.Builder builder = ShowMenuEvent.builder()
-                .items(menuItems)
-                .popupPosition(position);
-        if (textField != null) {
-            builder.onHide(e -> textField.restore());
-        }
-        builder.fire(getEventBus());
+        // The request goes up the page to its menu relay (see MenuRequest#relay)
+        MenuRequest.fire(grid.getElement(),
+                null,
+                menuItems,
+                position,
+                textField != null
+                        ? e -> textField.restore()
+                        : null);
     }
 
     // A separator between groups of items: none at the top, and never two together
@@ -209,7 +207,7 @@ final class DataGridContextMenu<R> {
     }
 
     private void fireHyperlink(final Hyperlink hyperlink) {
-        HyperlinkEvent.fire(getEventBus(), hyperlink, new DefaultTaskMonitorFactory(getEventBus()));
+        grid.followHyperlink(hyperlink);
     }
 
     // --------------------------------------------------------------------------------
@@ -314,7 +312,7 @@ final class DataGridContextMenu<R> {
     }
 
     private void askAi(final String description, final List<String> headers, final List<List<String>> rows) {
-        AskStroomAiEvent.fire(getEventBus(), new GeneralTableContext(description, headers, rows));
+        AskStroomAiTableRequest.fire(grid.getElement(), new GeneralTableContext(description, headers, rows));
     }
 
     // The table name prefix for descriptions, e.g. "Annotations ", or "" if there is no name.
@@ -397,10 +395,6 @@ final class DataGridContextMenu<R> {
             }
         }
         return rows;
-    }
-
-    private HasHandlers getEventBus() {
-        return grid.getGlobalEventBus();
     }
 
 }

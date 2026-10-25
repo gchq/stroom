@@ -70,7 +70,7 @@ public class DuplicateManagementListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Duplicate Management");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -91,7 +91,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         // A list of the column's values, each ticked or not: the arrows move, and Space, Enter or a
         // press ticks or unticks the value with the focus, Ctrl+A all of them. Escape goes on to
         // the popup, which closes
-        list = new DataGrid<>(this, DataGrid.DEFAULT_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.DEFAULT_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Values");
         list.setRowStyles(rowStyles);

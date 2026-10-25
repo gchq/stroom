@@ -68,7 +68,7 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                                         final RefCellsController refCells) {
         super(eventBus, view);
         this.refCells = own(refCells);
-        this.dataGrid = new DataGrid<>(this);
+        this.dataGrid = new DataGrid<>();
         // Rows keyed by number (1 to n): a tick rebuilds the row
         this.dataGrid.setKeyProvider(ContentTemplate::getTemplateNumber);
         this.dataGrid.setTableName("Content Templates");

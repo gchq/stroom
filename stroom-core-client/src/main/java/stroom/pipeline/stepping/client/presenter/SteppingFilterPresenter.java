@@ -98,7 +98,7 @@ public class SteppingFilterPresenter extends
         removeXPath.setEnabled(false);
 
         // A list of the pipeline's elements, the one with the focus chosen (its filters shown)
-        elementChooser = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        elementChooser = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         elementChooser.setProfile(DataGridProfile.LISTBOX);
         elementChooser.setAccessibleName("Elements");
         elementChooser.getElement().addClassName(BASE_CLASS);

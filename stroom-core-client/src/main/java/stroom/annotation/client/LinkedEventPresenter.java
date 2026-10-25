@@ -74,7 +74,7 @@ public class LinkedEventPresenter
         own(dataPresenter);
         own(addEventLinkPresenter);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Linked Events");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

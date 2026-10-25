@@ -52,7 +52,7 @@ public class ConfigPropertyClusterValuesListPresenter
                                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this, 1000);
+        dataGrid = new DataGrid<>(1000);
         dataGrid.setTableName("Cluster Property Values");
         dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);

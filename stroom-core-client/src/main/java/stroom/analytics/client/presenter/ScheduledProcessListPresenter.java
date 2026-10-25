@@ -100,7 +100,7 @@ public class ScheduledProcessListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         request = ExecutionScheduleRequest.builder().build();
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager =

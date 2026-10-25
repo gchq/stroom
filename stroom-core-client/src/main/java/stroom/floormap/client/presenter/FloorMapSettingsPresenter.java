@@ -155,7 +155,7 @@ public class FloorMapSettingsPresenter
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
-        schemaGrid = new DataGrid<>(this);
+        schemaGrid = new DataGrid<>();
         schemaGrid.setTableName("Value Schema");
         // An edit replaces a mapping with a new one, so rows are keyed by the mapping they
         // started as (see rowKey), not by their values, and keep their row (and focus)

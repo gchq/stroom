@@ -4,6 +4,42 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Make DataGridWidget usable in templates and free of the bus: requests bubble through the DOM, and sort, range and selection outputs become callbacks. Cells take onOpen/onMenu callbacks instead of an EventBus or HasHandlers. SelectionList and SelectionPopup move from init(model) to setters.
 
+## Progress (25 October 2026)
+
+Done: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, the checks of `CommandLinkCell`,
+`HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`), the three ref cells and `DataGrid`.
+Still to do: `PagerView`, `PagerViewWithHeading`, `SelectionList`, `SelectionPopup` and
+`VisFrame`. What was decided on the way, where it differs from the plans below:
+
+- **`SvgCell` is `IconCell`**, named for what it is, with its stylesheet `icon-cell.css` (BEM:
+  `icon-cell`, `icon-cell--button`, `icon-cell--disabled`; `svgCell-face`, unused, keeps its name).
+- **`ActionMenuCell`** asks for its menu with `MenuRequest.fireFromOpener`, which can now say that
+  Left on a top item closes it (`allowCloseOnMoveLeft`), as the row menus need.
+- **One `RefCellsController`** for the three ref cells, which the plans allowed: its
+  `configure(...)` overloads set `DocRefCell`'s `onOpen`, `FeedRefCell`'s `onOpen` and `onCopyUrl`,
+  and `UserRefCell`'s `canOpen` (a predicate: anyone who manages users, else only themself) and
+  `onOpen`. A cell with no `onOpen` offers no way to open. Each list presenter injects and owns
+  one; the `DataGridUtil` helpers take it in place of the bus (and the security context). The
+  cells' stories set the callbacks themselves; the controller's rules are JVM tested
+  (`TestRefCellsController`), as the cells need a browser.
+- **The menu relay is `CorePresenter`'s**, not `MainPresenter`'s, as the standalone dashboard shows
+  only the core presenter: its splitters' and dialogs' menus never opened (see ISSUES.md).
+- **`DataGrid`**, in three commits, each with its stories' screenshots unchanged: its inline styles
+  became custom properties and state classes (the rules select through the grid's own parts with
+  child combinators, as custom properties inherit into a grid in a cell); its parts come from
+  `DataGrid.ui.xml`; and it has no bus. It has `DataGrid()` and also `DataGrid(int pageSize)`
+  for Java callers, as `setPageSize` goes through `setVisibleRange`, which a new grid's callers
+  didn't. All 132 callers moved, so the old constructors and `getGlobalEventBus()` are gone. Its
+  context menu is a `MenuRequest` (which now takes an `onHide`); its link items follow a link as a
+  click on it does, with the grid's `HyperlinkEvent` when something handles it (a dashboard's or
+  query's table) and otherwise an `OpenHyperlinkRequest`; asking Stroom AI is an
+  `AskStroomAiTableRequest`. `DomRequests` sends and receives all three, and `CorePresenter`,
+  `ScreenHarness` and `StoryPopups.withPageRequests()` (was `withMenuRequests`) relay them. Going
+  through the grid fixed a bug: a dashboard opened from a table's menu got no parent dashboard
+  (stories `LinkMenuThroughTheGrid` and `LinkMenuToTheApp`; a changelog entry).
+- `setHideHeader` called after the first render now hides the header: `render` only set its
+  display when the header's structure changed. The root's `data-grid--no-header` hides it now.
+
 ## CSS and template notes for the wave
 
 - data-grid.css (stroom-app/src/main/resources/ui/css/data-grid.css) already uses custom properties set with DataGridDom.setCssVariable (--data-grid__columns, --total-width, --row-height, --v-travel, --h-travel). Every DataGrid inline style becomes one more property set with that helper: --data-grid__handle-left, --resize-line-left, --move-ghost-left, --move-ghost-width, --move-line-left, --head-height, --content-height, --body-offset, --v-track-top, --v-thumb-length, --h-thumb-length, --v-thumb-position, --h-thumb-position and --span (with a class data-grid__cell--span).

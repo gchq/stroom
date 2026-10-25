@@ -55,7 +55,7 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
         super(eventBus, view);
 
         // A list of sessions, the one with the focus chosen. Escape goes on to the dialog (Cancel)
-        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Tab sessions");
         list.setSelectionModel(selectionModel,

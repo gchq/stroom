@@ -36,7 +36,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -143,11 +142,12 @@ public final class FeedRefCellStories {
 
     /// The cell in a grid, as Stroom's lists use it, whose right-click menu is Stroom's real menu.
     private static Widget grid(final StoryContext context) {
-        final EventBus eventBus = StoryPopups.create(context).withMenus().getEventBus();
+        // The grid asks for its context menu with a MenuRequest
+        StoryPopups.create(context).withPageRequests();
         final Spy onOpen = context.fn(ON_OPEN);
         final FeedRefCell<String> cell = cell(onOpen::call, name -> {
         }, true);
-        final DataGrid<String> grid = new DataGrid<>(eventBus::fireEvent);
+        final DataGrid<String> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

@@ -40,7 +40,7 @@ public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
                                final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Script Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

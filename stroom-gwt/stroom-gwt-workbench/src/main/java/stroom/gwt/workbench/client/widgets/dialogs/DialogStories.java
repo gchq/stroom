@@ -269,7 +269,7 @@ public final class DialogStories {
     /// A primary button that opens the dialog.
     private static Widget trigger(final StoryContext context, final String label, final DialogSpec spec) {
         // With menus, for the dialog's window options
-        final StoryPopups popups = StoryPopups.create(context).withMenuRequests();
+        final StoryPopups popups = StoryPopups.create(context).withPageRequests();
         final FlowPanel panel = new FlowPanel();
         panel.add(DialogWidgets.button(label, DialogWidgets.PRIMARY, event -> spec.show(popups)));
         return panel;

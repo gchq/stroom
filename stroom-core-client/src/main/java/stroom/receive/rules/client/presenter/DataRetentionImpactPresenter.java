@@ -111,7 +111,7 @@ public class DataRetentionImpactPresenter
                                         final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
         super(eventBus, view);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         dataGrid.setTableName("Data Retention Impact");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

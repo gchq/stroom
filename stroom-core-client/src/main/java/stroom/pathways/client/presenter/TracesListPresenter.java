@@ -111,7 +111,7 @@ public class TracesListPresenter
         this.histogram = new TraceHistogramChart();
         histogram.setDateTimeFormatter(dateTimeFormatter);
 
-        dataGrid = new DataGrid<>(this);
+        dataGrid = new DataGrid<>();
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(TraceRoot::getTraceId);
         dataGrid.setTableName("Traces");
