@@ -55,6 +55,28 @@ public enum StyleSetting {
             "how many ranges the values are counted in; 0 chooses from how many rows there are"),
     ORIENT("orient", "Direction", Control.SELECTION, "horizontal", List.of("horizontal", "vertical"), null, null,
             "flows run left to right (horizontal) or top to bottom (vertical)"),
+    THRESHOLD("threshold", "Threshold", Control.DECIMAL, "", List.of(), null, null,
+            "draws a line at this value, e.g. an alert level; blank for none"),
+    THRESHOLD_LABEL("thresholdLabel", "Threshold Label", Control.TEXT, "", List.of(), null, null,
+            "the threshold line's label; its value if blank"),
+    AVERAGE_LINE("averageLine", "Average Line", Control.BOOLEAN, "false", List.of(), null, null,
+            "draws a line at the average value"),
+    LOG_SCALE("logScale", "Log Scale", Control.BOOLEAN, "false", List.of(), null, null,
+            "a logarithmic value axis, for values spanning orders of magnitude; values of 0 or less are left out"),
+    UNITS("units", "Units", Control.SELECTION, "none", List.of("none", "count", "bytes", "percent", "ms", "seconds"),
+            null, null, "how values are shown: count as 1.2k, bytes as 1.2 MB, percent as 34 % (values from 0 to "
+                        + "100), ms and seconds as durations such as 1.5 s"),
+    BREAK_OUTLIERS("breakOutliers", "Break Outliers", Control.BOOLEAN, "false", List.of(), null, null,
+            "cuts the value axis when a few values dwarf the rest, so the others can be read"),
+    ZOOM_SLIDER("zoomSlider", "Zoom Slider", Control.BOOLEAN, "false", List.of(), null, null,
+            "shows a zoom bar under the chart (the mouse wheel zooms anyway)"),
+    JITTER("jitter", "Jitter", Control.BOOLEAN, "false", List.of(), null, null,
+            "spreads out points that would sit on top of each other"),
+    THUMBNAIL("thumbnail", "Thumbnail", Control.BOOLEAN, "false", List.of(), null, null,
+            "shows a small overview of the whole graph, marking where it is zoomed to"),
+    PHYSICS("physics", "Physics", Control.SELECTION, "settled", List.of("settled", "lively", "spread"), null, null,
+            "how the layout moves: settled (settles quickly), lively (keeps moving longer) or spread (pushes the "
+            + "nodes further apart)"),
     SHOW_LABELS_OFF("showLabels", "Show Labels", Control.BOOLEAN, "false", List.of(), null, null,
             "shows each value on the chart"),
     SHOW_LABELS_ON("showLabels", "Show Labels", Control.BOOLEAN, "true", List.of(), null, null,
@@ -163,6 +185,19 @@ public enum StyleSetting {
             case SELECTION -> choices.stream()
                     .filter(choice -> choice.equalsIgnoreCase(trimmed))
                     .findFirst();
+            case DECIMAL -> {
+                if (trimmed.isEmpty()) {
+                    yield Optional.of("");
+                }
+                try {
+                    final double number = Double.parseDouble(trimmed);
+                    yield Double.isFinite(number)
+                            ? Optional.of(trimmed)
+                            : Optional.empty();
+                } catch (final NumberFormatException e) {
+                    yield Optional.empty();
+                }
+            }
             case NUMBER -> {
                 try {
                     final int number = Integer.parseInt(trimmed);
@@ -186,6 +221,7 @@ public enum StyleSetting {
                             ? "'' (blank)"
                             : choice)
                     .toList());
+            case DECIMAL -> "a number, or blank for none";
             case NUMBER -> "a whole number from " + min + " to " + max;
         };
     }
@@ -195,7 +231,9 @@ public enum StyleSetting {
         TEXT("text"),
         BOOLEAN("boolean"),
         SELECTION("selection"),
-        NUMBER("number");
+        NUMBER("number"),
+        /// Any number, or blank: a text control, as a visualisation's number control takes whole numbers.
+        DECIMAL("text");
 
         private final String type;
 

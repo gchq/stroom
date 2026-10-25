@@ -1033,7 +1033,7 @@ if (!window.visualisations) {
         var legendShown = seriesNames.length > 1;
 
         function axisText(value, type) {
-            return type === "time" ? formatTime(value, prefs.timePattern, prefs.timeZone) : formatNumber(value);
+            return type === "time" ? formatTime(value, prefs.timePattern, prefs.timeZone) : prefs.formatValue(value);
         }
 
         return {
@@ -1256,6 +1256,15 @@ if (!window.visualisations) {
         return {
             // Each node's own colour needs no legend: its label names it.
             legend: legendOption(settings, groups.length > 1 && !colourEachNode, style),
+            // An overview of the whole graph, marking where it is zoomed to, in the bottom-right corner.
+            thumbnail: boolSetting(settings, "thumbnail", false) ? {
+                show: true,
+                right: 8,
+                bottom: 8,
+                width: "22%",
+                height: "22%",
+                itemStyle: {borderColor: style.border}
+            } : undefined,
             // A node selects itself (node); a link its two ends (source and target).
             selectAt: function (seriesIndex, dataIndex, dataType) {
                 if (dataType === "edge") {
@@ -1302,12 +1311,7 @@ if (!window.visualisations) {
                 categories: groups.map(function (group) {
                     return {name: group};
                 }),
-                force: {
-                    repulsion: nodeCount > 500 ? 40 : (nodeCount > 100 ? 80 : 160),
-                    edgeLength: nodeCount > 100 ? [20, 80] : [40, 140],
-                    gravity: 0.1,
-                    layoutAnimation: nodeCount <= 500
-                },
+                force: physicsOf(settings, nodeCount),
                 edgeSymbol: directed ? ["none", "arrow"] : ["none", "none"],
                 edgeSymbolSize: 6,
                 emphasis: {focus: "adjacency", lineStyle: {width: 4}},
@@ -1341,6 +1345,23 @@ if (!window.visualisations) {
         };
     }
 
+    // The force layout's physics by the Physics setting: settled (as it settles quickly), lively (kept moving longer,
+    // with less friction and gravity) or spread (nodes pushed further apart, on longer links).
+    function physicsOf(settings, nodeCount) {
+        var repulsion = nodeCount > 500 ? 40 : (nodeCount > 100 ? 80 : 160);
+        var edgeLength = nodeCount > 100 ? [20, 80] : [40, 140];
+        var physics = String(textSetting(settings, "physics") || "settled").toLowerCase();
+        if (physics === "lively") {
+            return {repulsion: repulsion * 1.5, edgeLength: edgeLength, gravity: 0.05, friction: 0.15,
+                layoutAnimation: nodeCount <= 500};
+        }
+        if (physics === "spread") {
+            return {repulsion: repulsion * 3, edgeLength: [edgeLength[0] * 2, edgeLength[1] * 2], gravity: 0.03,
+                layoutAnimation: nodeCount <= 500};
+        }
+        return {repulsion: repulsion, edgeLength: edgeLength, gravity: 0.1, layoutAnimation: nodeCount <= 500};
+    }
+
     // ECharts' own palette, then as many more as are needed, spread round the colour wheel by the golden angle so
     // neighbouring ones differ, lighter on a dark theme.
     var BASE_PALETTE = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4",
@@ -1369,7 +1390,7 @@ if (!window.visualisations) {
         heat: ["#ffffcc", "#fd8d3c", "#bd0026"]
     };
 
-    function valueScale(settings, style, min, max) {
+    function valueScale(settings, style, min, max, format) {
         var name = String(textSetting(settings, "colourScale") || "blue").toLowerCase();
         var colours = (COLOUR_SCALES[name] || COLOUR_SCALES.blue).slice();
         if (style.dark && name !== "heat") {
@@ -1388,7 +1409,7 @@ if (!window.visualisations) {
             inRange: {color: colours},
             textStyle: {color: style.subtleText},
             formatter: function (value) {
-                return formatNumber(value);
+                return format(value);
             }
         };
     }
@@ -1465,10 +1486,11 @@ if (!window.visualisations) {
             tooltip: {
                 trigger: "item",
                 formatter: function (params) {
-                    return escapeHtml(params.value[0] + ", " + params.value[1] + ": " + formatNumber(params.value[2]));
+                    return escapeHtml(params.value[0] + ", " + params.value[1] + ": " +
+                        prefs.formatValue(params.value[2]));
                 }
             },
-            visualMap: valueScale(settings, style, min, max),
+            visualMap: valueScale(settings, style, min, max, prefs.formatValue),
             matrix: {
                 x: {data: xs},
                 y: {data: ys},
@@ -1491,7 +1513,7 @@ if (!window.visualisations) {
                     show: showLabels,
                     color: style.text,
                     formatter: function (params) {
-                        return formatNumber(params.value[2]);
+                        return prefs.formatValue(params.value[2]);
                     }
                 }
             }]
@@ -1587,10 +1609,10 @@ if (!window.visualisations) {
             tooltip: {
                 trigger: "item",
                 formatter: function (params) {
-                    return escapeHtml(params.value[0] + ": " + formatNumber(params.value[1]));
+                    return escapeHtml(params.value[0] + ": " + prefs.formatValue(params.value[1]));
                 }
             },
-            visualMap: valueScale(settings, style, min, max),
+            visualMap: valueScale(settings, style, min, max, prefs.formatValue),
             calendar: calendars,
             // A day selects its date, as the table has it.
             selectAt: function (seriesIndex, dataIndex) {
@@ -1639,7 +1661,7 @@ if (!window.visualisations) {
         var labels = [];
         for (var i = 0; i < bins; i++) {
             var from = min + i * width;
-            labels.push(formatNumber(from) + " – " + formatNumber(i === bins - 1 ? max : from + width));
+            labels.push(prefs.formatValue(from) + " – " + prefs.formatValue(i === bins - 1 ? max : from + width));
         }
 
         var counts = {};
@@ -1917,7 +1939,210 @@ if (!window.visualisations) {
     // Zooming: the mouse wheel zooms and dragging pans a bar or line chart's category or x axis, both axes of a
     // scatter plot, and a network graph (which roams). A reset zoom button at the top right of the chart's plot
     // area puts it back. A pie chart doesn't zoom.
-    function addZoom(kind, option, style) {
+    // ------------------------------------------------------------------------------------------
+    // Value settings: units, log scale, threshold and average lines, outlier breaks
+    // ------------------------------------------------------------------------------------------
+
+    function compact(value, steps, base) {
+        var abs = Math.abs(value);
+        for (var i = steps.length - 1; i > 0; i--) {
+            var size = Math.pow(base, i);
+            if (abs >= size) {
+                var scaled = value / size;
+                return (Math.abs(scaled) >= 100 ? Math.round(scaled) : Math.round(scaled * 10) / 10) + steps[i];
+            }
+        }
+        return formatNumber(value) + steps[0];
+    }
+
+    function duration(ms) {
+        var abs = Math.abs(ms);
+        if (abs < 1000) {
+            return formatNumber(Math.round(ms * 10) / 10) + " ms";
+        }
+        if (abs < 60000) {
+            return Math.round(ms / 100) / 10 + " s";
+        }
+        if (abs < 3600000) {
+            return Math.round(ms / 6000) / 10 + " min";
+        }
+        if (abs < 86400000) {
+            return Math.round(ms / 360000) / 10 + " h";
+        }
+        return Math.round(ms / 8640000) / 10 + " d";
+    }
+
+    // How a value is shown, by the Units setting.
+    function unitFormatter(units) {
+        switch (String(units || "none").toLowerCase()) {
+            case "count":
+                return function (value) {
+                    return compact(value, ["", "k", "M", "B", "T"], 1000);
+                };
+            case "bytes":
+                return function (value) {
+                    return compact(value, [" B", " KB", " MB", " GB", " TB", " PB"], 1024);
+                };
+            case "percent":
+                return function (value) {
+                    return formatNumber(Math.round(value * 10) / 10) + " %";
+                };
+            case "ms":
+                return duration;
+            case "seconds":
+                return function (value) {
+                    return duration(value * 1000);
+                };
+            default:
+                return formatNumber;
+        }
+    }
+
+    // The axis a bar, line or scatter chart's values run along: x for a horizontal bar chart, else y.
+    function valueAxisOf(option) {
+        if (option.yAxis && option.yAxis.type === "category" && option.xAxis && option.xAxis.type !== "category") {
+            return {axis: option.xAxis, dim: "x", index: 0};
+        }
+        return option.yAxis && option.yAxis.type !== "category" ? {axis: option.yAxis, dim: "y", index: 1} : null;
+    }
+
+    // Each series' values along the value axis: as numbers, or the y of [x, y] points.
+    function eachValue(series, index, fn) {
+        series.forEach(function (one) {
+            (one.data || []).forEach(function (item) {
+                if (Array.isArray(item)) {
+                    fn(item[index]);
+                } else if (typeof item === "number") {
+                    fn(item);
+                }
+            });
+        });
+    }
+
+    // Where to cut the value axis, if a few values dwarf the rest: between the largest jump (at least four times)
+    // with no more than a fifth of the values above it.
+    function outlierBreak(values) {
+        var sorted = values.filter(function (value) {
+            return value > 0;
+        }).sort(function (a, b) {
+            return a - b;
+        });
+        var best = null;
+        for (var i = 0; i < sorted.length - 1; i++) {
+            var ratio = sorted[i + 1] / sorted[i];
+            var above = sorted.length - i - 1;
+            if (ratio >= 4 && above <= Math.max(1, Math.floor(sorted.length / 5)) && (!best || ratio > best.ratio)) {
+                best = {ratio: ratio, start: sorted[i] * 1.15, end: sorted[i + 1] * 0.9};
+            }
+        }
+        return best && best.end > best.start ? {start: best.start, end: best.end, gap: "3%"} : null;
+    }
+
+    function applyValueSettings(kind, option, settings, style, prefs, report) {
+        var format = prefs.formatValue;
+        var unitsSet = String(textSetting(settings, "units") || "none").toLowerCase() !== "none";
+        if (unitsSet) {
+            option.tooltip = merge(option.tooltip || {}, {valueFormatter: format});
+            (option.series || []).forEach(function (series) {
+                if (series.label && series.label.show && (series.type === "bar" || series.type === "line")) {
+                    series.label.formatter = function (params) {
+                        return format(Array.isArray(params.value) ? params.value[1] : params.value);
+                    };
+                }
+            });
+        }
+        if (kind !== "bar" && kind !== "line" && kind !== "scatter") {
+            return;
+        }
+        var value = valueAxisOf(option);
+        if (!value) {
+            return;
+        }
+        var series = option.series || [];
+        if (unitsSet) {
+            value.axis.axisLabel = merge(value.axis.axisLabel || {}, {formatter: format});
+        }
+
+        var log = boolSetting(settings, "logScale", false);
+        if (log) {
+            value.axis.type = "log";
+            value.axis.logBase = 10;
+            // A value of 0 or less has no place on a log axis: a category's is left empty, a point left out.
+            var notPositive = 0;
+            series.forEach(function (one) {
+                var points = (one.data || []).some(Array.isArray);
+                one.data = (one.data || []).map(function (item) {
+                    var number = Array.isArray(item) ? item[value.index] : item;
+                    if (typeof number === "number" && number <= 0) {
+                        notPositive++;
+                        return null;
+                    }
+                    return item;
+                });
+                if (points) {
+                    one.data = one.data.filter(function (item) {
+                        return item !== null;
+                    });
+                }
+            });
+            if (notPositive > 0) {
+                report.warnings.push(notPositive + " values of 0 or less can't be shown on a log scale and were " +
+                    "left out");
+            }
+        } else if (boolSetting(settings, "breakOutliers", false)) {
+            var values = [];
+            eachValue(series, value.index, function (item) {
+                if (item !== null && isFinite(item)) {
+                    values.push(item);
+                }
+            });
+            var cut = outlierBreak(values);
+            if (cut) {
+                value.axis.breaks = [cut];
+            }
+        }
+
+        var lines = [];
+        var threshold = toNumber(textSetting(settings, "threshold"));
+        if (!isNaN(threshold) && series.length > 0) {
+            var label = textSetting(settings, "thresholdLabel") || format(threshold);
+            var line = {
+                name: label,
+                lineStyle: {color: "#e5484d", type: "dashed", width: 1.5},
+                label: {formatter: label, color: style.text, position: "insideEndTop"}
+            };
+            line[value.dim === "x" ? "xAxis" : "yAxis"] = threshold;
+            lines.push(line);
+        }
+        if (lines.length > 0) {
+            series[0].markLine = {silent: true, symbol: "none", data: lines};
+        }
+        if (kind !== "scatter" && boolSetting(settings, "averageLine", false)) {
+            series.forEach(function (one) {
+                var average = {
+                    type: "average",
+                    name: "Average",
+                    valueDim: value.dim,
+                    lineStyle: {color: style.subtleText, type: "dotted", width: 1.5},
+                    label: {
+                        color: style.subtleText,
+                        position: "insideEndBottom",
+                        formatter: function (params) {
+                            return (series.length > 1 ? one.name + " average " : "Average ") + format(params.value);
+                        }
+                    }
+                };
+                one.markLine = one.markLine || {silent: true, symbol: "none", data: []};
+                one.markLine.data.push(average);
+            });
+        }
+        if (kind === "scatter" && boolSetting(settings, "jitter", false)) {
+            option.xAxis.jitter = 8;
+            option.yAxis.jitter = 8;
+        }
+    }
+
+    function addZoom(kind, option, style, settings) {
         var top;
         var right;
         if (kind === "graph") {
@@ -1934,6 +2159,28 @@ if (!window.visualisations) {
                 option.dataZoom = [{type: "inside", yAxisIndex: 0}];
             } else {
                 option.dataZoom = [{type: "inside", xAxisIndex: 0}];
+            }
+            if (boolSetting(settings, "zoomSlider", false)) {
+                // A zoom bar along the bottom (or, for a horizontal bar chart, the right), driving the same axis.
+                var along = option.dataZoom[0];
+                var slider = {
+                    type: "slider",
+                    height: along.yAxisIndex === 0 ? undefined : 16,
+                    width: along.yAxisIndex === 0 ? 16 : undefined,
+                    bottom: along.yAxisIndex === 0 ? undefined : 6,
+                    right: along.yAxisIndex === 0 ? 8 : undefined,
+                    borderColor: style.border,
+                    textStyle: {color: style.subtleText},
+                    filterMode: along.filterMode
+                };
+                if (along.yAxisIndex === 0) {
+                    slider.yAxisIndex = 0;
+                    option.grid.right += 28;
+                } else {
+                    slider.xAxisIndex = 0;
+                    option.grid.bottom += 28;
+                }
+                option.dataZoom.push(slider);
             }
             // Just inside the plot area's top-right corner.
             top = option.grid.top + 4;
@@ -1956,6 +2203,9 @@ if (!window.visualisations) {
 
     function buildOption(context, settings, data, prefs, style) {
         settings = settings || {};
+        // The preferences, with how values are shown by the Units setting.
+        prefs = merge({}, prefs || {});
+        prefs.formatValue = unitFormatter(textSetting(settings, "units"));
         var kind = String(settings.kind || "").toLowerCase();
         if (KINDS.indexOf(kind) < 0) {
             throw new Error("Unknown chart kind '" + settings.kind + "'. Expected one of " + KINDS.join(", "));
@@ -1971,6 +2221,11 @@ if (!window.visualisations) {
             return null;
         };
         delete option.selectAt;
+        Object.keys(option).forEach(function (key) {
+            if (option[key] === undefined) {
+                delete option[key];
+            }
+        });
         // A clicked item is shown selected: one at a time.
         (option.series || []).forEach(function (series) {
             series.selectedMode = "single";
@@ -1991,7 +2246,8 @@ if (!window.visualisations) {
             textStyle: {color: style.text}
         });
 
-        addZoom(kind, option, style);
+        applyValueSettings(kind, option, settings, style, prefs, report);
+        addZoom(kind, option, style, settings);
 
         var cleaned = sanitiseOptions(settings.options);
         cleaned.warnings.forEach(function (warning) {
