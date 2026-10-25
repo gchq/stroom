@@ -419,9 +419,12 @@ class FieldMappingSections {
                                 final List<Long> streamIds,
                                 final String layout,
                                 final Descriptions described) {
-        final Map<String, Double> population = streamIds.isEmpty()
+        final Map<String, Object> summary = streamIds.isEmpty()
                 ? null
-                : (Map<String, Double>) streamSummaries.summariseEvents(streamIds, RECORDS).get("path_population");
+                : streamSummaries.summariseEvents(streamIds, RECORDS);
+        final Map<String, Double> population = summary == null
+                ? null
+                : IndexingInputs.populationWithDataNames(summary);
         if (!streamIds.isEmpty() && NullSafe.isEmptyMap(population)) {
             final List<String> kinds = streamIds.stream()
                     .map(id -> metaOrNone(id)
@@ -448,8 +451,10 @@ class FieldMappingSections {
                     e.getMessage()));
             schema = null;
         }
-        String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, documents, schema, layout,
-                described) + agreedLine(pipeline);
+        String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, summary == null
+                ? null
+                : IndexingInputs.populationByAction(summary), documents, schema, layout, described)
+                         + agreedLine(pipeline);
         final Optional<String> drift = mappingDrift.planDrift(kept);
         if (drift.isPresent()) {
             section = section.stripTrailing() + "\n\nNote: " + capitalised(beforeDiffers(drift.get())) + "\n";

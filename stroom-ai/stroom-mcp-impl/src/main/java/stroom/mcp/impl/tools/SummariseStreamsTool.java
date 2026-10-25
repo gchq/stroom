@@ -145,7 +145,10 @@ class SummariseStreamsTool extends AbstractBuiltInTool {
                                                                  + streamIds.size() + " stream(s) with the "
                                                                  + NAME + " tool");
         }
-        return JsonResults.of(result);
+        // The by-action shares are for documenting fields, too much to read here.
+        final Map<String, Object> shown = new LinkedHashMap<>(result);
+        shown.remove(StreamSummaries.POPULATION_BY_ACTION);
+        return JsonResults.of(shown);
     }
 
     private Map<String, Object> summariseErrors(final List<Long> streamIds) {

@@ -153,6 +153,24 @@ class TestStreamSummaries {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void eachPathIsAlsoCountedByTheActionElementOfItsEvents() {
+        // For documenting a field only some kinds of event have under each (seen: source.ip, from EventSource, in
+        // 40% of the events, under no event type): shares of all the events, named Data entries too.
+        world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(EVENTS));
+
+        final Map<String, Object> profile = summaries.summariseEvents(List.of(8L), 200);
+
+        final Map<String, Map<String, Double>> byAction =
+                (Map<String, Map<String, Double>>) profile.get(StreamSummaries.POPULATION_BY_ACTION);
+        assertThat(byAction).containsOnlyKeys("Authenticate");
+        assertThat(byAction.get("Authenticate"))
+                .containsEntry("EventDetail/TypeId", 100.0)
+                .containsEntry("EventDetail/Authenticate/User/Id", 50.0)
+                .containsEntry("Data[@Name='host']/@Value", 50.0);
+    }
+
+    @Test
     void aSampledProfileSaysSo() {
         world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(EVENTS, EVENTS));
 
