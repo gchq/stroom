@@ -24,9 +24,12 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTMLPanel;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -37,6 +40,7 @@ import java.util.Optional;
 /// that the icons show (which are hover tips only).
 public class PipelineElementBox extends Box<PipelineElement> {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String BLOCK = "pipeline-element";
     private static final String TARGET_CLASS = BLOCK + "--target";
     private static final String REFUSED_CLASS = BLOCK + "--refused";
@@ -44,7 +48,6 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private static final String IMAGE_CLASS = BLOCK + "__image";
     private static final String TYPE_ICON_CLASS = BLOCK + "__type-icon";
     private static final String REFUSED_ICON_CLASS = BLOCK + "__refused-icon";
-    private static final String LABEL_CLASS = BLOCK + "__label";
     private static final String EMBEDDED_CLASS = BLOCK + "__embedded";
     // What flows along the connectors into and out of it, which colour its dots
     private static final String FLOW_IN_ATTRIBUTE = "data-flow-in";
@@ -56,7 +59,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private final PipelineModel pipelineModel;
     private PipelineElement pipelineElement;
     // The element's name: a plain element, not GWT's Label (whose gwt-Label class isn't BEM)
-    private final Element label;
+    @UiField
+    Element label;
     // Its type icon, if it has one, and the "not allowed" icon that takes its place while it refuses
     // what is being moved to it (so that that isn't told by colour alone), which is only in the
     // document then
@@ -81,11 +85,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         this.pipelineElement = pipelineElement;
         this.typeName = iconName;
 
-        final FlowPanel background = new FlowPanel();
-        background.setStyleName(BLOCK);
-
-        label = Document.get().createDivElement();
-        label.setClassName(LABEL_CLASS);
+        // The box and its name (see the template)
+        final HTMLPanel background = BINDER.createAndBindUi(this);
         setLabelText(pipelineElement.getDisplayName());
         setDescription(pipelineElement.getDescription());
 
@@ -93,7 +94,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
             typeIcon = createIcon(icon, TYPE_ICON_CLASS);
             // Its type is in the box's name (see updateName)
             hideIcon(typeIcon, iconName);
-            background.getElement().appendChild(typeIcon);
+            // Before the name
+            background.getElement().insertFirst(typeIcon);
         } else {
             typeIcon = null;
         }
@@ -101,7 +103,6 @@ public class PipelineElementBox extends Box<PipelineElement> {
         refusedIcon = createIcon(SvgImage.NOT_ALLOWED, REFUSED_ICON_CLASS);
         hideIcon(refusedIcon, null);
 
-        background.getElement().appendChild(label);
 
         final Optional<PipelineProperty> embeddedProperty = pipelineModel.getProperties(pipelineElement).stream()
                 .filter(Objects::nonNull)
@@ -362,5 +363,13 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public int hashCode() {
         return Objects.hash(pipelineElement);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<HTMLPanel, PipelineElementBox> {
+
     }
 }

@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -33,8 +34,12 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.List;
@@ -43,19 +48,24 @@ import java.util.function.Predicate;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     // Room between columns for the connectors' dots and curves
     private static final double HORIZONTAL_SEPARATION = 40;
     private static final double VERTICAL_SEPARATION = 10;
     private static final String FADED_LAYER = "faded";
-    private final FlowPanel panel;
+    @UiField
+    FlowPanel panel;
     private LayeredCanvas canvas;
-    private FlowPanel boxPanel;
+    @UiField
+    AriaPanel boxPanel;
     // The faded elements' boxes and their connectors (those into them, drawn on their own canvas
     // layer), faded as one by its opacity, so that nothing in it shows through anything else in it
     // (e.g. a line through a dot). It is in the box panel, under the other boxes (so that a faded
     // line doesn't cover the dot it starts from), and positions nothing itself: what is in it is
     // where it would otherwise be.
-    private FlowPanel fadedGroup;
+    @UiField
+    AriaPanel fadedGroup;
     private Predicate<PipelineElement> faded = element -> false;
     private final PendingOperation pendingOperation = new PendingOperation();
     private TreeRenderer2<PipelineElement> renderer;
@@ -64,11 +74,9 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private SelectionModel<PipelineElement> selectionModel;
 
+    /// Makes an empty tree; [#setPipelineModel] gives it its pipeline.
     public PipelineTreePanel() {
-        panel = new FlowPanel();
-        // The BEM block pipeline-tree (see pipeline-tree.css)
-        panel.setStyleName("pipeline-tree");
-        initWidget(panel);
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     @Override
@@ -117,18 +125,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             throw new NullPointerException("Null model");
         }
 
+        // The boxes, the tree's items (PipelineElementRenderer), go in the template's panels
         clear();
-
-        boxPanel = new FlowPanel();
-        boxPanel.setStyleName("pipeline-tree__items");
-        // The boxes are the tree's items (PipelineElementRenderer), for assistive technology
-        boxPanel.getElement().setAttribute("role", "tree");
-        boxPanel.getElement().setAttribute("aria-label", "Pipeline structure");
-        fadedGroup = new FlowPanel();
-        fadedGroup.setStyleName("pipeline-tree__faded");
-        // Not a group of the tree's: its boxes are items of the tree as the others are
-        fadedGroup.getElement().setAttribute("role", "none");
-        boxPanel.add(fadedGroup);
 
         // setup the tree layout configuration.
         canvas = LayeredCanvas.createIfSupported();
@@ -156,21 +154,26 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer.setTreeLayout(treeLayout);
 
             canvas.addStyleName("pipeline-tree__canvas");
-            panel.add(canvas);
+            // Under the boxes
+            panel.insert(canvas, 0);
         }
-
-        panel.add(boxPanel);
     }
 
+    // Empties the panels of the last pipeline's boxes (keeping the faded group), and takes away
+    // its canvas, with the faded layer it put in the faded group
     private void clear() {
-        if (boxPanel != null) {
-            boxPanel.clear();
-            panel.remove(boxPanel);
+        for (int i = boxPanel.getWidgetCount() - 1; i >= 0; i--) {
+            if (boxPanel.getWidget(i) != fadedGroup) {
+                boxPanel.remove(i);
+            }
         }
+        fadedGroup.clear();
+        fadedGroup.getElement().removeAllChildren();
 
         if (canvas != null) {
             canvas.clear();
             panel.remove(canvas);
+            canvas = null;
         }
     }
 
@@ -284,5 +287,13 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
                     .filter(b -> disabledElements.contains(b.getItem()))
                     .forEach(b -> b.setDisabled(true));
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, PipelineTreePanel> {
+
     }
 }

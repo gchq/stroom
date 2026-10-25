@@ -23,10 +23,10 @@ import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.SelectionModel;
@@ -83,10 +83,11 @@ public final class PipelineElementRenderer
         pipelineElementBox.setPorts(hasChildren);
         setTreeItem(pipelineElementBox, pipelineElement, hasChildren, selected);
 
-        final Style style = pipelineElementBox.getElement().getStyle();
-        style.setLeft(bounds.getX(), Unit.PX);
-        style.setTop(bounds.getY(), Unit.PX);
-        style.setWidth(bounds.getWidth(), Unit.PX);
+        // Placed by pipeline-element.css's rule, which reads these
+        final Element boxElement = pipelineElementBox.getElement();
+        CssProperties.set(boxElement, "--pipeline-element__left", bounds.getX() + "px");
+        CssProperties.set(boxElement, "--pipeline-element__top", bounds.getY() + "px");
+        CssProperties.set(boxElement, "--pipeline-element__width", bounds.getWidth() + "px");
 
         if (faded.test(pipelineElement)) {
             fadedPanel.add(pipelineElementBox);
@@ -169,7 +170,7 @@ public final class PipelineElementRenderer
     // An element's box's own size, at the width its content needs
     private Dimension measure(final PipelineElement pipelineElement) {
         final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
-        pipelineElementBox.getElement().getStyle().clearWidth();
+        CssProperties.remove(pipelineElementBox.getElement(), "--pipeline-element__width");
         RootPanel.get().add(pipelineElementBox);
         // Its own size, not its scroll size, which would count the port dots over its borders
         final double width = pipelineElementBox.getElement().getOffsetWidth();
