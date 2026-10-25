@@ -1650,6 +1650,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The column for category.",
           "type" : "string"
         },
+        "date" : {
+          "description" : "The column for date.",
+          "type" : "string"
+        },
         "name" : {
           "description" : "The column for name.",
           "type" : "string"
@@ -1703,8 +1707,8 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     },
     "kind" : {
-      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections).",
-      "enum" : [ "bar", "line", "pie", "scatter", "graph" ],
+      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight).",
+      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord" ],
       "type" : "string"
     },
     "library" : {
@@ -1734,6 +1738,14 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "properties" : {
         "area" : {
           "description" : "The value for area, as text.",
+          "type" : "string"
+        },
+        "bins" : {
+          "description" : "The value for bins, as text.",
+          "type" : "string"
+        },
+        "colourScale" : {
+          "description" : "The value for colourScale, as text.",
           "type" : "string"
         },
         "directed" : {
@@ -1770,6 +1782,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "nodeColours" : {
           "description" : "The value for nodeColours, as text.",
+          "type" : "string"
+        },
+        "orient" : {
+          "description" : "The value for orient, as text.",
           "type" : "string"
         },
         "showLabels" : {

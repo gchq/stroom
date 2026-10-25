@@ -104,7 +104,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
 
     // The column ids a click on a generated chart selects.
     private static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
-            "target");
+            "target", "date");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
     private final TabSnapshots tabSnapshots;

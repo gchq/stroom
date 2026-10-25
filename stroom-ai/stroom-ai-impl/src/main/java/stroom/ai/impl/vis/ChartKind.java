@@ -87,7 +87,57 @@ public enum ChartKind {
                     new ChartRole("targetGroup", "Target Group (Optional)", false, ChartRole.Values.ANY,
                             "colours the target node by this column")),
             List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS,
-                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES));
+                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
+
+    HEATMAP("heatmap", "Heatmap", "a grid with a cell for each x and y pair, coloured by its value",
+            List.of(
+                    new ChartRole("x", "X Axis", true, ChartRole.Values.ANY,
+                            "the grid's columns, e.g. the hour of the day"),
+                    new ChartRole("y", "Y Axis", true, ChartRole.Values.ANY,
+                            "the grid's rows, e.g. the day of the week or a UserId"),
+                    new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
+                            "each cell's value, e.g. a count() column; drawn as its colour")),
+            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.SHOW_LABELS_OFF, StyleSetting.MAX_VALUES)),
+
+    CALENDAR("calendar", "Calendar heatmap", "a calendar of days, each coloured by its value",
+            List.of(
+                    new ChartRole("date", "Date", true, ChartRole.Values.DATE,
+                            "the day, e.g. EventTime rounded with floorDay(), formatted as Date Time"),
+                    new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
+                            "each day's value, e.g. a count() column; days in several rows are added up")),
+            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.MAX_VALUES)),
+
+    HISTOGRAM("histogram", "Histogram", "how a number is spread: bars counting the rows in each range of it",
+            List.of(
+                    new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
+                            "the numbers to count, e.g. bytes or a duration; one per row, not grouped"),
+                    new ChartRole("series", "Series (Optional)", false, ChartRole.Values.ANY,
+                            "splits each range's bar by this column, shown in the legend")),
+            List.of(StyleSetting.BINS, StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
+                    StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF, StyleSetting.MAX_SERIES,
+                    StyleSetting.MAX_VALUES)),
+
+    SANKEY("sankey", "Sankey diagram", "flows from one thing to the next, each as wide as how much flows",
+            List.of(
+                    new ChartRole("source", "Source", true, ChartRole.Values.ANY,
+                            "where each flow starts, e.g. a source IP"),
+                    new ChartRole("target", "Target", true, ChartRole.Values.ANY,
+                            "where it goes, e.g. a destination port"),
+                    new ChartRole("value", "Value (Optional)", false, ChartRole.Values.NUMBER,
+                            "how much flows, e.g. a count() column; each row counts once if not given")),
+            List.of(StyleSetting.ORIENT, StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES,
+                    StyleSetting.MAX_VALUES)),
+
+    CHORD("chord", "Chord diagram", "links between things round a circle, each as wide as its weight",
+            List.of(
+                    new ChartRole("source", "Source", true, ChartRole.Values.ANY,
+                            "one end of each link, e.g. the sender"),
+                    new ChartRole("target", "Target", true, ChartRole.Values.ANY,
+                            "the other end, e.g. the recipient"),
+                    new ChartRole("weight", "Weight (Optional)", false, ChartRole.Values.NUMBER,
+                            "how strong each link is, e.g. a count() of messages; each row counts once if not "
+                            + "given")),
+            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES));
 
     private final String id;
     private final String displayName;
