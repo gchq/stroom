@@ -180,6 +180,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
+    // What the open Add Column list does with a choice, removed when it closes
+    private HandlerRegistration addColumnSelection;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles rowStyles;
     private boolean initialised;
@@ -501,18 +503,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                 addColumnPopup.setPopupTextProvider(() ->
                                         QuickFilterTooltipUtil.createTooltip(
                                                 "Column Filter", helpUrl))));
+                // A choice made while the list is open when the table goes
+                onDispose(this::removeAddColumnSelection);
             } else if (changedDataSource) {
                 addColumnPopup.refresh();
+            }
+
+            // A second press on the button (which doesn't close the list, as it is the list's
+            // partner) closes it
+            if (addColumnPopup.isShowing()) {
+                addColumnPopup.hide();
+                return;
             }
 
             // The popup opens below the button
             final Element target = addColumnButton.getElement();
             addColumnPopup.addAutoHidePartner(target);
-            addColumnPopup.show(target);
-
-            final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             final MultiSelectionModel<ColumnSelectionItem> selectionModel = addColumnPopup.getSelectionModel();
-            handlerRegistrations.add(selectionModel.addSelectionHandler(e -> {
+            addColumnSelection = selectionModel.addSelectionHandler(e -> {
                 final ColumnSelectionItem item = selectionModel.getSelected();
                 if (item != null && !item.isHasChildren()) {
                     final Column column = item.getColumn();
@@ -521,21 +529,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                     addColumnPopup.hide();
                 }
-            }));
+            });
             // The popup is kept, so this replaces the last showing's
             addColumnPopup.setOnClose(() -> {
-                for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
-                    handlerRegistration.removeHandler();
-                }
-                handlerRegistrations.clear();
+                removeAddColumnSelection();
                 target.focus();
             });
-            own((HandlerRegistration) () -> {
-                for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
-                    handlerRegistration.removeHandler();
-                }
-                handlerRegistrations.clear();
-            });
+            addColumnPopup.show(target);
+        }
+    }
+
+    private void removeAddColumnSelection() {
+        if (addColumnSelection != null) {
+            addColumnSelection.removeHandler();
+            addColumnSelection = null;
         }
     }
 

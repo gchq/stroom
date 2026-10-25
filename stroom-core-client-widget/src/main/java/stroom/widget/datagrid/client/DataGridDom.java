@@ -239,7 +239,7 @@ final class DataGridDom {
         var link = $doc.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
-        link.style.display = "none";
+        link.hidden = true;
         $doc.body.appendChild(link);
         link.click();
         $doc.body.removeChild(link);

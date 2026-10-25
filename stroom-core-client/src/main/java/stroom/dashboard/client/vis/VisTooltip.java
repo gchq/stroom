@@ -114,7 +114,7 @@ public final class VisTooltip {
         if (tooltip == null) {
             tooltip = Document.get().createDivElement();
             tooltip.setClassName(CLASS_NAME);
-            // Hidden until shown (vis-tooltip.css)
+            // Hidden until shown (vis-tooltip--shown); assistive technology reads the points' own names
             tooltip.setAttribute("aria-hidden", "true");
             content = Document.get().createDivElement();
             content.setClassName(CONTENT_CLASS_NAME);

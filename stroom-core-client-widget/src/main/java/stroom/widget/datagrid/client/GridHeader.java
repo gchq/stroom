@@ -49,11 +49,9 @@ final class GridHeader<R> {
         this.headerRow = headerRow;
     }
 
-    /// Draws the header row.
-    ///
-    /// @param hidden Whether the header is hidden.
-    void render(final boolean hidden) {
-        // A hidden header is hidden by the grid's data-grid--no-header (data-grid.css)
+    /// Draws the header row; a hidden header is hidden by the grid's `data-grid--no-header`
+    /// (data-grid.css).
+    void render() {
         final Element active = DataGridDom.getActiveElement();
         final boolean headerFocused = active != null && active.hasAttribute(GridHtml.DATA_HCOL)
                                       && headerRow.isOrHasChild(active);

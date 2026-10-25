@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 5 (25 October 2026):** `PagerView`/`PagerViewImpl` is `PagerPanel` and `PagerViewWithHeading` is `HeadedPagerPanel` (both components in `stroom.widget.datagrid.client`; the plans below keep the old names and line numbers); `MessagePanelImpl` is `MessagePanel` (block `message-panel`); `SvgCell` is `IconCell`; the ref cells are in `stroom.data.client.component`, configured by one `RefCellsController`. `DataGrid` takes no bus (`DataGrid()`, `DataGrid(int pageSize)`): its context menu, links and Stroom AI questions go up the page as requests (`MenuRequest`, `OpenHyperlinkRequest`, `AskStroomAiTableRequest`) to `CorePresenter`'s relays. Not there yet, for the plans below that assume it: `PagerPanel` can't take children in a template (no `@UiChild` or `HasWidgets`: the grid goes in with `setDataWidget`, buttons with `getToolbar()`, and the toolbar's name is set in Java), and it is still the list's `TaskMonitorFactory` (about 90 uses); the grid's sort, range and selection outputs are still GWT's handlers. See `wave-05.md`.
+
 Convert the tool screens onto a content-tab component base: Users, Accounts, API keys, Credentials, Nodes, Jobs, Cache, Volumes, Meta, Retention, Content Store and so on. Then convert the shell: ContentTabPane, CurveTabLayout, Navigation, Main, Core, FullScreen and TabSessionManager. Replace explorer bus events with callbacks and context where possible, and finally delete ContentTabPresenter, WrapperView's GIN binding and the popup bridges.
 
 ## CSS and template notes for the wave
@@ -182,7 +184,7 @@ screen, presenter; complexity 2, effort S; used by 1.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DatabaseTablesMonitoringPresenter.java:62,65-66 | component-declaration | <dg:PagerPanel ui:field="pager"><dg:DataGrid ui:field="dataGrid" tableName="Database Tables" pageSize="1000"/></dg:PagerView> (stroom.widget.datagrid.client, wave 5). Needs DataGrid's no-argument constructor from wave 5: today it takes a HasHandlers (DataGrid.java:192,200). |
+| DatabaseTablesMonitoringPresenter.java:62,65-66 | component-declaration | <dg:PagerPanel ui:field="pager"><dg:DataGrid ui:field="dataGrid" tableName="Database Tables" pageSize="1000"/></dg:PagerPanel> (stroom.widget.datagrid.client, wave 5). Needs DataGrid's no-argument constructor from wave 5: today it takes a HasHandlers (DataGrid.java:192,200). |
 
 **Stays in Java:** Column definitions with their value getters (:68-106); Key provider (:64), sort handling and RestDataProvider (:111-136).
 
@@ -713,7 +715,7 @@ screen, presenter; complexity 4, effort L; used by 1.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ExecutionScheduleManager.java:133-134,143 | component-declaration | <dg:PagerPanel ui:field="pager"><dg:DataGrid ui:field="dataGrid" tableName="Execution Schedules"/></dg:PagerView> (wave 5; needs DataGrid's no-argument constructor). |
+| ExecutionScheduleManager.java:133-134,143 | component-declaration | <dg:PagerPanel ui:field="pager"><dg:DataGrid ui:field="dataGrid" tableName="Execution Schedules"/></dg:PagerPanel> (wave 5; needs DataGrid's no-argument constructor). |
 | ExecutionScheduleManager.java:149-151 | css-class | Selection count label built in Java with classes paging-bar paging-bar__label (paging-bar.css; pager-paging pager-label until wave 2): declare <g:HTML ui:field="selectionCount" styleName="paging-bar paging-bar__label"/> in the template and hand it to the pager's info area (or as a PagerView child if wave 5 gives it one). |
 | ExecutionScheduleManager.java:613 | css-class | default-min-sizes on the Expression dialog: into Expression.ui.xml's root, as for BatchDocumentPermissions (unit 252). |
 | ExecutionScheduleManager.java:205-224 | text | Toolbar name "Execution schedule actions" and six buttons on its own pager's toolbar: into the template if PagerView takes toolbar children; else they stay in the component's Java as one action enum. |

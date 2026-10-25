@@ -395,33 +395,6 @@
     min-height: 0;
 }
 
-.dashboardVis-messageOuter {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	height: 30px;
-	z-index: 5;
-}
-
-.dashboardVis-messageInner {
-	position: relative;
-	left: -50%;
-	top: -50%;
-
-	padding: 5px 10px;
-
-	background-color: white;
-/* 	border: 1px solid #404e60; */
-	box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px, rgba(0, 0, 0, 0.4) 0 0 3px;
-/* 	box-shadow: 1px 1px 8px rgba(0,0,0,0.6), -1px -1px 8px rgba(0,0,0,0.6); */
-	border-radius: 5px;
-
-	color: white;
-	background-color: #1f77b4;
-	/* Each line of the message on one line (MessagePanel), as GWT's Label with no word wrap was */
-	white-space: nowrap;
-}
-
 .KeyValueInputView,
 .ListInputView,
 .TextInputView {
@@ -449,32 +422,6 @@
 .listInputItem-container .listInputItem-source-text {
     display: inline-block;
     color: var(--text-color--disabled);
-}
-
-/* Placed by VisFrame (setContainerPositionAndSize), with its own names as they inherit into the frame */
-.VisFrame-container {
-    position: absolute;
-    left: var(--vis-frame__container-left, auto);
-    top: var(--vis-frame__container-top, auto);
-    width: var(--vis-frame__container-width, auto);
-    height: var(--vis-frame__container-height, auto);
-    margin: 0;
-    padding: 0;
-    border-width: 0;
-    z-index: 2;
-    overflow: hidden;
-}
-
-/* Placed by VisFrame (setInnerPositionAndSize) */
-.VisFrame-frame {
-    position: absolute;
-    left: var(--vis-frame__frame-left, auto);
-    top: var(--vis-frame__frame-top, auto);
-    width: var(--vis-frame__frame-width, auto);
-    height: var(--vis-frame__frame-height, auto);
-    margin: 0;
-    padding: 0;
-    border-width: 0;
 }
 
 /** DEBUG **/

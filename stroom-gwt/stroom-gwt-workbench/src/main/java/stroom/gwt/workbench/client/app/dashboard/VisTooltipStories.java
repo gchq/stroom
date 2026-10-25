@@ -196,7 +196,7 @@ public final class VisTooltipStories {
     private static Query visFrame(final Play play) {
         DashboardPlays.opened(play);
         DashboardPlays.runQuery(play, 0);
-        final Query frame = play.screen().querySelector("iframe.VisFrame-frame");
+        final Query frame = play.screen().querySelector("iframe.vis-frame__frame");
         play.waitFor(() -> play.expect(frame).toBeVisible());
         return frame;
     }

@@ -193,7 +193,7 @@ div.data-grid                       role=grid, tabindex, CSS vars: --data-grid__
 * **Column template.** `--data-grid__columns` holds the template, e.g. `"22px 200px 340.5px"`.
   * Header rows and body rows both use `display: grid; grid-template-columns: var(--data-grid__columns)`.
   * Resizing a column means writing one CSS custom property. No rows are re-rendered.
-  * A column span is `grid-column: span N` (R-R9).
+  * A column span is the cell's `data-grid__cell--span` class with its `--data-grid__span: N` (so the cell's `style` holds only a custom property) (R-R9).
 * **Horizontal scroll.** Header and body are in the same scroller, so they always scroll together.
   No synchronisation code is needed.
 * **Scrollbars: overlay thumbs (decided, §10).** The thumbs float over the grid area as they do
@@ -437,11 +437,11 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | ID | Requirement | Source |
 | --- | --- | --- |
 | R-D1 | Full `HasData<R>`: `setRowData(start, values)`, `setRowCount(count, exact)`, `setVisibleRange(start, length)`, `getVisibleRange`, `setPageSize`, `RangeChangeEvent`, `RowCountChangeEvent`, `LoadingStateChangeEvent` (2 handlers). Constructors take the page size (default `DEFAULT_LIST_PAGE_SIZE = 100`, `MASSIVE_LIST_PAGE_SIZE = 100000`). | G |
-| R-D2 | Works with `PagerView` / `Pager`: the pager calls `setDisplay(grid)`, and the "from to of", "?" for an inexact count, and typed-range behaviours are unchanged. | G |
+| R-D2 | Works with `PagerPanel` (was `PagerView`) / `Pager`: the pager calls `setDisplay(grid)`, and the "from to of", "?" for an inexact count, and typed-range behaviours are unchanged. | G |
 | R-D3 | Pushed data with a range-change feedback guard (dashboard `ignoreRangeChange`). Setting rows must not fire `RangeChangeEvent` unless the range changed. | G |
 | R-D4 | `flush()` applies pending changes synchronously (67 sites). `redraw()` re-renders. | G |
 | R-D5 | The empty state is **blank by default**, as today (decided, §10). Screens can opt in with `setEmptyMessage(String)` or `setEmptyTableWidget(Widget)`. Errors are still shown in the pager's `MessagePanel`. | G |
-| R-D6 | The loading state stays the pager's refresh spinner (`PagerView.createTaskMonitor`). The grid's own loading widget stays blank. | G |
+| R-D6 | The loading state stays the pager's refresh spinner (`PagerPanel.createTaskMonitor`, was `PagerView`'s). The grid's own loading widget stays blank. | G |
 | R-D7 | The vertical scroll position matches GWT (measured in Phase 0). It is kept when the same rows arrive again (a poll), when every row's values change, and when the columns are rebuilt. A page too short to scroll is at the top. A polling refresh never moves it. | G |
 | R-D8 | `scrollToRow(index)` / reveal: scroll a row into view in either mode (needed by keyboard moves and by presenters that select an item after loading). | G / R |
 

@@ -91,6 +91,17 @@ public final class FeedRefCellStories {
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("TEST_FEED"));
                     play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                 })
+                // The grid's menu's Copy Feed Details > Link asks the cell's owner to copy the feed's
+                // link (onCopyUrl; Stroom's RefCellsController fires CopyFeedUrlEvent)
+                .story("CopyLinkFromTheMenu", FeedRefCellStories::grid)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.rightClick(play.findByText("TEST_FEED"));
+                    final Query menu = screen.findByRole("menu");
+                    play.click(play.within(menu).getByRole("menuitem", "Copy Feed Details"));
+                    play.click(screen.findByRole("menuitem", "Link"));
+                    play.waitFor(() -> play.expect(play.spy(ON_COPY_LINK)).toHaveBeenCalledWith("TEST_FEED"));
+                })
                 // In a grid, a press on the open icon (an SVG image) opens the feed. The grid's
                 // selection threw on an SVG element, so the cell never had the press
                 .story("OpenIconInGrid", FeedRefCellStories::grid)
@@ -145,8 +156,8 @@ public final class FeedRefCellStories {
         // The grid asks for its context menu with a MenuRequest
         StoryPopups.create(context).withPageRequests();
         final Spy onOpen = context.fn(ON_OPEN);
-        final FeedRefCell<String> cell = cell(onOpen::call, name -> {
-        }, true);
+        final Spy onCopyLink = context.fn(ON_COPY_LINK);
+        final FeedRefCell<String> cell = cell(onOpen::call, onCopyLink::call, true);
         final DataGrid<String> grid = new DataGrid<>();
         grid.setWidth("100%");
         grid.setHeight("100%");

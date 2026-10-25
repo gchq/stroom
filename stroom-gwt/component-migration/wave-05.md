@@ -4,13 +4,71 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Make DataGridWidget usable in templates and free of the bus: requests bubble through the DOM, and sort, range and selection outputs become callbacks. Cells take onOpen/onMenu callbacks instead of an EventBus or HasHandlers. SelectionList and SelectionPopup move from init(model) to setters.
 
+## Audited (25 October 2026)
+
+Six reviewers read the wave against this plan, "Done means" and AGENTS.md. Fixed:
+
+- **Two regressions.** A dashboard table's Add Column list added a column twice after a second
+  press on its button had closed it (on master the next choice was added twice; here, once the
+  list's close was one callback, every later choice was): the list was shown before its handlers
+  were added, and showing an open list closes it. A second press now only closes it (story
+  `TableAddColumnAfterClosingTheList`; on master too, so a changelog entry). And every selection
+  list showed the grid's own context menu (Copy, Export Table, Ask Stroom AI About) on a
+  right-click: its grid had a private bus nothing heard, and now asks the page; the list turns the
+  menu off (story `NoMenuOnTheOptions`).
+- **A bug recorded as this branch's only.** The standalone dashboard's menus (splitters', dialogs')
+  never opened on master either (`MenuRequest` came with `d3ddaab46f`, which master has): a
+  changelog entry, and ISSUES.md says so.
+- **A fix only half done.** `setHideHeader` after the first render hid the header; showing it again
+  didn't draw and snap it again. It marks the header to be drawn again now (story
+  `HeaderHiddenAfterRender`).
+- **Claims that weren't so.** The counts (16 units, in 9 commits; 127 `DataGrid` constructor calls
+  and 5 `FindResultLists.create` calls, not "132 callers"; about 90 uses of the pager as a task
+  monitor, not "83 REST calls"); "a template can't name a `<nav>`" (an `HTMLPanel` can be one, but
+  can't carry an `aria-label`, so the `AriaPanel` stays); the menu's link items "follow a link as a
+  click does" (only where something handles the grid's links: elsewhere a click does nothing and the
+  menu asks the app); `HeadedPagerPanel` as "the plans' fallback" (it is a copy of the old panel, not
+  the fallback's wrapper around `PagerPanel`, and the reason given wasn't shown).
+- **Rule 6.** `MessagePanel` and `VisFrame`, used only by themselves, have their own BEM
+  stylesheets: `message-panel.css` (`message-panel`, `message-panel__message`, were
+  `dashboardVis-message*`) and `vis-frame.css` (`vis-frame`, `vis-frame__frame`, were
+  `VisFrame-*`).
+- **Smaller things.** A grid's hyperlink handler is counted once however often it is removed; the
+  download link is hidden with `hidden`, not an inline style; `SelectionList`'s event manager is at
+  the bottom of the class; javadoc on `VisFrame`'s methods and `SelectionPopup`; misplaced
+  comments, an unused import, an indent; stale names left by the renames in the docs, the design
+  history they had rewritten (`PagerPanel.addButton`, which never was), the CSS comments and the
+  suite's `build-handler-inventory.mjs`; the half-renamed snippets in the wave 11 and 15 plans; and
+  a "Since wave 5" note at the top of the wave 6, 10, 11, 12, 13 and 15 plans. Stories:
+  `DocRefCell` `NoOpen` checks the menu, `FeedRefCell` `CopyLinkFromTheMenu` the link, and
+  `DataGrid` `PagerMessage` shows a message.
+
+Decided, and left:
+
+- **Shared layout classes.** `PagerPanel` and `HeadedPagerPanel` keep `pager`, `pager-toolbar` and
+  `listContainer` (components.css), which unconverted views and the vis toolbar row use too; they
+  move when those do. `icon-cell--button` stays on the row action's button (with `icon-cell` on
+  its icon), as `svgCell-button` was.
+- **`HeadedPagerPanel`** stays a panel of its own until its two lists convert (wave 10), when a
+  thin `FormGroup` around `PagerPanel` can be tried with their screenshots.
+- **`SelectionPopup`'s position** is still GWT's `PopupPanel.setPopupPosition` (inline left and
+  top), as for every popup, until the popup and `PopupManager` work. `setModel` is still once only
+  and `destroy()` is still its popup's to call.
+- **`ColumnInteractions.div`** stays, for the auto-fit's measuring copies made at runtime.
+- **The task monitor.** The vis presenters' `TASK_MONITOR` also reaches their settings dialog
+  before it is shown, so its first fetch spins the visualisation's refresh button rather than the
+  tab's or the app's.
+- **Untested.** No story covers `VisFrame`'s `setOnSelection` and `setOnHyperlink` (the vis
+  stories hear the frame's messages directly), nor the standalone dashboard's relay.
+
 ## Done (25 October 2026)
 
-All 17 units, in 13 commits: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, and the checks
+All 16 units, in 9 commits (and one recording them): the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, and the checks
 of `CommandLinkCell`, `HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`, which needed no
 change), the three ref cells, `DataGrid` (three commits), `PagerView` with `PagerViewWithHeading`,
 `SelectionList`, `SelectionPopup` and `VisFrame`. Each commit ran its stories with the leak check
-and the screenshot diff; the grid's and the pager's ran all of them. What was decided on the way,
+and the screenshot diff; the grid's and the pager's ran all of them. (Corrected by the audit,
+above.) What was decided on the way,
 where it differs from the plans below:
 
 - **`SvgCell` is `IconCell`**, named for what it is, with its stylesheet `icon-cell.css` (BEM:
@@ -31,10 +89,10 @@ where it differs from the plans below:
   child combinators, as custom properties inherit into a grid in a cell); its parts come from
   `DataGrid.ui.xml`; and it has no bus. It has `DataGrid()` and also `DataGrid(int pageSize)`
   for Java callers, as `setPageSize` goes through `setVisibleRange`, which a new grid's callers
-  didn't. All 132 callers moved, so the old constructors and `getGlobalEventBus()` are gone. Its
-  context menu is a `MenuRequest` (which now takes an `onHide`); its link items follow a link as a
-  click on it does, with the grid's `HyperlinkEvent` when something handles it (a dashboard's or
-  query's table) and otherwise an `OpenHyperlinkRequest`; asking Stroom AI is an
+  didn't. All 127 calls of the old constructors (and 5 of `FindResultLists.create`) moved, so they
+  and `getGlobalEventBus()` are gone. Its context menu is a `MenuRequest` (which now takes an
+  `onHide`); its link items fire the grid's `HyperlinkEvent` when something handles it (a
+  dashboard's or query's table), as a click does, and otherwise an `OpenHyperlinkRequest`; asking Stroom AI is an
   `AskStroomAiTableRequest`. `DomRequests` sends and receives all three, and `CorePresenter`,
   `ScreenHarness` and `StoryPopups.withPageRequests()` (was `withMenuRequests`) relay them. Going
   through the grid fixed a bug: a dashboard opened from a table's menu got no parent dashboard
@@ -43,14 +101,16 @@ where it differs from the plans below:
   toolbar (hidden until `getToolbar()`) and its `MessagePanel`; `addInfoLabel`/`getInfoLabel(index)`
   became `addToolbarWidget(Widget)` (its one user keeps its label). It is still a `View` (the list
   presenters are `MyPresenterWidget<PagerPanel>`; GIN makes it unbound) and still a
-  `TaskMonitorFactory`: 83 REST calls pass it, and moving them to `Contexts.TASK_MONITOR` is left
+  `TaskMonitorFactory`: about 90 calls pass it, and moving them to `Contexts.TASK_MONITOR` is left
   for when the list presenters become controllers. `MessagePanel` is one concrete component, with
-  `white-space: nowrap` on `dashboardVis-messageInner` in place of GWT's `Label` with no word wrap.
-- **`PagerViewWithHeading` is `HeadedPagerPanel`**, the plans' fallback, not a heading on
-  `PagerPanel`: its layout differs (the toolbar fills the bar, the list is in a `SimplePanel`, no
-  message), so merging them would have changed every list or its two.
+  `white-space: nowrap` on its message (`message-panel__message` since the audit) in place of GWT's
+  `Label` with no word wrap.
+- **`PagerViewWithHeading` is `HeadedPagerPanel`**, a copy of the old panel (not a heading on
+  `PagerPanel`, nor the plans' fallback, a `FormGroup` around one): its layout differs (the toolbar
+  fills the bar, the list is in a `SimplePanel`, no message).
 - **`SelectionList`** is built from its template; its breadcrumb is an `AriaPanel` with role
-  `navigation` (a template can't name a `<nav>`, and it is the same landmark), and the grid stays in
+  `navigation` (the same landmark; an `HTMLPanel` can be a `<nav>` but can't carry its
+  `aria-label`), and the grid stays in
   Java, given to its `PagerPanel` with `setDataWidget`. Its quick filter is declared, with the
   filter's own `addKeyDownHandler` for Down and Escape (after the filter's keys, as the subclass's
   override was), so `QuickFilter` needed no callback. `init(model)` is `setModel(model)` (five
@@ -74,7 +134,8 @@ where it differs from the plans below:
   the selection model). They change with the list controllers (wave 10). `PagerPanel` is still a
   `TaskMonitorFactory` (above).
 - `setHideHeader` called after the first render now hides the header: `render` only set its
-  display when the header's structure changed. The root's `data-grid--no-header` hides it now.
+  display when the header's structure changed. The root's `data-grid--no-header` hides it now (and
+  since the audit the header is drawn again when shown).
 
 ## CSS and template notes for the wave
 

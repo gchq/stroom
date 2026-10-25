@@ -108,6 +108,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         initWidget(BINDER.createAndBindUi(this));
         cellTable = new DataGrid<>(100);
         cellTable.setProfile(DataGridProfile.LISTBOX);
+        // Options to choose, not a table to copy or export: the grid's own menu would offer that
+        cellTable.hasContextMenu(false);
         // An option with no text (e.g. the blank one that clears a value) is named None
         cellTable.setRowName(item -> NullSafe.isBlankString(item.getLabel())
                 ? "None"
@@ -139,8 +141,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         pagerView.setDataWidget(cellTable);
 
-        // After the filter's own keys (e.g. Escape clearing it): Down goes into the options, and
-        // Escape in an empty filter closes the list
+        // After the filter's own keys (Escape clears a filter with text in it): Down goes into the
+        // options, and Escape closes the list (a selection popup closes on Escape itself, before
+        // this sees it)
         quickFilter.addKeyDownHandler(event -> {
             if (event.isDownArrow()) {
                 cellTable.setKeyboardSelectedRow(0, true);
@@ -421,6 +424,110 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
+    private void setKeyboardSelection(final I value, final boolean stealFocus) {
+        final int row = cellTable.getVisibleItems().indexOf(value);
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, stealFocus);
+        } else {
+            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), stealFocus);
+        }
+    }
+
+    private void updatePath() {
+        links.clear();
+        if (navigationStates.isEmpty()) {
+            links.add(createCurrentLevel(model.getPathRoot()));
+        } else {
+            links.add(createLevelButton(model.getPathRoot(), null));
+        }
+        for (int i = 0; i < navigationStates.size(); i++) {
+            links.add(createSeparator());
+            final NavigationState<I> navigationState = navigationStates.get(i);
+            final I selectedItem = navigationState.getSelected();
+            if (i < navigationStates.size() - 1) {
+                links.add(createLevelButton(selectedItem.getLabel(), selectedItem));
+            } else {
+                links.add(createCurrentLevel(selectedItem.getLabel()));
+            }
+        }
+    }
+
+    // A level above the current one. It goes back within the list rather than to another page, so
+    // it is a button that looks like a link
+    private LinkButton createLevelButton(final String label, final I row) {
+        final LinkButton button = new LinkButton(label);
+        button.addStyleName(PATH_LINK);
+        // The button is replaced as the path changes, so the list takes the focus
+        button.addClickHandler(event -> navigateBack(row, false, true));
+        return button;
+    }
+
+    // The level the list shows, which screen readers announce as the current one
+    private static Label createCurrentLevel(final String label) {
+        final Label current = new Label(label);
+        current.setStyleName(PATH_CURRENT);
+        current.getElement().setAttribute("aria-current", "page");
+        return current;
+    }
+
+    // Screen readers needn't read the separators out
+    private static Label createSeparator() {
+        final Label separator = new Label("/");
+        separator.setStyleName(PATH_SEPARATOR);
+        separator.getElement().setAttribute("aria-hidden", "true");
+        return separator;
+    }
+
+    private void navigate(final I selectionItem,
+                          final boolean filterChange,
+                          final boolean stealFocus) {
+        final NavigationState<I> navigationState = new NavigationState<>(
+                selectionItem,
+                cellTable.getVisibleRange());
+        navigationStates.add(navigationState);
+        refresh(selectionItem, null, filterChange, new Range(0, cellTable.getPageSize()), stealFocus);
+    }
+
+    private void navigateBack(final boolean filterChange, final boolean stealFocus) {
+        final NavigationState<I> navigationState;
+        if (!navigationStates.isEmpty()) {
+            navigationState = navigationStates.remove(navigationStates.size() - 1);
+        } else {
+            navigationState = null;
+        }
+        navigateBack(navigationState, filterChange, stealFocus);
+    }
+
+    private void navigateBack(final I selectionItem, final boolean filterChange, final boolean stealFocus) {
+        NavigationState<I> navigationState = null;
+        while (!navigationStates.isEmpty() && !navigationStates
+                .get(navigationStates.size() - 1)
+                .getSelected()
+                .equals(selectionItem)) {
+            navigationState = navigationStates.remove(navigationStates.size() - 1);
+        }
+        navigateBack(navigationState, filterChange, stealFocus);
+    }
+
+    private void navigateBack(final NavigationState<I> navigationState,
+                              final boolean filterChange,
+                              final boolean stealFocus) {
+        final I selection;
+        final Range range;
+        if (navigationState != null) {
+            selection = navigationState.getSelected();
+            range = navigationState.getRange();
+        } else {
+            selection = null;
+            range = new Range(0, cellTable.getPageSize());
+        }
+        refresh(getCurrentParent(), selection, filterChange, range, stealFocus);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     /// The list's choosing, on the grid's keyboard and the mouse: moving only moves the focus (as a
     /// combobox's list does); Enter, Alt+Up or a click chooses; Right goes into an option with
     /// options of its own and Left back out; Escape closes the list. In a list of several choices,
@@ -650,110 +757,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 }
             }
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private void setKeyboardSelection(final I value, final boolean stealFocus) {
-        final int row = cellTable.getVisibleItems().indexOf(value);
-        if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row, stealFocus);
-        } else {
-            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), stealFocus);
-        }
-    }
-
-    private void updatePath() {
-        links.clear();
-        if (navigationStates.isEmpty()) {
-            links.add(createCurrentLevel(model.getPathRoot()));
-        } else {
-            links.add(createLevelButton(model.getPathRoot(), null));
-        }
-        for (int i = 0; i < navigationStates.size(); i++) {
-            links.add(createSeparator());
-            final NavigationState<I> navigationState = navigationStates.get(i);
-            final I selectedItem = navigationState.getSelected();
-            if (i < navigationStates.size() - 1) {
-                links.add(createLevelButton(selectedItem.getLabel(), selectedItem));
-            } else {
-                links.add(createCurrentLevel(selectedItem.getLabel()));
-            }
-        }
-    }
-
-    // A level above the current one. It goes back within the list rather than to another page, so
-    // it is a button that looks like a link
-    private LinkButton createLevelButton(final String label, final I row) {
-        final LinkButton button = new LinkButton(label);
-        button.addStyleName(PATH_LINK);
-        // The button is replaced as the path changes, so the list takes the focus
-        button.addClickHandler(event -> navigateBack(row, false, true));
-        return button;
-    }
-
-    // The level the list shows, which screen readers announce as the current one
-    private static Label createCurrentLevel(final String label) {
-        final Label current = new Label(label);
-        current.setStyleName(PATH_CURRENT);
-        current.getElement().setAttribute("aria-current", "page");
-        return current;
-    }
-
-    // Screen readers needn't read the separators out
-    private static Label createSeparator() {
-        final Label separator = new Label("/");
-        separator.setStyleName(PATH_SEPARATOR);
-        separator.getElement().setAttribute("aria-hidden", "true");
-        return separator;
-    }
-
-    private void navigate(final I selectionItem,
-                          final boolean filterChange,
-                          final boolean stealFocus) {
-        final NavigationState<I> navigationState = new NavigationState<>(
-                selectionItem,
-                cellTable.getVisibleRange());
-        navigationStates.add(navigationState);
-        refresh(selectionItem, null, filterChange, new Range(0, cellTable.getPageSize()), stealFocus);
-    }
-
-    private void navigateBack(final boolean filterChange, final boolean stealFocus) {
-        final NavigationState<I> navigationState;
-        if (!navigationStates.isEmpty()) {
-            navigationState = navigationStates.remove(navigationStates.size() - 1);
-        } else {
-            navigationState = null;
-        }
-        navigateBack(navigationState, filterChange, stealFocus);
-    }
-
-    private void navigateBack(final I selectionItem, final boolean filterChange, final boolean stealFocus) {
-        NavigationState<I> navigationState = null;
-        while (!navigationStates.isEmpty() && !navigationStates
-                .get(navigationStates.size() - 1)
-                .getSelected()
-                .equals(selectionItem)) {
-            navigationState = navigationStates.remove(navigationStates.size() - 1);
-        }
-        navigateBack(navigationState, filterChange, stealFocus);
-    }
-
-    private void navigateBack(final NavigationState<I> navigationState,
-                              final boolean filterChange,
-                              final boolean stealFocus) {
-        final I selection;
-        final Range range;
-        if (navigationState != null) {
-            selection = navigationState.getSelected();
-            range = navigationState.getRange();
-        } else {
-            selection = null;
-            range = new Range(0, cellTable.getPageSize());
-        }
-        refresh(getCurrentParent(), selection, filterChange, range, stealFocus);
     }
 
 

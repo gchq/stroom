@@ -29,6 +29,8 @@
 @import url("toolbar-row.css");
 @import url("focus-tooltip.css");
 @import url("vis-tooltip.css");
+@import url("vis-frame.css");
+@import url("message-panel.css");
 @import url("help-popup.css");
 @import url("info-tooltip.css");
 @import url("split-pane.css");

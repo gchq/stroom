@@ -16,7 +16,7 @@
 
 /*
    A visualisation's toolbar row (stroom.dashboard.client.vis.VisToolbarRow), named BEM style: above
-   the visualisation as a table's pager row is (it borrows PagerView's pager and pager-toolbar), the
+   the visualisation as a table's pager row is (it borrows PagerPanel's pager and pager-toolbar), the
    buttons the visualisation asks for, then its pause and resume button. Padded as a table's pager.
 */
 

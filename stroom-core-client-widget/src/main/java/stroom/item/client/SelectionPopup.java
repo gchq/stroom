@@ -43,6 +43,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Supplier;
 
+/// A [SelectionList] in a popup below the box that opens it (a selection box, a selection box
+/// cell, the table's Add Column button), styled by selection-popup.css. Escape, Tab, a click outside
+/// or a choice closes it; [#setOnClose(Runnable)] is told however it closes.
+///
+/// @param <T> The type of an option's value.
+/// @param <I> The type of an option.
 public class SelectionPopup<T, I extends SelectionItem> {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -140,6 +146,11 @@ public class SelectionPopup<T, I extends SelectionItem> {
 
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionList.getSelectionModel();
+    }
+
+    /// @return Whether the popup is open.
+    public boolean isShowing() {
+        return popupPanel.isShowing();
     }
 
     public void setEnabled(final boolean enabled) {

@@ -108,7 +108,7 @@ public final class CachesScreenStories {
                     play.waitFor(() -> play.expect("the 'Expire After Write' header's width",
                                     () -> longHeader.width().get() - shortHeader.width().get())
                             .toBeGreaterThan(0));
-                    // Clear on node1 (the bottom grid). The icon button column is GWT's IconCell, a
+                    // Clear on node1 (the bottom grid). The icon button column is Stroom's IconCell, a
                     // clickable div
                     play.click(play.within(play.getByText("node1").closest("tr, [role=\"row\"]"))
                             .getByTitle("Clear and rebuild cache"));

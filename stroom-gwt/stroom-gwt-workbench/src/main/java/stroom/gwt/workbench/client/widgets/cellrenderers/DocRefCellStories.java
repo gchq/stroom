@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -127,16 +128,28 @@ public final class DocRefCellStories {
                                 .build(), PIPELINE_REF)))
                 // The labels of the menu items that DocRefCell.getContextMenuItems gives the grid's
                 // context menu
-                .story("ContextMenuItems", context -> contextMenuItems())
+                .story("ContextMenuItems", context -> contextMenuItems(new DocRefCell.Builder<DocRef>()
+                        .onOpen(docRef -> {
+                        })
+                        .docRefFunction(docRef -> docRef)
+                        .build()))
+                .withPlay(play -> play.expect(play.getByText(TextMatch.startingWith("Open Feed")))
+                        .toBeInTheDocument())
                 // With no onOpen (no owner to open documents) the cell offers no way to open one:
                 // no open button, and its menu has only 'Copy Feed Details'
-                .story("NoOpen", context -> cellBox(new DocRefCell.Builder<DocRef>()
-                        .showIcon(true)
-                        .docRefFunction(docRef -> docRef)
-                        .build(), FEED_REF))
+                .story("NoOpen", context -> StoryPanels.column(8,
+                        cellBox(new DocRefCell.Builder<DocRef>()
+                                .showIcon(true)
+                                .docRefFunction(docRef -> docRef)
+                                .build(), FEED_REF),
+                        contextMenuItems(new DocRefCell.Builder<DocRef>()
+                                .docRefFunction(docRef -> docRef)
+                                .build())))
                 .withPlay(play -> {
                     play.expect(play.getByTitle("Copy name 'TEST_FEED' to clipboard")).toBeInTheDocument();
                     play.expect(play.queryByTitle("Open Feed TEST_FEED")).toBeNull();
+                    play.expect(play.getByText(TextMatch.startingWith("Copy Feed Details"))).toBeInTheDocument();
+                    play.expect(play.queryByText(TextMatch.startingWith("Open Feed"))).toBeNull();
                 });
     }
 
@@ -203,12 +216,7 @@ public final class DocRefCellStories {
     }
 
     /// A monospace list of the context menu items of `FEED_REF`.
-    private static Widget contextMenuItems() {
-        final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
-                .onOpen(docRef -> {
-                })
-                .docRefFunction(docRef -> docRef)
-                .build();
+    private static Widget contextMenuItems(final DocRefCell<DocRef> cell) {
         final FlowPanel panel = new FlowPanel();
         final Style style = panel.getElement().getStyle();
         style.setProperty("fontSize", "13px");

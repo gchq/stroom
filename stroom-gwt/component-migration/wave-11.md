@@ -4,6 +4,8 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 > **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
 
+> **Since wave 5 (25 October 2026):** `PagerView`/`PagerViewImpl` is `PagerPanel` and `PagerViewWithHeading` is `HeadedPagerPanel` (both components in `stroom.widget.datagrid.client`; the plans below keep the old names and line numbers); `MessagePanelImpl` is `MessagePanel` (block `message-panel`); `SvgCell` is `IconCell`; the ref cells are in `stroom.data.client.component`, configured by one `RefCellsController`. `DataGrid` takes no bus (`DataGrid()`, `DataGrid(int pageSize)`): its context menu, links and Stroom AI questions go up the page as requests (`MenuRequest`, `OpenHyperlinkRequest`, `AskStroomAiTableRequest`) to `CorePresenter`'s relays. Not there yet, for the plans below that assume it: `PagerPanel` can't take children in a template (no `@UiChild` or `HasWidgets`: the grid goes in with `setDataWidget`, buttons with `getToolbar()`, and the toolbar's name is set in Java), and it is still the list's `TaskMonitorFactory` (about 90 uses); the grid's sort, range and selection outputs are still GWT's handlers. See `wave-05.md`.
+
 Split the dialogs that call REST, own lists or forms, or make further dialogs into a component dialog plus a controller. Results go back through callbacks, the controller supplies the task monitor from context, and the identity flows hang off ChangePasswordPresenter.
 
 ## CSS and template notes for the wave
@@ -401,7 +403,7 @@ dialog, presenter; complexity 3, effort M; used by 7.
 | --- | --- | --- |
 | ColumnValuesFilterViewImpl.java:59 | aria | setAccessibleName("Filter values") repeats accessibleName="Filter values" already in the template (:13). Delete the Java line |
 | ColumnValuesFilterViewImpl.java:61 | aria | separator aria-hidden: replace <g:Label ui:field="separator" styleName="gwt-Label" text="-"/> (:9) with <g:HTML styleName="gwt-Label"><span aria-hidden="true">-</span></g:HTML>, so the field and the Java go |
-| ColumnValuesFilterPresenter.java:94-98,110-111 / template :14 | component-declaration | <dg:PagerPanel ui:field="pager" addStyleNames="dock-max form-control-border form-control-background overflow-hidden"><dg:DataGrid ui:field="list" profile="LISTBOX" accessibleName="Values"/></dg:PagerView> replaces the data SimplePanel. This needs wave 5's PagerView widget and DataGrid's no-arg constructor (DataGrid.java:192 takes the bus today) |
+| ColumnValuesFilterPresenter.java:94-98,110-111 / template :14 | component-declaration | <dg:PagerPanel ui:field="pager" addStyleNames="dock-max form-control-border form-control-background overflow-hidden"><dg:DataGrid ui:field="list" profile="LISTBOX" accessibleName="Values"/></dg:PagerPanel> replaces the data SimplePanel. This needs wave 5's PagerView widget and DataGrid's no-arg constructor (DataGrid.java:192 takes the bus today) |
 | ColumnValuesFilterViewImpl.ui.xml:6 | css-class | ColumnValuesFilterViewImpl (components.css:1876-1897, 2112, 2118) becomes column-values-filter |
 
 **Stays in Java:** Tick column with ColumnValueCell (wave 1), and row styles from the conditional formatting rules (ColumnValuesFilterPresenter.java:90,97-101,264-271); icon-colour__blue state class on the table's filter button (ColumnValuesFilterPresenter.java:256-258). It is state on another component's element, so it is better passed out through a callback to the table; Caption 'Filter Values' and popup position (:164-174); Name filter text (:187).
@@ -476,7 +478,7 @@ dialog, presenter; complexity 2, effort S; used by 1.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| AiAttachmentDataPresenter.java:63-65 | component-declaration | <dg:PagerPanel ui:field="pager" addStyleNames="form-control-border form-control-background"><dg:DataGrid ui:field="grid" tableName="Attachment Data"/></dg:PagerView>. This needs wave 5's PagerView widget and a no-arg DataGrid |
+| AiAttachmentDataPresenter.java:63-65 | component-declaration | <dg:PagerPanel ui:field="pager" addStyleNames="form-control-border form-control-background"><dg:DataGrid ui:field="grid" tableName="Attachment Data"/></dg:PagerPanel>. This needs wave 5's PagerView widget and a no-arg DataGrid |
 | AiAttachmentDataPresenter.java:64 | aria | setTableName("Attachment Data") becomes tableName="Attachment Data" (DataGrid.setTableName, DataGrid.java:956) |
 | AiAttachmentDataPresenter.java:121 | css-class | "form-control-border form-control-background", added on every show, goes on the PagerView in the template once |
 

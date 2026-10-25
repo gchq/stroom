@@ -109,6 +109,8 @@ public class DataGrid<R> extends Widget
     /// The page size for grids that show a very large list on one page.
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     // The column model holds sizing; headers and wrapping are kept alongside it by column.
     private final ColumnModel<Column<R, ?>> columnModel = new ColumnModel<>();
     private final Map<Column<R, ?>, Header<?>> headers = new HashMap<>();
@@ -120,8 +122,6 @@ public class DataGrid<R> extends Widget
     private final GridHtml<R> html;
 
     private final PageState<R> pageState;
-
-    private static final Binder BINDER = GWT.create(Binder.class);
 
     // DOM, from the template
     @UiField
@@ -863,6 +863,8 @@ public class DataGrid<R> extends Widget
     public void setHideHeader(final boolean hideHeader) {
         this.hideHeader = hideHeader;
         setStyleName("data-grid--no-header", hideHeader);
+        // Drawn again, so a header shown again is snapped to its height (see GridHeader.snapHeight)
+        headersDirty = true;
         scheduleRender();
     }
 
@@ -1187,9 +1189,14 @@ public class DataGrid<R> extends Widget
     public HandlerRegistration addHyperlinkHandler(final HyperlinkEvent.Handler handler) {
         final HandlerRegistration registration = addHandler(handler, HyperlinkEvent.getType());
         hyperlinkHandlerCount++;
+        final boolean[] removed = new boolean[1];
         return () -> {
-            registration.removeHandler();
-            hyperlinkHandlerCount--;
+            // Counted once, however often it is removed
+            if (!removed[0]) {
+                removed[0] = true;
+                registration.removeHandler();
+                hyperlinkHandlerCount--;
+            }
         };
     }
 
@@ -1488,7 +1495,7 @@ public class DataGrid<R> extends Widget
         }
         final boolean headerChanged = structureChanged || headersDirty;
         if (headerChanged) {
-            gridHeader.render(hideHeader);
+            gridHeader.render();
         }
         final boolean widthsChanged = structureChanged || renderedWidthVersion != columnModel.getWidthVersion();
         if (widthsChanged) {

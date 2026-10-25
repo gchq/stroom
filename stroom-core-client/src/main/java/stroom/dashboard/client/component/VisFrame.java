@@ -81,11 +81,10 @@ public class VisFrame extends Component implements RequiresResize {
         messageSupport = new MessageSupport(frame.getElement());
     }
 
-    /**
-     * Allows the URL for the iframe to be set. Called when the visualisation is
-     * running from Assets rather than Scripts.
-     * @param url The URL to set.
-     */
+    /// Sets the frame's page, for a visualisation that runs from its own assets rather than from
+    /// scripts injected into Stroom's page.
+    ///
+    /// @param url The page's URL.
     public void setUrl(final String url) {
         frameLoaded = false;
         frame.setUrl(url);
@@ -142,7 +141,7 @@ public class VisFrame extends Component implements RequiresResize {
         setPositionAndSize(frame.getElement(), "--vis-frame__frame-", left, top, width, height);
     }
 
-    // Custom properties that dashboard.css's VisFrame-container and VisFrame-frame use, named for
+    // Custom properties that vis-frame.css's vis-frame and vis-frame__frame use, named for
     // the part as they inherit into the frame
     private static void setPositionAndSize(final Element element,
                                            final String prefix,
@@ -250,6 +249,11 @@ public class VisFrame extends Component implements RequiresResize {
         send(() -> messageSupport.postMessage(message));
     }
 
+    /// Loads a visualisation's scripts into the frame, telling the function when they have loaded
+    /// or failed.
+    ///
+    /// @param scripts  The scripts, in the order they load.
+    /// @param function The visualisation's function, told how its loading went.
     public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
     }
@@ -334,6 +338,9 @@ public class VisFrame extends Component implements RequiresResize {
         send(() -> messageSupport.postMessage(message, callback));
     }
 
+    /// Sets the class on the visualisation's page, e.g. for the theme.
+    ///
+    /// @param className The class.
     public void setClassName(final String className) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(className));
@@ -344,18 +351,24 @@ public class VisFrame extends Component implements RequiresResize {
         send(() -> messageSupport.postMessage(message));
     }
 
+    /// Tells the visualisation that a search has started.
     public void start() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.start"));
         send(() -> messageSupport.postMessage(message));
     }
 
+    /// Tells the visualisation that the search has ended.
     public void end() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.end"));
         send(() -> messageSupport.postMessage(message));
     }
 
+    /// Tells the visualisation which of its types to draw.
+    ///
+    /// @param visType   The type's function name.
+    /// @param className The class for its page, e.g. for the theme.
     public void setVisType(final String visType, final String className) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(visType));
@@ -381,6 +394,11 @@ public class VisFrame extends Component implements RequiresResize {
         send(() -> messageSupport.postMessage(message, callback));
     }
 
+    /// Gives the visualisation its data to draw.
+    ///
+    /// @param context  The dashboard's context, e.g. its time range and parameters.
+    /// @param settings The visualisation's settings.
+    /// @param data     The data.
     public void setData(final JavaScriptObject context, final JavaScriptObject settings, final JavaScriptObject data) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONObject(context));
@@ -406,6 +424,8 @@ public class VisFrame extends Component implements RequiresResize {
         // Do nothing...
     }
 
+    /// @param loadHandler Told when the frame's page has loaded.
+    /// @return The registration.
     public HandlerRegistration addLoadHandler(final LoadHandler loadHandler) {
         return frame.addLoadHandler(loadHandler);
     }

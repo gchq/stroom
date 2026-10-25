@@ -604,17 +604,42 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
-### Menus that didn't open in the standalone dashboard (remove_gwtp only)
+### Menus that didn't open in the standalone dashboard (on master too)
 
 **Fixed (25 October 2026), confirmed in the code.** Widgets with no event bus ask for their menus
 with `MenuRequest`, which bubbles up the page to one relay that fires the `ShowMenuEvent`. Only
 `MainPresenter` installed the relay, and the standalone dashboard (`DashboardApp`) shows
 `FullScreenPresenter`, not the main presenter, so these menus never opened there: a split pane
 splitter's Pane Layout menu, and a dialog's menu button (`DialogWindow`). The relay is now
-installed by `CorePresenter`, which both apps show (once, as a singleton). Only this branch had
-the bug (the widgets moved to `MenuRequest` here), so there is no changelog entry. The workbench's
-`ShellScreen` stories had two relays (`ScreenHarness`'s and the main presenter's); now they have
-one. Not checked in a running dashboard: the workbench has no story of the standalone dashboard.
+installed by `CorePresenter`, which both apps show (once, as a singleton). Master has the bug too
+(`MenuRequest` came with `d3ddaab46f`, 12 October 2026, which master has; the wave 5 audit found
+this, after it was first recorded as this branch's only), so it has a changelog entry. The
+workbench's `ShellScreen` stories had two relays (`ScreenHarness`'s and the main presenter's); now
+they have one. Not checked in a running dashboard, and no regression story: the workbench has no
+story of the standalone dashboard (`CorePresenter` without `MainPresenter`).
+
+### A dashboard opened from a table's menu didn't get its parent dashboard (on master too)
+
+**Fixed (25 October 2026, wave 5), confirmed in the code.** A table's right-click menu's link items
+(Follow URL, Open In New Tab, Open In This Tab) fired the `HyperlinkEvent` on the app's bus, which
+skipped the dashboard's (or query's) table, where a click on the link goes and the table adds the
+dashboard it is in. So a dashboard opened from the menu got no parent context
+(`DashboardPlugin.openParameterisedDashboard` was given null), and with it none of its parent's
+`parent.*` values (time range, parameters, selections). The menu came with `f2243980ea`
+(`DataGridWidget`) on master. The grid now follows a link from its menu as a click does when
+something handles its links, and otherwise asks the app (`OpenHyperlinkRequest`). Stories
+`LinkMenuThroughTheGrid` and `LinkMenuToTheApp` (a stand-in for the table's handler); a changelog
+entry.
+
+### The Add Column button's list added a column twice (on master too)
+
+**Fixed (25 October 2026, the wave 5 audit), confirmed in the code.** A second press on a dashboard
+table's Add Column button, while its list was open, closed the list and then added another choice
+handler to the list (the list was shown before its handlers were added, and showing an open list
+closes it). On master, the next column chosen was added twice; in this branch, after wave 5 made
+the list's close a single callback, every later choice was. A second press now only closes the
+list, and the list's one choice handler is kept in a field. Story `TableAddColumnAfterClosingTheList`
+(`DashboardComponentStories`); a changelog entry.
 
 ## Memory
 
@@ -1773,7 +1798,7 @@ These were found by the review and fixed in the same change:
     details are now a focusable region named "Content pack details", which the keyboard can
     scroll (`app-main-contentstorescreen--install`).
   * The query help's and column picker's path was GWT `Hyperlink`s (adding browser history
-    entries) whose root "Help" read as if it opened help. It is now a `nav` named "Breadcrumb",
+    entries) whose root "Help" read as if it opened help. It is now a navigation landmark named "Breadcrumb" (a `nav`; since wave 5 an `AriaPanel` with role `navigation`),
     the levels above are buttons ("Help Contents", "All Columns"), the level shown is
     `aria-current="page"` and the separators are hidden from screen readers
     (`app-editors-queryeditor--query-help`).

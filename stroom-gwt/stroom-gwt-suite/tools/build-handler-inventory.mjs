@@ -547,13 +547,15 @@ const mouseProven = new Map();
  * calls `hidePopup()` -> `popup.hide()` -> `SelectionPopup.hide()` -> `popupPanel.hide()`, and a GWT
  * `PopupPanel.hide()` fires CloseEvent. So the handlers registered on that popup ran:
  *
- *   BaseSelectionBox:163  handlerRegistrations.add(popup.addCloseHandler(...))
- *   SelectionPopup:47     registerHandler(popupPanel.addCloseHandler(event -> hide()))
- *   SelectionPopup:135    addCloseHandler(...) — the method BaseSelectionBox:163 calls
+ *   SelectionPopup        popupPanel.addCloseHandler(...) in its constructor, which runs the box's
+ *                         close callback (BaseSelectionBox's setOnClose, since wave 5: no handler
+ *                         of the box's own to credit)
+ *   SelectionPopup        registerHandler(popupPanel.addCloseHandler(event -> hide()))
  *
- * `SelectionPopup:48` watches the selectionList's OWN close event, which is a different thing, and is
- * deliberately NOT credited — hence matching the receiver and not just the class. `MyDateBox`'s
- * receiver also reduces to "popup", which is why the class has to match too.
+ * The selection list's own close (`selectionList.setOnClose`, a callback since wave 5, once a close
+ * event) is a different thing, and is deliberately NOT credited — hence matching the receiver and
+ * not just the class. `MyDateBox`'s receiver also reduces to "popup", which is why the class has to
+ * match too.
  */
 /**
  * What a completed SELECTION also proves beyond the popup closing: the CLICK that opened it.
@@ -566,7 +568,6 @@ const mouseProven = new Map();
  */
 const CLICK_BY_SELECTION = new Map([['BaseSelectionBox', new Set(['svgicon'])]]);
 const CLOSE_BY_SELECTION = new Map([
-  ['BaseSelectionBox', new Set(['popup'])],
   ['SelectionPopup', new Set(['popuppanel'])],
 ]);
 /** Did any completed selection happen anywhere in the walk? */

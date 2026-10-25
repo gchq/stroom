@@ -110,8 +110,8 @@ final class ColumnInteractions {
         this.root = root;
         this.scroller = scroller;
         this.head = head;
-        // Hidden until needed: the handle until shown (HANDLE_SHOWN_CLASS_NAME), the resize line
-        // while not resizing and the move ghost and line while not moving (data-grid.css)
+        // Each hidden until needed (data-grid.css): the handle until shown (HANDLE_SHOWN_CLASS_NAME),
+        // the resize line while not resizing, and the move ghost and line while not moving
         this.handle = handle;
         this.resizeLine = resizeLine;
         this.moveGhost = moveGhost;

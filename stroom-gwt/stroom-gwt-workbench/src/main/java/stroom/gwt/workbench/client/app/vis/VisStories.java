@@ -68,7 +68,7 @@ public final class VisStories {
     public static final String TITLE = "App/Visualisations/";
 
     /// The selector of the visualisation's frame.
-    public static final String FRAME = "iframe.VisFrame-frame";
+    public static final String FRAME = "iframe.vis-frame__frame";
 
     // How long a visualisation may take to load its scripts and draw. The first story to load
     // the larger scripts (e.g. D3) is the slowest

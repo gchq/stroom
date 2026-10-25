@@ -28,6 +28,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
@@ -37,7 +39,6 @@ import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
@@ -166,6 +167,17 @@ public final class DataGridStories {
                 .story("Pager", DataGridStories::pager)
                 .withPlay(play -> play.waitFor(() -> play.expect(play.querySelectorAll(ROW))
                         .toHaveLength(PAGER_PAGE_SIZE)))
+                // The pager panel's message over the list, as a table shows a search's errors: each
+                // line on a line of its own, none wrapped; Hide message takes it away
+                .story("PagerMessage", DataGridStories::pagerMessage)
+                .withPlay(play -> {
+                    final Query message = play.querySelector(".message-panel__message");
+                    play.waitFor(() -> play.expect(message).toBeVisible());
+                    play.expect(message).toHaveStyle("white-space", "nowrap");
+                    play.expect(message).toHaveTextContent(TextMatch.containing("could not be reached"));
+                    play.click(play.getByRole("button", "Hide message"));
+                    play.waitFor(() -> play.expect(message).not().toBeVisible());
+                })
                 // Empty state: no rows, blank as MyDataGrid's
                 .story("EmptyState", context -> {
                     final DataGrid<Person> grid = personGrid();
@@ -335,6 +347,35 @@ public final class DataGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(4));
                     play.expect(play.querySelector(".data-grid__head")).toHaveStyle("display", "none");
+                })
+                // The header hidden and shown again after the grid is drawn: it went only once the
+                // grid's structure changed, as only drawing the header set its display
+                .story("HeaderHiddenAfterRender", context -> {
+                    final DataGrid<Person> grid = plainGrid();
+                    final Button toggle = new Button("Hide header");
+                    toggle.addClickHandler(event -> {
+                        final boolean hide = "Hide header".equals(toggle.getText());
+                        grid.setHideHeader(hide);
+                        toggle.setText(hide
+                                ? "Show header"
+                                : "Hide header");
+                    });
+                    final FlowPanel frame = new FlowPanel();
+                    frame.add(toggle);
+                    frame.add(sized(paged(grid), "320px", "900px"));
+                    return frame;
+                })
+                .withPlay(play -> {
+                    final Query head = play.querySelector(".data-grid__head");
+                    play.waitFor(() -> play.expect(play.querySelectorAll(ROW).nth(0)).toBeVisible());
+                    play.expect(head).toBeVisible();
+                    final Value<Double> height = play.capture("the header's height", head.height());
+                    play.click(play.getByRole("button", "Hide header"));
+                    play.waitFor(() -> play.expect(head).toHaveStyle("display", "none"));
+                    play.click(play.getByRole("button", "Show header"));
+                    play.waitFor(() -> play.expect(head).toBeVisible());
+                    play.expect("the header's height again, less its height before",
+                            () -> head.height().get() - height.get()).toBe(0.0);
                 })
                 // The fill columns share the surplus width by weight
                 .story("ColumnFillWeights", context -> sized(paged(noteGrid(true)), "320px", "900px"))
@@ -700,6 +741,20 @@ public final class DataGridStories {
         final Spy onNavigate = context.fn(ON_NAVIGATE);
         grid.addRangeChangeHandler(event -> onNavigate.call(event.getNewRange().getStart()));
         return sized(pagerView.asWidget(), "260px", null);
+    }
+
+    private static Widget pagerMessage(final StoryContext context) {
+        final DataGrid<Person> grid = plainGrid();
+        final PagerPanel pagerView = new PagerPanel();
+        pagerView.setDataWidget(grid);
+        pagerView.getMessagePanel().showMessage(List.of(
+                new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
+        final Button hide = new Button("Hide message");
+        hide.addClickHandler(event -> pagerView.getMessagePanel().hideMessage());
+        final FlowPanel frame = new FlowPanel();
+        frame.add(hide);
+        frame.add(sized(pagerView.asWidget(), "260px", "600px"));
+        return frame;
     }
 
     private static Widget manyRows(final StoryContext context) {

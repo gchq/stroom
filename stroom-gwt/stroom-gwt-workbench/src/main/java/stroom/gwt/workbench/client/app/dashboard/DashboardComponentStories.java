@@ -157,7 +157,7 @@ public final class DashboardComponentStories {
                     for (final String tab : List.of("Q", "T", "Chart")) {
                         play.expect(DashboardPlays.tab(play, tab)).toBeInTheDocument();
                     }
-                    final Query visFrame = play.screen().querySelector("iframe.VisFrame-frame");
+                    final Query visFrame = play.screen().querySelector("iframe.vis-frame__frame");
                     play.waitFor(() -> play.expect(visFrame).toBeInTheDocument());
                     // The visualisation frame (VisFrame) is named after its component, as its tab is
                     play.expect(visFrame).toHaveAttribute("title", "Chart");
@@ -171,7 +171,7 @@ public final class DashboardComponentStories {
                         DashboardComponentStories::visRoutes))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    final Query visFrame = play.screen().querySelector("iframe.VisFrame-frame");
+                    final Query visFrame = play.screen().querySelector("iframe.vis-frame__frame");
                     play.waitFor(() -> play.expect(visFrame).toBeVisible());
                     final Query splitter = play.getByRole("separator", "Resize T and Chart");
                     play.run("focus the splitter", () -> splitter.element().get().focus());
@@ -250,6 +250,44 @@ public final class DashboardComponentStories {
                     play.expect(labels).not().toContain("Column Filter");
                     play.click(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT));
                     play.expect(screen.findByText("Rename Field", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Add Column's button opens its list, and a second press closes it. A column chosen
+                // after that is added once: the second press left the list's choice handler behind,
+                // so every later choice added the column again
+                .story("TableAddColumnAfterClosingTheList", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        // The data source's fields, for the list's Data Source level: none
+                        routes -> routes.route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, "
+                                + "\"total\": 0, \"exact\": true}}"))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    final Query addColumn = play.getByRole("button", "Add Column");
+                    // How many columns the table has, before any is added (a second column of the
+                    // same kind is named apart, so the columns are counted)
+                    final Query headers = play.querySelectorAll(".column-top .column-label");
+                    final Value<Integer> before = play.capture("the columns", headers.count());
+                    // The list's options, not the columns' headers, which are named the same
+                    play.click(addColumn);
+                    play.waitFor(() -> play.expect(screen.getByText("Counts")).toBeVisible());
+                    play.click(addColumn);
+                    play.waitFor(() -> play.expect(screen.queryByText("Counts")).toBeNull());
+
+                    play.click(addColumn);
+                    play.click(play.within(screen.querySelector(".selection-popup")).findByText("Counts"));
+                    play.click(play.within(screen.querySelector(".selection-popup")).findByText("Count Groups"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Counts")).toBeNull());
+                    play.waitFor(() -> play.expect("the columns added", () -> headers.count().get() - before.get())
+                            .toBe(1));
+                    // Once more: one more column, so no choice handler was left behind by the last
+                    play.click(addColumn);
+                    play.click(play.within(screen.querySelector(".selection-popup")).findByText("Counts"));
+                    play.click(play.within(screen.querySelector(".selection-popup")).findByText("Count Groups"));
+                    play.waitFor(() -> play.expect("the columns added", () -> headers.count().get() - before.get())
+                            .toBe(2));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The column's Filter dialog splits Include from Exclude with a splitter between them,
@@ -666,7 +704,7 @@ public final class DashboardComponentStories {
         if (hit.closest('.flex-layout__splitter')) {
             return 'splitter';
         }
-        if (hit.closest('.VisFrame-container') || hit.tagName === 'IFRAME') {
+        if (hit.closest('.vis-frame') || hit.tagName === 'IFRAME') {
             return 'visualisation';
         }
         return 'something else (' + hit.className + ')';

@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.selectors;
 
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -123,6 +124,25 @@ public final class SelectionBoxStories {
                         play.expect(box).toHaveFocus();
                     }
                     play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // A right-click on an option shows no menu: the list's options are to choose, not a
+                // table. The grid under them had a private bus, which hid its menu (Copy, Export
+                // Table, Ask Stroom AI About); since the grid asks the page for it, the list turns it
+                // off
+                .story("NoMenuOnTheOptions", context -> {
+                    StoryPopups.create(context).withPageRequests();
+                    return named(selectionBox(context, NAMES));
+                })
+                .withPlay(play -> {
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    final Query option = play.screen().getByRole("option", "Alpha");
+                    play.waitFor(() -> play.expect(option).toHaveFocus());
+                    play.rightClick(option);
+                    // A menu would be shown straight away
+                    play.sleep(300);
+                    play.expect(play.screen().queryByRole("menu")).toBeNull();
+                    play.expect(option).toBeInTheDocument();
                 })
                 // In the list, Alt+Up chooses the option with the focus and closes the list
                 .story("AltUpChoosesTheOption", context -> named(selectionBox(context, NAMES)))

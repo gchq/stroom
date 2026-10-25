@@ -129,7 +129,7 @@ public final class VisToolbarStories {
     // The visualisation's frame (VisFrame), once the dashboard has opened and its query has run
     private static Query visFrame(final Play play) {
         DashboardPlays.opened(play);
-        final Query frame = play.screen().querySelector("iframe.VisFrame-frame");
+        final Query frame = play.screen().querySelector("iframe.vis-frame__frame");
         play.waitFor(5000, () -> play.expect(frame).toBeVisible());
         final Query box = play.withinFrame(frame).querySelector(".pressed");
         play.waitFor(5000, () -> play.expect(box).toBeInTheDocument());

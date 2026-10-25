@@ -98,7 +98,7 @@ public class DocumentUserPermissionsListPresenter
                                                 final DocumentTypeCache documentTypeCache,
                                                 final QuickFilterContextHandlerFactory
                                                         quickFilterContextHandlerFactory,
-                                                        final RefCellsController refCells) {
+                                                final RefCellsController refCells) {
         super(eventBus, userListView);
         this.refCells = own(refCells);
         getView().setAccessibleName("Filter users");
