@@ -32,9 +32,11 @@ import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -43,6 +45,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -117,13 +121,37 @@ public class DataGrid<R> extends Widget
 
     private final PageState<R> pageState;
 
-    // DOM.
-    private final Element scroller;
-    private final Element head;
-    private final Element headerRow;
-    private final Element content;
-    private final Element body;
-    private final Element empty;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    // DOM, from the template
+    @UiField
+    Element scroller;
+    @UiField
+    Element head;
+    @UiField
+    Element headerRow;
+    @UiField
+    Element content;
+    @UiField
+    Element body;
+    @UiField
+    Element empty;
+    @UiField
+    Element verticalTrack;
+    @UiField
+    Element verticalThumb;
+    @UiField
+    Element horizontalTrack;
+    @UiField
+    Element horizontalThumb;
+    @UiField
+    Element resizeHandle;
+    @UiField
+    Element resizeLine;
+    @UiField
+    Element moveGhost;
+    @UiField
+    Element moveLine;
     private final OverlayScrollbars scrollbars;
     private final ColumnInteractions columnInteractions;
     private final DataGridContextMenu<R> contextMenu;
@@ -209,32 +237,24 @@ public class DataGrid<R> extends Widget
         // Before the first input the grid puts the focus back after (see refocus)
         InputModality.install();
 
-        final Document doc = Document.get();
-        final Element root = doc.createDivElement();
-        root.setClassName("data-grid data-grid--header-selection");
-
-        // The scroller is the grid as far as ARIA is concerned, and takes keyboard focus, so a grid
-        // can always be scrolled from the keyboard. Key events bubble from it to the root, where they
-        // are handled.
-        scroller = div(doc, "data-grid__scroller");
-        scroller.setAttribute("role", "grid");
-        scroller.setTabIndex(0);
-        head = div(doc, "data-grid__head");
-        headerRow = div(doc, "data-grid__header-row");
-        headerRow.setAttribute("role", "row");
-        head.appendChild(headerRow);
-        content = div(doc, "data-grid__content");
-        body = div(doc, "data-grid__body");
-        body.setAttribute("role", "rowgroup");
-        content.appendChild(body);
-        empty = div(doc, "data-grid__empty");
-        content.appendChild(empty);
-        scroller.appendChild(head);
-        scroller.appendChild(content);
-        root.appendChild(scroller);
-
-        scrollbars = new OverlayScrollbars(root, scroller, this::getHeaderHeight);
-        columnInteractions = new ColumnInteractions(this, root, scroller, head);
+        // The parts (see the template), which key events bubble from to the root, where they are
+        // handled
+        final Element root = BINDER.createAndBindUi(this);
+        scrollbars = new OverlayScrollbars(root,
+                scroller,
+                verticalTrack,
+                verticalThumb,
+                horizontalTrack,
+                horizontalThumb,
+                this::getHeaderHeight);
+        columnInteractions = new ColumnInteractions(this,
+                root,
+                scroller,
+                head,
+                resizeHandle,
+                resizeLine,
+                moveGhost,
+                moveLine);
         contextMenu = new DataGridContextMenu<>(this);
 
         keyboard = new DataGridKeyboard<>(this);
@@ -255,12 +275,6 @@ public class DataGrid<R> extends Widget
                    | Event.KEYEVENTS
                    | Event.ONCHANGE
                    | Event.ONCONTEXTMENU);
-    }
-
-    private static Element div(final Document doc, final String className) {
-        final Element element = doc.createDivElement();
-        element.setClassName(className);
-        return element;
     }
 
     // --------------------------------------------------------------------------------
@@ -1843,5 +1857,15 @@ public class DataGrid<R> extends Widget
         /// @param absIndex The absolute row index.
         /// @return A map of column index to the number of columns that cell spans. Empty for none.
         Map<Integer, Integer> getSpans(R row, int absIndex);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The owner is raw: a binder can't name a type variable
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<DivElement, DataGrid> {
+
     }
 }

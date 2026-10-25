@@ -20,7 +20,6 @@ import stroom.widget.datagrid.client.model.ScrollThumb;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -63,25 +62,30 @@ final class OverlayScrollbars {
     private double dragStartPointer;
     private double dragStartPosition;
 
-    /// Create the tracks and thumbs and add them to the grid.
+    /// Works the grid's tracks and thumbs (its template's).
     ///
-    /// @param root         The grid's root element, which the tracks are added to.
+    /// @param root         The grid's root element.
     /// @param scroller     The grid's scroller.
+    /// @param vTrack       The vertical scrollbar's track.
+    /// @param vThumb       Its thumb.
+    /// @param hTrack       The horizontal scrollbar's track.
+    /// @param hThumb       Its thumb.
     /// @param headerHeight Supplies the height in pixels of the sticky header.
-    OverlayScrollbars(final Element root, final Element scroller, final IntSupplier headerHeight) {
+    OverlayScrollbars(final Element root,
+                      final Element scroller,
+                      final Element vTrack,
+                      final Element vThumb,
+                      final Element hTrack,
+                      final Element hThumb,
+                      final IntSupplier headerHeight) {
         this.root = root;
         this.scroller = scroller;
+        this.vTrack = vTrack;
+        this.vThumb = vThumb;
+        this.hTrack = hTrack;
+        this.hThumb = hThumb;
         this.headerHeight = headerHeight;
 
-        final Document doc = Document.get();
-        vTrack = div(doc, "data-grid__track data-grid__track--vertical");
-        vThumb = div(doc, "data-grid__thumb");
-        vTrack.appendChild(vThumb);
-        hTrack = div(doc, "data-grid__track data-grid__track--horizontal");
-        hThumb = div(doc, "data-grid__thumb");
-        hTrack.appendChild(hThumb);
-        root.appendChild(vTrack);
-        root.appendChild(hTrack);
         if (SCROLL_TIMELINE) {
             root.addClassName(SCROLL_TIMELINE_CLASS_NAME);
         }
@@ -91,12 +95,6 @@ final class OverlayScrollbars {
     /// as the grid scrolls.
     boolean followsScroll() {
         return SCROLL_TIMELINE;
-    }
-
-    private static Element div(final Document doc, final String className) {
-        final Element element = doc.createDivElement();
-        element.setClassName(className);
-        return element;
     }
 
     /// Start listening for pointer events. Call when the grid is attached.

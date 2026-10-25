@@ -88,32 +88,34 @@ final class ColumnInteractions {
     // Set after a move, so the click that ends it does not also sort the column.
     private boolean suppressClick;
 
-    /// Create the handle, guide lines and ghost and add them to the grid.
+    /// Works the grid's handle, guide lines and ghost (its template's).
     ///
-    /// @param grid     The grid.
-    /// @param root     The grid's root element.
-    /// @param scroller The grid's scroller.
-    /// @param head     The grid's sticky header.
+    /// @param grid       The grid.
+    /// @param root       The grid's root element.
+    /// @param scroller   The grid's scroller.
+    /// @param head       The grid's header, which the handle is in.
+    /// @param handle     The resize handle.
+    /// @param resizeLine The line that follows a column's edge while it is resized.
+    /// @param moveGhost  The ghost of a column that follows the pointer while it is moved.
+    /// @param moveLine   The line where a moved column will go.
     ColumnInteractions(final DataGrid<?> grid,
                        final Element root,
                        final Element scroller,
-                       final Element head) {
+                       final Element head,
+                       final Element handle,
+                       final Element resizeLine,
+                       final Element moveGhost,
+                       final Element moveLine) {
         this.grid = grid;
         this.root = root;
         this.scroller = scroller;
         this.head = head;
-
-        final Document doc = Document.get();
-        handle = div(doc, "data-grid__resize-handle");
-        resizeLine = div(doc, "data-grid__resize-line");
-        moveGhost = div(doc, "data-grid__move-ghost");
-        moveLine = div(doc, "data-grid__move-line");
-        head.appendChild(handle);
-        root.appendChild(resizeLine);
-        root.appendChild(moveGhost);
-        root.appendChild(moveLine);
         // Hidden until needed: the handle until shown (HANDLE_SHOWN_CLASS_NAME), the resize line
         // while not resizing and the move ghost and line while not moving (data-grid.css)
+        this.handle = handle;
+        this.resizeLine = resizeLine;
+        this.moveGhost = moveGhost;
+        this.moveLine = moveLine;
     }
 
     private static Element div(final Document doc, final String className) {
