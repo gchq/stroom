@@ -1579,6 +1579,10 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
   `character-navigator.css` and `item-selection.css`). Delete them once removals are allowed.
+* Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
+  `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
+  the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals
+  are allowed.
 * ~~The item selection dialog's spinner (a data viewer's "Select Record") had no accessible name:
   its name label was never given text (found 25 October 2026 in wave 4).~~ Fixed: the spinner is
   named "Item number" in `ItemSelection.ui.xml`; story `Widgets/Editors & Viewers/ItemNavigator`

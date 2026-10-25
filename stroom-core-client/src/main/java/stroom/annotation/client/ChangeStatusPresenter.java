@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
+import stroom.annotation.client.component.ChooserController;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.FindAnnotationTagCriteria;
@@ -24,9 +25,7 @@ import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SetTag;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
@@ -38,6 +37,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -48,36 +48,19 @@ public class ChangeStatusPresenter
         implements ChangeStatusUiHandlers {
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
+    private final Provider<ChooserController<AnnotationTag>> chooserProvider;
     private AnnotationTag currentStatus;
 
     @Inject
     public ChangeStatusPresenter(final EventBus eventBus,
                                  final ChangeStatusView view,
                                  final AnnotationResourceClient annotationResourceClient,
-                                 final ChooserPresenter<AnnotationTag> annotationStatusPresenter) {
+                                 final Provider<ChooserController<AnnotationTag>> chooserProvider) {
         super(eventBus, view);
-        own(annotationStatusPresenter);
         this.annotationResourceClient = annotationResourceClient;
-        this.annotationStatusPresenter = annotationStatusPresenter;
-        this.annotationStatusPresenter.setDataSupplier((filter, consumer) -> {
-            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values ->
-                            consumer.accept(values.getValues()),
-                    new DefaultErrorHandler(this, null), this);
-        });
-        annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
-        annotationStatusPresenter.setAccessibleName("Statuses");
+        this.chooserProvider = chooserProvider;
 
         getView().setUiHandlers(this);
-
-        own(annotationStatusPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = annotationStatusPresenter.getSelected();
-            if (!Objects.equals(currentStatus, selected)) {
-                changeStatus(selected);
-                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
-            }
-        }));
     }
 
     private FindAnnotationTagCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -127,21 +110,26 @@ public class ChangeStatusPresenter
     private void setStatus(final AnnotationTag status) {
         currentStatus = status;
         getView().setStatus(status);
-        annotationStatusPresenter.clearFilter();
-        annotationStatusPresenter.setSelected(status);
     }
 
     @Override
     public void showStatusChooser(final Element element) {
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(annotationStatusPresenter)
-                .popupType(PopupType.POPUP)
-                .caption("Choose Status")
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> annotationStatusPresenter.focus())
-                .fire();
+        final ChooserController<AnnotationTag> chooser = chooserProvider.get();
+        chooser.setDataSupplier((filter, consumer) -> {
+            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
+            annotationResourceClient.findAnnotationTags(criteria, values ->
+                            consumer.accept(values.getValues()),
+                    new DefaultErrorHandler(this, null), this);
+        });
+        chooser.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        chooser.setAccessibleName("Statuses");
+        chooser.setSelected(currentStatus);
+        chooser.show(this, element, "Choose Status", selected -> {
+            if (!Objects.equals(currentStatus, selected)) {
+                changeStatus(selected);
+                chooser.hide();
+            }
+        });
     }
 
     public interface ChangeStatusView extends View, Focus, HasUiHandlers<ChangeStatusUiHandlers> {

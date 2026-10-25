@@ -22,8 +22,6 @@ import stroom.annotation.client.ChangeAssignedToViewImpl;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChangeStatusViewImpl;
-import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.annotation.client.ChooserViewImpl;
 import stroom.index.client.presenter.DenseVectorFieldPresenter;
 import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldView;
 import stroom.index.client.presenter.IndexDataPresenter;
@@ -82,8 +80,6 @@ public class IndexScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
-        bindSharedView(ChooserView.class,
-                ChooserViewImpl.class);
     }
 }
 

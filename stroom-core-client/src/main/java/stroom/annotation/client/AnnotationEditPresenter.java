@@ -19,6 +19,9 @@ package stroom.annotation.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.client.component.ChooserController;
+import stroom.annotation.client.component.ChooserController.DataSupplier;
+import stroom.annotation.client.component.MultiChooserController;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
@@ -148,11 +151,9 @@ public class AnnotationEditPresenter
     private static final String LINK_GAP = "\u2003";
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
+    private final Provider<ChooserController<AnnotationTag>> chooserProvider;
     private final UserRefPopupPresenter assignedToPresenter;
-    private final MultiChooserPresenter<AnnotationTag> annotationLabelPresenter;
-    private final MultiChooserPresenter<AnnotationTag> annotationCollectionPresenter;
-    private final ChooserPresenter<AnnotationTag> commentPresenter;
+    private final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider;
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private final DurationPresenter retentionDurationProvider;
@@ -183,29 +184,21 @@ public class AnnotationEditPresenter
     public AnnotationEditPresenter(final EventBus eventBus,
                                    final AnnotationEditView view,
                                    final AnnotationResourceClient annotationResourceClient,
-                                   final ChooserPresenter<AnnotationTag> annotationStatusPresenter,
+                                   final Provider<ChooserController<AnnotationTag>> chooserProvider,
                                    final UserRefPopupPresenter assignedToPresenter,
-                                   final MultiChooserPresenter<AnnotationTag> annotationLabelPresenter,
-                                   final MultiChooserPresenter<AnnotationTag> annotationCollectionPresenter,
-                                   final ChooserPresenter<AnnotationTag> commentPresenter,
+                                   final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
                                    final DurationPresenter retentionDurationProvider,
                                    final DurationLabel durationLabel,
                                    final Provider<CommentEditPresenter> commentEditPresenterProvider) {
         super(eventBus, view);
-        own(annotationStatusPresenter);
         own(assignedToPresenter);
-        own(annotationLabelPresenter);
-        own(annotationCollectionPresenter);
-        own(commentPresenter);
         own(retentionDurationProvider);
         this.annotationResourceClient = annotationResourceClient;
-        this.annotationStatusPresenter = annotationStatusPresenter;
+        this.chooserProvider = chooserProvider;
         this.assignedToPresenter = assignedToPresenter;
-        this.annotationLabelPresenter = annotationLabelPresenter;
-        this.annotationCollectionPresenter = annotationCollectionPresenter;
-        this.commentPresenter = commentPresenter;
+        this.multiChooserProvider = multiChooserProvider;
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
         this.retentionDurationProvider = retentionDurationProvider;
@@ -215,35 +208,12 @@ public class AnnotationEditPresenter
         getView().setUiHandlers(this);
         assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
 
-        this.annotationStatusPresenter.setDataSupplier((filter, consumer) -> {
-            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values ->
-                            consumer.accept(values.getValues()),
-                    new DefaultErrorHandler(this, null), this);
-        });
-        annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
-        annotationStatusPresenter.setAccessibleName("Statuses");
+    }
 
-        this.annotationLabelPresenter.setDataSupplier((filter, consumer) -> {
-            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values ->
-                            consumer.accept(values.getValues()),
-                    new DefaultErrorHandler(this, null), this);
-        });
-        annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
-        annotationLabelPresenter.setAccessibleName("Labels");
-
-        this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
-            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values ->
-                            consumer.accept(values.getValues()),
-                    new DefaultErrorHandler(this, null), this);
-        });
-        annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
-        annotationCollectionPresenter.setAccessibleName("Collections");
-
-        this.commentPresenter.setDataSupplier((filter, consumer) -> {
-            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
+    // Gives a chooser the tags of a type that match its filter
+    private DataSupplier<AnnotationTag> tagSupplier(final AnnotationTagType annotationTagType) {
+        return (filter, consumer) -> {
+            final FindAnnotationTagCriteria criteria = createCriteria(annotationTagType, filter);
             annotationResourceClient.findAnnotationTags(
                     criteria,
                     values -> {
@@ -252,30 +222,7 @@ public class AnnotationEditPresenter
                         }
                     },
                     new DefaultErrorHandler(this, null), this);
-        });
-        commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
-        commentPresenter.setAccessibleName("Standard comments");
-        commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
-
-        own(annotationStatusPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = annotationStatusPresenter.getSelected();
-            if (!Objects.equals(currentStatus, selected)) {
-                changeStatus(selected);
-                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
-            }
-        }));
-        own(annotationLabelPresenter.addSelectionHandler(e -> {
-            final List<AnnotationTag> selected = annotationLabelPresenter.getSelectedItems();
-            changeAnnotationLabels(selected);
-        }));
-        own(annotationCollectionPresenter.addSelectionHandler(e -> {
-            final List<AnnotationTag> selected = annotationCollectionPresenter.getSelectedItems();
-            changeAnnotationCollections(selected);
-        }));
-        own(commentPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = commentPresenter.getSelected();
-            changeComment(selected);
-        }));
+        };
     }
 
     private FindAnnotationTagCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -352,8 +299,6 @@ public class AnnotationEditPresenter
     private void setStatus(final AnnotationTag status) {
         currentStatus = status;
         getView().setStatus(status);
-        annotationStatusPresenter.clearFilter();
-        annotationStatusPresenter.setSelected(status);
     }
 
     private void changeAssignedTo(final UserRef selected) {
@@ -465,11 +410,13 @@ public class AnnotationEditPresenter
                 : retentionPeriod.toLongString());
     }
 
-    private void changeComment(final AnnotationTag selected) {
+    // Adds a standard comment to the comment being written, returning whether it did
+    private boolean changeComment(final AnnotationTag selected) {
         if (selected != null && hasChanged(getView().getComment(), selected.getTagText())) {
             getView().setComment(getView().getComment() + selected.getTagText());
-            HidePopupRequestEvent.builder(commentPresenter).fire();
+            return true;
         }
+        return false;
     }
 
     private void change(final SingleAnnotationChangeRequest request) {
@@ -1468,15 +1415,17 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(annotationStatusPresenter)
-                .popupType(PopupType.POPUP)
-                .caption("Choose Status")
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> annotationStatusPresenter.focus())
-                .fire();
+        final ChooserController<AnnotationTag> chooser = chooserProvider.get();
+        chooser.setDataSupplier(tagSupplier(AnnotationTagType.STATUS));
+        chooser.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        chooser.setAccessibleName("Statuses");
+        chooser.setSelected(currentStatus);
+        chooser.show(this, element, "Choose Status", selected -> {
+            if (!Objects.equals(currentStatus, selected)) {
+                changeStatus(selected);
+                chooser.hide();
+            }
+        });
     }
 
     @Override
@@ -1493,20 +1442,12 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        annotationLabelPresenter.clearFilter();
-        annotationLabelPresenter.setSelectedItems(currentLabels);
-        annotationLabelPresenter.refresh();
-
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(annotationLabelPresenter)
-                .popupType(PopupType.POPUP)
-                .caption("Choose Labels")
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> annotationLabelPresenter.focus())
-//                .onHide(e -> changeAnnotationLabels(annotationLabelPresenter.getSelectedItems()))
-                .fire();
+        final MultiChooserController<AnnotationTag> chooser = multiChooserProvider.get();
+        chooser.setDataSupplier(tagSupplier(AnnotationTagType.LABEL));
+        chooser.setDisplayValueFunction(Lozenge::create);
+        chooser.setAccessibleName("Labels");
+        chooser.setSelectedItems(currentLabels);
+        chooser.show(this, element, "Choose Labels", this::changeAnnotationLabels);
     }
 
     @Override
@@ -1514,20 +1455,12 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        annotationCollectionPresenter.clearFilter();
-        annotationCollectionPresenter.setSelectedItems(currentCollections);
-        annotationCollectionPresenter.refresh();
-
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(annotationCollectionPresenter)
-                .popupType(PopupType.POPUP)
-                .caption("Choose Collections")
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> annotationCollectionPresenter.focus())
-//                .onHide(e -> changeAnnotationCollections(annotationCollectionPresenter.getSelectedItems()))
-                .fire();
+        final MultiChooserController<AnnotationTag> chooser = multiChooserProvider.get();
+        chooser.setDataSupplier(tagSupplier(AnnotationTagType.COLLECTION));
+        chooser.setDisplayValueFunction(Lozenge::create);
+        chooser.setAccessibleName("Collections");
+        chooser.setSelectedItems(currentCollections);
+        chooser.show(this, element, "Choose Collections", this::changeAnnotationCollections);
     }
 
     @Override
@@ -1535,17 +1468,16 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        commentPresenter.clearFilter();
-        commentPresenter.clearSelection();
-        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
-                element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.builder(commentPresenter)
-                .popupType(PopupType.POPUP)
-                .caption("Choose Comment")
-                .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
-                .onShow(e -> commentPresenter.focus())
-                .fire();
+        final ChooserController<AnnotationTag> chooser = chooserProvider.get();
+        chooser.setDataSupplier(tagSupplier(AnnotationTagType.COMMENT));
+        chooser.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        chooser.setAccessibleName("Standard comments");
+        chooser.setTooltipFunction(AnnotationTag::getTagText);
+        chooser.show(this, element, "Choose Comment", selected -> {
+            if (changeComment(selected)) {
+                chooser.hide();
+            }
+        });
     }
 
     @Override

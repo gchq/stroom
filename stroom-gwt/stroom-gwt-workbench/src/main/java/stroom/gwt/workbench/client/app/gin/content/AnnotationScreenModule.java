@@ -34,9 +34,6 @@ import stroom.annotation.client.ChangeAssignedToViewImpl;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChangeStatusViewImpl;
-import stroom.annotation.client.ChooserPresenter;
-import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.annotation.client.ChooserViewImpl;
 import stroom.annotation.client.CommentEditPresenter;
 import stroom.annotation.client.CommentEditPresenter.CommentEditView;
 import stroom.annotation.client.CommentEditViewImpl;
@@ -47,7 +44,6 @@ import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
-import stroom.annotation.client.MultiChooserPresenter;
 import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.view.FindViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -90,10 +86,6 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
                 CommentEditViewImpl.class);
         bindSharedView(AbstractFindPresenter.FindView.class,
                 FindViewImpl.class);
-        bindSharedView(ChooserView.class,
-                ChooserViewImpl.class);
-        bind(ChooserPresenter.class);
-        bind(MultiChooserPresenter.class);
         bind(FindAnnotationPresenter.class);
     }
 }
