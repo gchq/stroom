@@ -467,6 +467,33 @@ public final class IndexFieldDocs {
                                                    final EventSchema schema,
                                                    final String layout,
                                                    final Descriptions described) {
+        return indexFieldMappingMarkdown(plan, population, byAction, documents, null, schema, layout, described);
+    }
+
+    /// [#indexFieldMappingMarkdown(FieldPlan, Map, Map, List, EventSchema, String, Descriptions)], with example
+    /// values the index holds for fields the sample's documents have none of, so a reader sees what kind of data
+    /// each holds (asked for by the user; not in the Stroom MCP server): shown as from the index, and given to the
+    /// field's description.
+    ///
+    /// @param plan        The index plan.
+    /// @param population  The share of the sample's events (%) each event path is populated in, or null for no
+    ///                    sample.
+    /// @param byAction    The share of all events (%) each path is populated in, by the action element of the
+    ///                    events that have it, or null.
+    /// @param documents   The documents the pipeline wrote from the sample, or null.
+    /// @param indexValues Example values the index holds, by index field, or null.
+    /// @param schema      The event-logging schema, or null.
+    /// @param layout      [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described   The field descriptions, or null for none.
+    /// @return The section's text, ending with a new line.
+    public static String indexFieldMappingMarkdown(final FieldPlan plan,
+                                                   final Map<String, Double> population,
+                                                   final Map<String, Map<String, Double>> byAction,
+                                                   final List<Map<String, List<String>>> documents,
+                                                   final Map<String, List<String>> indexValues,
+                                                   final EventSchema schema,
+                                                   final String layout,
+                                                   final Descriptions described) {
         final Descriptions descriptions = described == null
                 ? new Descriptions()
                 : described;
@@ -497,9 +524,15 @@ public final class IndexFieldDocs {
             final List<List<String>> perDocument = documents == null
                     ? null
                     : perDocument(documents, f.name());
-            final List<String> sampledValues = perDocument == null
+            final List<String> fromSample = perDocument == null
                     ? List.of()
                     : distinctNonEmpty(perDocument.stream().flatMap(List::stream).toList());
+            final List<String> fromIndex = fromSample.isEmpty()
+                    ? NullSafe.list(NullSafe.get(indexValues, values -> values.get(f.name())))
+                    : List.of();
+            final List<String> sampledValues = fromSample.isEmpty()
+                    ? fromIndex
+                    : fromSample;
             final Map<String, String> says = new LinkedHashMap<>();
             if (shared != null) {
                 says.put("shared template", "Written by the shared template `" + shared.template() + "`.");
@@ -526,13 +559,17 @@ public final class IndexFieldDocs {
             }
             if (documents != null) {
                 final List<String> values = distinctNonEmpty(allValues(documents, f.name()));
-                cells.add(values.isEmpty()
-                        ? "(none in the sample)"
-                        : values.subList(0, Math.min(3, values.size())).stream()
+                cells.add(!values.isEmpty()
+                        ? values.subList(0, Math.min(3, values.size())).stream()
                                   .map(v -> "`" + PyText.head(v, 40) + "`")
                                   .collect(Collectors.joining(", ")) + (values.size() > 3
                                 ? " (+" + (values.size() - 3) + ")"
-                                : ""));
+                                : "")
+                        : !fromIndex.isEmpty()
+                                ? fromIndex.stream()
+                                          .map(v -> "`" + PyText.head(v, 40) + "`")
+                                          .collect(Collectors.joining(", ")) + " (from the index)"
+                                : "(none in the sample)");
             }
             rows.add(new IndexRow(shared != null
                     ? ""

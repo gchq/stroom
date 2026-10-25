@@ -80,6 +80,7 @@ class FieldMappingSections {
     private final GeneratedDrift mappingDrift;
     private final StreamReader streamReader;
     private final StreamSummaries streamSummaries;
+    private final IndexValues indexValues;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -88,6 +89,7 @@ class FieldMappingSections {
     /// @param mappingDrift    Says whether the XSLT is still what its mapping generates.
     /// @param streamReader    Reads the streams' meta.
     /// @param streamSummaries Reads how populated each path of the sample Events is.
+    /// @param indexValues     Reads example values from the index for fields the sample has none of.
     @Inject
     FieldMappingSections(final PipelineStepping stepping,
                          final DraftCefMappingTool cef,
@@ -95,7 +97,8 @@ class FieldMappingSections {
                          final EventVersions eventVersions,
                          final GeneratedDrift mappingDrift,
                          final StreamReader streamReader,
-                         final StreamSummaries streamSummaries) {
+                         final StreamSummaries streamSummaries,
+                         final IndexValues indexValues) {
         this.stepping = stepping;
         this.cef = cef;
         this.pipelineShapes = pipelineShapes;
@@ -103,6 +106,7 @@ class FieldMappingSections {
         this.mappingDrift = mappingDrift;
         this.streamReader = streamReader;
         this.streamSummaries = streamSummaries;
+        this.indexValues = indexValues;
     }
 
     /// `field_mapping_section`: the Field mapping section generated from the kept mapping (stepped over the sample
@@ -451,15 +455,36 @@ class FieldMappingSections {
                     e.getMessage()));
             schema = null;
         }
+        // Example values from the index for the fields the sample has none of (asked for by the user).
+        final List<String> missing = population == null
+                ? List.of()
+                : IndexValues.notInSample(plan, population);
+        final Map<String, List<String>> fromIndex = missing.isEmpty()
+                ? null
+                : examplesFromIndex(context, pipeline, plan, missing);
         String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, summary == null
                 ? null
-                : IndexingInputs.populationByAction(summary), documents, schema, layout, described)
+                : IndexingInputs.populationByAction(summary), documents, fromIndex, schema, layout, described)
                          + agreedLine(pipeline);
         final Optional<String> drift = mappingDrift.planDrift(kept);
         if (drift.isPresent()) {
             section = section.stripTrailing() + "\n\nNote: " + capitalised(beforeDiffers(drift.get())) + "\n";
         }
         return section;
+    }
+
+    // A nicety: a pipeline Stroom can't merge gives none.
+    private Map<String, List<String>> examplesFromIndex(final ToolCallContext context,
+                                                        final PipelineDoc pipeline,
+                                                        final FieldPlan plan,
+                                                        final List<String> fields) {
+        try {
+            return indexValues.examples(context, pipelineShapes.merged(pipeline.getUuid()), plan, fields);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No example values from the index of {}: {}", pipeline.getName(),
+                    e.getMessage()));
+            return null;
+        }
     }
 
     private SteppedPipeline load(final String pipelineUuid) {

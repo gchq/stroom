@@ -367,6 +367,26 @@ class TestIndexFieldDocs {
     }
 
     @Test
+    void aFieldTheSampleHasNoneOfShowsTheIndexsValues() {
+        // Asked for by the user: what kind of data it holds, on either backend.
+        for (final String backend : List.of(FieldPlan.LUCENE, FieldPlan.ELASTICSEARCH)) {
+            final FieldPlan plan = FieldPlan.of(backend, "acme-v1", "@timestamp", List.of(
+                    PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                    PlannedField.of("user.target.name", "keyword", "EventDetail/*/User/Name")));
+            final List<Map<String, List<String>>> documents = List.of(Map.of("@timestamp",
+                    List.of("2026-10-01T10:00:00.000Z")));
+
+            final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, Map.of("EventTime/TimeCreated", 100.0),
+                    Map.of(), documents, Map.of("user.target.name", List.of("Patel, Priya", "Lee, Sam")), null,
+                    FieldDocs.BY_EVENT_TYPE, null);
+
+            assertThat(text.split("### Not in the sample")[1]).as(backend)
+                    .contains("| `EventDetail/*/User/Name` | not in the sample | `Patel, Priya`, `Lee, Sam` (from the "
+                              + "index) |");
+        }
+    }
+
+    @Test
     void fieldsFromAnyActionAreUnderTheActionsTheSampleHasThemIn() {
         // Seen: SecretServer's user.target.*, object and folder fields (EventDetail/*/...) among the common fields,
         // and its Data fields (EventDetail//Data[@Name='...']/@Value) under a heading of no name.
