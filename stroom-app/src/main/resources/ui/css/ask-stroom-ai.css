@@ -2522,22 +2522,21 @@ a.ai-stroom-link::after {
 }
 
 /* The task list, suggestions and input box along the bottom, over what is above them. Not while the chat is
-   empty, when the input box sits in the middle with nothing beneath it. */
+   empty, when the input box sits in the middle with nothing beneath it. No shadow of its own: the input box's,
+   all round it, is the one (asked for by the user: the two overlapping left a line along the top). */
 .askStroomAiViewImpl:not(.empty) .askStroomAiViewImpl-bottom {
     position: relative;
     z-index: 1;
     background-color: var(--control__background-color);
-    box-shadow: 0 calc(-1 * var(--ai-overlay-offset)) var(--ai-overlay-blur) var(--ai-overlay-spread)
-    var(--ai-overlay-shadow);
     /* No gap above the task list and input box, so the shadow starts right at their top edge. */
     padding-top: 0;
 }
 
-/* And the input box and task list each lifted off it. (While the chat works, the input box's glow takes the place
-   of its shadow.) */
+/* The input box (its border round the text, the mode and the other controls) and the task list, each with one
+   shadow the same all round it. (While the chat works, the input box's glow takes the place of its shadow.) */
 .askStroomAiViewImpl-bottom-inner,
 .askStroomAiViewImpl-taskList {
-    box-shadow: 0 6px 24px var(--ai-overlay-shadow);
+    box-shadow: 0 0 16px -4px var(--ai-overlay-shadow);
 }
 
 /* The button to go back to the latest message stays over the bottom's shadow. */
@@ -2545,10 +2544,12 @@ a.ai-stroom-link::after {
     z-index: 3;
 }
 
-/* The overview's search controls and zoom buttons, lifted off the chart scrolling beneath them. */
+/* The overview's search controls and zoom buttons, set apart from the chart scrolling beneath them by an outer
+   border (asked for by the user, in place of a shadow): a ring just outside their own border, in the text's
+   colour, so it shows in either theme. */
 .ai-overview-toolbar,
 .ai-overview-zoom-strip {
-    box-shadow: 0 6px 24px var(--ai-overlay-shadow);
+    box-shadow: 0 0 0 1px rgb(from var(--text-color) r g b / 0.3);
 }
 
 /* While the overview is shown, the task list is put away: it is about the conversation, not the overview. It comes
