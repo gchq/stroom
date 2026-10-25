@@ -494,6 +494,31 @@ class TestReadDocumentTool {
     }
 
     @Test
+    void aLargeKeptMappingIsSavedToTheWorkspaceRatherThanShown() {
+        // Seen in a chat: a CEF XSLT's kept plan (15 KB, its not-sent list mostly) was shown whole, making a
+        // 38.5 KB reply, while the XSLT's own parts had been saved to the workspace as too large to show.
+        Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig(null, null, null, null, 400, null, null,
+                null, null, null, null, null, null));
+        viewable.add(XSLT.getUuid());
+        final String description = TestKeptMapping.described("Acme VPN events");
+        indexable(XSLT, Map.of("xsl", "<xsl:stylesheet/>", "meta", "{}"),
+                XsltDoc.builder().uuid(XSLT.getUuid()).name(XSLT.getName()).description(description).build());
+
+        final String result = run("{\"uuid\":\"xslt-uuid\",\"mapping\":true}");
+
+        final ArgumentCaptor<String> saved = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(workspace).writeDocument(Mockito.eq(1),
+                Mockito.eq(WorkspacePath.parse("/documents/xslt-uuid/mapping.json")), saved.capture(),
+                Mockito.eq(XSLT.getUuid()));
+        assertThat(saved.getValue()).contains("EventSource/Generator");
+        assertThat(result)
+                .contains("## Kept mapping\nIt is too large to show")
+                .contains("/documents/xslt-uuid/mapping.json")
+                .contains("jq tool")
+                .doesNotContain("EventSource/Generator");
+    }
+
+    @Test
     void anEventLoggingSchemasElementIsDescribedRatherThanTheWholeXsd() {
         // Seen with the Stroom MCP server: the whole XSD (over 100 KB) was put in a file by the agent's client, and
         // the agent spent twelve minutes reading it with PowerShell.

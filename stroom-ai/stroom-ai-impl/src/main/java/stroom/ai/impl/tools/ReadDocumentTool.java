@@ -513,7 +513,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         parts.values().removeIf(text -> text == null || text.isEmpty());
         parts.replaceAll((name, text) -> SecretRedactor.redactJson(text));
         final String kept = XsltDoc.TYPE.equals(docRef.getType())
-                ? keptMapping(docRef, parts, wholeMapping)
+                ? keptMapping(docRef, parts, wholeMapping, workspace, limits(context).getMaxCharsPerRead())
                 : "";
         if (parts.isEmpty()) {
             return describe(docRef) + " has no text content.";
@@ -573,7 +573,11 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     // given as a summary, or whole if asked for. Seen with the Stroom MCP server: the whole mapping (1,400 lines)
     // was spilled by the client to a file, which the agent read in parts and then sent back whole to regenerate
     // the XSLT.
-    private String keptMapping(final DocRef docRef, final Map<String, String> parts, final boolean whole) {
+    private String keptMapping(final DocRef docRef,
+                               final Map<String, String> parts,
+                               final boolean whole,
+                               final SessionWorkspace workspace,
+                               final int limit) {
         final String description = documentAccess.read(docRef, XsltDoc.class)
                 .map(XsltDoc::getDescription)
                 .orElse(null);
@@ -592,8 +596,21 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             sb.append("\n\n## Pending changes\n");
             KeptMapping.pendingChanges(changes).forEach(change -> sb.append("- ").append(change).append('\n'));
         });
-        kept.ifPresent(mapping -> sb.append("\n\n## Kept mapping\n")
-                .append(JsonUtil.writeValueAsString(KeptMapping.summary(mapping, docRef.getUuid(), whole), true)));
+        kept.ifPresent(mapping -> {
+            final String json = JsonUtil.writeValueAsString(KeptMapping.summary(mapping, docRef.getUuid(), whole),
+                    true);
+            sb.append("\n\n## Kept mapping\n");
+            if (json.length() <= limit / 2) {
+                sb.append(json);
+                return;
+            }
+            // As a large part is: saved, not put in the reply (seen: a CEF plan's 15 KB, its not-sent list mostly,
+            // shown whole on top of the XSLT's parts saved to the workspace).
+            final WorkspacePath path = documentPath(docRef, "mapping.json");
+            workspace.writeDocument(path, json, docRef.getUuid());
+            sb.append("It is too large to show (").append(size(json.length())).append("), so it has been saved to ")
+                    .append(path).append(": pick out the parts you need of it with the jq tool.");
+        });
         return sb.toString().stripTrailing() + lost;
     }
 

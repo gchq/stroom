@@ -28,10 +28,12 @@ import stroom.ai.impl.tools.cef.CefOverride;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.cef.CefValue;
 import stroom.ai.impl.tools.validation.EventStreams;
+import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -94,12 +96,16 @@ class TestDraftCefMappingTool {
     private final CefSources sources = Mockito.mock(CefSources.class);
     private final XsltSaves saves = Mockito.mock(XsltSaves.class);
     private final BuildPlan plan = Mockito.mock(BuildPlan.class);
+    // Compiles everything, unless a test says.
+    private final XsltCompileCheck compileCheck = Mockito.mock(XsltCompileCheck.class);
     private final DraftCefMappingTool tool = new DraftCefMappingTool(agentInstructions, consent, eventStreams,
-            world.stepping(), keptMappings, documentAccess, sources, saves, plan);
+            world.stepping(), keptMappings, documentAccess, sources, saves, plan, compileCheck,
+            new CefChoices(Mockito.mock(SecurityContext.class)));
     private List<Map<String, Object>> instructions = List.of();
 
     @BeforeEach
     void setUp() {
+        Mockito.when(compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of()));
         Mockito.when(agentInstructions.targets(anyList(), anyList(), anyList(), anyList())).thenReturn(
                 new AgentInstructions.Targets(List.of("/"), List.of()));
         Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any())).thenAnswer(inv ->
@@ -134,6 +140,26 @@ class TestDraftCefMappingTool {
     }
 
     @Test
+    void theUsersAnswerIsKeptForTheBuildSoItIsAskedOnce() throws Exception {
+        // Seen: asked whether keys outside ArcSight's dictionary may be used on every call of one CEF pipeline's
+        // building.
+        Mockito.when(consent.choose(any(), any(), eq(DraftCefMappingTool.NAME),
+                        eq(DraftCefMappingTool.CUSTOM_QUESTION), anyList(), isNull()))
+                .thenReturn(Optional.of(DraftCefMappingTool.CUSTOM_OPTIONS.get(1)));
+
+        assertThat(draft("{\"stream_ids\": [7], \"topic\": \"t\", \"build\": \"b\"}").get("custom_keys"))
+                .isEqualTo(true);
+        assertThat(draft("{\"stream_ids\": [7], \"topic\": \"t\", \"build\": \"b\"}").get("custom_keys"))
+                .isEqualTo(true);
+        Mockito.verify(consent, Mockito.times(1)).choose(any(), any(), eq(DraftCefMappingTool.NAME),
+                eq(DraftCefMappingTool.CUSTOM_QUESTION), anyList(), isNull());
+        // Another build's is its own.
+        draft("{\"stream_ids\": [7], \"topic\": \"t\", \"build\": \"other\"}");
+        Mockito.verify(consent, Mockito.times(2)).choose(any(), any(), eq(DraftCefMappingTool.NAME),
+                eq(DraftCefMappingTool.CUSTOM_QUESTION), anyList(), isNull());
+    }
+
+    @Test
     void theUsersAnswerInAFormIsTaken() throws Exception {
         Mockito.when(consent.choose(any(), any(), eq(DraftCefMappingTool.NAME),
                         eq(DraftCefMappingTool.CUSTOM_QUESTION), anyList(), isNull()))
@@ -153,6 +179,23 @@ class TestDraftCefMappingTool {
 
         assertThat(result).containsEntry("saved", null);
         assertThat(String.join(" ", (List<String>) result.get("problems"))).contains("needs topic");
+        Mockito.verify(saves, Mockito.never()).create(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void anXsltThatDoesNotCompileIsNotSaved() throws Exception {
+        // Seen: a record key's undeclared prefix (//d:EventSource/d:SessionId) found only by Stroom's log when the
+        // pipeline ran.
+        Mockito.when(compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of(
+                "XPST0081 Namespace prefix 'q' has not been declared")));
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"topic\": \"t\", "
+                                                 + "\"build\": \"b\", \"name\": \"CEF\"}");
+
+        assertThat(result).containsEntry("saved", null);
+        assertThat((List<String>) result.get("problems")).containsExactly(
+                "the XSLT doesn't compile: XPST0081 Namespace prefix 'q' has not been declared");
         Mockito.verify(saves, Mockito.never()).create(any(), any(), any(), any(), any(), any(), any());
     }
 
