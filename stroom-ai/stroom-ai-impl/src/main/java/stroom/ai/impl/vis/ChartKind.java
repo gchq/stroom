@@ -145,7 +145,16 @@ public enum ChartKind {
                     new ChartRole("weight", "Weight (Optional)", false, ChartRole.Values.NUMBER,
                             "how strong each link is, e.g. a count() of messages; each row counts once if not "
                             + "given")),
-            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES));
+            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
+
+    GAUGE("gauge", "Gauge", "a dial showing a value against its range; one per name, when a name column is mapped",
+            List.of(
+                    new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
+                            "the value shown, e.g. max(Bytes) in a table grouped to one row"),
+                    new ChartRole("name", "Name (Optional)", false, ChartRole.Values.ANY,
+                            "a gauge per value of this column, e.g. Host; without it, the first row is shown")),
+            List.of(StyleSetting.GAUGE_MIN, StyleSetting.GAUGE_MAX, StyleSetting.BANDS, StyleSetting.UNITS,
+                    StyleSetting.MAX_GAUGES, StyleSetting.MAX_VALUES));
 
     private final String id;
     private final String displayName;

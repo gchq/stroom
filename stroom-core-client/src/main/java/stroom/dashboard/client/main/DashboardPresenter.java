@@ -1391,6 +1391,10 @@ public class DashboardPresenter
         // The tables added, by the name the changes give them (lower case), and the name and settings of each other
         // component renamed or changed, as they were, by id.
         final Map<String, Component> added = new LinkedHashMap<>();
+        // Of several charts added together, the last added and the first of the row it is in, which later ones are
+        // placed beside, under or with (see TableChange.RIGHT, UNDER and WITH).
+        Component lastVis = null;
+        Component rowStart = null;
         final Map<String, ComponentConfig> configsBefore = new LinkedHashMap<>();
         for (int i = 0; i < changes.size(); i++) {
             final TableChange change = changes.get(i);
@@ -1418,10 +1422,19 @@ public class DashboardPresenter
             } else if (TableChange.ADD_VIS.equals(change.getOp())) {
                 final Component linked = change.getTable() == null || change.getTable().equalsIgnoreCase(name)
                         ? component
-                        : added.get(change.getTable().toLowerCase());
+                        : added.containsKey(change.getTable().toLowerCase())
+                                ? added.get(change.getTable().toLowerCase())
+                                : tableNamed(change.getTable());
                 final Component vis = linked == null
                         ? null
-                        : addVis(linked, change);
+                        : addVis(linked, change, lastVis, rowStart);
+                if (vis != null) {
+                    if (!TableChange.RIGHT.equals(change.getPlacement())
+                        && !TableChange.WITH.equals(change.getPlacement())) {
+                        rowStart = vis;
+                    }
+                    lastVis = vis;
+                }
                 if (vis == null) {
                     failed = prefix + "the visualisation couldn't be added.";
                 } else {
@@ -1609,7 +1622,22 @@ public class DashboardPresenter
     // Adds a Visualisation component linked to a table, showing the Visualisation the change gives with its settings,
     // in a new pane below the table or as a tab beside it, with the name asked for (made unique if the dashboard has
     // the name already).
-    private Component addVis(final Component table, final TableChange change) {
+    // A table on the dashboard, by its name (ignoring case), e.g. for one of several charts added together that is
+    // linked to another table than the change's; or null.
+    private Component tableNamed(final String name) {
+        for (final Component component : components) {
+            if (component instanceof TablePresenter
+                && name.equalsIgnoreCase(NullSafe.get(component.getComponentConfig(), ComponentConfig::getName))) {
+                return component;
+            }
+        }
+        return null;
+    }
+
+    private Component addVis(final Component table,
+                             final TableChange change,
+                             final Component lastVis,
+                             final Component rowStart) {
         final MutableTabConfig tableTab = table.getTabConfig();
         final ComponentType type = components.getComponentTypes().stream()
                 .filter(componentType -> VisPresenter.TYPE.getId().equals(componentType.getId()))
@@ -1639,6 +1667,26 @@ public class DashboardPresenter
         vis.link();
         final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
         vis.setTabConfig(tabConfig);
+        // Of several charts added together: beside, under or with one added before it.
+        final MutableTabConfig lastTab = NullSafe.get(lastVis, Component::getTabConfig);
+        final MutableTabConfig rowStartTab = NullSafe.get(rowStart, Component::getTabConfig);
+        if (TableChange.WITH.equals(change.getPlacement()) && lastTab != null && lastTab.getParent() != null) {
+            lastTab.getParent().add(tabConfig);
+            layoutPresenter.clear();
+            layoutPresenter.refresh();
+            onChange();
+            return vis;
+        }
+        if (TableChange.RIGHT.equals(change.getPlacement()) && lastTab != null
+            && layoutPresenter.addTabRight(lastTab.getParent(), tabConfig)) {
+            onChange();
+            return vis;
+        }
+        if (TableChange.UNDER.equals(change.getPlacement()) && rowStartTab != null
+            && layoutPresenter.addTabBelow(rowStartTab.getParent(), tabConfig)) {
+            onChange();
+            return vis;
+        }
         if (TableChange.TAB.equals(change.getPlacement())
             || !layoutPresenter.addTabBelow(tableTab.getParent(), tabConfig)) {
             // Beside the table: asked for, or if it can't go below it.

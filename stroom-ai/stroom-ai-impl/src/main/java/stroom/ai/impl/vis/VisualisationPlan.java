@@ -47,7 +47,8 @@ import java.util.Set;
 /// @param componentId  The dashboard table's component id, or null for a StroomQL query; for an embedded query on a
 ///                     dashboard, its component id.
 /// @param componentName The name of the new vis component on the dashboard, or null for a StroomQL query.
-/// @param placement    Where it goes on the dashboard: below the table or as a tab beside it.
+/// @param placement    Where it goes on the dashboard: below the table or as a tab beside it; for a chart after the
+///                     first of several created together, beside, below or as a tab with the one before it.
 /// @param snapshotHash The hash of the dashboard description it was planned against, or of the query's text.
 /// @param query        True if it is for a StroomQL query's `show` clause rather than a dashboard.
 /// @param baseQuery    For a StroomQL query, its text when the chart was planned, else null.
@@ -71,7 +72,13 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     public static final String BELOW = "below";
     /// Places a new vis component as a tab beside its table.
     public static final String TAB = "tab";
-    static final Set<String> PLACEMENTS = Set.of(BELOW, TAB);
+    /// Of several charts created together, places one in a new pane to the right of the one before it (a row).
+    public static final String RIGHT = "right";
+    /// Of several charts created together, places one in a new pane below the one before it (a column).
+    public static final String UNDER = "under";
+    /// Of several charts created together, places one as a tab in the pane of the one before it (stacked tabs).
+    public static final String WITH = "with";
+    static final Set<String> PLACEMENTS = Set.of(BELOW, TAB, RIGHT, UNDER, WITH);
     static final int MAX_TEXT = 1_000;
     static final int MAX_OPTIONS = 20_000;
 
@@ -167,7 +174,8 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
         checkText("the table's name", table);
         checkText("the component's name", componentName);
         if (placement != null && !PLACEMENTS.contains(placement)) {
-            throw new IllegalArgumentException("Placement must be " + BELOW + " or " + TAB + ".");
+            throw new IllegalArgumentException("Placement must be one of " + BELOW + ", " + TAB + ", " + RIGHT + ", "
+                                               + UNDER + " or " + WITH + ".");
         }
         if (!isQuery() && (NullSafe.isBlankString(componentId) || NullSafe.isBlankString(componentName))) {
             throw new IllegalArgumentException("A dashboard's visualisation needs its table and a component "
