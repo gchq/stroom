@@ -23,6 +23,7 @@ import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -59,6 +60,14 @@ public class VisViewImpl extends ViewImpl implements VisView {
                 }
                 GlobalResizeObserver.addListener(getElement(), element -> {
                     if (widget.getOffsetWidth() > 0 && widget.getOffsetHeight() > 0) {
+                        onResize();
+                    }
+                });
+                // The frame floats over the pane, placed where the pane is. A pane put back in a layout that was
+                // built again (e.g. once a component is added as a tab beside it) may be the same size somewhere
+                // else, which the resize observer doesn't report: place the frame again once it is laid out.
+                Scheduler.get().scheduleDeferred(() -> {
+                    if (isAttached() && widget.getOffsetWidth() > 0 && widget.getOffsetHeight() > 0) {
                         onResize();
                     }
                 });
@@ -102,7 +111,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
             final Element dashboard = getParentByClass(ref, "dashboard-scrollPanel");
 
             if (ref != null) {
-                final Rect inner = ElementUtil.getBoundingClientRectPlusWindowScroll(ref);
+                final Rect inner = withinTabContent(ref, ElementUtil.getBoundingClientRectPlusWindowScroll(ref));
                 if (dashboard != null) {
                     final Rect outer = ElementUtil.getClientRect(dashboard);
                     final Rect min = Rect.min(outer, inner);
@@ -138,6 +147,18 @@ public class VisViewImpl extends ViewImpl implements VisView {
                 visFrame.onResize();
             }
         }
+    }
+
+    // The pane's layout is positioned within its whole tab layout, tab bar included, so the frame placed over it
+    // would cover the tab bar: keep it to the tab's content area, below the bar.
+    private Rect withinTabContent(final Element ref, final Rect rect) {
+        Element content = ref;
+        while (content != null && !content.hasClassName("tabLayout-content")) {
+            content = content.getParentElement();
+        }
+        return content == null
+                ? rect
+                : Rect.min(rect, ElementUtil.getBoundingClientRectPlusWindowScroll(content));
     }
 
     private Element getParentByClass(final Element element, final String className) {

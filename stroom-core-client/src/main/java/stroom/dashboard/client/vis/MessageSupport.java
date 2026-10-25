@@ -38,6 +38,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class MessageSupport
         implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers>, HasTaskMonitorFactory {
@@ -51,6 +52,7 @@ public class MessageSupport
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private SelectionUiHandlers uiHandlers;
+    private Consumer<String> reportHandler;
 
     public MessageSupport(final EventBus eventBus,
                           final Element frame) {
@@ -63,6 +65,13 @@ public class MessageSupport
     @Override
     public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
         this.uiHandlers = uiHandlers;
+    }
+
+    /// Sets what receives the render reports a visualisation sends with `stroom.report`.
+    ///
+    /// @param reportHandler Receives each report as JSON.
+    public void setReportHandler(final Consumer<String> reportHandler) {
+        this.reportHandler = reportHandler;
     }
 
     public void bind() {
@@ -105,6 +114,16 @@ public class MessageSupport
 
             if (uiHandlers != null) {
                 uiHandlers.onSelection(VisComponentSelection.create(selection));
+            }
+
+        } else if ("report".equals(functionName)) {
+            final JSONValue report = message.get("report");
+            if (reportHandler != null && report != null && report.isObject() != null) {
+                // Only the fields Stroom expects: any script in the frame can send a report.
+                final String clean = VisRenderReports.sanitise(report.isObject());
+                if (clean != null) {
+                    reportHandler.accept(clean);
+                }
             }
 
         } else {

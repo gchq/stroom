@@ -24,7 +24,11 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,10 +43,12 @@ import java.util.Optional;
 /// The changes to a dashboard table that the agent can propose, and the user can apply with a button (see
 /// `propose_dashboard_change`): group or ungroup a column, add, edit, move, hide or show a column, sort by a
 /// column, filter a column, set the expression of the classic query that feeds the table, or add a table beside
-/// it as a tab (fed by the same query), which the changes after it can set up by naming it as their `table`. Each
-/// is read from the model's arguments, checked against the columns of the table it changes, and described in
-/// plain language for the user, by Stroom.
+/// it as a tab (fed by the same query), which the changes after it can set up by naming it as their `table`, add a
+/// Visualisation linked to a table, or change a Visualisation's settings. Each is read from the model's arguments,
+/// checked against the columns of the table it changes, and described in plain language for the user, by Stroom.
 public final class DashboardChanges {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardChanges.class);
 
     public static final String GROUP = "group";
     public static final String UNGROUP = "ungroup";
@@ -60,6 +66,20 @@ public final class DashboardChanges {
     public static final String ADD_TABLE = "add_table";
     /// Adds a Text widget in a new pane below a table, showing the event of the table's selected row.
     public static final String ADD_TEXT = "add_text";
+    /// Adds a Visualisation (vis) component linked to a table: in a new pane below it, or as a tab beside it.
+    public static final String ADD_VIS = "add_vis";
+    /// Changes the control values of a Visualisation component, and optionally the Visualisation it shows.
+    public static final String SET_VIS_SETTINGS = "set_vis_settings";
+    /// Where add_vis puts the Visualisation: in a new pane below the table (the default).
+    public static final String BELOW = "below";
+    /// Where add_vis puts the Visualisation: as a tab beside the table.
+    public static final String TAB = "tab";
+    /// Where add_vis can put the Visualisation.
+    public static final List<String> PLACEMENTS = List.of(BELOW, TAB);
+    /// The type of a Visualisation control whose value is a column of the linked table.
+    public static final String FIELD_CONTROL = "field";
+    /// The most settings one add_vis or set_vis_settings may give.
+    public static final int MAX_VIS_SETTINGS = 50;
     /// Adds a conditional formatting rule to a table: rows matching conditions on its columns are coloured, made
     /// bold or italic, or hidden.
     public static final String ADD_FORMAT_RULE = "add_format_rule";
@@ -80,8 +100,8 @@ public final class DashboardChanges {
     public static final String SET_SETTING = "set_setting";
     /// The operations, in the order they are described to the model.
     public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, MOVE_COLUMN,
-            HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE, ADD_TEXT, RENAME, SET_SETTING,
-            ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
+            HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE, ADD_TEXT, ADD_VIS, SET_VIS_SETTINGS,
+            RENAME, SET_SETTING, ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
     /// The most tables one proposal may add.
     public static final int MAX_TABLES = 10;
     /// The deepest an expression may nest, and the most items it may have, as read back from a stored change.
@@ -164,16 +184,19 @@ public final class DashboardChanges {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
             if (SET_EXPRESSION.equals(change.op()) || RENAME.equals(change.op())
-                || SET_SETTING.equals(change.op())) {
+                || SET_SETTING.equals(change.op()) || SET_VIS_SETTINGS.equals(change.op())) {
                 // Of the table's query, or of a component: checked against the dashboard's components.
                 checked.add(change);
                 continue;
             }
-            if (ADD_TEXT.equals(change.op())) {
-                // The table it follows: the proposal's, or one added before it.
+            if (ADD_TEXT.equals(change.op()) || ADD_VIS.equals(change.op())) {
+                // The table it follows, or is linked to: the proposal's, or one added before it.
                 if (change.table() != null && !change.table().equalsIgnoreCase(table)
                     && !tables.containsKey(change.table().toLowerCase(Locale.ROOT))) {
-                    problems.add(prefix + "there is no table '" + change.table() + "' for it to follow. It follows "
+                    problems.add(prefix + "there is no table '" + change.table() + "' for it to "
+                                 + (ADD_VIS.equals(change.op())
+                            ? "be linked to. It is linked to "
+                            : "follow. It follows ")
                                  + "table '" + NullSafe.nonBlankStringElse(table, "?") + "', or a table added "
                                  + "before it with add_table.");
                 }
@@ -264,7 +287,89 @@ public final class DashboardChanges {
             }
             checked.add(exact);
         }
-        return new Checked(List.copyOf(checked), List.copyOf(problems));
+        // Each table's columns as the changes leave them, by name (lower case), and the proposal's under its own
+        // name too.
+        final Map<String, List<String>> columnsAfter = new LinkedHashMap<>();
+        tables.forEach((key, names) -> columnsAfter.put(key, List.copyOf(names)));
+        if (table != null) {
+            columnsAfter.putIfAbsent(table.toLowerCase(Locale.ROOT), columnsAfter.get(""));
+        }
+        return new Checked(List.copyOf(checked), List.copyOf(problems), Collections.unmodifiableMap(columnsAfter));
+    }
+
+    /// Reads the controls a Visualisation declares in its settings (`tabs[].controls[]`, each with an `id` and a
+    /// `type`, e.g. `field`, `text`, `number` or `selection`).
+    ///
+    /// @param settingsJson The Visualisation's settings, as JSON.
+    /// @return Each control's type, by its id, in the order declared; empty if there are none or they can't be read.
+    public static Map<String, String> visControls(final String settingsJson) {
+        if (NullSafe.isBlankString(settingsJson)) {
+            return Map.of();
+        }
+        try {
+            final Map<?, ?> root = JsonUtil.readValue(settingsJson, Map.class);
+            final Map<String, String> controls = new LinkedHashMap<>();
+            if (root != null && root.get("tabs") instanceof final List<?> tabs) {
+                for (final Object tab : tabs) {
+                    if (tab instanceof final Map<?, ?> tabMap && tabMap.get("controls") instanceof final List<?> list) {
+                        for (final Object control : list) {
+                            if (control instanceof final Map<?, ?> controlMap
+                                && controlMap.get("id") instanceof final String id && !id.isBlank()) {
+                                controls.put(id, controlMap.get("type") instanceof final String type
+                                        ? type
+                                        : "");
+                            }
+                        }
+                    }
+                }
+            }
+            return Collections.unmodifiableMap(controls);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read a Visualisation's controls", e);
+            return Map.of();
+        }
+    }
+
+    /// Checks the settings an add_vis or set_vis_settings gives: each must be a control the Visualisation declares,
+    /// and each value of a `field` control a column of the table it is linked to, exactly as the table names it.
+    ///
+    /// @param settings      The settings: each control's id and value (empty to go back to its default).
+    /// @param controls      The Visualisation's controls: each one's type, by its id (see [#visControls(String)]).
+    /// @param columns       The columns of the table it is linked to, as the changes leave them, or null if they
+    ///                      aren't known (field values are then not checked).
+    /// @param visualisation The Visualisation's name, for the problems.
+    /// @param which         The table it is linked to, for the problems, e.g. "table 'Events'".
+    /// @return What is wrong with the settings, if anything.
+    public static List<String> visSettingsProblems(final Map<String, String> settings,
+                                                   final Map<String, String> controls,
+                                                   final List<String> columns,
+                                                   final String visualisation,
+                                                   final String which) {
+        final List<String> problems = new ArrayList<>();
+        final Map<String, String> declared = NullSafe.map(controls);
+        for (final Map.Entry<String, String> entry : NullSafe.map(settings).entrySet()) {
+            final String id = entry.getKey();
+            final String value = entry.getValue();
+            if (!declared.containsKey(id)) {
+                final Optional<String> near = find(List.copyOf(declared.keySet()), id);
+                problems.add("Visualisation '" + visualisation + "' has no control '" + id + "'"
+                             + near.map(name -> " (did you mean '" + name + "'?)").orElse("") + ". Its controls "
+                             + "are: " + (declared.isEmpty()
+                        ? "none"
+                        : String.join(", ", declared.entrySet().stream()
+                                .map(control -> control.getKey() + " (" + control.getValue() + ")")
+                                .toList())) + ".");
+            } else if (FIELD_CONTROL.equalsIgnoreCase(declared.get(id)) && NullSafe.isNonEmptyString(value)
+                       && columns != null && !columns.contains(value)) {
+                final Optional<String> near = find(columns, value);
+                problems.add("control '" + id + "' takes a column of " + which + ", which has no column '" + value
+                             + "'" + near.map(name -> " (did you mean '" + name + "'?)").orElse("")
+                             + ". Its columns are: " + (columns.isEmpty()
+                        ? "none yet"
+                        : String.join(", ", columns)) + ".");
+            }
+        }
+        return problems;
     }
 
     /// @param changes Some changes.
@@ -324,6 +429,9 @@ public final class DashboardChanges {
                 : null;
         if (RENAME.equals(op) || SET_SETTING.equals(op)) {
             return componentChange(op, map, name, prefix);
+        }
+        if (ADD_VIS.equals(op) || SET_VIS_SETTINGS.equals(op)) {
+            return visChange(op, map, name, table, prefix);
         }
         if (ADD_FORMAT_RULE.equals(op)) {
             return formatRule(map, query, position, table, prefix);
@@ -552,21 +660,117 @@ public final class DashboardChanges {
         if (value == null) {
             throw new IllegalArgumentException(prefix + "set_setting needs the value.");
         }
-        final DocRef doc = map.get("doc") instanceof final Map<?, ?> docMap
-                           && docMap.get("type") instanceof final String type
-                           && docMap.get("uuid") instanceof final String uuid
-                ? new DocRef(type, uuid, docMap.get("name") instanceof final String docName
-                        ? docName
-                        : null)
-                : null;
         return Change.builder(op)
                 .target(target)
                 .targetId(targetId)
                 .setting(setting)
                 .value(value)
                 .ref(text(map, "ref", prefix))
-                .doc(doc)
+                .doc(doc(map.get("doc")))
                 .build();
+    }
+
+    // A document as the browser is given it (`type`, `uuid` and `name`), or null if it isn't one.
+    private static DocRef doc(final Object value) {
+        return value instanceof final Map<?, ?> docMap
+               && docMap.get("type") instanceof final String type
+               && docMap.get("uuid") instanceof final String uuid
+                ? new DocRef(type, uuid, docMap.get("name") instanceof final String docName
+                        ? docName
+                        : null)
+                : null;
+    }
+
+    // A change adding a Visualisation, or to a Visualisation's settings: the Visualisation as the model gives it
+    // (its UUID) or as stored (the document), and the settings.
+    private static Change visChange(final String op,
+                                    final Map<?, ?> map,
+                                    final String name,
+                                    final String table,
+                                    final String prefix) {
+        final String uuid = text(map, "visualisation", prefix);
+        final DocRef stored = doc(map.get("doc"));
+        if (stored != null && !VisualisationDoc.TYPE.equals(stored.getType())) {
+            throw new IllegalArgumentException(prefix + op + " can only show a Visualisation.");
+        }
+        final DocRef visualisation = stored != null
+                ? stored
+                : NullSafe.get(uuid, value -> new DocRef(VisualisationDoc.TYPE, value));
+        final Map<String, String> settings = visSettings(map.get("settings"), prefix);
+        if (ADD_VIS.equals(op)) {
+            if (name == null) {
+                throw new IllegalArgumentException(prefix + "add_vis needs the new Visualisation component's name.");
+            }
+            if (visualisation == null) {
+                throw new IllegalArgumentException(prefix + "add_vis needs visualisation: the UUID of the "
+                                                   + "Visualisation document to show.");
+            }
+            final String placement = NullSafe.get(text(map, "placement", prefix),
+                    value -> value.toLowerCase(Locale.ROOT));
+            if (placement != null && !PLACEMENTS.contains(placement)) {
+                throw new IllegalArgumentException(prefix + "placement must be one of "
+                                                   + String.join(", ", PLACEMENTS) + ".");
+            }
+            // An empty value is the control's default, which a new component has anyway.
+            final Map<String, String> given = new LinkedHashMap<>();
+            NullSafe.map(settings).forEach((id, value) -> {
+                if (!value.isEmpty()) {
+                    given.put(id, value);
+                }
+            });
+            return Change.builder(op)
+                    .name(name)
+                    .table(table)
+                    .doc(visualisation)
+                    .settings(Collections.unmodifiableMap(given))
+                    .placement(placement)
+                    .build();
+        }
+        final String target = text(map, "target", prefix);
+        if (target == null) {
+            throw new IllegalArgumentException(prefix + "set_vis_settings needs the target: the Visualisation "
+                                               + "component, by its name as the user sees it.");
+        }
+        if (NullSafe.map(settings).isEmpty() && visualisation == null) {
+            throw new IllegalArgumentException(prefix + "set_vis_settings needs settings to change, or a "
+                                               + "visualisation to switch to.");
+        }
+        return Change.builder(op)
+                .target(target)
+                .targetId(text(map, "target_id", prefix))
+                .doc(visualisation)
+                .settings(NullSafe.map(settings))
+                .build();
+    }
+
+    // A Visualisation's settings as given: each control's id and its value as text (empty for its default).
+    private static Map<String, String> visSettings(final Object value, final String prefix) {
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof final Map<?, ?> map)) {
+            throw new IllegalArgumentException(prefix + "settings must be an object of control ids and their "
+                                               + "values, e.g. {\"category\": \"UserId\"}.");
+        }
+        if (map.size() > MAX_VIS_SETTINGS) {
+            throw new IllegalArgumentException(prefix + "give at most " + MAX_VIS_SETTINGS + " settings.");
+        }
+        final Map<String, String> settings = new LinkedHashMap<>();
+        for (final Map.Entry<?, ?> entry : map.entrySet()) {
+            final String id = text(Map.of("settings", String.valueOf(entry.getKey())), "settings", prefix);
+            if (id == null) {
+                throw new IllegalArgumentException(prefix + "each setting needs a control id.");
+            }
+            final Object setting = entry.getValue();
+            if (setting instanceof Map<?, ?> || setting instanceof List<?>) {
+                throw new IllegalArgumentException(prefix + "the value of setting '" + id + "' must be text.");
+            }
+            final String text = setting == null
+                    ? null
+                    : text(Map.of("settings", String.valueOf(setting)), "settings", prefix);
+            settings.put(id, NullSafe.string(text));
+        }
+        return Collections.unmodifiableMap(settings);
     }
 
     /// @param expression An expression.
@@ -722,16 +926,22 @@ public final class DashboardChanges {
     /// @param table      The table it changes, by name, if not the table the proposal is for: one an earlier
     ///                   add_table adds. Null for the proposal's table.
     /// @param copy       For add_table, true to start the new table with the proposal table's columns.
-    /// @param target     For rename and set_setting, the component it changes, by name, or null for the
-    ///                   proposal's table.
-    /// @param targetId   For rename and set_setting, the component's id, once resolved, or null for a table
-    ///                   added by these changes (known by its name).
+    /// @param target     For rename, set_setting and set_vis_settings, the component it changes, by name, or null
+    ///                   for the proposal's table.
+    /// @param targetId   For rename, set_setting and set_vis_settings, the component's id, once resolved, or null
+    ///                   for a component added by these changes (known by its name).
     /// @param setting    For set_setting, the setting's key (see [DashboardSettings]).
     /// @param value      For set_setting, its value: as given, then as checked.
     /// @param ref        For set_setting of a component (e.g. the query that feeds a table), its id, once resolved.
-    /// @param doc        For set_setting of a document (e.g. a pipeline), the document, once resolved.
+    /// @param doc        For set_setting of a document (e.g. a pipeline), the document, once resolved. For add_vis,
+    ///                   the Visualisation to show; for set_vis_settings, the Visualisation to switch to, or null
+    ///                   to keep the one it shows.
     /// @param rule       For add_format_rule, what the rule does; its conditions are in `query`, and where to add
     ///                   it in `position` (default the end).
+    /// @param settings   For add_vis and set_vis_settings, the Visualisation's settings: each control's id and
+    ///                   value (for set_vis_settings, empty to go back to the control's default). Null for others.
+    /// @param placement  For add_vis, where to put it: [#BELOW] the table (the default, if null) or as a [#TAB]
+    ///                   beside it.
     public record Change(String op,
                          String column,
                          Integer level,
@@ -752,7 +962,9 @@ public final class DashboardChanges {
                          String value,
                          String ref,
                          DocRef doc,
-                         FormatRule rule) {
+                         FormatRule rule,
+                         Map<String, String> settings,
+                         String placement) {
 
         /// @param column The column's name, exactly as the table has it.
         /// @return This change, of that column.
@@ -803,13 +1015,15 @@ public final class DashboardChanges {
                     .value(value)
                     .ref(ref)
                     .doc(doc)
-                    .rule(rule);
+                    .rule(rule)
+                    .settings(settings)
+                    .placement(placement);
         }
 
         /// @return The change in plain language, for the user.
         public String describe() {
             final String text = describeOp();
-            return table == null || ADD_TEXT.equals(op)
+            return table == null || ADD_TEXT.equals(op) || ADD_VIS.equals(op)
                     ? text
                     : "In table '" + table + "': " + text;
         }
@@ -858,6 +1072,24 @@ public final class DashboardChanges {
                 case ADD_TEXT -> "Add a Text widget '" + name + "' below " + (table == null
                         ? "this table"
                         : "table '" + table + "'") + ", showing the event of its selected row";
+                case ADD_VIS -> "Add a visualisation '" + name + "' (" + describeVisualisation() + ") "
+                                + (TAB.equals(placement)
+                        ? "as a tab beside "
+                        : "below ") + (table == null
+                        ? "this table"
+                        : "table '" + table + "'") + (NullSafe.map(settings).isEmpty()
+                        ? ""
+                        : ", with " + describeVisSettings());
+                case SET_VIS_SETTINGS -> {
+                    final List<String> parts = new ArrayList<>();
+                    if (doc != null) {
+                        parts.add("show " + describeVisualisation());
+                    }
+                    if (!NullSafe.map(settings).isEmpty()) {
+                        parts.add("set " + describeVisSettings());
+                    }
+                    yield "Change visualisation '" + target + "': " + String.join(", ", parts);
+                }
                 case RENAME -> "Rename " + (target == null
                         ? "this table"
                         : "'" + target + "'") + " to '" + name + "'";
@@ -887,6 +1119,22 @@ public final class DashboardChanges {
                         : ExpressionDescriber.describe(query), "everything");
                 default -> op + " '" + column + "'";
             };
+        }
+
+        // The Visualisation it shows, by name if known, else its UUID.
+        private String describeVisualisation() {
+            return doc == null
+                    ? "?"
+                    : NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid());
+        }
+
+        // Its Visualisation settings, e.g. "category 'UserId', value back to its default".
+        private String describeVisSettings() {
+            return String.join(", ", NullSafe.map(settings).entrySet().stream()
+                    .map(entry -> entry.getValue().isEmpty()
+                            ? entry.getKey() + " back to its default"
+                            : entry.getKey() + " '" + entry.getValue() + "'")
+                    .toList());
         }
 
         /// @return The change as the browser is given it, with only the fields it has.
@@ -920,6 +1168,8 @@ public final class DashboardChanges {
                 map.put("italic", rule.italic());
                 map.put("hide", rule.hide());
             }
+            NullSafe.consume(settings, v -> map.put("settings", new LinkedHashMap<>(v)));
+            NullSafe.consume(placement, v -> map.put("placement", v));
             return map;
         }
 
@@ -950,6 +1200,8 @@ public final class DashboardChanges {
             private String ref;
             private DocRef doc;
             private FormatRule rule;
+            private Map<String, String> settings;
+            private String placement;
 
             private Builder(final String op) {
                 this.op = op;
@@ -1081,7 +1333,8 @@ public final class DashboardChanges {
                 return this;
             }
 
-            /// @param doc For set_setting of a document, the document.
+            /// @param doc For set_setting of a document, the document; for add_vis and set_vis_settings, the
+            ///            Visualisation.
             /// @return This builder.
             public Builder doc(final DocRef doc) {
                 this.doc = doc;
@@ -1095,10 +1348,26 @@ public final class DashboardChanges {
                 return this;
             }
 
+            /// @param settings For add_vis and set_vis_settings, the Visualisation's settings: each control's id and
+            ///                 value.
+            /// @return This builder.
+            public Builder settings(final Map<String, String> settings) {
+                this.settings = settings;
+                return this;
+            }
+
+            /// @param placement For add_vis, where to put it: [#BELOW] or [#TAB].
+            /// @return This builder.
+            public Builder placement(final String placement) {
+                this.placement = placement;
+                return this;
+            }
+
             /// @return The change.
             public Change build() {
                 return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
-                        where, query, table, copy, target, targetId, setting, value, ref, doc, rule);
+                        where, query, table, copy, target, targetId, setting, value, ref, doc, rule, settings,
+                        placement);
             }
         }
     }
@@ -1141,7 +1410,22 @@ public final class DashboardChanges {
     ///
     /// @param changes  The changes, each naming its column exactly as the table has it.
     /// @param problems What is wrong with them, if anything.
-    public record Checked(List<Change> changes, List<String> problems) {
+    /// @param columns  The columns of each table the changes know, as they leave them, by table name (lower case):
+    ///                 the proposal's table (also under the empty name) and the tables they add.
+    public record Checked(List<Change> changes, List<String> problems, Map<String, List<String>> columns) {
 
+        /// @param changes  The changes, each naming its column exactly as the table has it.
+        /// @param problems What is wrong with them, if anything.
+        public Checked(final List<Change> changes, final List<String> problems) {
+            this(changes, problems, Map.of());
+        }
+
+        /// @param table A table's name, or null for the proposal's table.
+        /// @return Its columns as the changes leave them, or null if the changes don't know the table.
+        public List<String> columnsOf(final String table) {
+            return NullSafe.map(columns).get(table == null
+                    ? ""
+                    : table.toLowerCase(Locale.ROOT));
+        }
     }
 }

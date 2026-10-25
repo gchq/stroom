@@ -214,6 +214,30 @@ class TestUserActionsUi {
     }
 
     @Test
+    void aVisualisationChangeGivesItsSettingsAsJsonAndItsPlacement() {
+        // The settings object, as the chat's JSON gives it as text.
+        final TableChange added = UserActionsUi.tableChange(Map.of("op", "add_vis", "name", "Users",
+                        "table", "Logons", "settings", "{\"category\":\"UserId\"}", "placement", "tab",
+                        "value", "ignored")::get, null,
+                Map.of("type", "Visualisation", "uuid", "vis-uuid", "name", "Bar chart"));
+
+        assertThat(added.getOp()).isEqualTo(TableChange.ADD_VIS);
+        assertThat(added.getName()).isEqualTo("Users");
+        assertThat(added.getTable()).isEqualTo("Logons");
+        assertThat(added.getValue()).isEqualTo("{\"category\":\"UserId\"}");
+        assertThat(added.getPlacement()).isEqualTo(TableChange.TAB);
+        assertThat(added.getDoc()).isEqualTo(new DocRef("Visualisation", "vis-uuid", "Bar chart"));
+
+        final TableChange changed = UserActionsUi.tableChange(Map.of("op", "set_vis_settings", "target", "Users",
+                "target_id", "vis-1", "settings", "{\"value\":\"\"}")::get, null, null);
+
+        assertThat(changed.getTargetId()).isEqualTo("vis-1");
+        assertThat(changed.getValue()).isEqualTo("{\"value\":\"\"}");
+        assertThat(changed.getPlacement()).isNull();
+        assertThat(changed.getDoc()).isNull();
+    }
+
+    @Test
     void aFormattingRuleIsReadWithWhatItDoes() {
         final Map<String, Object> conditions = Map.of("op", "AND", "children", List.of(
                 Map.of("field", "EventType", "condition", "EQUALS", "value", "Logon Failure")));
@@ -239,5 +263,52 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.expression("not a map")).isNull();
         // A term on its own isn't a query's expression.
         assertThat(UserActionsUi.expression(Map.of("field", "x", "condition", "EQUALS"))).isNull();
+    }
+
+    @Test
+    void createVisualisationButtonSaysWhatItDoes() {
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_VISUALISATION)).isEqualTo("Create visualisation…");
+    }
+
+    @Test
+    void quotesStroomQlStrings() {
+        assertThat(UserActionsUi.quoteStroomQl("Chat user connections")).isEqualTo("\"Chat user connections\"");
+        assertThat(UserActionsUi.quoteStroomQl("a \"b\" \\c")).isEqualTo("\"a \\\"b\\\" \\\\c\"");
+    }
+
+    @Test
+    void addsAShowClauseAtTheEnd() {
+        assertThat(UserActionsUi.withShowClause("from Messages\nselect Sender, Recipient\n",
+                "show \"G\" (source = \"Sender\")"))
+                .isEqualTo("from Messages\nselect Sender, Recipient\nshow \"G\" (source = \"Sender\")\n");
+        assertThat(UserActionsUi.withShowClause("from Messages\nselect Sender", "show \"G\" ()"))
+                .isEqualTo("from Messages\nselect Sender\nshow \"G\" ()");
+    }
+
+    @Test
+    void replacesTheShowClauseTheQueryHas() {
+        final String query = "from Messages\nselect Sender, count() as Count\n\nshow BarChart(\n  x = Sender,\n"
+                             + "  y = Count)\n";
+
+        assertThat(UserActionsUi.withShowClause(query, "show \"Users\" (category = \"Sender\")"))
+                .isEqualTo("from Messages\nselect Sender, count() as Count\nshow \"Users\" (category = \"Sender\")\n");
+    }
+
+    @Test
+    void summarisesARenderReport() {
+        assertThat(UserActionsUi.renderReportSummary(Map.of("status", "ok", "nodes", 42.0, "links", 117.0,
+                "library", "ECharts", "libraryVersion", "6.1.0", "droppedRows", Map.of(), "warnings", List.of())))
+                .isEqualTo("It drew 42 nodes and 117 links (ECharts 6.1.0).");
+        assertThat(UserActionsUi.renderReportSummary(Map.of("status", "ok", "points", 30.0, "series", 3.0,
+                "droppedRows", Map.of("value not a number", 2.0),
+                "warnings", List.of("5 series beyond Max Series were left out", "another"))))
+                .isEqualTo("It drew 30 points in 3 series, leaving out 2 rows (value not a number). 5 series beyond "
+                           + "Max Series were left out (+1 more)");
+        assertThat(UserActionsUi.renderReportSummary(Map.of("status", "error", "error", "Map a column to target")))
+                .isEqualTo("It failed to draw: Map a column to target");
+        assertThat(UserActionsUi.renderReportSummary(Map.of("status", "empty"))).startsWith("It drew nothing yet");
+        assertThat(UserActionsUi.renderReportSummary(Map.of("status", "ok", "source", "dom", "elementCount", 250.0)))
+                .isEqualTo("It drew 250 elements.");
+        assertThat(UserActionsUi.renderReportSummary(Map.of())).isEqualTo("It sent a report Stroom couldn't read.");
     }
 }

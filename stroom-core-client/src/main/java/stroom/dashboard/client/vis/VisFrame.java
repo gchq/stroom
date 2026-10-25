@@ -39,6 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactory {
 
@@ -113,6 +114,13 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
     @Override
     public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
         messageSupport.setUiHandlers(uiHandlers);
+    }
+
+    /// Sets what receives the render reports the visualisation sends with `stroom.report`.
+    ///
+    /// @param reportHandler Receives each report as JSON.
+    public void setReportHandler(final Consumer<String> reportHandler) {
+        messageSupport.setReportHandler(reportHandler);
     }
 
     @Override

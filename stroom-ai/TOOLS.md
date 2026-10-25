@@ -51,6 +51,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `grep` | Finds lines of a workspace file containing some text | all | yes | | | | yes (workspace) | |
 | `jq` | Runs a jq query on a workspace JSON file | all | yes | | | | yes (workspace) | |
 | `list_data_sources` | Lists the data sources the user can query | all | yes | | | View, Use | workspace | |
+| `list_visualisations` | The charting libraries installed, the chart kinds each draws with their columns and settings, and the Visualisations in Stroom | all | yes | | | | workspace | |
 | `ls` | Lists the chat's workspace files | all | yes | | | | yes (workspace) | |
 | `memory` | Reads and changes the user's and the chat's memory | Agent | no | | | | yes (chat) | |
 | `pipeline` | Chains data tools over workspace files | all | yes | | | | yes (workspace) | |
@@ -61,6 +62,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | all | yes | | | View | yes (button) | `write_documentation` (part: it writes a pipeline's or an index's) |
 | `propose_query` | Offers a button to create a StroomQL Query document | all | yes | | | Use | yes (button) | |
 | `propose_query_change` | Offers a button to change the query in the attached tab | all | yes | | | View, Use | yes (attached tab, button) | |
+| `propose_visualisation` | Plans a chart of the attached dashboard's (or query's) table, checks its rows can make it, and offers a button to create it there | all | yes | | | | yes (attached tab, button) | |
 | `read_document` | A document's content, or what a processor filter selects; a pipeline as Stroom runs it, an index's survey | all | yes | | Manage Processors | View | workspace | `describe_document` |
 | `read_file` | Reads lines of a workspace file | all | yes | | | | yes (workspace) | |
 | `read_turn` | Reads a whole earlier turn of the chat | all | yes | | | | yes (history) | |
