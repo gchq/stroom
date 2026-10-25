@@ -1509,6 +1509,13 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   doesn't also close them on a history change.~~ Fixed: both also call
   `setAutoHideOnHistoryEventsEnabled(true)`. No story: the workbench's own navigation is the
   history, so a story can't change it.
+* Adopting the tab bars' `TabSelector` (wave 3's audit, 25 October 2026) changes one screenshot,
+  `App/Main/ServerTasksScreen` `SeededFilter`, every run: the task list's last column (Info) now
+  ends at the screen's edge with an ellipsis, where it ran past it under a horizontal scrollbar.
+  Bisected to the one line (`add(tabSelector, root)` in place of appending its element); the
+  screen has no tab bar of its own, so how it reaches the list's column widths isn't known yet.
+  The other server task stories don't change. Find the link (a tab bar made at start-up whose
+  attach, or child count, changes when the list is first sized?) before taking a new baseline.
 * A `PopupType.POPUP` given a size (`PopupUtil`) still sets an inline width and height on its
   content (found 25 October 2026 in wave 3's audit): a class wouldn't beat the content's own width
   rules as the inline size does. Fix it as the popups' contents convert (menus, lists).
