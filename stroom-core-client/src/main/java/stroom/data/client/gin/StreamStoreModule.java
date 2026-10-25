@@ -19,10 +19,6 @@ package stroom.data.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
-import stroom.data.client.presenter.CharacterNavigatorPresenter;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
@@ -45,8 +41,6 @@ import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.client.view.CharacterNavigatorViewImpl;
-import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
@@ -123,14 +117,6 @@ public class StreamStoreModule extends PluginModule {
                 SourcePresenter.class,
                 SourceView.class,
                 SourceViewImpl.class);
-        bindPresenterWidget(
-                CharacterRangeSelectionPresenter.class,
-                CharacterRangeSelectionView.class,
-                CharacterRangeSelectionViewImpl.class);
-        bindPresenterWidget(
-                CharacterNavigatorPresenter.class,
-                CharacterNavigatorView.class,
-                CharacterNavigatorViewImpl.class);
         bind(MetaListPresenter.class);
         bind(SteppingMetaListPresenter.class);
 

@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.component.CharacterNavigatorController;
 import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.view.ClassificationLabelController;
@@ -77,7 +78,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     private final ClassificationWrapper classificationWrapper;
     private final SourceProgressBar sourceProgressBar;
     private final TextPresenter textPresenter;
-    private final CharacterNavigatorPresenter characterNavigatorPresenter;
+    private final CharacterNavigatorController characterNavigator;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
@@ -102,18 +103,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                            final ClassificationLabelController classificationLabelController,
                            final SourceProgressBar sourceProgressBar,
                            final TextPresenter textPresenter,
-                           final CharacterNavigatorPresenter characterNavigatorPresenter,
+                           final CharacterNavigatorController characterNavigator,
                            final UiConfigCache uiConfigCache,
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         own(textPresenter);
-        own(characterNavigatorPresenter);
+        own(characterNavigator);
         own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
         this.classificationWrapper = classificationWrapper;
         this.sourceProgressBar = sourceProgressBar;
         this.textPresenter = textPresenter;
-        this.characterNavigatorPresenter = characterNavigatorPresenter;
+        this.characterNavigator = characterNavigator;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.clientSecurityContext = clientSecurityContext;
@@ -122,7 +123,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         classificationWrapper.setContent(textPresenter.getView());
         view.setTextView(classificationWrapper);
-        view.setNavigatorView(characterNavigatorPresenter.getView());
+        view.setNavigatorView(characterNavigator);
 
         setupProgressBar(view, sourceProgressBar);
 
@@ -159,11 +160,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         if (isViewAsHex
                 && (dataNavigatorData == null || !NavigationMode.BYTES.equals(dataNavigatorData.getNavigationMode()))) {
             dataNavigatorData = new HexDumpNavigatorData();
-            characterNavigatorPresenter.setDisplay(dataNavigatorData);
+            characterNavigator.setDisplay(dataNavigatorData);
         } else if (!isViewAsHex
                 && (dataNavigatorData == null || !NavigationMode.CHARS.equals(dataNavigatorData.getNavigationMode()))) {
             dataNavigatorData = new DataNavigatorData();
-            characterNavigatorPresenter.setDisplay(dataNavigatorData);
+            characterNavigator.setDisplay(dataNavigatorData);
         }
     }
 
@@ -409,7 +410,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     public void setNavigatorControlsVisible(final boolean isVisible) {
         if (isVisible) {
-            getView().setNavigatorView(characterNavigatorPresenter.getView());
+            getView().setNavigatorView(characterNavigator);
         } else {
             getView().setNavigatorView(null);
         }
@@ -648,7 +649,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
     private void updateNavigator(final AbstractFetchDataResult result) {
-        characterNavigatorPresenter.refreshNavigator();
+        characterNavigator.refreshNavigator();
     }
 
     private void setTitle(final FetchDataResult fetchDataResult) {
@@ -899,7 +900,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         void setTextView(final View view);
 
-        void setNavigatorView(final View view);
+        void setNavigatorView(IsWidget navigator);
 
         void setNonSegmentedTitle(final String feedName,
                                   final long id,

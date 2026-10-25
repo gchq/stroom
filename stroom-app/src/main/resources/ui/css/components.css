@@ -444,20 +444,6 @@
     justify-content: flex-end;
 }
 
-.characterRangeSelectionViewImpl-options {
-   display: flex;
-   gap: var(--control__gap--horizontal);
-}
-
-.characterRangeSelectionViewImpl-options > * {
-   min-width: 120px;
-}
-
-.characterRangeSelectionViewImpl-infoLine {
-    display: flex;
-    gap: var(--control__gap--horizontal);
-}
-
 .subStreamNavigator {
     position: relative;
     text-align: right;
@@ -637,26 +623,6 @@
     background-color: var(--dashboard-panel__background-color);
     overflow: hidden;
     user-select: none;
-}
-
-.characterNavigator {
-    display: flex;
-    justify-content: space-between;
-}
-
-.characterNavigator-labels {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 3px 1rem;
-}
-
-.characterNavigator-label {
-    cursor: pointer;
-}
-
-.characterNavigator-label:hover {
-    text-decoration: underline;
 }
 
 .characterNavigator-button {

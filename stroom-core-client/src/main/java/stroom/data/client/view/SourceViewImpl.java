@@ -113,9 +113,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setNavigatorView(final View characterNavigatorView) {
-        if (characterNavigatorView != null) {
-            navigatorContainer.setWidget(characterNavigatorView.asWidget());
+    public void setNavigatorView(final IsWidget navigator) {
+        if (navigator != null) {
+            navigatorContainer.setWidget(navigator.asWidget());
         } else {
             navigatorContainer.clear();
         }

@@ -16,14 +16,15 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.data.client.component.CharacterNavigator;
+import stroom.data.client.component.CharacterNavigatorController;
+import stroom.data.client.component.CharacterRangeSelection;
+import stroom.data.client.component.CharacterRangeSelectionController;
 import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.presenter.CharacterNavigatorPresenter;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.SourcePresenter;
-import stroom.data.client.view.CharacterNavigatorViewImpl;
-import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.client.view.SourceViewImpl;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -112,7 +113,7 @@ public final class SourcePresenterStories {
                         true))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query label = play.querySelector(".characterNavigator-label");
+                    final Query label = play.querySelector(".character-navigator__label");
                     play.waitFor(() -> play.expect(label).toBeVisible());
                     play.click(label);
                     final Play dialog = screen.within(screen.findByText("Set Source Range", StroomDom.DIALOG_TITLE)
@@ -127,6 +128,33 @@ public final class SourcePresenterStories {
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Set Source Range", StroomDom.DIALOG_TITLE))
                             .toBeNull());
+                })
+                // A valid range in Set Source Range is fetched: here characters 1,001 to 2,000
+                .story("SetRange", context -> render(context, LOADED_FIXTURES, false, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query label = play.querySelector(".character-navigator__label");
+                    play.waitFor(() -> play.expect(label).toBeVisible());
+                    play.click(label);
+                    final Play dialog = screen.within(screen.findByText("Set Source Range", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // From's offset, then To's
+                    final Query from = dialog.getAllByRole("spinbutton", "Character offset").nth(0);
+                    final Query to = dialog.getAllByRole("spinbutton", "Character offset").nth(1);
+                    play.clear(to);
+                    play.type(to, "2000");
+                    play.clear(from);
+                    play.type(from, "1001");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Source Range", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // Zero based
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(DataFixtures.FETCH_PATH)
+                                    .withJsonBodyContaining("{\"sourceLocation\": {\"dataRange\": "
+                                                            + "{\"charOffsetFrom\": 1000}}}")
+                                    .toSpyMatcher()));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });
     }
 
@@ -179,14 +207,9 @@ public final class SourcePresenterStories {
     static SourcePresenter sourcePresenter(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
         final SourceProgressBar sourceProgressBar = new SourceProgressBar();
-        final CharacterNavigatorPresenter characterNavigatorPresenter = new CharacterNavigatorPresenter(
-                eventBus,
-                new SourceProgressBar(),
-                new CharacterNavigatorViewImpl(eventBus, GWT.create(CharacterNavigatorViewImpl.Binder.class)),
-                () -> new CharacterRangeSelectionPresenter(
-                        eventBus,
-                        new CharacterRangeSelectionViewImpl(
-                                GWT.create(CharacterRangeSelectionViewImpl.Binder.class))));
+        final CharacterNavigatorController characterNavigator = new CharacterNavigatorController(
+                new CharacterNavigator(),
+                () -> new CharacterRangeSelectionController(eventBus, new CharacterRangeSelection()));
         return new SourcePresenter(
                 eventBus,
                 new SourceViewImpl(GWT.create(SourceViewImpl.Binder.class)),
@@ -194,7 +217,7 @@ public final class SourcePresenterStories {
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 sourceProgressBar,
                 EditorWidgets.textPresenter(eventBus),
-                characterNavigatorPresenter,
+                characterNavigator,
                 harness.getUiConfigCache(),
                 harness.getRestFactory(),
                 harness.getInjector().getClientSecurityContext());

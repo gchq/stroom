@@ -24,10 +24,6 @@ import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
-import stroom.data.client.presenter.CharacterNavigatorPresenter;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
-import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
@@ -43,8 +39,6 @@ import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.client.view.CharacterNavigatorViewImpl;
-import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.EditExpressionViewImpl;
@@ -148,14 +142,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 SourcePresenter.class,
                 SourceView.class,
                 SourceViewImpl.class);
-        bindPresenterWidget(
-                CharacterRangeSelectionPresenter.class,
-                CharacterRangeSelectionView.class,
-                CharacterRangeSelectionViewImpl.class);
-        bindPresenterWidget(
-                CharacterNavigatorPresenter.class,
-                CharacterNavigatorView.class,
-                CharacterNavigatorViewImpl.class);
 
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);

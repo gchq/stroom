@@ -1,0 +1,41 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The character navigator (stroom.data.client.component.CharacterNavigator), named BEM style: the
+   source viewer's line and character ranges, links that open the "Set Source Range" dialog, and
+   its buttons. Was .characterNavigator, -labels and -label (components.css).
+*/
+
+.character-navigator {
+    display: flex;
+    justify-content: space-between;
+}
+
+.character-navigator__labels {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 3px 1rem;
+}
+
+.character-navigator__label {
+    cursor: pointer;
+}
+
+.character-navigator__label:hover {
+    text-decoration: underline;
+}
