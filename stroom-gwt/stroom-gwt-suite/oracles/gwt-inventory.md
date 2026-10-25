@@ -10,40 +10,40 @@
 > inputs at the top of the build script and re-run. The companion `gwt-inventory.csv` is the
 > machine-readable source of truth.
 
-**Total files: 4007**  ·  client 2910 · shared 1012 · api 85
+**Total files: 4012**  ·  client 2915 · shared 1012 · api 85
 
 ## Category summary
 
 | Top-level category | Files |
 | --- | ---: |
-| [Widget](#widget) | 593 |
-| [Screen/Dialog](#screendialog) | 1869 |
+| [Widget](#widget) | 597 |
+| [Screen/Dialog](#screendialog) | 1870 |
 | [Shared Screen/Dialog](#shared-screendialog) | 208 |
 | [Model](#model) | 806 |
 | [REST API](#rest-api) | 97 |
 | [Utility](#utility) | 226 |
 | [Framework](#framework) | 208 |
-| **Total** | **4007** |
+| **Total** | **4012** |
 
 ## Widget
 
-_593 files._
+_597 files._
 
 | Subcategory | Files |
 | --- | ---: |
-| General | 106 |
+| General | 107 |
 | Input / Form | 73 |
 | Popup / Overlay | 56 |
 | Editor / Viewer | 52 |
 | Tree | 51 |
 | Data / Cells | 50 |
-| Widget utilities | 45 |
+| Widget utilities | 46 |
 | Tabs | 43 |
 | Menu | 33 |
 | Editor (ACE wrapper, vendored) | 26 |
 | Dialogs (alert / confirm / prompt) | 16 |
 | Core GWT widget overrides (vendored) | 14 |
-| Selection / items | 12 |
+| Selection / items | 14 |
 | Feedback | 7 |
 | Icons / SVG | 5 |
 | Data / Table | 4 |
@@ -53,6 +53,7 @@ _593 files._
 | File | Module | Role |
 | --- | --- | --- |
 | `stroom-core-client-widget/src/main/java/stroom/data/client/event/AskStroomAiEvent.java` | stroom-core-client-widget | Event |
+| `stroom-core-client-widget/src/main/java/stroom/data/client/event/AskStroomAiTableRequest.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/data/client/event/DataSelectionEvent.java` | stroom-core-client-widget | Event |
 | `stroom-core-client-widget/src/main/java/stroom/data/client/event/HasDataSelectionHandlers.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/data/client/event/SelectAllEvent.java` | stroom-core-client-widget | Event |
@@ -60,6 +61,7 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/event/client/StaticEventBus.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/hyperlink/client/Hyperlink.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/hyperlink/client/HyperlinkTargetType.java` | stroom-core-client-widget | Type |
+| `stroom-core-client-widget/src/main/java/stroom/hyperlink/client/OpenHyperlinkRequest.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/task/client/DefaultTaskMonitorFactory.java` | stroom-core-client-widget | Factory |
 | `stroom-core-client-widget/src/main/java/stroom/task/client/SimpleTask.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/task/client/Task.java` | stroom-core-client-widget | — |
@@ -90,6 +92,7 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/ColumnBuilder.java` | stroom-core-client-widget | Builder |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/ColumnInteractions.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGrid.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGrid.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridContextMenu.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridDom.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridKeyboard.java` | stroom-core-client-widget | — |
@@ -105,12 +108,14 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/GridHtml.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/GridRows.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HasContextMenus.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadedPagerPanel.java` | stroom-core-client-widget | Panel |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadedPagerPanel.ui.xml` | stroom-core-client-widget | Panel |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/Heading.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingAlignment.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingBuilder.java` | stroom-core-client-widget | Builder |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingListener.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanel.java` | stroom-core-client-widget | Panel |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanelImpl.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanel.ui.xml` | stroom-core-client-widget | Panel |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/model/AutoFit.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/model/ColumnModel.java` | stroom-core-client-widget | Model |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/model/ColumnSizing.java` | stroom-core-client-widget | — |
@@ -129,10 +134,8 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MouseHelper.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/OrderByColumn.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/OverlayScrollbars.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerView.java` | stroom-core-client-widget | View |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewImpl.java` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewWithHeading.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewWithHeadingImpl.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerPanel.java` | stroom-core-client-widget | Panel |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerPanel.ui.xml` | stroom-core-client-widget | Panel |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/RenderedRow.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/RowKey.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/SortIcon.java` | stroom-core-client-widget | — |
@@ -151,8 +154,6 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/presenter/client/View.java` | stroom-core-client-widget | View |
 | `stroom-core-client-widget/src/main/java/stroom/widget/presenter/client/ViewImpl.java` | stroom-core-client-widget | ViewImpl |
 | `stroom-core-client-widget/src/main/java/stroom/widget/presenter/client/ViewWithUiHandlers.java` | stroom-core-client-widget | UiHandlers |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/datagrid/client/PagerViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/datagrid/client/PagerViewWithHeadingImpl.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client/src/main/java/stroom/widget/histogram/client/Histogram.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/widget/histogram/client/Histogram.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/widget/histogram/client/HistogramDataModel.java` | stroom-core-client | Model |
@@ -422,10 +423,10 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/ColourSwatchCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/CommandLink.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/CommandLinkCell.java` | stroom-core-client-widget | Cell |
+| `stroom-core-client-widget/src/main/java/stroom/cell/info/client/IconCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/InfoColumn.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/PercentBarCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/RedGreenTextCell.java` | stroom-core-client-widget | Cell |
-| `stroom-core-client-widget/src/main/java/stroom/cell/info/client/SvgCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/SvgStringCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/info/client/ToolTipCell.java` | stroom-core-client-widget | Cell |
 | `stroom-core-client-widget/src/main/java/stroom/cell/item/client/ItemCell.java` | stroom-core-client-widget | Cell |
@@ -451,11 +452,11 @@ _593 files._
 | `stroom-core-client/src/main/java/stroom/dashboard/client/query/QueryCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnValueCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/FilterCell.java` | stroom-core-client | Cell |
+| `stroom-core-client/src/main/java/stroom/data/client/component/DocRefCell.java` | stroom-core-client | Cell |
+| `stroom-core-client/src/main/java/stroom/data/client/component/FeedRefCell.java` | stroom-core-client | Cell |
+| `stroom-core-client/src/main/java/stroom/data/client/component/UserRefCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/CopyTextCell.java` | stroom-core-client | Cell |
-| `stroom-core-client/src/main/java/stroom/data/client/presenter/DocRefCell.java` | stroom-core-client | Cell |
-| `stroom-core-client/src/main/java/stroom/data/client/presenter/FeedRefCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/HasContextMenusCell.java` | stroom-core-client | Cell |
-| `stroom-core-client/src/main/java/stroom/data/client/presenter/UserRefCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocumentTypeCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/FindInContentResultCell.java` | stroom-core-client | Cell |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/FindResultCell.java` | stroom-core-client | Cell |
@@ -477,6 +478,7 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/CssProperties.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/Debug.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/DisabledState.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/util/client/DomRequests.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleClickTester.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleSelectEvent.java` | stroom-core-client-widget | Event |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleSelectTester.java` | stroom-core-client-widget | — |
@@ -685,8 +687,10 @@ _593 files._
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionBox.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionItem.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionList.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionList.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionListModel.java` | stroom-core-client-widget | Model |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionPopup.java` | stroom-core-client-widget | Popup |
+| `stroom-core-client-widget/src/main/java/stroom/item/client/SelectionPopup.ui.xml` | stroom-core-client-widget | Popup |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SimpleSelectionItemWrapper.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/item/client/SimpleSelectionListModel.java` | stroom-core-client-widget | Model |
 
@@ -723,7 +727,7 @@ _593 files._
 
 ## Screen/Dialog
 
-_1869 files._
+_1870 files._
 
 | Subcategory | Files |
 | --- | ---: |
@@ -732,7 +736,7 @@ _1869 files._
 | Security | 138 |
 | Floormap | 113 |
 | Query / search | 93 |
-| Data / streams | 87 |
+| Data / streams | 88 |
 | State (Plan B) | 86 |
 | Pipeline | 79 |
 | Analytics | 71 |
@@ -1080,7 +1084,7 @@ _1869 files._
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/DocumentTypeCellStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/ExpanderCellStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/FeedRefCellStories.java` | stroom-gwt | — |
-| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/SvgCellStories.java` | stroom-gwt | — |
+| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/IconCellStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/TickBoxCellStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/UserRefCellStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/ValueSpinnerCellStories.java` | stroom-gwt | — |
@@ -1196,6 +1200,9 @@ _1869 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrameController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/DashboardPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/embeddedquery/BasicEmbeddedQuerySettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/embeddedquery/BasicEmbeddedQuerySettingsUiHandlers.java` | stroom-core-client | UiHandlers |
@@ -1375,11 +1382,8 @@ _1869 files._
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/MessageSupport.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/MyScriptInjector.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/PostMessage.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dashboard/client/vis/SelectionUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisFieldOption.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisFrame.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisInputChoices.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPane.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java` | stroom-core-client | Model |
@@ -1812,6 +1816,7 @@ _1869 files._
 | `stroom-core-client/src/main/java/stroom/data/client/component/ItemSelection.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ItemSelectionController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/NavigatorAction.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/data/client/component/RefCellsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/DataPreviewKey.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/DataPreviewTabPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/AbstractMetaListPresenter.java` | stroom-core-client | Presenter |

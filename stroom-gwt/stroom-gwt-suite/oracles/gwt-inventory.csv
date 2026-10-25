@@ -57,10 +57,10 @@ stroom-core-client-widget/src/main/java/stroom/cell/info/client/CellIcon.java,st
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/ColourSwatchCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/CommandLink.java,stroom-core-client-widget,client,cell,,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/CommandLinkCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
+stroom-core-client-widget/src/main/java/stroom/cell/info/client/IconCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/InfoColumn.java,stroom-core-client-widget,client,cell,,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/PercentBarCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/RedGreenTextCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
-stroom-core-client-widget/src/main/java/stroom/cell/info/client/SvgCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/SvgStringCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/info/client/ToolTipCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/item/client/ItemCell.java,stroom-core-client-widget,client,cell,Cell,java,Widget,Data / Cells
@@ -75,6 +75,7 @@ stroom-core-client-widget/src/main/java/stroom/cell/valuespinner/shared/Editable
 stroom-core-client-widget/src/main/java/stroom/cell/valuespinner/shared/EditableLong.java,stroom-core-client-widget,shared,cell,,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/cell/valuespinner/shared/HasSpinnerConstraints.java,stroom-core-client-widget,shared,cell,,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/data/client/event/AskStroomAiEvent.java,stroom-core-client-widget,client,data,Event,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/data/client/event/AskStroomAiTableRequest.java,stroom-core-client-widget,client,data,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/data/client/event/DataSelectionEvent.java,stroom-core-client-widget,client,data,Event,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/data/client/event/HasDataSelectionHandlers.java,stroom-core-client-widget,client,data,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/data/client/event/SelectAllEvent.java,stroom-core-client-widget,client,data,Event,java,Widget,General
@@ -119,6 +120,7 @@ stroom-core-client-widget/src/main/java/stroom/event/client/StaticEventBus.java,
 stroom-core-client-widget/src/main/java/stroom/hyperlink/client/Hyperlink.java,stroom-core-client-widget,client,hyperlink,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/hyperlink/client/HyperlinkEvent.java,stroom-core-client-widget,client,hyperlink,Event,java,Framework,Client events (event bus)
 stroom-core-client-widget/src/main/java/stroom/hyperlink/client/HyperlinkTargetType.java,stroom-core-client-widget,client,hyperlink,Type,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/hyperlink/client/OpenHyperlinkRequest.java,stroom-core-client-widget,client,hyperlink,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/item/client/AbstractSelectionListModel.java,stroom-core-client-widget,client,item,Model,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/BaseSelectionBox.java,stroom-core-client-widget,client,item,,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/BaseSelectionBox.ui.xml,stroom-core-client-widget,client,item,,ui.xml,Widget,Selection / items
@@ -129,8 +131,10 @@ stroom-core-client-widget/src/main/java/stroom/item/client/SelectionBoxCell.java
 stroom-core-client-widget/src/main/java/stroom/item/client/SelectionItem.java,stroom-core-client-widget,client,item,,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/SelectionItemCell.java,stroom-core-client-widget,client,item,Cell,java,Widget,Data / Cells
 stroom-core-client-widget/src/main/java/stroom/item/client/SelectionList.java,stroom-core-client-widget,client,item,,java,Widget,Selection / items
+stroom-core-client-widget/src/main/java/stroom/item/client/SelectionList.ui.xml,stroom-core-client-widget,client,item,,ui.xml,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/SelectionListModel.java,stroom-core-client-widget,client,item,Model,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/SelectionPopup.java,stroom-core-client-widget,client,item,Popup,java,Widget,Selection / items
+stroom-core-client-widget/src/main/java/stroom/item/client/SelectionPopup.ui.xml,stroom-core-client-widget,client,item,Popup,ui.xml,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/SimpleSelectionItemWrapper.java,stroom-core-client-widget,client,item,,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/item/client/SimpleSelectionListModel.java,stroom-core-client-widget,client,item,Model,java,Widget,Selection / items
 stroom-core-client-widget/src/main/java/stroom/svg/client/Icon.java,stroom-core-client-widget,client,svg,,java,Widget,Icons / SVG
@@ -195,6 +199,7 @@ stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/ColSpec.ja
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/ColumnBuilder.java,stroom-core-client-widget,client,widget,Builder,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/ColumnInteractions.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGrid.java,stroom-core-client-widget,client,widget,,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGrid.ui.xml,stroom-core-client-widget,client,widget,,ui.xml,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridContextMenu.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridDom.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridKeyboard.java,stroom-core-client-widget,client,widget,,java,Widget,General
@@ -211,19 +216,19 @@ stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/GridHeader
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/GridHtml.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/GridRows.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HasContextMenus.java,stroom-core-client-widget,client,widget,,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadedPagerPanel.java,stroom-core-client-widget,client,widget,Panel,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadedPagerPanel.ui.xml,stroom-core-client-widget,client,widget,Panel,ui.xml,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/Heading.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingAlignment.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingBuilder.java,stroom-core-client-widget,client,widget,Builder,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/HeadingListener.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanel.java,stroom-core-client-widget,client,widget,Panel,java,Widget,General
-stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanelImpl.java,stroom-core-client-widget,client,widget,,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MessagePanel.ui.xml,stroom-core-client-widget,client,widget,Panel,ui.xml,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/MouseHelper.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/OrderByColumn.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/OverlayScrollbars.java,stroom-core-client-widget,client,widget,,java,Widget,General
-stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerView.java,stroom-core-client-widget,client,widget,View,java,Widget,General
-stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewImpl.java,stroom-core-client-widget,client,widget,ViewImpl,java,Widget,General
-stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewWithHeading.java,stroom-core-client-widget,client,widget,,java,Widget,General
-stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerViewWithHeadingImpl.java,stroom-core-client-widget,client,widget,,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerPanel.java,stroom-core-client-widget,client,widget,Panel,java,Widget,General
+stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/PagerPanel.ui.xml,stroom-core-client-widget,client,widget,Panel,ui.xml,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/RenderedRow.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/RowKey.java,stroom-core-client-widget,client,widget,,java,Widget,General
 stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/SortIcon.java,stroom-core-client-widget,client,widget,,java,Widget,General
@@ -492,6 +497,7 @@ stroom-core-client-widget/src/main/java/stroom/widget/util/client/ContentFocus.j
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/CssProperties.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/Debug.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/DisabledState.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
+stroom-core-client-widget/src/main/java/stroom/widget/util/client/DomRequests.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleClickTester.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleSelectEvent.java,stroom-core-client-widget,client,widget,Event,java,Widget,Widget utilities
 stroom-core-client-widget/src/main/java/stroom/widget/util/client/DoubleSelectTester.java,stroom-core-client-widget,client,widget,,java,Widget,Widget utilities
@@ -557,8 +563,6 @@ stroom-core-client-widget/src/main/resources/com/google/gwt/user/client/ui/Nativ
 stroom-core-client-widget/src/main/resources/stroom/cell/list/client/CellList.css,stroom-core-client-widget,client,cell,,css,Widget,Data / Cells
 stroom-core-client-widget/src/main/resources/stroom/editor/client/view/EditorViewImpl.ui.xml,stroom-core-client-widget,client,editor,ViewImpl,ui.xml,Widget,Editor / Viewer
 stroom-core-client-widget/src/main/resources/stroom/editor/client/view/SingleLineEditorViewImpl.ui.xml,stroom-core-client-widget,client,editor,ViewImpl,ui.xml,Widget,Editor / Viewer
-stroom-core-client-widget/src/main/resources/stroom/widget/datagrid/client/PagerViewImpl.ui.xml,stroom-core-client-widget,client,widget,ViewImpl,ui.xml,Widget,General
-stroom-core-client-widget/src/main/resources/stroom/widget/datagrid/client/PagerViewWithHeadingImpl.ui.xml,stroom-core-client-widget,client,widget,,ui.xml,Widget,General
 stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/ExplorerPopupViewImpl.ui.xml,stroom-core-client-widget,client,widget,ViewImpl,ui.xml,Widget,Tree
 stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterDialogViewImpl.ui.xml,stroom-core-client-widget,client,widget,ViewImpl,ui.xml,Widget,Tree
 stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterPageViewImpl.ui.xml,stroom-core-client-widget,client,widget,ViewImpl,ui.xml,Widget,Tree
@@ -826,6 +830,9 @@ stroom-core-client/src/main/java/stroom/credentials/client/view/ReplaceSecretVie
 stroom-core-client/src/main/java/stroom/credentials/client/view/SshKeySecretViewImpl.java,stroom-core-client,client,credentials,ViewImpl,java,Screen/Dialog,Credentials
 stroom-core-client/src/main/java/stroom/credentials/client/view/UsernamePasswordSecretViewImpl.java,stroom-core-client,client,credentials,ViewImpl,java,Screen/Dialog,Credentials
 stroom-core-client/src/main/java/stroom/dashboard/client/DashboardPlugin.java,stroom-core-client,client,dashboard,Plugin,java,Screen/Dialog,Dashboard
+stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
+stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.ui.xml,stroom-core-client,client,dashboard,,ui.xml,Screen/Dialog,Dashboard
+stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrameController.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/embeddedquery/BasicEmbeddedQuerySettingsPresenter.java,stroom-core-client,client,dashboard,Presenter,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/embeddedquery/BasicEmbeddedQuerySettingsUiHandlers.java,stroom-core-client,client,dashboard,UiHandlers,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/embeddedquery/BasicEmbeddedQuerySettingsViewImpl.java,stroom-core-client,client,dashboard,ViewImpl,java,Screen/Dialog,Dashboard
@@ -1018,11 +1025,8 @@ stroom-core-client/src/main/java/stroom/dashboard/client/vis/MessageEvent.java,s
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/MessageSupport.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/MyScriptInjector.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/PostMessage.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
-stroom-core-client/src/main/java/stroom/dashboard/client/vis/SelectionUiHandlers.java,stroom-core-client,client,dashboard,UiHandlers,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisFieldOption.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
-stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisFrame.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisInputChoices.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
-stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPane.java,stroom-core-client,client,dashboard,,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPlugin.java,stroom-core-client,client,dashboard,Plugin,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisPresenter.java,stroom-core-client,client,dashboard,Presenter,java,Screen/Dialog,Dashboard
 stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java,stroom-core-client,client,dashboard,Model,java,Screen/Dialog,Dashboard
@@ -1047,6 +1051,8 @@ stroom-core-client/src/main/java/stroom/data/client/component/CharacterRangeSele
 stroom-core-client/src/main/java/stroom/data/client/component/CharacterRangeSelectionController.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/ClassificationWrapper.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/ClassificationWrapper.ui.xml,stroom-core-client,client,data,,ui.xml,Screen/Dialog,Data / streams
+stroom-core-client/src/main/java/stroom/data/client/component/DocRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
+stroom-core-client/src/main/java/stroom/data/client/component/FeedRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigator.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigator.ui.xml,stroom-core-client,client,data,,ui.xml,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigatorController.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
@@ -1054,6 +1060,8 @@ stroom-core-client/src/main/java/stroom/data/client/component/ItemSelection.java
 stroom-core-client/src/main/java/stroom/data/client/component/ItemSelection.ui.xml,stroom-core-client,client,data,,ui.xml,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/ItemSelectionController.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/component/NavigatorAction.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
+stroom-core-client/src/main/java/stroom/data/client/component/RefCellsController.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
+stroom-core-client/src/main/java/stroom/data/client/component/UserRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/gin/StreamStoreModule.java,stroom-core-client,client,data,Module,java,Framework,Dependency injection (GIN wiring)
 stroom-core-client/src/main/java/stroom/data/client/presenter/AbstractMetaListPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/BeginSteppingHandler.java,stroom-core-client,client,data,Handler,java,Screen/Dialog,Data / streams
@@ -1068,11 +1076,9 @@ stroom-core-client/src/main/java/stroom/data/client/presenter/DataTypeUiManager.
 stroom-core-client/src/main/java/stroom/data/client/presenter/DataUploadPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/DataViewType.java,stroom-core-client,client,data,Type,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/DisplayMode.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
-stroom-core-client/src/main/java/stroom/data/client/presenter/DocRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/presenter/EditExpressionPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/ExpressionPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/ExpressionValidator.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
-stroom-core-client/src/main/java/stroom/data/client/presenter/FeedRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/presenter/HasContextMenusCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/presenter/InterceptingSelectionChangeHandler.java,stroom-core-client,client,data,Handler,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/MarkerListPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
@@ -1094,7 +1100,6 @@ stroom-core-client/src/main/java/stroom/data/client/presenter/SourceTabPresenter
 stroom-core-client/src/main/java/stroom/data/client/presenter/SteppingMetaListPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/TextPresenter.java,stroom-core-client,client,data,Presenter,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/presenter/TextUiHandlers.java,stroom-core-client,client,data,UiHandlers,java,Screen/Dialog,Data / streams
-stroom-core-client/src/main/java/stroom/data/client/presenter/UserRefCell.java,stroom-core-client,client,data,Cell,java,Widget,Data / Cells
 stroom-core-client/src/main/java/stroom/data/client/view/ClassificationLabel.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/view/ClassificationLabel.ui.xml,stroom-core-client,client,data,,ui.xml,Screen/Dialog,Data / streams
 stroom-core-client/src/main/java/stroom/data/client/view/ClassificationLabelController.java,stroom-core-client,client,data,,java,Screen/Dialog,Data / streams
@@ -3626,7 +3631,7 @@ stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widget
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/DocumentTypeCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/ExpanderCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/FeedRefCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
-stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/SvgCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
+stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/IconCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/TickBoxCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/UserRefCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/cellrenderers/ValueSpinnerCellStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt

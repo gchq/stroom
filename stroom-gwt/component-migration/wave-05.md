@@ -4,12 +4,14 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Make DataGridWidget usable in templates and free of the bus: requests bubble through the DOM, and sort, range and selection outputs become callbacks. Cells take onOpen/onMenu callbacks instead of an EventBus or HasHandlers. SelectionList and SelectionPopup move from init(model) to setters.
 
-## Progress (25 October 2026)
+## Done (25 October 2026)
 
-Done: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, the checks of `CommandLinkCell`,
-`HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`), the three ref cells, `DataGrid`,
-`PagerView` and `PagerViewWithHeading`. Still to do: `SelectionList`, `SelectionPopup` and
-`VisFrame`. What was decided on the way, where it differs from the plans below:
+All 17 units, in 13 commits: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, and the checks
+of `CommandLinkCell`, `HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`, which needed no
+change), the three ref cells, `DataGrid` (three commits), `PagerView` with `PagerViewWithHeading`,
+`SelectionList`, `SelectionPopup` and `VisFrame`. Each commit ran its stories with the leak check
+and the screenshot diff; the grid's and the pager's ran all of them. What was decided on the way,
+where it differs from the plans below:
 
 - **`SvgCell` is `IconCell`**, named for what it is, with its stylesheet `icon-cell.css` (BEM:
   `icon-cell`, `icon-cell--button`, `icon-cell--disabled`; `svgCell-face`, unused, keeps its name).
@@ -47,6 +49,30 @@ Done: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, the checks of `Com
 - **`PagerViewWithHeading` is `HeadedPagerPanel`**, the plans' fallback, not a heading on
   `PagerPanel`: its layout differs (the toolbar fills the bar, the list is in a `SimplePanel`, no
   message), so merging them would have changed every list or its two.
+- **`SelectionList`** is built from its template; its breadcrumb is an `AriaPanel` with role
+  `navigation` (a template can't name a `<nav>`, and it is the same landmark), and the grid stays in
+  Java, given to its `PagerPanel` with `setDataWidget`. Its quick filter is declared, with the
+  filter's own `addKeyDownHandler` for Down and Escape (after the filter's keys, as the subclass's
+  override was), so `QuickFilter` needed no callback. `init(model)` is `setModel(model)` (five
+  callers), and `setOnClose(Runnable)` replaced `CloseEvent`.
+- **`SelectionPopup`** is a plain class that owns its `PopupPanel` (it was a `Composite` with no
+  widget), its content from its template. `setModel`, `setPopupTextProvider` (on `SelectionList`
+  too; `QuickFilter`'s many callers keep `registerPopupTextProvider`) and `setOnClose(Runnable)`,
+  which a close handler added in its constructor calls however it closes (one bound with the popup
+  missed `hide()`, which unbinds first). The table's Add Column popup, which is kept, now replaces
+  its close callback each time it is shown rather than adding another handler.
+- **`VisFrame`** is in `stroom.dashboard.client.component` with its template, and
+  `VisFrameController` attaches to it (the presenters keep the frame, which their views place and
+  their data goes to): it binds the frame's messages until it is disposed and fires `HyperlinkEvent`,
+  its task monitor the context's `TASK_MONITOR`, which both vis presenters provide from their
+  refresh buttons. Selections and links are `setOnSelection` and `setOnHyperlink`; `VisPane`,
+  `SelectionUiHandlers` and `MessageSupport`'s bus are gone. Its placing is the `--vis-frame__*`
+  custom properties; the tooltip's showing and placing are `vis-tooltip--shown` and
+  `--vis-tooltip__left`/`--vis-tooltip__top`.
+- **Left:** the wave's summary says the grid's sort, range and selection outputs become callbacks;
+  no unit's plan lists them, and they are still GWT's handlers (`ColumnSortEvent`, range changes,
+  the selection model). They change with the list controllers (wave 10). `PagerPanel` is still a
+  `TaskMonitorFactory` (above).
 - `setHideHeader` called after the first render now hides the header: `render` only set its
   display when the header's structure changed. The root's `data-grid--no-header` hides it now.
 

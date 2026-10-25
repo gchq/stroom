@@ -1500,9 +1500,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   deleted (removals wait): in `button.css`, the default, outline and icon button variants, the
   `button--selected`, `.small` and `.large` rules, `button__container`, the empty `.button svg`
   and `.button:focus-visible` rules, and the unused `.stroom-theme-dark2` colours; in
-  `SvgCell.css`, `svgCell-face`; and the unused classes `SvgIconCell`,
-  `FindResultWithPermissionsCell` and `ToolTipCell` (which never closes its `<div>`). Delete them
-  once removals are allowed.
+  `SvgCell.css`, `svgCell-face` (in `icon-cell.css` since wave 5, under its old name); and the
+  unused classes `SvgIconCell`, `SvgStringCell` (found in wave 5), `FindResultWithPermissionsCell`
+  and `ToolTipCell` (which never closes its `<div>`). Delete them once removals are allowed.
 * ~~Selecting a node in the XSD browser's diagram highlights the whole grid it is in, not its row:
   `XSDNodeLabel.setSelected` put `nodeLabelSelected` on the label's grandparent, the table row
   until the node grid became a CSS grid (`9dc39a1829`), since when it is the whole grid (found

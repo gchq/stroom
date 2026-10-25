@@ -289,6 +289,8 @@ Split the widgets that open their own presenter dialogs, or reach services or th
 
 Each unit's plan (names, template, what goes, every inline style and its replacement, what moves into the template): [`component-migration/wave-05.md`](component-migration/wave-05.md).
 
+> **Done, 25 October 2026**: all 17 units. The cells ask through callbacks (`RefCellsController` sets the ref cells'), `SvgCell` is `IconCell`, and `DataGrid` has a template, no inline styles and no bus: its context menu, links and Stroom AI questions go up the page as requests (`MenuRequest`, `OpenHyperlinkRequest`, `AskStroomAiTableRequest`) to the relays of `CorePresenter` (which, unlike `MainPresenter`, the standalone dashboard shows). `PagerView` is `PagerPanel` (and `HeadedPagerPanel`), `SelectionList` and `SelectionPopup` take `setModel` and `setOnClose`, and `VisFrame` has a `VisFrameController`. Two bugs fixed on the way: a dashboard opened from a table's menu got no parent dashboard, and the standalone dashboard's menus never opened. What was decided, and what is left (the grid's sort, range and selection outputs), is at the top of [`component-migration/wave-05.md`](component-migration/wave-05.md).
+
 Make DataGridWidget usable in templates and free of the bus: requests bubble through the DOM, and sort, range and selection outputs become callbacks. Cells take onOpen/onMenu callbacks instead of an EventBus or HasHandlers. SelectionList and SelectionPopup move from init(model) to setters.
 
 **Why now.** DataGridWidget has 114 callers and sits under every list. Nearly all of these files are being changed in data_grid2 or copy_and_paste, so this wave starts as soon as those land, before any list.
