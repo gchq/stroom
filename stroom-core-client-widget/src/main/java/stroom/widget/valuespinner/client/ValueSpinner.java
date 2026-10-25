@@ -17,6 +17,7 @@
 package stroom.widget.valuespinner.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextInput;
@@ -400,6 +401,29 @@ public class ValueSpinner
     public void setMax(final long max) {
         spinner.setMax(max);
         updateBounds();
+    }
+
+    /// The largest value it can have, from a template (`maxValue="59"`): UiBinder can't parse the
+    /// `long` [#setMax(long)] takes.
+    ///
+    /// @param max The largest value it can have.
+    public void setMaxValue(final int max) {
+        setMax(max);
+    }
+
+    /// The smallest value it can have, from a template (`minValue="0"`): UiBinder can't parse the
+    /// `long` [#setMin(long)] takes.
+    ///
+    /// @param min The smallest value it can have.
+    public void setMinValue(final int min) {
+        setMin(min);
+    }
+
+    /// Names its text box for assistive technology, where no label is for it (see [AccessibleName]).
+    ///
+    /// @param name The name, e.g. `Character count`.
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(this, name);
     }
 
     public void setMaxStep(final int maxStep) {

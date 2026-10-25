@@ -167,6 +167,17 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         }
     }
 
+    /// Marks the button as one that opens a dialog, which screen readers announce.
+    ///
+    /// @param opensDialog Whether pressing the button opens a dialog.
+    public void setOpensDialog(final boolean opensDialog) {
+        if (opensDialog) {
+            getElement().setAttribute("aria-haspopup", "dialog");
+        } else {
+            getElement().removeAttribute("aria-haspopup");
+        }
+    }
+
     @Override
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);

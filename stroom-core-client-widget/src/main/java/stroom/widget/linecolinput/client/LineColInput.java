@@ -18,6 +18,7 @@ package stroom.widget.linecolinput.client;
 
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.core.client.GWT;
@@ -99,6 +100,13 @@ public class LineColInput extends Composite {
      */
     public boolean isEnabled() {
         return valueBox.isEnabled();
+    }
+
+    /// Names its text box for assistive technology, where no label is for it (see [AccessibleName]).
+    ///
+    /// @param name The name, e.g. `Line and column`.
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(this, name);
     }
 
     /**

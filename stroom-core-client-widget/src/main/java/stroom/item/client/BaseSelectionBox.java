@@ -18,6 +18,7 @@ package stroom.item.client;
 
 import stroom.svg.client.IconBox;
 import stroom.widget.component.client.AriaPanel;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.TextInput;
 import stroom.widget.util.client.SelectionType;
 import stroom.widget.util.client.TypedKey;
@@ -270,6 +271,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setName(final String name) {
         textBox.setName(name);
+    }
+
+    /// Names its text box for assistive technology, where no label is for it (see [AccessibleName]).
+    ///
+    /// @param name The name, e.g. `Type`.
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(this, name);
     }
 
     public void setEnabled(final boolean enabled) {

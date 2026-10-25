@@ -58,6 +58,8 @@ public class IconBox extends Component {
     DivElement icon;
 
     private Runnable onIconClick;
+    private Element field;
+    private boolean opensDialog;
 
     public IconBox() {
         panel = BINDER.createAndBindUi(this);
@@ -74,14 +76,38 @@ public class IconBox extends Component {
     /// @param widget   The field, or a widget holding it (its first input is the field).
     /// @param svgImage The icon, e.g. [SvgImage#CALENDAR].
     public void setWidget(final Widget widget, final SvgImage svgImage) {
+        addField(widget);
+        setIcon(svgImage);
+    }
+
+    /// Puts a field in the box, from a template, with the icon set by [#setIcon(SvgImage)]:
+    /// `<svg:IconBox icon="CALENDAR"><svg:field><g:TextBox/></svg:field></svg:IconBox>`.
+    ///
+    /// @param widget The field, or a widget holding it (its first input is the field).
+    @UiChild(tagname = "field", limit = 1)
+    public void addField(final Widget widget) {
         panel.addAndReplaceElement(widget, fieldSlot);
-        final Element field = findField(widget.getElement());
+        field = findField(widget.getElement());
         if (field != null) {
             field.addClassName(BLOCK + "__field");
+            applyOpensDialog();
         }
+    }
+
+    /// @param svgImage The icon inside the end of the field's border, e.g. [SvgImage#CALENDAR].
+    public void setIcon(final SvgImage svgImage) {
         icon.setInnerHTML(svgImage.getSvg());
         // An SVG element's className isn't a string, so set the class attribute itself
         icon.getFirstChildElement().setAttribute("class", BLOCK + "__image");
+    }
+
+    /// Marks the field as one that opens a dialog (e.g. a date box's calendar), which screen
+    /// readers announce (`aria-haspopup="dialog"`).
+    ///
+    /// @param opensDialog Whether the field opens a dialog.
+    public void setOpensDialog(final boolean opensDialog) {
+        this.opensDialog = opensDialog;
+        applyOpensDialog();
     }
 
     /// Puts a field in the box with a drop-down arrow, the same arrow (and size and colour) as the
@@ -126,6 +152,17 @@ public class IconBox extends Component {
                 handler.onClick(event);
             }
         }, ClickEvent.getType());
+    }
+
+    // Set on the field whichever of it and the attribute a template gives first
+    private void applyOpensDialog() {
+        if (field != null) {
+            if (opensDialog) {
+                field.setAttribute("aria-haspopup", "dialog");
+            } else {
+                field.removeAttribute("aria-haspopup");
+            }
+        }
     }
 
     // The widget's element if it is an input, else the first input in it
