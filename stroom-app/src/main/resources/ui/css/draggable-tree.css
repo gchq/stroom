@@ -31,3 +31,17 @@ body:has(.draggable-tree--panning),
 body:has(.draggable-tree--panning) * {
 	cursor: grabbing !important;
 }
+
+/* The copy of what is dragged, which follows the pointer (placed by DraggableTreePanel): unseen
+   until it moves. Through the block, as it is a tree panel with a block of its own */
+.draggable-tree > .draggable-tree__dragged {
+	position: absolute;
+	z-index: 2;
+	opacity: 0;
+	left: var(--draggable-tree__drag-left, 0);
+	top: var(--draggable-tree__drag-top, 0);
+}
+
+.draggable-tree > .draggable-tree__dragged.draggable-tree__dragged--moving {
+	opacity: 0.5;
+}

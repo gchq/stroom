@@ -60,68 +60,45 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");
 
-        layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
-            @Override
-            protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
-                return canTake(parent, child);
-            }
-
-            @Override
-            protected void startDragging(final PipelineElement parent, final PipelineElement child) {
-                // Dragging replaces moving with the keyboard
-                keyboard.cancelDetach();
-            }
-
-            @Override
-            protected void endDragging(final PipelineElement parent, final PipelineElement child) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onMove(parent, child);
-                }
-            }
-
-            @Override
-            protected void setSelected(final PipelineElement item) {
-                if (item != null) {
-                    // A clicked element has the focus too, so that the keyboard carries on from it
-                    keyboard.moveTo(item);
-                } else if (allowNullSelection) {
-                    selectionModel.setSelected(null, true);
-                }
-            }
-        };
+        layoutPanel = new DraggableTreePanel<>();
+        layoutPanel.setTreePanels(treePanel, subTreePanel);
         // The order of an element's children doesn't matter (the model moves nothing), so dropping
         // an element where it came from leaves it as it was
         layoutPanel.setPutBackOnOwnParent(true);
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
 
-        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "element", "elements") {
-            @Override
-            protected String getName(final PipelineElement element) {
-                return element.getDisplayName();
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "element", "elements");
+        keyboard.setNameOf(PipelineElement::getDisplayName);
+        keyboard.setCanTake(this::canTake);
+        keyboard.setOnMove(this::onMove);
+        keyboard.setOnRemove(element -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onRemove(element);
             }
+        });
 
-            @Override
-            protected boolean canTake(final PipelineElement parent, final PipelineElement child) {
-                return PipelineTreeViewImpl.this.canTake(parent, child);
+        layoutPanel.setIsValidTarget(this::canTake);
+        // Dragging replaces moving with the keyboard
+        layoutPanel.setOnDragStart((parent, child) -> keyboard.cancelDetach());
+        layoutPanel.setOnDragEnd(this::onMove);
+        layoutPanel.setOnSelect(item -> {
+            if (item != null) {
+                // A clicked element has the focus too, so that the keyboard carries on from it
+                keyboard.moveTo(item);
+            } else if (allowNullSelection) {
+                selectionModel.setSelected(null, true);
             }
-
-            @Override
-            protected void move(final PipelineElement parent, final PipelineElement child) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onMove(parent, child);
-                }
-            }
-
-            @Override
-            protected void remove(final PipelineElement element) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onRemove(element);
-                }
-            }
-        };
+        });
         // A detached element and those after it are faded, with the connectors into them
         treePanel.setFaded(keyboard::isDetached);
+    }
+
+    // An element moved to another parent, by dragging or with the keyboard
+    private void onMove(final PipelineElement parent, final PipelineElement child) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onMove(parent, child);
+        }
     }
 
     @Override

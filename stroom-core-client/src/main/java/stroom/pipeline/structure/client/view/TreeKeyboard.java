@@ -24,7 +24,6 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -33,6 +32,11 @@ import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /// The keyboard for a tree drawn by a [TreePanel] (e.g. the pipeline structure and query expression
 /// trees), one tab stop: Left moves to an item's parent and Right to its first child (the trees
@@ -45,11 +49,11 @@ import java.util.List;
 /// Where the tree may be changed (see [#setAllowMoving]), an item and the items after it can be
 /// moved to another parent, as dragging them does: Ctrl+X detaches it (its box shows it, see
 /// [Box#setDetached], until it is attached), the arrow keys choose its new parent (whose box shows
-/// whether it would take it, see [#canTake]), Ctrl+V attaches it there, and Escape puts it back. A
+/// whether it would take it, see [#setCanTake]), Ctrl+V attaches it there, and Escape puts it back. A
 /// live region tells screen reader users what each of these did.
 ///
 /// @param <E> The tree's items.
-public abstract class TreeKeyboard<E> {
+public class TreeKeyboard<E> {
 
     private final TreePanel<E> treePanel;
     private final DraggableTreePanel<E> root;
@@ -64,14 +68,22 @@ public abstract class TreeKeyboard<E> {
     private E detached;
     // The item whose box to focus once the tree is redrawn
     private E focusAfterRedraw;
+    // What its owner says about the tree's items, and is told (see the setters)
+    private Function<E, String> nameOf = String::valueOf;
+    private BiPredicate<E, E> canTake;
+    private BiConsumer<E, E> onMove;
+    private Consumer<E> onRemove;
+    private Consumer<E> onNavigate;
+    private BiPredicate<KeyDownEvent, E> onKey;
+    private String branchPlace = "after it";
 
     /// @param treePanel The tree.
     /// @param root      The draggable panel holding it, whose key presses are the tree's, which
-    ///                  fires its context menu events, and in which the live region is
+    ///                  fires its context menu events, and whose template has the live region
     ///                  (`draggable-tree__status`, also `sr-only`, so it isn't seen).
     /// @param itemName  What one of the tree's items is called, e.g. "element".
     /// @param itemsName What more than one are called, e.g. "elements".
-    protected TreeKeyboard(final TreePanel<E> treePanel,
+    public TreeKeyboard(final TreePanel<E> treePanel,
                            final DraggableTreePanel<E> root,
                            final String itemName,
                            final String itemsName) {
@@ -81,56 +93,94 @@ public abstract class TreeKeyboard<E> {
         this.itemsName = itemsName;
         root.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
         treePanel.setAfterRefresh(this::afterRefresh);
-
-        liveRegion = Document.get().createDivElement();
-        liveRegion.setClassName("sr-only draggable-tree__status");
-        liveRegion.setAttribute("role", "status");
-        liveRegion.setAttribute("aria-live", "polite");
-        root.getElement().appendChild(liveRegion);
+        liveRegion = root.getStatusElement();
     }
 
-    /// @param item An item.
-    /// @return Its name, e.g. for telling screen reader users that it was detached.
-    protected abstract String getName(E item);
-
-    /// @param parent An item.
-    /// @param child  Another.
-    /// @return Whether the first can take the second (and the items after it) as a child.
-    protected abstract boolean canTake(E parent, E child);
-
-    /// Moves an item (and the items after it) to another parent.
+    /// Sets what gives an item's name, e.g. for telling screen reader users that it was detached.
     ///
-    /// @param parent Its new parent.
-    /// @param child  The item.
-    protected abstract void move(E parent, E child);
-
-    /// Asks for an item to be removed (e.g. with a confirmation first).
-    ///
-    /// @param item The item.
-    protected abstract void remove(E item);
-
-    /// Told that the arrow keys (or Home or End) are about to move the focus, and the selection,
-    /// to an item, e.g. to stop editing the item being left.
-    ///
-    /// @param item The item.
-    protected void onNavigate(final E item) {
+    /// @param nameOf Given an item, its name.
+    public void setNameOf(final Function<E, String> nameOf) {
+        this.nameOf = Objects.requireNonNull(nameOf, "nameOf");
     }
 
-    /// Says where the items that move with an item are, e.g. in "rawWriter and the 1 element after
+    /// Sets which item may take which as a child.
+    ///
+    /// @param canTake Given a parent and an item, whether the parent may take it (and the items
+    ///                after it).
+    public void setCanTake(final BiPredicate<E, E> canTake) {
+        this.canTake = canTake;
+    }
+
+    /// Sets what moves an item (and the items after it) to another parent.
+    ///
+    /// @param onMove Given its new parent and the item.
+    public void setOnMove(final BiConsumer<E, E> onMove) {
+        this.onMove = onMove;
+    }
+
+    /// Sets what removes an item when Delete is pressed on it (e.g. with a confirmation first).
+    ///
+    /// @param onRemove Given the item.
+    public void setOnRemove(final Consumer<E> onRemove) {
+        this.onRemove = onRemove;
+    }
+
+    /// Sets what is told that the arrow keys (or Home or End) are about to move the focus, and the
+    /// selection, to an item, e.g. to stop editing the item being left.
+    ///
+    /// @param onNavigate Given the item.
+    public void setOnNavigate(final Consumer<E> onNavigate) {
+        this.onNavigate = onNavigate;
+    }
+
+    /// Sets what handles a key press on an item before the tree does, e.g. to start editing it.
+    ///
+    /// @param onKey Given the key press and the item, whether it handled it (and so the tree
+    ///              mustn't).
+    public void setOnKey(final BiPredicate<KeyDownEvent, E> onKey) {
+        this.onKey = onKey;
+    }
+
+    /// Sets where the items that move with an item are, e.g. in "rawWriter and the 1 element after
     /// it detached".
     ///
-    /// @return Where they are: "after it" by default, as in a pipeline.
-    protected String getBranchPlace() {
-        return "after it";
+    /// @param branchPlace Where they are: "after it" by default, as in a pipeline.
+    public void setBranchPlace(final String branchPlace) {
+        this.branchPlace = Objects.requireNonNull(branchPlace, "branchPlace");
     }
 
-    /// Handles a key press on an item before the tree does, e.g. to start editing it.
-    ///
-    /// @param event The key press.
-    /// @param item  The item.
-    /// @return Whether it was handled (and so the tree mustn't handle it too).
-    protected boolean onKey(final KeyDownEvent event, final E item) {
-        return false;
+    private String getName(final E item) {
+        return nameOf.apply(item);
+    }
+
+    private boolean canTake(final E parent, final E child) {
+        return canTake != null && canTake.test(parent, child);
+    }
+
+    private void move(final E parent, final E child) {
+        if (onMove != null) {
+            onMove.accept(parent, child);
+        }
+    }
+
+    private void remove(final E item) {
+        if (onRemove != null) {
+            onRemove.accept(item);
+        }
+    }
+
+    private void onNavigate(final E item) {
+        if (onNavigate != null) {
+            onNavigate.accept(item);
+        }
+    }
+
+    private String getBranchPlace() {
+        return branchPlace;
+    }
+
+    private boolean onKey(final KeyDownEvent event, final E item) {
+        return onKey != null && onKey.test(event, item);
     }
 
     /// @param selectionModel The tree's selection, which follows the focus.

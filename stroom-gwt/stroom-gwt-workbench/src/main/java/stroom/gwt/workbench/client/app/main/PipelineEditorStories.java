@@ -602,6 +602,10 @@ public final class PipelineEditorStories {
                     play.expect(elementBox(tree, "streamAppender")).not().toHaveClass(REFUSED);
                     play.expect(refusedIcon(tree, "streamAppender")).toBeNull();
                     play.expect(typeIcon(tree, "streamAppender")).toBeVisible();
+                    // The copy of what is dragged floats over the tree, faded, once it has moved
+                    final Query copy = play.querySelector(".draggable-tree__dragged");
+                    play.expect(copy).toHaveStyle("position", "absolute");
+                    play.expect(copy).toHaveStyle("opacity", "0.5");
 
                     // Over nothing, nothing is marked; back over decoration, it is again
                     play.fireEvent().mouseMove(streamAppender,

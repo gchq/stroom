@@ -96,112 +96,84 @@ public class ExpressionTreeViewImpl
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");
 
-        layoutPanel = new DraggableTreePanel<Item>(treePanel, subTreePanel) {
-            @Override
-            protected boolean isValidTarget(final Item parent, final Item child) {
-                return parent instanceof Operator;
-            }
-
-            @Override
-            protected void setSelected(final Item item) {
-                if (selectionModel != null) {
-                    if (item == null) {
-                        endEditing();
-                        selectionModel.setSelected(null, true);
-                    } else if (!selectionModel.isSelected(item)) {
-                        // A clicked item is edited, and has the focus, so that the keyboard carries
-                        // on from it
-                        endEditing();
-                        treePanel.setEditingItem(item);
-                        keyboard.moveTo(item);
-                    } else if (!treePanel.isEditingItem(item)) {
-                        // Selected with the keyboard: a click edits it
-                        edit(item);
-                    }
-                }
-            }
-
-            @Override
-            protected void startDragging(final Item parent, final Item child) {
-                // Dragging replaces moving with the keyboard
-                keyboard.cancelDetach();
-                if (selectionModel != null) {
-                    endEditing();
-                    selectionModel.clear();
-                }
-            }
-
-            @Override
-            protected void endDragging(final Item parent, final Item child) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
-            }
-        };
+        layoutPanel = new DraggableTreePanel<>();
+        layoutPanel.setTreePanels(treePanel, subTreePanel);
         layoutPanel.setAllowDragging(true);
         layoutPanel.addStyleName("expression-tree-view");
 
-        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "item", "items") {
-            @Override
-            protected String getName(final Item item) {
-                return ExpressionItemRenderer.getName(treePanel.getTree(), item);
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "item", "items");
+        keyboard.setNameOf(item -> ExpressionItemRenderer.getName(treePanel.getTree(), item));
+        keyboard.setCanTake((parent, child) -> parent instanceof Operator);
+        keyboard.setOnMove((parent, child) -> {
+            final DefaultTreeForTreeLayout<Item> tree = treePanel.getTree();
+            tree.removeChild(child);
+            tree.addChild(parent, child);
+            treePanel.refresh();
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
             }
-
-            @Override
-            protected boolean canTake(final Item parent, final Item child) {
-                return parent instanceof Operator;
-            }
-
-            @Override
-            protected void move(final Item parent, final Item child) {
-                final DefaultTreeForTreeLayout<Item> tree = treePanel.getTree();
-                tree.removeChild(child);
-                tree.addChild(parent, child);
-                treePanel.refresh();
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onChange();
-                }
-            }
-
-            @Override
-            protected void remove(final Item item) {
-                if (removeHandler != null) {
-                    cancelDetach();
-                    treePanel.setEditingItem(null);
-                    removeHandler.accept(item);
-                    // The focus goes to the item selected in its place, shown as its label
-                    if (selectionModel != null && selectionModel.getSelectedObject() != null) {
-                        moveTo(selectionModel.getSelectedObject());
-                    }
-                }
-            }
-
-            @Override
-            protected String getBranchPlace() {
-                // An operator's items
-                return "in it";
-            }
-
-            @Override
-            protected boolean onKey(final KeyDownEvent event, final Item item) {
-                final int keyCode = event.getNativeKeyCode();
-                if (selectionModel != null
-                    && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_F2)
-                    && !event.isAnyModifierKeyDown()) {
-                    startEditing(item);
-                    return true;
-                }
-                return false;
-            }
-
-            @Override
-            protected void onNavigate(final Item item) {
-                // Leaving an item ends its editing (keeping what was entered); the item moved to is
-                // shown as its label
-                endEditing();
+        });
+        keyboard.setOnRemove(item -> {
+            if (removeHandler != null) {
+                keyboard.cancelDetach();
                 treePanel.setEditingItem(null);
+                removeHandler.accept(item);
+                // The focus goes to the item selected in its place, shown as its label
+                if (selectionModel != null && selectionModel.getSelectedObject() != null) {
+                    keyboard.moveTo(selectionModel.getSelectedObject());
+                }
             }
-        };
+        });
+        // An operator's items
+        keyboard.setBranchPlace("in it");
+        keyboard.setOnKey((event, item) -> {
+            final int keyCode = event.getNativeKeyCode();
+            if (selectionModel != null
+                && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_F2)
+                && !event.isAnyModifierKeyDown()) {
+                startEditing(item);
+                return true;
+            }
+            return false;
+        });
+        keyboard.setOnNavigate(item -> {
+            // Leaving an item ends its editing (keeping what was entered); the item moved to is
+            // shown as its label
+            endEditing();
+            treePanel.setEditingItem(null);
+        });
+
+        layoutPanel.setIsValidTarget((parent, child) -> parent instanceof Operator);
+        layoutPanel.setOnSelect(item -> {
+            if (selectionModel != null) {
+                if (item == null) {
+                    endEditing();
+                    selectionModel.setSelected(null, true);
+                } else if (!selectionModel.isSelected(item)) {
+                    // A clicked item is edited, and has the focus, so that the keyboard carries
+                    // on from it
+                    endEditing();
+                    treePanel.setEditingItem(item);
+                    keyboard.moveTo(item);
+                } else if (!treePanel.isEditingItem(item)) {
+                    // Selected with the keyboard: a click edits it
+                    edit(item);
+                }
+            }
+        });
+        layoutPanel.setOnDragStart((parent, child) -> {
+            // Dragging replaces moving with the keyboard
+            keyboard.cancelDetach();
+            if (selectionModel != null) {
+                endEditing();
+                selectionModel.clear();
+            }
+        });
+        layoutPanel.setOnDragEnd((parent, child) -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
         // A detached item and the items in it are faded, with the brackets to their items
         treePanel.setFaded(keyboard::isDetached);
         // Before the fields' own handlers, which e.g. close a date's calendar on Escape

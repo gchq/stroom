@@ -24,21 +24,28 @@ import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 /// A tree whose items can be dragged, with the items after them, to another parent.
 ///
@@ -51,7 +58,12 @@ import java.util.List;
 /// far as the tree goes.
 ///
 /// Pressing on the background (not an item) and dragging pans the tree, if it scrolls.
-public abstract class DraggableTreePanel<E> extends Composite implements HasContextMenuHandlers {
+///
+/// A template can declare it; its owner gives it its trees ([#setTreePanels]) and says, through
+/// callbacks, which item may take which, and what selecting, dragging and dropping do.
+///
+/// @param <E> The type of the tree's items.
+public class DraggableTreePanel<E> extends Composite implements HasContextMenuHandlers {
 
     private static final int DRAGGING_THRESHOLD = 20;
     // How far the pointer moves before pressing on the background pans rather than clicks
@@ -67,10 +79,25 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     private static final String BLOCK = "draggable-tree";
     private static final String PANNABLE_CLASS = BLOCK + "--pannable";
     private static final String PANNING_CLASS = BLOCK + "--panning";
+    // The copy of what is dragged, which follows the pointer, and once it has moved
+    private static final String DRAGGED_CLASS = BLOCK + "__dragged";
+    private static final String MOVING_CLASS = DRAGGED_CLASS + "--moving";
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final TreePanel<E> treePanel;
-    private final TreePanel<E> subTreePanel;
-    private final FlowPanel layoutPanel;
+    @UiField
+    HTMLPanel layoutPanel;
+    // Where the tree goes, and the live region for the keyboard's moves (TreeKeyboard)
+    @UiField
+    Element treeSlot;
+    @UiField
+    Element status;
+    private TreePanel<E> treePanel;
+    private TreePanel<E> subTreePanel;
+    private BiPredicate<E, E> isValidTarget;
+    private Consumer<E> onSelect;
+    private BiConsumer<E, E> onDragStart;
+    private BiConsumer<E, E> onDragEnd;
+    private BiConsumer<E, E> onDragCancel;
     private Box<E> box;
     // The item under the pointer, if it would take what is dragged: where it is dropped
     private Box<E> targetBox;
@@ -104,16 +131,65 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     private int panScrollLeft;
     private int panScrollTop;
 
-    public DraggableTreePanel(final TreePanel<E> treePanel, final TreePanel<E> subTreePanel) {
-        this.treePanel = treePanel;
-        this.subTreePanel = subTreePanel;
-
-        layoutPanel = new FlowPanel();
-        layoutPanel.setStyleName(BLOCK);
-        layoutPanel.add(treePanel);
-        initWidget(layoutPanel);
-
+    /// Makes a panel with no tree yet, e.g. one a template declares; see [#setTreePanels].
+    public DraggableTreePanel() {
+        initWidget(BINDER.createAndBindUi(this));
         sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCONTEXTMENU);
+    }
+
+    /// Gives the panel its tree, once, and the second panel that draws a copy of what is dragged.
+    ///
+    /// @param treePanel    The tree.
+    /// @param subTreePanel The copy of what is dragged, shown only while dragging.
+    public void setTreePanels(final TreePanel<E> treePanel, final TreePanel<E> subTreePanel) {
+        if (this.treePanel != null) {
+            throw new IllegalStateException("Already has its trees");
+        }
+        this.treePanel = Objects.requireNonNull(treePanel, "treePanel");
+        this.subTreePanel = Objects.requireNonNull(subTreePanel, "subTreePanel");
+        layoutPanel.addAndReplaceElement(treePanel, treeSlot);
+    }
+
+    /// @return The live region in which the keyboard's moves are told (see [TreeKeyboard]).
+    Element getStatusElement() {
+        return status;
+    }
+
+    /// Sets which item may take which as a child, by dragging.
+    ///
+    /// @param isValidTarget Given a parent and an item, whether the parent may take it (and the
+    ///                      items after it).
+    public void setIsValidTarget(final BiPredicate<E, E> isValidTarget) {
+        this.isValidTarget = isValidTarget;
+    }
+
+    /// Sets what a click on an item, or on nothing, does, e.g. selecting it.
+    ///
+    /// @param onSelect Given the item clicked, or null for a click on nothing.
+    public void setOnSelect(final Consumer<E> onSelect) {
+        this.onSelect = onSelect;
+    }
+
+    /// Sets what is told when an item starts being dragged.
+    ///
+    /// @param onDragStart Given its parent and the item.
+    public void setOnDragStart(final BiConsumer<E, E> onDragStart) {
+        this.onDragStart = onDragStart;
+    }
+
+    /// Sets what is told when an item is dropped on a new parent (which the tree already shows).
+    ///
+    /// @param onDragEnd Given its new parent and the item.
+    public void setOnDragEnd(final BiConsumer<E, E> onDragEnd) {
+        this.onDragEnd = onDragEnd;
+    }
+
+    /// Sets what is told when a drag ends without a drop on a target (released over nothing, over an
+    /// item that refuses it or where it came from, or Escape pressed), which puts it back.
+    ///
+    /// @param onDragCancel Given its parent, where it was put back, and the item.
+    public void setOnDragCancel(final BiConsumer<E, E> onDragCancel) {
+        this.onDragCancel = onDragCancel;
     }
 
     @Override
@@ -267,9 +343,8 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                 final int x = MouseHelper.getRelativeX(event, getElement());
                 final int y = MouseHelper.getRelativeY(event, getElement());
 
-                subTreePanel.getElement().getStyle().setLeft(x - offsetX, Unit.PX);
-                subTreePanel.getElement().getStyle().setTop(y - offsetY, Unit.PX);
-                subTreePanel.getElement().getStyle().setOpacity(0.5);
+                placeDragged(x - offsetX, y - offsetY);
+                subTreePanel.addStyleName(MOVING_CLASS);
 
                 updateHotspot(treePanel.getTargetBox(event, true));
                 updateEdgeScroll();
@@ -294,11 +369,10 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                 treePanel.refresh(this::markUnderPointer);
                 markUnderPointer();
 
-                subTreePanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
-                subTreePanel.getElement().getStyle().setZIndex(2);
-                subTreePanel.getElement().getStyle().setOpacity(0);
-                subTreePanel.getElement().getStyle().setLeft(0, Unit.PX);
-                subTreePanel.getElement().getStyle().setTop(0, Unit.PX);
+                // Unseen until it moves (draggable-tree.css)
+                subTreePanel.removeStyleName(MOVING_CLASS);
+                subTreePanel.addStyleName(DRAGGED_CLASS);
+                placeDragged(0, 0);
                 layoutPanel.add(subTreePanel);
 
                 final Box<E> subTreeBox = subTreePanel.getBox(box.getItem());
@@ -387,9 +461,14 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                       + Document.get().getScrollLeft();
         final int y = pointerY - getElement().getAbsoluteTop() + getElement().getScrollTop()
                       + Document.get().getScrollTop();
-        subTreePanel.getElement().getStyle().setLeft(x - offsetX, Unit.PX);
-        subTreePanel.getElement().getStyle().setTop(y - offsetY, Unit.PX);
+        placeDragged(x - offsetX, y - offsetY);
         updateHotspot(getBoxAt(pointerX, pointerY));
+    }
+
+    // Places the copy of what is dragged, relative to the panel
+    private void placeDragged(final int left, final int top) {
+        CssProperties.set(subTreePanel.getElement(), "--draggable-tree__drag-left", left + "px");
+        CssProperties.set(subTreePanel.getElement(), "--draggable-tree__drag-top", top + "px");
     }
 
     private void stopEdgeScroll() {
@@ -610,7 +689,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         }
     }
 
-    protected abstract boolean isValidTarget(final E parent, final E child);
+    private boolean isValidTarget(final E parent, final E child) {
+        return isValidTarget != null && isValidTarget.test(parent, child);
+    }
 
     private void addChildren(final DefaultTreeForTreeLayout<E> subTree, final E parent) {
         final List<E> children = treePanel.getTree().getChildren(parent);
@@ -622,20 +703,28 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         }
     }
 
-    protected abstract void setSelected(final E item);
-
-    protected void startDragging(final E parent, final E child) {
+    private void setSelected(final E item) {
+        if (onSelect != null) {
+            onSelect.accept(item);
+        }
     }
 
-    protected void endDragging(final E parent, final E child) {
+    private void startDragging(final E parent, final E child) {
+        if (onDragStart != null) {
+            onDragStart.accept(parent, child);
+        }
     }
 
-    /// Told when a drag ends without a drop on a target (released over nothing, over an item that
-    /// refuses it or where it came from, or Escape pressed), which puts it back where it was.
-    ///
-    /// @param parent Its parent, where it was put back.
-    /// @param child  The item dragged.
-    protected void cancelDragging(final E parent, final E child) {
+    private void endDragging(final E parent, final E child) {
+        if (onDragEnd != null) {
+            onDragEnd.accept(parent, child);
+        }
+    }
+
+    private void cancelDragging(final E parent, final E child) {
+        if (onDragCancel != null) {
+            onDragCancel.accept(parent, child);
+        }
     }
 
     public void setAllowDragging(final boolean allowDragging) {
@@ -660,5 +749,15 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     @Override
     public HandlerRegistration addContextMenuHandler(final ContextMenuEvent.Handler handler) {
         return addHandler(handler, ContextMenuEvent.getType());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The owner is raw: a binder can't name a type variable
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<Widget, DraggableTreePanel> {
+
     }
 }
