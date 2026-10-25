@@ -160,6 +160,42 @@ class TestDraftCefMappingTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void theFieldsNotSentAreGivenOnceByWhy() throws Exception {
+        // Seen: 125 not-sent entries, each saying the same why, given in the plan and again beside it.
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"topic\": \"t\", \"custom_keys\": false, "
+                                                 + "\"overrides\": [{\"path\": "
+                                                 + "\"EventDetail/Authenticate/Data[@Name='note']/@Value\", "
+                                                 + "\"drop\": true}]}");
+
+        assertThat((Map<String, Object>) result.get("plan")).doesNotContainKey("not_sent");
+        assertThat((List<Map<String, Object>>) result.get("not_sent")).anySatisfy(group -> {
+            assertThat(group.get("why")).isEqualTo("left out as instructed");
+            assertThat(group.get("count")).isEqualTo(1);
+            assertThat(group.get("paths")).isEqualTo(Map.of("Authenticate",
+                    List.of("EventDetail/Authenticate/Data[@Name='note']/@Value")));
+        });
+    }
+
+    @Test
+    void notSentEntriesAreGroupedByWhyThenEventTypeKeepingEachPath() {
+        final List<Map<String, Object>> grouped = DraftCefMappingTool.groupedNotSent(List.of(
+                Map.of("path", "EventDetail/Alert/Data[@Name='a']/@Value", "event_type", "Alert", "why", "no key"),
+                Map.of("path", "EventSource/Client/HostName", "event_type", "common", "why", "left out"),
+                Map.of("path", "EventDetail/Alert/Data[@Name='b']/@Value", "event_type", "Alert", "why", "no key"),
+                Map.of("path", "EventDetail/View/Data[@Name='c']/@Value", "event_type", "View", "why", "no key")));
+
+        assertThat(grouped).containsExactly(
+                Map.of("why", "no key", "count", 3, "paths", Map.of(
+                        "Alert", List.of("EventDetail/Alert/Data[@Name='a']/@Value",
+                                "EventDetail/Alert/Data[@Name='b']/@Value"),
+                        "View", List.of("EventDetail/View/Data[@Name='c']/@Value"))),
+                Map.of("why", "left out", "count", 1, "paths", Map.of("common",
+                        List.of("EventSource/Client/HostName"))));
+        assertThat(DraftCefMappingTool.groupedNotSent(List.of())).isEmpty();
+    }
+
+    @Test
     void theUsersAnswerInAFormIsTaken() throws Exception {
         Mockito.when(consent.choose(any(), any(), eq(DraftCefMappingTool.NAME),
                         eq(DraftCefMappingTool.CUSTOM_QUESTION), anyList(), isNull()))
