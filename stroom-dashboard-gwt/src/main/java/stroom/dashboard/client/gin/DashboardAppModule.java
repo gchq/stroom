@@ -37,10 +37,6 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
-import stroom.data.client.presenter.ItemNavigatorPresenter;
-import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
-import stroom.data.client.presenter.ItemSelectionPresenter;
-import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
@@ -53,8 +49,6 @@ import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
-import stroom.data.client.view.ItemNavigatorViewImpl;
-import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
@@ -162,14 +156,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 CharacterNavigatorPresenter.class,
                 CharacterNavigatorView.class,
                 CharacterNavigatorViewImpl.class);
-        bindPresenterWidget(
-                ItemNavigatorPresenter.class,
-                ItemNavigatorView.class,
-                ItemNavigatorViewImpl.class);
-        bindPresenterWidget(
-                ItemSelectionPresenter.class,
-                ItemSelectionView.class,
-                ItemSelectionViewImpl.class);
 
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);

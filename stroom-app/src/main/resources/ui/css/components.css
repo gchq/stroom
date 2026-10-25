@@ -6,15 +6,6 @@
 .itemSelectionViewImpl-panelChild {
 }
 
-.itemSelectionViewImpl-countLabel {
-    padding-left: 6px;
-}
-
-.itemSelectionViewImpl-flowPanel {
-    display: flex;
-    align-items: center;
-}
-
 .ruleView-bottom {
     padding-top: 5px;
 }
@@ -528,21 +519,6 @@
 
 .acceptRejectContent-reject {
     background-color: red;
-}
-
-.itemNavigator {
-    display: flex;
-    gap: .75rem;
-}
-
-.itemNavigator-label {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-
-.itemNavigator-label:hover {
-    text-decoration: underline;
 }
 
 .itemNavigator-button {

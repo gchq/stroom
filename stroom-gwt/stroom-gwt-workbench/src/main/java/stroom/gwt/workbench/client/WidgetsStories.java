@@ -63,6 +63,7 @@ import stroom.gwt.workbench.client.widgets.display.LogoStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorFeatureStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorThemeStories;
+import stroom.gwt.workbench.client.widgets.editorsandviewers.ItemNavigatorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.MarkdownEditorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourcePresenterStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories;
@@ -145,6 +146,8 @@ public final class WidgetsStories {
         AceEditorStories.addTo(registry);
         AceEditorFeatureStories.addTo(registry);
         AceEditorThemeStories.addTo(registry);
+        // Widgets/Editors & Viewers/ItemNavigator
+        ItemNavigatorStories.addTo(registry);
         // Widgets/Editors & Viewers/MarkdownEditor
         MarkdownEditorStories.addTo(registry);
         // Widgets/Editors & Viewers/SourcePresenter

@@ -18,7 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.component.ClassificationWrapper;
-import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.component.ItemNavigatorController;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataInfoSection;
@@ -117,7 +117,7 @@ public class DataPresenter
     // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
     private final ControllerLayer htmlLayer;
     private final TextPresenter textPresenter;
-    private final ItemNavigatorPresenter itemNavigatorPresenter;
+    private final ItemNavigatorController itemNavigator;
     private final SourceProgressBar sourceProgressBar;
     private final MarkerListPresenter markerListPresenter;
     private final UiConfigCache uiConfigCache;
@@ -162,7 +162,7 @@ public class DataPresenter
     @Inject
     public DataPresenter(final EventBus eventBus,
                          final HtmlPane htmlPane,
-                         final ItemNavigatorPresenter itemNavigatorPresenter,
+                         final ItemNavigatorController itemNavigator,
                          final DataView dataView,
                          final ClassificationWrapper classificationWrapper,
                          final ClassificationLabelController classificationLabelController,
@@ -174,7 +174,7 @@ public class DataPresenter
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, classificationWrapper);
-        own(itemNavigatorPresenter);
+        own(itemNavigator);
         own(textPresenter);
         own(markerListPresenter);
         own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
@@ -183,7 +183,7 @@ public class DataPresenter
         this.classificationWrapper = classificationWrapper;
         this.htmlPane = htmlPane;
         this.htmlLayer = new ControllerLayer(htmlPane);
-        this.itemNavigatorPresenter = itemNavigatorPresenter;
+        this.itemNavigator = itemNavigator;
         this.textPresenter = textPresenter;
         this.sourceProgressBar = sourceProgressBar;
         // Use properties mode for meta
@@ -207,11 +207,11 @@ public class DataPresenter
 
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
-        itemNavigatorPresenter.setDisplay(noNavigatorData);
+        itemNavigator.setDisplay(noNavigatorData);
         dataView.addSourceLinkClickHandler(event ->
                 openSourcePresenter());
         dataView.setSourceLinkVisible(true, true);
-        dataView.setNavigatorView(itemNavigatorPresenter.getView());
+        dataView.setNavigatorView(itemNavigator);
         dataView.setProgressView(sourceProgressBar);
         sourceProgressBar.setVisible(false);
 
@@ -289,7 +289,7 @@ public class DataPresenter
                     dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
                     dataView.setProgressView(null);
-                    itemNavigatorPresenter.refreshNavigator();
+                    itemNavigator.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
@@ -597,7 +597,7 @@ public class DataPresenter
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
                             .onFailure(caught -> {
-                                itemNavigatorPresenter.setRefreshing(false);
+                                itemNavigator.setRefreshing(false);
                                 showSimpleError(caught.getMessage());
                                 final Set<String> availableChildStreamTypes = Collections.emptySet();
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -607,7 +607,7 @@ public class DataPresenter
                             .exec();
                 } else {
                     showInvalidStreamErrorMsg();
-                    itemNavigatorPresenter.setRefreshing(false);
+                    itemNavigator.setRefreshing(false);
                 }
             }
         }
@@ -625,7 +625,7 @@ public class DataPresenter
                                    + currentPartNo
                                    + ":"
                                    + currentRecordNo, "");
-        itemNavigatorPresenter.setDisplay(noNavigatorData);
+        itemNavigator.setDisplay(noNavigatorData);
         dataView.setSourceLinkVisible(false, false);
         showTextPresenter();
     }
@@ -743,7 +743,7 @@ public class DataPresenter
 
     private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
         if (getCurrentMetaId() != null) {
-            itemNavigatorPresenter.setRefreshing(true);
+            itemNavigator.setRefreshing(true);
 
             // Create the action queue and delayed refresh timer if we haven't
             // already. This allows the user to hit the next/prev btn multiple times without
@@ -777,11 +777,11 @@ public class DataPresenter
                                     // update the text.
                                     if (actionQueue.size() == 0) {
                                         setPageResponse(result, request.isFireEvents());
-                                        itemNavigatorPresenter.setRefreshing(false);
+                                        itemNavigator.setRefreshing(false);
                                     }
                                 })
                                 .onFailure(caught ->
-                                        itemNavigatorPresenter.setRefreshing(false))
+                                        itemNavigator.setRefreshing(false))
                                 .taskMonitorFactory(dataView)
                                 .exec();
                     }
@@ -939,7 +939,7 @@ public class DataPresenter
 
         if (streamType == null) {
             showHtmlPresenter();
-            itemNavigatorPresenter.setDisplay(noNavigatorData);
+            itemNavigator.setDisplay(noNavigatorData);
         } else {
             // Select the tab based
             final TabData newActiveTab;
@@ -967,7 +967,7 @@ public class DataPresenter
                 showTextPresenter();
             }
             // Now we have changed tabs, ensure the nav visibility is right
-            itemNavigatorPresenter.refreshNavigator();
+            itemNavigator.refreshNavigator();
         }
 
         if (dataView.getTabBar().getSelectedTab() != null) {
@@ -983,17 +983,17 @@ public class DataPresenter
     }
 
     private void showHtmlPresenter() {
-        itemNavigatorPresenter.setDisplay(noNavigatorData);
+        itemNavigator.setDisplay(noNavigatorData);
         dataView.getLayerContainer().show(htmlLayer);
     }
 
     private void showTextPresenter() {
-        itemNavigatorPresenter.setDisplay(navigatorData);
+        itemNavigator.setDisplay(navigatorData);
         dataView.getLayerContainer().show(textPresenter);
     }
 
     private void showMarkerPresenter() {
-        itemNavigatorPresenter.setDisplay(navigatorData);
+        itemNavigator.setDisplay(navigatorData);
         dataView.getLayerContainer().show(markerListPresenter);
     }
 
@@ -1021,7 +1021,7 @@ public class DataPresenter
             dataView.setSourceLinkVisible(true, true);
             dataView.setProgressView(sourceProgressBar);
             refreshProgressBar(result != null);
-            itemNavigatorPresenter.refreshNavigator();
+            itemNavigator.refreshNavigator();
             refreshHighlights(result);
             refreshMarkers(result);
         }
@@ -1157,7 +1157,7 @@ public class DataPresenter
         // navigate, so its navigator stays hidden (as fetchData hides it)
         final boolean isDataRange = currentSourceLocation != null && currentSourceLocation.getDataRange() != null;
         if (visible && !isDataRange) {
-            dataView.setNavigatorView(itemNavigatorPresenter.getView());
+            dataView.setNavigatorView(itemNavigator);
         } else {
             dataView.setNavigatorView(null);
         }
@@ -1308,7 +1308,7 @@ public class DataPresenter
 
         LayerContainer getLayerContainer();
 
-        void setNavigatorView(final ItemNavigatorView itemNavigatorView);
+        void setNavigatorView(IsWidget navigator);
 
         void setProgressView(IsWidget sourceProgressBar);
     }

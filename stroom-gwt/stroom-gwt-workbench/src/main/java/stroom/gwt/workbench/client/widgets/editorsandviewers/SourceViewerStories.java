@@ -17,14 +17,14 @@
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.data.client.component.ClassificationWrapper;
+import stroom.data.client.component.ItemNavigator;
+import stroom.data.client.component.ItemNavigatorController;
+import stroom.data.client.component.ItemSelection;
+import stroom.data.client.component.ItemSelectionController;
 import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.ItemNavigatorPresenter;
-import stroom.data.client.presenter.ItemSelectionPresenter;
 import stroom.data.client.presenter.MarkerListPresenter;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.ItemNavigatorViewImpl;
-import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -241,16 +241,13 @@ public final class SourceViewerStories {
     /// Creates the presenter and its views, as GIN would.
     private static DataPresenter dataPresenter(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
-        final ItemNavigatorPresenter itemNavigatorPresenter = new ItemNavigatorPresenter(
-                eventBus,
-                new ItemNavigatorViewImpl(eventBus, GWT.create(ItemNavigatorViewImpl.Binder.class)),
-                () -> new ItemSelectionPresenter(
-                        eventBus,
-                        new ItemSelectionViewImpl(eventBus, GWT.create(ItemSelectionViewImpl.Binder.class))));
+        final ItemNavigatorController itemNavigator = new ItemNavigatorController(
+                new ItemNavigator(),
+                () -> new ItemSelectionController(eventBus, new ItemSelection()));
         return new DataPresenter(
                 eventBus,
                 new HtmlPane(),
-                itemNavigatorPresenter,
+                itemNavigator,
                 new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
                 new ClassificationWrapper(),
                 new ClassificationLabelController(harness.getUiConfigCache()),

@@ -24,10 +24,6 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.ItemNavigatorPresenter;
-import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
-import stroom.data.client.presenter.ItemSelectionPresenter;
-import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
@@ -47,8 +43,6 @@ import stroom.data.client.view.CharacterNavigatorViewImpl;
 import stroom.data.client.view.CharacterRangeSelectionViewImpl;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.ItemNavigatorViewImpl;
-import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.MetaViewImpl;
 import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
@@ -97,12 +91,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(CharacterNavigatorPresenter.class,
                 CharacterNavigatorView.class,
                 CharacterNavigatorViewImpl.class);
-        bindPresenterWidget(ItemNavigatorPresenter.class,
-                ItemNavigatorView.class,
-                ItemNavigatorViewImpl.class);
-        bindPresenterWidget(ItemSelectionPresenter.class,
-                ItemSelectionView.class,
-                ItemSelectionViewImpl.class);
         bind(MetaListPresenter.class);
         bind(SteppingMetaListPresenter.class);
         bind(ProcessorTaskListPresenter.class);

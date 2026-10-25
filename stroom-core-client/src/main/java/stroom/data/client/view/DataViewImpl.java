@@ -17,7 +17,6 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
-import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.ViewImpl;
@@ -120,9 +119,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public void setNavigatorView(final ItemNavigatorView itemNavigatorView) {
-        if (itemNavigatorView != null) {
-            navigatorContainer.setWidget(itemNavigatorView.asWidget());
+    public void setNavigatorView(final IsWidget navigator) {
+        if (navigator != null) {
+            navigatorContainer.setWidget(navigator.asWidget());
         } else {
             navigatorContainer.clear();
         }

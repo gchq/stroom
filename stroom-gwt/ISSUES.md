@@ -1499,6 +1499,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   October 2026 in wave 3's audit)~~ Fixed: Accept is `button--contained-green` and Reject stays
   `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. Delete
   both rule sets once removals are allowed.
+* Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button` and the empty
+  `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the item navigator
+  and item selection became components, `item-navigator.css` and `item-selection.css`). Delete them
+  once removals are allowed.
+* ~~The item selection dialog's spinner (a data viewer's "Select Record") had no accessible name:
+  its name label was never given text (found 25 October 2026 in wave 4).~~ Fixed: the spinner is
+  named "Item number" in `ItemSelection.ui.xml`; story `Widgets/Editors & Viewers/ItemNavigator`
+  `SelectRecord` finds it by that name.
 * ~~A link in a stream's Info tab (`DataPresenter`) or a pipeline processor's details
   (`ProcessorPresenter`) opened its stream once for every time the info had been loaded or a
   row selected (found 25 October 2026 in wave 3's audit; older): `OpenLinkUtil.addClickHandler`
