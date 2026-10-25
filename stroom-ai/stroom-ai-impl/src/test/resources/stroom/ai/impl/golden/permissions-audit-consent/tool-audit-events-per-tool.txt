@@ -366,6 +366,9 @@
     }
   }
 
+## list_visualisations {}
+(nothing recorded)
+
 ## ls {"path":"/"}
 (nothing recorded)
 
@@ -492,6 +495,9 @@
       "success" : true
     }
   }
+
+## propose_visualisation {}
+(nothing recorded)
 
 ## read_document {"uuid":"xslt-uuid"}
 - audit: documentViewed(1, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}, "Read by the read_document tool")

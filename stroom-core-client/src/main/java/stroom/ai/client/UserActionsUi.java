@@ -24,9 +24,11 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -43,6 +45,9 @@ final class UserActionsUi {
     /// A dashboard the agent proposed, built from StroomQL, which the button opens Stroom's New Dashboard dialog to
     /// create.
     static final String CREATE_DASHBOARD = "create_dashboard";
+    /// A chart the agent planned, drawn with ECharts, which the button opens Stroom's New Visualisation dialog to
+    /// create, then adds to the dashboard (or the query's show clause), unsaved.
+    static final String CREATE_VISUALISATION = "create_visualisation";
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
@@ -167,6 +172,8 @@ final class UserActionsUi {
             return "Create query…";
         } else if (CREATE_DASHBOARD.equals(action)) {
             return "Create dashboard…";
+        } else if (CREATE_VISUALISATION.equals(action)) {
+            return "Create visualisation…";
         } else if (APPLY_CODE_CHANGE.equals(action) || APPLY_DOCUMENTATION_CHANGE.equals(action)) {
             return "Review and apply…";
         } else if (APPLY_QUERY_CHANGE.equals(action)) {
@@ -175,6 +182,110 @@ final class UserActionsUi {
             return "Apply to dashboard";
         }
         return "Do it";
+    }
+
+    /// Quotes text as a StroomQL string, e.g. a Visualisation's name in a show clause.
+    ///
+    /// @param text The text.
+    /// @return The text in double quotes, with any quotes or backslashes in it escaped.
+    static String quoteStroomQl(final String text) {
+        return "\"" + NullSafe.string(text).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+
+    /// Puts a show clause in a StroomQL query: in place of the show clause it has (from that clause to the end, as
+    /// show is the last clause), or at its end.
+    ///
+    /// @param query  The query.
+    /// @param clause The show clause, e.g. `show "Chat user connections" (source = "Sender")`.
+    /// @return The query with the clause.
+    static String withShowClause(final String query, final String clause) {
+        final String text = NullSafe.string(query);
+        final String[] lines = text.split("\n", -1);
+        final StringBuilder sb = new StringBuilder();
+        for (final String line : lines) {
+            final String start = line.trim().toLowerCase(Locale.ROOT);
+            if (start.equals("show") || start.startsWith("show ") || start.startsWith("show\t")) {
+                break;
+            }
+            sb.append(line).append('\n');
+        }
+        String kept = sb.toString();
+        while (kept.endsWith("\n\n") || (kept.endsWith("\n") && kept.trim().isEmpty())) {
+            kept = kept.substring(0, kept.length() - 1);
+        }
+        if (!kept.isEmpty() && !kept.endsWith("\n")) {
+            kept = kept + "\n";
+        }
+        return kept + clause + (text.endsWith("\n")
+                ? "\n"
+                : "");
+    }
+
+    /// Says in a sentence how a visualisation drew, from the render report it sent (see `stroom.report`): what it
+    /// drew, what it left out, or why it failed. It never repeats data values: the report has none.
+    ///
+    /// @param report The report, as plain Java (maps, lists, strings, doubles).
+    /// @return The sentence.
+    static String renderReportSummary(final Map<String, Object> report) {
+        final String status = String.valueOf(NullSafe.map(report).get("status"));
+        if (NullSafe.map(report).isEmpty()) {
+            return "It sent a report Stroom couldn't read.";
+        }
+        if ("error".equals(status)) {
+            return "It failed to draw: " + shorten(String.valueOf(report.get("error")), 300);
+        }
+        if ("empty".equals(status)) {
+            return "It drew nothing yet: the table has no rows. It will draw when the table has some.";
+        }
+        final StringBuilder sb = new StringBuilder();
+        if ("nothing-drawn".equals(status)) {
+            sb.append("It drew nothing");
+        } else if ("dom".equals(report.get("source"))) {
+            sb.append("It drew ").append(count(report.get("elementCount"))).append(" elements");
+        } else if (report.get("nodes") instanceof Number) {
+            sb.append("It drew ").append(count(report.get("nodes"))).append(" nodes and ")
+                    .append(count(report.get("links"))).append(" links");
+        } else {
+            sb.append("It drew ").append(count(report.get("points"))).append(" points");
+            if (report.get("series") instanceof final Number series && series.intValue() > 1) {
+                sb.append(" in ").append(count(series)).append(" series");
+            }
+        }
+        if (report.get("library") != null && report.get("libraryVersion") != null) {
+            sb.append(" (").append(report.get("library")).append(" ").append(report.get("libraryVersion"))
+                    .append(")");
+        }
+        if (report.get("droppedRows") instanceof final Map<?, ?> dropped && !dropped.isEmpty()) {
+            sb.append(", leaving out ");
+            boolean first = true;
+            for (final Map.Entry<?, ?> entry : dropped.entrySet()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                sb.append(count(entry.getValue())).append(" rows (").append(entry.getKey()).append(")");
+                first = false;
+            }
+        }
+        sb.append(".");
+        if (report.get("warnings") instanceof final List<?> warnings && !warnings.isEmpty()) {
+            sb.append(" ").append(shorten(String.valueOf(warnings.get(0)), 200));
+            if (warnings.size() > 1) {
+                sb.append(" (+").append(warnings.size() - 1).append(" more)");
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String count(final Object value) {
+        return value instanceof final Number number
+                ? String.valueOf(number.longValue())
+                : "?";
+    }
+
+    private static String shorten(final String text, final int max) {
+        return text.length() <= max
+                ? text
+                : text.substring(0, max - 1) + "…";
     }
 
     /// @param editableWhenProposed True if the user could edit the dashboard when the change was proposed.
@@ -201,11 +312,14 @@ final class UserActionsUi {
     /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
     /// @param query For set_expression, the query's expression as the server wrote it ([#expression(Object)]), or
     ///              null.
-    /// @param doc   For set_setting of a document, the document as the server wrote it (`type`, `uuid` and
-    ///              `name`), or null.
+    /// @param doc   For set_setting of a document, or the Visualisation of add_vis or set_vis_settings, the
+    ///              document as the server wrote it (`type`, `uuid` and `name`), or null.
     /// @return The operation, for the dashboard to apply.
     static TableChange tableChange(final Function<String, String> field, final Object query, final Object doc) {
-        return TableChange.builder(field.apply("op"))
+        final String op = field.apply("op");
+        // A Visualisation's settings are given as a JSON object, which the field gives as its JSON.
+        final boolean vis = TableChange.ADD_VIS.equals(op) || TableChange.SET_VIS_SETTINGS.equals(op);
+        return TableChange.builder(op)
                 .column(field.apply("column"))
                 .level(number(field.apply("level")))
                 .name(field.apply("name"))
@@ -223,7 +337,9 @@ final class UserActionsUi {
                 .target(field.apply("target"))
                 .targetId(field.apply("target_id"))
                 .setting(field.apply("setting"))
-                .value(field.apply("value"))
+                .value(vis
+                        ? field.apply("settings")
+                        : field.apply("value"))
                 .ref(field.apply("ref"))
                 .doc(doc instanceof final Map<?, ?> map
                      && map.get("type") instanceof final String type
@@ -237,6 +353,7 @@ final class UserActionsUi {
                 .bold("true".equals(field.apply("bold")))
                 .italic("true".equals(field.apply("italic")))
                 .hide("true".equals(field.apply("hide")))
+                .placement(field.apply("placement"))
                 .build();
     }
 

@@ -244,6 +244,20 @@ public class DocumentAccess {
         }
     }
 
+    /// @param docRef A document.
+    /// @return True if the user can edit it. False if they can't, or if checking fails (failing closed).
+    public boolean canEdit(final DocRef docRef) {
+        if (docRef == null || docRef.getUuid() == null) {
+            return false;
+        }
+        try {
+            return securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check Edit on " + docRef, e);
+            return false;
+        }
+    }
+
     /// @param docRef A document the user can view.
     /// @return The node for it in the Explorer tree, if it is in the tree.
     public Optional<ExplorerNode> node(final DocRef docRef) {

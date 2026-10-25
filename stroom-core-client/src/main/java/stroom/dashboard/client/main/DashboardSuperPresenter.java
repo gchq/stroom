@@ -118,10 +118,11 @@ public class DashboardSuperPresenter
         return null;
     }
 
-    /// @return A hash of the dashboard as edited (its description, as the AI chat is given it), to tell whether it
-    /// has changed since the chat proposed a change to it.
+    /// @return A hash of the dashboard as edited (its description, as the AI chat is given it, without the
+    /// Visualisations' render reports, which change as they render), to tell whether it has changed since the chat
+    /// proposed a change to it.
     public String aiDashboardHash() {
-        return AiTabSnapshotPart.hashText(dashboardPresenter.getDescription());
+        return AiTabSnapshotPart.hashText(dashboardPresenter.getComparableDescription());
     }
 
     /// @return For each change the AI chat applied here and that hasn't been undone, the hash of the dashboard just

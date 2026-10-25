@@ -52,6 +52,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -73,7 +74,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 ///
 /// The change is checked against the dashboard as the user has it, from the latest snapshot of the tab: the table
 /// and each column it names must exist, and each expression must be valid (with the parser the table tool's eval
-/// uses, and the data source's fields where they can be read). An invalid change is refused with the reason, so
+/// uses, and the data source's fields where they can be read). A Visualisation a change adds or switches to must be
+/// one the user can view, and its settings must be controls it declares, with each `field` control's value a column
+/// of the table it is linked to. An invalid change is refused with the reason, so
 /// the agent can correct it. The hash of the dashboard's settings is kept with the button, which only applies
 /// while the dashboard still has them.
 class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
@@ -144,11 +147,12 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                              + "add_table or set_expression).")
                 .addStringProperty("table", "The table the change is to, if not the component: only a table an "
                                             + "earlier add_table in these changes adds. For add_text: the table "
-                                            + "it follows (default the component).")
+                                            + "it follows (default the component). For add_vis: the table it is "
+                                            + "linked to (default the component).")
                 .addIntegerProperty("level", "For group: the level to group at, from 1.")
                 .addStringProperty("name", "For add_column: the new column's name. For edit_column: its new name. "
-                                           + "For add_table or add_text: the new component's name. For rename: "
-                                           + "the new name.")
+                                           + "For add_table, add_text or add_vis: the new component's name. For "
+                                           + "rename: the new name.")
                 .addBooleanProperty("copy", "For add_table: true to start with the component's columns, false "
                                             + "(the default) for none.")
                 .addProperty("conditions", ArraySchema.builder()
@@ -174,7 +178,20 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addBooleanProperty("italic", "For add_format_rule: make matching rows italic.")
                 .addBooleanProperty("hide", "For add_format_rule: hide matching rows.")
                 .addStringProperty("target", "For rename or set_setting: the component (table, query or text), "
-                                             + "by its name as the user sees it; default the component.")
+                                             + "by its name as the user sees it; default the component. For "
+                                             + "set_vis_settings: the Visualisation component.")
+                .addStringProperty("visualisation", "For add_vis: the UUID of the Visualisation document to show. "
+                                                    + "For set_vis_settings: the UUID of one to switch to, if any.")
+                .addProperty("settings", ObjectSchema.builder()
+                        .description("For add_vis or set_vis_settings: the Visualisation's settings, as an object "
+                                     + "of its control ids and their values as text, e.g. {\"category\": "
+                                     + "\"UserId\", \"value\": \"Count\"}. A field control's value is a column "
+                                     + "of the linked table. For set_vis_settings, only the controls to change; an "
+                                     + "empty value puts a control back to its default.")
+                        .build())
+                .addEnumProperty("placement", DashboardChanges.PLACEMENTS, "For add_vis: below (the default) for a "
+                                                                          + "new pane below the table, or tab for "
+                                                                          + "a tab beside it.")
                 .addStringProperty("setting", "For set_setting: the setting. " + settingsHelp())
                 .addStringProperty("value", "For set_setting: its value (true or false, a number, a pipeline's "
                                             + "UUID, a data source's name or UUID, a component's name, or none "
@@ -217,7 +234,13 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                  + "per event category: add_table, its columns, and a filter on the category "
                                  + "column); add_text, which adds a Text widget below the table (or a table added "
                                  + "before it, named as its table) showing the event of the selected row, that later "
-                                 + "set_setting changes can set up by naming it as their target; add_format_rule or "
+                                 + "set_setting changes can set up by naming it as their target; add_vis, which adds "
+                                 + "a Visualisation component linked to the table (or a table added before it), "
+                                 + "below it or as a tab beside it, showing an existing Visualisation document by its "
+                                 + "UUID (e.g. one of the content pack's D3 visualisations) with settings for its "
+                                 + "controls; set_vis_settings, "
+                                 + "which changes the controls of a Visualisation component, or the Visualisation it "
+                                 + "shows; add_format_rule or "
                                  + "remove_format_rule, for the table's conditional formatting (rows matching "
                                  + "conditions on its columns coloured, bold, italic or hidden); rename, which "
                                  + "renames any component and its tab; or set_setting, which changes a setting of "
@@ -297,8 +320,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .toList());
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
-        final List<Change> built = withComponents(withQueryExpressions(checked.changes(), table, problems),
-                settings.text(), tableName, problems);
+        final List<Change> built = withVisualisations(withComponents(withQueryExpressions(checked.changes(), table,
+                        problems), settings.text(), tableName, problems), checked, settings.text(),
+                NullSafe.list(tab.searches()), tableName, problems);
         if (!problems.isEmpty()) {
             return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
                                    + "\nCorrect it and propose it again.");
@@ -309,7 +333,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         arguments.put("component", tableName);
         arguments.put("component_id", table.getComponentId());
         arguments.put("changes", built.stream().map(Change::toMap).toList());
-        arguments.put("snapshot_hash", AiTabSnapshotPart.hashText(settings.text()));
+        // Not of the Visualisations' render reports, which change as they render.
+        arguments.put("snapshot_hash", AiTabSnapshotPart.hashText(
+                DashboardComponents.withoutRenderReports(settings.text())));
         NullSafe.consume(summary, text -> arguments.put("summary", text));
         final ToolUserAction action = new ToolUserAction("apply-dashboard-change-" + SEQUENCE.incrementAndGet(),
                 UserActions.APPLY_DASHBOARD_CHANGE, arguments);
@@ -341,16 +367,19 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         for (int i = 0; i < changes.size(); i++) {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
-            if (DashboardChanges.ADD_TABLE.equals(change.op()) || DashboardChanges.ADD_TEXT.equals(change.op())) {
+            if (DashboardChanges.ADD_TABLE.equals(change.op()) || DashboardChanges.ADD_TEXT.equals(change.op())
+                || DashboardChanges.ADD_VIS.equals(change.op())) {
                 final String key = change.name().toLowerCase(Locale.ROOT);
-                if (DashboardChanges.ADD_TEXT.equals(change.op())
+                if (!DashboardChanges.ADD_TABLE.equals(change.op())
                     && (added.containsKey(key) || DashboardComponents.find(components, change.name()).isPresent())) {
                     problems.add(prefix + "the dashboard already has a component '" + change.name() + "'. Give "
                                  + "another name.");
                 }
-                added.put(key, DashboardChanges.ADD_TABLE.equals(change.op())
-                        ? DashboardComponents.TABLE
-                        : DashboardComponents.TEXT);
+                added.put(key, switch (change.op()) {
+                    case DashboardChanges.ADD_TABLE -> DashboardComponents.TABLE;
+                    case DashboardChanges.ADD_VIS -> DashboardComponents.VISUALISATION;
+                    default -> DashboardComponents.TEXT;
+                });
             }
             if (!DashboardChanges.RENAME.equals(change.op()) && !DashboardChanges.SET_SETTING.equals(change.op())) {
                 resolved.add(change);
@@ -386,9 +415,11 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             if (setting == null) {
                 final List<String> keys = DashboardSettings.keys(type);
                 problems.add(prefix + type + " '" + targetName + "' has no setting '" + change.setting() + "'"
-                             + (keys.isEmpty()
-                        ? ", and its settings can't be changed here."
-                        : ". Its settings are: " + String.join(", ", keys) + "."));
+                             + (DashboardComponents.VISUALISATION.equals(type)
+                        ? ". Change a Visualisation's settings with set_vis_settings."
+                        : keys.isEmpty()
+                                ? ", and its settings can't be changed here."
+                                : ". Its settings are: " + String.join(", ", keys) + "."));
                 resolved.add(change);
                 continue;
             }
@@ -400,6 +431,141 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             }
         }
         return resolved;
+    }
+
+    // Checks each add_vis and set_vis_settings change: the Visualisation it shows must be one the user can view,
+    // and its settings controls the Visualisation declares, each field control's value a column of the table it is
+    // linked to. Resolves the Visualisation (with its name) and, for set_vis_settings, the component it changes.
+    // Adds why to the problems for any that can't be.
+    private List<Change> withVisualisations(final List<Change> changes,
+                                            final Checked checked,
+                                            final String dashboardText,
+                                            final List<AiTabSearch> searches,
+                                            final String tableName,
+                                            final List<String> problems) {
+        final List<Component> components = DashboardComponents.parse(dashboardText);
+        // The Visualisations read, by UUID; and the Visualisation components these changes add, by name (lower
+        // case), as added.
+        final Map<String, VisualisationDoc> visualisations = new HashMap<>();
+        final Map<String, Change> addedVis = new HashMap<>();
+        final List<Change> resolved = new ArrayList<>();
+        for (int i = 0; i < changes.size(); i++) {
+            final Change change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
+            if (DashboardChanges.ADD_VIS.equals(change.op())) {
+                final VisualisationDoc visualisation = visualisation(change.doc(), visualisations);
+                if (visualisation == null) {
+                    problems.add(prefix + "no Visualisation you can view has the UUID '"
+                                 + NullSafe.get(change.doc(), DocRef::getUuid) + "'. Give a Visualisation's UUID.");
+                    resolved.add(change);
+                    continue;
+                }
+                final String linked = NullSafe.nonBlankStringElse(change.table(), tableName);
+                final Change exact = change.toBuilder().doc(docRef(visualisation)).build();
+                visProblems(prefix, exact.settings(), visualisation, checked.columnsOf(change.table()), linked,
+                        problems);
+                addedVis.put(change.name().toLowerCase(Locale.ROOT), exact);
+                resolved.add(exact);
+                continue;
+            }
+            if (!DashboardChanges.SET_VIS_SETTINGS.equals(change.op())) {
+                resolved.add(change);
+                continue;
+            }
+            // The component: one these changes add (known by its name until it is added), or one the dashboard has.
+            final Change added = addedVis.get(change.target().toLowerCase(Locale.ROOT));
+            final Component component = added != null
+                    ? null
+                    : DashboardComponents.find(components, change.target()).orElse(null);
+            if (added == null && (component == null
+                                  || !DashboardComponents.VISUALISATION.equals(component.type()))) {
+                final List<Component> visComponents = components.stream()
+                        .filter(c -> DashboardComponents.VISUALISATION.equals(c.type()))
+                        .toList();
+                problems.add(prefix + "the dashboard has no Visualisation component '" + change.target() + "'. "
+                             + (visComponents.isEmpty()
+                        ? "It has none: add one with add_vis."
+                        : "Its Visualisation components are: " + DashboardComponents.describe(visComponents) + "."));
+                resolved.add(change);
+                continue;
+            }
+            final DocRef current = added != null
+                    ? added.doc()
+                    : component.visualisation();
+            final DocRef wanted = change.doc() != null
+                    ? change.doc()
+                    : current;
+            final VisualisationDoc visualisation = visualisation(wanted, visualisations);
+            if (visualisation == null) {
+                problems.add(prefix + (wanted == null
+                        ? "the component shows no Visualisation yet. Give the UUID of one to show (visualisation)."
+                        : "no Visualisation you can view has the UUID '" + wanted.getUuid() + "'."));
+                resolved.add(change);
+                continue;
+            }
+            final String linked = added != null
+                    ? NullSafe.nonBlankStringElse(added.table(), tableName)
+                    : component.table();
+            visProblems(prefix, change.settings(), visualisation, linkedColumns(linked, checked, searches, tableName),
+                    NullSafe.nonBlankStringElse(linked, "?"), problems);
+            resolved.add(change.toBuilder()
+                    .targetId(NullSafe.get(component, Component::id))
+                    .doc(change.doc() == null
+                            ? null
+                            : docRef(visualisation))
+                    .build());
+        }
+        return resolved;
+    }
+
+    // Reads a Visualisation the user can view, once per UUID, or gives null if there is no such one.
+    private VisualisationDoc visualisation(final DocRef docRef, final Map<String, VisualisationDoc> visualisations) {
+        if (docRef == null || NullSafe.isBlankString(docRef.getUuid())) {
+            return null;
+        }
+        return visualisations.computeIfAbsent(docRef.getUuid().strip(), uuid -> documentAccess
+                .read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class)
+                .orElse(null));
+    }
+
+    private static DocRef docRef(final VisualisationDoc visualisation) {
+        return new DocRef(VisualisationDoc.TYPE, visualisation.getUuid(), visualisation.getName());
+    }
+
+    // Adds what is wrong with a Visualisation's settings to the problems.
+    private static void visProblems(final String prefix,
+                                    final Map<String, String> settings,
+                                    final VisualisationDoc visualisation,
+                                    final List<String> columns,
+                                    final String table,
+                                    final List<String> problems) {
+        DashboardChanges.visSettingsProblems(settings, DashboardChanges.visControls(visualisation.getSettings()),
+                        columns, NullSafe.nonBlankStringElse(visualisation.getName(), visualisation.getUuid()),
+                        "table '" + table + "'")
+                .forEach(problem -> problems.add(prefix + problem));
+    }
+
+    // The columns of the table a Visualisation is linked to: as these changes leave them, for the proposal's table
+    // or one they add, else as the dashboard's searches have them; null if they aren't known.
+    private static List<String> linkedColumns(final String table,
+                                              final Checked checked,
+                                              final List<AiTabSearch> searches,
+                                              final String tableName) {
+        if (table == null) {
+            return null;
+        }
+        final List<String> known = table.equalsIgnoreCase(tableName)
+                ? checked.columnsOf(null)
+                : checked.columnsOf(table);
+        if (known != null) {
+            return known;
+        }
+        return searches.stream()
+                .filter(search -> table.equals(NullSafe.nonBlankStringElse(search.getName(),
+                        search.getComponentId())))
+                .findFirst()
+                .map(search -> NullSafe.list(search.getColumns()))
+                .orElse(null);
     }
 
     // Checks a setting's value, resolving any document or component it names.
