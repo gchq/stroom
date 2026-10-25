@@ -202,11 +202,50 @@ public class MarkdownConverter {
             $wnd.Prism.highlightAllUnder(markdownDiv);
         }
         this.@stroom.entity.client.presenter.MarkdownConverter::nativeCopyHints(*)(markdownDiv);
+        this.@stroom.entity.client.presenter.MarkdownConverter::nativeKeepCellWordsWhole(*)(markdownDiv);
         if (copyIcon) {
             this.@stroom.entity.client.presenter.MarkdownConverter::nativeCopyButtons(*)(markdownDiv, copyIcon);
         }
         this.@stroom.entity.client.presenter.MarkdownConverter::nativeSections(*)(markdownDiv);
         return markdownDiv.innerHTML;
+    }-*/;
+
+    /// Keeps each run of text without a space in a table cell on one line, when it holds a character a browser may
+    /// break a line after (a hyphen, a slash, ...), e.g. `2026-10-25` (asked for by the user); a cell still wraps at
+    /// its spaces. CSS can't stop a break after a hyphen alone, so each such run is put in a span that doesn't wrap.
+    /// Its text is as it was, so what is copied is too.
+    ///
+    /// @param container The element holding the converted html.
+    private native void nativeKeepCellWordsWhole(final Element container) /*-{
+        var doc = container.ownerDocument;
+        var breakable = /[^\s\w]/;
+        Array.prototype.forEach.call(container.querySelectorAll('td, th'), function (cell) {
+            var walker = doc.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+            var texts = [];
+            while (walker.nextNode()) {
+                texts.push(walker.currentNode);
+            }
+            texts.forEach(function (text) {
+                var parts = text.nodeValue.split(/(\s+)/);
+                if (!parts.some(function (part) {
+                    return /\S/.test(part) && breakable.test(part);
+                })) {
+                    return;
+                }
+                var fragment = doc.createDocumentFragment();
+                parts.forEach(function (part) {
+                    if (/\S/.test(part) && breakable.test(part)) {
+                        var whole = doc.createElement('span');
+                        whole.className = 'markdown-nowrap';
+                        whole.textContent = part;
+                        fragment.appendChild(whole);
+                    } else if (part) {
+                        fragment.appendChild(doc.createTextNode(part));
+                    }
+                });
+                text.parentNode.replaceChild(fragment, text);
+            });
+        });
     }-*/;
 
     /// Marks each code span (code not in a block) as copied by a click, with a hint saying so (asked for by the
@@ -239,7 +278,15 @@ public class MarkdownConverter {
             var wrapper = doc.createElement('div');
             wrapper.className = 'markdown-copyable';
             block.parentNode.insertBefore(wrapper, block);
-            wrapper.appendChild(block);
+            if (block.tagName === 'TABLE') {
+                // A table too wide for the page scrolls sideways in a box of its own, its button staying put.
+                var scroll = doc.createElement('div');
+                scroll.className = 'markdown-table-scroll';
+                scroll.appendChild(block);
+                wrapper.appendChild(scroll);
+            } else {
+                wrapper.appendChild(block);
+            }
             var button = doc.createElement('button');
             button.type = 'button';
             button.className = 'markdown-copy';

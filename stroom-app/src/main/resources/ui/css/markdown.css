@@ -83,7 +83,7 @@
 }
 
 /* A table's button at the table's own top right, not the page's. */
-.markdown-copyable:has(> table) {
+.markdown-copyable:has(> .markdown-table-scroll) {
   width: fit-content;
   max-width: 100%;
 }
@@ -310,17 +310,29 @@
   margin: 1.5em 0;
 }
 
-/* A table fits the width it has where it can, its cells wrapping, a long word or path too, rather than running
-   off the side. */
+/* A table fits the width it has where it can, its cells wrapping only at spaces, so a word, a date (2026-10-25)
+   or a path stays whole (asked for by the user); a table wider than that scrolls sideways in its own box. */
 .markdown table {
   border-collapse: collapse;
   border: 1px solid var(--markdown-tbl__border-color);
   max-width: 100%;
 }
 
-.markdown table th,
-.markdown table td {
-  overflow-wrap: anywhere;
+.markdown-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* A run of text without a space kept on one line (see MarkdownConverter.nativeKeepCellWordsWhole). */
+.markdown-nowrap {
+  white-space: nowrap;
+}
+
+/* Text outside a table breaks a word only when it is wider than the whole line (e.g. a long URL), so nothing runs
+   past the page's edge, where it would be cut off. */
+.markdown p,
+.markdown li {
+  overflow-wrap: break-word;
 }
 
 .markdown table th {
