@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
@@ -38,6 +39,7 @@ import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.text.TextPresenter;
 import stroom.dashboard.client.vis.VisPresenter;
+import stroom.dashboard.shared.AbstractQueryComponentSettings;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -46,7 +48,6 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConstraints;
-import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -1139,6 +1140,8 @@ public class DashboardPresenter
                 }
             } else if (component instanceof final VisPresenter visPresenter) {
                 describeVis(sb, visPresenter, withRenderReports);
+            } else if (component instanceof final EmbeddedQueryPresenter embeddedQuery) {
+                describeEmbeddedQuery(sb, embeddedQuery);
             }
             final String settings = describeSettings(NullSafe.get(component.getComponentConfig(),
                     ComponentConfig::getSettings));
@@ -1163,7 +1166,7 @@ public class DashboardPresenter
             if (table.overrideMaxStringFieldLength()) {
                 parts.add("maxStringFieldLength " + table.getMaxStringFieldLength());
             }
-        } else if (settings instanceof final QueryComponentSettings query) {
+        } else if (settings instanceof final AbstractQueryComponentSettings query) {
             final Automate automate = query.getAutomate();
             parts.add("queryOnOpen " + (automate != null && automate.isOpen()));
             parts.add("autoRefresh " + (automate != null && automate.isRefresh()));
@@ -1179,6 +1182,17 @@ public class DashboardPresenter
             return null;
         }
         return String.join("; ", parts);
+    }
+
+    // An embedded query: the Query it shows by reference, if it does, and its StroomQL, between lines of three
+    // backticks.
+    private static void describeEmbeddedQuery(final StringBuilder sb, final EmbeddedQueryPresenter embeddedQuery) {
+        final DocRef referenced = embeddedQuery.getReferencedQuery();
+        sb.append("Query: ").append(referenced == null
+                ? "embedded in the dashboard"
+                : "Query " + describeDoc(referenced) + " by reference").append('\n');
+        sb.append("StroomQL:\n```\n").append(NullSafe.string(embeddedQuery.getQueryText()).strip())
+                .append("\n```\n");
     }
 
     // A Visualisation component: the Visualisation it shows, the table it is linked to, its settings as a JSON
@@ -1382,6 +1396,24 @@ public class DashboardPresenter
                 } else {
                     added.put(NullSafe.string(change.getName()).toLowerCase(), vis);
                 }
+            } else if (TableChange.SET_QUERY.equals(change.getOp())) {
+                final Component target = change.getTargetId() == null
+                        ? null
+                        : components.get(change.getTargetId());
+                if (!(target instanceof final EmbeddedQueryPresenter embeddedQuery)) {
+                    failed = prefix + "there is no embedded query '" + NullSafe.string(change.getTargetId()) + "'.";
+                } else if (!Objects.equals(NullSafe.string(embeddedQuery.getQueryText()).strip(),
+                        NullSafe.string(change.getRef()).strip())) {
+                    failed = prefix + "the embedded query's StroomQL has changed since this was proposed.";
+                } else {
+                    if (!configsBefore.containsKey(target.getId())) {
+                        configsBefore.put(target.getId(), ComponentSettingChanges.snapshot(target));
+                    }
+                    final String problem = embeddedQuery.setQueryText(change.getValue());
+                    failed = problem == null
+                            ? null
+                            : prefix + problem;
+                }
             } else if (TableChange.RENAME.equals(change.getOp()) || TableChange.SET_SETTING.equals(change.getOp())
                        || TableChange.SET_VIS_SETTINGS.equals(change.getOp())) {
                 final Component target = change.getTargetId() != null
@@ -1433,7 +1465,8 @@ public class DashboardPresenter
             query.onChange();
         }
         syncSettingsDialogs(component, configsBefore.keySet());
-        if (undoKey != null && before != null) {
+        // A change to an embedded query, rather than a table, is undone by putting its settings back.
+        if (undoKey != null && (before != null || !configsBefore.isEmpty())) {
             appliedChanges.put(undoKey, new AppliedChanges(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
                     added.values().stream().map(Component::getId).toList(), configsBefore, descriptionBefore,
@@ -1694,7 +1727,8 @@ public class DashboardPresenter
             query.setExpression(undo.expressionBefore);
             query.onChange();
         }
-        final boolean restored = TableChange.restore(components.get(undo.componentId), undo.before);
+        final boolean restored = undo.before == null
+                                 || TableChange.restore(components.get(undo.componentId), undo.before);
         syncSettingsDialogs(components.get(undo.componentId), undo.configsBefore.keySet());
         return restored;
     }

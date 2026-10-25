@@ -40,6 +40,7 @@ import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -253,7 +254,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(COMPONENT_ARG, "The table the changes are for, by its name as the user "
                                                           + "sees it. Changes to other components name them as "
-                                                          + "their target.")
+                                                          + "their target. Or an embedded query's name, for "
+                                                          + "set_setting and rename changes only.")
                         .addProperty(CHANGES_ARG, ArraySchema.builder()
                                 .items(change)
                                 .description("The changes, applied in order: at most "
@@ -264,6 +266,11 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .required(COMPONENT_ARG, CHANGES_ARG, SUMMARY_ARG)
                         .build())
                 .build();
+    }
+
+    // An embedded query's search, in a dashboard tab: its results are a StroomQL query's.
+    static boolean isEmbeddedQuery(final AiTabSearch search) {
+        return search.getLive() instanceof QueryTableContext || search.getResults() instanceof QueryTableContext;
     }
 
     @Override
@@ -299,7 +306,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), component);
         if (table == null) {
             return ToolResult.text(
-                    "The dashboard has no table '" + component + "'. Its tables are: "
+                    "The dashboard has no table or embedded query '" + component + "'. Its tables and embedded "
+                    + "queries are: "
                     + String.join(", ", NullSafe.list(tab.searches()).stream()
                      .map(search -> "'" + NullSafe.nonBlankStringElse(search.getName(), search.getComponentId())
                                     + "'")
@@ -314,6 +322,20 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         }
 
         final String tableName = NullSafe.nonBlankStringElse(table.getName(), table.getComponentId());
+        if (isEmbeddedQuery(table)) {
+            final List<String> notSettings = changes.stream()
+                    .map(Change::op)
+                    .filter(op -> !DashboardChanges.SET_SETTING.equals(op) && !DashboardChanges.RENAME.equals(op))
+                    .distinct()
+                    .toList();
+            if (!notSettings.isEmpty()) {
+                return ToolResult.text("No change was proposed: '" + tableName + "' is an embedded query, whose "
+                                       + "StroomQL makes its results, so it takes only " + DashboardChanges.SET_SETTING
+                                       + " (e.g. queryOnOpen) and " + DashboardChanges.RENAME + " changes, not "
+                                       + String.join(", ", notSettings) + ". Its StroomQL is in the dashboard's "
+                                       + "description: tell the user the StroomQL to use instead.");
+            }
+        }
         final Checked checked = DashboardChanges.check(changes, NullSafe.list(table.getColumns()), tableName,
                 NullSafe.list(tab.searches()).stream()
                         .map(search -> NullSafe.nonBlankStringElse(search.getName(), search.getComponentId()))
@@ -674,7 +696,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     private static String settingsHelp() {
         final List<String> parts = new ArrayList<>();
         for (final String type : List.of(DashboardComponents.TABLE, DashboardComponents.QUERY,
-                DashboardComponents.TEXT)) {
+                DashboardComponents.EMBEDDED_QUERY, DashboardComponents.TEXT)) {
             parts.add(type + ": " + String.join("; ", DashboardSettings.SETTINGS.stream()
                     .filter(setting -> setting.componentType().equals(type))
                     .map(setting -> setting.key() + " (" + setting.label() + ")")

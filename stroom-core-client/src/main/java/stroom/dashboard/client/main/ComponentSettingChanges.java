@@ -21,6 +21,7 @@ import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -120,6 +121,8 @@ public final class ComponentSettingChanges {
                 changed = table(table, setting, value, ref, doc);
             } else if (current instanceof final QueryComponentSettings query) {
                 changed = query(query, setting, value, doc);
+            } else if (current instanceof final EmbeddedQueryComponentSettings embeddedQuery) {
+                changed = embeddedQuery(embeddedQuery, setting, value);
             } else if (current instanceof final TextComponentSettings text) {
                 changed = text(text, setting, value, ref, doc);
             } else {
@@ -191,6 +194,25 @@ public final class ComponentSettingChanges {
                 }
                 builder.dataSource(doc);
             }
+            case "queryOnOpen" -> builder.automate(automate.copy().open(Boolean.parseBoolean(value)).build());
+            case "autoRefresh" -> builder.automate(automate.copy().refresh(Boolean.parseBoolean(value)).build());
+            case "refreshInterval" -> builder.automate(automate.copy().refreshInterval(value).build());
+            default -> {
+                return null;
+            }
+        }
+        return builder.build();
+    }
+
+    /// @return An embedded query's settings with one changed, or null if it has no such setting.
+    static ComponentSettings embeddedQuery(final EmbeddedQueryComponentSettings settings,
+                                           final String setting,
+                                           final String value) {
+        final Automate automate = settings.getAutomate() != null
+                ? settings.getAutomate()
+                : Automate.builder().build();
+        final EmbeddedQueryComponentSettings.Builder builder = settings.copy();
+        switch (setting) {
             case "queryOnOpen" -> builder.automate(automate.copy().open(Boolean.parseBoolean(value)).build());
             case "autoRefresh" -> builder.automate(automate.copy().refresh(Boolean.parseBoolean(value)).build());
             case "refreshInterval" -> builder.automate(automate.copy().refreshInterval(value).build());
