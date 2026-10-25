@@ -49,7 +49,7 @@ public final class InfoPopoverCellStories {
 
     private static final String BODY = "Popover body content";
     // The trigger is an icon in a table cell, found by its cell's class
-    private static final String ICON = ".svgCell-icon";
+    private static final String ICON = ".icon-cell";
     private static final String NEIGHBOUR = "popover-neighbour";
 
     private InfoPopoverCellStories() {

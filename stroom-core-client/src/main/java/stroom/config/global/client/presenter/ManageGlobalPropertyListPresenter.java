@@ -365,7 +365,7 @@ public class ManageGlobalPropertyListPresenter
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((ConfigPropertyRow row) ->
-                                row.getNameAsString(), getEventBus())
+                                row.getNameAsString())
                         .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),

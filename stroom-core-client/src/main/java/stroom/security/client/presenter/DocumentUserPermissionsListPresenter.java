@@ -341,7 +341,7 @@ public class DocumentUserPermissionsListPresenter
                                                                 SafeHtmlUtils.fromTrustedString(typeIcon.getSvg())),
                                                 Attribute.title(type.getDisplayType()),
                                                 Attribute.className(
-                                                        "svg-icon svgCell-icon create-document-types-icon "
+                                                        "svg-icon icon-cell create-document-types-icon "
                                                         + typeIcon.getClassName()));
                                     });
                                 },

@@ -17,7 +17,7 @@
 package stroom.floormap.client.presenter;
 
 import stroom.cell.info.client.CellIcon;
-import stroom.cell.info.client.SvgCell;
+import stroom.cell.info.client.IconCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
@@ -171,7 +171,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         // Highlight toggle. A button cell, so clicking the eye flips the group's
         // highlight without also having to select the row.
         final Column<FloorMapGroup, CellIcon> highlightColumn =
-                new Column<>(new SvgCell()) {
+                new Column<>(new IconCell()) {
                     @Override
                     public CellIcon getValue(final FloorMapGroup group) {
                         return highlightIcon(isShown(group));

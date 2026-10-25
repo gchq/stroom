@@ -98,7 +98,7 @@ public class LinkedEventPresenter
         view.setDataView(dataPresenter.getView());
 
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.copyTextColumnBuilder(EventId::toString, getEventBus())
+                DataGridUtil.copyTextColumnBuilder(EventId::toString)
                         .build(),
                 "Id",
                 ColumnSizeConstants.MEDIUM_COL);

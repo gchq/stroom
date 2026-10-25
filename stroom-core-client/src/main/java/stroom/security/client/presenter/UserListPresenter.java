@@ -279,8 +279,7 @@ public class UserListPresenter
                                         this,
                                         copyPermissionsPopupFunction),
                                 null,
-                                (User user) -> UserAndGroupHelper.buildActionsForMsg(user),
-                                this))
+                                (User user) -> UserAndGroupHelper.buildActionsForMsg(user)))
 //                .enabledWhen(User::isEnabled)
                 .build();
 

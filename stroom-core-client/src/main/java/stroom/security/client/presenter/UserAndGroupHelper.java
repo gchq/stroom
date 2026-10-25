@@ -73,7 +73,7 @@ public class UserAndGroupHelper {
     }
 
     public static SafeHtml buildSingleIconHeader(final boolean isGroup) {
-        final String iconClassName = "svgCell-icon";
+        final String iconClassName = "icon-cell";
         final SvgImage icon = isGroup
                 ? SvgImage.USERS
                 : SvgImage.USER;
@@ -91,7 +91,7 @@ public class UserAndGroupHelper {
     }
 
     public static SafeHtml buildUserAndGroupIconHeader() {
-        final String iconClassName = "svgCell-icon";
+        final String iconClassName = "icon-cell";
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {

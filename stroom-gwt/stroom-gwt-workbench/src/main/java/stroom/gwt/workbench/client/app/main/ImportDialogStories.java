@@ -140,7 +140,7 @@ public final class ImportDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     uploadFile(play);
-                    play.click(confirmDialog(screen).querySelector(".svgCell-icon, .infoColumn, [title='Info']"));
+                    play.click(confirmDialog(screen).querySelector(".icon-cell, .infoColumn, [title='Info']"));
                     play.waitFor(() -> play.expect(screen.getByText("Will overwrite the existing document"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Fields Updated")).toBeInTheDocument();

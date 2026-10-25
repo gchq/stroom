@@ -199,7 +199,7 @@ public final class ProcessorFilterListStories {
     }
 
     // Opens the filter row's Info popover (ProcessorInfoBuilder), shown on the page's body.
-    // The info cell is an SvgCell titled 'Info'
+    // The info cell is an IconCell titled 'Info'
     private static Play openInfo(final Play play) {
         play.click(play.findAllByTitle("Info").nth(0));
         return play.screen();

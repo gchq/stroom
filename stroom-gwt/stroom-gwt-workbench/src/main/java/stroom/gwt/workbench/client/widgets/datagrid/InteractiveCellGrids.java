@@ -304,7 +304,8 @@ final class InteractiveCellGrids {
 
     static Widget actionMenuGrid(final StoryContext context) {
         final Spy onAction = context.fn(ON_ACTION);
-        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        // The cell asks for its menu with a MenuRequest, which the relay shows
+        StoryPopups.create(context).withMenuRequests();
         final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
@@ -317,7 +318,7 @@ final class InteractiveCellGrids {
                     .command(() -> onAction.call("copy", person.getName()))
                     .build());
             return items;
-        }, popups.getEventBus()::fireEvent);
+        });
         grid.addColumn(new Column<Person, Person>(cell) {
             @Override
             public Person getValue(final Person person) {

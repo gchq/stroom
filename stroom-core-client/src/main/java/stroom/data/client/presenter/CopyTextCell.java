@@ -27,19 +27,15 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.web.bindery.event.shared.EventBus;
 
-public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell {
+/// A text cell with a hover icon that copies its text to the clipboard ([Clipboard#writeText]).
+public class CopyTextCell extends AbstractCell<String> implements EventCell {
 
-    private final EventBus eventBus;
-
-    public CopyTextCell(final EventBus eventBus) {
+    /// Makes a cell that copies its text when its icon is pressed.
+    public CopyTextCell() {
         super(BrowserEvents.MOUSEDOWN);
-        this.eventBus = eventBus;
     }
 
     @Override
@@ -64,11 +60,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
         }
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> gwtEvent) {
-        eventBus.fireEvent(gwtEvent);
     }
 
     @Override

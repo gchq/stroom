@@ -19,7 +19,7 @@ package stroom.cell.info.client;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.MouseUtil;
@@ -33,7 +33,6 @@ import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
@@ -54,7 +53,6 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     private final Function<R, String> tooltipExtractor;
     private final Function<R, List<Item>> menuCreator;
     private final Function<R, String> menuNameExtractor;
-    private final HasHandlers hasHandlers;
 
     /// @param menuCreator       Function to create the menu items to display.
     /// @param tooltipExtractor  Function to supply the tooltip for the ellipses icon, or null for
@@ -63,35 +61,27 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     ///                          text, e.g. "Actions for user 'jbloggs'" (see
     ///                          [ShowMenuEvent.Builder#name]), or null (or a function giving null)
     ///                          for "Actions for row N".
-    /// @param hasHandlers       What the menu's [ShowMenuEvent] is fired on.
     public ActionMenuCell(final Function<R, List<Item>> menuCreator,
                           final Function<R, String> tooltipExtractor,
-                          final Function<R, String> menuNameExtractor,
-                          final HasHandlers hasHandlers) {
+                          final Function<R, String> menuNameExtractor) {
         super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
 
         this.menuCreator = menuCreator;
         this.tooltipExtractor = tooltipExtractor;
         this.menuNameExtractor = menuNameExtractor;
-        this.hasHandlers = hasHandlers;
     }
 
-    /**
-     * @param menuCreator      Function to create the menu items to display
-     * @param tooltipExtractor Function to supply the tooltip for the ellipses icon
-     */
+    /// @param menuCreator      Function to create the menu items to display.
+    /// @param tooltipExtractor Function to supply the tooltip for the ellipses icon, or null for
+    ///                         'Actions...'.
     public ActionMenuCell(final Function<R, List<Item>> menuCreator,
-                          final Function<R, String> tooltipExtractor,
-                          final HasHandlers hasHandlers) {
-        this(menuCreator, tooltipExtractor, null, hasHandlers);
+                          final Function<R, String> tooltipExtractor) {
+        this(menuCreator, tooltipExtractor, null);
     }
 
-    /**
-     * @param menuCreator Function to create the menu items to display
-     */
-    public ActionMenuCell(final Function<R, List<Item>> menuCreator,
-                          final HasHandlers hasHandlers) {
-        this(menuCreator, null, hasHandlers);
+    /// @param menuCreator Function to create the menu items to display.
+    public ActionMenuCell(final Function<R, List<Item>> menuCreator) {
+        this(menuCreator, null);
     }
 
     @Override
@@ -133,14 +123,13 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
         if (!NullSafe.hasItems(items)) {
             return;
         }
-        ShowMenuEvent
-                .builder()
-                .name(getMenuName(NullSafe.get(menuNameExtractor, func -> func.apply(row)), context))
-                .items(items)
-                .popupPosition(popupPosition)
-                .opener(button)
-                .allowCloseOnMoveLeft()
-                .fire(hasHandlers);
+        // The request bubbles up to the page's menu relay (see MenuRequest#relay)
+        MenuRequest.fireFromOpener(
+                button,
+                getMenuName(NullSafe.get(menuNameExtractor, func -> func.apply(row)), context),
+                items,
+                popupPosition,
+                true);
     }
 
     /// The accessible name of a row's menu: the name given, or else "Actions for row N", where N
@@ -178,9 +167,9 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
             // A button the grid's keyboard reaches (a row action), named by its title, that says it
             // opens a menu
             sb.append(RowActions.menuButton(
-                    "svgCell-button " + ACTION_MENU_CELL_CLASS_NAME,
+                    "icon-cell--button " + ACTION_MENU_CELL_CLASS_NAME,
                     tooltipText,
-                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "svgCell-icon")));
+                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "icon-cell")));
         }
     }
 }

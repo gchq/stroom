@@ -1243,7 +1243,7 @@ async function driveStep(step) {
       [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'tick-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'row-action') {
-    // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.svgCell-button` in the row — opens
+    // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.icon-cell--button` in the row — opens
     // a per-row menu (Dependencies: Open / Properties / Delete / Locate; Users: Open user…). Not a
     // button the survey offers, so it is a seed.
     const box = await page.evaluate((nth) => {
@@ -1251,7 +1251,7 @@ async function driveStep(step) {
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const rows = [...scope.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
       const row = rows[nth ?? 0];
-      const cell = row && [...row.querySelectorAll('.svgCell-button')].find((c) => c.offsetWidth > 0);
+      const cell = row && [...row.querySelectorAll('.icon-cell--button')].find((c) => c.offsetWidth > 0);
       if (!cell) return null;
       const r = cell.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };

@@ -21,9 +21,9 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
+import stroom.cell.info.client.IconCell;
 import stroom.cell.info.client.PercentBarCell;
 import stroom.cell.info.client.RedGreenTextCell;
-import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
 import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
@@ -155,7 +155,7 @@ public class DataGridUtil {
      */
     public static <T_ROW> Column<T_ROW, CellIcon> svgStatusColumn(
             final Function<T_ROW, CellIcon> cellValueExtractor) {
-        final Column<T_ROW, CellIcon> column = column(cellValueExtractor, () -> new SvgCell(false));
+        final Column<T_ROW, CellIcon> column = column(cellValueExtractor, () -> new IconCell(false));
         column.setCellStyleNames("statusIcon");
         return column;
     }
@@ -461,10 +461,9 @@ public class DataGridUtil {
      * @param <T_ROW>        The row type
      */
     public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> copyTextColumnBuilder(
-            final Function<T_ROW, String> valueExtractor,
-            final EventBus eventBus) {
+            final Function<T_ROW, String> valueExtractor) {
 
-        return new ColumnBuilder<T_ROW, String, Cell<String>>(valueExtractor, () -> new CopyTextCell(eventBus));
+        return new ColumnBuilder<T_ROW, String, Cell<String>>(valueExtractor, CopyTextCell::new);
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, Number, Cell<Number>> percentBarColumnBuilder(
@@ -645,7 +644,7 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, CellIcon, Cell<CellIcon>> cellIconColumnBuilder(
             final boolean isButton,
             final Function<T_ROW, CellIcon> valueExtractor) {
-        return new ColumnBuilder<T_ROW, CellIcon, Cell<CellIcon>>(valueExtractor, () -> new SvgCell(isButton));
+        return new ColumnBuilder<T_ROW, CellIcon, Cell<CellIcon>>(valueExtractor, () -> new IconCell(isButton));
     }
 
     public static HeadingBuilder headingBuilder(final String headingText) {

@@ -20,8 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
+import stroom.cell.info.client.IconCell;
 import stroom.cell.info.client.InfoColumn;
-import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxCell.Appearance;
 import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
@@ -303,7 +303,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addIconColumn() {
-        dataGrid.addColumn(new Column<ProcessorListRow, CellIcon>(new SvgCell()) {
+        dataGrid.addColumn(new Column<ProcessorListRow, CellIcon>(new IconCell()) {
             @Override
             public CellIcon getValue(final ProcessorListRow row) {
                 CellIcon icon = null;

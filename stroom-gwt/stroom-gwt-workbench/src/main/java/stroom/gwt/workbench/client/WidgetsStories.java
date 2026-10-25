@@ -30,7 +30,7 @@ import stroom.gwt.workbench.client.widgets.cellrenderers.DocRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocumentTypeCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.ExpanderCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.FeedRefCellStories;
-import stroom.gwt.workbench.client.widgets.cellrenderers.SvgCellStories;
+import stroom.gwt.workbench.client.widgets.cellrenderers.IconCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.TickBoxCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.UserRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.ValueSpinnerCellStories;
@@ -247,8 +247,8 @@ public final class WidgetsStories {
         ExpanderCellStories.addTo(registry);
         // Widgets/Cell Renderers/FeedRefCell
         FeedRefCellStories.addTo(registry);
-        // Widgets/Cell Renderers/SvgCell
-        SvgCellStories.addTo(registry);
+        // Widgets/Cell Renderers/IconCell
+        IconCellStories.addTo(registry);
         // Widgets/Cell Renderers/TickBoxCell
         TickBoxCellStories.addTo(registry);
         // Widgets/Cell Renderers/UserRefCell

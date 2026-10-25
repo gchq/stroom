@@ -25,7 +25,7 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.cell.info.client.CellIcon;
-import stroom.cell.info.client.SvgCell;
+import stroom.cell.info.client.IconCell;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
@@ -229,7 +229,7 @@ public class ExecutionScheduleManager
     private void createIconColumn() {
         dataGrid.addColumn(
             new OrderByColumn<ExecutionSchedule, CellIcon>(
-                new SvgCell(),
+                new IconCell(),
                 ExecutionScheduleFields.PARENT_DOC_TYPE,
                 false) {
                 @Override
@@ -274,7 +274,7 @@ public class ExecutionScheduleManager
     private void createEnabledColumn() {
 
         final OrderByColumn<ExecutionSchedule, CellIcon> enabledColumn = new OrderByColumn<ExecutionSchedule, CellIcon>(
-            new SvgCell(false),
+            new IconCell(false),
             ExecutionScheduleFields.ENABLED,
             false) {
             @Override

@@ -170,7 +170,7 @@ public final class FeedEditorStories {
                     play.click(DocEditors.tab(play, "Active Tasks"));
                     play.waitFor(() -> play.expect(play.getAllByText("Events Task Pipeline").count())
                             .toSatisfy("more than none", count -> ((Integer) count) > 0));
-                    play.click(play.querySelector(".svgCell-icon"));
+                    play.click(play.querySelector(".icon-cell"));
                     final Play info = play.within(screen.findByText("Key Data").closest("table"));
                     play.expect(info.getByText("Priority")).toBeInTheDocument();
                     play.expect(info.getByText("Feed")).toBeInTheDocument();

@@ -367,8 +367,7 @@ public abstract class AbstractMetaListPresenter
 
     void addCreatedColumn() {
         final Column<MetaRow, String> col = DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()),
-                        getEventBus())
+                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                 .withSorting(MetaFields.CREATE_TIME)
                 .defaultSortAscending(false)
                 .build();
@@ -398,8 +397,7 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(MetaRow::getMeta)
                                                 .map(Meta::getTypeName)
-                                                .orElse(""),
-                                getEventBus())
+                                                .orElse(""))
                         .withSorting(MetaFields.TYPE)
                         .build(),
                 "Type",

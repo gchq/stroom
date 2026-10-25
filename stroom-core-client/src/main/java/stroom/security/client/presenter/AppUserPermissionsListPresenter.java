@@ -277,8 +277,7 @@ public class AppUserPermissionsListPresenter
                                                 null),
                                 null,
                                 (AppUserPermissions appUsrPerms) ->
-                                        UserAndGroupHelper.buildActionsForMsg(appUsrPerms.getUserRef()),
-                                this))
+                                        UserAndGroupHelper.buildActionsForMsg(appUsrPerms.getUserRef())))
 //                .enabledWhen(User::isEnabled)
                 .build();
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar

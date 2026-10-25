@@ -189,8 +189,8 @@
 /* A column headed by an icon (or two), e.g. a tick box column's */
 .data-grid__header-cell--sortable .single-icon-column-header,
 .data-grid__header-cell--sortable .two-icon-column-header,
-.data-grid__header-cell--sortable .single-icon-column-header .svgCell-icon,
-.data-grid__header-cell--sortable .two-icon-column-header .svgCell-icon {
+.data-grid__header-cell--sortable .single-icon-column-header .icon-cell,
+.data-grid__header-cell--sortable .two-icon-column-header .icon-cell {
     cursor: pointer;
 }
 

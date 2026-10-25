@@ -117,7 +117,7 @@ public class ProfilePeriodListPresenter
     void addDays() {
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((ProfilePeriod ctr) ->
-                                NullSafe.get(ctr, ProfilePeriod::getDays, Days::toString), getEventBus())
+                                NullSafe.get(ctr, ProfilePeriod::getDays, Days::toString))
                         .build(),
                 "Days",
                 200);
@@ -126,7 +126,7 @@ public class ProfilePeriodListPresenter
     void addStartTime() {
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((ProfilePeriod ctr) ->
-                                NullSafe.get(ctr, ProfilePeriod::getStartTime, Time::toString), getEventBus())
+                                NullSafe.get(ctr, ProfilePeriod::getStartTime, Time::toString))
                         .build(),
                 "Start Time",
                 85);
@@ -135,7 +135,7 @@ public class ProfilePeriodListPresenter
     void addEndTime() {
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((ProfilePeriod ctr) ->
-                                NullSafe.get(ctr, ProfilePeriod::getEndTime, Time::toString), getEventBus())
+                                NullSafe.get(ctr, ProfilePeriod::getEndTime, Time::toString))
                         .build(),
                 "End Time",
                 85);
@@ -149,7 +149,7 @@ public class ProfilePeriodListPresenter
                             } else {
                                 return "" + profilePeriod.getMaxNodeThreads();
                             }
-                        }, getEventBus())
+                        })
                         .build(),
                 "Max Node Threads",
                 150);
@@ -163,7 +163,7 @@ public class ProfilePeriodListPresenter
                             } else {
                                 return "" + profilePeriod.getMaxClusterThreads();
                             }
-                        }, getEventBus())
+                        })
                         .build(),
                 "Max Cluster Threads",
                 150);

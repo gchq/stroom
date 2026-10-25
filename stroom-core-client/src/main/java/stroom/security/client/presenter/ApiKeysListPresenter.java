@@ -401,8 +401,7 @@ public class ApiKeysListPresenter
                                         null),
                                 null,
                                 (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildActionsForMsg(
-                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner)),
-                                this))
+                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner))))
 //                .enabledWhen(User::isEnabled)
                 .build();
 

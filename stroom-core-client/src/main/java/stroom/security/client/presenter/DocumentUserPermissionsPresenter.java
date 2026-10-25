@@ -236,7 +236,7 @@ public class DocumentUserPermissionsPresenter
                                                     .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
                                             Attribute.title(docType.getDisplayType()),
                                             Attribute.className(
-                                                    "svg-icon svgCell-icon " + icon.getClassName()))
+                                                    "svg-icon icon-cell " + icon.getClassName()))
                                     .italic(docType.getDisplayType())
                                     .append(" from: ")
                                     .append(pathStr);
@@ -274,7 +274,7 @@ public class DocumentUserPermissionsPresenter
                                             .append(SafeHtmlUtils.fromTrustedString(icon.getSvg())),
                                     Attribute.title(docType.getDisplayType()),
                                     Attribute.className(
-                                            "svg-icon svgCell-icon " + icon.getClassName()))
+                                            "svg-icon icon-cell " + icon.getClassName()))
                             .italic(docType.getDisplayType());
                 }
                 return htmlBuilder.toSafeHtml();

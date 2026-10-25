@@ -120,9 +120,9 @@ public class ActionCell<R> extends AbstractCell<R> {
                     : nameFunction.apply(row);
             // A button the grid's keyboard reaches (a row action), named by its title
             sb.append(RowActions.button(
-                    "svgCell-button",
+                    "icon-cell--button",
                     name,
-                    SvgImageUtil.toSafeHtml(cellIcon.getIcon(), "svgCell-icon")));
+                    SvgImageUtil.toSafeHtml(cellIcon.getIcon(), "icon-cell")));
         }
     }
 }

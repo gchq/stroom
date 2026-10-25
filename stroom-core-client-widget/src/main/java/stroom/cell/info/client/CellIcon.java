@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 
 import java.util.Objects;
 
-/// An icon shown in a table cell (e.g. by [SvgCell] or [ActionCell]): the icon, its name (its tooltip,
+/// An icon shown in a table cell (e.g. by [IconCell] or [ActionCell]): the icon, its name (its tooltip,
 /// and what a screen reader reads) and whether it is enabled (a disabled icon is drawn faded and, in
 /// a cell whose icons can be pressed, does nothing when pressed).
 ///

@@ -26,15 +26,15 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-public class SvgCell extends AbstractCell<CellIcon> {
+public class IconCell extends AbstractCell<CellIcon> {
 
     private final boolean isButton;
 
-    public SvgCell() {
+    public IconCell() {
         this(true);
     }
 
-    public SvgCell(final boolean isButton) {
+    public IconCell(final boolean isButton) {
         super(isButton
                 ? "click"
                 : null);
@@ -81,13 +81,13 @@ public class SvgCell extends AbstractCell<CellIcon> {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            String className = "svgCell-icon";
+            String className = "icon-cell";
             if (isButton) {
-                className += " svgCell-button";
+                className += " icon-cell--button";
             }
 
             if (!value.isEnabled()) {
-                className += " " + "svgCell-disabled";
+                className += " " + "icon-cell--disabled";
             }
 
             sb.append(SvgImageUtil.toSafeHtml(

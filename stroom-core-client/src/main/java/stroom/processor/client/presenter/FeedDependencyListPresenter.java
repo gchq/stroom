@@ -150,8 +150,7 @@ public class FeedDependencyListPresenter
 
     void addStreamTypeColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder(FeedDependency::getStreamType,
-                                getEventBus())
+                DataGridUtil.copyTextColumnBuilder(FeedDependency::getStreamType)
                         .build(),
                 "Type",
                 200);

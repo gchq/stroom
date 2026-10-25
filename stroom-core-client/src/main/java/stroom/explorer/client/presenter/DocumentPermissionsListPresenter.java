@@ -82,7 +82,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     private void addColumns() {
         // Icon
 //        final Column<FindResultWithPermissions, Preset> iconCol =
-//                new Column<FindResultWithPermissions, Preset>(new SvgCell()) {
+//                new Column<FindResultWithPermissions, Preset>(new IconCell()) {
 //                    @Override
 //                    public Preset getValue(final FindResultWithPermissions row) {
 //                        if (row != null && row.getFindResult() != null && row.getFindResult().getIcon() != null) {

@@ -220,7 +220,7 @@ Where a component sits:
   cell table, so its markup and classes are in 4, with the other lists (on the data grid).
 - A control's grid cell is in 4, not with the control: the value spinner's and tick box's cells
   are reached by the grid's keyboard pattern. Cells that only show something or act as buttons
-  (`ActionCell`, `CopyTextCell`, `SvgCell` and the like) are in 4 too.
+  (`ActionCell`, `CopyTextCell`, `IconCell` and the like) are in 4 too.
 - The term editor's fields are in 1; the expression tree around them is in 5.
 
 Order: 1, 2, 3, 4, 5, 6, with tidy-ups between.

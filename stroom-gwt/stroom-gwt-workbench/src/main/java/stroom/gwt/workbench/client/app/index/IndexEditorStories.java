@@ -149,7 +149,7 @@ public final class IndexEditorStories {
                     play.expect(play.getByRole("button", "Delete Selected Index Shards"))
                             .not().toHaveAttribute("aria-disabled");
                     // The info column's popup shows what isn't a column
-                    play.click(play.querySelector(".svgCell-icon"));
+                    play.click(play.querySelector(".icon-cell"));
                     final Play info = play.within(screen.findByText("Index UUID").closest("table"));
                     play.expect(info.getByText("Commit Document Count")).toBeInTheDocument();
                     play.expect(info.getByText("/data/index/1")).toBeInTheDocument();

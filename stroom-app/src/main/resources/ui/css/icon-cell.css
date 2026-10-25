@@ -14,24 +14,31 @@
  * limitations under the License.
  */
 
-.svgCell-icon {
+/*
+   The icon cell (stroom.cell.info.client.IconCell), named BEM style: an icon in a grid cell
+   (icon-cell), clickable (--button) or disabled (--disabled). ActionCell, ActionMenuCell and the
+   permission and user cells draw their icons with the same classes. Was SvgCell.css (svgCell-*).
+   svgCell-face is unused (see ISSUES.md).
+*/
+
+.icon-cell {
 	cursor: default;
 	vertical-align: middle;
 }
 
-.svgCell-icon svg {
+.icon-cell svg {
   width: var(--icon-width);
   height: var(--icon-height);
   color: var(--icon-colour__blue);
 }
 
-.svgCell-button {
+.icon-cell--button {
 	cursor: pointer;
 }
 
 /* A row's action button (ActionCell, ActionMenuCell, a RowActions button) is a 24px target
    (WCAG 2.5.8) round its icon; a negative margin takes the extra back, so the row is no taller */
-.svgCell-button.rowAction {
+.icon-cell--button.rowAction {
 	min-width: 24px;
 	min-height: 24px;
 	margin: -4px;
@@ -39,7 +46,7 @@
 
 /* ...which a grid cell's content (overflow-x hidden, so overflow-y auto) would otherwise scroll by.
    It has no text to cut short */
-.data-grid__cell > div:has(> .svgCell-button.rowAction) {
+.data-grid__cell > div:has(> .icon-cell--button.rowAction) {
 	overflow: visible;
 }
 
@@ -61,11 +68,11 @@
 	top: -2px;
 }
 
-.svgCell-disabled {
+.icon-cell--disabled {
 	cursor: default;
 	opacity: var(--disabled-opacity);
 }
 
-.stroom-theme-dark .data-grid__row--selected .svgCell-icon svg {
+.stroom-theme-dark .data-grid__row--selected .icon-cell svg {
     color: white !important;
 }

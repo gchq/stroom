@@ -36,15 +36,18 @@ public final class MenuRequest {
     private final List<Item> items;
     private final PopupPosition popupPosition;
     private final Element opener;
+    private final boolean allowCloseOnMoveLeft;
 
     private MenuRequest(final String name,
                         final List<Item> items,
                         final PopupPosition popupPosition,
-                        final Element opener) {
+                        final Element opener,
+                        final boolean allowCloseOnMoveLeft) {
         this.name = name;
         this.items = items;
         this.popupPosition = popupPosition;
         this.opener = opener;
+        this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
     }
 
     /// Asks for a menu to be shown.
@@ -57,7 +60,7 @@ public final class MenuRequest {
                             final String name,
                             final List<Item> items,
                             final PopupPosition popupPosition) {
-        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition, null));
+        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition, null, false));
     }
 
     /// Asks for a menu to be shown, opened by a button (see [ShowMenuEvent.Builder#opener]), which the
@@ -71,7 +74,25 @@ public final class MenuRequest {
                                       final String name,
                                       final List<Item> items,
                                       final PopupPosition popupPosition) {
-        dispatch(opener, EVENT, new MenuRequest(name, items, popupPosition, opener));
+        fireFromOpener(opener, name, items, popupPosition, false);
+    }
+
+    /// Asks for a menu to be shown, opened by a button, as
+    /// [#fireFromOpener(Element, String, List, PopupPosition)] does, saying whether Left on one of
+    /// its top items closes it (see [ShowMenuEvent.Builder#allowCloseOnMoveLeft(boolean)]), e.g. for
+    /// a row's actions.
+    ///
+    /// @param opener               The button that opens the menu.
+    /// @param name                 The menu's accessible name.
+    /// @param items                The menu's items.
+    /// @param popupPosition        Where the menu is shown.
+    /// @param allowCloseOnMoveLeft Whether Left on one of the menu's top items closes it.
+    public static void fireFromOpener(final Element opener,
+                                      final String name,
+                                      final List<Item> items,
+                                      final PopupPosition popupPosition,
+                                      final boolean allowCloseOnMoveLeft) {
+        dispatch(opener, EVENT, new MenuRequest(name, items, popupPosition, opener, allowCloseOnMoveLeft));
     }
 
     /// Shows the menus that widgets on the page ask for, by firing a [ShowMenuEvent] for each.
@@ -88,7 +109,8 @@ public final class MenuRequest {
         final ShowMenuEvent.Builder builder = ShowMenuEvent.builder()
                 .name(request.name)
                 .items(request.items)
-                .popupPosition(request.popupPosition);
+                .popupPosition(request.popupPosition)
+                .allowCloseOnMoveLeft(request.allowCloseOnMoveLeft);
         if (request.opener != null) {
             builder.opener(request.opener);
         }

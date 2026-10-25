@@ -29,7 +29,7 @@ import com.google.gwt.user.cellview.client.Column;
 public abstract class InfoColumn<T> extends Column<T, CellIcon> {
 
     public InfoColumn() {
-        super(new SvgCell());
+        super(new IconCell());
     }
 
     @Override
