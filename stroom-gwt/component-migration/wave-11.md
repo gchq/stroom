@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
+
 Split the dialogs that call REST, own lists or forms, or make further dialogs into a component dialog plus a controller. Results go back through callbacks, the controller supplies the task monitor from context, and the identity flows hang off ChangePasswordPresenter.
 
 ## CSS and template notes for the wave
@@ -65,7 +67,7 @@ dialog, presenter; complexity 2, effort S; used by 4.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DocumentAssetUploadFileDialogViewImpl.ui.xml:17 | component-declaration | <form:CustomFileUpload ui:field="fileUpload"/> already declared (wave 4); its controller attaches |
+| DocumentAssetUploadFileDialogViewImpl.ui.xml:17 | component-declaration | <form:FileChooser ui:field="fileChooser"/> already declared (wave 4); its controller attaches |
 | DocumentAssetUploadFileDialogViewImpl.ui.xml:5 | css-class | visualisation-assets-add-dialog has no CSS rule: drop it |
 
 **Stays in Java:** upload path label (DocumentAssetUploadFileDialogPresenter.java:107): data; form submit and REST (controller).
@@ -146,7 +148,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ImportConfigViewImpl.ui.xml:9 | component-declaration | <form:CustomFileUpload ui:field="fileUpload"/> already declared (wave 4); controller attaches CustomFileUploadController |
+| ImportConfigViewImpl.ui.xml:9 | component-declaration | <form:FileChooser ui:field="fileChooser"/> already declared (wave 4); controller attaches FileChooserController |
 
 **Stays in Java:** submit and the confirm hand-off (ImportConfigPresenter.java:87-100).
 
@@ -1226,7 +1228,7 @@ dialog, presenter; complexity 2, effort M; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DataUploadViewImpl.ui.xml:16,21,27 | component-declaration | SelectionBox, DateTimeBox (attach DateTimeBoxController) and CustomFileUpload (attach its controller) already declared |
+| DataUploadViewImpl.ui.xml:16,21,27 | component-declaration | SelectionBox, DateTimeBox (attach DateTimeBoxController) and FileChooser (attach its controller) already declared |
 
 **Stays in Java:** stream type items and default (DataUploadPresenter.java:164-173): fetched; meta data and submit (controller).
 

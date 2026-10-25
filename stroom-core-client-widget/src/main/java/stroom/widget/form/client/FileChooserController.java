@@ -50,6 +50,7 @@ public class FileChooserController extends Controller {
     private TaskMonitorFactory taskMonitorFactory;
     private String taskMessage = "Uploading";
 
+    /// Made by GIN; [#attach(FileChooser)] gives it its chooser.
     @Inject
     public FileChooserController() {
     }
@@ -78,7 +79,8 @@ public class FileChooserController extends Controller {
     /// form, so that it can carry the `X-CSRF` header the server requires.
     ///
     /// @param url       The upload endpoint, e.g. `ImportUtil.getImportFileURL()`.
-    /// @param onSuccess Given the key of the uploaded file.
+    /// @param onSuccess Given the key of the uploaded file. What it throws is its own: it isn't taken
+    ///                  as the upload failing (it once was, and reported as an upload error).
     /// @param onFailure Given the reason it failed.
     public void upload(final String url,
                        final Consumer<ResourceKey> onSuccess,

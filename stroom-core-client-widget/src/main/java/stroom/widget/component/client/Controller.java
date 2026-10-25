@@ -16,6 +16,7 @@
 
 package stroom.widget.component.client;
 
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -238,6 +239,20 @@ public abstract class Controller implements IsWidget, HasControllerNode, HasHand
     /// @return The value, or the key's default if nothing provides it.
     protected final <T> T context(final ContextKey<T> key) {
         return node.lookup(key);
+    }
+
+    /// What shows the progress of a request this controller makes through a client that takes a
+    /// task monitor (rather than with `owner(this)`): the one its owners provide
+    /// ([Contexts#TASK_MONITOR]), or null if none does, so that the request shows Stroom's own
+    /// busy indicator. The context's default shows nothing, so passing it on would hide the
+    /// request's progress altogether, e.g. one made before a dialog is shown.
+    ///
+    /// @return The task monitor its owners provide, or null.
+    protected final TaskMonitorFactory getProvidedTaskMonitor() {
+        final TaskMonitorFactory taskMonitorFactory = node.lookup(Contexts.TASK_MONITOR);
+        return taskMonitorFactory == Contexts.TASK_MONITOR.getDefaultValue()
+                ? null
+                : taskMonitorFactory;
     }
 
     /// Watches a context value: runs `onChange` with it once this controller is owned, and again

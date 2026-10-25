@@ -1499,6 +1499,29 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   October 2026 in wave 3's audit)~~ Fixed: Accept is `button--contained-green` and Reject stays
   `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. Delete
   both rule sets once removals are allowed.
+* Found in wave 4's audit (25 October 2026), and fixed:
+  * ~~A controller passed its context's task monitor (`context(Contexts.TASK_MONITOR)`) to clients
+    that take one (`ScheduledTimeClient`, `ConfigDefaultSetter`, the explorer's decorate request).
+    Where nothing provides one, the context's default shows nothing, and a request given it doesn't
+    fall back to Stroom's own busy indicator, as one given null does: the schedule dialog asked for
+    its times before it was shown, with no progress at all (the old `SchedulePopup` passed itself,
+    which fell back).~~ Controllers pass `getProvidedTaskMonitor()`, which is null when nothing
+    provides one (`TestController` `theProvidedTaskMonitorIsNullWhenNothingProvidesOne`). The same
+    was in `DocSelectionController` and `AnalyticStreamDestinationController` (earlier waves).
+  * ~~A visualisation's settings kept a `DateTimeBoxController` for every date setting of every
+    visualisation chosen since the dialog opened: changing the visualisation rebuilds its tabs, and
+    the old tabs' controllers stayed owned (`BasicVisSettingsPresenter`).~~ They are released with
+    their tabs. No automated test: the leak check counts only unowned controllers.
+  * ~~The item selection and source range dialogs cut what they read to an `int`
+    (`ValueSpinner.getIntValue`), though an item or character offset is a `long`: an item past
+    2,147,483,647 was read wrong (older than this wave).~~ They read the value as it is
+    (`getValue`); story `Widgets/Editors & Viewers/ItemNavigator` `SelectLargeRecordNumber`.
+  * ~~The schedule dialog asked the server for its times twice as it opened (older).~~ Once.
+  * ~~`IconBox.setOpensDialog(false)` took away an `aria-haspopup` its field had set itself.~~ Only
+    what it added.
+* Batch Edit Schedules' `validate` (`BatchExecutionScheduleEditPresenter`) tells its caller `false`
+  after every check, even after `true` (found 25 October 2026 in wave 4's audit; older). Harmless
+  today, as `ExecutionScheduleManager` acts only on `true`; fix when the dialog converts.
 * Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
@@ -2066,7 +2089,8 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
     `TestProcessorEditPresenter`).
   * #51: Set Source Range, when the range ended before or where it started: the message had no
     callback and the hide handler no `else`. Its offsets also read "51" for 5, as the 1 was
-    appended rather than added (`TestCharacterRangeSelectionPresenter`).
+    appended rather than added (`TestCharacterRangeSelectionController`, once
+    `TestCharacterRangeSelectionPresenter`).
   * #52: Add Processor, when creating the filter failed: the create, unlike the update, had no
     failure handler (`TestProcessorEditPresenter`).
   * #53: Add/Edit index volume, when the user declined the validation warning
@@ -2126,7 +2150,8 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   a step request with no `criteria`, which failed on the server with a `NullPointerException`.
   `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the
   location link is disabled too, and `SteppingPresenter.beginStepping` enables both once a stream is
-  chosen (`TestStepControlPresenter`, `TestStepLocationLinkPresenter`).
+  chosen (`TestStepControlPresenter`, `TestStepLocationLinkController`, once
+  `TestStepLocationLinkPresenter`).
 
 Found while writing the workbench's stories, and fixed. Each story named is its regression test
 (`stroom-gwt-workbench`):
@@ -2439,8 +2464,9 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
 * **Every check of a schedule made a new schedule dialog** (`ScheduleBox.validate`): it asked its
   provider for a new `SchedulePopup` each time, though it already had one, so leaving the box, and
   each change of its value or enabled state, made a whole dialog (presenter and view) to check the
-  expression with: three times leaving it made five. It uses its own dialog. Workbench:
-  `Widgets/Date & Time/ScheduleBox` `CheckingReusesTheDialog`.
+  expression with: three times leaving it made five. Since wave 4 a check makes no dialog at all
+  (`ScheduleBoxController` asks the server itself). Workbench: `Widgets/Date & Time/ScheduleBox`
+  `CheckingMakesNoDialog` (was `CheckingReusesTheDialog`).
 * **The schedule box only opened its dialog on Enter or a click, and its quick settings borrowed the
   time range's classes** (`ScheduleBox`, `ScheduleViewImpl`, `TimeRangePopup`): Alt+Down opens it
   too, the field says it opens a dialog, and its classes are BEM (`schedule-box`; `ScheduleBox.css`

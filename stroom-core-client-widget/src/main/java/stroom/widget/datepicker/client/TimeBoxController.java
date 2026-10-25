@@ -39,6 +39,7 @@ public class TimeBoxController extends Controller {
     private boolean minuteVisible = true;
     private boolean secondVisible = true;
 
+    /// Made by GIN; [#attach(TimeBox)] gives it its box.
     @Inject
     public TimeBoxController(final Provider<TimePickerController> timePickerProvider) {
         this.timePickerProvider = timePickerProvider;
@@ -47,9 +48,11 @@ public class TimeBoxController extends Controller {
     /// Attaches this to the box whose requests to open the dialog it answers.
     ///
     /// @param box The box, e.g. one a template declares.
-    public void attach(final TimeBox box) {
+    /// @return This, for its owner to keep.
+    public TimeBoxController attach(final TimeBox box) {
         this.box = Objects.requireNonNull(box, "box");
         box.setOnOpenPicker(this::openPicker);
+        return this;
     }
 
     /// @param visible Whether the dialog lets the hour be chosen.

@@ -35,6 +35,7 @@ public class TimeRangeSelectorController extends Controller {
 
     private final Provider<TimeRangePickerController> timeRangePickerProvider;
 
+    /// Made by GIN; [#attach(TimeRangeSelector)] gives it its selector.
     @Inject
     public TimeRangeSelectorController(final Provider<TimeRangePickerController> timeRangePickerProvider) {
         this.timeRangePickerProvider = timeRangePickerProvider;
@@ -43,11 +44,13 @@ public class TimeRangeSelectorController extends Controller {
     /// Attaches this to the selector whose requests to open the dialog it answers.
     ///
     /// @param selector The selector, e.g. one a template declares.
-    public void attach(final TimeRangeSelector selector) {
+    /// @return This, for its owner to keep.
+    public TimeRangeSelectorController attach(final TimeRangeSelector selector) {
         Objects.requireNonNull(selector, "selector");
         selector.setOnOpenPicker(() -> timeRangePickerProvider.get().edit(this,
                 selector.getValue(),
                 selector.getElement(),
                 timeRange -> selector.setValue(timeRange, true)));
+        return this;
     }
 }

@@ -42,7 +42,6 @@ public class DocumentAssetUploadFileDialogPresenter
     /**
      * Allows us to stop the hide request for the dialog
      */
-    private final FileChooserController fileChooser;
     private HidePopupRequestEvent currentHideRequest;
 
     /** What to call when the upload has been successful */
@@ -65,6 +64,8 @@ public class DocumentAssetUploadFileDialogPresenter
      * Height of dialog
      */
     private static final int DIALOG_HEIGHT = 300;
+
+    private final FileChooserController fileChooser;
 
     /**
      * Injected constructor.

@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
+
 Rename the dashboard Component interface to DashboardPane, give panes and their settings a component-model base, then convert bottom-up through this stack: settings tabs, TextInput, KeyValueInput and ListInput panes, Vis, table rules and filters, ColumnsManager, TablePresenter, QueryResultTable, QueryResultTableSplit, the query-data tabs, QueryEdit, QueryDocEdit, then DashboardPresenter and EmbeddedQuery. The model pushes data through setData and setSearching, not ResultComponent.
 
 ## CSS and template notes for the wave
@@ -324,7 +326,7 @@ composite, presenter; complexity 5, effort XL; used by 8.
 | stroom/data/client/view/DataViewImpl.java:67-68 | text | text="View Source" on the source link |
 | stroom/data/client/view/DataViewImpl.java:70-71 | aria | role="button" tabindex="0": declare the link as an HTMLPanel <span ui:field="sourceLink" class="dataViewImpl-sourceLinkLabel clickableLabel" role="button" tabindex="0">View Source</span> (g:Label takes no role attribute), keeping the Enter/Space handler in Java |
 | DataPresenter.java:213-214 / ui.xml:15,21 | component-declaration | <d:ItemNavigator ui:field="navigator"/> (wave 4) and <pr:Progress ui:field="progress" addStyleNames="dock-min dataViewImpl-progressBarPanel"/> (wave 3) instead of the two slots |
-| DataPresenter.java:179 | component-declaration | <d:ClassificationWrapperView> (wave 4) as the template root around the data layout instead of super(eventBus, classificationWrapperView) + setContent(dataView) |
+| DataPresenter.java:179 | component-declaration | <d:ClassificationWrapper> (wave 4) as the template root around the data layout instead of super(eventBus, classificationWrapperView) + setContent(dataView) |
 
 **Stays in Java:** tabs Info, Error, Data Preview, Meta, Context (DataPresenter.java:106-110, 204-208) and their hidden state: LinkTabBar tabs are added in Java; source link visible/enabled and its 'enabled' class (DataViewImpl.java:92, DataPresenter.java:1018-1022): state; Html (wave 3), Text (wave 8 data) and MarkerList (wave 10): layers swapped in layerContainer, so made in Java; tabBar.setTabPanel(layerContainer.getElement()) (DataViewImpl.java:64): Element argument; pager unit text Record/Page/Part (DataPresenter.java:102-104): chosen at runtime.
 
@@ -626,7 +628,7 @@ composite, presenter; complexity 4, effort L; used by 7.
 | stroom/data/client/view/SourceViewImpl.java:70 | structure | visible="false" on <spinner:SpinnerLarge> |
 | SourcePresenter.java:122,409-411 / ui.xml:30 | component-declaration | <d:CharacterNavigator ui:field="navigator"/> (wave 4) in navigatorContainer; setNavigatorView(null) becomes setVisible(false) |
 | SourcePresenter.java:174 / ui.xml:34 | component-declaration | <pr:Progress ui:field="progress" addStyleNames="dock-min sourceViewImpl-progressBarPanel"/> (wave 3) |
-| SourcePresenter.java:120-121 / ui.xml:36 | component-declaration | <d:ClassificationWrapperView ui:field="classification"> wrapping <d:Text ui:field="text"/> (wave 8 stroom.data.client.component.Text) inside the stepping-button-container; setContent stays in Java if wave 4 does not make the wrapper a HasOneWidget |
+| SourcePresenter.java:120-121 / ui.xml:36 | component-declaration | <d:ClassificationWrapper ui:field="classification"> wrapping <d:Text ui:field="text"/> (wave 8 stroom.data.client.component.Text) inside the stepping-button-container; setContent stays in Java if wave 4 does not make the wrapper a HasOneWidget |
 
 **Stays in Java:** feed, id, part or record number, type labels and which of Part/Record shows (SourceViewImpl.java:84-106): data; metaListContainer slot (setMetaListContainerView, set by SteppingPresenter.java:236): stays a setter until SteppingPresenter (unit 54) declares it; stepping button visibility and enabled: state.
 

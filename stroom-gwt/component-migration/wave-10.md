@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
+
 Convert every list presenter built on PagerView/DataGridWidget into a list component plus a controller that owns its REST data: RestDataProvider with an owner, and FilteredList where the list has a quick filter. Selection goes out through callbacks, and back-references to parents are removed. The floor map grid lists use the shared ToolbarGrid.
 
 ## CSS and template notes for the wave
@@ -1569,7 +1571,7 @@ list, presenter; complexity 4, effort L; used by 1.
 | JobNodeListPresenter.java:117 via JobNodeListHelper.java:345-346 | component-declaration | <v:ToolbarToggleButton ui:field="showEnabled" svg="FILTER" title="Show Only Enabled Jobs"/> |
 | JobNodeListPresenter.java:120-122 | component-declaration | <v:ToolbarToggleButton ui:field="autoRefresh" svg="AUTO_REFRESH" title="Auto Refresh"/> |
 
-**Stays in Java:** JobNodeListPresenter.java:378-388 heading built from the job name and filter state; toggle states, NodeChangeEvent listen (128-), redraw timer, REST; SchedulePopup (wave 4) opened by the controller, not declared; CommandLinkCell columns.
+**Stays in Java:** JobNodeListPresenter.java:378-388 heading built from the job name and filter state; toggle states, NodeChangeEvent listen (128-), redraw timer, REST; SchedulePickerController (wave 4) opened by the controller, not declared; CommandLinkCell columns.
 
 ## `PipelineReferenceListPresenter`
 

@@ -61,6 +61,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private final RestFactory restFactory;
     private final Provider<DateTimeBoxController> dateTimeBoxControllerProvider;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
+    // What opens the tabs' date dialogs, released with their tabs
+    private final List<DateTimeBoxController> dateTimeBoxControllers = new ArrayList<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
     private JSONObject dynamicSettings;
@@ -169,7 +171,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             if (controls != null) {
                 final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane();
                 dynamicSettingsPane.setOnDateTimeBoxAdded(box ->
-                        make(dateTimeBoxControllerProvider).attach(box));
+                        dateTimeBoxControllers.add(make(dateTimeBoxControllerProvider).attach(box)));
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 
@@ -184,6 +186,10 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             settingsPresenter.removeTab(tab);
         }
         dynamicSettingsMap.clear();
+        // The visualisation's tabs are made again when it changes, so their controllers go now,
+        // rather than with this
+        dateTimeBoxControllers.forEach(this::release);
+        dateTimeBoxControllers.clear();
     }
 
     @Override

@@ -525,9 +525,9 @@ async function survey() {
     }, scope).catch(() => []);
     for (const label of headers) if (!buttons.some((b) => b.label === label)) buttons.push({ kind: 'header', label, enabled: true, visible: true });
   }
-  // The data preview's item pager ("Part 1 of 1" → ItemSelectionPresenter), the source view's
-  // character pager (→ CharacterRangeSelectionPresenter) and the stepping toolbar's location
-  // (→ StepLocationPresenter) were GWT `Label`s with click handlers, which no markup advertised, so
+  // The data preview's item pager ("Part 1 of 1" → ItemSelectionController, once
+  // ItemSelectionPresenter), the source view's character pager (→ CharacterRangeSelectionController)
+  // and the stepping toolbar's location (→ StepLocationPickerController) were GWT `Label`s with click handlers, which no markup advertised, so
   // they were offered here as `selector:` affordances. They are buttons now (#5406), titled
   // `Select Part`/`Select Record`, `Set Source Range` and `Set Location`, so the button reader
   // finds them.
@@ -1783,7 +1783,7 @@ if (DIRECTED.includes('stepping')) {
   // scratch store under Stroom's TEMP dir, creates no meta and writes no stream, so it is allowed now
   // and the step controls (First/Backward/Forward/Last/Refresh) run for real.
   //
-  // Two doors: `Set Location` (StepLocationPresenter) opens from the toolbar's location button
+  // Two doors: `Set Location` (StepLocationPickerController) opens from the toolbar's location button
   // (titled `Set Location`; its text, `[<metaId>:<part>:<record>]`, is data); and ElementPresenter
   // is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
   // element is selected in the stepping tree — the same canvas as the Structure tab, so the same

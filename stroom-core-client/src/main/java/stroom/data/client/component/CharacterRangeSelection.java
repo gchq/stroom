@@ -88,7 +88,7 @@ public class CharacterRangeSelection extends Component {
                         break;
                     case COUNT:
                         fromLineCol.getLocation().ifPresent(dataRangeBuilder::fromLocation);
-                        dataRangeBuilder.withLength((long) toCharCount.getIntValue());
+                        dataRangeBuilder.withLength(toCharCount.getValue());
                         break;
                 }
                 break;
@@ -96,13 +96,13 @@ public class CharacterRangeSelection extends Component {
                 switch (toType.getValue()) {
                     case OFFSET:
                         dataRangeBuilder
-                                .fromCharOffset(fromCharOffset.getIntValue() - 1L)
-                                .toCharOffset(toCharOffset.getIntValue() - 1L);
+                                .fromCharOffset(fromCharOffset.getValue() - 1L)
+                                .toCharOffset(toCharOffset.getValue() - 1L);
                         break;
                     case COUNT:
                         dataRangeBuilder
-                                .fromCharOffset(fromCharOffset.getIntValue() - 1L)
-                                .withLength((long) toCharCount.getIntValue());
+                                .fromCharOffset(fromCharOffset.getValue() - 1L)
+                                .withLength(toCharCount.getValue());
                         break;
                 }
                 break;

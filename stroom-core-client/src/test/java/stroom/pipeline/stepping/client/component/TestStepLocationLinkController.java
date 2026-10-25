@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;
@@ -38,6 +39,7 @@ class TestStepLocationLinkController {
     private final EventBus eventBus = new SimpleEventBus();
     private final List<ShowPopupEvent> shown = new ArrayList<>();
     private StepLocationLink view;
+    private StepLocationPicker pickerView;
     private StepLocationLinkController controller;
     private Runnable onClick;
 
@@ -48,10 +50,11 @@ class TestStepLocationLinkController {
         eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
 
         view = Mockito.mock(StepLocationLink.class);
+        pickerView = Mockito.mock(StepLocationPicker.class);
         // The real dialog controller, as the popup is fired from it onto the event bus
         controller = new StepLocationLinkController(view, () -> new StepLocationPickerController(
                 eventBus,
-                Mockito.mock(StepLocationPicker.class)));
+                pickerView));
 
         final ArgumentCaptor<Runnable> onClickCaptor = ArgumentCaptor.forClass(Runnable.class);
         Mockito.verify(view).setOnClick(onClickCaptor.capture());
@@ -70,6 +73,39 @@ class TestStepLocationLinkController {
         assertThat(shown)
                 .extracting(ShowPopupEvent::getCaption)
                 .containsExactly("Set Location");
+    }
+
+    @Test
+    void ok_stepsToTheLocationEntered() {
+        final List<StepLocation> steppedTo = new ArrayList<>();
+        controller.setOnStepLocation(steppedTo::add);
+        final StepLocation current = new StepLocation(123L, 0L, 3L);
+        controller.setStepLocation(current);
+        final StepLocation entered = new StepLocation(456L, 1L, 0L);
+        Mockito.when(pickerView.getStepLocation()).thenReturn(entered);
+
+        onClick.run();
+        final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
+        Mockito.when(okPressed.isOk()).thenReturn(true);
+        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+
+        // The dialog starts on the location shown, and OK steps to the one entered
+        Mockito.verify(pickerView).setStepLocation(current);
+        assertThat(steppedTo).containsExactly(entered);
+        Mockito.verify(okPressed).hide();
+    }
+
+    @Test
+    void cancel_stepsNowhere() {
+        final List<StepLocation> steppedTo = new ArrayList<>();
+        controller.setOnStepLocation(steppedTo::add);
+
+        onClick.run();
+        final HidePopupRequestEvent cancelPressed = Mockito.mock(HidePopupRequestEvent.class);
+        shown.getFirst().getHideRequestHandler().onHideRequest(cancelPressed);
+
+        assertThat(steppedTo).isEmpty();
+        Mockito.verify(cancelPressed).hide();
     }
 
     @Test

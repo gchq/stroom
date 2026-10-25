@@ -148,8 +148,8 @@ Also on the harness, for what Stroom's app does around a screen:
 * **`afterStartUp(action)`** runs the action once the harness has loaded the UI config into its
   `UiConfigCache` and the user's preferences into `CurrentPreferences`, as Stroom does at login
   before it shows any screen. Create the screen in it, as Stroom opens screens after login, and
-  always when the screen (or anything it creates) reads the cached UI config at once (e.g. a
-  `ClassificationLabel`'s colours) or the user's preferences (`EditorPresenter` reads the editor
+  always when the screen (or anything it creates) reads the cached UI config at once or the
+  user's preferences (`EditorPresenter` reads the editor
   preferences, lists format dates with them). Without it, each `UiConfigCache.get` call made before
   the config arrives is answered, which a screen may not expect (`UserListPresenter` then sets up
   its columns twice). Most of the `UsersScreen` stories deliberately open the screen at once:
@@ -444,7 +444,7 @@ RestFixtures.builder()
 ```
 
 * `UploadReply.success(key, name)` is the servlet's `PropertyMap` arg line
-  (`#PM#success=true key=res-1 name=import.zip#PM#`), which Stroom's `FileUploadResultHandler`
+  (`#PM#success=true key=res-1 name=import.zip#PM#`), which Stroom's `FileChooserController.readReply`
   reads into the `ResourceKey` given to the screen's success handler (e.g. the key sent with
   `ImportConfigRequest`, `UploadDataRequest` or a key store secret). `failure(message)` is the
   servlet's `success=false` reply, whose exception message goes to the screen's failure handler

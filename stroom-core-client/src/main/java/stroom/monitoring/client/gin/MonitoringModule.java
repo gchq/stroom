@@ -63,7 +63,6 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(JobListPlugin.class);
         bindPlugin(ExecutionScheduleManagerPlugin.class);
 
-
         // Node management.
         bindPlugin(NodeGroupsPlugin.class);
         bindPlugin(NodeMonitoringPlugin.class);

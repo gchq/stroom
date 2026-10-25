@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ import java.util.function.Consumer;
 
 /// The source viewer's character navigator: the lines and characters shown (e.g. "Chars 1 to 1,000
 /// of 5,000"), as links that ask to set the range shown, and Show Beginning, Advance Backwards,
-/// Advance Forwards and Refresh buttons. It is hidden while there is nothing to move through. A
+/// Advance Forwards and Refresh buttons. The links and the moving buttons are hidden while there is
+/// nothing to move through; the refresh button stays, disabled until there is a range. A
 /// button is disabled once pressed, until the range shown next arrives ([#show(HasCharacterData)]).
 /// Its markup is `CharacterNavigator.ui.xml`; [CharacterNavigatorController] fills it.
 public class CharacterNavigator extends Component {

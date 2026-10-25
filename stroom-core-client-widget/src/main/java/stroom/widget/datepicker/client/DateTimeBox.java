@@ -114,8 +114,10 @@ public class DateTimeBox
         }
     }
 
-    // The time the dialog starts on: the field's, else the last one set (unless any text is
-    // allowed, when the field's text may be an expression), else now; for its controller
+    /// The time the dialog starts on, for its controller: the field's, else the last one set
+    /// (unless any text is allowed, when the field's text may be an expression), else now.
+    ///
+    /// @return The time, in milliseconds since the epoch.
     long getPickerStartTime() {
         final Long time = parse(textBox.getValue());
         if (time != null) {

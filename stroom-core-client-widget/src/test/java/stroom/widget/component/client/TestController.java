@@ -16,6 +16,7 @@
 
 package stroom.widget.component.client;
 
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -76,6 +77,26 @@ class TestController {
         ControllerNode.root("story").adopt(child.getControllerNode());
 
         assertThat(ControllerChecks.unownedCount()).isZero();
+    }
+
+    @Test
+    void theProvidedTaskMonitorIsNullWhenNothingProvidesOne() {
+        // Regression test: controllers passed the context's default task monitor, which shows
+        // nothing, to clients that take one, so a request made before a dialog was shown (the
+        // schedule dialog's times) showed no progress, rather than Stroom's own busy indicator
+        final Requester unowned = new Requester();
+        assertThat(unowned.getProvidedTaskMonitor()).isNull();
+
+        final Requester ownedWithoutOne = new Requester();
+        ControllerNode.root("story").adopt(ownedWithoutOne.getControllerNode());
+        assertThat(ownedWithoutOne.getProvidedTaskMonitor()).isNull();
+
+        final TaskMonitorFactory provided = Mockito.mock(TaskMonitorFactory.class);
+        final ControllerNode root = ControllerNode.root("dialog");
+        root.provide(Contexts.TASK_MONITOR, ContextValue.of(provided));
+        final Requester owned = new Requester();
+        root.adopt(owned.getControllerNode());
+        assertThat(owned.getProvidedTaskMonitor()).isSameAs(provided);
     }
 
     @Test
@@ -260,6 +281,14 @@ class TestController {
 
         void onTest(TestEvent event);
     }
+
+    // A controller that makes requests through a client that takes a task monitor
+    private static final class Requester extends Controller {
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class TestEvent extends GwtEvent<TestHandler> {
 

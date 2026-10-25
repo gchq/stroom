@@ -60,6 +60,8 @@ public class IconBox extends Component {
     private Runnable onIconClick;
     private Element field;
     private boolean opensDialog;
+    // Whether this put aria-haspopup on the field, so that only then does it take it away
+    private boolean addedOpensDialog;
 
     public IconBox() {
         panel = BINDER.createAndBindUi(this);
@@ -90,14 +92,13 @@ public class IconBox extends Component {
         field = findField(widget.getElement());
         if (field != null) {
             field.addClassName(BLOCK + "__field");
-            // A field may say so itself, so only an attribute given first is added here
-            if (opensDialog) {
-                applyOpensDialog();
-            }
+            applyOpensDialog();
         }
     }
 
-    /// @param svgImage The icon inside the end of the field's border, e.g. [SvgImage#CALENDAR].
+    /// Sets the icon inside the end of the field's border, from a template (`icon="CALENDAR"`).
+    ///
+    /// @param svgImage The icon, e.g. [SvgImage#CALENDAR].
     public void setIcon(final SvgImage svgImage) {
         icon.setInnerHTML(svgImage.getSvg());
         // An SVG element's className isn't a string, so set the class attribute itself
@@ -105,7 +106,9 @@ public class IconBox extends Component {
     }
 
     /// Marks the field as one that opens a dialog (e.g. a date box's calendar), which screen
-    /// readers announce (`aria-haspopup="dialog"`).
+    /// readers announce (`aria-haspopup="dialog"`). It may come before or after the field
+    /// ([#addField(Widget)]). A field that says so itself keeps saying so: false takes away only
+    /// what this added.
     ///
     /// @param opensDialog Whether the field opens a dialog.
     public void setOpensDialog(final boolean opensDialog) {
@@ -157,13 +160,15 @@ public class IconBox extends Component {
         }, ClickEvent.getType());
     }
 
-    // Set on the field whichever of it and the attribute a template gives first
+    // Applies opensDialog to the field once there is one
     private void applyOpensDialog() {
         if (field != null) {
             if (opensDialog) {
                 field.setAttribute("aria-haspopup", "dialog");
-            } else {
+                addedOpensDialog = true;
+            } else if (addedOpensDialog) {
                 field.removeAttribute("aria-haspopup");
+                addedOpensDialog = false;
             }
         }
     }

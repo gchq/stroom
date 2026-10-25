@@ -4,6 +4,44 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Split the widgets that open their own presenter dialogs, or reach services or the bus themselves, into a dumb box and a controller or callback, following the DropDownBox and DocSelectionController pilot. The date, time and schedule popups become component dialogs. The navigators invert to callbacks. ClassificationLabel takes its colours from outside, and VisFrame and CustomFileUpload lose their bus and transport coupling.
 
+## Audited (25 October 2026)
+
+Six reviewers read the wave against this plan, "Done means" and AGENTS.md. No regression in
+normal use. Fixed:
+
+- **Progress.** Controllers passed their context's task monitor to clients that take one; where
+  nothing provides one it shows nothing, and the request then shows no progress rather than
+  Stroom's busy indicator (the schedule dialog asks for its times before it is shown). They pass
+  `Controller.getProvidedTaskMonitor()`, null when nothing provides one; so do the two earlier
+  controllers that did the same (`DocSelectionController`, `AnalyticStreamDestinationController`).
+  Calls through `ScheduledTimeClient` keep `guard(...)` for late replies, rather than the plan's
+  `owner(this)`, as the client takes no owner.
+- **A leak.** A visualisation's settings kept the date controllers of every visualisation chosen
+  while the dialog was open; they are released with their tabs.
+- **Long values.** The item selection and source range dialogs read their spinners as `int`; they
+  read `long`s (an older bug).
+- **Claims that weren't so.** `TimeRangeSelector` now has the `setOnChange` the Done section
+  claimed; the schedule and date-time boxes have the read-only stories it claimed, and Set
+  Location's OK and Cancel are tested (`TestStepLocationLinkController`).
+- **Smaller things.** The schedule dialog asked for its times twice as it opened; an `IconBox`
+  told `opensDialog` false took away an `aria-haspopup` its field had set itself; every new file
+  says 2026 (a rename keeps its year); the new controllers' constructors and the package-private
+  methods have `///` javadoc; three view getters were below their classes' inner-type divider;
+  unused imports; stale names in comments, docs, the later waves' plans and the suite's tools
+  (`build-handler-inventory.mjs` looked for `ItemNavigatorViewImpl`); weak story checks (the item
+  navigator's First, the file chooser's GWT classes, the source range's end, the settings pane's
+  change and read-only checks).
+
+Decided, and left:
+
+- **`date-time-view`** stays the block both the time and date-time dialogs' content use
+  (`date-time-view.css`), as the two share it; it isn't renamed for either.
+- `FieldEndStories`' date-time box has no controller, as only its layout is checked.
+- `BatchExecutionScheduleEditPresenter.validate` tells its caller `false` after `true` (older,
+  harmless today; in `ISSUES.md`).
+- The suite's crawl-made oracles (`reachability-graph.md`, `route-recipes.json`) still name the old
+  classes until the next crawl.
+
 ## Done (25 October 2026)
 
 All 17 units, in nine commits after one for the shared widgets' template support. What was decided
@@ -23,7 +61,7 @@ on the way, where it differs from the plans below:
   selector's: the query expression editor's term editor gets a `Provider<DateTimeBoxController>`
   through its view, and `DynamicSettingsPane` hands its date boxes to its owner
   (`setOnDateTimeBoxAdded`). Their `ValueChangeEvent`s stay beside the new `setOnChange` until their
-  callers move (rule 5).
+  callers move (rule 5), `TimeRangeSelector`'s since the audit.
 - **The schedule box's checks make no dialog.** `ScheduleBoxController` checks the schedule with
   the server itself (`validate`), and makes a dialog only when one is opened; the job screens'
   `JobNodeListHelper` opens one per change through a provider.

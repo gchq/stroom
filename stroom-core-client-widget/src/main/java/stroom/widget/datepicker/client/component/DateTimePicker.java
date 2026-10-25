@@ -112,6 +112,9 @@ public class DateTimePicker extends Component {
         hour.focus();
     }
 
+    /// Chooses today, keeping the time.
+    ///
+    /// @param event The event.
     @UiHandler("today")
     void onToday(final ClickEvent event) {
         final UTCDate utc = dateTimeModel.getTodayUTC();
@@ -120,6 +123,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Chooses yesterday, keeping the time.
+    ///
+    /// @param event The event.
     @UiHandler("yesterday")
     void onYesterday(final ClickEvent event) {
         final UTCDate utc = dateTimeModel.getTodayUTC();
@@ -129,6 +135,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Chooses the start of this week, keeping the time.
+    ///
+    /// @param event The event.
     @UiHandler("weekStart")
     void onWeekStart(final ClickEvent event) {
         final UTCDate utc = dateTimeModel.getTodayUTC();
@@ -138,6 +147,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Takes the day chosen in the calendar.
+    ///
+    /// @param event The event.
     @UiHandler("datePicker")
     void onDatePicker(final ValueChangeEvent<UTCDate> event) {
         value = resolveDateTime(value);
@@ -145,6 +157,9 @@ public class DateTimePicker extends Component {
         updateTime();
     }
 
+    /// Chooses the time now, keeping the date.
+    ///
+    /// @param event The event.
     @UiHandler("now")
     void onNow(final ClickEvent event) {
         final TimeRecord timeRecord = dateTimeModel.parseTime(UTCDate.create());
@@ -156,6 +171,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Chooses midnight, keeping the date.
+    ///
+    /// @param event The event.
     @UiHandler("midnight")
     void onMidnight(final ClickEvent event) {
         hour.setValue(0);
@@ -166,6 +184,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Chooses midday, keeping the date.
+    ///
+    /// @param event The event.
     @UiHandler("midday")
     void onMidday(final ClickEvent event) {
         hour.setValue(12);
@@ -176,6 +197,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Takes the hour typed or spun, allowing for daylight saving changes.
+    ///
+    /// @param event The event.
     @UiHandler("hour")
     void onHour(final ValueChangeEvent<Long> event) {
         final int previousHour = this.previousHour;
@@ -199,6 +223,9 @@ public class DateTimePicker extends Component {
         }
     }
 
+    /// Zeroes the time.
+    ///
+    /// @param event The event.
     @UiHandler("hourReset")
     void onHourReset(final ClickEvent event) {
         hour.setValue(0);
@@ -209,6 +236,9 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Takes the minute typed or spun.
+    ///
+    /// @param event The event.
     @UiHandler("minute")
     void onMinute(final ValueChangeEvent<Long> event) {
         final int minute = this.minute.getIntValue();
@@ -216,6 +246,9 @@ public class DateTimePicker extends Component {
         updateTime();
     }
 
+    /// Zeroes the minute and what follows it.
+    ///
+    /// @param event The event.
     @UiHandler("minuteReset")
     void onMinuteReset(final ClickEvent event) {
         minute.setValue(0);
@@ -225,12 +258,18 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Takes the second typed or spun.
+    ///
+    /// @param event The event.
     @UiHandler("second")
     void onSecond(final ValueChangeEvent<Long> event) {
         value.setSeconds(second.getIntValue());
         updateTimeLabel();
     }
 
+    /// Zeroes the second and what follows it.
+    ///
+    /// @param event The event.
     @UiHandler("secondReset")
     void onSecondReset(final ClickEvent event) {
         second.setValue(0);
@@ -239,12 +278,18 @@ public class DateTimePicker extends Component {
         update();
     }
 
+    /// Takes the millisecond typed or spun.
+    ///
+    /// @param event The event.
     @UiHandler("millisecond")
     void onMillisecond(final ValueChangeEvent<Long> event) {
         value.setMilliseconds(millisecond.getIntValue());
         updateTimeLabel();
     }
 
+    /// Zeroes the millisecond.
+    ///
+    /// @param event The event.
     @UiHandler("millisecondReset")
     void onMillisecondReset(final ClickEvent event) {
         millisecond.setValue(0);

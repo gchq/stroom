@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
+
 Convert the settings forms, editor panes and explorer pickers that embed DocSelectionBox, UserRef, EditorPresenter, Markdown or the explorer tree. Replace embedded DocSelectionBoxPresenter with a DropDownBox in the template plus DocSelectionController. Views stop exposing their widgets, and onReadOnly becomes setReadOnly.
 
 ## CSS and template notes for the wave

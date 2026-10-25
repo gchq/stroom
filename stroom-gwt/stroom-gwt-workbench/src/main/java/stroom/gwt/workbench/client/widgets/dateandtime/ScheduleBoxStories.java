@@ -67,10 +67,10 @@ public final class ScheduleBoxStories {
         registry.component("Widgets/Date & Time/ScheduleBox", ScheduleBoxStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Type a schedule's expression, or use the clock icon to open the dialog
-                .story("Basic", ScheduleBoxStories::render)
+                .story("Basic", context -> render(context, false))
                 // The field says it opens a dialog; Alt+Down opens it as Enter does, and Escape
                 // closes it
-                .story("KeysOpenTheDialog", ScheduleBoxStories::render)
+                .story("KeysOpenTheDialog", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.expect(screen.getByRole("textbox", "Schedule")).toHaveAttribute("aria-haspopup", "dialog");
@@ -85,7 +85,7 @@ public final class ScheduleBoxStories {
                 })
                 // The dialog's quick settings are buttons in groups named by their titles; pressing
                 // one sets the expression
-                .story("QuickSettingsAreGroupedButtons", ScheduleBoxStories::render)
+                .story("QuickSettingsAreGroupedButtons", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.tab();
@@ -101,7 +101,7 @@ public final class ScheduleBoxStories {
                 })
                 // Checking the expression (each time the box is left, as here) asks the server and
                 // makes no dialog: it once made a new dialog for every check
-                .story("CheckingMakesNoDialog", ScheduleBoxStories::render)
+                .story("CheckingMakesNoDialog", context -> render(context, false))
                 .withPlay(play -> {
                     for (int i = 0; i < 3; i++) {
                         play.tab();
@@ -113,7 +113,7 @@ public final class ScheduleBoxStories {
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // OK puts the schedule chosen in the box (the server, here, accepts any)
-                .story("ChooseSchedule", ScheduleBoxStories::render)
+                .story("ChooseSchedule", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.tab();
@@ -128,8 +128,21 @@ public final class ScheduleBoxStories {
                     play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledTimes(1);
                     play.expect(play.spy(ON_NEW_DIALOG)).toHaveBeenCalledTimes(1);
                 })
+                // Read only: neither the clock nor Enter opens the dialog, and no dialog is made
+                .story("ReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(screen.getByRole("textbox", "Schedule")).toHaveAttribute("readonly");
+                    play.expect(play.querySelector(".schedule-box")).toHaveClass("icon-box--read-only");
+                    play.click(play.querySelector(".schedule-box .icon-box__icon"));
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    play.sleep(200);
+                    play.expect(screen.queryByText(TITLE)).toBeNull();
+                    play.expect(play.spy(ON_NEW_DIALOG)).not().toHaveBeenCalled();
+                })
                 // Cancel leaves the box as it was
-                .story("CancelKeepsSchedule", ScheduleBoxStories::render)
+                .story("CancelKeepsSchedule", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.tab();
@@ -144,7 +157,7 @@ public final class ScheduleBoxStories {
                 });
     }
 
-    private static Widget render(final StoryContext context) {
+    private static Widget render(final StoryContext context, final boolean readOnly) {
         final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
         final Spy onNewDialog = context.fn(ON_NEW_DIALOG);
         final Spy onChange = context.fn(ON_CHANGE);
@@ -163,6 +176,7 @@ public final class ScheduleBoxStories {
         }, scheduledTimeClient)).attach(box);
         box.setValue(Schedule.builder().type(ScheduleType.CRON).expression("0 0 2 * * ?").build());
         box.setOnChange(onChange::call);
+        box.setReadOnly(readOnly);
         harness.add(box);
         return harness.asWidget();
     }

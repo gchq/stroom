@@ -38,6 +38,7 @@ public class ClassificationLabelController extends Controller {
 
     private final UiConfigCache uiConfigCache;
 
+    /// Made by GIN, with the UI config the colours are read from.
     @Inject
     public ClassificationLabelController(final UiConfigCache uiConfigCache) {
         this.uiConfigCache = uiConfigCache;

@@ -27,4 +27,5 @@
 
 .item-selection__count {
     padding-left: 6px;
+    white-space: nowrap;
 }

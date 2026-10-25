@@ -81,14 +81,14 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
         return metaData.getText();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
     @Override
     public DateTimeBox getEffectiveBox() {
         return effective;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, DataUploadViewImpl> {
 

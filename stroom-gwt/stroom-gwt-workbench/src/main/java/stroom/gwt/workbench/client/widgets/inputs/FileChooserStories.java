@@ -65,10 +65,10 @@ public final class FileChooserStories {
                     play.expect(play.getByText("No file chosen")).toHaveClass("file-chooser__name--empty");
                     play.expect(play.querySelector(StroomDom.FILE_INPUT)).toHaveClass("file-chooser__input");
                     play.expect(play.querySelector(StroomDom.FILE_INPUT)).not().toBeVisible();
-                    play.expect(play.querySelectorAll(".customFileUpload, .gwt-FileUpload, .gwt-Label"))
-                            .toHaveLength(1);
+                    // It is Stroom's markup throughout, no GWT widget's
+                    play.expect(play.querySelectorAll(".file-chooser [class*='gwt-']")).toHaveLength(0);
                 })
-                // With an accept filter and a callback reporting the chosen file name
+                // A callback reporting the chosen file name
                 .story("WithCallback", context -> {
                     // FileChooser has no accept filter or button label, so the button says
                     // "Choose File" and any file can be chosen.

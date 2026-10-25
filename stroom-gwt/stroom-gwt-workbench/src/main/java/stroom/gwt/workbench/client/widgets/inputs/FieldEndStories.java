@@ -77,6 +77,7 @@ public final class FieldEndStories {
         panel.getElement().getStyle().setProperty("gap", "12px");
         panel.getElement().getStyle().setProperty("width", "200px");
 
+        // Only its layout is checked, so its calendar opens no dialog (no controller is attached)
         final DateTimeBox dateTime = new DateTimeBox();
         dateTime.setExpressionsAllowed(true);
         dateTime.setText(LONG);

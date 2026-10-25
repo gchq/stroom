@@ -25,11 +25,9 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.client.IconBox;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.form.client.AccessibleName;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -100,6 +98,25 @@ public final class DateTimePickerStories {
                     // The icon once still opened the dialog (DateTimeBox.setEnabled only disabled
                     // its text box)
                     play.click(play.querySelector(ICON_OUTER));
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                })
+                // Read only: the value can be read and stays in the tab order, but neither the icon
+                // nor Enter opens the dialog
+                .story("ReadOnly", context -> {
+                    final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
+                    final DateTimeBox box = dateTimeBox(context, harness, VALUE_MS);
+                    box.setReadOnly(true);
+                    harness.add(box);
+                    return harness.asWidget();
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(play.querySelector("input")).toHaveAttribute("readonly");
+                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(IconBox.ICON_BOX_READONLY_CLASS_NAME);
+                    play.click(play.querySelector(ICON_OUTER));
+                    play.tab();
+                    play.keyboard("{Enter}");
                     play.sleep(100);
                     play.expect(screen.queryByText("Set Date And Time")).toBeNull();
                 })

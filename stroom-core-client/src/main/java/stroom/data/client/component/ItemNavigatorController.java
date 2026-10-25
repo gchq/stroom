@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class ItemNavigatorController extends Controller {
     private final Provider<ItemSelectionController> itemSelectionProvider;
     private HasItems display;
 
+    /// Made by GIN, with its navigator and what makes its selection dialog.
     @Inject
     public ItemNavigatorController(final ItemNavigator view,
                                    final Provider<ItemSelectionController> itemSelectionProvider) {

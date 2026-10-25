@@ -332,7 +332,7 @@ public class DocSelectionController extends Controller {
     private TaskMonitorFactory getTaskMonitorFactory() {
         return taskMonitorFactory != null
                 ? taskMonitorFactory
-                : context(Contexts.TASK_MONITOR);
+                : getProvidedTaskMonitor();
     }
 
     private void handleDecorateError(final DocRef docRef,

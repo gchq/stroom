@@ -21,7 +21,6 @@ import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimes;
 import stroom.schedule.client.component.SchedulePickerController;
 import stroom.util.shared.scheduler.Schedule;
-import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
@@ -47,6 +46,7 @@ public class ScheduleBoxController extends Controller {
     private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeSupplier = consumer ->
             consumer.accept(null);
 
+    /// Made by GIN; [#attach(ScheduleBox)] gives it its box.
     @Inject
     public ScheduleBoxController(final Provider<SchedulePickerController> schedulePickerProvider,
                                  final ScheduledTimeClient scheduledTimeClient) {
@@ -94,7 +94,7 @@ public class ScheduleBoxController extends Controller {
                 box.setCheckedSchedule(scheduledTimes.getSchedule());
             }
             consumer.accept(scheduledTimes);
-        }), context(Contexts.TASK_MONITOR));
+        }), getProvidedTaskMonitor());
     }
 
     private void check() {
@@ -121,6 +121,6 @@ public class ScheduleBoxController extends Controller {
                         });
                     }));
                 }),
-                context(Contexts.TASK_MONITOR));
+                getProvidedTaskMonitor());
     }
 }

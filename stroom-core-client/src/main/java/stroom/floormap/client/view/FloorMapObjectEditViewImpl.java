@@ -37,7 +37,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 import java.util.function.Consumer;
 
@@ -714,12 +713,12 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    // --------------------------------------------------------------------------------
-
     @Override
     public DateTimeBox getEffectiveTimeBox() {
         return effectiveTimeBox;
     }
+
+    // --------------------------------------------------------------------------------
 
     public interface Binder extends UiBinder<Widget, FloorMapObjectEditViewImpl> {
 

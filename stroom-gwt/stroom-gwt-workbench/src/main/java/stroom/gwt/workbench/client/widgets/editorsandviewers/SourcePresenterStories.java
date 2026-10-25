@@ -152,7 +152,7 @@ public final class SourcePresenterStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(DataFixtures.FETCH_PATH)
                                     .withJsonBodyContaining("{\"sourceLocation\": {\"dataRange\": "
-                                                            + "{\"charOffsetFrom\": 1000}}}")
+                                                            + "{\"charOffsetFrom\": 1000, \"charOffsetTo\": 1999}}}")
                                     .toSpyMatcher()));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });

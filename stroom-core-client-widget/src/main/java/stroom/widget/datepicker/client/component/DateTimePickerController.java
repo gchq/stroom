@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class DateTimePickerController extends Controller {
 
     private final DateTimePicker view;
 
+    /// Made by GIN for one use, with the dialog's content.
     @Inject
     public DateTimePickerController(final EventBus eventBus, final DateTimePicker view) {
         super(eventBus);

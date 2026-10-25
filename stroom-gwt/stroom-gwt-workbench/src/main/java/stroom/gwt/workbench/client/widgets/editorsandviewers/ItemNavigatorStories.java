@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -37,12 +38,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ItemNavigator] (the data viewer's "Record 3 of 10" link and its First,
 /// Previous, Next, Last and Refresh buttons) and the item selection dialog its link opens
-/// ([ItemSelectionController]), with ten records shown one at a time.
+/// ([ItemSelectionController]), with records shown one at a time.
 public final class ItemNavigatorStories {
 
     private static final String ON_SET_ITEM_NO = "onSetItemNo";
     private static final String ON_REFRESH = "onRefresh";
     private static final String DIALOG = "Select Record";
+    private static final long TEN = 10;
+    private static final long THREE_BILLION = 3_000_000_000L;
 
     private ItemNavigatorStories() {
         // Static utility
@@ -55,7 +58,7 @@ public final class ItemNavigatorStories {
         registry.component("Widgets/Editors & Viewers/ItemNavigator", ItemNavigatorStories.class)
                 .layout(StoryLayout.CENTERED)
                 // The third of ten records
-                .story("Default", ItemNavigatorStories::render)
+                .story("Default", context -> render(context, TEN))
                 .withPlay(play -> {
                     play.findByText("Record 3 of 10");
                     // A toolbar button is disabled with aria-disabled, staying in the tab order
@@ -63,20 +66,27 @@ public final class ItemNavigatorStories {
                     play.expect(play.getByTitle("Last record")).not().toHaveAttribute("aria-disabled", "true");
                 })
                 // The buttons move between the records; the first has no First or Previous
-                .story("Buttons", ItemNavigatorStories::render)
+                .story("Buttons", context -> render(context, TEN))
                 .withPlay(play -> {
                     play.click(play.getByTitle("Next record"));
                     play.findByText("Record 4 of 10");
+                    // Previous from the second record reaches the first, where First and Previous
+                    // can't be pressed
                     play.click(play.getByTitle("First record"));
+                    play.findByText("Record 1 of 10");
+                    play.click(play.getByTitle("Next record"));
+                    play.findByText("Record 2 of 10");
+                    play.click(play.getByTitle("Previous record"));
                     play.findByText("Record 1 of 10");
                     play.expect(play.getByTitle("First record")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle("Previous record")).toHaveAttribute("aria-disabled", "true");
-                    // Its title has its shortcut too
+                    play.expect(play.getByTitle("Next record")).not().toHaveAttribute("aria-disabled", "true");
+                    // The refresh button, found by its class as its title has its shortcut too
                     play.click(play.querySelector(".refresh-button"));
                     play.expect(play.spy(ON_REFRESH)).toHaveBeenCalledTimes(1);
                 })
                 // The link opens the dialog on the record shown; OK goes to the record chosen
-                .story("SelectRecord", ItemNavigatorStories::render)
+                .story("SelectRecord", context -> render(context, TEN))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.getByRole("button", "Select Record (Record 3 of 10)"));
@@ -90,11 +100,24 @@ public final class ItemNavigatorStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText(DIALOG)).toBeNull());
                     // Zero based
-                    play.expect(play.spy(ON_SET_ITEM_NO)).toHaveBeenCalledWith(6);
+                    play.expect(play.spy(ON_SET_ITEM_NO)).toHaveBeenCalledWith("6");
                     play.findByText("Record 7 of 10");
                 })
+                // An item beyond the largest int is chosen as it is: it was once cut to an int
+                .story("SelectLargeRecordNumber", context -> render(context, THREE_BILLION))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.getByRole("button", TextMatch.containing("Select Record (Record 3 of")));
+                    final Play dialog = screen.within(screen.findByText(DIALOG).closest(StroomDom.DIALOG));
+                    final Query itemNo = dialog.getByRole("spinbutton", "Item number");
+                    play.clear(itemNo);
+                    play.type(itemNo, "2999999999");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText(DIALOG)).toBeNull());
+                    play.expect(play.spy(ON_SET_ITEM_NO)).toHaveBeenCalledWith("2999999998");
+                })
                 // Cancel leaves the record shown
-                .story("SelectRecordCancel", ItemNavigatorStories::render)
+                .story("SelectRecordCancel", context -> render(context, TEN))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.getByRole("button", "Select Record (Record 3 of 10)"));
@@ -106,12 +129,12 @@ public final class ItemNavigatorStories {
                 });
     }
 
-    private static Widget render(final StoryContext context) {
+    private static Widget render(final StoryContext context, final long count) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
         final ItemNavigatorController navigator = harness.own(new ItemNavigatorController(
                 new ItemNavigator(),
                 () -> new ItemSelectionController(harness.getEventBus(), new ItemSelection())));
-        navigator.setDisplay(new Records(navigator, context.fn(ON_SET_ITEM_NO), context.fn(ON_REFRESH)));
+        navigator.setDisplay(new Records(navigator, count, context.fn(ON_SET_ITEM_NO), context.fn(ON_REFRESH)));
         harness.add(navigator.asWidget());
         return harness.asWidget();
     }
@@ -120,18 +143,21 @@ public final class ItemNavigatorStories {
     // --------------------------------------------------------------------------------
 
 
-    /// Ten records, one shown at a time, starting with the third.
+    /// Records, one shown at a time, starting with the third.
     private static final class Records implements HasItems {
 
-        private static final long COUNT = 10;
-
         private final ItemNavigatorController navigator;
+        private final long count;
         private final Spy onSetItemNo;
         private final Spy onRefresh;
         private long offset = 2;
 
-        private Records(final ItemNavigatorController navigator, final Spy onSetItemNo, final Spy onRefresh) {
+        private Records(final ItemNavigatorController navigator,
+                        final long count,
+                        final Spy onSetItemNo,
+                        final Spy onRefresh) {
             this.navigator = navigator;
+            this.count = count;
             this.onSetItemNo = onSetItemNo;
             this.onRefresh = onRefresh;
         }
@@ -148,13 +174,13 @@ public final class ItemNavigatorStories {
 
         @Override
         public void setItemNo(final long itemNo) {
-            onSetItemNo.call((int) itemNo);
+            onSetItemNo.call(String.valueOf(itemNo));
             show(itemNo);
         }
 
         @Override
         public Count<Long> getTotalItemsCount() {
-            return Count.exactly(COUNT);
+            return Count.exactly(count);
         }
 
         @Override
@@ -174,7 +200,7 @@ public final class ItemNavigatorStories {
 
         @Override
         public void nextPage() {
-            show(Math.min(COUNT - 1, offset + 1));
+            show(Math.min(count - 1, offset + 1));
         }
 
         @Override
@@ -184,7 +210,7 @@ public final class ItemNavigatorStories {
 
         @Override
         public void lastPage() {
-            show(COUNT - 1);
+            show(count - 1);
         }
 
         @Override

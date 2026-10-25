@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
-import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -57,6 +56,7 @@ public class SchedulePickerController extends Controller {
     private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
     private ScheduleReferenceTime scheduleReferenceTime;
 
+    /// Made by GIN for one use, with the dialog's content and what works its times out.
     @Inject
     public SchedulePickerController(final EventBus eventBus,
                                     final SchedulePicker view,
@@ -89,10 +89,11 @@ public class SchedulePickerController extends Controller {
                      final Schedule schedule,
                      final ScheduleReferenceTime scheduleReferenceTime,
                      final Consumer<Schedule> onOk) {
-        this.currentSchedule = schedule;
         this.scheduleReferenceTime = scheduleReferenceTime;
+        // The schedule is its type's, which the dialog shows (it once asked for its times twice)
+        remember(schedule);
+        currentSchedule = schedule;
         read();
-        onScheduleTypeChange(currentSchedule.getType());
         ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .modal()
@@ -110,7 +111,7 @@ public class SchedulePickerController extends Controller {
                                 onOk.accept(createSchedule());
                                 e.hide();
                             }
-                        }), context(Contexts.TASK_MONITOR));
+                        }), getProvidedTaskMonitor());
                     } else {
                         e.hide();
                     }
@@ -125,21 +126,7 @@ public class SchedulePickerController extends Controller {
     }
 
     private void onScheduleTypeChange(final ScheduleType scheduleType) {
-        final Schedule shown = new Schedule(currentSchedule.getType(), view.getExpression().trim());
-        switch (currentSchedule.getType()) {
-            case INSTANT: {
-                instantSchedule = shown;
-                break;
-            }
-            case FREQUENCY: {
-                frequencySchedule = shown;
-                break;
-            }
-            case CRON: {
-                cronSchedule = shown;
-                break;
-            }
-        }
+        remember(new Schedule(currentSchedule.getType(), view.getExpression().trim()));
         switch (scheduleType) {
             case INSTANT: {
                 currentSchedule = instantSchedule;
@@ -155,6 +142,24 @@ public class SchedulePickerController extends Controller {
             }
         }
         read();
+    }
+
+    // Keeps a schedule as its type's, so that changing the type and back shows it again
+    private void remember(final Schedule schedule) {
+        switch (schedule.getType()) {
+            case INSTANT: {
+                instantSchedule = schedule;
+                break;
+            }
+            case FREQUENCY: {
+                frequencySchedule = schedule;
+                break;
+            }
+            case CRON: {
+                cronSchedule = schedule;
+                break;
+            }
+        }
     }
 
     private Schedule createSchedule() {
@@ -190,7 +195,7 @@ public class SchedulePickerController extends Controller {
                         view.setNextScheduledTime("Never");
                     }
                 }
-            }), context(Contexts.TASK_MONITOR));
+            }), getProvidedTaskMonitor());
         }
     }
 }

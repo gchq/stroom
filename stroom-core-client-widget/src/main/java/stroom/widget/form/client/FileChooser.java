@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class FileChooser extends Component {
         chooseFile.setFocus(true);
     }
 
-    // The file input holding the chosen file, which its controller uploads
+    /// @return The file input holding the chosen file, which its controller uploads.
     Element getFileInput() {
         return fileInput;
     }

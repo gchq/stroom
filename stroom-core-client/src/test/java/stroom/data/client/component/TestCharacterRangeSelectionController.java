@@ -37,7 +37,9 @@ class TestCharacterRangeSelectionController {
     @Test
     void anInvalidRangeLetsTheDialogBeUsedAgain() {
         // Regression test: the range's problem was shown with no callback and the dialog neither
-        // closed nor reset, so it was left with OK and Cancel disabled.
+        // closed nor reset, so it was left with OK and Cancel disabled. This covers what OK does
+        // with a problem; that the controller passes the alert's close on to it is covered in the
+        // browser by Widgets/Editors & Viewers/SourcePresenter InvalidRangeKeepsDialogUsable.
         final HidePopupRequestEvent okPressed = press(true, range(4, 4));
 
         // The offsets are shown one based, added rather than appended ("51")

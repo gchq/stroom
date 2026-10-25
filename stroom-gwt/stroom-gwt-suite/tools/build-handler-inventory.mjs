@@ -850,7 +850,8 @@ const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists i
 // `needs-key`, which is what B3 still owes. Joining one is `hit`'s business, not this list's.
 // The screens the data viewer's item navigator is on, the way any handler's owners are worked out.
 const navigatorOwners = (() => {
-  const owners = closureOf('ItemNavigatorViewImpl');
+  // ItemNavigatorViewImpl until wave 4 of the component migration
+  const owners = closureOf('ItemNavigator');
   for (const o of [...owners]) { const p = partnerOf(o); if (p) for (const c of closureOf(p)) owners.add(c); }
   for (const o of [...owners]) for (const parent of embeddedBy.get(o) ?? []) owners.add(parent);
   return owners;
@@ -887,7 +888,7 @@ for (const h of handlers) {
   let hit = null;
   // `Pager`'s range editor, driven as one gesture: its click, key and focus/blur handlers all ride on
   // it, so they join by the receiver the gesture reached rather than by a label or a node.
-  if (h.kind === 'click' && PAGING_LABELS.has(h.label) && ['Pager', 'ItemNavigatorViewImpl'].includes(h.class)) {
+  if (h.kind === 'click' && PAGING_LABELS.has(h.label) && ['Pager', 'ItemNavigator'].includes(h.class)) {
     // Paging buttons by SCREEN. A grid's Pager and the data viewer's item navigator both say First,
     // Backward, Forward and Last, so a label cannot say which was pressed. The screen can: a press
     // on a screen with a grid and no navigator is the Pager's, one on the navigator's screen with no

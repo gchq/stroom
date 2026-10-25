@@ -34,7 +34,7 @@ class TestUploadReply {
     void testSuccess_isTheServletsArgLine() {
         final UploadReply reply = UploadReply.success("res-1", "my import.zip");
 
-        // As FileUploadResultHandler reads it
+        // As FileChooserController.readReply reads it
         final PropertyMap propertyMap = new PropertyMap();
         propertyMap.loadArgLine(reply.getResponseText());
         assertThat(propertyMap.isSuccess()).isTrue();

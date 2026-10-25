@@ -43,6 +43,7 @@ public class TimeRangePickerController extends Controller {
 
     private final TimeRangePicker view;
 
+    /// Made by GIN for one use, with the dialog's content and what opens its times' dialogs.
     @Inject
     public TimeRangePickerController(final EventBus eventBus,
                                      final TimeRangePicker view,

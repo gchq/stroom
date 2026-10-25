@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class ItemSelection extends Component {
 
     /// @return The item chosen, zero based.
     public long getItemNo() {
-        return itemNoSpinner.getIntValue() - 1;
+        return itemNoSpinner.getValue() - 1;
     }
 
     /// @param itemNo The item to show, zero based.

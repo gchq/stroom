@@ -36,6 +36,7 @@ public class DateTimeBoxController extends Controller {
     private final Provider<DateTimePickerController> dateTimePickerProvider;
     private DateTimeBox box;
 
+    /// Made by GIN; [#attach(DateTimeBox)] gives it its box.
     @Inject
     public DateTimeBoxController(final Provider<DateTimePickerController> dateTimePickerProvider) {
         this.dateTimePickerProvider = dateTimePickerProvider;
@@ -44,7 +45,7 @@ public class DateTimeBoxController extends Controller {
     /// Attaches this to the box whose requests to open the dialog it answers.
     ///
     /// @param box The box, e.g. one a template declares.
-    /// @return This, e.g. for its owner to keep.
+    /// @return This, for its owner to keep.
     public DateTimeBoxController attach(final DateTimeBox box) {
         this.box = Objects.requireNonNull(box, "box");
         box.setOnOpenPicker(this::openPicker);

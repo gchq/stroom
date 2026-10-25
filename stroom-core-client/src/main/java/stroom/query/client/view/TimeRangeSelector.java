@@ -54,6 +54,7 @@ public class TimeRangeSelector extends Component implements HasValue<TimeRange>,
     private ParamValues paramValues;
     private boolean enabled = true;
     private Runnable onOpenPicker;
+    private Runnable onChange;
 
     /// Makes a selector of all time.
     public TimeRangeSelector() {
@@ -70,6 +71,11 @@ public class TimeRangeSelector extends Component implements HasValue<TimeRange>,
     ///                     the selector is disabled or read only.
     public void setOnOpenPicker(final Runnable onOpenPicker) {
         this.onOpenPicker = onOpenPicker;
+    }
+
+    /// @param onChange Run when the user changes the time range with the dialog.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     /// Enables or disables choosing the time range. A disabled one is greyed, announced as
@@ -124,6 +130,9 @@ public class TimeRangeSelector extends Component implements HasValue<TimeRange>,
         showValue();
         if (fireEvents) {
             ValueChangeEvent.fire(this, this.value);
+            if (onChange != null) {
+                onChange.run();
+            }
         }
     }
 
@@ -133,6 +142,10 @@ public class TimeRangeSelector extends Component implements HasValue<TimeRange>,
         showValue();
     }
 
+    /// Kept beside [#setOnChange(Runnable)] until its callers have moved.
+    ///
+    /// @param handler Told when the user changes the time range with the dialog.
+    /// @return The handler's registration.
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
         return addHandler(handler, ValueChangeEvent.getType());

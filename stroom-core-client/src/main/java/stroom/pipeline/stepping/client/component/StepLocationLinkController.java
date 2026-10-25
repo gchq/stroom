@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class StepLocationLinkController extends Controller {
     private Consumer<StepLocation> onStepLocation = stepLocation -> {
     };
 
+    /// Made by GIN, with its link and what makes its dialog.
     @Inject
     public StepLocationLinkController(final StepLocationLink view,
                                       final Provider<StepLocationPickerController> stepLocationPickerProvider) {

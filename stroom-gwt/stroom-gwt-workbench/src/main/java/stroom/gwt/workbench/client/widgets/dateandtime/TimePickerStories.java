@@ -32,7 +32,6 @@ import stroom.widget.datepicker.client.component.TimePicker;
 import stroom.widget.datepicker.client.component.TimePickerController;
 import stroom.widget.form.client.AccessibleName;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 

@@ -2,6 +2,8 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
+> **Since wave 4 (25 October 2026):** the date-time, time, schedule and time range boxes' controllers (`DateTimeBoxController`, `TimeBoxController`, `ScheduleBoxController`, `TimeRangeSelectorController`) are already attached by today's presenters, so there is no `setPopupProvider` or `setSchedulePresenterProvider` left to replace: a converted controller makes and attaches them as they do. `CustomFileUpload` is `FileChooser`, with a `FileChooserController` its owner attaches; `ClassificationWrapperView` is `ClassificationWrapper` (`stroom.data.client.component`); the schedule dialog is `SchedulePickerController`. The rows below name what was there when they were written.
+
 Convert document tabs and large composite panes into components with controllers, removing the dependency on DocPresenter: data, source and stepping; pipeline structure; annotations; processing and notifications; Plan B settings; user and permissions tabs; retention and processor tabs. Hand-rolled tabs become TabbedComponent.
 
 ## CSS and template notes for the wave
@@ -61,7 +63,7 @@ tab, presenter; complexity 4, effort L; used by 3.
 | ElementViewImpl.java:40-76,82-88 | structure | the layout built in asWidget/thinSplitPane goes into the template: <l:SplitPane ui:field="layout" vertical="true" thin="true" sizes="50%, *, 15%" names="Code, Output, Log" addStyleNames="max"> with the code pane, an inner <l:SplitPane ui:field="inputAndOutput" thin="true" sizes="50%, *" names="Input, Output"> and the log pane; panes not used by an element are hidden with setPaneHidden (code, input) as the log is today |
 | ElementViewImpl.java:46-47,55,66 | css-class | dashboard-panel overflow-hidden on the code, input, output and log panes, in the template |
 | ElementPresenter.java:124 (code), 190 (log) | component-declaration | <ed:CodeEditor ui:field="code"/> and <ed:CodeEditor ui:field="log"/> (wave 6's dumb editor component) in the code and log panes |
-| ElementPresenter.java:96-97,155,159 | component-declaration | <d:ClassificationWrapperView ui:field="input"> and <d:ClassificationWrapperView ui:field="output"> (wave 4, stroom.data.client.presenter) each wrapping a <ed:CodeEditor/> in the input and output panes |
+| ElementPresenter.java:96-97,155,159 | component-declaration | <d:ClassificationWrapper ui:field="input"> and <d:ClassificationWrapper ui:field="output"> (wave 4, stroom.data.client.presenter) each wrapping a <ed:CodeEditor/> in the input and output panes |
 
 **Stays in Java:** Which panes show (from the element's roles: has code, mutator, validator), log visibility, editor texts, modes and indicators (ElementPresenter.java:123-207,321,445); LOG_PANE_SIZE as part of the template's sizes; SplitPane split positions the user drags.
 

@@ -24,7 +24,6 @@ import stroom.explorer.client.presenter.DocSelectionController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
-import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
@@ -109,6 +108,6 @@ public class AnalyticStreamDestinationController extends Controller {
                 AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED,
                 feedSelection.getSelectedEntityReference(),
                 "destination feed",
-                context(Contexts.TASK_MONITOR));
+                getProvidedTaskMonitor());
     }
 }
