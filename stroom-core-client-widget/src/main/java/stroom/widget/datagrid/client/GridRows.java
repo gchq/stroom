@@ -30,7 +30,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.view.client.SelectionModel;
@@ -200,13 +199,13 @@ final class GridRows<R> {
                     VirtualWindow.DEFAULT_BUFFER_ROWS);
             start = window.getStart();
             end = window.getEnd();
-            content.getStyle().setHeight(window.getContentHeight(), Unit.PX);
-            body.getStyle().setProperty("transform", "translateY(" + window.getOffset() + "px)");
+            CssProperties.set(content, "--data-grid__content-height", window.getContentHeight() + "px");
+            CssProperties.set(body, "--data-grid__body-offset", window.getOffset() + "px");
         } else {
             start = 0;
             end = rows.size();
-            content.getStyle().clearHeight();
-            body.getStyle().clearProperty("transform");
+            CssProperties.remove(content, "--data-grid__content-height");
+            CssProperties.remove(body, "--data-grid__body-offset");
             final boolean contain = rows.size() > CONTAIN_ROW_THRESHOLD;
             grid.setStyleName("data-grid--contain", contain);
             if (contain) {

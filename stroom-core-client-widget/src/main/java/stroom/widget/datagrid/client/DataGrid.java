@@ -1484,9 +1484,8 @@ public class DataGrid<R> extends Widget
         headersDirty = false;
 
         final boolean isEmpty = pageState.getRowDataSize() == 0;
-        empty.getStyle().setProperty("display", isEmpty && emptyMessage != null
-                ? ""
-                : "none");
+        // Which shows the empty message (data-grid.css)
+        setStyleName("data-grid--empty", isEmpty && emptyMessage != null);
         if (profile.hasCells()) {
             scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
             scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));

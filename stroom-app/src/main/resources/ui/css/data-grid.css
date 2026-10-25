@@ -38,7 +38,17 @@
 
    Modifiers of the grid, none with an ARIA attribute: --virtual (only the rows in view are drawn),
    --contain (a long page in natural mode), --selectable (it has a selection model), --no-header,
-   --dragging, --resizing, --scroll-timeline (the thumbs follow scroll-driven animations).
+   --empty (no rows, with a message to show), --dragging, --resizing, --scroll-timeline (the thumbs
+   follow scroll-driven animations).
+
+   What the grid works out as it lays itself out is set as custom properties on the part they
+   place, not as inline styles: --data-grid__head-height, --data-grid__content-height,
+   --data-grid__body-offset, --data-grid__v-track-top, --data-grid__v-thumb-length,
+   --data-grid__h-thumb-length, --data-grid__v-thumb-position, --data-grid__h-thumb-position,
+   --data-grid__handle-left, --data-grid__resize-line-left, --data-grid__move-ghost-left,
+   --data-grid__move-ghost-width, --data-grid__move-line-left, and a spanning cell's
+   --data-grid__span. The rules that use them select through the grid's own parts (child
+   combinators), so a grid inside another's cell isn't laid out by the outer grid's.
 
    Modifiers of a row: --even and --odd (its stripe), --selected, --keyboard (the keyboard's row),
    --probe. Of a header cell: --sortable. Of a cell: --keyboard (the keyboard's row's first cell),
@@ -126,6 +136,12 @@
     /* Opaque, as the rows scroll under it: the colour of what the grid sits in (MyDataGrid's
        header, which no row passes under, is transparent) */
     background-color: var(--data-grid__head-background-color, var(--page__background-color));
+    /* Snapped to a whole pixel once measured (GridHeader.snapHeight) */
+    height: var(--data-grid__head-height, auto);
+}
+
+.data-grid--no-header > .data-grid__scroller > .data-grid__head {
+    display: none;
 }
 
 /* What a grid sits on, when it isn't the page: a dialog's colour is painted by a layer behind its
@@ -284,6 +300,11 @@
     vertical-align: middle;
 }
 
+/* A cell spanning columns (setColumnSpans) */
+.data-grid__cell.data-grid__cell--span {
+    grid-column: span var(--data-grid__span, 1);
+}
+
 .data-grid__cell > div {
     min-width: 0;
 }
@@ -357,6 +378,15 @@
     will-change: transform;
 }
 
+/* As tall as every row, with the rows drawn moved down to where they are in it */
+.data-grid--virtual > .data-grid__scroller > .data-grid__content {
+    height: var(--data-grid__content-height, auto);
+}
+
+.data-grid--virtual > .data-grid__scroller > .data-grid__content > .data-grid__body {
+    transform: translateY(var(--data-grid__body-offset, 0px));
+}
+
 .data-grid--virtual .data-grid__row {
     height: var(--data-grid__row-height, 24px);
     overflow: hidden;
@@ -372,8 +402,13 @@
 }
 
 .data-grid__empty {
+    display: none;
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     color: var(--text-color--disabled);
+}
+
+.data-grid--empty > .data-grid__scroller > .data-grid__content > .data-grid__empty {
+    display: block;
 }
 
 /* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */
@@ -393,6 +428,8 @@
 }
 
 .data-grid__track--vertical {
+    /* Below the header */
+    top: var(--data-grid__v-track-top, 0);
     right: 0;
     bottom: 0;
     width: 12px;
@@ -403,6 +440,11 @@
     right: 0;
     bottom: 0;
     height: 12px;
+}
+
+/* Nothing to scroll */
+.data-grid__track.data-grid__track--hidden {
+    display: none;
 }
 
 .data-grid__thumb {
@@ -417,12 +459,17 @@
     transition: background-color .5s;
 }
 
-.data-grid__track--vertical .data-grid__thumb {
+/* Placed directly too, which a running scroll-driven animation (below) overrides */
+.data-grid__track--vertical > .data-grid__thumb {
     width: 12px;
+    height: var(--data-grid__v-thumb-length, 0);
+    transform: translateY(var(--data-grid__v-thumb-position, 0px));
 }
 
-.data-grid__track--horizontal .data-grid__thumb {
+.data-grid__track--horizontal > .data-grid__thumb {
+    width: var(--data-grid__h-thumb-length, 0);
     height: 12px;
+    transform: translateX(var(--data-grid__h-thumb-position, 0px));
 }
 
 /*
@@ -483,8 +530,10 @@
  * lines.
  */
 .data-grid__resize-handle {
+    display: none;
     position: absolute;
     top: 0;
+    left: var(--data-grid__handle-left, 0);
     bottom: 0;
     width: 10px;
     z-index: 1;
@@ -494,8 +543,14 @@
     touch-action: none;
 }
 
+/* On the edge of the column under the pointer */
+.data-grid__resize-handle.data-grid__resize-handle--shown {
+    display: block;
+}
+
 .data-grid__resize-line,
 .data-grid__move-line {
+    display: none;
     position: absolute;
     top: 0;
     bottom: 0;
@@ -505,14 +560,32 @@
     pointer-events: none;
 }
 
+.data-grid__resize-line {
+    left: var(--data-grid__resize-line-left, 0);
+}
+
+.data-grid__move-line {
+    left: var(--data-grid__move-line-left, 0);
+}
+
 .data-grid__move-ghost {
+    display: none;
     position: absolute;
     top: 0;
     bottom: 0;
+    left: var(--data-grid__move-ghost-left, 0);
+    width: var(--data-grid__move-ghost-width, 0);
     z-index: 4;
     background-color: gray;
     opacity: 0.3;
     pointer-events: none;
+}
+
+/* The resize line shows while a column is resized, and the move ghost and line while one is moved */
+.data-grid--resizing > .data-grid__resize-line,
+.data-grid--dragging:not(.data-grid--resizing) > .data-grid__move-ghost,
+.data-grid--dragging:not(.data-grid--resizing) > .data-grid__move-line {
+    display: block;
 }
 
 /* While a column is dragged, nothing in the grid is selected and the cursor stays put. */

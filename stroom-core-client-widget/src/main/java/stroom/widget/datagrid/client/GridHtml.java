@@ -52,6 +52,9 @@ final class GridHtml<R> {
     /// The attribute holding a header cell's column index.
     static final String DATA_HCOL = "data-hcol";
 
+    // A cell spanning columns, as many as its --data-grid__span
+    private static final String SPAN_CLASS_NAME = "data-grid__cell--span";
+
     // A tick box in a cell is a check box to assistive technology
     private static final String CHECK_BOX_ROLE = "role=\"checkbox\"";
 
@@ -191,14 +194,20 @@ final class GridHtml<R> {
             }
             content.appendHtmlConstant("</div>");
 
+            final Integer span = spans.get(i);
+            final int clamped = span != null && span > 1
+                    ? Math.min(span, count - i)
+                    : 1;
+            if (clamped > 1) {
+                // The span is a custom property its class uses (data-grid.css)
+                classes.append(' ').append(SPAN_CLASS_NAME);
+            }
             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
             sb.appendHtmlConstant("<div class=\"")
                     .appendEscaped(classes.toString())
                     .appendHtmlConstant("\" " + cellRoleAttribute + DATA_COL + "=\"" + i + "\"");
-            final Integer span = spans.get(i);
-            if (span != null && span > 1) {
-                final int clamped = Math.min(span, count - i);
-                sb.appendHtmlConstant(" style=\"grid-column: span " + clamped + "\" aria-colspan=\""
+            if (clamped > 1) {
+                sb.appendHtmlConstant(" style=\"--data-grid__span: " + clamped + "\" aria-colspan=\""
                                       + clamped + "\"");
                 skipUntil = i + clamped;
             }

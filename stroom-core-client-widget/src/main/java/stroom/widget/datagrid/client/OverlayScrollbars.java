@@ -23,7 +23,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +43,8 @@ final class OverlayScrollbars {
     private static final int MIN_THUMB_LENGTH = 28;
     private static final String ACTIVE_CLASS_NAME = "data-grid__thumb--active";
     private static final String SCROLL_TIMELINE_CLASS_NAME = "data-grid--scroll-timeline";
+    // A track with nothing to scroll
+    private static final String TRACK_HIDDEN_CLASS_NAME = "data-grid__track--hidden";
     private static final boolean SCROLL_TIMELINE = supportsScrollTimeline();
 
     private final Element root;
@@ -128,16 +129,12 @@ final class OverlayScrollbars {
         final ScrollThumb v = verticalThumb();
         final ScrollThumb h = horizontalThumb();
 
-        vTrack.getStyle().setTop(headerHeight.getAsInt(), Unit.PX);
-        vTrack.getStyle().setProperty("display", v.isVisible()
-                ? ""
-                : "none");
-        vThumb.getStyle().setHeight(v.getLength(), Unit.PX);
+        CssProperties.set(vTrack, "--data-grid__v-track-top", headerHeight.getAsInt() + "px");
+        setHidden(vTrack, !v.isVisible());
+        CssProperties.set(vThumb, "--data-grid__v-thumb-length", v.getLength() + "px");
 
-        hTrack.getStyle().setProperty("display", h.isVisible()
-                ? ""
-                : "none");
-        hThumb.getStyle().setWidth(h.getLength(), Unit.PX);
+        setHidden(hTrack, !h.isVisible());
+        CssProperties.set(hThumb, "--data-grid__h-thumb-length", h.getLength() + "px");
 
         if (SCROLL_TIMELINE) {
             // The scroll-driven animations move the thumbs from 0 to their travel.
@@ -146,8 +143,16 @@ final class OverlayScrollbars {
         }
         // Also place the thumbs directly. A running scroll-driven animation overrides this, but
         // where animations are turned off (e.g. the test runner's screenshots) it is what shows.
-        vThumb.getStyle().setProperty("transform", "translateY(" + v.getPosition() + "px)");
-        hThumb.getStyle().setProperty("transform", "translateX(" + h.getPosition() + "px)");
+        CssProperties.set(vThumb, "--data-grid__v-thumb-position", v.getPosition() + "px");
+        CssProperties.set(hThumb, "--data-grid__h-thumb-position", h.getPosition() + "px");
+    }
+
+    private static void setHidden(final Element track, final boolean hidden) {
+        if (hidden) {
+            track.addClassName(TRACK_HIDDEN_CLASS_NAME);
+        } else {
+            track.removeClassName(TRACK_HIDDEN_CLASS_NAME);
+        }
     }
 
     private ScrollThumb verticalThumb() {
