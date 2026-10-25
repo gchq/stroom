@@ -38,6 +38,7 @@ import stroom.ai.impl.workspace.SafePattern;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -71,8 +72,13 @@ public final class LocalCheck {
     private static final Pattern TOKEN = PyText.re("^[A-Za-z][\\w.:-]{0,39}$");
     private static final Pattern WORD = PyText.re("[A-Za-z_][\\w.-]*");
     private static final String NAME = "Name";
-    // An element that holds a user's id, e.g. EventSource/User/Id, EventDetail/Authenticate/User/Id.
+    // An element that holds a user's id, e.g. EventSource/User/Id, EventDetail/Authenticate/User/Id: without the
+    // schema, by its name.
     private static final Pattern USER_ID = Pattern.compile("(^|/)User/Id$");
+    // The schema's type of a user (User, RunAs, Approver, Requestor, an email's From).
+    private static final String USER_TYPE = "UserComplexType";
+    // Users of that type that are an email's addressees: their Ids are email addresses, the domain part of them.
+    private static final Set<String> EMAIL_USERS = Set.of("From", "To", "Cc", "Bcc");
     // DOMAIN\\user or user@domain: one name, then a domain.
     private static final Pattern DOMAIN_QUALIFIED = Pattern.compile(
             "[^\\\\\\s@]+\\\\[^\\\\\\s@]+|[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
@@ -945,42 +951,165 @@ public final class LocalCheck {
         return out;
     }
 
+    /// Data entries reading fields that none of the sample records their rule takes holds: Data the kind doesn't
+    /// carry, which the documentation then lists as "(not in the sample)". A warning, as the sample may lack them
+    /// while other records have them. Not in the Python server; seen: a SecretServer launch rule's rpc_account,
+    /// target and duration_ms, in none of its records.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The warnings.
+    public static List<String> dataNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        if (hasText(mapping.forEach())) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = new ArrayList<>();
+        final List<Map<String, String>> extracted = new ArrayList<>();
+        for (int n = 0; n < records.size(); n++) {
+            final Map<String, String> values = extracted(mapping, records, null, n);
+            extracted.add(values);
+            rules.add(ruleOf(mapping, records.get(n), values));
+        }
+        final List<String> out = new ArrayList<>();
+        for (final EventRule rule : mapping.events()) {
+            final List<Integer> taken = new ArrayList<>();
+            for (int n = 0; n < records.size(); n++) {
+                if (rule.name().equals(rules.get(n))) {
+                    taken.add(n);
+                }
+            }
+            if (taken.isEmpty()) {
+                continue;
+            }
+            final List<String> unheld = new ArrayList<>();
+            for (final FieldMapping entry : rule.fields()) {
+                final List<String> inputs = new ArrayList<>();
+                if (hasText(entry.field())) {
+                    inputs.add(entry.field());
+                }
+                inputs.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
+                if (!hasText(entry.dataName()) || inputs.isEmpty() || entry.defaultValue() != null) {
+                    continue;
+                }
+                final boolean held = taken.stream().anyMatch(n -> inputs.stream().anyMatch(field -> hasText(
+                        derived.contains(field)
+                                ? (extracted.get(n) == null
+                                        ? null
+                                        : extracted.get(n).get(field))
+                                : valueOf(records.get(n), field))));
+                if (!held) {
+                    unheld.add("'" + entry.dataKey() + "'");
+                }
+            }
+            if (!unheld.isEmpty()) {
+                out.add("[" + rule.name() + "] Data " + String.join(", ", unheld) + " read" + (unheld.size() == 1
+                        ? "s a field"
+                        : " fields") + " none of the " + taken.size() + " sample records this rule takes holds: "
+                        + "remove " + (unheld.size() == 1
+                        ? "it"
+                        : "them") + ", unless other records will have " + (unheld.size() == 1
+                        ? "it"
+                        : "them") + ".");
+            }
+        }
+        return out;
+    }
+
     /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,
     /// `user@domain`): an Id is usually the account name alone, which `strip_domain` gives (unlike the Stroom MCP
     /// server, which said nothing: seen in eval cases 35, 36 and 43, the domain kept in every Id).
     ///
     /// @param mapping The mapping.
     /// @param records The sample's records.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
     /// @return The warnings.
-    public static List<String> domainQualifiedUserIds(final TranslationMapping mapping, final List<Object> records) {
+    public static List<String> domainQualifiedUserIds(final TranslationMapping mapping,
+                                                      final List<Object> records,
+                                                      final EventSchema schema) {
+        return domainQualifiedWarnings(domainQualifiedIds(mapping, records, schema));
+    }
+
+    /// @param qualified The fields whose values going into users' Ids carry a domain
+    ///                  ([#domainQualifiedIds(TranslationMapping, List)]).
+    /// @return A warning for each Id they go into.
+    public static List<String> domainQualifiedWarnings(final List<QualifiedIds> qualified) {
         final List<String> out = new ArrayList<>();
-        final List<Object> items = forEachItems(mapping, records);
-        for (final FieldMapping entry : mapping.allEntries()) {
-            if (!hasText(entry.field()) || !USER_ID.matcher(entry.path()).find() || entry.hasMap()
-                || hasText(entry.transform()) || hasText(entry.xpath()) || entry.value() != null) {
-                continue;
-            }
-            final List<Object> pool = hasText(mapping.forEach()) && !"record".equals(entry.scope())
-                    ? items
-                    : records;
-            final Set<String> qualified = new LinkedHashSet<>();
-            for (final Object record : pool) {
-                final String value = valueOf(record, entry.field());
-                if (value != null && DOMAIN_QUALIFIED.matcher(PyText.strip(value)).matches()) {
-                    qualified.add(PyText.strip(value));
-                }
-            }
-            if (!qualified.isEmpty()) {
-                final String said = entry.path() + " takes field '" + entry.field() + "', whose values are "
-                                    + "domain-qualified (" + PyText.repr(qualified.stream().limit(3).toList())
-                                    + "): an Id is usually the account name alone. If so, give the entry "
-                                    + "transform: strip_domain";
+        for (final QualifiedIds found : qualified) {
+            for (final String path : found.paths()) {
+                final String said = path + " takes field '" + found.field() + "', whose values are "
+                                    + "domain-qualified (" + PyText.repr(found.examples()) + "): an Id is usually "
+                                    + "the account name alone. If so, give the entry transform: strip_domain";
                 if (!out.contains(said)) {
                     out.add(said);
                 }
             }
         }
         return out;
+    }
+
+    /// The fields mapped as they are into users' Ids whose sample values are domain-qualified (`DOMAIN\\user`,
+    /// `user@domain`), read from the record or from what the mapping's extractions give it (seen: SecretServer's
+    /// `By User`, read from its message's key/value pairs, never checked, and the domain kept in every Id). The Ids
+    /// are those of the schema's users (User, RunAs, Approver, Requestor, wherever they are: Send/Destination/User,
+    /// say), not an email's addressees (From, To, Cc, Bcc), whose Ids are email addresses.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
+    /// @return Each field, in the mapping's order, with the Id paths it is mapped into as it is and up to three of
+    /// its domain-qualified values.
+    public static List<QualifiedIds> domainQualifiedIds(final TranslationMapping mapping,
+                                                        final List<Object> records,
+                                                        final EventSchema schema) {
+        final FieldValues values = new FieldValues(mapping, records);
+        final Map<String, List<String>> paths = new LinkedHashMap<>();
+        final Map<String, Set<String>> qualified = new LinkedHashMap<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (!hasText(entry.field()) || !isUserId(entry.path(), schema) || entry.hasMap()
+                || hasText(entry.transform()) || hasText(entry.xpath()) || entry.value() != null) {
+                continue;
+            }
+            final Set<String> found = new LinkedHashSet<>();
+            for (final String value : values.of(entry)) {
+                if (value != null && DOMAIN_QUALIFIED.matcher(PyText.strip(value)).matches()) {
+                    found.add(PyText.strip(value));
+                }
+            }
+            if (!found.isEmpty()) {
+                final List<String> into = paths.computeIfAbsent(entry.field(), field -> new ArrayList<>());
+                if (!into.contains(entry.path())) {
+                    into.add(entry.path());
+                }
+                qualified.computeIfAbsent(entry.field(), field -> new LinkedHashSet<>()).addAll(found);
+            }
+        }
+        final List<QualifiedIds> out = new ArrayList<>();
+        paths.forEach((field, into) -> out.add(new QualifiedIds(field, List.copyOf(into),
+                qualified.get(field).stream().limit(3).toList())));
+        return out;
+    }
+
+    // An Id of one of the schema's users, not an email's addressee; without the schema, an Id of an element named
+    // User.
+    private static boolean isUserId(final String path, final EventSchema schema) {
+        if (schema == null) {
+            return USER_ID.matcher(path).find();
+        }
+        if (!path.endsWith("/Id")) {
+            return false;
+        }
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final RuntimeException e) {
+            return false;
+        }
+        if (chain.size() < 2) {
+            return false;
+        }
+        final EventSchema.Child user = chain.get(chain.size() - 2);
+        return USER_TYPE.equals(schema.typeName(user.decl())) && !EMAIL_USERS.contains(user.name());
     }
 
     /// Fields mapped as they are into an element whose schema type has a pattern (an address, a port, a MAC),
@@ -995,7 +1124,10 @@ public final class LocalCheck {
     public static List<String> checkSchemaValues(final TranslationMapping mapping, final List<Object> records,
                                                  final EventSchema schema) {
         final List<String> out = new ArrayList<>();
-        final List<Object> items = forEachItems(mapping, records);
+        // Read from the record or from what the mapping's extractions give it (seen: SecretServer's fields, read
+        // from its message's key/value pairs, never checked; not in the Stroom MCP server, which read the record's
+        // own fields alone).
+        final FieldValues fieldValues = new FieldValues(mapping, records);
         final Set<String> nil = new HashSet<>(mapping.nilValues() == null
                 ? List.of()
                 : mapping.nilValues());
@@ -1009,12 +1141,8 @@ public final class LocalCheck {
             if (patterns.isEmpty()) {
                 continue;
             }
-            final List<Object> pool = hasText(mapping.forEach()) && !"record".equals(entry.scope())
-                    ? items
-                    : records;
             final List<String> values = new ArrayList<>();
-            for (final Object record : pool) {
-                final String value = valueOf(record, entry.field());
+            for (final String value : fieldValues.of(entry)) {
                 if (value != null && !PyText.isBlank(value) && !nil.contains(PyText.strip(value))) {
                     values.add(value);
                 }
@@ -1126,6 +1254,52 @@ public final class LocalCheck {
     }
 
     // A field the mapping reads, with the scope it reads it in.
+    // Each record's value of an entry's field (or each item's, for an entry for_each repeats): the record's own,
+    // or what the mapping's extractions give it, worked out once for all the entries.
+    private static final class FieldValues {
+
+        private final TranslationMapping mapping;
+        private final List<Object> records;
+        private final List<Object> items;
+        private final Set<String> derived;
+        private final Map<List<Object>, List<Map<String, String>>> extracted = new IdentityHashMap<>();
+
+        private FieldValues(final TranslationMapping mapping, final List<Object> records) {
+            this.mapping = mapping;
+            this.records = records;
+            this.items = forEachItems(mapping, records);
+            this.derived = derived(mapping);
+        }
+
+        // Null where a record has no value, or its extractions can't be run here.
+        private List<String> of(final FieldMapping entry) {
+            final List<Object> pool = hasText(mapping.forEach()) && !"record".equals(entry.scope())
+                    ? items
+                    : records;
+            final String field = entry.field();
+            if (!derived.contains(field)) {
+                return pool.stream().map(record -> valueOf(record, field)).toList();
+            }
+            final List<Map<String, String>> given = extracted.computeIfAbsent(pool, of -> of.stream()
+                    .map(record -> extractedValues(mapping, record))
+                    .toList());
+            final List<String> out = new ArrayList<>();
+            given.forEach(values -> out.add(values == null
+                    ? null
+                    : values.get(field)));
+            return out;
+        }
+    }
+
+    /// A field mapped as it is into users' Ids, whose sample values are domain-qualified.
+    ///
+    /// @param field    The field.
+    /// @param paths    The Id paths it is mapped into as it is, e.g. `EventSource/User/Id`.
+    /// @param examples Up to three of its domain-qualified values.
+    public record QualifiedIds(String field, List<String> paths, List<String> examples) {
+
+    }
+
     private record Wanted(String name, String scope) {
 
     }

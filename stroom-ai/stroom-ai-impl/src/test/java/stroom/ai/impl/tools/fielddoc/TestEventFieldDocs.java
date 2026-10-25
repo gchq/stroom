@@ -31,8 +31,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,6 +48,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestEventFieldDocs {
 
     private static final String NOT_IN_THE_MAPPING = "not in the mapping";
+    private static final Pattern COMMON_DATA = Pattern.compile(
+            "\\| `EventDetail/\\*/Data\\[@Name='([^']*)'\\]/@Value` \\|");
 
     private static final EventSchema SCHEMA = FieldDocFixtures.SCHEMA;
 
@@ -74,7 +81,8 @@ class TestEventFieldDocs {
         final String text = EventFieldDocs.fieldMappingMarkdown(golden(mapping), SCHEMA, events == null
                 ? null
                 : EventFieldDocs.sampledEvents(outputs), layout, null);
-        assertThat(text).isEqualTo(withoutExtractedFields(FieldDocFixtures.golden("fielddoc/" + expected)));
+        assertThat(withoutCommonData(text)).isEqualTo(withoutCommonData(withoutExtractedFields(
+                FieldDocFixtures.golden("fielddoc/" + expected)), text));
     }
 
     // The Python text without its Extracted fields section, which the port leaves to the XSLT (asked for by the
@@ -307,18 +315,23 @@ class TestEventFieldDocs {
                   {"path": "EventDetail/View/Data", "data_name": "Result", "field": "outcome"}]}]}"""));
         final Descriptions asking = Descriptions.asking(true);
         final String asked = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, asking);
-        assertThat(asked).isEqualTo(FieldDocFixtures.golden("fielddoc/data-names.md"));
-        assertThat(PyJson.dumps(asking.wanted()))
-                .isEqualTo(PyJson.dumps(FieldDocFixtures.goldenJson("fielddoc/data-names-wanted.json")));
+        assertThat(withoutCommonData(asked)).isEqualTo(withoutCommonData(FieldDocFixtures.golden(
+                "fielddoc/data-names.md"), asked));
+        // Folder, written alike by every event type, is one common field (not the Python server's Folder per
+        // type), asked of once all the same.
+        final Map<String, Map<String, Object>> wanted = new LinkedHashMap<>(asking.wanted());
+        final Map<String, Object> folder = wanted.remove("EventDetail/*/Data[@Name='Folder']/@Value");
+        final Map<String, Object> python = new LinkedHashMap<>(FieldDocFixtures.goldenJson(
+                "fielddoc/data-names-wanted.json"));
+        python.remove("Data[@Name='Folder']");
+        assertThat(PyJson.dumps(wanted)).isEqualTo(PyJson.dumps(python));
+        assertThat(folder).containsEntry("from", "`folder`");
         // Result: read from two fields.
-        assertThat(asking.wanted().keySet()).containsExactlyInAnyOrder("Data[@Name='Folder']",
+        assertThat(asking.wanted().keySet()).containsExactlyInAnyOrder("EventDetail/*/Data[@Name='Folder']/@Value",
                 "EventDetail/(Authenticate|Process)/Action",
                 "EventDetail/(Authenticate|Process)/Data[@Name='Result']/@Value",
                 "EventDetail/(Authenticate|Process)/User/Id", "EventDetail/View/Data[@Name='Result']/@Value",
                 "EventDetail/View/Object/Id");
-        assertThat(asking.wanted().get("Data[@Name='Folder']").get("under"))
-                .isEqualTo(List.of("EventDetail/(Authenticate|Process)", "EventDetail/View"));
-        assertThat(asking.wanted().get("Data[@Name='Folder']").get("from")).isEqualTo("`folder`");
         // One description covers the name everywhere; one by full path wins for its row; an older doc's, kept under
         // the first type's path, still covers the row it was given for.
         final Map<String, String> descriptions = new LinkedHashMap<>();
@@ -327,12 +340,141 @@ class TestEventFieldDocs {
         descriptions.put("EventDetail/Authenticate/Action", "What the user did.");
         final Descriptions given = new Descriptions(descriptions, true);
         final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, given);
+        // Folder, one common field, takes the description given its name.
         assertThat(text).contains(
-                "| `EventDetail/(Authenticate\\|Process)/Data[@Name='Folder']/@Value` | Folder holding the secret. |",
-                "| `EventDetail/View/Data[@Name='Folder']/@Value` | Folder of the secret viewed. |",
+                "| `EventDetail/*/Data[@Name='Folder']/@Value` | Folder holding the secret. |",
                 "| `EventDetail/(Authenticate\\|Process)/Action` | What the user did. |");
-        assertThat(given.wanted()).doesNotContainKeys("Data[@Name='Folder']",
+        assertThat(given.wanted()).doesNotContainKeys("EventDetail/*/Data[@Name='Folder']/@Value",
                 "EventDetail/(Authenticate|Process)/Action");
+    }
+
+    @Test
+    void dataEveryEventTypeWritesAlikeIsACommonField() {
+        // Seen: a Windows event's System/EventID and the like in each of 23 SecretServer rules, repeated in every
+        // event type's table, and, outweighing what told the kinds apart, putting them all in one section.
+        final TranslationMapping m = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "unmatched": "skip", "common": [], "events": [
+                 {"name": "login", "when": [{"field": "a", "equals": "login"}], "fields": [
+                  {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                  {"path": "EventDetail/Authenticate/User/Id", "field": "user"},
+                  {"path": "EventDetail/Authenticate/Data", "data_name": "EventID", "field": "id"},
+                  {"path": "EventDetail/Authenticate/Data", "data_name": "Level", "field": "level"}]},
+                 {"name": "role", "when": [{"field": "a", "equals": "role"}], "fields": [
+                  {"path": "EventDetail/Alert/Type", "value": "Other"},
+                  {"path": "EventDetail/Alert/Data", "data_name": "EventID", "field": "id"},
+                  {"path": "EventDetail/Alert/Data", "data_name": "Level", "field": "level"}]},
+                 {"name": "view", "fields": [{"path": "EventDetail/View/Object/Id", "field": "obj"},
+                  {"path": "EventDetail/View/Data", "data_name": "EventID", "field": "id"},
+                  {"path": "EventDetail/View/Data", "data_name": "Level", "field": "severity"}]}]}"""));
+
+        final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, null);
+        final String[] halves = text.split("### Event types");
+
+        assertThat(halves[0]).contains("| `EventDetail/*/Data[@Name='EventID']/@Value` | The `EventID` value "
+                                       + "recorded in a Data element of the event's action element. | `id` |");
+        // Not read alike by every type (Level from another field in view): each type's own.
+        assertThat(halves[0]).doesNotContain("Level");
+        assertThat(halves[1]).doesNotContain("EventID")
+                .contains("`EventDetail/Authenticate/Data[@Name='Level']/@Value`");
+        // Grouped by what tells them apart: each type in its own section.
+        assertThat(halves[1].lines().filter(line -> line.startsWith("#### "))).containsExactly("#### login",
+                "#### role", "#### view");
+    }
+
+    @Test
+    void eventTypesAreGroupedByTheirElementsNotTheirData() {
+        // Seen: SecretServer rules with the same Data entries and few elements of their own, an Alert's and Process
+        // ones in one section. Rules writing only Data (Unknown) are judged on their Data.
+        final TranslationMapping m = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "unmatched": "skip", "common": [], "events": [
+                 {"name": "role", "when": [{"field": "a", "equals": "role"}], "fields": [
+                  {"path": "EventDetail/Alert/Type", "value": "Other"},
+                  {"path": "EventDetail/Alert/Data", "data_name": "ticket", "field": "ticket"},
+                  {"path": "EventDetail/Alert/Data", "data_name": "node", "field": "node"},
+                  {"path": "EventDetail/Alert/Data", "data_name": "item", "field": "item"}]},
+                 {"name": "launch", "when": [{"field": "a", "equals": "launch"}], "fields": [
+                  {"path": "EventDetail/Process/Action", "value": "Execute"},
+                  {"path": "EventDetail/Process/Command", "field": "cmd"},
+                  {"path": "EventDetail/Process/Data", "data_name": "ticket", "field": "ticket"},
+                  {"path": "EventDetail/Process/Data", "data_name": "node", "field": "node"}]},
+                 {"name": "start", "when": [{"field": "a", "equals": "start"}], "fields": [
+                  {"path": "EventDetail/Process/Action", "value": "Execute"},
+                  {"path": "EventDetail/Process/Command", "field": "cmd"}]},
+                 {"name": "odd", "when": [{"field": "a", "equals": "odd"}], "fields": [
+                  {"path": "EventDetail/Unknown/Data", "data_name": "ticket", "field": "ticket"}]},
+                 {"name": "rest", "fields": [
+                  {"path": "EventDetail/Unknown/Data", "data_name": "ticket", "field": "ticket"}]}]}"""));
+
+        final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, null);
+
+        assertThat(text.lines().filter(line -> line.startsWith("#### "))).containsExactly("#### role",
+                "#### launch, start", "#### odd, rest");
+    }
+
+    @Test
+    void anObjectIsTheSameFieldWhicheverSideOfTheActionItIsOn() {
+        // Seen: SecretServer's folder create (Create/Folder/...) and move (Move/Source/Folder/...) shared no path,
+        // each in a section of its own.
+        final TranslationMapping m = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "unmatched": "skip", "common": [], "events": [
+                 {"name": "create", "when": [{"field": "a", "equals": "create"}], "fields": [
+                  {"path": "EventDetail/Create/Folder/Id", "field": "id"},
+                  {"path": "EventDetail/Create/Folder/Name", "field": "folder"}]},
+                 {"name": "move", "when": [{"field": "a", "equals": "move"}], "fields": [
+                  {"path": "EventDetail/Move/Source/Folder/Id", "field": "id"},
+                  {"path": "EventDetail/Move/Source/Folder/Name", "field": "folder"},
+                  {"path": "EventDetail/Move/Destination/Folder/Name", "field": "target"}]},
+                 {"name": "grant", "when": [{"field": "a", "equals": "grant"}], "fields": [
+                  {"path": "EventDetail/Authorise/Action", "value": "Modify"},
+                  {"path": "EventDetail/Authorise/Object/Id", "field": "secret_id"},
+                  {"path": "EventDetail/Authorise/Object/Name", "field": "secret"},
+                  {"path": "EventDetail/Authorise/Object/Type", "value": "Secret"},
+                  {"path": "EventDetail/Authorise/AddGroups/Group/Name", "field": "permission"}]},
+                 {"name": "revoke", "when": [{"field": "a", "equals": "revoke"}], "fields": [
+                  {"path": "EventDetail/Authorise/Action", "value": "Modify"},
+                  {"path": "EventDetail/Authorise/Object/Id", "field": "secret_id"},
+                  {"path": "EventDetail/Authorise/Object/Name", "field": "secret"},
+                  {"path": "EventDetail/Authorise/Object/Type", "value": "Secret"},
+                  {"path": "EventDetail/Authorise/RemoveGroups/Group/Name", "field": "permission"}]},
+                 {"name": "start", "when": [{"field": "a", "equals": "start"}], "fields": [
+                  {"path": "EventDetail/Network/Connect/Source/Device/IPAddress", "field": "ip"},
+                  {"path": "EventDetail/Network/Connect/Destination/Device/HostName", "field": "host"}]},
+                 {"name": "end", "when": [{"field": "a", "equals": "end"}], "fields": [
+                  {"path": "EventDetail/Network/Close/Source/Device/IPAddress", "field": "ip"},
+                  {"path": "EventDetail/Network/Close/Destination/Device/HostName", "field": "host"}]},
+                 {"name": "alert", "when": [{"field": "a", "equals": "alert"}], "fields": [
+                  {"path": "EventDetail/Alert/Type", "value": "Other"}]}]}"""));
+
+        final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, null);
+
+        // And a permission granted and one revoked, the groups added and removed (seen: SecretServer's, 4 of their
+        // 6 fields alike, in sections of their own).
+        // And a session's start and end, a Network's Connect and Close (seen: SecretServer's, sharing no path).
+        assertThat(text.lines().filter(line -> line.startsWith("#### "))).containsExactly("#### create, move",
+                "#### grant, revoke", "#### start, end", "#### alert");
+        // Each still shown at its own path.
+        assertThat(text).contains("`EventDetail/Create/Folder/Id`", "`EventDetail/Move/Source/Folder/Id`",
+                "`EventDetail/Move/Destination/Folder/Name`", "`EventDetail/Authorise/AddGroups/Group/Name`",
+                "`EventDetail/Authorise/RemoveGroups/Group/Name`");
+    }
+
+    // The Python server's text without the Data rows the port shows once, as common fields (each Data name the
+    // port's text has a common row for, in every table), and the port's without its common rows.
+    private static String withoutCommonData(final String text) {
+        return withoutCommonData(text, text);
+    }
+
+    private static String withoutCommonData(final String text, final String port) {
+        final Matcher common = COMMON_DATA.matcher(port);
+        final Set<String> names = new LinkedHashSet<>();
+        while (common.find()) {
+            names.add(common.group(1));
+        }
+        return text.lines()
+                .filter(line -> names.stream().noneMatch(name -> line.startsWith("| `EventDetail/")
+                                                                 && line.contains("/Data[@Name='" + name
+                                                                                  + "']/@Value` |")))
+                .collect(Collectors.joining("\n"));
     }
 
     @Test

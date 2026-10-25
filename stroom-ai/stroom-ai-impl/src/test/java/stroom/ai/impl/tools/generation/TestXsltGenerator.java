@@ -372,6 +372,29 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aFieldWrittenToAnElementAndAsDataIsWarnedOf() {
+        // Seen: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept beside the
+        // elements the agent mapped. A warning: a Data copy may be kept on purpose.
+        final Map<String, Object> json = baseJson();
+        json.put("events", List.of(rule("view", List.of(), List.of(
+                Map.of("path", "EventDetail/TypeId", "join", List.of("action", "sid")),
+                Map.of("path", "EventDetail/View/Document/Id", "field", "sid"),
+                Map.of("path", "EventDetail/View/Document/Name", "field", "result", "transform", "upper"),
+                Map.of("path", "EventDetail/View/Data", "data_name", "session", "field", "sid"),
+                Map.of("path", "EventDetail/View/Data", "data_name", "result", "field", "result"),
+                Map.of("path", "EventDetail/View/Data", "data_name", "action", "field", "action")))));
+
+        assertThat(generate(TranslationMapping.fromJson(json)).warnings())
+                .contains("[view] 'sid' is written as EventDetail/View/Document/Id and as Data 'session' "
+                          + "(EventDetail/View/Data): the element holds it, so the Data entry says it again. Remove "
+                          + "the Data entry, unless it is kept on purpose (the same Data across event types that "
+                          + "don't all have the element).")
+                // Changed on the way to its element (upper), or part of the TypeId: not the same value twice.
+                .noneMatch(warning -> warning.contains("'result' is written as"))
+                .noneMatch(warning -> warning.contains("'action' is written as"));
+    }
+
+    @Test
     void aJoinIsOfTwoOrMoreFieldsAndOnlyTheirText() {
         for (final String[] bad : new String[][]{
                 {"{\"path\": \"EventDetail/TypeId\", \"join\": [\"event\"]}", "two or more"},

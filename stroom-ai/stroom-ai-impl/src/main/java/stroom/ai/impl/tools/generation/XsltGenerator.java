@@ -201,6 +201,7 @@ public final class XsltGenerator {
         });
         eventTrees.checkFunctions();
         eventTrees.checkXpaths(derived.keySet());
+        eventTrees.checkReachable();
         this.ownFunctions = chooseFunctions();
         chooseKeyed();
         // mcp:data writes a Data entry only when its value is present: one line a Data entry instead of an xsl:if
