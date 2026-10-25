@@ -65,6 +65,38 @@ class TestFieldDocs {
     }
 
     @Test
+    void pathsAreComparedWithoutTheSideAnObjectIsOn() {
+        // The schema says which steps are sides: siblings of one type that hold elements.
+        assertThat(compared("EventDetail/Move/Source/Folder/Id")).isEqualTo("EventDetail/*/Folder/Id")
+                .isEqualTo(compared("EventDetail/Create/Folder/Id"));
+        assertThat(compared("EventDetail/Update/After/Object/Name")).isEqualTo("EventDetail/*/Object/Name");
+        assertThat(compared("EventDetail/Authorise/AddGroups/Group/Name"))
+                .isEqualTo(compared("EventDetail/Authorise/RemoveGroups/Group/Name"))
+                .isEqualTo("EventDetail/*/Group/Name");
+        assertThat(compared("EventDetail/Process/Input/File/Path"))
+                .isEqualTo(compared("EventDetail/Process/Output/File/Path"))
+                .isEqualTo("EventDetail/*/File/Path");
+        // Below the action element too: an Update's Changes, and a Network's action and its two ends.
+        assertThat(compared("EventDetail/Update/Changes/Add/Object/Id"))
+                .isEqualTo(compared("EventDetail/Update/Changes/Remove/Object/Id"))
+                .isEqualTo("EventDetail/*/Changes/Object/Id");
+        assertThat(compared("EventDetail/Network/Connect/Source/Device/IPAddress"))
+                .isEqualTo(compared("EventDetail/Network/Close/Destination/Device/IPAddress"))
+                .isEqualTo("EventDetail/*/Device/IPAddress");
+        assertThat(compared("EventDetail/Send/Source/User/Id")).isEqualTo("EventDetail/*/User/Id");
+        // An object's own fields are kept: an Email's From and To are two fields of one event.
+        assertThat(compared("EventDetail/Create/Email/To/Id")).isEqualTo("EventDetail/*/Email/To/Id");
+        assertThat(compared("EventDetail/Create/Email/From/Id")).isEqualTo("EventDetail/*/Email/From/Id");
+        // Without the schema's word, the action element alone is any.
+        assertThat(compared("EventDetail/Authorise/Data[@Name='x']/@Value"))
+                .isEqualTo("EventDetail/*/Data[@Name='x']/@Value");
+        assertThat(compared("EventDetail/TypeId")).isEqualTo("EventDetail/TypeId");
+        assertThat(FieldDocs.comparedPath("EventDetail/Move/Source/Folder/Id", null))
+                .isEqualTo("EventDetail/*/Source/Folder/Id");
+        assertThat(compared(null)).isEmpty();
+    }
+
+    @Test
     void theActionElementOfAPathIsAny() {
         assertThat(FieldDocs.anyActionPath("EventDetail/Send/Source/User/Id"))
                 .isEqualTo("EventDetail/*/Source/User/Id");
@@ -187,5 +219,9 @@ class TestFieldDocs {
         assertThat(PyText.strip("  x \n")).isEqualTo("x");
         assertThat(PyText.head("abc", 2)).isEqualTo("ab");
         assertThat(PyText.split("a//b/", "/")).containsExactly("a", "", "b", "");
+    }
+
+    private static String compared(final String path) {
+        return FieldDocs.comparedPath(path, FieldDocFixtures.SCHEMA);
     }
 }

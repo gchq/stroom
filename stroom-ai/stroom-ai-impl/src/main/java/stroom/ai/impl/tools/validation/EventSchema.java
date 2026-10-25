@@ -152,6 +152,40 @@ public final class EventSchema {
         return decl(decl).enumeration();
     }
 
+    /// @param decl An element's declaration.
+    /// @return The name of the complex type it is declared with, e.g. `UserComplexType`, or null for an inline
+    /// type or a leaf.
+    public String typeName(final Element decl) {
+        return decl(decl).typeName();
+    }
+
+    /// @param decl An element's declaration.
+    /// @return True if it is one of the objects a collection of them holds (the members of MultiObjectComplexType:
+    /// Object, Folder, File, Email...).
+    public boolean isObject(final Element decl) {
+        return decl(decl).object();
+    }
+
+    /// A step that says which side of its parent what is below it is on: one of the parent's children that holds
+    /// elements, where another of them holds the same type (a Move's Source and Destination, an Update's Before and
+    /// After, an Authorise's AddGroups and RemoveGroups, a Network's Connect and Close). Not in the Stroom MCP
+    /// server.
+    ///
+    /// @param parent The parent's declaration.
+    /// @param child  One of its children.
+    /// @return True if the child is such a side.
+    public boolean isSide(final Element parent, final Child child) {
+        final Decl self = decl(child.decl());
+        if (self.leaf() || self.children().isEmpty()) {
+            return false;
+        }
+        return children(parent).stream()
+                .filter(other -> !other.name().equals(child.name()))
+                .map(other -> decl(other.decl()))
+                .anyMatch(other -> !other.leaf() && !other.children().isEmpty()
+                                   && other.typeKey().equals(self.typeKey()));
+    }
+
     /// @param path A path below Event, e.g. `EventSource/User/Id` (a leading `Event/` is allowed).
     /// @return The chain of children it walks.
     /// @throws IllegalArgumentException if the schema has no such path, saying what is allowed where it stops,
@@ -322,6 +356,9 @@ public final class EventSchema {
     // What the schema gives for one declaration, worked out once.
     private record Decl(List<Child> children,
                         boolean leaf,
+                        String typeName,
+                        String typeKey,
+                        boolean object,
                         String baseType,
                         List<String> patterns,
                         List<String> enumeration,
@@ -350,6 +387,8 @@ public final class EventSchema {
         private final Map<Element, List<Child>> childrenOf = new IdentityHashMap<>();
         private final Map<Element, Integer> choiceIds = new IdentityHashMap<>();
         private final Map<Integer, List<String>> requiredChoices = new LinkedHashMap<>();
+        // The objects a collection of them holds: MultiObjectComplexType's members.
+        private final Set<Element> objects = Collections.newSetFromMap(new IdentityHashMap<>());
         private final Element event;
 
         private Reader(final Element root) {
@@ -379,6 +418,12 @@ public final class EventSchema {
                     .findFirst()
                     .map(Child::decl)
                     .orElseThrow(() -> new IllegalArgumentException("Its Events element holds no Event"));
+            final Element multiObject = types.get("MultiObjectComplexType");
+            if (multiObject != null) {
+                final List<Found> members = new ArrayList<>();
+                walkType(multiObject, members, null, false);
+                members.forEach(member -> objects.add(resolve(member.decl())));
+            }
         }
 
         // Every declaration below Event (Event's own included), with what the schema gives for it.
@@ -401,8 +446,16 @@ public final class EventSchema {
         private Decl decl(final Element decl) {
             final Element resolved = resolve(decl);
             final Element complexType = complex(resolved);
+            final String typeName = complexType != null && xs(resolved, "complexType") == null
+                    ? local(XmlTrees.attribute(resolved, "type"))
+                    : null;
             return new Decl(children(resolved),
                     complexType == null || xs(complexType, "simpleContent") != null,
+                    typeName,
+                    typeName != null
+                            ? typeName
+                            : inlineKey(resolved),
+                    objects.contains(resolved),
                     baseType(resolved),
                     patterns(resolved),
                     enumeration(resolved),
@@ -433,6 +486,24 @@ public final class EventSchema {
             final List<Child> children = List.copyOf(out);
             childrenOf.put(resolved, children);
             return children;
+        }
+
+        // An inline type by what it holds: each child's name and declared type, so two declared alike (an
+        // Authorise's AddGroups and RemoveGroups, each with its own documentation) are the same.
+        private String inlineKey(final Element resolved) {
+            final StringBuilder key = new StringBuilder("inline:");
+            for (final Child child : children(resolved)) {
+                key.append(child.name()).append('=')
+                        .append(Objects.requireNonNullElse(XmlTrees.attribute(child.decl(), "type"), ""))
+                        .append(child.required()
+                                ? "!"
+                                : "?")
+                        .append(child.repeatable()
+                                ? "*"
+                                : "")
+                        .append(';');
+            }
+            return key.toString();
         }
 
         private String baseType(final Element resolved) {

@@ -79,6 +79,46 @@ class TestXsltGeneratorProblems extends XsltRuns {
     }
 
     @Test
+    void aRuleAnEarlierRuleAlwaysTakesIsAProblem() {
+        // Seen: a draft's user_logon (action Login or Login Failed) kept above the agent's own user_login, which
+        // never wrote an event; the documentation said of it "none in the sample".
+        final Map<String, Object> json = baseJson();
+        json.put("events", List.of(
+                rule("user_logon", List.of(equalsCondition("event", "User"),
+                        Map.of("field", "action", "one_of", List.of("Login", "Login Failed"))), LOGON),
+                rule("user_login", List.of(equalsCondition("event", "User"), equalsCondition("action", "Login"),
+                        Map.of("field", "result", "present", true)), LOGON),
+                rule("user_logout", List.of(equalsCondition("event", "User"), equalsCondition("action", "Logout")),
+                        LOGON),
+                otherRule()));
+
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .contains("[user_login] can never match: user_logon, before it, takes every record it would (event = "
+                          + "User, action = Login, result present). Remove one of them, or put the narrower rule "
+                          + "first.")
+                .noneMatch(problem -> problem.startsWith("[user_logout] can never match"))
+                .noneMatch(problem -> problem.startsWith("[other] can never match"));
+
+        // The narrower first: each takes its own.
+        json.put("events", List.of(
+                rule("user_login", List.of(equalsCondition("event", "User"), equalsCondition("action", "Login")),
+                        LOGON),
+                rule("user_logon", List.of(equalsCondition("event", "User"),
+                        Map.of("field", "action", "one_of", List.of("Login", "Login Failed"))), LOGON),
+                otherRule()));
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .noneMatch(problem -> problem.contains("can never match"));
+
+        // Conditions on what the other doesn't test, or a regex: not told apart from the conditions, not refused.
+        json.put("events", List.of(
+                rule("a", List.of(Map.of("field", "action", "matches", "^Log")), LOGON),
+                rule("b", List.of(equalsCondition("action", "Login")), LOGON),
+                otherRule()));
+        assertThat(generate(TranslationMapping.fromJson(json)).problems())
+                .noneMatch(problem -> problem.contains("can never match"));
+    }
+
+    @Test
     void missingRequiredElementsAndChoicesAreProblems() {
         final List<String> problems = generate(mapping(with("events", List.of(rule("bare", List.of(), json("""
                 [{"path": "EventDetail/Description", "value": "x"}]""")))))).problems();

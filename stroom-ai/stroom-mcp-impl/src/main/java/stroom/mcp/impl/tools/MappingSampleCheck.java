@@ -52,6 +52,9 @@ final class MappingSampleCheck {
 
     /// How long the check may take, as the Stroom MCP server's `sample_check_seconds` default.
     static final Duration CHECK_TIME = Duration.ofSeconds(60);
+    /// The key of the fields whose values going into users' Ids carry a domain, for the caller to take out (not
+    /// for the result: they are [LocalCheck.QualifiedIds], not JSON).
+    static final String DOMAIN_QUALIFIED = "domain_qualified";
 
     private MappingSampleCheck() {
         // Static only.
@@ -68,7 +71,7 @@ final class MappingSampleCheck {
     /// @param inferred True if the spec was inferred from the sample rather than given.
     /// @param clock    The clock the check's time is read against.
     /// @return `records`, `problems`, `warnings`, `fields_seen`, `not_checked`, `kept_unknown` and `note`, as the
-    /// Stroom MCP server gave them.
+    /// Stroom MCP server gave them, and [#DOMAIN_QUALIFIED].
     static Map<String, Object> check(final TranslationMapping mapping,
                                      final List<String> samples,
                                      final SplitterSpec splitter,
@@ -81,7 +84,11 @@ final class MappingSampleCheck {
         final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
         final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
         problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
-        warnings.addAll(LocalCheck.domainQualifiedUserIds(mapping, found.records()));
+        final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(mapping, found.records(),
+                schema);
+        warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
+        // Not in the Python server: Data a rule's own records never hold.
+        warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
         // Not in the Python server: the required elements the sample's records leave out, counted.
         warnings.addAll(LocalCheck.requiredLeftEmpty(mapping, found.records(),
                 XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))
@@ -105,6 +112,7 @@ final class MappingSampleCheck {
         }
         check.put("problems", problems);
         check.put("warnings", warnings);
+        check.put(DOMAIN_QUALIFIED, qualified);
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

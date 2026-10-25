@@ -300,6 +300,24 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void extractedValuesAreCheckedAgainstTheSchemasPatterns() {
+        // Seen: SecretServer's fields, read from its message's key/value pairs, were never checked (only the
+        // record's own fields were), so a value the schema refuses would have failed only at stepping.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "extract": [{"field": "msg", "regex": "Source IP: (\\\\S+)", "names": ["source_ip"]}],
+                 "common": [{"path": "EventSource/Client/IPAddress", "field": "source_ip"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"}]}]}"""));
+        final List<Object> records = List.of(map("msg", "Login - Source IP: 10.0.0.1"),
+                map("msg", "Login - Source IP: Unknown"));
+
+        assertThat(LocalCheck.checkSchemaValues(mapping, records, SCHEMA)).singleElement().asString()
+                .contains("field 'source_ip' has ['Unknown'] in 1 of the 2 sample records");
+    }
+
+    @Test
     void valuesThatFitOnceCasedAreGivenTheTransformThatFitsThem() {
         // Seen in eval case 34: upper-case IPv6 addresses (the schema's pattern is lower case) were left out, as the
         // problem said to map only the values that fit, when transform: lower makes them fit.
@@ -332,7 +350,7 @@ class TestLocalCheck extends DraftFixtures {
         final List<Object> records = List.of(map("by_user", "domain.com\\priya.patel", "upn", "joe@acme.example"),
                 map("by_user", "alice", "upn", "bob"));
 
-        assertThat(LocalCheck.domainQualifiedUserIds(mapping, records)).containsExactly(
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, records, SCHEMA)).containsExactly(
                 "EventSource/User/Id takes field 'by_user', whose values are domain-qualified "
                 + "(['domain.com\\\\priya.patel']): an Id is usually the account name alone. If so, give the entry "
                 + "transform: strip_domain",
@@ -340,8 +358,49 @@ class TestLocalCheck extends DraftFixtures {
                 + "(['joe@acme.example']): an Id is usually the account name alone. If so, give the entry transform: "
                 + "strip_domain");
         // With the transform given, or values with no domain, nothing is said.
-        assertThat(LocalCheck.domainQualifiedUserIds(mapping, List.of(map("by_user", "alice", "upn", "bob"))))
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, List.of(map("by_user", "alice", "upn", "bob")),
+                SCHEMA))
                 .isEmpty();
+    }
+
+    @Test
+    void domainQualifiedUserIdsAreFoundInExtractedFields() {
+        // Seen: SecretServer's By User, read from its message's key/value pairs, was never checked (only the
+        // record's own fields were), and the domain was kept in every Id.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "extract": [{"field": "msg", "regex": "By User: (\\\\S+)", "names": ["by_user"]}],
+                 "common": [{"path": "EventSource/User/Id", "field": "by_user"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"},
+                                                     {"path": "EventDetail/Authenticate/User/Id",
+                                                      "field": "by_user"}]}]}"""));
+        final List<Object> records = List.of(map("msg", "Event: Login - By User: domain.com\\sam.lee"),
+                map("msg", "Event: Login - By User: alice"));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA)).containsExactly(new LocalCheck.QualifiedIds(
+                "by_user", List.of("EventSource/User/Id", "EventDetail/Authenticate/User/Id"),
+                List.of("domain.com\\sam.lee")));
+    }
+
+    @Test
+    void theIdsCheckedAreTheSchemasUsersButNotAnEmailsAddressees() {
+        // Asked for by the user: every element of the schema's user type (RunAs, Send/Destination/User), not only
+        // those named User; an email's From, To, Cc and Bcc hold email addresses, the domain part of them.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/RunAs/Id", "field": "run_as"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [
+                              {"path": "EventDetail/Send/Destination/User/Id", "field": "to_user"},
+                              {"path": "EventDetail/Create/Email/To/Id", "field": "to"}]}]}"""));
+        final List<Object> records = List.of(map("run_as", "ACME\\svc", "to_user", "ACME\\bob",
+                "to", "bob@acme.example"));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA))
+                .extracting(LocalCheck.QualifiedIds::field)
+                .containsExactly("run_as", "to_user");
     }
 
     @Test

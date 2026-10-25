@@ -242,6 +242,23 @@ class TestAiDaoImpl {
     }
 
     @Test
+    void eachStatusHasItsChatsNewestForm() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat none = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.storeMessage(chat.getId(), AiMessageType.APPROVAL_REQUEST, "approve?");
+        final AiChatMessage question = aiDao.storeMessage(chat.getId(), AiMessageType.ELICITATION, "which?");
+        aiDao.storeMessage(chat.getId(), AiMessageType.AI_RESPONSE, "thanks");
+        aiDao.storeMessage(none.getId(), AiMessageType.AI_RESPONSE, "a");
+
+        final Map<Integer, Integer> forms = aiDao.getChatStatuses("user1", 10).stream()
+                .collect(Collectors.toMap(AiChatStatus::getChatId, AiChatStatus::getFormMessageId));
+
+        // A chat waiting again, with another form, is told from one still waiting with the same.
+        assertThat(forms).containsEntry(chat.getId(), question.getId())
+                .containsEntry(none.getId(), 0);
+    }
+
+    @Test
     void aNewChatIsTheLastOpened() {
         final AiChat earlier = aiDao.createChat(UserRef.builder().uuid("user1").build());
         final AiChatMessage answer = aiDao.storeMessage(earlier.getId(), AiMessageType.AI_RESPONSE, "a");

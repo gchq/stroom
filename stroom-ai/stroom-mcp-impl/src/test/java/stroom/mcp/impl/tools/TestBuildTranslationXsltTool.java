@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -291,6 +293,131 @@ class TestBuildTranslationXsltTool {
         changed.put("events", events);
         assertThat(world.call(tool, Map.of("mapping", changed, "uuid", uuid, "sample", SAMPLE)).get("status"))
                 .isEqualTo("needs_review");
+    }
+
+    @Test
+    void splittingTheDomainOffAUsersIdIsPutToTheUserBeforeSaving() {
+        // Asked for by the user: SecretServer's Ids kept their domain (domain.com\sam.lee), the warning to the
+        // agent never acted on.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "bob"}
+                """;
+        final String warned = "sample: EventDetail/Authenticate/User/Id takes field 'user', whose values are "
+                              + "domain-qualified";
+
+        // Without forms the warning is the agent's, as before.
+        final Map<String, Object> unasked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N0", "sample", sample));
+        assertThat(unasked).containsKey("saved");
+        assertThat(list(unasked.get("warnings"))).anyMatch(w -> String.valueOf(w).startsWith(warned));
+
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+        assertThat(world.asked).singleElement().asString()
+                .isEqualTo("Split the domain off the users' Ids from 'user' (EventDetail/Authenticate/User/Id)? "
+                           + "E.g. ACME\\alice: the Id alice, the Domain ACME.");
+        assertThat(split).as(String.valueOf(split)).containsKey("saved");
+        assertThat(list(split.get("changes_applied"))).containsExactly("the domain split off 'user', as the user "
+                + "chose: EventDetail/Authenticate/User/Id: strip_domain, and EventDetail/Authenticate/User/Domain "
+                + "from 'user' (domain)");
+        assertThat(list(split.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith(warned));
+        final String uuid = String.valueOf(map(split.get("saved")).get("uuid"));
+        final String kept = JsonUtil.writeValueAsString(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload(), false);
+        assertThat(kept).contains("\"path\":\"EventDetail/Authenticate/User/Id\",\"field\":\"user\","
+                                  + "\"transform\":\"strip_domain\"",
+                "\"path\":\"EventDetail/Authenticate/User/Domain\",\"field\":\"user\",\"transform\":\"domain\"");
+
+        // Asked once: the whole mapping sent again unsplit is split again, as the user chose, without asking.
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample",
+                sample));
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(again.get("changes_applied"))).hasSize(1);
+
+        // Kept whole, as the user chose: nothing changed, no warning, and not asked again.
+        world.answers.put("Split the domain off", DomainSplits.KEEP);
+        final Map<String, Object> whole = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N2", "sample", sample));
+        assertThat(world.asked).hasSize(2);
+        assertThat(whole).doesNotContainKey("changes_applied");
+        assertThat(list(whole.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith(warned));
+        final String wholeUuid = String.valueOf(map(whole.get("saved")).get("uuid"));
+        assertThat(world.call(tool, Map.of("mapping", mapping, "uuid", wholeUuid, "sample", sample)))
+                .doesNotContainKey("changes_applied");
+        assertThat(world.asked).hasSize(2);
+    }
+
+    @Test
+    void anIdWrittenFromTwoFieldsIsAskedAboutOnce() {
+        // Seen: Authenticate/User/Id from By User in some rules and Target User in others, two forms in a row.
+        final Map<String, Object> mapping = JsonUtil.readValue("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                            {"path": "EventSource/System/Name", "value": "Acme"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "acme"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "reset", "when": [{"field": "kind", "equals": "reset"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Reset"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "ResetPassword"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "target"}]},
+                            {"name": "logon",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]}]}""",
+                Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "kind": "logon", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws01", "kind": "reset", "target": "ACME\\\\bob"}
+                """;
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Split the domain off the users' Ids from 'target' (EventDetail/Authenticate/User/Id), "
+                            + "'user' (EventDetail/Authenticate/User/Id)?");
+        assertThat(split).as(String.valueOf(split)).containsKey("saved");
+        assertThat(list(split.get("changes_applied"))).hasSize(2);
+    }
+
+    @Test
+    void changesAreMergedOnceWhenAFormStopsTheCall() {
+        // Seen in the chat: a form stops the call, which is made again with the answer; the changes merged into
+        // the mapping kept as sent on the first run were merged again on the second ("changes.common removes
+        // 'EventDetail/Purpose', which the mapping does not have"), and the answer was lost with the call.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\",").replace(
+                "{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}",
+                "{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}, "
+                + "{\"path\": \"EventSource/Client/HostName\", \"field\": \"host\"}"), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                """;
+        // Saved first, without forms: nothing asked.
+        final String uuid = String.valueOf(map(world.call(tool, Map.of("mapping", mapping, "sample", sample,
+                "build", "acme-v1", "name", "N")).get("saved")).get("uuid"));
+        world.forms = true;
+        world.waitsForUser = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        final Map<String, Object> changes = Map.of("common", List.of(Map.of("path",
+                "EventSource/Client/HostName", "remove", true)));
+
+        // The first run stops at the form; the same call made again gets the answer.
+        final Map<String, Object> args = Map.of("changes", changes, "sample", sample, "uuid", uuid);
+        assertThatThrownBy(() -> world.call(tool, args)).isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final Map<String, Object> again = world.call(tool, args);
+
+        assertThat(again).as(String.valueOf(again)).containsKey("saved");
+        assertThat(list(again.get("changes_applied"))).anyMatch(line -> String.valueOf(line).contains(
+                "EventSource/Client/HostName"));
     }
 
     @Test
