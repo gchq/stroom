@@ -52,6 +52,167 @@
   margin-top: 0;
 }
 
+/* Copying (see MarkdownConverter): a code span by a click, a code block or a table by its button at the top
+   right; "Copied" shown for a moment beside what was clicked. */
+.markdown-copy-code {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Copyable code darkens a little under the pointer: a faint shade over its background, which darkens it in
+   either theme, eased in and out. */
+.markdown-copy-code,
+.markdown-copyable > pre {
+  transition: box-shadow 0.15s ease;
+}
+
+.markdown-copy-code:hover,
+.markdown-copyable:hover > pre {
+  box-shadow: inset 0 0 0 100vmax rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-copy-code,
+  .markdown-copyable > pre {
+    transition: none;
+  }
+}
+
+.markdown-copyable {
+  position: relative;
+}
+
+/* A table's button at the table's own top right, not the page's. */
+.markdown-copyable:has(> table) {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.markdown-copy {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 3px;
+  border: 1px solid var(--markdown-code__border-color);
+  border-radius: 4px;
+  background-color: var(--markdown-background__color);
+  color: var(--text-color);
+  cursor: pointer;
+  opacity: 0.35;
+}
+
+.markdown-copyable:hover > .markdown-copy,
+.markdown-copy:focus-visible {
+  opacity: 1;
+}
+
+.markdown-copy svg {
+  width: 14px;
+  height: 14px;
+}
+
+.markdown-copied::after {
+  content: "Copied";
+  position: absolute;
+  z-index: 1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: var(--text-color);
+  color: var(--markdown-background__color);
+  font-family: var(--font-family, sans-serif);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.markdown-copy-code.markdown-copied::after {
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, -2px);
+}
+
+.markdown-copy.markdown-copied::after {
+  right: 100%;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+
+/* Collapsible sections, one a heading (see MarkdownConverter.nativeSections): the heading's arrow sits in a
+   gutter to its left, so the text stays where it was. */
+.markdown:has(> .markdown-section) {
+  padding-left: 1.6em;
+}
+
+.markdown-section__heading {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+}
+
+.markdown-section__heading::-webkit-details-marker {
+  display: none;
+}
+
+.markdown-section__heading > :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+
+.markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+  content: "\25BE";
+  position: absolute;
+  left: -1.3em;
+  width: 1em;
+  font-size: 0.85em;
+  text-align: center;
+  color: var(--markdown-muted__color);
+  transition: transform 0.2s ease;
+}
+
+.markdown-section:not([open]) > .markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+  transform: rotate(-90deg);
+}
+
+/* Opening and closing slide rather than jump, where the browser can animate a section's content to its own
+   height; elsewhere it opens and closes at once, as before. Clipped vertically only while it moves, so a wide
+   table still scrolls sideways and the "Copied" label above a code span shows. */
+.markdown {
+  interpolate-size: allow-keywords;
+}
+
+.markdown-section::details-content {
+  block-size: 0;
+  overflow-x: visible;
+  overflow-y: clip;
+  overflow-clip-margin: 1.5em;
+  transition: block-size 0.2s ease, content-visibility 0.2s ease allow-discrete;
+}
+
+.markdown-section[open]::details-content {
+  block-size: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-section::details-content,
+  .markdown-section__heading > :is(h1, h2, h3, h4, h5, h6)::before {
+    transition: none;
+  }
+}
+
+.markdown-section__heading:hover > :is(h1, h2, h3, h4, h5, h6)::before {
+  color: var(--markdown-heading__color);
+}
+
+/* The first heading sits at the top, as the first child did before it was sectioned. */
+.markdown > .markdown-section:first-child > .markdown-section__heading > :first-child,
+.markdown-container > .markdown-section:first-child > .markdown-section__heading > :first-child {
+  margin-top: 0;
+}
+
 .markdown h1 {
   font-size: 1.5em;
   padding-bottom: 0.25em;
@@ -272,7 +433,7 @@ hide the standard control and replace it with something more fancy that we can c
    is not crammed against the panel's edges, and a readable line length. */
 .info-page.markdown-container {
   box-sizing: border-box;
-  padding: 10px 14px 20px;
+  padding: 10px 4px 20px;
 }
 
 .info-page.markdown-container > .markdown {
