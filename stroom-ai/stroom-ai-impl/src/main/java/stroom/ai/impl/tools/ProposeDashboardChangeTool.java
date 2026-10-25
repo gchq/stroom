@@ -44,6 +44,10 @@ import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -61,10 +65,12 @@ import jakarta.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /// `propose_dashboard_change` - offers the user a change to a table on the dashboard in their attached tab (group or
@@ -96,6 +102,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                         + "user to open the dashboard and attach its tab (+ by the chat's input), then "
                                         + "ask again.";
 
+    // The column ids a click on a generated chart selects.
+    private static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
+            "target");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
     private final TabSnapshots tabSnapshots;
@@ -169,7 +178,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .description("For add_format_rule: the conditions a row must meet.")
                         .build())
                 .addEnumProperty("match", List.of("all", "any"), "For add_format_rule: whether a row must meet all "
-                                                                + "the conditions (the default) or any of them.")
+                                                                + "the conditions (the default) or any of them. For "
+                                                                + "add_selection_filter: whether all its terms must "
+                                                                + "hold (the default) or any.")
                 .addEnumProperty("style", DashboardChanges.FORMAT_STYLES, "For add_format_rule: the colour to give "
                                                                           + "matching rows.")
                 .addEnumProperty("format_type", DashboardChanges.FORMAT_TYPES, "For add_format_rule: what the "
@@ -180,7 +191,32 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addBooleanProperty("hide", "For add_format_rule: hide matching rows.")
                 .addStringProperty("target", "For rename or set_setting: the component (table, query or text), "
                                              + "by its name as the user sees it; default the component. For "
-                                             + "set_vis_settings: the Visualisation component.")
+                                             + "set_vis_settings: the Visualisation component. For "
+                                             + "add_selection_filter: the query, embedded query or table to filter.")
+                .addStringProperty("chart", "For add_selection_filter: the Visualisation component whose "
+                                            + "selection (what the user clicks on it) filters the target.")
+                .addEnumProperty("mode", DashboardChanges.FILTER_MODES, "For add_selection_filter: query filters "
+                                                                        + "the target's search, re-run as the "
+                                                                        + "selection changes, so every table it "
+                                                                        + "feeds narrows, the chart's own too "
+                                                                        + "(its fields are the query's); table "
+                                                                        + "filters the target table's rows and the "
+                                                                        + "chart stays whole (its fields are the "
+                                                                        + "table's columns). Ask the user which if "
+                                                                        + "they haven't said.")
+                .addProperty("terms", ArraySchema.builder()
+                        .items(ObjectSchema.builder()
+                                .addStringProperty("field", "A query field (mode query) or a column of the table "
+                                                            + "(mode table).")
+                                .addStringProperty("selection", "What the chart's selection holds to compare it "
+                                                                + "with: a column id the chart maps (e.g. category, "
+                                                                + "name, x, source), the table column mapped to it, "
+                                                                + "or node for a network graph's node.")
+                                .required("field", "selection")
+                                .build())
+                        .description("For add_selection_filter: each field and the selection it must equal. A "
+                                     + "term drops out while nothing is selected.")
+                        .build())
                 .addStringProperty("visualisation", "For add_vis: the UUID of the Visualisation document to show. "
                                                     + "For set_vis_settings: the UUID of one to switch to, if any.")
                 .addProperty("settings", ObjectSchema.builder()
@@ -241,7 +277,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                  + "UUID (e.g. one of the content pack's D3 visualisations) with settings for its "
                                  + "controls; set_vis_settings, "
                                  + "which changes the controls of a Visualisation component, or the Visualisation it "
-                                 + "shows; add_format_rule or "
+                                 + "shows; add_selection_filter, which filters a query's search or a table's rows "
+                                 + "by what the user clicks on a chart (a slice, bar, point or node); "
+                                 + "add_format_rule or "
                                  + "remove_format_rule, for the table's conditional formatting (rows matching "
                                  + "conditions on its columns coloured, bold, italic or hidden); rename, which "
                                  + "renames any component and its tab; or set_setting, which changes a setting of "
@@ -343,13 +381,15 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         if (isEmbeddedQuery(table)) {
             final List<String> notSettings = changes.stream()
                     .map(Change::op)
-                    .filter(op -> !DashboardChanges.SET_SETTING.equals(op) && !DashboardChanges.RENAME.equals(op))
+                    .filter(op -> !DashboardChanges.SET_SETTING.equals(op) && !DashboardChanges.RENAME.equals(op)
+                                  && !DashboardChanges.ADD_SELECTION_FILTER.equals(op))
                     .distinct()
                     .toList();
             if (!notSettings.isEmpty()) {
                 return ToolResult.text("No change was proposed: '" + tableName + "' is an embedded query, whose "
                                        + "StroomQL makes its results, so it takes only " + DashboardChanges.SET_SETTING
-                                       + " (e.g. queryOnOpen) and " + DashboardChanges.RENAME + " changes, not "
+                                       + " (e.g. queryOnOpen), " + DashboardChanges.RENAME + " and "
+                                       + DashboardChanges.ADD_SELECTION_FILTER + " changes, not "
                                        + String.join(", ", notSettings) + ". Its StroomQL is in the dashboard's "
                                        + "description: tell the user the StroomQL to use instead.");
             }
@@ -360,9 +400,10 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .toList());
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
-        final List<Change> built = withVisualisations(withComponents(withQueryExpressions(checked.changes(), table,
-                        problems), settings.text(), tableName, problems), checked, settings.text(),
-                NullSafe.list(tab.searches()), tableName, problems);
+        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withQueryExpressions(
+                        checked.changes(), table, problems), settings.text(), tableName, problems), checked,
+                settings.text(), NullSafe.list(tab.searches()), tableName, problems), settings.text(),
+                NullSafe.list(tab.searches()), problems);
         if (!problems.isEmpty()) {
             return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
                                    + "\nCorrect it and propose it again.");
@@ -744,12 +785,138 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         return problems;
     }
 
+    // Resolves each add_selection_filter's components (the one it filters and the chart whose selection filters it),
+    // checks its mode suits the component, its selection keys are ones the chart gives, and its fields are the
+    // query's (or its columns the table's), and builds its filter. Adds why to the problems for any that can't be.
+    private List<Change> withSelectionFilters(final List<Change> changes,
+                                              final String dashboardText,
+                                              final List<AiTabSearch> searches,
+                                              final List<String> problems) {
+        final List<Component> components = DashboardComponents.parse(dashboardText);
+        final List<Component> charts = components.stream()
+                .filter(component -> DashboardComponents.VISUALISATION.equals(component.type()))
+                .toList();
+        final List<Change> resolved = new ArrayList<>();
+        for (int i = 0; i < changes.size(); i++) {
+            final Change change = changes.get(i);
+            if (!DashboardChanges.ADD_SELECTION_FILTER.equals(change.op())) {
+                resolved.add(change);
+                continue;
+            }
+            final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
+            final Component target = DashboardComponents.find(components, change.target()).orElse(null);
+            final Component chart = DashboardComponents.find(charts, change.name()).orElse(null);
+            if (target == null) {
+                problems.add(prefix + "the dashboard has no component '" + change.target() + "'. Its components "
+                             + "are: " + DashboardComponents.describe(components) + ".");
+            }
+            if (chart == null) {
+                problems.add(prefix + "the dashboard has no Visualisation component '" + change.name() + "'. "
+                             + (charts.isEmpty()
+                        ? "It has none."
+                        : "Its Visualisation components are: " + DashboardComponents.describe(charts) + "."));
+            }
+            if (target == null || chart == null) {
+                resolved.add(change);
+                continue;
+            }
+            final List<String> before = List.copyOf(problems);
+            checkSelectionFilter(prefix, change, target, chart, searches, problems);
+            if (!problems.equals(before)) {
+                resolved.add(change);
+                continue;
+            }
+            final ExpressionOperator.Builder filter = ExpressionOperator.builder().op("any".equals(change.filter())
+                    ? Op.OR
+                    : Op.AND);
+            change.settings().forEach((field, key) -> filter.addTerm(ExpressionTerm.builder()
+                    .field(field)
+                    .condition(Condition.EQUALS)
+                    .value("${component." + chart.id() + ".selection." + key + "}")
+                    .build()));
+            resolved.add(change.toBuilder().targetId(target.id()).ref(chart.id()).query(filter.build()).build());
+        }
+        return resolved;
+    }
+
+    // Whether a selection filter suits what it filters and the chart it is filtered by.
+    private void checkSelectionFilter(final String prefix,
+                                      final Change change,
+                                      final Component target,
+                                      final Component chart,
+                                      final List<AiTabSearch> searches,
+                                      final List<String> problems) {
+        final boolean query = DashboardChanges.QUERY_FILTER.equals(change.value());
+        final String type = target.type();
+        final boolean embedded = DashboardComponents.EMBEDDED_QUERY.equals(type);
+        if (query && !embedded && !DashboardComponents.QUERY.equals(type)) {
+            problems.add(prefix + "'" + target.name() + "' is a " + type + ": a query filter filters a Query's or "
+                         + "Embedded Query's search. Use mode table to filter a table's rows.");
+            return;
+        }
+        if (!query && !embedded && !DashboardComponents.TABLE.equals(type)) {
+            problems.add(prefix + "'" + target.name() + "' is a " + type + ": a table filter filters a Table's (or "
+                         + "an Embedded Query's) rows. Use mode query to filter a query's search.");
+            return;
+        }
+        final Set<String> keys = selectionKeys(chart);
+        change.settings().values().stream()
+                .filter(key -> !keys.isEmpty() && !keys.contains(key))
+                .distinct()
+                .forEach(key -> problems.add(prefix + "chart '" + chart.name() + "' doesn't select '" + key + "'. "
+                                             + "A click on it selects: " + String.join(", ", keys) + "."));
+        final List<String> known;
+        final String what;
+        if (query) {
+            // An embedded query's fields are its StroomQL data source's, which aren't known here.
+            known = embedded
+                    ? null
+                    : fieldsOf(target.dataSource());
+            what = "field";
+        } else {
+            known = searches.stream()
+                    .filter(search -> target.id().equals(search.getComponentId()))
+                    .findFirst()
+                    .map(AiTabSearch::getColumns)
+                    .orElse(null);
+            what = "column";
+        }
+        if (known != null) {
+            change.settings().keySet().stream()
+                    .filter(field -> !known.contains(field))
+                    .forEach(field -> problems.add(prefix + "'" + target.name() + "' has no " + what + " '" + field
+                                                   + "'. Its " + what + "s are: " + String.join(", ", known)
+                                                   + "."));
+        }
+    }
+
+    // The keys a click on a chart Stroom AI generated selects: each of its mapped columns a click picks out (not a
+    // measure such as a bar's value) by its id (e.g. category) and by the name of the table column mapped to it, and
+    // node for a network graph's nodes. Empty for another chart, whose keys aren't known.
+    static Set<String> selectionKeys(final Component chart) {
+        final Set<String> keys = new LinkedHashSet<>();
+        NullSafe.map(chart.settings()).forEach((key, column) -> {
+            if (SELECTED_ROLES.contains(key) && NullSafe.isNonBlankString(column)) {
+                keys.add(key);
+                keys.add(column);
+            }
+        });
+        if (keys.contains("source")) {
+            keys.add("node");
+        }
+        return keys;
+    }
+
     // The names of the fields of the table's data source, or null if they can't be read.
     private List<String> fields(final AiTabSearch table) {
         final AskStroomAiContext request = table.getLive() != null
                 ? table.getLive()
                 : table.getResults();
-        final DocRef dataSource = ResultsRequests.dashboardDataSource(request);
+        return fieldsOf(ResultsRequests.dashboardDataSource(request));
+    }
+
+    // The names of a data source's fields, or null if they can't be read.
+    private List<String> fieldsOf(final DocRef dataSource) {
         if (dataSource == null || !dataSourceAccess.canUse(dataSource)) {
             return null;
         }

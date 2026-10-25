@@ -42,10 +42,13 @@ import stroom.dashboard.client.vis.VisPresenter;
 import stroom.dashboard.shared.AbstractQueryComponentSettings;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
+import stroom.dashboard.shared.HasSelectionFilter;
+import stroom.dashboard.shared.HasSelectionQuery;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.dashboard.shared.Search;
@@ -1143,6 +1146,7 @@ public class DashboardPresenter
             } else if (component instanceof final EmbeddedQueryPresenter embeddedQuery) {
                 describeEmbeddedQuery(sb, embeddedQuery);
             }
+            describeSelectionFilters(sb, NullSafe.get(component.getComponentConfig(), ComponentConfig::getSettings));
             final String settings = describeSettings(NullSafe.get(component.getComponentConfig(),
                     ComponentConfig::getSettings));
             if (settings != null) {
@@ -1150,6 +1154,32 @@ public class DashboardPresenter
             }
         }
         return sb.toString();
+    }
+
+    // The filters a component takes from other components' selections (e.g. a chart's): a query's, applied to its
+    // search, and a table's, applied to its rows. A term's value names a selection, e.g.
+    // ${component.vis-1.selection.category}.
+    private static void describeSelectionFilters(final StringBuilder sb, final ComponentSettings settings) {
+        if (settings instanceof final HasSelectionQuery query) {
+            describeHandlers(sb, "Query selection filters", query.getSelectionQuery());
+        }
+        if (settings instanceof final HasSelectionFilter filter) {
+            describeHandlers(sb, "Table selection filters", filter.getSelectionFilter());
+        }
+    }
+
+    private static void describeHandlers(final StringBuilder sb,
+                                         final String heading,
+                                         final List<ComponentSelectionHandler> handlers) {
+        final List<String> described = NullSafe.list(handlers).stream()
+                .filter(handler -> handler.getExpression() != null)
+                .map(handler -> handler.getExpression().toString() + (handler.isEnabled()
+                        ? ""
+                        : " (disabled)"))
+                .toList();
+        if (!described.isEmpty()) {
+            sb.append(heading).append(": ").append(String.join("; ", described)).append('\n');
+        }
     }
 
     // A component's main settings (those its Settings dialog has), by short keys, or null if it has none.
@@ -1395,6 +1425,22 @@ public class DashboardPresenter
                     failed = prefix + "the visualisation couldn't be added.";
                 } else {
                     added.put(NullSafe.string(change.getName()).toLowerCase(), vis);
+                }
+            } else if (TableChange.ADD_SELECTION_FILTER.equals(change.getOp())) {
+                final Component target = change.getTargetId() == null
+                        ? null
+                        : components.get(change.getTargetId());
+                if (target == null) {
+                    failed = prefix + "there is no component '" + NullSafe.string(change.getTarget()) + "'.";
+                } else {
+                    if (!added.containsValue(target) && !configsBefore.containsKey(target.getId())) {
+                        configsBefore.put(target.getId(), ComponentSettingChanges.snapshot(target));
+                    }
+                    final String problem = ComponentSettingChanges.addSelectionFilter(target, change.getValue(),
+                            change.getQuery());
+                    failed = problem == null
+                            ? null
+                            : prefix + problem;
                 }
             } else if (TableChange.SET_QUERY.equals(change.getOp())) {
                 final Component target = change.getTargetId() == null
