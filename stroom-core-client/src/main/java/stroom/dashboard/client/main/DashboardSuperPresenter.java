@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -135,7 +136,7 @@ public class DashboardSuperPresenter
         return hashes;
     }
 
-    // Each table's search requests, for the AI chat to take snapshots of their rows.
+    // Each table's search requests, and each embedded query's, for the AI chat to take snapshots of their rows.
     private List<AiTabSearch> aiTabSearches() {
         final Components components = dashboardPresenter.getComponents();
         final List<AiTabSearch> searches = new ArrayList<>();
@@ -157,6 +158,8 @@ public class DashboardSuperPresenter
                         tablePresenter.getColumnNames(),
                         tablePresenter.getTotalRows(),
                         tablePresenter.isSearching()));
+            } else if (component instanceof final EmbeddedQueryPresenter embeddedQuery) {
+                NullSafe.consume(embeddedQuery.aiTabSearch(), searches::add);
             }
         }
         return searches;

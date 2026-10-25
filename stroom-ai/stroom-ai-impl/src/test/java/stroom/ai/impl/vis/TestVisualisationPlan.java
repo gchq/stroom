@@ -148,6 +148,20 @@ class TestVisualisationPlan {
     }
 
     @Test
+    void anEmbeddedQuerysPlanIsAShowClauseForItsComponent() {
+        final VisualisationPlan plan = new VisualisationPlan("pie", Map.of("name", "UserA", "value", "Messages"),
+                Map.of(), null, "Pairs", "query-1", null, null, "h", true, "from x select UserA, Messages");
+
+        assertThat(plan.isQuery()).isTrue();
+        assertThat(plan.isEmbeddedQuery()).isTrue();
+        assertThat(plan.toJson()).doesNotContain("embeddedQuery");
+        assertThat(VisualisationPlan.fromJson(plan.toJson())).isEqualTo(plan);
+        // A Query's plan names no component.
+        assertThat(new VisualisationPlan("pie", Map.of(), Map.of(), null, null, null, null, null, "h", true,
+                "from x").isEmbeddedQuery()).isFalse();
+    }
+
+    @Test
     void replacementSettingsClearTheOldChartsColumns() {
         @SuppressWarnings("unchecked")
         final Map<String, Object> settings = JsonUtil.readValue(VisualisationActions.replacementSettings(

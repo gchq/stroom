@@ -35,12 +35,14 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.TableSettings;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +83,7 @@ class TestProposeVisualisationTool {
                                                  + "Visualisation: 'Bar chart' (uuid bar-uuid)\n"
                                                  + "Linked table: 'Links'\n"
                                                  + RENDER_REPORT_LINE + "\n";
+    private static final String EMBEDDED_QUERY_TEXT = "from \"Messages\"\nselect From, To, count() as Count";
     private static final String QUERY_TEXT = "from \"Messages\"\nselect From, To, count() as Count\n";
     private static final String SAMPLE_PATH = "/tabs/1/results/links.csv";
     private static final String SAMPLE_CSV = "From,To,Count\nalice,bob,3\nbob,carol,2\ncarol,alice,1\n";
@@ -390,6 +393,20 @@ class TestProposeVisualisationTool {
     }
 
     @Test
+    void aColumnGroupedBelowTheTopLevelStopsTheChart() {
+        // The table's grouping, from its dashboard settings: To grouped under From.
+        dashboardTab(List.of(linksTable(
+                Column.builder().id("c1").name("From").expression("${From}").format(Format.TEXT).group(0).build(),
+                Column.builder().id("c2").name("To").expression("${To}").format(Format.TEXT).group(1).build())),
+                false);
+
+        assertThat(call(graphArgs()))
+                .startsWith("No chart was offered: the table 'Links' can't make this network graph:")
+                .contains("'To' can't be target: it is grouped at level 2");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
     void sampledValuesThatArentNumbersStopTheChart() {
         // A StroomQL query's column formats aren't known, so the sample is what shows the column isn't numeric.
         queryTab();
@@ -653,9 +670,15 @@ class TestProposeVisualisationTool {
 
     // The dashboard table 'Links', with the From column given.
     private static AiTabSearch linksTable(final Column from) {
+        return linksTable(from,
+                Column.builder().id("c2").name("To").expression("${To}").format(Format.TEXT).build());
+    }
+
+    // The dashboard table 'Links', with the From and To columns given.
+    private static AiTabSearch linksTable(final Column from, final Column to) {
         final List<Column> columns = List.of(
                 from,
-                Column.builder().id("c2").name("To").expression("${To}").format(Format.TEXT).build(),
+                to,
                 Column.builder().id("c3").name("Count").expression("count()").format(Format.NUMBER).build());
         final DashboardTableContext live = new DashboardTableContext("Dashboard 'Messages'", null,
                 DashboardSearchRequest.builder()
@@ -676,6 +699,74 @@ class TestProposeVisualisationTool {
     }
 
     // A StroomQL query tab, whose table's column formats aren't known.
+    @Test
+    void anEmbeddedQueryIsChartedInItsShowClause() {
+        embeddedQueryTab("Query: embedded in the dashboard");
+
+        assertThat(call(graphArgs()))
+                .contains("shown a 'Create visualisation' button for a network graph of table 'Pairs'")
+                .contains("in the dashboard's folder")
+                .contains("put in the show clause of embedded query 'Pairs' on dashboard 'Messages', naming it by "
+                          + "its UUID (show \"<its uuid>\" (source = \"From\", target = \"To\", weight = "
+                          + "\"Count\")), which then runs, unsaved");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            assertThat(action).containsEntry("doc", Map.of("type", DASHBOARD.getType(), "uuid",
+                    DASHBOARD.getUuid()));
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.isEmbeddedQuery()).isTrue();
+            assertThat(plan.componentId()).isEqualTo("query-1");
+            assertThat(plan.table()).isEqualTo("Pairs");
+            assertThat(plan.componentName()).isNull();
+            assertThat(plan.placement()).isNull();
+            // Planned against its StroomQL as it stands, and the dashboard as it is.
+            assertThat(plan.baseQuery()).isEqualTo(EMBEDDED_QUERY_TEXT);
+            assertThat(plan.snapshotHash()).isEqualTo(AiTabSnapshotPart.hashText(embeddedDashboardText(
+                    "Query: embedded in the dashboard")));
+        });
+    }
+
+    @Test
+    void anEmbeddedQueryShowingAQueryByReferenceIsChartedInThatQuery() {
+        embeddedQueryTab("Query: Query 'Saved pairs' (uuid q-uuid) by reference");
+
+        assertThat(call(graphArgs()))
+                .startsWith("No chart was offered: embedded query 'Pairs' shows Query 'Saved pairs' by reference")
+                .contains("Ask the user to open Query 'Saved pairs', attach its tab, and ask again.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void anEmbeddedQueryIsChartedWithEChartsOnly() {
+        embeddedQueryTab("Query: embedded in the dashboard");
+        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+
+        assertThat(callWith(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3))
+                .startsWith("No chart was offered: an embedded query is charted by a show clause")
+                .endsWith("Use library echarts.");
+        assertThat(callWith(ProposeVisualisationTool.REPLACE_ARG, "Old chart"))
+                .startsWith("Error: Only a chart on a dashboard replaces another with replace");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    // A dashboard 'Messages' whose embedded query 'Pairs' gives From, To and Count.
+    private void embeddedQueryTab(final String queryLine) {
+        final QueryTableContext live = new QueryTableContext("Embedded query 'Pairs'", null,
+                QuerySearchRequest.builder().query(EMBEDDED_QUERY_TEXT).build());
+        final AiTabSearch pairs = new AiTabSearch("Pairs", "query-1", null, live, List.of("From", "To", "Count"),
+                3L, false);
+        final StoredTabSnapshot snapshot = new StoredTabSnapshot(5, 1, DASHBOARD, "/", "Messages", "Dashboard",
+                false, null, "h", 0L, List.of(), List.of(pairs), null);
+        Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
+        Mockito.when(tabSnapshots.part(CHAT, snapshot, AiTabSnapshotPart.DASHBOARD))
+                .thenReturn(Optional.of(new UnsavedPart(embeddedDashboardText(queryLine), false,
+                        "/tabs/1/dashboard.md")));
+    }
+
+    private static String embeddedDashboardText(final String queryLine) {
+        return "Time range: All time\nShown components: Pairs\n\n## Embedded Query 'Pairs' (id query-1)\n"
+               + queryLine + "\nStroomQL:\n```\n" + EMBEDDED_QUERY_TEXT + "\n```\n";
+    }
+
     private void queryTab() {
         final AiTabSearch table = new AiTabSearch(null, "table", null, null, List.of("From", "To", "Count"), 3L,
                 false);

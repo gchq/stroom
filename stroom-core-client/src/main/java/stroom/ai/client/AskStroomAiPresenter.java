@@ -3093,6 +3093,47 @@ public class AskStroomAiPresenter
                 });
     }
 
+    // Puts a Visualisation the user has just created in the show clause of an embedded query on the dashboard it was
+    // planned for, by UUID, unsaved, and runs the query; if its StroomQL hasn't changed since.
+    private void showInEmbeddedQuery(final int messageId,
+                                     final String actionId,
+                                     final AiCreateVisualisation create,
+                                     final DocRef visualisation,
+                                     final String created) {
+        final String clause = "show " + UserActionsUi.quoteStroomQl(visualisation.getUuid()) + " ("
+                              + create.getShowArguments() + ")";
+        final String base = NullSafe.string(create.getBaseQuery());
+        final TableChange change = TableChange.builder(TableChange.SET_QUERY)
+                .targetId(create.getTableId())
+                .value(UserActionsUi.withShowClause(base, clause))
+                .ref(base)
+                .build();
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                create.getTarget(),
+                create.getTableId(),
+                create.getTableName(),
+                List.of(change),
+                create.getSnapshotHash(),
+                onResult -> onResult.accept(null),
+                () -> showUserActionStatus(messageId, actionId, "DONE",
+                        created + " and put it in the show clause of embedded query '" + create.getTableName()
+                        + "', not saved. Save the dashboard to keep it."),
+                message -> {
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, created + ", but it couldn't be put in embedded query '"
+                                                  + create.getTableName() + "': " + message + "\nAdd this clause "
+                                                  + "at the end of its StroomQL to show it:\n" + clause, null);
+                    }
+                },
+                dashboardUndoKey(messageId, actionId));
+        if (!event.isHandled()) {
+            AlertEvent.fireInfo(this, created + ". To show it, open Dashboard '"
+                                      + NullSafe.get(create.getTarget(), DocRef::getName) + "' and add this clause at "
+                                      + "the end of embedded query '" + create.getTableName() + "':\n" + clause,
+                    null);
+        }
+    }
+
     /// Shows a Visualisation Stroom AI has just rewritten for a new chart in the vis component that showed the old
     /// one, unsaved: its settings become the new chart's columns (and its name, if that changes). Each vis
     /// component loads the Visualisation again, as its settings and controls have changed.
@@ -3147,6 +3188,11 @@ public class AskStroomAiPresenter
         awaitedRenderReports.put(visualisation.getUuid(), new AwaitedReport(messageId, actionId,
                 visualisation.getName()));
         final String created = "Created Visualisation '" + visualisation.getName() + "'";
+        if (create.isForQuery() && create.getTarget() != null
+            && DashboardDoc.TYPE.equals(create.getTarget().getType())) {
+            showInEmbeddedQuery(messageId, actionId, create, visualisation, created);
+            return;
+        }
         if (create.isForQuery()) {
             // By UUID, which Stroom resolves before a name, so another Visualisation of the same name can't
             // make the query ambiguous.

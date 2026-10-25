@@ -185,6 +185,24 @@ class TestUserActions {
     }
 
     @Test
+    void aCreateVisualisationButtonForAnEmbeddedQueryIsForItsDashboard() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Chats");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        Mockito.when(lookup.find(new DocRef("Query", OTHER_UUID))).thenReturn(Optional.of(
+                new DocRef("Query", OTHER_UUID, "Chats")));
+        final String plan = new VisualisationPlan("bar", Map.of("category", "UserA", "value", "Messages"),
+                Map.of(), null, "Pairs", "query-1", null, null, "h", true, "from Chats select UserA").toJson();
+
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard", plan)), NOW))
+                .singleElement()
+                .satisfies(action -> assertThat(action.label())
+                        .isEqualTo("Create visualisation 'Chat user connections' (Bar chart) and show it with "
+                                   + "embedded query 'Pairs' on dashboard 'Chats'"));
+        // Not for a Query.
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Query", plan)), NOW)).isEmpty();
+    }
+
+    @Test
     void aReplacingVisualisationButtonSaysWhatItReplacesAndThatItIsSavedAtOnce() {
         final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Events");
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));

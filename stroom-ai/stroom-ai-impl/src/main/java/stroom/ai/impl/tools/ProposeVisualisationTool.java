@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.DashboardComponents;
 import stroom.ai.impl.DashboardComponents.Component;
+import stroom.ai.impl.DashboardComponents.EmbeddedQuery;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -184,8 +185,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                         .map(kind -> kind.id() + " (" + kind.summary() + ")")
                                         .collect(Collectors.joining("; ")) + ".")
                         .addProperty(COLUMNS_ARG, columns.build())
-                        .addStringProperty(TABLE_ARG, "Optional. The dashboard table to chart, by the name the "
-                                                      + "user sees, when the dashboard has several.")
+                        .addStringProperty(TABLE_ARG, "Optional. The dashboard table (or embedded query) to "
+                                                      + "chart, by the name the user sees, when the dashboard has "
+                                                      + "several.")
                         .addProperty(STYLE_ARG, style.build())
                         .addStringProperty(OPTIONS_ARG, "Optional, echarts only. ECharts option overrides as a "
                                                         + "JSON object, for what the style settings can't do, "
@@ -281,15 +283,29 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                    + "a chart can't be proposed for it.");
         }
 
-        // Check the table's data can make the chart.
         final String tableName = tableName(table);
+        // An embedded query on a dashboard is charted in its StroomQL's show clause, as a Query is.
+        final EmbeddedQuery embedded;
+        if (!query && ProposeDashboardChangeTool.isEmbeddedQuery(table)) {
+            embedded = DashboardComponents.embeddedQuery(part.text(), table.getComponentId()).orElse(null);
+            final String problem = embeddedQueryProblem(embedded, tableName, library);
+            if (problem != null) {
+                return ToolResult.text(problem);
+            }
+        } else {
+            embedded = null;
+        }
+
+        // Check the table's data can make the chart.
         final AskStroomAiContext results = table.getLive() != null
                 ? table.getLive()
                 : table.getResults();
         final Map<String, String> formats = ResultsRequests.columnFormats(results);
         final Map<String, String> expressions = ResultsRequests.columnExpressions(results);
+        final Map<String, Integer> groups = ResultsRequests.columnGroups(results);
         final List<TableColumn> columns = NullSafe.list(table.getColumns()).stream()
-                .map(column -> new TableColumn(column, formats.get(column), expressions.get(column)))
+                .map(column -> new TableColumn(column, formats.get(column), expressions.get(column),
+                        groups.get(column)))
                 .toList();
         final SampleOutcome sample = sample(request, context, table);
         final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
@@ -310,8 +326,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             if (addNew) {
                 throw new WorkspaceException("Give " + REPLACE_ARG + " or " + ADD_NEW_ARG + ", not both.");
             }
-            replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library, query);
-        } else if (!query && !addNew) {
+            replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library,
+                    query || embedded != null);
+        } else if (!query && embedded == null && !addNew) {
             final List<Component> generated = generatedCharts(DashboardComponents.parse(part.text()), tableName);
             if (!generated.isEmpty()) {
                 return ToolResult.text(askReplaceOrAdd(tableName, generated));
@@ -335,8 +352,28 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (D3.equals(library)) {
             return d3(kind, mappings, target, query, tableName, placement, name, notes);
         }
-        return echarts(kind, mappings, style, options, target, query, table, tableName, part, name, summary,
-                placement, replace, request, context, notes);
+        return echarts(kind, mappings, style, options, target, query, embedded, table, tableName, part, name,
+                summary, placement, replace, request, context, notes);
+    }
+
+    // Why an embedded query's chart can't be offered, or null if it can.
+    static String embeddedQueryProblem(final EmbeddedQuery embedded, final String name, final String library) {
+        if (embedded == null) {
+            return "Embedded query '" + name + "''s StroomQL isn't in the tab's snapshot in full (it may be too "
+                   + "large, or still loading), so a chart can't be proposed for it.";
+        }
+        if (embedded.isReference()) {
+            return "No chart was offered: embedded query '" + name + "' shows Query '"
+                   + embedded.referenced().getName() + "' by reference, so its chart goes in that Query's show "
+                   + "clause. Ask the user to open Query '" + embedded.referenced().getName() + "', attach its tab, "
+                   + "and ask again.";
+        }
+        if (!ECHARTS.equals(library)) {
+            return "No chart was offered: an embedded query is charted by a show clause in its StroomQL, which "
+                   + "Stroom puts there for a chart it generates (library " + ECHARTS + "). Use library " + ECHARTS
+                   + ".";
+        }
+        return null;
     }
 
     // The Visualisation panes linked to the table that show a chart Stroom AI generated.
@@ -413,6 +450,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                final String options,
                                final DocRef target,
                                final boolean query,
+                               final EmbeddedQuery embedded,
                                final AiTabSearch table,
                                final String tableName,
                                final UnsavedPart part,
@@ -447,6 +485,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 replace != null
                         ? replace.componentName()
                         : name);
+        // A Query's chart, or an embedded query's, is a show clause; an embedded query's is planned for its
+        // component on the dashboard, against its StroomQL as it stands.
+        final boolean showClause = query || embedded != null;
         final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, style, options,
                 query
                         ? null
@@ -454,21 +495,21 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 query
                         ? null
                         : table.getComponentId(),
-                query
+                showClause
                         ? null
                         : componentName,
-                query
+                showClause
                         ? null
                         : placement,
                 query
                         ? AiTabSnapshotPart.hashText(part.text())
                         : AiTabSnapshotPart.hashText(DashboardComponents.withoutRenderReports(part.text())),
-                query
+                showClause
                         ? Boolean.TRUE
                         : null,
                 query
                         ? part.text()
-                        : null,
+                        : NullSafe.get(embedded, EmbeddedQuery::query),
                 replace);
         try {
             plan.validate();
@@ -503,7 +544,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                     + "nothing, explain why and offer a fix." + notes)
                     .withUserAction(action);
         }
-        final String where = query
+        final String where = embedded != null
+                ? "put in the show clause of embedded query '" + tableName + "' on dashboard '" + target.getName()
+                  + "', naming it by its UUID (show \"<its uuid>\" (" + showArguments(kind, mappings) + ")), which "
+                  + "then runs, unsaved"
+                : query
                 ? "put in the query's show clause, naming it by its UUID (show \"<its uuid>\" ("
                   + showArguments(kind, mappings) + ")), unsaved"
                 : "added to dashboard '" + target.getName() + "' " + ("tab".equals(placement)
