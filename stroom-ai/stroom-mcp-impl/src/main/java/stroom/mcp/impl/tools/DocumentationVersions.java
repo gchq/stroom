@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// The version control block at the end of a pipeline's documentation (the Stroom MCP server's
 /// `utils/versionlog.py`): one row per released version, numbered, dated, with who made it (and whether through the
@@ -150,7 +151,7 @@ final class DocumentationVersions {
             final List<String> codes = distinct(pending, "code");
             lines.add("| Unreleased | " + NullSafe.string(pending.getLast().get("date")) + " | "
                       + cell(String.join("; ", distinct(pending, "by"))) + " | "
-                      + cell(String.join("; ", distinct(pending, "change"))) + " | "
+                      + cell(changes(distinct(pending, "change"))) + " | "
                       + cell(codes.isEmpty()
                     ? ""
                     : codes.getLast()) + " |");
@@ -200,7 +201,7 @@ final class DocumentationVersions {
         rows.add(row(String.valueOf(rows.isEmpty()
                         ? 1
                         : Integer.parseInt(rows.getLast().get("version")) + 1), DAY.format(now),
-                String.join("; ", distinct(entries, "by")), String.join("; ", distinct(entries, "change")),
+                String.join("; ", distinct(entries, "by")), changes(distinct(entries, "change")),
                 codes.isEmpty()
                         ? ""
                         : codes.getLast()));
@@ -237,6 +238,17 @@ final class DocumentationVersions {
         row.put(KEYS.get(3), change);
         row.put(KEYS.get(4), code);
         return row;
+    }
+
+    // A row's changes: one as it is; several a bullet each, a line each (not in the Stroom MCP server, which ran
+    // them together with "; "; asked for by the user: seen, seven rewrites of a doc as one run-on sentence).
+    private static String changes(final List<String> changes) {
+        if (changes.size() == 1) {
+            return changes.getFirst();
+        }
+        return changes.stream()
+                .map(change -> "• " + change)
+                .collect(Collectors.joining("<br>"));
     }
 
     private static String cell(final String text) {

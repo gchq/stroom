@@ -161,7 +161,10 @@ public class WorkspaceArguments {
         if (value.isTextual() && value.textValue().startsWith(REFERENCE_PREFIX)) {
             return read(chatId, value.textValue().substring(REFERENCE_PREFIX.length()), null, where);
         }
-        if (!(value instanceof final ObjectNode object) || !object.has(REFERENCE_KEY)) {
+        final JsonNode reference = value.isTextual()
+                ? quotedReference(value.textValue())
+                : value;
+        if (!(reference instanceof final ObjectNode object) || !object.has(REFERENCE_KEY)) {
             return null;
         }
         final Iterator<String> names = object.fieldNames();
@@ -184,6 +187,31 @@ public class WorkspaceArguments {
         return read(chatId, path.textValue(), jq == null
                 ? null
                 : jq.textValue(), where);
+    }
+
+    // A reference given as a string (a parameter typed as one): the string is the object itself,
+    // '{"$workspace": "/outputs/doc.md"}', with nothing but the reference's keys. Seen: write_documentation's markdown
+    // given so, written into the documentation as it was, in place of the file's text.
+    private static JsonNode quotedReference(final String text) {
+        final String trimmed = text.strip();
+        if (!trimmed.startsWith("{") || !trimmed.endsWith("}") || !trimmed.contains(REFERENCE_KEY)) {
+            return null;
+        }
+        try {
+            final JsonNode parsed = MAPPER.readTree(trimmed);
+            if (!(parsed instanceof final ObjectNode object) || !object.has(REFERENCE_KEY)) {
+                return null;
+            }
+            final Iterator<String> names = object.fieldNames();
+            while (names.hasNext()) {
+                if (!REFERENCE_KEYS.contains(names.next())) {
+                    return null;
+                }
+            }
+            return object;
+        } catch (final JsonProcessingException e) {
+            return null;
+        }
     }
 
     // Reads a file, or the jq query's result of it, as JSON if it is JSON and as text otherwise.
