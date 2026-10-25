@@ -17,7 +17,7 @@
 package stroom.floormap.client.presenter;
 
 /// What the user right-clicked on the floor map canvas, which the canvas gives its owner
-/// ([FloorMapCanvasPresenter#setOnContextMenu]).
+/// (`FloorMapCanvasController.setOnContextMenu`).
 ///
 /// Carries the ID of the map object under the cursor (or `null` when the
 /// click landed on empty canvas), the logical map-space coordinates of the

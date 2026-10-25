@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
@@ -32,34 +31,41 @@ import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.overlay.FloorMapAreaOverlay;
 import stroom.floormap.client.overlay.FloorMapHighlight;
-import stroom.floormap.client.presenter.FloorMapCanvasPresenter;
-import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
+import stroom.floormap.client.view.FloorMapGrid;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.client.Console;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.component.client.Component;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
-import com.google.gwt.event.dom.client.HasMouseUpHandlers;
-import com.google.gwt.event.dom.client.HasMouseWheelHandlers;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -80,12 +86,12 @@ import java.util.function.Function;
 ///   ([TypeStyle]); event entities additionally carry movement trails
 ///   tinted with the type colour.
 ///
-/// Facts are painted in the order supplied by the presenter (the configured
+/// Facts are painted in the order supplied by the controller (the configured
 /// type z-order); events paint on top. Pan and zoom are applied via a wrapping
 /// SVG `<g>` group.
-public class FloorMapCanvasViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements FloorMapCanvasView {
+public class FloorMapCanvas extends Component implements RequiresResize {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// The local display width of an image fact in SVG user-units. The height is
     /// derived from this and the image's aspect ratio; the fact's world-to-map
@@ -126,6 +132,8 @@ public class FloorMapCanvasViewImpl
     // every non-selection highlight colour (group vs containment) in one place.
     /// Opacity applied to a dimmed (0.3) layer group.
     private static final String DIMMED_LAYER_OPACITY = "0.3";
+    /// The focus panel's class while a modal gesture shows the crosshair pointer.
+    private static final String CROSSHAIR = "stroom-floormap-canvas-focus--crosshair";
     private static final String HANDLE_STROKE = ACCENT_BLUE;
     private static final String HANDLE_FILL = "#ffffff";
     /// Fill for the round "+" insert handle (light blue tint).
@@ -194,12 +202,11 @@ public class FloorMapCanvasViewImpl
     /// cluster can never outrank an undimmed fact.
     private static final int CAPTION_PRIORITY_DIMMED_PENALTY = 10000;
     /// On-screen radius (px) of the vertex-0 close-target ring in the area
-    /// drawing draft — shares the presenter's single constant so the drawn ring
+    /// drawing draft — shares the controller's single constant so the drawn ring
     /// and the click hit-test always match.
     private static final double AREA_DRAFT_CLOSE_RADIUS_PX =
-            FloorMapCanvasPresenter.AREA_CLOSE_RADIUS_PX;
+            FloorMapCanvasController.AREA_CLOSE_RADIUS_PX;
 
-    private final Widget widget;
 
     /// Natural `{width, height}` in pixels per image URL, as reported by the
     /// browser once loaded.
@@ -229,7 +236,7 @@ public class FloorMapCanvasViewImpl
     private Set<String> lastSelectedIds;
 
     /// What one map unit means in the real world, or `null` on a map with
-    /// no scale set. Set from the presenter rather than passed per draw: it
+    /// no scale set. Set from the controller rather than passed per draw: it
     /// changes only when the document is read or recalibrated.
     private FloorMapMeasurementUnits measurementUnits;
 
@@ -243,7 +250,7 @@ public class FloorMapCanvasViewImpl
     private final String gridPatternId = FloorMapAria.uniqueId("floormap-grid-major");
 
     /// Resolves an entity id to its display name, for captioning a cluster drawn
-    /// around the tracked entity. Supplied by the presenter; `null` until
+    /// around the tracked entity. Supplied by the controller; `null` until
     /// then, which falls the caption back to the id.
     private Function<String, String> entityNameResolver;
 
@@ -256,7 +263,7 @@ public class FloorMapCanvasViewImpl
     private final List<PendingCaption> pendingCaptions = new ArrayList<>();
 
     @UiField
-    HTML svgContainer;
+    DivElement svgContainer;
 
     @UiField
     FocusPanel focusPanel;
@@ -336,7 +343,7 @@ public class FloorMapCanvasViewImpl
     /// Visually-hidden live region carrying the map's spoken commentary. See
     /// [#announce(String)].
     @UiField
-    Label statusRegion;
+    DivElement statusRegion;
 
     /// The last thing announced, so an unchanged message can be skipped.
     ///
@@ -365,26 +372,9 @@ public class FloorMapCanvasViewImpl
     /// and the mode would otherwise look like nothing having happened.
     private boolean measuringScale;
 
-    /// Constructs the canvas view, inflating the UiBinder template.
-    ///
-    /// @param binder the UiBinder that produces the widget tree
-    @Inject
-    public FloorMapCanvasViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-
-        // The map is a picture of its data, so it is named and summarised as one
-        // image rather than exposed as a tree of shapes.
-        //
-        // The role and label go on the container, not on the <svg>: draw() replaces
-        // the SVG wholesale on every frame, so anything written onto that element
-        // is destroyed up to 60 times a second, whereas the container is stable for
-        // the life of the view. setMapSummary() then costs one attribute write.
-        //
-        // role="img" also makes the subtree presentational, which is the point: the
-        // SVG is full of <text> captions positioned for the eye, and read in DOM
-        // (paint) order they are a stream of disconnected names and numbers. The
-        // summary and the Tracking grid say the same thing usefully.
-        svgContainer.getElement().setAttribute("role", "img");
+    /// Makes the canvas, with nothing drawn yet.
+    public FloorMapCanvas() {
+        initWidget(BINDER.createAndBindUi(this));
 
         // The focus panel needs a name of its own. A screen reader announces the
         // element that has focus, and focus lands here rather than on svgContainer, so
@@ -393,7 +383,9 @@ public class FloorMapCanvasViewImpl
         // generic element. Browsers vary in how strictly they enforce that — Chromium has
         // historically exposed such labels anyway — so "the label is dropped" is the spec
         // position rather than a guarantee about every screen reader. Either way an explicit
-        // role is the only way to be sure the name is exposed.
+        // role is the only way to be sure the name is exposed. UiBinder can't set an
+        // attribute on a widget, and the FocusPanel is needed for its focus, blur and key handlers,
+        // so the role is set here.
         //
         // role="img" cannot simply move up here to fix that. It makes its whole
         // subtree presentational, and this panel contains statusRegion — the live
@@ -416,22 +408,22 @@ public class FloorMapCanvasViewImpl
         });
 
         setMapSummary("Floor map");
-
-        FloorMapAria.liveRegion(statusRegion);
     }
 
-    /// {@inheritDoc}
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    /// {@inheritDoc}
-    @Override
+    /// Sets the map's accessible name — a one-line summary of what is currently
+    /// drawn, for a user who cannot see it.
+    ///
+    /// The canvas is exposed to assistive technology as a single image with a
+    /// generated description, not as a tree of shapes. Read in DOM order the
+    /// SVG's own text captions are a stream of disconnected names and numbers:
+    /// they are positioned for the eye, and their paint order is a z-order, not
+    /// a reading order.
+    ///
+    /// @param summary the summary; replaces any previous one
     public void setMapSummary(final String summary) {
         // The container is named unconditionally: it is never focused, so rewriting its
         // label is inert until something reads it.
-        svgContainer.getElement().setAttribute("aria-label", summary);
+        svgContainer.setAttribute("aria-label", summary);
 
         // The focus panel is different, because renaming the element that currently has
         // focus is an event: screen readers may announce a focused element's new name. The
@@ -450,8 +442,10 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Points the map's accessible description at another element — in practice
+    /// the Tracking panel's grid, which is the map's row-by-row text equivalent.
+    ///
+    /// @param elementId the id of the describing element
     public void setMapDescribedBy(final String elementId) {
         // Container only — deliberately NOT the focus panel. The id names the whole
         // Tracking / Fact List grid, and an accessible description is that element's
@@ -462,7 +456,7 @@ public class FloorMapCanvasViewImpl
         //
         // If the route to the grid should be spoken on focus, it wants a short fixed
         // sentence of its own, not this id.
-        svgContainer.getElement().setAttribute("aria-describedby", elementId);
+        svgContainer.setAttribute("aria-describedby", elementId);
     }
 
     /// Shows or clears the line explaining why the map is empty.
@@ -478,7 +472,6 @@ public class FloorMapCanvasViewImpl
     ///
     /// @param text  what to say, or `null`/blank to clear the line
     /// @param fault whether this is a fault rather than merely an absence
-    @Override
     public void setEmptyStatus(final String text, final boolean fault) {
         if (text == null || text.isEmpty()) {
             emptyStatus.setText("");
@@ -495,17 +488,20 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Announces a change through the canvas's live region.
+    ///
+    /// For things the map says only by redrawing itself: what is selected,
+    /// what is being followed, that the followed entity has left the timeline
+    /// range. Repeats of the current message are dropped.
+    ///
+    /// @param message the message to announce
     public void announce(final String message) {
         if (message == null || message.isEmpty() || message.equals(lastAnnouncement)) {
             return;
         }
         lastAnnouncement = message;
-        statusRegion.setText(message);
+        statusRegion.setInnerText(message);
     }
-
-    /// {@inheritDoc} — no read-only visual changes required for the canvas.
 
     /// Handles resize events. If the parent container has no size yet (e.g. during
     /// initial attachment), the call is deferred until layout completes.
@@ -513,17 +509,17 @@ public class FloorMapCanvasViewImpl
     /// The retry stops if the widget is detached. Without that check the deferred
     /// call re-queued itself unconditionally, so a canvas that never gets laid out —
     /// a document opened into a hidden or closed tab — rescheduled forever and kept
-    /// the view, and through it the presenter, reachable for the rest of the
+    /// the view, and through it the controller, reachable for the rest of the
     /// session.
     @Override
     public void onResize() {
-        if (!svgContainer.isAttached()) {
+        if (!isAttached()) {
             // Nothing to size, and nothing will ever size it. A later attach fires
             // onResize again through the normal widget lifecycle.
             return;
         }
 
-        final Element parent = svgContainer.getElement().getParentElement();
+        final Element parent = svgContainer.getParentElement();
         if (parent == null) {
             return;
         }
@@ -539,38 +535,90 @@ public class FloorMapCanvasViewImpl
         }
 
         // SVG handles its own responsiveness via 100% width/height. Notify the
-        // presenter that the canvas now has a real size so it can apply its
+        // controller that the canvas now has a real size so it can apply its
         // size-dependent default view (see setResizeListener).
         if (resizeListener != null) {
             resizeListener.run();
         }
     }
 
-    /// {@inheritDoc}
-    @Override
-    public FocusPanel getFocusPanel() {
-        return focusPanel;
+    /// @return The element the map is drawn in, which takes the pointer and the keys: its size is the
+    ///         canvas's, and pointer positions are measured from its corner.
+    public Element getSurfaceElement() {
+        return focusPanel.getElement();
     }
 
-    /// {@inheritDoc}
-    @Override
-    public HasMouseMoveHandlers getMouseMoveHandlers() {
-        return focusPanel;
+    /// Gives the keyboard focus to the map, e.g. when a mode its keys end starts from a menu.
+    public void focus() {
+        focusPanel.setFocus(true);
     }
 
-    /// {@inheritDoc}
-    @Override
-    public HasMouseUpHandlers getMouseUpHandlers() {
-        return focusPanel;
+    /// Shows the crosshair pointer, while a modal gesture (drawing an area, measuring for Set
+    /// Scale) is live, or the normal one.
+    ///
+    /// @param crosshair Whether to show the crosshair.
+    public void setCrosshair(final boolean crosshair) {
+        focusPanel.setStyleName(CROSSHAIR, crosshair);
     }
 
-    /// {@inheritDoc}
-    @Override
-    public HasMouseWheelHandlers getMouseWheelHandlers() {
-        return focusPanel;
+    /// @param handler Told when a mouse button is pressed on the map.
+    /// @return Its registration.
+    public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler) {
+        return focusPanel.addMouseDownHandler(handler);
     }
 
-    /// {@inheritDoc}
+    /// @param handler Told when the pointer moves over the map.
+    /// @return Its registration.
+    public HandlerRegistration addMouseMoveHandler(final MouseMoveHandler handler) {
+        return focusPanel.addMouseMoveHandler(handler);
+    }
+
+    /// @param handler Told when a mouse button is released over the map.
+    /// @return Its registration.
+    public HandlerRegistration addMouseUpHandler(final MouseUpHandler handler) {
+        return focusPanel.addMouseUpHandler(handler);
+    }
+
+    /// @param handler Told when the pointer leaves the map.
+    /// @return Its registration.
+    public HandlerRegistration addMouseOutHandler(final MouseOutHandler handler) {
+        return focusPanel.addMouseOutHandler(handler);
+    }
+
+    /// @param handler Told when the mouse wheel turns over the map.
+    /// @return Its registration.
+    public HandlerRegistration addMouseWheelHandler(final MouseWheelHandler handler) {
+        return focusPanel.addMouseWheelHandler(handler);
+    }
+
+    /// @param handler Told when the map is double-clicked.
+    /// @return Its registration.
+    public HandlerRegistration addDoubleClickHandler(final DoubleClickHandler handler) {
+        return focusPanel.addDoubleClickHandler(handler);
+    }
+
+    /// @param handler Told when a key is pressed while the map has the focus.
+    /// @return Its registration.
+    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
+        return focusPanel.addKeyDownHandler(handler);
+    }
+
+    /// @param handler Told when the browser would show its context menu over the map.
+    /// @return Its registration.
+    public HandlerRegistration addContextMenuHandler(final ContextMenuHandler handler) {
+        return focusPanel.addDomHandler(handler, ContextMenuEvent.getType());
+    }
+
+    /// Renders the complete SVG canvas contents.
+    ///
+    /// This is called on every state change (zoom, pan, object move,
+    /// selection change, data load) and rebuilds the entire SVG DOM.
+    /// The rendering layers are, from back to front:
+    ///
+    /// 1. Grid overlay (drawn when `showGrid` is set)
+    /// 2. Facts — image facts (incl. backgrounds) and imageless default graphics,
+    ///    in the supplied paint (z) order
+    /// 3. Events (people) drawn on top
     ///
     /// Rebuilds the entire SVG DOM. The structure is
     /// `<svg>` → `<g pan/zoom>` → facts, then events. Each image fact is wrapped in its
@@ -578,9 +626,58 @@ public class FloorMapCanvasViewImpl
     /// anchored in map space but drawn at a fixed screen size (see
     /// [#fixedSizeTransform]).
     ///
-    /// The parameters are documented once, on
-    /// `FloorMapCanvasPresenter.FloorMapCanvasView#draw`.
-    @Override
+    /// @param scale           the current zoom scale factor
+    /// @param x               the current pan offset X (pixels)
+    /// @param y               the current pan offset Y (pixels)
+    /// @param facts           the facts to render, already in paint (z) order
+    /// @param events          the event entity overlay objects (map coordinates)
+    /// @param selectedObjectIds the IDs of the currently selected objects (all
+    ///         highlighted); empty if nothing is selected
+    /// @param typeStyles      per-type presentation settings (default graphic
+    ///         shape/colour for imageless facts); may be `null`
+    /// @param showGrid        `true` to draw the (non-interactive) grid overlay
+    /// @param dimmedTypes     the types the user has pushed into the background from the
+    ///         Layers panel, drawn at reduced opacity. Applies to facts,
+    ///         events *and* cluster glyphs, so a dimmed layer does
+    ///         not reappear at full strength once its members merge. May
+    ///         be `null`, meaning nothing is dimmed
+    /// @param marqueeRectPx   the rubber-band selection rectangle
+    ///         `{minX, minY, maxX, maxY}` in element pixels, already
+    ///         normalised so the mins are the mins whichever way the drag
+    ///         went, or `null` when no marquee is in progress
+    /// @param drawSelectionHandles
+    ///         `true` to draw the selection frame and its handles.
+    ///         Distinct from the selection being non-empty: the caller
+    ///         suppresses it while a marquee is being dragged, so the
+    ///         frame does not fight the rubber band for the user's
+    ///         attention
+    /// @param scaleRotateEnabled
+    ///         `true` when the selection contains at least one
+    ///         *unlocked* fact with an image or an outline, so
+    ///         scale and rotate handles are worth offering. False leaves
+    ///         the move-only frame - handles that cannot act on anything
+    ///         are worse than no handles, because they invite a gesture
+    ///         that then does nothing
+    /// @param areaDraftPx     the in-progress area-drawing polyline in element
+    ///         pixels (`{x0, y0, x1, y1, ...}`, last point =
+    ///         live cursor), or `null` when not drawing
+    /// @param areaOverlay     area-containment decorations — which facts/entities
+    ///         carry the "related to the focused entity" highlight
+    ///         and what each area's occupant-count badge reads;
+    ///         never `null`
+    /// @param clusterOverlay  which entities are merged into summary glyphs
+    ///         because they are too close together on screen to
+    ///         tell apart. Members must **not** be
+    ///         drawn individually — the cluster glyph stands in
+    ///         for them. Never `null`
+    /// @param highlight       resolves the non-selection highlight for each entity -
+    ///         a group's own colour, or area-containment green when the
+    ///         entity is inside an area holding the tracked entity,
+    ///         whichever the resolver says wins. Selection styling still
+    ///         takes precedence over both; never `null`
+    /// @param measureLinePx   the in-progress Set Scale line
+    ///         `{x0, y0, x1, y1}` in element pixels, or
+    ///         `null` when not measuring
     public void draw(final double scale,
                      final double x,
                      final double y,
@@ -630,7 +727,7 @@ public class FloorMapCanvasViewImpl
                 // size; image facts carry the flip in their matrix and scale
                 // with the map.
                 panGroup.elem(flipGroup -> {
-                    // ---- Facts (paint order = z-order supplied by the presenter) ----
+                    // ---- Facts (paint order = z-order supplied by the controller) ----
                     if (facts != null) {
                         for (final Fact fact : facts) {
                             // Merged into a cluster: the cluster glyph stands in
@@ -775,7 +872,7 @@ public class FloorMapCanvasViewImpl
             new Attribute("focusable", "false")
         );
 
-        svgContainer.setHTML(htmlBuilder.toSafeHtml());
+        svgContainer.setInnerSafeHtml(htmlBuilder.toSafeHtml());
         updateCanvasHint(areaDraftPx, measureLinePx);
         updateScaleBar(scale);
     }
@@ -835,7 +932,7 @@ public class FloorMapCanvasViewImpl
                     new Attribute("font-family", "sans-serif"),
                     new Attribute("font-weight", "600"),
                     new Attribute("paint-order", "stroke"),
-                    new Attribute("style", "stroke: var(--page__background-color)"),
+                    new Attribute("class", "stroom-floormap-measure-label"),
                     new Attribute("stroke-width", "3"),
                     new Attribute("pointer-events", "none"));
         }
@@ -865,7 +962,7 @@ public class FloorMapCanvasViewImpl
     ///
     /// Lives here rather than in the rebuilt SVG so it can use the theme's CSS
     /// variables, and so it never moves with pan or zoom. Being inside
-    /// `draw` covers both of the presenter's redraw paths — the static one
+    /// `draw` covers both of the controller's redraw paths — the static one
     /// and the animation-frame loop — so it cannot go stale while entities
     /// move.
     ///
@@ -880,17 +977,27 @@ public class FloorMapCanvasViewImpl
         }
         scaleBar.setVisible(true);
         scaleBarLabel.setText(FloorMapMeasurementUnits.format(measurementUnits, bar[0]));
-        scaleBarLine.setWidth(bar[1] + "px");
+        CssProperties.set(scaleBarLine.getElement(), "--floormap-scale-bar__width", bar[1] + "px");
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Sets what one map unit means in the real world, used to label the grid
+    /// and size the scale bar. `null` on a map that has never been
+    /// calibrated, which measures in the default scale.
+    ///
+    /// A setter rather than a [#draw] parameter: it changes only when
+    /// the document is read or recalibrated, not per frame.
+    ///
+    /// @param measurementUnits the document's units, or `null`
     public void setMeasurementUnits(final FloorMapMeasurementUnits measurementUnits) {
         this.measurementUnits = measurementUnits;
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Shows a readout pill at the cursor during a move or resize, or hides
+    /// it.
+    ///
+    /// @param text      what to show, or `null` to hide
+    /// @param cursorXPx cursor position in element pixels
+    /// @param cursorYPx cursor position in element pixels
     public void setGestureReadout(final String text, final double cursorXPx, final double cursorYPx) {
         if (text == null) {
             gestureReadout.removeStyleName(GESTURE_READOUT_VISIBLE);
@@ -913,19 +1020,41 @@ public class FloorMapCanvasViewImpl
             y = cursorYPx - READOUT_OFFSET_Y_PX - READOUT_ASSUMED_HEIGHT_PX;
         }
 
-        gestureReadout.getElement().getStyle().setLeft(Math.max(0, x), Unit.PX);
-        gestureReadout.getElement().getStyle().setTop(Math.max(0, y), Unit.PX);
+        CssProperties.set(gestureReadout.getElement(), "--floormap-gesture-readout__left", Math.max(0, x) + "px");
+        CssProperties.set(gestureReadout.getElement(), "--floormap-gesture-readout__top", Math.max(0, y) + "px");
         gestureReadout.addStyleName(GESTURE_READOUT_VISIBLE);
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Supplies the resolver used to caption a cluster drawn around the tracked
+    /// entity, which needs that entity's display name.
+    ///
+    /// A setter rather than a [#draw] parameter, for the same reason
+    /// as the measurement units: it is wired once by the owning tab and never
+    /// changes per frame.
+    ///
+    /// @param entityNameResolver resolves an entity id to its display name, or
+    ///         `null` to fall back to ids
     public void setEntityNameResolver(final Function<String, String> entityNameResolver) {
         this.entityNameResolver = entityNameResolver;
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Shows the panel describing whatever is under the pointer — a cluster's
+    /// members, or one entity's details — or hides it.
+    ///
+    /// One panel serves both: only one thing can be under the pointer, and
+    /// naming ten entities and describing one are the same job.
+    ///
+    /// Anchored to the glyph rather than to the cursor, so it holds still
+    /// while the pointer moves across the glyph — which also means the
+    /// controller only needs to call this when the hovered glyph changes, not
+    /// on every mouse move.
+    ///
+    /// @param caption   the heading — a cluster's `"10 users"` or an
+    ///         entity's name — or `null` to hide
+    /// @param lines     the lines to list under it: member names (already
+    ///         capped) or an entity's details
+    /// @param anchorXPx the glyph's centre in element pixels
+    /// @param anchorYPx the glyph's centre in element pixels
     public void setHoverTooltip(final String caption,
                                 final List<String> lines,
                                 final double anchorXPx,
@@ -968,20 +1097,30 @@ public class FloorMapCanvasViewImpl
             y = anchorYPx - HOVER_TOOLTIP_OFFSET_PX - tooltipHeight;
         }
 
-        hoverTooltip.getElement().getStyle().setLeft(Math.max(0, x), Unit.PX);
-        hoverTooltip.getElement().getStyle().setTop(Math.max(0, y), Unit.PX);
+        CssProperties.set(hoverTooltip.getElement(), "--floormap-hover-tooltip__left", Math.max(0, x) + "px");
+        CssProperties.set(hoverTooltip.getElement(), "--floormap-hover-tooltip__top", Math.max(0, y) + "px");
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// The width/height ratio of an image the canvas has already loaded, or
+    /// `null` if it has not. Never starts a load.
+    ///
+    /// @param imageUrl the image URL
+    /// @return the aspect ratio, or `null` when unknown
     public Double getImageAspectRatio(final String imageUrl) {
         // Deliberately does not start a load: this answers "do we already know?"
         // for a dialog, and must not queue work from a non-drawing path.
         return cachedAspectRatio(imageUrl);
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
+    /// of the selected facts, **without** the minimum-size
+    /// padding [#getSelectionFrame()] applies — that padding exists to
+    /// keep drag handles separable and would overstate a small object's size.
+    ///
+    /// Reflects the last [#draw], so during a gesture it already
+    /// includes the live transform.
+    ///
+    /// @return the bounds, or `null` when nothing is selected or laid out
     public double[] getSelectionBoundsPx() {
         // Unpadded, unlike the selection frame: that pads small selections out
         // to a minimum size so the drag handles stay separable, which would
@@ -1029,8 +1168,11 @@ public class FloorMapCanvasViewImpl
         areaDrawHint.addStyleName(AREA_DRAW_HINT_VISIBLE);
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Tells the view the Set Scale mode is active, so its instruction pill
+    /// can announce the mode before the first press — at which point there is
+    /// no measuring line for the view to infer it from.
+    ///
+    /// @param measuringScale `true` while the mode is active
     public void setMeasuringScale(final boolean measuringScale) {
         this.measuringScale = measuringScale;
     }
@@ -1240,7 +1382,7 @@ public class FloorMapCanvasViewImpl
             // Invisible hit polygon — the clickable element. pointer-events
             // "all" makes both the interior and a generous 10px border band
             // clickable regardless of paint, so an area is selected by
-            // clicking anywhere inside it. The presenter treats a press on an
+            // clicking anywhere inside it. The controller treats a press on an
             // UNSELECTED area like a background press (drag pans, click
             // selects), so a large area cannot hijack map panning.
             areaGroup.elem(SafeHtmlUtil.from("polygon"),
@@ -1461,23 +1603,44 @@ public class FloorMapCanvasViewImpl
                 IMAGE_DISPLAY_WIDTH, OBJECT_SIZE, this::cachedAspectRatio, lastTypeStyles);
     }
 
-    @Override
+    /// Returns the keys of facts whose on-screen bounds intersect the given
+    /// rubber-band rectangle (element-pixel space, `{minX, minY, maxX,
+    /// maxY}`). Uses the geometry of the last [#draw] call — including
+    /// image aspect ratios, which are known only to the view.
+    ///
+    /// @param rectPx the marquee rectangle in element pixels
+    /// @return the intersecting fact keys; never `null`
     public Set<String> hitTestScreenRect(final double[] rectPx) {
         return geometry().hitTestRect(lastFacts, rectPx);
     }
 
-    @Override
+    /// Returns the map-space bounding box `{minX, minY, maxX, maxY}` of
+    /// all facts from the last [#draw] call, or `null` if there is
+    /// no content. Used to compute the initial zoom-to-fit view. Independent
+    /// of the current scale/pan (unlike [#getSelectionFrame()]).
+    ///
+    /// @return the content bounds in map space, or `null`
     public double[] getContentMapBounds() {
         return geometry().contentMapBounds(lastFacts);
     }
 
-    @Override
+    /// Returns the fact's map-space anchor point (the point the camera
+    /// centres on when the fact is tracked). Delegates to
+    /// [Fact#mapAnchor] with the view's image display width and the
+    /// fact's aspect ratio — which is known only to the view.
+    ///
+    /// @param fact the fact to anchor; must not be `null`
+    /// @return the anchor `{mapX, mapY}`; never `null`
     public double[] getFactMapAnchor(final Fact fact) {
         return fact.mapAnchor(IMAGE_DISPLAY_WIDTH,
                 cachedAspectRatio(fact.getImage()));
     }
 
-    @Override
+    /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
+    /// of the current selection (from the last [#draw]), or `null`
+    /// if nothing is selected. Used to seed a scale/rotate gesture.
+    ///
+    /// @return the selection frame in element pixels, or `null`
     public double[] getSelectionFrame() {
         return computeSelectionFrame();
     }
@@ -1493,7 +1656,7 @@ public class FloorMapCanvasViewImpl
     /// Draws the selection frame outline, the 4 corner scale handles and the
     /// rotation handle above the top edge, all in screen space at the SVG root.
     /// Each handle carries an id of `FloorMapJsonKeys.HANDLE_PREFIX + role`
-    /// so the presenter can route a mousedown on it to a scale/rotate gesture.
+    /// so the controller can route a mousedown on it to a scale/rotate gesture.
     /// Scaling is always aspect-preserving, so only corner handles are offered.
     private void appendSelectionHandles(final HtmlBuilder svg, final boolean enabled,
                                         final boolean areaOffset) {
@@ -2262,7 +2425,7 @@ public class FloorMapCanvasViewImpl
     ///
     /// @param mapX  map-space X of the anchor point
     /// @param mapY  map-space Y of the anchor point
-    /// @param scale the current zoom factor (never zero — clamped by the presenter)
+    /// @param scale the current zoom factor (never zero — clamped by the controller)
     /// @return the `transform` attribute value
     private static String fixedSizeTransform(final double mapX,
                                              final double mapY,
@@ -2477,13 +2640,17 @@ public class FloorMapCanvasViewImpl
     /// (e.g. after an asynchronous image aspect-ratio resolution completes).
     ///
     /// @param redrawListener the callback, or `null` to clear
-    @Override
     public void setRedrawListener(final Runnable redrawListener) {
         this.redrawListener = redrawListener;
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Registers a listener that is called once the canvas has a real
+    /// (non-zero) on-screen size — i.e. after layout completes. The
+    /// controller uses this to apply its size-dependent initial view (which
+    /// needs the canvas dimensions to fit or place the content).
+    ///
+    /// @param resizeListener the callback to invoke, typically
+    ///         `FloorMapCanvasController::maybeApplyInitialView`
     public void setResizeListener(final Runnable resizeListener) {
         this.resizeListener = resizeListener;
     }
@@ -2557,18 +2724,17 @@ public class FloorMapCanvasViewImpl
         img.onload = function() {
             var width = img.naturalWidth || img.width || 0;
             var height = img.naturalHeight || img.height || 0;
-            self.@stroom.floormap.client.view.FloorMapCanvasViewImpl::onImageSizeResolved(Ljava/lang/String;DD)
+            self.@stroom.floormap.client.component.FloorMapCanvas::onImageSizeResolved(Ljava/lang/String;DD)
                     (url, width, height);
         };
         img.onerror = function() {
-            self.@stroom.floormap.client.view.FloorMapCanvasViewImpl::onImageSizeResolved(Ljava/lang/String;DD)
+            self.@stroom.floormap.client.component.FloorMapCanvas::onImageSizeResolved(Ljava/lang/String;DD)
                     (url, 0, 0);
         };
         img.src = url;
     }-*/;
 
-    /// GWT UiBinder interface for [FloorMapCanvasViewImpl].
-    public interface Binder extends UiBinder<Widget, FloorMapCanvasViewImpl> {
+    interface Binder extends UiBinder<Widget, FloorMapCanvas> {
 
     }
 }

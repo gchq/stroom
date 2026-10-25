@@ -62,7 +62,7 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
     }
 
     @Override
-    public void setMapView(final View view) {
+    public void setMapView(final IsWidget view) {
         mapPanel.setWidget(view.asWidget());
     }
 

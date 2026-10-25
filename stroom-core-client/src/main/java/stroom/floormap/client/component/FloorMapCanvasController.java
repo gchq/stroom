@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
@@ -30,27 +30,21 @@ import stroom.floormap.client.overlay.FloorMapGroupOverlay;
 import stroom.floormap.client.overlay.FloorMapHighlight;
 import stroom.floormap.client.overlay.FloorMapHoverDetail;
 import stroom.floormap.client.playback.FloorMapEntityAnimator;
-import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
+import stroom.floormap.client.presenter.MapContextMenu;
 import stroom.floormap.client.view.FloorMapGrid;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
-import com.google.gwt.event.dom.client.HasMouseUpHandlers;
-import com.google.gwt.event.dom.client.HasMouseWheelHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.user.client.ui.FocusPanel;
-import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -64,7 +58,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 /// Presenter for the interactive SVG map canvas.
 ///
@@ -79,7 +72,9 @@ import javax.inject.Inject;
 /// The canvas view renders the z-ordered facts plus the event draw list
 /// produced by [#buildAnimatedDrawList(double)] via its
 /// [draw()][FloorMapCanvasView#draw] method.
-public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasView> {
+public class FloorMapCanvasController extends Controller {
+
+    private final FloorMapCanvas view;
 
 
     // -------------------------------------------------------------------------
@@ -97,7 +92,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// projection: map space is Y-up, the SVG render pipeline is Y-down, so the
     /// only fixed transform on top of pan/zoom is a Y flip. With this as the
     /// viewport's background, `viewport.mapToScreen`/`screenToMap`
-    /// reproduce this presenter's projection exactly, so the (unit-tested)
+    /// reproduce this controller's projection exactly, so the (unit-tested)
     /// viewport maths is the single source of the projection formula.
     private static final FloorMapTransformationMatrix Y_FLIP =
             FloorMapTransformationMatrix.scale(1, -1);
@@ -413,7 +408,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // -------------------------------------------------------------------------
 
     /// The entity animation data machine (interpolation, trails, teleport). This
-    /// presenter owns only the scheduler loop, camera-follow and drawing; all the
+    /// controller owns only the scheduler loop, camera-follow and drawing; all the
     /// per-entity bookkeeping lives in the shared, unit-tested animator.
     private final FloorMapEntityAnimator animator = new FloorMapEntityAnimator();
 
@@ -451,21 +446,25 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         this.onContextMenu = onContextMenu;
     }
 
+    /// Made by GIN, with the canvas it draws on.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     The canvas.
     @Inject
-    public FloorMapCanvasPresenter(final EventBus eventBus,
-                                   final FloorMapCanvasView view) {
-        super(eventBus, view);
+    public FloorMapCanvasController(final EventBus eventBus,
+                                    final FloorMapCanvas view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
 
         handleMouseEvents();
 
-        if (getView() != null) {
-            getView().setRedrawListener(this::redraw);
-            // Apply the bottom-left default view as soon as the canvas has a
-            // real size. onResize() self-defers until layout completes, then
-            // fires this back.
-            getView().setResizeListener(this::maybeApplyInitialView);
-            getView().onResize();
-        }
+        view.setRedrawListener(this::redraw);
+        // Apply the bottom-left default view as soon as the canvas has a
+        // real size. onResize() self-defers until layout completes, then
+        // fires this back.
+        view.setResizeListener(this::maybeApplyInitialView);
+        view.onResize();
 
         // Perform initial draw
         redraw();
@@ -485,7 +484,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         if (initialViewApplied) {
             return;
         }
-        final int height = getView().getFocusPanel().getElement().getOffsetHeight();
+        final int height = view.getSurfaceElement().getOffsetHeight();
         if (height <= 0) {
             // Canvas not laid out yet — a later onResize will call back.
             return;
@@ -500,7 +499,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             return;
         }
 
-        final double[] bounds = getView().getContentMapBounds();
+        final double[] bounds = view.getContentMapBounds();
         if (bounds != null && applyFitView(bounds, height)) {
             initialViewApplied = true;
             if (initialViewListener != null) {
@@ -524,7 +523,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// @param height the current viewport height (already known to be `> 0`)
     /// @return `true` if a view was applied
     private boolean applyFitView(final double[] b, final int height) {
-        final int width = getView().getFocusPanel().getElement().getOffsetWidth();
+        final int width = view.getSurfaceElement().getOffsetWidth();
         if (width <= 0) {
             return false;
         }
@@ -587,7 +586,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         animator.setPlaying(playing);
         // Playback state is otherwise visible only as the play button's icon
         // changing, over on the timeline.
-        getView().announce(playing
+        view.announce(playing
                 ? "Playing"
                 : "Paused");
     }
@@ -622,7 +621,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Check if we clicked on an object in edit mode.
         // Only react to the primary (left) mouse button — right-click is
         // handled by the contextmenu event handler below.
-        own(getView().getFocusPanel().addMouseDownHandler(event -> {
+        own(view.addMouseDownHandler(event -> {
             // Ignore right-click (button 2 in the W3C DOM spec).
             // Without this guard the mousedown sets isDragging = true, but
             // the subsequent mouseup lands on the context menu popup (outside
@@ -802,7 +801,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // The pointer can leave the canvas without a final mousemove inside it
         // (straight onto the dock, or off the window), which would strand the
         // tooltip over a canvas the user is no longer pointing at.
-        own(getView().getFocusPanel().addMouseOutHandler(event -> {
+        own(view.addMouseOutHandler(event -> {
             // mouseout bubbles from every descendant, so it also fires when the
             // pointer merely crosses between elements INSIDE the canvas — the SVG
             // root to a glyph's shape and back. Those are not exits, and treating
@@ -811,14 +810,14 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             // pointer has gone somewhere outside this panel (or nowhere at all,
             // which is what leaving the window reports).
             final EventTarget related = event.getRelatedTarget();
-            final Element panel = getView().getFocusPanel().getElement();
+            final Element panel = view.getSurfaceElement();
             if (!Element.is(related)
                 || !panel.isOrHasChild(Element.as(related))) {
                 hideHoverTooltip();
             }
         }));
 
-        own(getView().getMouseMoveHandlers().addMouseMoveHandler(event -> {
+        own(view.addMouseMoveHandler(event -> {
             // Guard: if no mouse button is actually pressed, cancel any
             // stale drag state. This catches the case where mousedown fired
             // on the canvas but mouseup landed outside (on a toolbar button
@@ -978,7 +977,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }));
 
         //noinspection unused event
-        own(getView().getMouseUpHandlers().addMouseUpHandler(event -> {
+        own(view.addMouseUpHandler(event -> {
             // Set Scale: the release ends the measurement and hands its map-space
             // length to the handler, which asks what that distance really is.
             if (gesture == Gesture.MEASURING_SCALE) {
@@ -1073,7 +1072,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 // background: its screen bounds cover the whole floor plan, so
                 // every marquee would silently include it and the following drag
                 // would translate the entire plan along with the real selection.
-                for (final String id : getView().hitTestScreenRect(rect)) {
+                for (final String id : view.hitTestScreenRect(rect)) {
                     if (!lockedKeys.contains(id) && !backgroundKeys.contains(id)) {
                         selectedObjectIds.add(id);
                     }
@@ -1120,7 +1119,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }));
 
         // Mouse Wheel (Zoom towards cursor)
-        own(getView().getMouseWheelHandlers().addMouseWheelHandler(event -> {
+        own(view.addMouseWheelHandler(event -> {
             event.preventDefault();
             // The zoom moves the map out from under the tooltip's anchor, and
             // re-clusters at the new scale, so what it names may not survive.
@@ -1143,7 +1142,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
         // Right-click context menu — suppress the browser default and tell the owner (onContextMenu).
         // Only fires in edit mode; in read-only (Map tab) mode the browser default is allowed.
-        own(getView().getFocusPanel().addDomHandler(event -> {
+        own(view.addContextMenuHandler(event -> {
             if (!editMode) {
                 return;
             }
@@ -1194,7 +1193,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             if (contextRole != null && contextRole.startsWith("vertex-")) {
                 final Fact area = selectedAreaFact();
                 if (area != null) {
-                    final Element panel = getView().getFocusPanel().getElement();
+                    final Element panel = view.getSurfaceElement();
                     final double[] vertexMap = screenToMapCoords(
                             clientX - panel.getAbsoluteLeft(),
                             clientY - panel.getAbsoluteTop());
@@ -1208,7 +1207,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             // Convert viewport-relative client coordinates to element-relative
             // coordinates, matching the coordinate space used by event.getX()/getY()
             // and the zoom/pan model (offsetX, offsetY, scale).
-            final Element panelElement = getView().getFocusPanel().getElement();
+            final Element panelElement = view.getSurfaceElement();
             final double elementX = clientX - panelElement.getAbsoluteLeft();
             final double elementY = clientY - panelElement.getAbsoluteTop();
 
@@ -1224,11 +1223,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             final double[] mapCoords = screenToMapCoords(elementX, elementY);
 
             onContextMenu.accept(new MapContextMenu(objectId, mapCoords[0], mapCoords[1], clientX, clientY));
-        }, ContextMenuEvent.getType()));
+        }));
 
         // Escape clears the selection, so you can pan again after selecting the
         // full-canvas background (an unselected background press pans).
-        own(getView().getFocusPanel().addKeyDownHandler(event -> {
+        own(view.addKeyDownHandler(event -> {
             // While drawing an area: Escape discards the draft, Enter closes
             // the polygon. (No clash with Escape-clears-selection — starting a
             // draw clears the selection.)
@@ -1289,7 +1288,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Double-click closes the in-progress area polygon. The dblclick's two
         // component clicks have already appended two near-coincident vertices,
         // so drop the duplicate before closing.
-        own(getView().getFocusPanel().addDoubleClickHandler(event -> {
+        own(view.addDoubleClickHandler(event -> {
             if (gesture != Gesture.DRAWING_AREA) {
                 return;
             }
@@ -1470,7 +1469,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 // rather than a second, subtly different idea of "fit".
                 initialViewApplied = false;
                 maybeApplyInitialView();
-                getView().announce("View reset. Zoom " + zoomPercentText());
+                view.announce("View reset. Zoom " + zoomPercentText());
                 refreshAccessibleSummary();
                 redraw();
                 break;
@@ -1514,7 +1513,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
         hideHoverTooltip();
 
-        final Element panel = getView().getFocusPanel().getElement();
+        final Element panel = view.getSurfaceElement();
         final FloorMapViewport vp = new FloorMapViewport(scale, offsetX, offsetY);
         // Zoom about the viewport centre: the wheel path uses the cursor position,
         // which does not exist here.
@@ -1523,7 +1522,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         offsetX = vp.getOffsetX();
         offsetY = vp.getOffsetY();
 
-        getView().announce("Zoom " + zoomPercentText());
+        view.announce("Zoom " + zoomPercentText());
         refreshAccessibleSummary();
         redraw();
     }
@@ -1544,7 +1543,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// Callers must have checked `editMode` and that no gesture is in
     /// progress — see [#handleViewKeys].
     private void openKeyboardContextMenu() {
-        final Element panel = getView().getFocusPanel().getElement();
+        final Element panel = view.getSurfaceElement();
         final String objectId = selectedObjectIds.isEmpty()
                 ? null
                 : selectedObjectIds.iterator().next();
@@ -1552,7 +1551,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Anchor on the selection frame's centre when there is one, so the menu
         // opens beside the thing it acts on rather than in the middle of the map.
         final double[] frame = objectId != null
-                ? getView().getSelectionFrame()
+                ? view.getSelectionFrame()
                 : null;
         final double elementX = frame != null
                 ? (frame[0] + frame[2]) / 2
@@ -1615,7 +1614,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 FloorMapZOrder.sort(visibleFacts(factsExcludingOverlay(overlay)), typeStyles);
         final List<FloorMapObject> drawEvents = visibleEvents(overlay);
         final FloorMapAreaOverlay areas = areaOverlay();
-        getView().draw(scale, offsetX, offsetY,
+        view.draw(scale, offsetX, offsetY,
                 drawFacts,
                 drawEvents, selectedObjectIds, typeStyles, showGrid, dimmedTypes,
                 gesture == Gesture.MARQUEE ? currentMarqueeRect() : null,
@@ -1732,7 +1731,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // would have read rather than what the roster happened to know.
         final double[] anchorPx = mapToScreen(
                 new double[]{cluster.getMapX(), cluster.getMapY()});
-        getView().setHoverTooltip(
+        view.setHoverTooltip(
                 FloorMapClusterLabel.captionFor(cluster, entityNameResolver),
                 FloorMapClusterLabel.hoverNames(names, CLUSTER_TOOLTIP_MAX_NAMES),
                 anchorPx[0], anchorPx[1]);
@@ -1777,7 +1776,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         hoveredClusterKey = null;
         final String caption = FloorMapHoverDetail.caption(id, displayName(id));
         final double[] anchorPx = mapToScreen(anchorMap);
-        getView().setHoverTooltip(
+        view.setHoverTooltip(
                 caption,
                 FloorMapHoverDetail.lines(
                         entityType(id),
@@ -1794,7 +1793,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         if (hoveredClusterKey != null || hoveredObjectId != null) {
             hoveredClusterKey = null;
             hoveredObjectId = null;
-            getView().setHoverTooltip(null, null, 0, 0);
+            view.setHoverTooltip(null, null, 0, 0);
         }
     }
 
@@ -1819,7 +1818,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     ///
     /// @param id The entity's id.
     /// @return The entity's name, else its id.
-    String displayNameOrId(final String id) {
+    public String displayNameOrId(final String id) {
         final String name = displayName(id);
         return name != null
                 ? name
@@ -1893,12 +1892,12 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         } else {
             text = null;
         }
-        getView().setGestureReadout(text, cursorXPx, cursorYPx);
+        view.setGestureReadout(text, cursorXPx, cursorYPx);
     }
 
     /// Clears the gesture readout, if one is showing.
     private void hideGestureReadout() {
-        getView().setGestureReadout(null, 0, 0);
+        view.setGestureReadout(null, 0, 0);
     }
 
     /// The selection's size as `"2.4 m × 1.1 m"`, or `null` if it
@@ -1908,7 +1907,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// it reports what is actually on screen — including an image's aspect ratio,
     /// which only the view knows.
     private String selectionSizeText() {
-        final double[] bounds = getView().getSelectionBoundsPx();
+        final double[] bounds = view.getSelectionBoundsPx();
         if (bounds == null || scale <= 0) {
             return null;
         }
@@ -1926,7 +1925,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// Axes are named because a bare pair of numbers on a Y-up map is exactly the
     /// kind of cell that gets queried.
     private String selectionPositionText() {
-        final double[] bounds = getView().getSelectionBoundsPx();
+        final double[] bounds = view.getSelectionBoundsPx();
         if (bounds == null) {
             return null;
         }
@@ -2084,7 +2083,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             return;
         }
 
-        final double[] frame = getView().getSelectionFrame();
+        final double[] frame = view.getSelectionFrame();
         if (frame == null) {
             isDragging = false;
             gesture = Gesture.NONE;
@@ -2381,7 +2380,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // of the generic type glyph. The static twin is suppressed by
         // factsExcludingOverlay, so without this the icon would vanish the moment
         // the entity appears in the events stream. This is a rendering concern
-        // (it needs `facts`), so it stays in the presenter rather than the
+        // (it needs `facts`), so it stays in the controller rather than the
         // shared animator. Set unconditionally (null clears). The lookup map is
         // maintained by setFacts, not rebuilt here - this runs every frame.
         for (final FloorMapObject obj : combined) {
@@ -2407,7 +2406,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                     lastAnimationTimestamp = timestamp;
 
                     // Advance entity animations + trail fades (shared animator),
-                    // then glide the damped camera-follow (presenter-owned).
+                    // then glide the damped camera-follow (controller-owned).
                     final boolean animActive = animator.advanceFrame(timestamp, deltaMs);
                     final boolean cameraMoved = followStep(deltaMs);
 
@@ -2424,7 +2423,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                             visibleFacts(factsExcludingOverlay(overlay)), typeStyles);
                     final List<FloorMapObject> drawEvents = visibleEvents(overlay);
                     final FloorMapAreaOverlay areas = areaOverlay();
-                    getView().draw(scale, offsetX, offsetY,
+                    view.draw(scale, offsetX, offsetY,
                             drawFacts,
                             drawEvents, selectedObjectIds, typeStyles, showGrid, dimmedTypes,
                             null, false, false, null, areas,
@@ -2589,7 +2588,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         final double[] screen = mapToScreen(pos);
         final double screenX = screen[0];
         final double screenY = screen[1];
-        final Element panel = getView().getFocusPanel().getElement();
+        final Element panel = view.getSurfaceElement();
         // Margin 0.5 collapses the dead zone to the centre point (hard-centre).
         final boolean centre = centreOnNextFollow;
         centreOnNextFollow = false;
@@ -2637,7 +2636,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         final Fact fact = factFor(id);
         // Image anchors need the aspect ratio, known only to the view.
         return fact != null
-                ? getView().getFactMapAnchor(fact)
+                ? view.getFactMapAnchor(fact)
                 : null;
     }
 
@@ -2686,7 +2685,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// @return a two-element array `{mapX, mapY}` representing the
     ///         visible centre in map space
     public double[] getVisibleCentreMapCoords() {
-        final Element panel = getView().getFocusPanel().getElement();
+        final Element panel = view.getSurfaceElement();
         final double centreX = panel.getOffsetWidth() / 2.0;
         final double centreY = panel.getOffsetHeight() / 2.0;
         return screenToMapCoords(centreX, centreY);
@@ -2769,11 +2768,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Make the modal mode visible immediately: crosshair cursor (the
         // instruction banner is drawn by the view). Without this the mode is
         // indistinguishable from nothing having happened.
-        getView().getFocusPanel().getElement().getStyle()
-                .setProperty("cursor", "crosshair");
+        view.setCrosshair(true);
         // The triggering context-menu click leaves keyboard focus on the popup;
         // without this, Enter/Escape are dead until the first canvas click.
-        getView().getFocusPanel().setFocus(true);
+        view.focus();
         redraw();
     }
 
@@ -2789,14 +2787,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         fireSelectionChanged();
         measureStartMap = null;
         gesture = Gesture.MEASURING_SCALE;
-        getView().setMeasuringScale(true);
+        view.setMeasuringScale(true);
         // Make the modal mode visible the instant it starts — a mode with no
         // cursor or banner is indistinguishable from nothing having happened.
-        getView().getFocusPanel().getElement().getStyle()
-                .setProperty("cursor", "crosshair");
+        view.setCrosshair(true);
         // The triggering context-menu click leaves keyboard focus on the popup;
         // without this, Escape is dead until the first canvas click.
-        getView().getFocusPanel().setFocus(true);
+        view.focus();
         redraw();
     }
 
@@ -2806,8 +2803,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         isDragging = false;
         hasMoved = false;
         gesture = Gesture.NONE;
-        getView().setMeasuringScale(false);
-        getView().getFocusPanel().getElement().getStyle().clearProperty("cursor");
+        view.setMeasuringScale(false);
+        view.setCrosshair(false);
         redraw();
     }
 
@@ -2833,8 +2830,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
         measureStartMap = null;
         gesture = Gesture.NONE;
-        getView().setMeasuringScale(false);
-        getView().getFocusPanel().getElement().getStyle().clearProperty("cursor");
+        view.setMeasuringScale(false);
+        view.setCrosshair(false);
         redraw();
 
         if (scaleHandler != null && mapLength > 0) {
@@ -2846,7 +2843,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     public void cancelAreaDrawing() {
         areaDraftMap.clear();
         gesture = Gesture.NONE;
-        getView().getFocusPanel().getElement().getStyle().clearProperty("cursor");
+        view.setCrosshair(false);
         redraw();
     }
 
@@ -2862,7 +2859,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
         areaDraftMap.clear();
         gesture = Gesture.NONE;
-        getView().getFocusPanel().getElement().getStyle().clearProperty("cursor");
+        view.setCrosshair(false);
         redraw();
         if (areaHandler != null) {
             areaHandler.onAreaDrawn(mapVertices);
@@ -2940,7 +2937,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         this.entityNameResolver = entityNameResolver;
         // The canvas caption needs it too, and must not word a cluster differently
         // from the tooltip describing the same cluster.
-        getView().setEntityNameResolver(entityNameResolver);
+        view.setEntityNameResolver(entityNameResolver);
     }
 
     // -----------------------------------------------------------------------
@@ -3057,7 +3054,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
 
         sb.append(". Zoom ").append(zoomPercentText());
-        getView().setMapSummary(sb.toString());
+        view.setMapSummary(sb.toString());
     }
 
     /// Names an entity for speech, adding the area it is in when that is known.
@@ -3102,10 +3099,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 ? emptyStatusText != null
                 : !normalised.equals(emptyStatusText);
         emptyStatusText = normalised;
-        getView().setEmptyStatus(normalised, fault);
+        view.setEmptyStatus(normalised, fault);
         refreshAccessibleSummary();
         if (changed && normalised != null) {
-            getView().announce(normalised);
+            view.announce(normalised);
         }
     }
 
@@ -3126,16 +3123,16 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         this.currentTimeText = timeText;
         refreshAccessibleSummary();
         if (!playing) {
-            getView().announce("Showing " + timeText);
+            view.announce("Showing " + timeText);
         }
     }
 
     /// Announces, and re-summarises after, a change of tracked entity.
     private void announceTracking() {
         if (trackedObjectId != null) {
-            getView().announce("Following " + describeEntity(trackedObjectId));
+            view.announce("Following " + describeEntity(trackedObjectId));
         } else {
-            getView().announce("Stopped following");
+            view.announce("Stopped following");
         }
         refreshAccessibleSummary();
     }
@@ -3150,7 +3147,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     ///
     /// @param elementId the grid's element id
     public void setTextAlternativeId(final String elementId) {
-        getView().setMapDescribedBy(elementId);
+        view.setMapDescribedBy(elementId);
     }
 
     /// Sets the per-type presentation settings (z-order + default graphic shape
@@ -3165,7 +3162,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// Sets what one map unit means in the real world, so the grid labels, the
     /// scale bar and any distance the canvas reports carry real units.
     ///
-    /// Held here as well as pushed to the view because the presenter sizes
+    /// Held here as well as pushed to the view because the controller sizes
     /// offsets in grid divisions ([#minorGridDivisionsToMapUnits]), and the
     /// grid's decade now depends on the scale — given different units the two
     /// would disagree about where the lines are.
@@ -3174,7 +3171,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     ///         has no scale set
     public void setMeasurementUnits(final FloorMapMeasurementUnits measurementUnits) {
         this.measurementUnits = measurementUnits;
-        getView().setMeasurementUnits(measurementUnits);
+        view.setMeasurementUnits(measurementUnits);
         redraw();
     }
 
@@ -3188,7 +3185,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// @param imageUrl the image URL
     /// @return the aspect ratio, or `null` when unknown
     public Double getImageAspectRatio(final String imageUrl) {
-        return getView().getImageAspectRatio(imageUrl);
+        return view.getImageAspectRatio(imageUrl);
     }
 
     /// Sets per-type layer visibility from the Layers panel. Types in
@@ -3375,12 +3372,12 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// some users who do have it.
     private void announceSelection() {
         if (selectedObjectIds.isEmpty()) {
-            getView().announce("Selection cleared");
+            view.announce("Selection cleared");
         } else if (selectedObjectIds.size() == 1) {
-            getView().announce(
+            view.announce(
                     describeEntity(selectedObjectIds.iterator().next()) + " selected");
         } else {
-            getView().announce(selectedObjectIds.size() + " objects selected");
+            view.announce(selectedObjectIds.size() + " objects selected");
         }
         refreshAccessibleSummary();
     }
@@ -3436,277 +3433,4 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         /// @param primary the first-selected id (the "primary"), or `null`
         void onSelectionChanged(Collection<String> keys, String primary);
     }
-
-
-    // =========================================================================
-    // View interface
-    // =========================================================================
-
-    /// View contract for the floor map canvas.
-    ///
-    /// The canvas is an SVG-based rendering surface that displays a
-    /// background image (the floor plan), overlaid with draggable map objects
-    /// (gates, doors, cameras, people, etc.). It supports zoom, pan, object
-    /// selection, and right-click context menus.
-    ///
-    /// The view is responsible for rendering; all interaction logic
-    /// (drag handling, selection, coordinate transforms) lives in
-    /// [FloorMapCanvasPresenter].
-    public interface FloorMapCanvasView extends View, RequiresResize {
-
-        /// Returns the [FocusPanel] that wraps the SVG canvas.
-        ///
-        /// The presenter registers mouse and context-menu handlers on this
-        /// panel. `FocusPanel` is returned (rather than a narrower
-        /// `Has*Handlers` type) so that the presenter can also attach
-        /// DOM-level handlers via `addDomHandler` (e.g. for the native
-        /// `contextmenu` event).
-        ///
-        /// @return the focus panel containing the SVG canvas
-        FocusPanel getFocusPanel();
-
-        /// Returns the handler source for mouse-move events on the canvas.
-        ///
-        /// @return the mouse-move handler source
-        HasMouseMoveHandlers getMouseMoveHandlers();
-
-        /// Returns the handler source for mouse-up events on the canvas.
-        ///
-        /// @return the mouse-up handler source
-        HasMouseUpHandlers getMouseUpHandlers();
-
-        /// Returns the handler source for mouse-wheel events on the canvas.
-        ///
-        /// @return the mouse-wheel handler source
-        HasMouseWheelHandlers getMouseWheelHandlers();
-
-        /// Renders the complete SVG canvas contents.
-        ///
-        /// This is called on every state change (zoom, pan, object move,
-        /// selection change, data load) and rebuilds the entire SVG DOM.
-        /// The rendering layers are, from back to front:
-        ///
-        /// 1. Grid overlay (drawn when `showGrid` is set)
-        /// 2. Facts — image facts (incl. backgrounds) and imageless default graphics,
-        ///    in the supplied paint (z) order
-        /// 3. Events (people) drawn on top
-        ///
-        /// @param scale           the current zoom scale factor
-        /// @param x               the current pan offset X (pixels)
-        /// @param y               the current pan offset Y (pixels)
-        /// @param facts           the facts to render, already in paint (z) order
-        /// @param events          the event entity overlay objects (map coordinates)
-        /// @param selectedObjectIds the IDs of the currently selected objects (all
-        ///         highlighted); empty if nothing is selected
-        /// @param typeStyles      per-type presentation settings (default graphic
-        ///         shape/colour for imageless facts); may be `null`
-        /// @param showGrid        `true` to draw the (non-interactive) grid overlay
-        /// @param dimmedTypes     the types the user has pushed into the background from the
-        ///         Layers panel, drawn at reduced opacity. Applies to facts,
-        ///         events *and* cluster glyphs, so a dimmed layer does
-        ///         not reappear at full strength once its members merge. May
-        ///         be `null`, meaning nothing is dimmed
-        /// @param marqueeRectPx   the rubber-band selection rectangle
-        ///         `{minX, minY, maxX, maxY}` in element pixels, already
-        ///         normalised so the mins are the mins whichever way the drag
-        ///         went, or `null` when no marquee is in progress
-        /// @param drawSelectionHandles
-        ///         `true` to draw the selection frame and its handles.
-        ///         Distinct from the selection being non-empty: the caller
-        ///         suppresses it while a marquee is being dragged, so the
-        ///         frame does not fight the rubber band for the user's
-        ///         attention
-        /// @param scaleRotateEnabled
-        ///         `true` when the selection contains at least one
-        ///         *unlocked* fact with an image or an outline, so
-        ///         scale and rotate handles are worth offering. False leaves
-        ///         the move-only frame - handles that cannot act on anything
-        ///         are worse than no handles, because they invite a gesture
-        ///         that then does nothing
-        /// @param areaDraftPx     the in-progress area-drawing polyline in element
-        ///         pixels (`{x0, y0, x1, y1, ...}`, last point =
-        ///         live cursor), or `null` when not drawing
-        /// @param areaOverlay     area-containment decorations — which facts/entities
-        ///         carry the "related to the focused entity" highlight
-        ///         and what each area's occupant-count badge reads;
-        ///         never `null`
-        /// @param clusterOverlay  which entities are merged into summary glyphs
-        ///         because they are too close together on screen to
-        ///         tell apart. Members must **not** be
-        ///         drawn individually — the cluster glyph stands in
-        ///         for them. Never `null`
-        /// @param highlight       resolves the non-selection highlight for each entity -
-        ///         a group's own colour, or area-containment green when the
-        ///         entity is inside an area holding the tracked entity,
-        ///         whichever the resolver says wins. Selection styling still
-        ///         takes precedence over both; never `null`
-        /// @param measureLinePx   the in-progress Set Scale line
-        ///         `{x0, y0, x1, y1}` in element pixels, or
-        ///         `null` when not measuring
-        void draw(double scale, double x, double y, List<Fact> facts,
-                List<FloorMapObject> events, Set<String> selectedObjectIds,
-                List<TypeStyle> typeStyles, boolean showGrid, Set<String> dimmedTypes,
-                double[] marqueeRectPx, boolean drawSelectionHandles, boolean scaleRotateEnabled,
-                double[] areaDraftPx, FloorMapAreaOverlay areaOverlay,
-                FloorMapClusterOverlay clusterOverlay,
-                FloorMapHighlight highlight, double[] measureLinePx);
-
-        /// Sets what one map unit means in the real world, used to label the grid
-        /// and size the scale bar. `null` on a map that has never been
-        /// calibrated, which measures in the default scale.
-        ///
-        /// A setter rather than a [#draw] parameter: it changes only when
-        /// the document is read or recalibrated, not per frame.
-        ///
-        /// @param measurementUnits the document's units, or `null`
-        void setMeasurementUnits(FloorMapMeasurementUnits measurementUnits);
-
-        /// Tells the view the Set Scale mode is active, so its instruction pill
-        /// can announce the mode before the first press — at which point there is
-        /// no measuring line for the view to infer it from.
-        ///
-        /// @param measuringScale `true` while the mode is active
-        void setMeasuringScale(boolean measuringScale);
-
-        /// Shows a readout pill at the cursor during a move or resize, or hides
-        /// it.
-        ///
-        /// @param text      what to show, or `null` to hide
-        /// @param cursorXPx cursor position in element pixels
-        /// @param cursorYPx cursor position in element pixels
-        void setGestureReadout(String text, double cursorXPx, double cursorYPx);
-
-        /// Shows the panel describing whatever is under the pointer — a cluster's
-        /// members, or one entity's details — or hides it.
-        ///
-        /// One panel serves both: only one thing can be under the pointer, and
-        /// naming ten entities and describing one are the same job.
-        ///
-        /// Anchored to the glyph rather than to the cursor, so it holds still
-        /// while the pointer moves across the glyph — which also means the
-        /// presenter only needs to call this when the hovered glyph changes, not
-        /// on every mouse move.
-        ///
-        /// @param caption   the heading — a cluster's `"10 users"` or an
-        ///         entity's name — or `null` to hide
-        /// @param lines     the lines to list under it: member names (already
-        ///         capped) or an entity's details
-        /// @param anchorXPx the glyph's centre in element pixels
-        /// @param anchorYPx the glyph's centre in element pixels
-        void setHoverTooltip(String caption, List<String> lines,
-                double anchorXPx, double anchorYPx);
-
-        /// Supplies the resolver used to caption a cluster drawn around the tracked
-        /// entity, which needs that entity's display name.
-        ///
-        /// A setter rather than a [#draw] parameter, for the same reason
-        /// as the measurement units: it is wired once by the owning tab and never
-        /// changes per frame.
-        ///
-        /// @param entityNameResolver resolves an entity id to its display name, or
-        ///         `null` to fall back to ids
-        void setEntityNameResolver(Function<String, String> entityNameResolver);
-
-        /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
-        /// of the selected facts, **without** the minimum-size
-        /// padding [#getSelectionFrame()] applies — that padding exists to
-        /// keep drag handles separable and would overstate a small object's size.
-        ///
-        /// Reflects the last [#draw], so during a gesture it already
-        /// includes the live transform.
-        ///
-        /// @return the bounds, or `null` when nothing is selected or laid out
-        double[] getSelectionBoundsPx();
-
-        /// The width/height ratio of an image the canvas has already loaded, or
-        /// `null` if it has not. Never starts a load.
-        ///
-        /// @param imageUrl the image URL
-        /// @return the aspect ratio, or `null` when unknown
-        Double getImageAspectRatio(String imageUrl);
-
-        /// Returns the keys of facts whose on-screen bounds intersect the given
-        /// rubber-band rectangle (element-pixel space, `{minX, minY, maxX,
-        /// maxY}`). Uses the geometry of the last [#draw] call — including
-        /// image aspect ratios, which are known only to the view.
-        ///
-        /// @param rectPx the marquee rectangle in element pixels
-        /// @return the intersecting fact keys; never `null`
-        Set<String> hitTestScreenRect(double[] rectPx);
-
-        /// Returns the fact's map-space anchor point (the point the camera
-        /// centres on when the fact is tracked). Delegates to
-        /// [Fact#mapAnchor] with the view's image display width and the
-        /// fact's aspect ratio — which is known only to the view.
-        ///
-        /// @param fact the fact to anchor; must not be `null`
-        /// @return the anchor `{mapX, mapY}`; never `null`
-        double[] getFactMapAnchor(Fact fact);
-
-        /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
-        /// of the current selection (from the last [#draw]), or `null`
-        /// if nothing is selected. Used to seed a scale/rotate gesture.
-        ///
-        /// @return the selection frame in element pixels, or `null`
-        double[] getSelectionFrame();
-
-        /// Returns the map-space bounding box `{minX, minY, maxX, maxY}` of
-        /// all facts from the last [#draw] call, or `null` if there is
-        /// no content. Used to compute the initial zoom-to-fit view. Independent
-        /// of the current scale/pan (unlike [#getSelectionFrame()]).
-        ///
-        /// @return the content bounds in map space, or `null`
-        double[] getContentMapBounds();
-
-        /// Registers a listener that is called whenever the view needs to
-        /// trigger a redraw from outside the normal presenter flow (e.g.
-        /// after an asynchronous image aspect-ratio calculation completes).
-        ///
-        /// @param redrawListener the callback to invoke, typically
-        ///         `FloorMapCanvasPresenter::redraw`
-        void setRedrawListener(Runnable redrawListener);
-
-        /// Registers a listener that is called once the canvas has a real
-        /// (non-zero) on-screen size — i.e. after layout completes. The
-        /// presenter uses this to apply its size-dependent initial view (which
-        /// needs the canvas dimensions to fit or place the content).
-        ///
-        /// @param resizeListener the callback to invoke, typically
-        ///         `FloorMapCanvasPresenter::maybeApplyInitialView`
-        void setResizeListener(Runnable resizeListener);
-
-        /// Sets the map's accessible name — a one-line summary of what is currently
-        /// drawn, for a user who cannot see it.
-        ///
-        /// The canvas is exposed to assistive technology as a single image with a
-        /// generated description, not as a tree of shapes. Read in DOM order the
-        /// SVG's own text captions are a stream of disconnected names and numbers:
-        /// they are positioned for the eye, and their paint order is a z-order, not
-        /// a reading order.
-        ///
-        /// @param summary the summary; replaces any previous one
-        void setMapSummary(String summary);
-
-        /// Points the map's accessible description at another element — in practice
-        /// the Tracking panel's grid, which is the map's row-by-row text equivalent.
-        ///
-        /// @param elementId the id of the describing element
-        void setMapDescribedBy(String elementId);
-
-        /// Announces a change through the canvas's live region.
-        ///
-        /// For things the map says only by redrawing itself: what is selected,
-        /// what is being followed, that the followed entity has left the timeline
-        /// range. Repeats of the current message are dropped.
-        ///
-        /// @param message the message to announce
-        void announce(String message);
-
-        /// Shows or clears the on-canvas line saying why the map is empty.
-        ///
-        /// @param text  what to say, or `null` to clear it
-        /// @param fault whether this is a fault rather than merely an absence
-        void setEmptyStatus(String text, boolean fault);
-    }
-
 }

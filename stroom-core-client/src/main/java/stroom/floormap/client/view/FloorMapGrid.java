@@ -67,24 +67,13 @@ public final class FloorMapGrid {
 
     // -- Appearance constants ------------------------------------------------
 
-    /// Background fill — references the CSS variable
-    /// `--floormap-grid__background-color` so the grid respects
-    /// light/dark themes.
-    // These three are emitted as `style="stroke: var(...)"` rather than as
-    // `stroke="var(...)"`. CSS Custom Properties defines var() substitution for property
-    // declarations; whether a presentation *attribute* substitutes is not something the
-    // specs clearly guarantee, and implementations have differed. Chromium resolves both
-    // forms (measured), so the attribute form was not broken here - but the style form is
-    // the one that is actually defined, and it costs nothing.
-    //
-    // Safe to raise the precedence this way because nothing in the stylesheet targets these
-    // elements: the grid lines and background rect carry no class, and the tokens below are
-    // already the theme indirection (--floormap-grid__major-stroke -> --vis-axis__color), so
-    // there is no rule for an inline style to override.
-    private static final String BG_FILL = "var(--floormap-grid__background-color)";
-    /// Major grid line colour — references the CSS variable
-    /// `--floormap-grid__major-stroke`.
-    private static final String MAJOR_STROKE = "var(--floormap-grid__major-stroke)";
+    // The grid's colours come from classes in stroom-floormap.css, which use the theme's tokens
+    // (--floormap-grid__background-color, __major-stroke and __minor-stroke): a CSS rule resolves
+    // var() as a property declaration does, which a presentation attribute is not clearly
+    // guaranteed to.
+    private static final String BG_CLASS = "stroom-floormap-grid__background";
+    private static final String MAJOR_CLASS = "stroom-floormap-grid__line stroom-floormap-grid__line--major";
+    private static final String MINOR_CLASS = "stroom-floormap-grid__line stroom-floormap-grid__line--minor";
     /// Desired screen-pixel width for major grid lines.
     private static final double MAJOR_SCREEN_PX = 1.0;
     /// Maximum opacity for minor grid lines (reached mid-decade).
@@ -92,13 +81,6 @@ public final class FloorMapGrid {
     /// Desired screen-pixel width for minor grid lines.
     private static final double MINOR_SCREEN_PX = 0.5;
 
-    /// Minor grid line colour — references the CSS variable
-    /// `--floormap-grid__minor-stroke`. The dynamic
-    /// zoom-dependent opacity is applied via the SVG
-    /// `stroke-opacity` attribute rather than being baked
-    /// into an `rgba()` value, so the base colour can
-    /// come from CSS.
-    private static final String MINOR_STROKE = "var(--floormap-grid__minor-stroke)";
 
     // -- Zoom range constants ------------------------------------------------
 
@@ -208,7 +190,7 @@ public final class FloorMapGrid {
                                 new Attribute("y1", pos),
                                 new Attribute("x2", formatDouble(majorWorldSpacing)),
                                 new Attribute("y2", pos),
-                                new Attribute("style", "stroke: " + MINOR_STROKE),
+                                new Attribute("class", MINOR_CLASS),
                                 new Attribute("stroke-opacity", minorOpacityStr),
                                 new Attribute("stroke-width", minorStrokeWidth));
                         // Vertical minor line
@@ -217,7 +199,7 @@ public final class FloorMapGrid {
                                 new Attribute("y1", "0"),
                                 new Attribute("x2", pos),
                                 new Attribute("y2", formatDouble(majorWorldSpacing)),
-                                new Attribute("style", "stroke: " + MINOR_STROKE),
+                                new Attribute("class", MINOR_CLASS),
                                 new Attribute("stroke-opacity", minorOpacityStr),
                                 new Attribute("stroke-width", minorStrokeWidth));
                     }
@@ -230,7 +212,7 @@ public final class FloorMapGrid {
                         new Attribute("y1", "0"),
                         new Attribute("x2", formatDouble(majorWorldSpacing)),
                         new Attribute("y2", "0"),
-                        new Attribute("style", "stroke: " + MAJOR_STROKE),
+                        new Attribute("class", MAJOR_CLASS),
                         new Attribute("stroke-width", majorStrokeWidth));
                 // Vertical major line
                 gridPattern.elem(SafeHtmlUtil.from("line"),
@@ -238,7 +220,7 @@ public final class FloorMapGrid {
                         new Attribute("y1", "0"),
                         new Attribute("x2", "0"),
                         new Attribute("y2", formatDouble(majorWorldSpacing)),
-                        new Attribute("style", "stroke: " + MAJOR_STROKE),
+                        new Attribute("class", MAJOR_CLASS),
                         new Attribute("stroke-width", majorStrokeWidth));
 
             },
@@ -257,7 +239,7 @@ public final class FloorMapGrid {
         builder.elem(SafeHtmlUtil.from("rect"),
                 new Attribute("width", "100%"),
                 new Attribute("height", "100%"),
-                new Attribute("style", "fill: " + BG_FILL));
+                new Attribute("class", BG_CLASS));
 
         // -- 5. Grid overlay — fills entire viewport ------------------------
         builder.elem(SafeHtmlUtil.from("rect"),

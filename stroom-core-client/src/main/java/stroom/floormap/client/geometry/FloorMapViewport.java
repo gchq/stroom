@@ -49,7 +49,7 @@ public final class FloorMapViewport {
     /// larger ones pull it along.
     ///
     /// Callers wanting to hard-centre pass 0.5 instead, which collapses the dead
-    /// zone to the centre point; `FloorMapCanvasPresenter` does this for the
+    /// zone to the centre point; `FloorMapCanvasController` does this for the
     /// first follow after tracking is switched on.
     public static final double DEFAULT_FOLLOW_MARGIN = 0.35;
 

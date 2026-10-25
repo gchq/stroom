@@ -88,7 +88,7 @@ public final class FloorMapEditorStories {
 
     private static final RestFixtures FIXTURES = fixtures(DOC);
 
-    // The canvas's focusable element (FloorMapCanvasViewImpl's focus panel)
+    // The canvas's focusable element (FloorMapCanvas's focus panel)
     private static final String CANVAS = ".stroom-floormap-canvas-focus";
 
     // The canvas's context menu with nothing selected, named for what it acts on
@@ -151,6 +151,23 @@ public final class FloorMapEditorStories {
                     expectMenuWithFocus(play, screen);
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Set Scale, from the canvas's menu, shows the crosshair and takes the focus; Escape
+                // leaves the mode, and the normal pointer is back
+                .story("SetScaleCrosshair", FloorMapEditorStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.waitFor(() -> play.expect(canvas).toHaveAttribute("role", "group"));
+                    play.run("focus the canvas", () -> canvas.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.click(screen.findByRole("menuitem", "Set Scale"));
+                    play.waitFor(() -> play.expect(canvas).toHaveClass("stroom-floormap-canvas-focus--crosshair"));
+                    play.waitFor(() -> play.expect(canvas).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(canvas)
+                            .not().toHaveClass("stroom-floormap-canvas-focus--crosshair"));
                     DocEditors.expectNoProblems(play);
                 })
                 // Discover reads the store a page at a time: a second page is asked for from where

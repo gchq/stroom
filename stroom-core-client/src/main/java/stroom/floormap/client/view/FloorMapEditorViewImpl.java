@@ -165,7 +165,7 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
     }
 
     @Override
-    public void setCanvasView(final View view) {
+    public void setCanvasView(final IsWidget view) {
         canvasPanel.setWidget(view.asWidget());
     }
 

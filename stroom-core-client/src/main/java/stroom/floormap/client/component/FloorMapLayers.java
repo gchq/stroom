@@ -63,7 +63,7 @@ import java.util.function.Consumer;
 /// *full → 30% opacity → off*. Changes are pushed to the canvas through
 /// [#setOnChange(Runnable)]; the owner reads
 /// [#getHiddenTypes()] / [#getDimmedTypes()] and forwards them to
-/// `FloorMapCanvasPresenter.setLayerVisibility(...)`.
+/// `FloorMapCanvasController.setLayerVisibility(...)`.
 ///
 /// Editor-only controls are implemented here and shown when
 /// [#setEditorMode(boolean)] is set: drag-and-keyboard reordering (which

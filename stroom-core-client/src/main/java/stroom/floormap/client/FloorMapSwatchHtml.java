@@ -165,7 +165,7 @@ public final class FloorMapSwatchHtml {
     ///
     /// **Why there is no SVG scale compensation here.** The canvas
     /// has to compensate for SVGs with no `viewBox` (see
-    /// `FloorMapCanvasViewImpl.appendScaledImage`), because an SVG
+    /// `FloorMapCanvas.appendScaledImage`), because an SVG
     /// `<image>` scales its referent *through that referent's viewBox*
     /// and so cannot scale one that lacks it. An HTML `<img>` scales by a
     /// different route: the element's own box is the concrete object size and the SVG
@@ -213,7 +213,7 @@ public final class FloorMapSwatchHtml {
 
     /// The inner SVG for a shape centred on the origin and spanning
     /// `±extent`. Mirrors the canvas's dispatch in
-    /// `FloorMapCanvasViewImpl.appendStyledGlyph`.
+    /// `FloorMapCanvas.appendStyledGlyph`.
     private static String shapeSvg(final Shape shape, final String fill, final double extent) {
         if (shape == null) {
             // The fallback graphic for an unconfigured layer is a rounded rect.

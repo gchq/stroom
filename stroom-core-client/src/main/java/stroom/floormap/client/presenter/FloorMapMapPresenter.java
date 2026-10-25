@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.floormap.client.component.FloorMapCanvasController;
 import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.editor.FloorMapDocSession;
@@ -93,7 +94,7 @@ import java.util.function.Consumer;
 ///
 /// ### Layout slots
 ///
-/// - [#MAP] – the [FloorMapCanvasPresenter] (canvas / visualisation)
+/// - [#MAP] – the [FloorMapCanvasController] (canvas / visualisation)
 /// - [#DOCK] – the [FloorMapDockController] (right-hand dock; hosts the
 ///   [FloorMapTrackingPresenter] tracking panel as its first tab, then
 ///   [FloorMapLayers] and [FloorMapGroupsPresenter])
@@ -108,7 +109,7 @@ public class FloorMapMapPresenter
 
     private static final int HISTOGRAM_BINS = 100;
 
-    private final FloorMapCanvasPresenter floorMapCanvasPresenter;
+    private final FloorMapCanvasController canvas;
     private final FloorMapTimelinePresenter floorMapTimelinePresenter;
     private final FloorMapTrackingPresenter floorMapTrackingPresenter;
     private final FloorMapLayers layersPanel;
@@ -269,7 +270,7 @@ public class FloorMapMapPresenter
     private List<Row> lastFactSnapshotRows;
 
     /// Runs the document's events query at the selected time, producing the entity overlay that
-    /// [FloorMapCanvasPresenter] animates.
+    /// [FloorMapCanvasController] animates.
     ///
     /// The Map tab owns this query rather than [FloorMapQueryPresenter] (the Events Query
     /// tab): that presenter is created lazily, the first time its tab is opened, so a Map tab
@@ -385,7 +386,7 @@ public class FloorMapMapPresenter
                                 final RestFactory restFactory,
                                 final DateTimeSettingsFactory dateTimeSettingsFactory,
                                 final ResultStoreModel resultStoreModel,
-                                final Provider<FloorMapCanvasPresenter> floorMapCanvasPresenterProvider,
+                                final Provider<FloorMapCanvasController> canvasProvider,
                                 final Provider<FloorMapTimelinePresenter> floorMapTimelinePresenterProvider,
                                 final Provider<FloorMapTrackingPresenter> floorMapEntityListPresenterProvider,
                                 final FloorMapLayers layersPanel,
@@ -395,7 +396,7 @@ public class FloorMapMapPresenter
         super(eventBus, view);
 
         this.floorMapClusterPresenter = floorMapClusterPresenter;
-        this.floorMapCanvasPresenter = make(floorMapCanvasPresenterProvider);
+        this.canvas = make(canvasProvider);
         this.floorMapTimelinePresenter = make(floorMapTimelinePresenterProvider);
         this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
         this.layersPanel = layersPanel;
@@ -412,7 +413,7 @@ public class FloorMapMapPresenter
         // Layer visibility is a transient view control on the Map tab; push
         // changes to the canvas as hidden / dimmed type sets.
         layersPanel.setOnChange(() ->
-                floorMapCanvasPresenter.setLayerVisibility(
+                canvas.setLayerVisibility(
                         layersPanel.getHiddenTypes(),
                         layersPanel.getDimmedTypes()));
 
@@ -429,7 +430,7 @@ public class FloorMapMapPresenter
                 floorMapGroupsPresenter::addMember,
                 floorMapGroupsPresenter::createGroupWith);
 
-        getView().setMapView(floorMapCanvasPresenter.getView());
+        getView().setMapView(canvas);
         getView().setDockView(dock);
         getView().setTimelineView(floorMapTimelinePresenter.getView());
 
@@ -437,7 +438,7 @@ public class FloorMapMapPresenter
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
         // Buttons are in toolbar order: grid, clustering, then the dock.
         showGridButton = mapToolbar.toggle(
-                SvgImage.TABLE, "Toggle Grid", floorMapCanvasPresenter::setShowGrid);
+                SvgImage.TABLE, "Toggle Grid", canvas::setShowGrid);
         showGridButton.setPressed(false);
 
         // Merge crowded entities into summary glyphs. On by default; the canvas
@@ -446,18 +447,18 @@ public class FloorMapMapPresenter
         clusterToggleButton = mapToolbar.toggle(
                 SvgImage.FIELDS_GROUP,
                 "Toggle Clustering of Nearby Entities",
-                floorMapCanvasPresenter::setClusterNearbyEntities);
+                canvas::setClusterNearbyEntities);
         clusterToggleButton.setPressed(true);
 
         // Show/hide the right-hand dock
         dockToggleButton = mapToolbar.toggle(
                 SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
         dockToggleButton.setPressed(true);
-        floorMapCanvasPresenter.setClusterNearbyEntities(true);
+        canvas.setClusterNearbyEntities(true);
         // Cluster tooltips name their members through the same resolver the
         // Tracking and Groups panels use, so one entity reads the same way
         // wherever it is named.
-        floorMapCanvasPresenter.setEntityNameResolver(this::entityDisplayName);
+        canvas.setEntityNameResolver(this::entityDisplayName);
 
         // Histogram data model — buckets timestamps and notifies the timeline.
         this.histogramDataModel = new HistogramDataModel(HISTOGRAM_BINS);
@@ -509,10 +510,10 @@ public class FloorMapMapPresenter
         // The canvas never fires this for backgrounds or areas — their
         // clickable surface can cover most of the map, so a press over them
         // must stay a pan — but they can still be tracked from the panel.
-        floorMapCanvasPresenter.setOnObjectSelected(objectId -> {
+        canvas.setOnObjectSelected(objectId -> {
             if (objectId != null && entityList.contains(objectId)) {
                 floorMapTrackingPresenter.setSelected(objectId);
-                floorMapCanvasPresenter.setTrackedObjectId(objectId);
+                canvas.setTrackedObjectId(objectId);
             }
         });
 
@@ -520,7 +521,7 @@ public class FloorMapMapPresenter
         // Clicking a cluster lists its members, which is what makes entities
         // merged into one glyph reachable at all — until this, the nine users
         // under the tenth could be counted and named but never got at.
-        floorMapCanvasPresenter.setOnClusterSelected(cluster -> {
+        canvas.setOnClusterSelected(cluster -> {
             if (cluster != null) {
                 makeDialog(floorMapClusterPresenter).show(
                         cluster,
@@ -532,7 +533,7 @@ public class FloorMapMapPresenter
                         // Tracking panel does, so the two cannot diverge.
                         memberId -> {
                             floorMapTrackingPresenter.setSelected(memberId);
-                            floorMapCanvasPresenter.setTrackedObjectId(memberId);
+                            canvas.setTrackedObjectId(memberId);
                         });
             }
         });
@@ -548,19 +549,19 @@ public class FloorMapMapPresenter
         // re-invokes this consumer, which re-centres and resumes following
         // after a manual pan paused it.
         this.floorMapTrackingPresenter.setSelectionConsumer(entry ->
-                floorMapCanvasPresenter.setTrackedObjectId(entry != null
+                canvas.setTrackedObjectId(entry != null
                         ? entry.getId()
                         : null));
 
         // Keep the canvas informed of play/pause transitions so it can switch
         // between animate-on-move and teleport behaviour.
         floorMapTimelinePresenter.setPlayStateChangeHandler(
-                floorMapCanvasPresenter::setPlaying);
+                canvas::setPlaying);
 
         // Discard stale animation state whenever the timeline jumps non-continuously
         // (scrub, step-back/forward, loop-around, stop-at-end).
         floorMapTimelinePresenter.setClearAnimationStateHandler(
-                floorMapCanvasPresenter::clearAnimationState);
+                canvas::clearAnimationState);
 
         // The discrete jumps. Every read is now a snapshot at the selected time, so a jump needs
         // no different query — but it does need the read in flight abandoned rather than waited
@@ -588,7 +589,7 @@ public class FloorMapMapPresenter
         // Name the Tracking grid as the map's text alternative. The canvas is
         // exposed as a single summarised image; this is what tells a screen-reader
         // user that the row-by-row detail behind that summary exists, and where.
-        floorMapCanvasPresenter.setTextAlternativeId(
+        canvas.setTextAlternativeId(
                 floorMapTrackingPresenter.getGridElementId());
     }
 
@@ -642,19 +643,19 @@ public class FloorMapMapPresenter
         unplacedEntitiesReported = false;
         wrongEventsStoreTypeReported = false;
         stageReporter.reset();
-        floorMapCanvasPresenter.setEmptyStatus(null, false);
+        canvas.setEmptyStatus(null, false);
         eventsErrorReported = false;
         eventsTruncationReported = false;
         orderNoteReported = false;
         orderCheckedQuery = null;
         lastAreaMembership = FloorMapAreaMembership.EMPTY;
         floorMapTrackingPresenter.clearAreaState();
-        floorMapCanvasPresenter.setAreaMembership(FloorMapAreaMembership.EMPTY);
+        canvas.setAreaMembership(FloorMapAreaMembership.EMPTY);
 
         // What one map unit means in the real world — labels the grid and the
         // scale bar. Null on an uncalibrated map, which measures in the default
         // scale of one centimetre per map unit.
-        floorMapCanvasPresenter.setMeasurementUnits(document.getMeasurementUnits());
+        canvas.setMeasurementUnits(document.getMeasurementUnits());
 
         // Drop any staged group edit this read has persisted, then show the groups
         // as the session sees them (the staged list if the save has not happened
@@ -666,7 +667,7 @@ public class FloorMapMapPresenter
         // Populate the Layers panel from the document's type styles and sync the
         // canvas with the current (transient) layer visibility.
         layersPanel.setLayers(document.getTypeStyles());
-        floorMapCanvasPresenter.setLayerVisibility(
+        canvas.setLayerVisibility(
                 layersPanel.getHiddenTypes(),
                 layersPanel.getDimmedTypes());
 
@@ -740,7 +741,7 @@ public class FloorMapMapPresenter
     /// Deliberately does not touch the tracked entity: groups highlight, they do
     /// not move the camera.
     private void pushGroupOverlay() {
-        floorMapCanvasPresenter.setGroupOverlay(FloorMapGroupOverlay.of(
+        canvas.setGroupOverlay(FloorMapGroupOverlay.of(
                 floorMapGroupsPresenter.getGroups(),
                 floorMapGroupsPresenter.getShownGroupIds()));
     }
@@ -797,7 +798,7 @@ public class FloorMapMapPresenter
         // clock as the timeline's own labels — hence the timeline's formatter
         // rather than a second one here. The canvas suppresses the announcement
         // itself while playing.
-        floorMapCanvasPresenter.setCurrentTimeText(
+        canvas.setCurrentTimeText(
                 floorMapTimelinePresenter.formatTime(time));
         // Facts: no query. The history is held and the snapshot at T derived from it, so playback,
         // scrub and step are zero-query for facts. The read below fires only when the cadence is
@@ -875,7 +876,7 @@ public class FloorMapMapPresenter
                           + ". This map predates the dedicated store type. Create a "
                           + FloorMapEventStoreDoc.TYPE + ", point the pipeline at it, and select it"
                           + " on the Settings tab. Reported once per read.");
-            floorMapCanvasPresenter.setEmptyStatus(
+            canvas.setEmptyStatus(
                     "This map's events store is a " + storeRef.getType() + ", not a "
                     + FloorMapEventStoreDoc.TYPE + ". Entities cannot be read until it is changed on"
                     + " the Settings tab.",
@@ -971,7 +972,7 @@ public class FloorMapMapPresenter
         // slide across the jump. Never for a periodic baseline, or trails would die every minute.
         if (pendingDiscontinuity) {
             pendingDiscontinuity = false;
-            floorMapCanvasPresenter.clearAnimationState();
+            canvas.clearAnimationState();
         }
         publishKnownEntities(entities);
     }
@@ -1231,8 +1232,8 @@ public class FloorMapMapPresenter
 
         // Facts paint in the configured type z-order (order backgrounds first on
         // the Settings tab so they sit behind); events draw on top.
-        floorMapCanvasPresenter.setTypeStyles(getEntity().getTypeStyles());
-        floorMapCanvasPresenter.setFacts(facts);
+        canvas.setTypeStyles(getEntity().getTypeStyles());
+        canvas.setFacts(facts);
 
         // Static facts (objects, backgrounds, areas) belong in the tracking
         // panel alongside the event entities, so merge them into the roster.
@@ -1392,12 +1393,12 @@ public class FloorMapMapPresenter
     /// ticks could legitimately return nothing, and it is worth keeping for the same reason.
     private void refreshEmptyStatus(final int entities, final int placed) {
         if (!factHistory.isLoaded()) {
-            floorMapCanvasPresenter.setEmptyStatus(null, false);
+            canvas.setEmptyStatus(null, false);
             return;
         }
         final FloorMapStageReporter.Stage stage = FloorMapStageReporter.classify(
                 lastEventRowCount, entities, NullSafe.size(lastFacts), placed);
-        floorMapCanvasPresenter.setEmptyStatus(stage.getStatusText(), stage.isFault());
+        canvas.setEmptyStatus(stage.getStatusText(), stage.isFault());
     }
 
     /// Places the last raw event entities against the current facts, reporting
@@ -1433,7 +1434,7 @@ public class FloorMapMapPresenter
     ///
     /// @param placed the entities, already resolved to map positions
     private void pushEventEntities(final List<FloorMapObject> placed) {
-        floorMapCanvasPresenter.setEventObjects(placed);
+        canvas.setEventObjects(placed);
         // Keep the tracking panel's roster up to date. Only re-push grid
         // data when membership actually changed so playback refreshes
         // (~300ms apart) don't churn the grid.
@@ -1453,7 +1454,7 @@ public class FloorMapMapPresenter
     private void updateAreaMembership() {
         final FloorMapAreaMembership membership =
                 FloorMapAreaMembership.compute(lastFacts, lastEventObjects);
-        floorMapCanvasPresenter.setAreaMembership(membership);
+        canvas.setAreaMembership(membership);
         floorMapTrackingPresenter.setAreaMembership(membership, this::entityDisplayName);
 
         // The Groups panel's live counts move with the same data, so they are
@@ -1781,7 +1782,7 @@ public class FloorMapMapPresenter
     ///
     /// @param listener the callback, or `null` to remove
     public void setInitialViewListener(final java.util.function.Consumer<double[]> listener) {
-        floorMapCanvasPresenter.setInitialViewListener(listener);
+        canvas.setInitialViewListener(listener);
     }
 
     public interface FloorMapMapView extends View {
@@ -1789,7 +1790,7 @@ public class FloorMapMapPresenter
         /// Shows the map canvas.
         ///
         /// @param view Its view.
-        void setMapView(View view);
+        void setMapView(IsWidget view);
 
         /// Shows the right-hand dock beside the map.
         ///

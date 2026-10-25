@@ -535,6 +535,30 @@
     box-shadow: inset 0 0 0 2px var(--focus-border);
 }
 
+/* While a modal gesture (drawing an area, measuring for Set Scale) is live */
+.stroom-floormap-canvas-focus--crosshair {
+    cursor: crosshair;
+}
+
+/* The grid (FloorMapGrid): its background and its major and minor lines, in the theme's colours.
+   Their widths and the minor lines' opacity follow the zoom, so they stay attributes */
+.stroom-floormap-grid__background {
+    fill: var(--floormap-grid__background-color);
+}
+
+.stroom-floormap-grid__line--major {
+    stroke: var(--floormap-grid__major-stroke);
+}
+
+.stroom-floormap-grid__line--minor {
+    stroke: var(--floormap-grid__minor-stroke);
+}
+
+/* The Set Scale line's running length: a halo in the page's colour keeps it legible over the map */
+.stroom-floormap-measure-label {
+    stroke: var(--page__background-color);
+}
+
 /* -----------------------------------------------------------------------
    Visually-hidden live region
 
@@ -606,6 +630,8 @@
 
 .stroom-floormap-gesture-readout {
     position: absolute;
+    left: var(--floormap-gesture-readout__left, 0);
+    top: var(--floormap-gesture-readout__top, 0);
     background-color: var(--page__background-color);
     color: var(--floormap-accent__color);
     font-size: 11px;
@@ -640,6 +666,8 @@
 
 .stroom-floormap-hover-tooltip {
     position: absolute;
+    left: var(--floormap-hover-tooltip__left, 0);
+    top: var(--floormap-hover-tooltip__top, 0);
     background-color: var(--page__background-color);
     color: var(--text-color);
     font-size: 11px;
@@ -821,6 +849,7 @@
 /* The rule itself: a baseline with an end tick at each end (├────┤). Its width
    is set per frame from the chosen distance. */
 .stroom-floormap-scale-bar__line {
+    width: var(--floormap-scale-bar__width);
     height: 6px;
     border-left: 2px solid var(--floormap-grid__highlight-color);
     border-right: 2px solid var(--floormap-grid__highlight-color);

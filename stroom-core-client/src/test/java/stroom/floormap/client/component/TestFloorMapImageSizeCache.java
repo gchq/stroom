@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
 import org.junit.jupiter.api.Test;
 

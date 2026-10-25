@@ -18,12 +18,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <!-- The FocusPanel is the map's keyboard host: GWT gives it tabindex="0", and
-         the presenter binds pan/zoom/traversal keys to it. It therefore needs a
+         the controller binds pan/zoom/traversal keys to it. It therefore needs a
          focus ring of its own, which stroom-floormap.css draws off this class. -->
     <g:FocusPanel ui:field="focusPanel" styleName="max"
                   addStyleNames="stroom-floormap-canvas-focus">
-        <g:FlowPanel addStyleNames="max stroom-floormap-canvas-container">
-            <g:HTML ui:field="svgContainer" addStyleNames="max"/>
+        <g:HTMLPanel styleName="max stroom-floormap-canvas-container">
+            <!-- The map is a picture of its data, so it is named and summarised as one image
+                 rather than exposed as a tree of shapes. The role and name go on this container,
+                 not on the <svg>: each frame replaces the SVG, whereas the container lasts as long
+                 as the canvas. role="img" also makes what it holds presentational, which is the
+                 point: the SVG's <text> captions are positioned for the eye, and read in DOM
+                 (paint) order they are a stream of disconnected names and numbers. The summary and
+                 the Tracking grid say the same thing usefully -->
+            <div ui:field="svgContainer" class="max" role="img" aria-label="Floor map"></div>
             <g:Label ui:field="areaDrawHint" addStyleNames="stroom-floormap-area-draw-hint"/>
             <!-- Follows the cursor during a move or resize, reporting the
                  position or size being dragged out in real-world units. -->
@@ -61,8 +68,11 @@
 
                  Visually hidden rather than display:none — a hidden live region is
                  removed from the accessibility tree and never announces. -->
-            <g:Label ui:field="statusRegion"
-                     addStyleNames="stroom-floormap-visually-hidden"/>
-        </g:FlowPanel>
+            <div ui:field="statusRegion"
+                 class="stroom-floormap-visually-hidden"
+                 role="status"
+                 aria-live="polite"
+                 aria-atomic="true"></div>
+        </g:HTMLPanel>
     </g:FocusPanel>
 </ui:UiBinder>

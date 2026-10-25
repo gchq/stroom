@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FloorMapCanvasController;
 import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapLayers;
@@ -150,7 +151,7 @@ public class FloorMapEditorPresenter
     // -----------------------------------------------------------------------
 
     private final RestFactory restFactory;
-    private final FloorMapCanvasPresenter floorMapCanvasPresenter;
+    private final FloorMapCanvasController canvas;
     private final FloorMapTimelinePresenter floorMapTimelinePresenter;
     private final FloorMapFactListPresenter floorMapFactListPresenter;
     private final FloorMapTimeListPresenter floorMapTimeListPresenter;
@@ -216,7 +217,7 @@ public class FloorMapEditorPresenter
     public FloorMapEditorPresenter(final EventBus eventBus,
                                    final FloorMapEditorView view,
                                    final RestFactory restFactory,
-                                   final Provider<FloorMapCanvasPresenter> canvasProvider,
+                                   final Provider<FloorMapCanvasController> canvasProvider,
                                    final Provider<FloorMapTimelinePresenter> timelineProvider,
                                    final Provider<FloorMapFactListPresenter> factListProvider,
                                    final Provider<FloorMapTimeListPresenter> timeListProvider,
@@ -232,7 +233,7 @@ public class FloorMapEditorPresenter
 
         // Each child is obtained via Provider so GIN creates a fresh instance
         // for this presenter rather than sharing singletons used elsewhere.
-        this.floorMapCanvasPresenter = make(canvasProvider);
+        this.canvas = make(canvasProvider);
         this.floorMapTimelinePresenter = make(timelineProvider);
         this.floorMapFactListPresenter = make(factListProvider);
         this.floorMapTimeListPresenter = make(timeListProvider);
@@ -241,7 +242,7 @@ public class FloorMapEditorPresenter
         // has already measured any image it has drawn, so this needs no second
         // load.
         this.floorMapObjectEditPresenter.setAspectRatioResolver(
-                floorMapCanvasPresenter::getImageAspectRatio);
+                canvas::getImageAspectRatio);
         final FloorMapDockController dock = make(dockProvider);
         this.setScaleProvider = setScaleProvider;
         this.layersPanel = layersPanel;
@@ -249,13 +250,13 @@ public class FloorMapEditorPresenter
         this.layerStyle = make(layerStyleProvider);
 
         // Always in edit mode, with the grid overlay shown as an editing aid.
-        floorMapCanvasPresenter.setEditMode(true);
-        floorMapCanvasPresenter.setShowGrid(true);
+        canvas.setEditMode(true);
+        canvas.setShowGrid(true);
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
         showGridButton = editorToolbar.toggle(
-                SvgImage.TABLE, "Toggle Grid", floorMapCanvasPresenter::setShowGrid);
+                SvgImage.TABLE, "Toggle Grid", canvas::setShowGrid);
         showGridButton.setPressed(true);
 
         // Show/hide the right-hand dock (the Layers panel). On by default, to
@@ -264,11 +265,11 @@ public class FloorMapEditorPresenter
                 SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
         dockToggleButton.setPressed(true);
         // Persist a drag as a single translate of the whole selection.
-        floorMapCanvasPresenter.setDragHandler(this::onFactsTransformed);
-        floorMapCanvasPresenter.setGeometryHandler(this::onFactGeometryEdited);
-        floorMapCanvasPresenter.setSelectionHandler(this::onCanvasSelectionChanged);
-        floorMapCanvasPresenter.setAreaHandler(this::onAreaDrawn);
-        floorMapCanvasPresenter.setScaleHandler(this::onScaleMeasured);
+        canvas.setDragHandler(this::onFactsTransformed);
+        canvas.setGeometryHandler(this::onFactGeometryEdited);
+        canvas.setSelectionHandler(this::onCanvasSelectionChanged);
+        canvas.setAreaHandler(this::onAreaDrawn);
+        canvas.setScaleHandler(this::onScaleMeasured);
 
         // Contextual help. The map-interaction help sits on the document toolbar
         // (Save / Save As …) at the right-hand end, contributed via HasToolbar so
@@ -283,10 +284,10 @@ public class FloorMapEditorPresenter
         // The Layers panel is the Editor dock's tab.
         dock.addTab("Layers", layersPanel);
         layersPanel.setOnChange(() -> {
-            floorMapCanvasPresenter.setLayerVisibility(
+            canvas.setLayerVisibility(
                     layersPanel.getHiddenTypes(),
                     layersPanel.getDimmedTypes());
-            floorMapCanvasPresenter.setLockedTypes(layersPanel.getLockedTypes());
+            canvas.setLockedTypes(layersPanel.getLockedTypes());
         });
         // Persist reorder / appearance / discovered-type edits from the panel.
         layersPanel.setOnTypeStylesEdit(this::onLayerTypeStylesEdited);
@@ -296,7 +297,7 @@ public class FloorMapEditorPresenter
         // Full facts-store type-discovery scan behind the panel's Discover action.
         layersPanel.setOnDiscover(this::onDiscoverTypes);
 
-        getView().setCanvasView(floorMapCanvasPresenter.getView());
+        getView().setCanvasView(canvas);
         getView().setDockView(dock);
         getView().setTimelineView(floorMapTimelinePresenter.getView());
         getView().setFactListView(floorMapFactListPresenter.getView());
@@ -305,7 +306,7 @@ public class FloorMapEditorPresenter
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List
         // is the navigable row-per-object view of what the canvas is drawing.
-        floorMapCanvasPresenter.setTextAlternativeId(
+        canvas.setTextAlternativeId(
                 floorMapFactListPresenter.getGridElementId());
         // Properties are shown as a modal dialog — no slot needed.
 
@@ -313,7 +314,7 @@ public class FloorMapEditorPresenter
         floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
 
         // ---- Canvas context menu --------------------------------------------
-        floorMapCanvasPresenter.setOnContextMenu(this::onCanvasContextMenu);
+        canvas.setOnContextMenu(this::onCanvasContextMenu);
 
         // ---- Fact List selection + Show All toggle --------------------------
         floorMapFactListPresenter.setMultiSelectionConsumer(this::onFactListSelectionChanged);
@@ -391,15 +392,15 @@ public class FloorMapEditorPresenter
         observedTypes.clear();
         layersPanel.setSeenTypes(observedTypes);
         layersPanel.setLayers(typeStyles());
-        floorMapCanvasPresenter.setLayerVisibility(
+        canvas.setLayerVisibility(
                 layersPanel.getHiddenTypes(),
                 layersPanel.getDimmedTypes());
-        floorMapCanvasPresenter.setLockedTypes(layersPanel.getLockedTypes());
+        canvas.setLockedTypes(layersPanel.getLockedTypes());
 
         // Measurement units as this session sees them: a Set Scale calibration
         // is staged in the doc session until save, so read it from there rather
         // than from the just-read document.
-        floorMapCanvasPresenter.setMeasurementUnits(sessionEntity().getMeasurementUnits());
+        canvas.setMeasurementUnits(sessionEntity().getMeasurementUnits());
 
         final String mapName = getMapName();
         if (mapName == null) {
@@ -490,7 +491,7 @@ public class FloorMapEditorPresenter
     ///
     /// @param view the view state, or `null` to fit locally
     public void setInitialViewState(final double[] view) {
-        floorMapCanvasPresenter.setInitialViewState(view);
+        canvas.setInitialViewState(view);
     }
 
     /// Handles a type-styles edit from the Layers panel (reorder / appearance /
@@ -500,7 +501,7 @@ public class FloorMapEditorPresenter
     /// @param newTypeStyles the new ordered type styles
     private void onLayerTypeStylesEdited(final List<TypeStyle> newTypeStyles) {
         docSession.stageTypeStyles(newTypeStyles);
-        floorMapCanvasPresenter.setTypeStyles(newTypeStyles);
+        canvas.setTypeStyles(newTypeStyles);
         floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
         setDirty(true);
     }
@@ -762,7 +763,7 @@ public class FloorMapEditorPresenter
         // Keep this canvas's accessible summary and live region on the same clock
         // as its timeline's labels. The Editor tab has its own canvas and timeline
         // pair, so it needs this wiring independently of the Map tab's.
-        floorMapCanvasPresenter.setCurrentTimeText(
+        canvas.setCurrentTimeText(
                 floorMapTimelinePresenter.formatTime(timeMs));
         loadAtTime(timeMs);
         if (model.getSelectedFactKey() != null) {
@@ -931,8 +932,8 @@ public class FloorMapEditorPresenter
         final List<Fact> facts = model.parseForCanvas(
                 entries, valueSchema(),
                 accessor());
-        floorMapCanvasPresenter.setTypeStyles(typeStyles());
-        floorMapCanvasPresenter.setFacts(facts);
+        canvas.setTypeStyles(typeStyles());
+        canvas.setFacts(facts);
         // Accumulate fact types seen on the canvas and surface any not yet
         // configured as layers in the Layers panel (event types are added
         // separately, through addEventTypes).
@@ -947,7 +948,7 @@ public class FloorMapEditorPresenter
         }
         // Restore the full (multi-)selection highlight after re-rendering, so a
         // group stays selected across canvas refreshes (e.g. after a transform).
-        floorMapCanvasPresenter.setSelectedObjectIds(model.getSelectedFactKeys());
+        canvas.setSelectedObjectIds(model.getSelectedFactKeys());
     }
 
     /// Updates the Fact List from a merged entry list — one row per unique key.
@@ -1003,7 +1004,7 @@ public class FloorMapEditorPresenter
     /// @param keys the fact keys to select
     private void applySelection(final java.util.Collection<String> keys) {
         model.setSelection(keys);
-        floorMapCanvasPresenter.setSelectedObjectIds(keys);
+        canvas.setSelectedObjectIds(keys);
         floorMapFactListPresenter.setSelectedKeys(keys);
         reflectSelectionSideEffects(keys);
     }
@@ -1028,7 +1029,7 @@ public class FloorMapEditorPresenter
 
     /// Persists a completed transform gesture (move/rotate/scale) as a single
     /// map-space affine applied to the whole selection (see
-    /// [FloorMapCanvasPresenter.DragHandler]). Each fact's world-to-map
+    /// [FloorMapCanvasController.DragHandler]). Each fact's world-to-map
     /// matrix is composed as `transform · oldMatrix`.
     private void onFactsTransformed(final java.util.Collection<String> keys,
                                     final FloorMapTransformationMatrix transform) {
@@ -1218,7 +1219,7 @@ public class FloorMapEditorPresenter
     /// visible canvas area as the initial position, giving the same
     /// properties-editor experience as the right-click "Add Object Here" action.
     private void onAddFactToFactList() {
-        final double[] centre = floorMapCanvasPresenter.getVisibleCentreMapCoords();
+        final double[] centre = canvas.getVisibleCentreMapCoords();
         onAddObjectAtPosition(centre[0], centre[1]);
     }
 
@@ -1415,7 +1416,7 @@ public class FloorMapEditorPresenter
                     .priority(1)
                     .icon(SvgImage.DELETE)
                     .text("Delete Vertex")
-                    .command(() -> floorMapCanvasPresenter.deleteVertex(vertexIndex))
+                    .command(() -> canvas.deleteVertex(vertexIndex))
                     .build());
         } else if (objectId == null) {
             // ---- Right-clicked on empty canvas ----
@@ -1431,13 +1432,13 @@ public class FloorMapEditorPresenter
                     .icon(SvgImage.PEN)
                     .text("Draw Area Here")
                     .command(() -> ensureAreaSupport(
-                            floorMapCanvasPresenter::startAreaDrawing))
+                            canvas::startAreaDrawing))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.DOUBLE_ARROW)
                     .text("Set Scale")
-                    .command(floorMapCanvasPresenter::startScaleMeasurement)
+                    .command(canvas::startScaleMeasurement)
                     .build());
         } else if (model.getSelectedFactKeys().size() > 1
                 && model.getSelectedFactKeys().contains(objectId)) {
@@ -1465,7 +1466,7 @@ public class FloorMapEditorPresenter
                     .build());
         } else {
             // ---- Right-clicked on a single object ----
-            menuName = "Actions for object '" + floorMapCanvasPresenter.displayNameOrId(objectId) + "'";
+            menuName = "Actions for object '" + canvas.displayNameOrId(objectId) + "'";
 
             // Edit Properties
             menuItems.add(new IconMenuItem.Builder()
@@ -1563,7 +1564,7 @@ public class FloorMapEditorPresenter
                     .icon(SvgImage.PEN)
                     .text("Draw Area Here")
                     .command(() -> ensureAreaSupport(
-                            floorMapCanvasPresenter::startAreaDrawing))
+                            canvas::startAreaDrawing))
                     .build());
 
             // Set Scale — offered here for the same reason area drawing is: a
@@ -1574,7 +1575,7 @@ public class FloorMapEditorPresenter
                     .priority(7)
                     .icon(SvgImage.DOUBLE_ARROW)
                     .text("Set Scale")
-                    .command(floorMapCanvasPresenter::startScaleMeasurement)
+                    .command(canvas::startScaleMeasurement)
                     .build());
         }
 
@@ -1636,7 +1637,7 @@ public class FloorMapEditorPresenter
                         model.setSelectedFactKey(saved.getKey());
 
                         // Select the new object in the Fact List and canvas
-                        floorMapCanvasPresenter.setSelectedObjectId(model.getSelectedFactKey());
+                        canvas.setSelectedObjectId(model.getSelectedFactKey());
                         floorMapFactListPresenter.setSelected(model.getSelectedFactKey());
 
                         // Populate the Time List optimistically from pending
@@ -1689,7 +1690,7 @@ public class FloorMapEditorPresenter
                     // area z-orders correctly before the document is saved, and
                     // re-hand the upgraded document to the object-edit dialog
                     // so it resolves the new roles immediately.
-                    floorMapCanvasPresenter.setTypeStyles(typeStyles());
+                    canvas.setTypeStyles(typeStyles());
                     floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
                     setDirty(true);
                     if (areaSupportEnabledListener != null) {
@@ -1753,13 +1754,13 @@ public class FloorMapEditorPresenter
                 sessionEntity().getMeasurementUnits(),
                 units -> {
                     docSession.stageMeasurementUnits(units);
-                    floorMapCanvasPresenter.setMeasurementUnits(units);
+                    canvas.setMeasurementUnits(units);
                     setDirty(true);
                 });
     }
 
     /// Creates a new area fact from a polygon the user has just drawn on the
-    /// canvas (see [FloorMapCanvasPresenter.AreaHandler]).
+    /// canvas (see [FloorMapCanvasController.AreaHandler]).
     ///
     /// The vertices are stored in the fact's *local* frame, centred on
     /// their centroid, with `WORLD_TO_MAP = translate(centroid)` — so the
@@ -1798,7 +1799,7 @@ public class FloorMapEditorPresenter
                         setDirty(true);
                         model.setSelectedFactKey(saved.getKey());
 
-                        floorMapCanvasPresenter.setSelectedObjectId(model.getSelectedFactKey());
+                        canvas.setSelectedObjectId(model.getSelectedFactKey());
                         floorMapFactListPresenter.setSelected(model.getSelectedFactKey());
 
                         // Populate the Time List optimistically from pending
@@ -1860,7 +1861,7 @@ public class FloorMapEditorPresenter
             // Offset by five minor grid divisions in both axes so the duplicate
             // doesn't sit on top of the original, at a visually consistent
             // distance regardless of zoom.
-            final double offset = floorMapCanvasPresenter.minorGridDivisionsToMapUnits(5.0);
+            final double offset = canvas.minorGridDivisionsToMapUnits(5.0);
             final TemporalEntry newEntry = FloorMapEditorModel.buildDuplicateEntry(
                     sourceEntry, mapName, newKey, model.getSelectedTime(),
                     offset, offset,
@@ -2182,7 +2183,7 @@ public class FloorMapEditorPresenter
         /// Shows the interactive map canvas, in the centre of the top area.
         ///
         /// @param view Its view.
-        void setCanvasView(View view);
+        void setCanvasView(IsWidget view);
 
         /// Shows the right-hand dock, which holds the Layers panel, beside the canvas.
         ///
