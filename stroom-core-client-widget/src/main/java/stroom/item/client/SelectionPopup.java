@@ -20,33 +20,37 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.Position;
 import stroom.widget.popup.client.presenter.PositionUtil;
-import stroom.widget.popup.client.view.SimplePopupLayout;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.TabOrder;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Supplier;
 
-public class SelectionPopup<T, I extends SelectionItem> extends Composite {
+public class SelectionPopup<T, I extends SelectionItem> {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private final PopupPanel popupPanel;
-    private final SelectionList<T, I> selectionList;
+    @UiField
+    SelectionList<T, I> selectionList;
+    private Runnable onClose;
     // What was typed to open the list, which it goes to once shown, or null if nothing was
     private String typed;
     // Whether the list opens with the focus on its last option (true) or its first (false), as End or
@@ -65,6 +69,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         }
     };
 
+    /// Makes a popup with an empty list; [#setModel] gives it its options.
     public SelectionPopup() {
         popupPanel = new PopupPanel() {
             @Override
@@ -90,15 +95,16 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
                 }
             }
         };
-        selectionList = new SelectionList<>();
+        // The list, as big as its options within the popup's limits (selection-popup.css)
+        popupPanel.add(BINDER.createAndBindUi(this));
+        // However it closes, and before it forgets where the list was (hide), as the boxes' own
+        // close handlers on the panel were
+        popupPanel.addCloseHandler(event -> {
+            if (onClose != null) {
+                onClose.run();
+            }
+        });
         selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-        // As big as its options, within the popup's limits (selection-popup.css)
-        selectionList.setFitContent(true);
-
-        final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
-        simplePopupLayout.setContent(selectionList);
-
-        popupPanel.add(simplePopupLayout);
         popupPanel.setAutoHideEnabled(true);
         // Styled by selection-popup.css
         popupPanel.setStyleName("selection-popup");
@@ -121,7 +127,10 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         popupPanel.addAutoHidePartner(partner);
     }
 
-    public void init(final SelectionListModel<T, I> model) {
+    /// Gives the popup's list its options, once.
+    ///
+    /// @param model The options.
+    public void setModel(final SelectionListModel<T, I> model) {
         selectionList.setModel(model);
     }
 
@@ -233,12 +242,19 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         selectionList.destroy();
     }
 
-    public HandlerRegistration addCloseHandler(final CloseHandler<PopupPanel> handler) {
-        return popupPanel.addCloseHandler(handler);
+    /// Sets what is told when the popup closes, however it closes (a choice, Escape, Tab or a click
+    /// outside it), e.g. to put the focus back on the box that opened it.
+    ///
+    /// @param onClose What is told, or null for nothing.
+    public void setOnClose(final Runnable onClose) {
+        this.onClose = onClose;
     }
 
-    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
-        selectionList.registerPopupTextProvider(popupTextSupplier);
+    /// Sets what the list's quick filter shows as its help, e.g. the fields it can filter on.
+    ///
+    /// @param popupTextSupplier Gives the help.
+    public void setPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        selectionList.setPopupTextProvider(popupTextSupplier);
     }
 
     /// Names the popup's list for screen readers, e.g. after the box that opened it.
@@ -251,5 +267,15 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     /// @return The id of the popup's list box element, for a box that controls it (`aria-controls`).
     public String getListBoxId() {
         return selectionList.getListBoxId();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The owner is raw: a binder can't name a type variable
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<Widget, SelectionPopup> {
+
     }
 }

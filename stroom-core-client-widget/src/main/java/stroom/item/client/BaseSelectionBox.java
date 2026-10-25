@@ -194,10 +194,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             return;
         }
         popup = new SelectionPopup<>();
-        popup.init(model);
+        popup.setModel(model);
         popup.addAutoHidePartner(textBox.getElement());
         popup.addAutoHidePartner(iconBox.getElement());
-        popup.registerPopupTextProvider(popupTextSupplier);
+        popup.setPopupTextProvider(popupTextSupplier);
         // The list is named after the box, and the box says that it is open and controls it
         popup.setAccessibleName(getAccessibleName(textBox.getElement()));
         textBox.getElement().setAttribute("aria-expanded", "true");
@@ -208,7 +208,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             popup.getSelectionModel().setSelected(selectionItem, true, new SelectionType(), false);
         }
         final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
-        handlerRegistrations.add(popup.addCloseHandler(event -> {
+        popup.setOnClose(() -> {
             textBox.getElement().setAttribute("aria-expanded", "false");
             textBox.getElement().removeAttribute("aria-controls");
             focus();
@@ -217,7 +217,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             }
             handlerRegistrations.clear();
             popup = null;
-        }));
+        });
         handlerRegistrations.add(popup.getSelectionModel().addSelectionHandler(e -> {
             final I selected = popup.getSelectionModel().getSelected();
             if (selected == null) {

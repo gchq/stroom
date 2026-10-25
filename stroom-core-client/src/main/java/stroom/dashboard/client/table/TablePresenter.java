@@ -493,12 +493,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
-                addColumnPopup.init(columnSelectionListModel);
+                addColumnPopup.setModel(columnSelectionListModel);
                 addColumnPopup.setAccessibleName("Add Column");
 
                 uiConfigCache.get(uiConfig ->
                         NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
-                                addColumnPopup.registerPopupTextProvider(() ->
+                                addColumnPopup.setPopupTextProvider(() ->
                                         QuickFilterTooltipUtil.createTooltip(
                                                 "Column Filter", helpUrl))));
             } else if (changedDataSource) {
@@ -522,13 +522,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     addColumnPopup.hide();
                 }
             }));
-            handlerRegistrations.add(addColumnPopup.addCloseHandler(closeEvent -> {
+            // The popup is kept, so this replaces the last showing's
+            addColumnPopup.setOnClose(() -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
                 target.focus();
-            }));
+            });
             own((HandlerRegistration) () -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();

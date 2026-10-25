@@ -175,7 +175,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
         final Element grid = closestGrid(combobox);
         final SelectionPopup<T, I> opened = new SelectionPopup<>();
         popup = opened;
-        opened.init(model);
+        opened.setModel(model);
         opened.addAutoHidePartner(combobox.getParentElement().getParentElement());
         opened.setAccessibleName(name(context.getIndex()));
         combobox.setAttribute("aria-expanded", "true");
@@ -188,7 +188,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
             opened.getSelectionModel().setSelected(selectionItem, true, new SelectionType(), false);
         }
         final List<HandlerRegistration> registrations = new ArrayList<>();
-        registrations.add(opened.addCloseHandler(event -> {
+        opened.setOnClose(() -> {
             // The box takes the focus back (Tab goes on from it), as the widget's does
             combobox.setAttribute("aria-expanded", "false");
             combobox.removeAttribute("aria-controls");
@@ -196,7 +196,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
             registrations.forEach(HandlerRegistration::removeHandler);
             registrations.clear();
             popup = null;
-        }));
+        });
         registrations.add(opened.getSelectionModel().addSelectionHandler(event -> {
             final I selected = opened.getSelectionModel().getSelected();
             final T chosen = selected == null

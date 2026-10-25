@@ -150,7 +150,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         });
     }
 
-    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+    /// Sets what the quick filter shows as its help, e.g. the fields it can filter on.
+    ///
+    /// @param popupTextSupplier Gives the help.
+    public void setPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         quickFilter.registerPopupTextProvider(popupTextSupplier);
     }
 

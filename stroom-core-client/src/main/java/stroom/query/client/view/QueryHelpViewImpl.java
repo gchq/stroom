@@ -81,7 +81,7 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
 
     @Override
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
-        selectionList.registerPopupTextProvider(popupTextSupplier);
+        selectionList.setPopupTextProvider(popupTextSupplier);
     }
 
     @UiHandler("copyButton")
