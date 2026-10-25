@@ -82,10 +82,10 @@ class TestListVisualisationsTool {
     @Test
     void installedEChartsTheUserCantUseIsFlagged() {
         Mockito.when(chartLibraries.findECharts()).thenReturn(Optional.of(new EChartsInstall(ECHARTS_SCRIPT,
-                "5.6.0")));
+                "6.1.0")));
         Mockito.when(chartLibraries.currentUserCanUse(ECHARTS_SCRIPT)).thenReturn(false);
 
-        assertThat(run()).contains("- ECharts 5.6.0: installed as Script 'ECharts' (echarts-uuid), but the user "
+        assertThat(run()).contains("- ECharts 6.1.0: installed as Script 'ECharts' (echarts-uuid), but the user "
                                    + "doesn't have Use permission on it, so its charts won't load for them.");
     }
 
@@ -106,14 +106,14 @@ class TestListVisualisationsTool {
     void echartsNotInstalledSaysHowToInstallItAndNamesUnrecognisedBuilds() {
         assertThat(run())
                 .contains("- ECharts: not installed. An administrator installs it")
-                .contains("from an Apache ECharts release, version 5 or later.")
+                .contains("from an Apache ECharts release, version 6 or later.")
                 .doesNotContain("doesn't hold an ECharts");
 
         Mockito.when(chartLibraries.findUnrecognisedECharts()).thenReturn(List.of(
                 new DocRef("Script", "dev-uuid", "echarts-dev"), new DocRef("Script", "old-uuid", "ECharts 4")));
 
         assertThat(run()).contains("- ECharts: not installed. Script 'echarts-dev', 'ECharts 4' doesn't hold an "
-                                   + "ECharts 5 or later build");
+                                   + "ECharts 6 or later build");
     }
 
     @Test

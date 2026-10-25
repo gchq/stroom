@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 ///
 /// - ECharts is installed by an administrator as a Script doc holding an ECharts build, `echarts.min.js` (any name,
 ///   any folder). It is recognised by its content: the zrender dependency and version that each ECharts build
-///   declares, version 5 or later. Any such build is used, so an administrator upgrades ECharts by putting a newer
+///   declares, version 6 or later. Any such build is used, so an administrator upgrades ECharts by putting a newer
 ///   build in the Script doc, with no new Stroom release. Who may edit that Script doc is a matter for its
 ///   permissions, as for any other visualisation script: its code runs, unsandboxed, in every generated chart.
 /// - The adapter (`echarts-generic.js`, bundled here) is created on first use as a Script doc in the same folder as
@@ -75,7 +75,7 @@ public class ChartLibraries {
     static final String ADAPTER_NAME = "ECharts Generic";
     static final String ADAPTER_MARKER = "stroom-echarts-generic-version:";
     /// The oldest ECharts major version the adapter supports.
-    public static final int MIN_ECHARTS_MAJOR = 5;
+    public static final int MIN_ECHARTS_MAJOR = 6;
 
     // Each ECharts build declares the zrender it is built on, and its own version: `echarts.min.js` as
     // `t.version="6.1.0",...,t.dependencies={zrender:"6.1.0"}`, and `echarts.js` as
@@ -113,7 +113,7 @@ public class ChartLibraries {
         this.securityContext = securityContext;
     }
 
-    /// Finds the ECharts library: a Script doc holding an ECharts build (version 5 or later), preferring one with
+    /// Finds the ECharts library: a Script doc holding an ECharts build (version 6 or later), preferring one with
     /// "echarts" in its name. Where several are installed, the newest version wins.
     ///
     /// @return The library, if one is installed.
@@ -135,8 +135,8 @@ public class ChartLibraries {
         });
     }
 
-    /// Finds Script docs named like ECharts that don't hold an ECharts 5 or later build, so the agent can say why
-    /// ECharts isn't used (e.g. an ECharts 4 build, or something else).
+    /// Finds Script docs named like ECharts that don't hold an ECharts 6 or later build, so the agent can say why
+    /// ECharts isn't used (e.g. an ECharts 5 build, or something else).
     ///
     /// @return Those Script docs.
     public List<DocRef> findUnrecognisedECharts() {
@@ -202,7 +202,7 @@ public class ChartLibraries {
         }
     }
 
-    /// Says which ECharts version a Script doc's content is, if it is an ECharts build of version 5 or later.
+    /// Says which ECharts version a Script doc's content is, if it is an ECharts build of version 6 or later.
     ///
     /// @param source A Script doc's content.
     /// @return The version, e.g. `6.1.0`, if the content is such a build.

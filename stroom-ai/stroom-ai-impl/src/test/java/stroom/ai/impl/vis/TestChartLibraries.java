@@ -70,7 +70,7 @@ class TestChartLibraries {
     }
 
     @Test
-    void recognisesAnyEChartsFiveOrLaterBuild() {
+    void recognisesAnyEChartsSixOrLaterBuild() {
         assertThat(ChartLibraries.echartsVersion(ECHARTS_6)).contains("6.1.0");
         // A newer release, with no new Stroom release.
         assertThat(ChartLibraries.echartsVersion(ECHARTS_6.replace("6.1.0", "7.0.2"))).contains("7.0.2");
@@ -79,16 +79,20 @@ class TestChartLibraries {
         assertThat(ChartLibraries.echartsVersion(ECHARTS_6.replace("\n", "\r\n").strip())).contains("6.1.0");
         // The unminified build declares its version differently; zrender's version, before it, isn't taken.
         assertThat(ChartLibraries.echartsVersion("""
-                var version = '5.6.0';
-                var version$1 = '5.5.1';
+                var version = '6.0.0';
+                var version$1 = '6.1.0';
                 var dependencies = {
-                  zrender: '5.6.0'
-                };""")).contains("5.5.1");
+                  zrender: '6.0.0'
+                };""")).contains("6.1.0");
     }
 
     @Test
     void ignoresOlderOrOtherScripts() {
         assertThat(ChartLibraries.echartsVersion(ECHARTS_4)).isEmpty();
+        // ECharts 5, before the minimum of 6.
+        assertThat(ChartLibraries.echartsVersion(ECHARTS_6.replace("6.1.0", "5.6.0"))).isEmpty();
+        assertThat(ChartLibraries.echartsVersion("var version$1 = '5.5.1';\nvar dependencies = {zrender: '5.6.0'};"))
+                .isEmpty();
         // A version but no zrender dependency: not ECharts.
         assertThat(ChartLibraries.echartsVersion("lib.version=\"6.1.0\";")).isEmpty();
         // zrender alone declares its version as `version:"..."`.
