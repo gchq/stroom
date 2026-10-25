@@ -37,11 +37,13 @@ import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.json.JsonUtil;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -79,6 +81,8 @@ class TestAgentEndToEnd {
     private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final UserActionLookup lookup = Mockito.mock(UserActionLookup.class);
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
+    // Estimates nothing, so nothing is made smaller, unless a test says.
+    private final ContextUsageTracker usageTracker = Mockito.mock(ContextUsageTracker.class);
 
     private FakeOpenAiServer model;
     private McpTestServer mcp;
@@ -131,7 +135,7 @@ class TestAgentEndToEnd {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
         final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
         agentChat = new McpAgentChat(aiService, builtInTools, runManager,
-                Mockito.mock(WorkspaceStore.class), Mockito.mock(ContextUsageTracker.class),
+                Mockito.mock(WorkspaceStore.class), usageTracker,
                 ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class), new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao),
                 AiConfig::new, aiDao, new UserActions(lookup),
@@ -187,16 +191,64 @@ class TestAgentEndToEnd {
         assertThat(run("second").aiMessage().text()).isEqualTo("Second answer.");
     }
 
+    @Test
+    void aLongRunsEarlierStepsAreSummarisedThroughTheRealClientAndTheRunCarriesOn() throws Exception {
+        // The summary is asked for whole (not streamed into the chat as an answer), part way through the run, by
+        // the model client the chat's compaction uses.
+        for (int n = 1; n <= 12; n++) {
+            model.callTool("create_filter", "{\"feed\":\"FEED-" + n + "\"}");
+        }
+        model.answer("All twelve filters are ready.").answerWhole("Made filters for FEED-1 to FEED-7.");
+        // Over the budget's threshold (1,100 of 1,375) at 11 steps in the conversation.
+        Mockito.when(usageTracker.estimateCautiously(Mockito.anyInt(), Mockito.anyList(), Mockito.any()))
+                .thenAnswer(invocation -> 100 * ((List<?>) invocation.getArgument(1)).stream()
+                        .filter(m -> m instanceof final AiMessage ai && ai.hasToolExecutionRequests())
+                        .count());
+
+        final ChatResponse response = run("set up feeds 1 to 12", realChatModel(), new ContextBudget(1_375, 80));
+
+        assertThat(response.aiMessage().text()).isEqualTo("All twelve filters are ready.");
+        final List<Map<String, Object>> requests = model.requests();
+        final List<Map<String, Object>> whole = requests.stream()
+                .filter(r -> !Boolean.TRUE.equals(r.get("stream")))
+                .toList();
+        assertThat(whole).singleElement().satisfies(summary -> {
+            final String sent = JsonUtil.writeValueAsString(summary.get("messages"), false);
+            assertThat(sent)
+                    .contains("summarising your own progress")
+                    .contains("FEED-7")
+                    .doesNotContain("FEED-8");
+            // Asked with no tools, so it can only answer in words.
+            assertThat(summary).doesNotContainKey("tools");
+        });
+        // Every call ran once, and the requests after the summary carry it in place of the earlier steps.
+        assertThat(requests.stream().filter(r -> Boolean.TRUE.equals(r.get("stream")))).hasSize(13);
+        final String last = JsonUtil.writeValueAsString(requests.getLast().get("messages"), false);
+        assertThat(last)
+                .contains("Made filters for FEED-1 to FEED-7.")
+                .doesNotContain("FEED-1\\\"")
+                .contains("FEED-12");
+        assertThat(stored.stream().filter(m -> m.getMessageType() == AiMessageType.TOOL_CALL)).hasSize(12);
+        // The summary isn't shown as an answer.
+        assertThat(stored).noneMatch(m -> m.getMessage().contains("Made filters for FEED-1 to FEED-7."));
+    }
+
     private ChatResponse run(final String question) throws Exception {
+        return run(question, notStreamed(), ContextBudget.UNKNOWN);
+    }
+
+    private ChatResponse run(final String question,
+                             final ChatModel chatModel,
+                             final ContextBudget budget) throws Exception {
         final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         try (final McpToolset toolset = new McpToolServerFactory(() -> null, null, null, () -> securityContext,
                 () -> null,
                 new McpClientCache(), () -> null, AiConfig::new, this::openIdConfiguration, () -> null)
                 .createToolset(modelDoc)) {
-            return agentChat.chat(notStreamed(), modelDoc, CHAT_ID,
+            return agentChat.chat(chatModel, modelDoc, CHAT_ID,
                     List.of(new SystemMessage("system prompt"), new UserMessage(question)), toolset, 99,
                     new AtomicBoolean(false), Mockito.mock(TaskContext.class), 1, new StringBuilder(), 0,
-                    ContextBudget.UNKNOWN);
+                    budget);
         }
     }
 
@@ -213,6 +265,22 @@ class TestAgentEndToEnd {
         final HttpClientProviderCache cache = Mockito.mock(HttpClientProviderCache.class);
         Mockito.when(cache.get(Mockito.any())).thenReturn(provider);
         return OpenAiStreamingChatModel.builder()
+                .baseUrl(model.baseUrl())
+                .apiKey("key")
+                .modelName("fake")
+                .httpClientBuilder(new ApacheHttpClientBuilder(cache, HttpClientConfiguration.builder().build(),
+                        Map.of()))
+                .build();
+    }
+
+    // The real model client for what isn't streamed (a summary), as a chat's compaction uses, over the real
+    // (shared) HTTP client.
+    private OpenAiChatModel realChatModel() {
+        final HttpClientProvider provider = Mockito.mock(HttpClientProvider.class);
+        Mockito.when(provider.get()).thenReturn(httpClient);
+        final HttpClientProviderCache cache = Mockito.mock(HttpClientProviderCache.class);
+        Mockito.when(cache.get(Mockito.any())).thenReturn(provider);
+        return OpenAiChatModel.builder()
                 .baseUrl(model.baseUrl())
                 .apiKey("key")
                 .modelName("fake")
