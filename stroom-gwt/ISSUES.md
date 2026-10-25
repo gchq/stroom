@@ -396,7 +396,9 @@ run of 22 October 2026 (1,538 stories).
   `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`, and `App/Main/AppShell` `OpensDocument`, whose
   keyboard focus lands on the Data tab in one run and on the info button in another (a race over
   where the focus goes as the document opens). A screenshot diff should ignore the first three, and
-  the last needs the story to wait for the focus to settle, or the race fixing.
+  the last needs the story to wait for the focus to settle, or the race fixing. Likewise
+  `App/Editors/QueryEditor` `AddToAnnotation` (found 25 October 2026): one full run showed the
+  focus ring on the results toolbar's annotate button, which it doesn't have alone (twice).
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 
