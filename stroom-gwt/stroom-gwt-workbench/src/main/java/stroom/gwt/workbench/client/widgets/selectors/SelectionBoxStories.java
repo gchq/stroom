@@ -339,7 +339,7 @@ public final class SelectionBoxStories {
         play.expect(row).not().toBeNull();
         final Play inRow = play.screen().within(row);
         play.expect(inRow.querySelector(".data-grid__cell")).not().toBeNull();
-        play.expect(inRow.querySelector(".explorerCell .selectionItemCell-text")).toHaveTextContent("One");
+        play.expect(inRow.querySelector(".explorer-cell .selectionItemCell-text")).toHaveTextContent("One");
     }
 
     private static void playEscape(final Play play) {

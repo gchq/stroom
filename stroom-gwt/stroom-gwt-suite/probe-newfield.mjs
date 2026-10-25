@@ -31,7 +31,7 @@ await gwt.signInFully(page, credentials());
 await closeDialogs(page);
 await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10000 });
 await page.waitForTimeout(2000);
-const first = await page.evaluate(() => [...document.querySelectorAll('.explorerCell')].find((e) => e.querySelector('.explorerCell-icon')?.getAttribute('title') === 'Lucene Index')?.textContent.trim());
+const first = await page.evaluate(() => [...document.querySelectorAll('.explorer-cell')].find((e) => e.querySelector('.explorer-cell__icon')?.getAttribute('title') === 'Lucene Index')?.textContent.trim());
 console.log('index:', first);
 await gwt.openDocByName(page, first, 'Lucene Index');
 await page.waitForTimeout(2500);

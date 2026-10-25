@@ -167,7 +167,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
           && !e.classList.contains('quick-filter__input')
           && !e.classList.contains('ace_text-input') && !e.closest('.ace_editor'));
       if (box) { out.push({ label, kind: 'text', value: String(box.value ?? ''), ...at(box) }); continue; }
-      // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownViewImpl`, rendered as
+      // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownBox`, rendered as
       // `.drop-down`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
       // MouseDownEvent.getType())`), and picking a document fires `addDataSelectionHandler`, which
       // the presenter turns into onChange -> setDirty (`DataGenSettingsPresenter:61`). DataGen's
@@ -243,7 +243,7 @@ export async function nudge(page, f) {
   }
   if (f.kind === 'chooser') {
     // A DOCUMENT CHOOSER (`DocSelectionBoxPresenter`): MOUSEDOWN opens `Choose item`
-    // (`DropDownViewImpl` registers MouseDownEvent, not ClickEvent). Choose a DOCUMENT row other than
+    // (`DropDownBox` registers MouseDownEvent, not ClickEvent). Choose a DOCUMENT row other than
     // the current one, then OK. The earlier attempt picked a branch: a folder, System or a Git Repo
     // holding feeds can't be chosen, so OK left the box as it was and the driver was set aside. The
     // documents the chooser accepts are listed at the top level as well as in their folders.
@@ -261,8 +261,8 @@ export async function nudge(page, f) {
         .filter((e) => e.textContent.trim() === 'Choose item').pop();
       const dialog = title?.closest('.dialog__container, .dialog');
       const branch = new Set(['Folder', 'System', 'Favourites', 'Git Repo', null]);
-      const row = [...(dialog?.querySelectorAll('.explorerCell') ?? [])].find((e) => e.offsetWidth > 0
-        && !branch.has(e.querySelector('.explorerCell-icon')?.getAttribute('title') ?? null)
+      const row = [...(dialog?.querySelectorAll('.explorer-cell') ?? [])].find((e) => e.offsetWidth > 0
+        && !branch.has(e.querySelector('.explorer-cell__icon')?.getAttribute('title') ?? null)
         && norm(e.textContent) && norm(e.textContent) !== 'None' && norm(e.textContent) !== norm(current));
       if (!row) return null;
       const r = row.getBoundingClientRect();
@@ -280,7 +280,7 @@ export async function nudge(page, f) {
     // and a click at that point left the box as it was.
     const dialog = page.locator('.dialog__title', { hasText: /^Choose item$/ })
       .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]');
-    await dialog.locator('.explorerCell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
+    await dialog.locator('.explorer-cell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
     await page.waitForTimeout(400);
     await button('OK').click({ timeout: 2_000 }).catch(() => {});
     return `chose "${pick.text}"`;

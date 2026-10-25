@@ -63,7 +63,7 @@ import java.util.function.Consumer;
 public class DocumentAssetTree extends Composite implements Focus {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String EXPANDER_CLASS_NAME = "explorerCell-expander";
+    private static final String EXPANDER_CLASS_NAME = "explorer-cell__expander";
 
     private static Template template;
 
@@ -86,11 +86,6 @@ public class DocumentAssetTree extends Composite implements Focus {
 
         initWidget(BINDER.createAndBindUi(this));
         grid.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
-        grid.setProfile(DataGridProfile.TREE);
-        // The cells draw their own padding, as the explorer's do; a long name scrolls the tree sideways
-        grid.setCellPadding(false);
-        grid.setFitWidth(true);
-        grid.hasContextMenu(false);
         grid.addColumn(new Column<DocumentAssetTreeItem, DocumentAssetTreeItem>(new ItemCell()) {
             @Override
             public DocumentAssetTreeItem getValue(final DocumentAssetTreeItem item) {
@@ -303,7 +298,7 @@ public class DocumentAssetTree extends Composite implements Focus {
             if (item == null) {
                 return;
             }
-            // Indented by its depth, as the explorer's (explorer-tree.css's explorerCell-expander)
+            // Indented by its depth, as the explorer's (explorer-tree.css's explorer-cell__expander)
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
                     "--explorer-cell__depth", String.valueOf(item.getDepth()));
             final SafeHtml expanderIcon;
@@ -320,9 +315,9 @@ public class DocumentAssetTree extends Composite implements Focus {
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             content.append(template.expander(expanderClassName, paddingLeft, expanderIcon));
-            content.append(template.div("explorerCell-icon-wrapper",
-                    SvgImageUtil.toSafeHtml(item.getIcon(), "explorerCell-icon")));
-            content.append(template.text("explorerCell-text", SafeHtmlUtils.fromString(item.getLabel())));
+            content.append(template.div("explorer-cell__icon-wrapper",
+                    SvgImageUtil.toSafeHtml(item.getIcon(), "explorer-cell__icon")));
+            content.append(template.text("explorer-cell__text", SafeHtmlUtils.fromString(item.getLabel())));
             sb.append(template.outer(content.toSafeHtml()));
         }
     }
@@ -350,7 +345,7 @@ public class DocumentAssetTree extends Composite implements Focus {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String className, SafeHtml content);
 
-        @Template("<div class=\"explorerCell\">{0}</div>")
+        @Template("<div class=\"explorer-cell\">{0}</div>")
         SafeHtml outer(SafeHtml content);
     }
 }

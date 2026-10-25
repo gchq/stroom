@@ -45,7 +45,7 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
                 final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                         title,
                         row.getIcon(),
-                        "explorerCell-icon");
+                        "explorer-cell__icon");
                 content.append(iconSafeHtml);
             }
             if (row.hasRenderedLabel()) {
@@ -68,7 +68,7 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
                 content.append(Templates.div(className, expanderIconSafeHtml));
             }
 
-            sb.append(Templates.div("explorerCell", content.toSafeHtml()));
+            sb.append(Templates.div("explorer-cell", content.toSafeHtml()));
         }
     }
 }

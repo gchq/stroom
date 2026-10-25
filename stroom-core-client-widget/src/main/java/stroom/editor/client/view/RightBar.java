@@ -184,7 +184,7 @@ public class RightBar extends Composite {
                                             sb.append("code-editor__marker--info");
                                             break;
                                     }
-                                    // Placed by the line it marks (editor.css's code-editor__marker)
+                                    // Placed by the line it marks (code-editor.css's code-editor__marker)
                                     sb.append("\" style=\"--code-editor__marker-top:");
                                     sb.append(top);
                                     sb.append("px;\">");

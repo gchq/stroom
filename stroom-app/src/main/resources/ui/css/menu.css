@@ -165,7 +165,7 @@
     white-space: nowrap;
     text-align: right;
     flex-grow: 1;
-    /* Stolen from editor.css */
+    /* Stolen from code-editor.css */
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
     font-size: 94%;
     font-weight: 300;

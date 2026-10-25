@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -193,6 +194,53 @@ public final class VisualisationAssetsStories {
                             .toBeNull());
                     play.expect(play.getByText("/assets/vis-1/js/chart.js")).toBeVisible();
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // OK is disabled until a file is chosen; a file chosen and OK pressed is the picker's
+                // value, and a double click on another chooses that one at once
+                .story("ChooseAssetWithTheMouse", VisualisationAssetsStories::renderChooser)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("None"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Choose Asset", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.expect(dialog.findByText("index.html")).toBeVisible();
+                    play.expect(dialog.getByRole("button", StroomDom.button("OK"))).toBeDisabled();
+                    play.click(dialog.getByText("index.html"));
+                    play.expect(dialog.getByRole("button", StroomDom.button("OK"))).toBeEnabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.expect(play.findByText("/assets/vis-1/index.html")).toBeVisible();
+
+                    play.click(play.getByText("/assets/vis-1/index.html"));
+                    final Play again = screen.within(
+                            screen.findByText("Choose Asset", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.click(again.findByText("css"));
+                    play.keyboard("{ArrowRight}");
+                    play.dblClick(again.findByText("style.css"));
+                    play.expect(play.findByText("/assets/vis-1/css/style.css")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Cancel leaves the picker's value as it was, even with a file chosen
+                .story("CancelKeepsTheAsset", VisualisationAssetsStories::renderChooser)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("None"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Choose Asset", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.click(dialog.findByText("index.html"));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Choose Asset", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.getByText("None")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // A disabled picker says so, and doesn't open
+                .story("DisabledPicker", context -> renderChooser(context, false))
+                .withPlay(play -> {
+                    final Query picker = play.findByRole("button", TextMatch.containing("None"));
+                    play.expect(picker).toHaveAttribute("aria-disabled", "true");
+                    play.click(picker);
+                    play.expect(play.screen().queryByText("Choose Asset", StroomDom.DIALOG_TITLE)).toBeNull();
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 
@@ -224,6 +272,11 @@ public final class VisualisationAssetsStories {
 
     // A floor map's asset picker, for the document with folders
     private static Widget renderChooser(final StoryContext context) {
+        return renderChooser(context, true);
+    }
+
+    // A floor map's asset picker, for the document with folders, enabled or not
+    private static Widget renderChooser(final StoryContext context, final boolean enabled) {
         final RestFixtures fixtures = RestFixtures.builder()
                 .get("/visualisationAssets/fetchDraftAssets/" + OWNER_UUID, RestReply.json(TREE_ASSETS))
                 .build();
@@ -240,6 +293,7 @@ public final class VisualisationAssetsStories {
             final DocumentAssetSelectionController picker = harness.own(
                     injector.getDocumentAssetSelectionController()).attach(box);
             picker.setDocument(VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build());
+            picker.setEnabled(enabled);
             frame.setWidget(box);
         });
         return harness.asWidget();

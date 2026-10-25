@@ -287,7 +287,7 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
             } else {
                 final E child = box.getItem();
                 treePanel.getTree().addChild(target, child);
-                layoutPanel.remove(subTreePanel);
+                removeDraggedCopy();
                 setTargetBox(null);
                 setRefusedBox(null);
                 treePanel.refresh();
@@ -654,11 +654,18 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
         }
     }
 
+    // Takes the copy of what was dragged off the page, as it was before the drag
+    private void removeDraggedCopy() {
+        layoutPanel.remove(subTreePanel);
+        subTreePanel.removeStyleName(DRAGGED_CLASS);
+        subTreePanel.removeStyleName(MOVING_CLASS);
+    }
+
     // Puts what is dragged back where it was, as it was not dropped on a target
     private void cancelDrag() {
         final E child = box.getItem();
         treePanel.getTree().addChild(dragParent, child, dragIndex);
-        layoutPanel.remove(subTreePanel);
+        removeDraggedCopy();
         setTargetBox(null);
         setRefusedBox(null);
         treePanel.refresh();

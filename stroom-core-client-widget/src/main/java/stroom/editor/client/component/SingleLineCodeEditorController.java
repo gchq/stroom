@@ -16,14 +16,16 @@
 
 package stroom.editor.client.component;
 
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /// A single line code editor's controller: it sets the text of its [SingleLineCodeEditor], with
 /// the options a single line has no use for (e.g. Line Numbers) off, and its [AceEditorController]
@@ -32,22 +34,36 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 /// It is work in progress: e.g. the Enter key isn't stopped from doing anything yet.
 public class SingleLineCodeEditorController extends Controller {
 
-    private final SingleLineCodeEditor view;
-    private final CodeEditorOptions options;
     private final AceEditorController aceEditorController;
+    private SingleLineCodeEditor view;
+    private CodeEditorOptions options;
+    private Consumer<String> onChange = text -> {
+    };
 
-    /// Made by GIN, with its editor.
+    /// Made by GIN; [#attach(SingleLineCodeEditor)] gives it its editor.
     ///
     /// @param eventBus            The application's event bus.
-    /// @param view                The editor.
     /// @param aceEditorController Sets the editor up as the user prefers; this owns it.
     @Inject
     public SingleLineCodeEditorController(final EventBus eventBus,
-                                          final SingleLineCodeEditor view,
                                           final AceEditorController aceEditorController) {
         super(eventBus);
-        this.view = view;
-        initWidget(view);
+        this.aceEditorController = own(aceEditorController);
+        // Read only as whatever owns it is
+        watch(Contexts.READ_ONLY, readOnly -> {
+            if (view != null) {
+                view.setReadOnly(readOnly);
+            }
+        });
+    }
+
+    /// Attaches this to an editor, e.g. one a template declares, setting it up: with the options a
+    /// single line has no use for off, and as the user prefers.
+    ///
+    /// @param view The editor.
+    /// @return This, for its owner to keep.
+    public SingleLineCodeEditorController attach(final SingleLineCodeEditor view) {
+        this.view = Objects.requireNonNull(view, "view");
         options = new CodeEditorOptions(view.getEditor(), showIndicators -> {
             // A single line has no overview bar to show them in
         });
@@ -58,7 +74,15 @@ public class SingleLineCodeEditorController extends Controller {
         options.getShowIndentGuides().setOff();
         options.getShowInvisiblesOption().setOff();
         options.getViewAsHexOption().setOff();
-        this.aceEditorController = own(aceEditorController).attach(view.getEditor(), options);
+        aceEditorController.attach(view.getEditor(), options);
+        view.getEditor().addValueChangeHandler(event -> onChange.accept(event.getValue()));
+        view.setReadOnly(Boolean.TRUE.equals(context(Contexts.READ_ONLY)));
+        return this;
+    }
+
+    /// @return The editor this is attached to.
+    public SingleLineCodeEditor getEditor() {
+        return view;
     }
 
     /// @return The text.
@@ -78,22 +102,16 @@ public class SingleLineCodeEditorController extends Controller {
         options.setMode(mode);
     }
 
-    /// @param readOnly Whether the text is read only.
-    public void setReadOnly(final boolean readOnly) {
-        view.setReadOnly(readOnly);
-    }
-
     /// Puts the focus on the text.
     public void focus() {
         view.focus();
     }
 
-    /// Listens for the text changing, until the registration is removed.
+    /// Sets what is told when the user changes the text.
     ///
-    /// @param handler Told the text each time.
-    /// @return The registration, for the handler's owner to own.
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
-        return view.getEditor().addValueChangeHandler(handler);
+    /// @param onChange Given the text each time.
+    public void setOnChange(final Consumer<String> onChange) {
+        this.onChange = onChange;
     }
 
     /// @see AceEditorController#registerCompletionProviders(AceCompletionProvider...)

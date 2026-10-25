@@ -797,10 +797,10 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
   // The tree's rows as `type|label`: the icon's title is the document type.
   const tree = () => page.evaluate(() => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.explorerCell')]
+    return [...document.querySelectorAll('.explorer-cell')]
       // The name without the icon's own text: an inline SVG's <style> or <title> is in textContent
       // (Elastic Index's `.st0{fill:…}`, OpenAI Model's "OpenAI icon"), so a name never matched.
-      .map((c) => `${n(c.querySelector('.explorerCell-icon')?.getAttribute('title'))}|${n([...c.querySelectorAll('*:not(svg):not(svg *)')]
+      .map((c) => `${n(c.querySelector('.explorer-cell__icon')?.getAttribute('title'))}|${n([...c.querySelectorAll('*:not(svg):not(svg *)')]
         .filter((e) => !e.children.length).map((e) => e.textContent).join(' '))}`);
   }).catch(() => []);
   // By name alone: the icon's title is not always the menu's name for the type (XSL Translation),
@@ -813,7 +813,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
   };
   const menuPath = async (target, items) => {
     await dismissMenus(page).catch(() => {});
-    if (!(await rightClickByText(page, '.explorerCell', target))) throw new Error(`no explorer row "${target}"`);
+    if (!(await rightClickByText(page, '.explorer-cell', target))) throw new Error(`no explorer row "${target}"`);
     for (const item of items) {
       if (!(await clickMenuItem(page, item))) throw new Error(`no "${item}" in the menu (after ${items.slice(0, items.indexOf(item)).join(' › ') || 'the right-click'})`);
       await settle(600);

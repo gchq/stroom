@@ -70,6 +70,8 @@ public class MenuController extends Controller implements Menu.Handler {
     // The item that has a delayed sub menu scheduled
     private Item timerItem = null;
     private boolean allowCloseOnMoveLeft = false;
+    // Set once the menu is closed, which is before it is disposed (once the popup manager is done)
+    private boolean hidden;
 
     /// Made by GIN for one use: a menu shown once, as a popup.
     ///
@@ -232,7 +234,8 @@ public class MenuController extends Controller implements Menu.Handler {
 
             if (menuItem instanceof final HasChildren hasChildren) {
                 hasChildren.getChildren().onSuccess(children -> {
-                    if (children != null && !children.isEmpty() && !isDisposed()) {
+                    // Not once the menu is closed: a sub menu shown then would be left open
+                    if (children != null && !children.isEmpty() && !hidden && !isDisposed()) {
                         // We are changing the highlighted item so close the current popup if it is
                         // open
                         hideChildren(false, false);
@@ -393,6 +396,7 @@ public class MenuController extends Controller implements Menu.Handler {
     }
 
     private void hideSelf(final boolean autoClose, final boolean ok) {
+        hidden = true;
         cancelDelayedSubMenu();
         ControllerDialog.hide(this, autoClose, ok);
     }

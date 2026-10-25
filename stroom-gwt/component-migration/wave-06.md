@@ -6,12 +6,62 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Turn the Ace EditorPresenter into a dumb CodeEditor with a settings model in place of its 13 option getters. Split MenuPresenter into a component. Configure DraggableTreePanel and PipelineTreePanel with callbacks instead of subclassing. Split AbstractExplorerTree into a tree widget and an ExplorerTreeModel controller. Give FlexLayout and TabLayout no-arg construction. Finish the UserRef and DocumentAsset box splits so DropDownViewImpl can go.
 
+## Audited (25 October 2026)
+
+Six reviewers read the wave against this plan, "Done means" and AGENTS.md (the trees, the pickers,
+the choosers and menu, the trace overview, the code editor, and the records). Fixed:
+
+- **A regression.** A second click on an annotation's setting (Status, Labels, Collections, Choose
+  Comment) opened a second chooser over the first, rather than closing it, as each opening is a
+  one-use chooser the popup manager hadn't seen. With two label choosers open, a tick in the older
+  could take back the newer's. Each caller keeps an `OpenChooser`, which closes the chooser opened
+  from the element clicked (story `SecondClickClosesTheChooser`, which failed before; this branch
+  only, so no changelog entry). `StatusSettingBlock` now checks that choosing the current status
+  leaves the chooser open and another closes it.
+- **The editor could not be declared.** `CodeEditorController` was injected with its own
+  `CodeEditor`, so the later waves' templates couldn't declare one; it attaches now
+  (`attach(CodeEditor)`), and `EditorPresenter` is given both. `SingleLineCodeEditorController`
+  attaches too, watches `Contexts.READ_ONLY` and has `setOnChange`, in place of `setReadOnly` and
+  GWT's value change handler.
+- **Rule 6.** The explorer's classes are BEM, with every use (the cells that borrow them, the
+  stories and the suite's scripts): `explorer-tree` (was `explorer-tree-panel`),
+  `explorer-tree__grid` (was `explorerTree`), `explorer-cell` with `__expander`, `__tick-box`,
+  `__icon`, `__icon-wrapper`, `__alert-icon`, `__text`, `--filter-match` and `--filter-no-match`
+  (were `explorerCell-*`). The editor's stylesheet is `code-editor.css`, named for its block, and the
+  indicator popup's block has its own `code-editor-indicator.css`.
+- **Rule 2.** The trees' grid settings (profile, cell padding, fit width, no context menu) are in
+  their templates, with a new `DataGrid.setHasContextMenu` setter for the last; the chooser's cell
+  uses `SafeHtmlTemplates`.
+- **The task monitor.** The explorer tree controller's REST call takes its owners' monitor; the
+  three presenters that passed themselves did nothing more, and only Navigation's spinner is set.
+- **Smaller things.** A sub menu whose items arrive after its menu has closed isn't shown; the drag
+  copy's classes come off after a drag; `setTicked`, `getTickedSet` and `setShowAlerts` are safe on
+  a tree without tick boxes or before it is attached (and the controller applies `showAlerts` on
+  attach); the Span Info's region has the scroll region's focus ring; an unused `Chooser.clearFilter`,
+  `CodeEditor.setMode` (which bypassed the mode the options keep), `EditorPresenter.getController`
+  and `CodeEditorController.getAceEditorController` are gone; `EditorPresenter` keeps its 2017;
+  javadoc, stale comments (the floor map views, `pathways.css`, the editor's never-shown popup) and
+  unused imports. Stories: the asset picker's OK with the mouse, a double click, Cancel and a
+  disabled picker.
+- **The records.** The claims below that weren't so (the floor map's layer style makes its box; the
+  editor's users; `TextPresenter.getContextMenu`; the baselines taken again; which screenshots
+  differed), what is left (below), a "Since wave 6" note in the wave 7, 8, 11, 12 and 15 plans, the
+  order's rows, `A11Y.md`'s scrolling regions, the stale names in `COMPONENTS.md`,
+  `COMPONENT_MODEL_DESIGN.md` and the suite's `dirty.mjs`, and the GWT inventory, regenerated.
+
+All 1,622 stories passed with the leak check after the fixes (the 39 screenshots that differed are the noise named above), and the app and the
+standalone dashboard GWT compile.
+
 ## Done (25 October 2026)
 
 All 16 units, in 11 commits. `FlexLayout` and `TabLayout`, named in the paragraph above, are not
 units of this wave: they are wave 8's, with the dashboard. Each commit ran its stories with the
 leak check and the screenshot diff. The `DropDownView` commit ran all 1,617, and so did the last,
-the editor's (1,618 passed; the 39 screenshots that differed are the known noise in ISSUES.md), and the app and the standalone dashboard GWT compile. What was decided on the way, where it differs from the plans below:
+the editor's (1,618 passed; the 39 screenshots that differed are the force graphs, the word
+cloud's and line chart's keyboard stories, the data grid's spinner column, AppShell `OpensDocument`
+and the ScheduleBox dialog's 1px shift, all recorded as noise in ISSUES.md), and the app and the
+standalone dashboard GWT compile. What was decided on the way, where it differs from the plans
+below:
 
 - **The trees.**
   - `DraggableTreePanel` is concrete and configured with callbacks (`setIsValidTarget`,
@@ -21,15 +71,17 @@ the editor's (1,618 passed; the 39 screenshots that differed are the known noise
     `--pipeline-element__*`.
   - `AbstractExplorerTree` and `ExplorerTickBoxTree` are one `ExplorerTree` (`setTickBoxes`,
     `setOnChoose`, `setOnInitialSelect`), fed by an `ExplorerTreeController` (was
-    `ExplorerTreeModel`).
-  - `DocumentAssetTree` has a template, `setAccessibleName` and `setOnSelect`.
+    `ExplorerTreeModel`); `OpenItems` moved with them to `stroom.explorer.client.component`.
+  - `DocumentAssetTree` has a template, `setAccessibleName` and `setOnSelect`; its
+    `HasSelectionHandlers` went in the same commit, as both its users moved (rule 5 allows it).
 - **The pickers.**
   - `DocumentAssetChooser` is shown once by `DocumentAssetChooserController.choose(...)`, with the
     new `ControllerDialog.setActionEnabled` (OK only while a file is chosen) and `pressAction`
     (Enter or a double click on a file).
-  - The floor map's two dialogs declare a `DropDownBox` and attach a
+  - The floor map's object edit dialog declares a `DropDownBox` in its template; its layer style
+    dialog, whose view is built in Java (its own unit is wave 11's), makes one. Both attach a
     `DocumentAssetSelectionController`. Their forms stories now show the box, as the dialogs do
-    (4 new baselines).
+    (4 baselines taken again).
   - `UserRefSelectionController` has the user picker's logic, and `UserRefSelectionBoxPresenter`
     stays a thin wrapper for its 11 callers.
   - `DropDownBox` is a `View`, so both wrappers are `MyPresenterWidget<DropDownBox>`;
@@ -37,8 +89,10 @@ the editor's (1,618 passed; the 39 screenshots that differed are the known noise
 - **The choosers are one-use popups.** `Chooser<T>` (`chooser.css`) is shown by a
   `ChooserController` or `MultiChooserController` made each time one opens, with
   `show(opener, element, caption, onChoose)`. A controller can't be shown again once its popup is
-  hidden (disposal is final), and the schedule and time range pickers already work this way. Its
-  generic template can't use `@UiHandler`, so the filter's handler is added in Java.
+  hidden (disposal is final), and the schedule and time range pickers already work this way. Each
+  caller keeps an `OpenChooser`, so that a second click on a setting closes its chooser, as the
+  popup manager did for a chooser shown again (fixed in the audit, above). Its generic template
+  can't use `@UiHandler`, so the filter's handler is added in Java.
 - **The menu is `MenuController`**, beside `Menu`, as this plan says (the order's notes said
   `MenuPopup` and `MenuPopupController`; corrected there). It merges `MenuPresenter` and
   `MenuViewImpl`; `Menu` has a template and no inline styles (`--menu__width`,
@@ -46,28 +100,52 @@ the editor's (1,618 passed; the 39 screenshots that differed are the known noise
   `ControllerDialog.showOnce`, and closed with the new `ControllerDialog.hide`.
 - **`TraceOverviewWidget`** has a no-arg constructor and a template for its frame. Its drawing is
   placed by custom properties, its copy menu is a `MenuRequest` (`CopyTextUtil.onClick(e)`), and
-  its Span Info could be scrolled only with a mouse (a new story, `SpanInfo`, found it; a changelog
-  entry).
+  its Span Info, which could be scrolled only with a mouse, is a named region that takes the focus
+  (a new story, `SpanInfo`, found it; on master too, so a changelog entry).
 - **The editor.**
   - `EditorViewImpl` and `AbstractEditorViewImpl` are `CodeEditor`, a component whose template
     declares the `Editor`, the error panel and the `RightBar`.
   - `CodeEditorOptions` holds the options and the mode.
-  - `CodeEditorController` has the text, Format and the menu (was `EditorMenuPresenter`).
+  - `CodeEditorController` has the text, Format and the menu (was `EditorMenuPresenter`), and
+    attaches to the editor (`attach(CodeEditor)`), so a template can declare it.
   - `AceEditorController` (was `AbstractEditorPresenter`) has the user's preferences, the global
     keys and the completer, and destroys the editor when disposed.
-  - `SingleLineCodeEditor` with `SingleLineCodeEditorController` replaces
-    `SingleLineEditorPresenter`.
-  - `EditorPresenter` is a thin `MyPresenterWidget<CodeEditor>` for its 31 callers, with the same
-    API; nothing called its `getContextMenu()`, so that is gone.
+  - `SingleLineCodeEditor` with `SingleLineCodeEditorController` (which attaches to it, watches
+    `Contexts.READ_ONLY` and has `setOnChange`) replaces `SingleLineEditorPresenter`.
+  - `EditorPresenter` is a thin `MyPresenterWidget<CodeEditor>` for its users (26 files in
+    `stroom-core-client`, and 7 stories; the plan's 31 was its fan-in), with the same API, its
+    option getters included. Nothing called its `getContextMenu()` but `TextPresenter`'s, which
+    nothing called, so both are gone.
   - `EditorView`, `BaseEditorView`, `SingleLineEditorView` and their bindings are deleted.
   - `FormatEvent`'s constructor is public, for the controller's listeners.
   - The overview bar's markers are placed by `--code-editor__marker-top`.
+  - Its stylesheet is `code-editor.css` (was `editor.css`), and the indicator popup's block is in
+    `code-editor-indicator.css` (moved in the audit).
 
 Found on the way and recorded in ISSUES.md:
 - the editor's own `IndicatorPopup`, never shown;
 - the trace overview's fixed text, which stays in its drawn HTML;
 - the unused `chooserViewImpl-*` CSS;
 - the top bar's and the editor snippet's flaky stories.
+
+Left, and why:
+
+- **Callers of the editor's option getters.** `EditorPresenter` keeps its 12 `get...Option()`
+  getters and `getFormatAction()` for its users, which move to `CodeEditorOptions` as their screens
+  convert (waves 8, 11 and 12), as rule 5 allows; the risk the order named is met by the model
+  being there.
+- **The trace overview's stylesheet.** `TraceOverviewWidget` keeps its name (a `TraceOverview`
+  DTO exists) and its rules in `pathways.css`, which the traces screens share, with the class names
+  they had, until wave 12's `TracesListTabPresenter` gives the pathways blocks their own files.
+  `explorer-tree.css` still holds the type filter's two rules too, and the asset tree's grid has an
+  unused `documentAssetTree` class (removals wait).
+- **Small things left as they were.** The drag copy's `aria-hidden` and `inert` are still set by
+  the two tree views (wave 7's); the fixed "None" text is in three controllers (no `emptyText` on
+  `DropDownBox`); a chooser is placed before its values arrive, as the label chooser always was;
+  `ControllerDialog`'s map of hosts keeps a builder never fired until its opener is disposed.
+- **Copyright years.** A class renamed, even when git sees a new file because it changed so much
+  (`CodeEditor`, `MenuController`, `ChooserController` and the rest), keeps its year; a class that
+  is new keeps 2026 (`OpenChooser`, `DocumentAssetSelectionController`, `UserRefSelectionController`).
 
 ## CSS and template notes for the wave
 

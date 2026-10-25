@@ -30,7 +30,6 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
@@ -86,7 +85,6 @@ public class ExplorerPopupPresenter
 
         explorerTree = new ExplorerTree();
         treeController = make(explorerTreeControllerProvider).attach(explorerTree);
-        treeController.setTaskMonitorFactory(this);
         treeController.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
         // The popup takes what the tree chooses, as it is chosen and as the tree chooses it
         explorerTree.setOnChoose((row, selectionType) -> setSelectedTreeItem(resolve(row), selectionType, false));

@@ -69,7 +69,7 @@ export const gwt = {
   /** Landing = the GWT app is up (explorer tree + a tab). Heuristic wait; screenshot-friendly. */
   async waitForApp(page) {
     await page.waitForLoadState('networkidle').catch(() => {});
-    await page.waitForSelector('.explorerCell, .navigationTree, [class*=explorer]', { timeout: 30_000 }).catch(() => {});
+    await page.waitForSelector('.explorer-cell, .navigationTree, [class*=explorer]', { timeout: 30_000 }).catch(() => {});
   },
 
   /** Full sign-in for the interactive journeys: sign in, handle a forced change, reach the app. */
@@ -81,7 +81,7 @@ export const gwt = {
     // timeout: on the happy path this selector lands in well under a second, and on the unhappy one
     // there is nothing to wait for — the sign-in form is already back on screen.
     const landed = await page
-      .waitForSelector('.explorerCell, .navigationTree, button[title="Main Menu"]', { timeout: 10_000 })
+      .waitForSelector('.explorer-cell, .navigationTree, button[title="Main Menu"]', { timeout: 10_000 })
       .then(() => true)
       .catch(() => false);
     if (!landed) await this.assertSignedIn(page, creds);
@@ -106,7 +106,7 @@ export const gwt = {
   async assertSignedIn(page, creds = {}) {
     const seen = await page.evaluate(() => ({
       signInForm: !!document.querySelector('input.userNameTextBox, input.password-box__input'),
-      app: !!document.querySelector('.explorerCell, .navigationTree, button[title="Main Menu"]'),
+      app: !!document.querySelector('.explorer-cell, .navigationTree, button[title="Main Menu"]'),
       url: window.location.href,
     }));
     if (seen.signInForm || !seen.app) {
@@ -143,7 +143,7 @@ export const gwt = {
     await page.waitForTimeout(800); // debounced filter fetch/apply
   },
 
-  /** Open a document by its explorer label (double-click the `.explorerCell` row). */
+  /** Open a document by its explorer label (double-click the `.explorer-cell` row). */
   async openDocByName(page, name, type) {
     return openExplorerDoc(page, name, type);
   },

@@ -98,11 +98,6 @@ public class Chooser<T> extends Component {
         this.onFilterChange = onFilterChange;
     }
 
-    /// Clears the filter's text.
-    public void clearFilter() {
-        nameFilter.clear();
-    }
-
     /// Puts the focus on the list of values.
     public void focus() {
         list.setFocus(true);

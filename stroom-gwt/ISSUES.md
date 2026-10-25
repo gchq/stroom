@@ -1583,10 +1583,19 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   reached with the keyboard, so couldn't be scrolled without a mouse (found 25 October 2026 in wave
   6, by a new story's accessibility check; older).~~ Fixed: a named region that takes the focus, as
   the operation list is (`App/Main/TracesScreen` `SpanInfo`).
-* `TraceOverviewWidget` draws the trace as HTML again on every change, so the operation list's
-  fixed heading ("Service & Operation") and its region's role and name are in that HTML, not its
-  template (found 25 October 2026, in wave 6). They can move to the template if the list's frame is
-  split from its rows.
+* `TraceOverviewWidget` draws the trace as HTML again on every change, so its fixed text and ARIA
+  are in that HTML, not its template (found 25 October 2026, in wave 6): the operation list's
+  heading ("Service & Operation") and its region's role and name, the Span Info's title, its close
+  button ("×", titled "Close") and its region's role and name, and Reset Range and Full Range. They
+  can move to the template if the frame is split from what is drawn from the spans.
+* The single line code editor's `maxLines="1"` (`SingleLineCodeEditor.ui.xml`, as the old
+  `setMaxLines(1)`) does nothing: `Editor.setMaxLines` applies only once Ace has started, and
+  `Editor`'s attach handler doesn't apply it then (found 25 October 2026, in wave 6's audit; older).
+  The line's height comes from `code-editor__ace--single-line`'s rules. Fix with `updateMaxLines()`
+  in the attach handler, and the single line stories' screenshots.
+* Two files in Ace's directory (`edu/ycp/cs/dh/acegwt`), which aren't changed without approval,
+  still name `editor.css`, renamed `code-editor.css` in wave 6's audit (25 October 2026): its
+  `public/README.md` and `AceAnnotationType.java`'s comment.
 * The code editor's own `IndicatorPopup` (static in `CodeEditor`, before that `EditorViewImpl`) is
   never shown: the overview bar (`RightBar`) shows one of its own, which hides itself on a click
   (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,

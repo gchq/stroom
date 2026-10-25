@@ -394,7 +394,7 @@ async function clickAffordance(label, timeout = 3000) {
       const el = [...scope.querySelectorAll('button, [role=button], .button')].find((b) => b.offsetWidth > 0 && !b.disabled
         && b.getAttribute('aria-disabled') !== 'true'
         && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted)
-        && !b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
+        && !b.closest('.navigationTree, .explorer-tree__grid, [class*=navigation], [class*=explorer]'));
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1126,8 +1126,8 @@ async function driveStep(step) {
     const found = await page.evaluate((type) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const rows = [...document.querySelectorAll('.explorerCell')].filter((e) => e.offsetWidth > 0)
-        .map((e) => ({ title: norm(e.querySelector('.explorerCell-icon')?.getAttribute('title')),
+      const rows = [...document.querySelectorAll('.explorer-cell')].filter((e) => e.offsetWidth > 0)
+        .map((e) => ({ title: norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title')),
           label: norm(e.textContent) }))
         .filter((r) => r.title);
       for (const [how, test] of [
@@ -1151,16 +1151,16 @@ async function driveStep(step) {
   } else if (step.via === 'context') {
     await expandExplorer();
     if (step.also?.length) {
-      if (!(await clickByText(page, '.explorerCell', step.target))) {
+      if (!(await clickByText(page, '.explorer-cell', step.target))) {
         throw new Error(`no explorer row "${step.target}" to select`);
       }
       for (const extra of step.also) {
-        if (!(await ctrlClickByText(page, '.explorerCell', extra))) {
+        if (!(await ctrlClickByText(page, '.explorer-cell', extra))) {
           throw new Error(`no explorer row "${extra}" to add to the selection`);
         }
       }
     }
-    if (!(await rightClickByText(page, '.explorerCell', step.target))) {
+    if (!(await rightClickByText(page, '.explorer-cell', step.target))) {
       throw new Error(`no explorer row "${step.target}" to right-click`);
     }
   } else if (step.via === 'right-click') {
@@ -1261,7 +1261,7 @@ async function driveStep(step) {
     await waitForMenu(page, { budget: 1_500, label: 'row-action' }).catch(() => {});
   } else if (step.via === 'select-tree') {
     // The first item of a tree in scope — a real click. A GWT Tree's items are `.gwt-TreeItem` (a
-    // visualisation's asset tree); the explorer tree a document CHOOSER shows is `.explorerCell`
+    // visualisation's asset tree); the explorer tree a document CHOOSER shows is `.explorer-cell`
     // rows (`selector`), and `match` names what the wanted row must contain — the Pipeline icon,
     // because a chooser lists the folders above its documents too.
     const box = await page.evaluate(([selector, match]) => {
@@ -1292,7 +1292,7 @@ async function driveStep(step) {
     }, [step.selector ?? null, !!step.empty]);
     if (!box) throw new Error(step.empty ? 'no empty text box to fill' : `nothing to fill matching ${step.selector}`);
     const countRows = () => page.evaluate(() =>
-      [...document.querySelectorAll('.explorerCell, tr, [role=row]')].filter((e) => e.offsetWidth > 0).length);
+      [...document.querySelectorAll('.explorer-cell, tr, [role=row]')].filter((e) => e.offsetWidth > 0).length);
     const before = await countRows();
     await page.mouse.click(box.x, box.y);
     await page.keyboard.type(step.text, { delay: 30 });
@@ -1888,7 +1888,7 @@ if (DIRECTED.includes('process')) {
     path: ['Dashboard (document)', 'Process', 'after filter', 'after select tree item (a pipeline)', 'OK'],
     route: [{ via: 'docType', type: 'Dashboard' }, { via: 'button', label: 'Process', opens: 'dialog' },
       { via: 'fill', selector: 'input.quick-filter__input', text: 'Example', post: true, opens: 'changed' },
-      { via: 'select-tree', selector: '.explorerCell', match: '.explorerCell-icon[title="Pipeline"]', post: true, opens: 'changed' },
+      { via: 'select-tree', selector: '.explorer-cell', match: '.explorer-cell__icon[title="Pipeline"]', post: true, opens: 'changed' },
       { via: 'button', label: 'OK', opens: 'dialog' }] });
   console.log('  + 1 directed process seed: a pipeline chosen for a dashboard\'s Process');
 }
@@ -2692,7 +2692,7 @@ async function walk(node, state, arrivedAt) {
         const els = [...document.querySelectorAll('button, [role=button], .button')].filter((b) => b.offsetWidth > 0
           && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted || norm(b.textContent) === wanted));
         if (!els.length) return true;
-        return els.every((b) => !!b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
+        return els.every((b) => !!b.closest('.navigationTree, .explorer-tree__grid, [class*=navigation], [class*=explorer]'));
       }, label).catch(() => true);
       if (inExplorer) {
         if (chromeDone.has(label)) continue;

@@ -66,8 +66,8 @@ await settleExplorer(page, { label: 'expand', budget: 8_000 }).catch(() => {});
 const name = await page.evaluate((t) => {
   const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
   const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const rows = [...document.querySelectorAll('.explorerCell')].filter((e) => e.offsetWidth > 0)
-    .map((e) => ({ title: norm(e.querySelector('.explorerCell-icon')?.getAttribute('title')), label: norm(e.textContent) }))
+  const rows = [...document.querySelectorAll('.explorer-cell')].filter((e) => e.offsetWidth > 0)
+    .map((e) => ({ title: norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title')), label: norm(e.textContent) }))
     .filter((r) => r.title);
   for (const test of [(x) => x === t, (x) => squash(x) === squash(t), (x) => squash(x).startsWith(squash(t))]) {
     const hit = rows.find((r) => test(r.title));

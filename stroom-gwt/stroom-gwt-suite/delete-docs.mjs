@@ -58,8 +58,8 @@ async function freshTree() {
 const readTree = () =>
   page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.explorerCell')].map((c) => ({
-      type: norm(c.querySelector('.explorerCell-icon')?.getAttribute('title')),
+    return [...document.querySelectorAll('.explorer-cell')].map((c) => ({
+      type: norm(c.querySelector('.explorer-cell__icon')?.getAttribute('title')),
       // Not textContent: an inline SVG icon's <style> or <title> is text too (see seed.mjs).
       label: norm([...c.querySelectorAll('*:not(svg):not(svg *)')].filter((e) => !e.children.length).map((e) => e.textContent).join(' ')),
     }));
@@ -81,7 +81,7 @@ for (const name of targets) {
   try {
     await freshTree();
     await dismissMenus(page).catch(() => {});
-    if (!(await rightClickByText(page, '.explorerCell', name))) throw new Error('row not found');
+    if (!(await rightClickByText(page, '.explorer-cell', name))) throw new Error('row not found');
     if (!(await clickMenuItem(page, 'Delete'))) throw new Error('no Delete item');
     await page.waitForTimeout(800);
     // A confirm dialog: OK to proceed.

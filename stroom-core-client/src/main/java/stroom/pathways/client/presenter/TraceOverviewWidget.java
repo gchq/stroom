@@ -1245,7 +1245,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                         }, Attribute.className("span-info-attr"));
                     });
                 }
-            }, Attribute.className("span-info-body"),
+            }, Attribute.className("span-info-body scroll-region"),
                     // It scrolls when it is taller than the panel, so, as the operation list, it is
                     // a named region that takes the focus, so that the keyboard can scroll it
                     new Attribute("tabindex", "0"),

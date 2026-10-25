@@ -56,9 +56,9 @@ public final class EditorWidgets {
     public static EditorPresenter editorPresenter(final EventBus eventBus) {
         return new EditorPresenter(
                 eventBus,
+                new CodeEditor(),
                 new CodeEditorController(
                         eventBus,
-                        new CodeEditor(),
                         new AceEditorController(
                                 eventBus,
                                 getDelegatingAceCompleter(),

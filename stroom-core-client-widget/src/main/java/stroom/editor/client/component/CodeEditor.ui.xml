@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:e="urn:import:stroom.editor.client.view">
     <!--
-      A code editor (editor.css): the text, in Ace, with the overview bar of its errors and warnings
+      A code editor (code-editor.css): the text, in Ace, with the overview bar of its errors and warnings
       beside it. An error loading the text is shown in place of the text, which is hidden
     -->
     <g:FlowPanel styleName="code-editor max dock-container-horizontal">

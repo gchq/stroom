@@ -332,6 +332,22 @@ public final class AnnotationEditorStories {
                     play.expect(p1).toHaveAttribute("aria-checked", "true");
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // A second click on a setting closes the chooser the first opened (it opened a
+                // second chooser over the first, whose ticks could undo the second's)
+                .story("SecondClickClosesTheChooser", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Labels"));
+                    play.expect(screen.findByRole("listbox", "Labels")).toBeVisible();
+                    play.click(play.getByText("Labels"));
+                    play.waitFor(() -> play.expect(screen.queryAllByRole("listbox", "Labels")).toHaveLength(0));
+                    play.click(play.getByText("Status"));
+                    play.expect(screen.findByRole("listbox", "Statuses")).toBeVisible();
+                    play.click(play.getByText("Status"));
+                    play.waitFor(() -> play.expect(screen.queryAllByRole("listbox", "Statuses")).toHaveLength(0));
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // Read only (no Edit permission): everything can be read, nothing changed (the
                 // annotation once ignored read only, and each change went straight to the server)
                 .story("ReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
@@ -414,13 +430,18 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
                     play.click(play.getByText("Status"));
-                    // GWT's status chooser is a list, with no selection box
+                    // GWT's status chooser is a list, with no selection box. The current status,
+                    // chosen again, changes nothing and leaves it open
+                    final Query statuses = screen.findByRole("listbox", "Statuses");
+                    play.click(screen.within(statuses).getByRole("option", "Open"));
+                    play.expect(screen.getByRole("listbox", "Statuses")).toBeVisible();
                     play.click(screen.findByText("Closed"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"setTag\", "
                                             + "\"tag\": {\"name\": \"Closed\"}}}")
                                     .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryAllByRole("listbox", "Statuses")).toHaveLength(0));
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Each setting's ⋮ is a button, named for what it changes, that the keyboard reaches;

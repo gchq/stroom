@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,17 @@ public class EditorPresenter
 
     private final CodeEditorController controller;
 
+    /// Made by GIN, with the editor it shows and the controller it attaches to it.
+    ///
+    /// @param eventBus   The application's event bus.
+    /// @param view       The editor.
+    /// @param controller The editor's controller, which this owns.
     @Inject
     public EditorPresenter(final EventBus eventBus,
+                           final CodeEditor view,
                            final CodeEditorController controller) {
-        super(eventBus, controller.getCodeEditor());
-        this.controller = own(controller);
-    }
-
-    /// @return The controller this presents.
-    public CodeEditorController getController() {
-        return controller;
+        super(eventBus, view);
+        this.controller = own(controller).attach(view);
     }
 
     /// @see CodeEditorController#getEditorId()

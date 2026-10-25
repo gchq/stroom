@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -66,6 +67,12 @@ import java.util.function.Function;
 /// ([CodeEditorOptions]) and its Format action, and shows its menu: the edit items for its text (Cut,
 /// Copy, Paste and so on), Format, and the options, ticked to show how they are set. Its
 /// [AceEditorController] sets the editor up as the user prefers.
+///
+/// A template declares the editor, and its screen's controller attaches one of these to it:
+///
+/// ```java
+/// codeEditor = make(codeEditorControllerProvider).attach(view.getCodeEditor());
+/// ```
 ///
 /// Screens that are still presenters use it through `EditorPresenter`.
 public class CodeEditorController extends Controller {
@@ -77,34 +84,40 @@ public class CodeEditorController extends Controller {
             AceEditorMode.STROOM_FRAGMENT_PARSER,
             AceEditorMode.STROOM_COMBINED_PARSER);
 
-    private final CodeEditor view;
-    private final Editor editor;
-    private final CodeEditorOptions options;
-    private final Action formatAction;
+    private final Action formatAction = new Action("Format", false, this::format);
     private final AceEditorController aceEditorController;
     private final Listeners<FormatEvent> formatListeners = new Listeners<>();
+    private CodeEditor view;
+    private Editor editor;
+    private CodeEditorOptions options;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
 
-    /// Made by GIN, with its editor.
+    /// Made by GIN; [#attach(CodeEditor)] gives it its editor.
     ///
     /// @param eventBus            The application's event bus, which its menu is shown on.
-    /// @param view                The editor.
     /// @param aceEditorController Sets the editor up as the user prefers; this owns it.
     @Inject
     public CodeEditorController(final EventBus eventBus,
-                                final CodeEditor view,
                                 final AceEditorController aceEditorController) {
         super(eventBus);
-        this.view = view;
-        this.editor = view.getEditor();
-        initWidget(view);
-        options = new CodeEditorOptions(editor, view::setShowIndicators);
-        formatAction = new Action("Format", false, this::format);
-        this.aceEditorController = own(aceEditorController).attach(editor, options);
-        view.setOnContextMenu(this::showMenu);
+        this.aceEditorController = own(aceEditorController);
     }
 
-    /// @return The editor, e.g. for a screen to show.
+    /// Attaches this to an editor, e.g. one a template declares, setting it up: its options at
+    /// their defaults, as the user prefers, with its menu.
+    ///
+    /// @param view The editor.
+    /// @return This, for its owner to keep.
+    public CodeEditorController attach(final CodeEditor view) {
+        this.view = Objects.requireNonNull(view, "view");
+        this.editor = view.getEditor();
+        options = new CodeEditorOptions(editor, view::setShowIndicators);
+        aceEditorController.attach(editor, options);
+        view.setOnContextMenu(this::showMenu);
+        return this;
+    }
+
+    /// @return The editor this is attached to.
     public CodeEditor getCodeEditor() {
         return view;
     }
@@ -226,7 +239,9 @@ public class CodeEditorController extends Controller {
         editor.insertSnippet(snippet);
     }
 
-    /// @see CodeEditor#setFirstLineNumber(int)
+    /// Sets the number of the first line, e.g. for a part of a stream.
+    ///
+    /// @param firstLineNumber The number.
     public void setFirstLineNumber(final int firstLineNumber) {
         view.setFirstLineNumber(firstLineNumber);
     }
@@ -238,12 +253,16 @@ public class CodeEditorController extends Controller {
         editor.setMarkers(markers);
     }
 
-    /// @see CodeEditor#setHighlights(List)
+    /// Highlights ranges of the text, and moves to the first so that it is in view.
+    ///
+    /// @param highlights The ranges, or null or empty for none.
     public void setHighlights(final List<TextRange> highlights) {
         view.setHighlights(highlights);
     }
 
-    /// @see CodeEditor#setControlsVisible(boolean)
+    /// Sets whether the editor's controls are shown over its text, leaving room for them.
+    ///
+    /// @param visible Whether they are.
     public void setControlsVisible(final boolean visible) {
         view.setControlsVisible(visible);
     }
@@ -296,11 +315,6 @@ public class CodeEditorController extends Controller {
     /// @return The registration, for the handler's owner to own.
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
         return editor.addValueChangeHandler(handler);
-    }
-
-    /// @return What sets the editor up as the user prefers, and registers its completion providers.
-    public AceEditorController getAceEditorController() {
-        return aceEditorController;
     }
 
     /// @see AceEditorController#registerCompletionProviders(AceEditorMode, AceCompletionProvider...)

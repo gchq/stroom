@@ -29,9 +29,10 @@ import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -55,6 +56,8 @@ import java.util.function.Function;
 ///
 /// @param <T> The type of the values.
 public class ChooserController<T> extends Controller {
+
+    private static final Template TEMPLATE = GWT.create(Template.class);
 
     private final Chooser<T> view;
     private final MultiSelectionModelImpl<T> selectionModel = new MultiSelectionModelImpl<>();
@@ -165,7 +168,10 @@ public class ChooserController<T> extends Controller {
         ControllerDialog.pressAction(this, DialogAction.OK);
     }
 
-    // Where a chooser opened from an element goes: below it, its left edge 1px to the left
+    /// Where a chooser opened from an element goes: below it, its left edge 1px to the left.
+    ///
+    /// @param element The element it is opened from.
+    /// @return The chooser's position.
     static PopupPosition below(final Element element) {
         return new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
@@ -183,22 +189,29 @@ public class ChooserController<T> extends Controller {
     }
 
     private SafeHtml item(final T value) {
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        final SafeHtml text = value != null
+                ? displayValueFunction.apply(value)
+                : SafeHtmlUtils.EMPTY_SAFE_HTML;
         final String tooltip = value != null && tooltipFunction != null
                 ? tooltipFunction.apply(value)
                 : null;
-        if (tooltip != null && !tooltip.isEmpty()) {
-            builder.appendHtmlConstant("<div class=\"chooser__item\" title=\"");
-            builder.appendEscaped(tooltip);
-            builder.appendHtmlConstant("\">");
-        } else {
-            builder.appendHtmlConstant("<div class=\"chooser__item\">");
-        }
-        if (value != null) {
-            builder.append(displayValueFunction.apply(value));
-        }
-        builder.appendHtmlConstant("</div>");
-        return builder.toSafeHtml();
+        return tooltip != null && !tooltip.isEmpty()
+                ? TEMPLATE.itemWithTitle(tooltip, text)
+                : TEMPLATE.item(text);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A value's text in the list, with its tooltip if it has one
+    interface Template extends SafeHtmlTemplates {
+
+        @Template("<div class=\"chooser__item\">{0}</div>")
+        SafeHtml item(SafeHtml text);
+
+        @Template("<div class=\"chooser__item\" title=\"{0}\">{1}</div>")
+        SafeHtml itemWithTitle(String title, SafeHtml text);
     }
 
 

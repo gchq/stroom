@@ -250,8 +250,8 @@ async function reset() {
  * Open a document from the explorer.
  *
  * Expands the tree FIRST. `reset()` leaves the explorer as the app opens it, with every folder shut,
- * and `openExplorerDoc` matches only VISIBLE `.explorerCell` rows — so the first `DOC=` run died on
- * `no visible .explorerCell matching "Test Dashboard"` when the document was there all along, one
+ * and `openExplorerDoc` matches only VISIBLE `.explorer-cell` rows — so the first `DOC=` run died on
+ * `no visible .explorer-cell matching "Test Dashboard"` when the document was there all along, one
  * closed folder away. `record.mjs` expands before every open for exactly this reason.
  */
 async function openDoc(name, type) {
@@ -367,8 +367,8 @@ async function navigate(node) {
       const found = await page.evaluate((type) => {
         const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
         const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const rows = [...document.querySelectorAll('.explorerCell')].filter((e) => e.offsetWidth > 0)
-          .map((e) => ({ el: e, title: norm(e.querySelector('.explorerCell-icon')?.getAttribute('title')),
+        const rows = [...document.querySelectorAll('.explorer-cell')].filter((e) => e.offsetWidth > 0)
+          .map((e) => ({ el: e, title: norm(e.querySelector('.explorer-cell__icon')?.getAttribute('title')),
             label: norm(e.textContent) }))
           .filter((r) => r.title);
         for (const [how, test] of [
@@ -404,16 +404,16 @@ async function navigate(node) {
       // target. It reported 14 items and no `Remove Tags`: the single-selection menu wearing a
       // multi-selection label, which is worse than not covering the shape at all.
       if (step.also?.length) {
-        if (!(await clickByText(page, '.explorerCell', step.target))) {
+        if (!(await clickByText(page, '.explorer-cell', step.target))) {
           throw new Error(`no explorer row "${step.target}" to select`);
         }
         for (const extra of step.also) {
-          if (!(await ctrlClickByText(page, '.explorerCell', extra))) {
+          if (!(await ctrlClickByText(page, '.explorer-cell', extra))) {
             throw new Error(`no explorer row "${extra}" to add to the selection`);
           }
         }
       }
-      if (!(await rightClickByText(page, '.explorerCell', step.target))) {
+      if (!(await rightClickByText(page, '.explorer-cell', step.target))) {
         throw new Error(`no explorer row "${step.target}" to right-click`);
       }
       await page.waitForTimeout(600);

@@ -135,8 +135,8 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         // The icon grid is a group of choices rather than one control, so the row
         // label names the group — the same treatment the asset picker gets below.
         FloorMapAria.labelledByCell(grid, ROW_ICON, 0, iconPicker);
-        // The picker is an injected view rather than a control of its own, so the
-        // name has to hang off the container as a group.
+        // The picker is a button named by the value it shows, so the row's name hangs off its
+        // container as a group.
         FloorMapAria.group(assetPickerPanel, "Image");
         assetPickerPanel.setWidget(assetBox);
         // "Upload" alone does not say what is being uploaded or where it goes.

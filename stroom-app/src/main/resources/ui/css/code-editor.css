@@ -15,13 +15,13 @@
  */
 
 /*
-   The code editor (stroom.editor.client.view): Stroom's parts around and on top of the Ace editor,
-   named BEM style (block, block__element, block--modifier). The block is the editor's view
-   (code-editor), holding the Ace editor (code-editor__ace, code-editor__ace--single-line for a
-   single line editor) and the overview bar to its right (code-editor__overview), with its summary
-   and markers. The highlight and error underline are Ace markers that Stroom adds. The indicator
-   popup and the editor's context menu options are blocks of their own, as they are shown outside
-   the editor. Ace's own classes (ace_*, and the stroom_* annotation classes the Ace wrapper gives
+   The code editor (stroom.editor.client.component.CodeEditor and SingleLineCodeEditor): Stroom's
+   parts around and on top of the Ace editor, named BEM style (block, block__element,
+   block--modifier). The block is the editor (code-editor), holding the Ace editor (code-editor__ace,
+   code-editor__ace--single-line for a single line editor) and the overview bar to its right
+   (code-editor__overview), with its summary and markers. The highlight and error underline are Ace
+   markers that Stroom adds. The indicator popup is a block of its own (code-editor-indicator.css),
+   as it is shown outside the editor. Ace's own classes (ace_*, and the stroom_* annotation classes the Ace wrapper gives
    the gutter) are styled here only where Stroom changes them; the editor themes are in
    editor-themes.css.
 */
@@ -215,15 +215,7 @@
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-/* The overview bar, its markers and their indicator popup */
-
-.code-editor-indicator {
-	border: 1px solid black;
-	padding: 0px 2px;
-	background-color: var(--tooltip__background-color);
-	color: var(--tooltip__text-color);
-	z-index: 10;
-}
+/* The overview bar and its markers (their indicator popup is code-editor-indicator.css) */
 
 .code-editor__text {
     border-bottom: 1px solid transparent; /* Required to allow mouse drag selection on ace editor text inside this panel. */

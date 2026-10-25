@@ -125,7 +125,7 @@ public final class VisualisationEditorStories {
                     play.expect(play.queryByText("main.js")).toBeNull();
                     // Expand the folder from its expander, then open the file in the editor
                     play.click(play.within(play.getByText("src").closest("[role='treeitem']"))
-                            .querySelector(".explorerCell-expander"));
+                            .querySelector(".explorer-cell__expander"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
                     // Until a file is selected, the editor's area asks for one (it was blank)
                     final Query placeholder = play.getByText("Select a file to view or edit it");

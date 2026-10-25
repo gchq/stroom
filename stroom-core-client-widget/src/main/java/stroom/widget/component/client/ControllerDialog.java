@@ -113,7 +113,8 @@ public final class ControllerDialog {
     /// Hides a dialog at once, without asking its hide request handler, as `HidePopupEvent` does
     /// for a presenter's, e.g. a sub menu closed with its menu. It is then disposed.
     ///
-    /// @param dialog    The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param dialog    The controller shown with [#showOnce]. Hiding it again does nothing (the popup
+    ///                  manager no longer has it), and once it is disposed nothing is fired.
     /// @param autoClose Whether it is hidden by a click outside it, as its hide handler is told.
     /// @param ok        Whether it is hidden by its OK action, as its hide handler is told.
     public static void hide(final Controller dialog, final boolean autoClose, final boolean ok) {

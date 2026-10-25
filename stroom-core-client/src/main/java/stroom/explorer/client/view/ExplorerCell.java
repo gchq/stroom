@@ -63,15 +63,15 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
     private String getCellClassName() {
-        return "explorerCell";
+        return "explorer-cell";
     }
 
     public String getExpanderClassName() {
-        return getCellClassName() + "-expander";
+        return getCellClassName() + "__expander";
     }
 
     public String getTickBoxClassName() {
-        return getCellClassName() + "-tickBox";
+        return getCellClassName() + "__tick-box";
     }
 
     /// Sets what the tick boxes show, for a tick tree, whose items have them.
@@ -99,13 +99,13 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 expanderIcon = SvgImage.ARROW_RIGHT;
             }
 
-            // Indented by its depth (explorer-tree.css's explorerCell-expander)
+            // Indented by its depth (explorer-tree.css's explorer-cell__expander)
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
                     "--explorer-cell__depth", String.valueOf(node.getDepth()));
 
             // Add expander.
             final SafeHtml expanderIconSafeHtml;
-            String className = getCellClassName() + "-expander";
+            String className = getCellClassName() + "__expander";
             if (expanderIcon != null) {
                 expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
                 className += " " + expanderIcon.getClassName();
@@ -120,7 +120,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (tickBoxes) {
                 // The tick box as a picture: the tree item says whether it is ticked (aria-checked)
-                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox",
+                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "__tick-box",
                         TICK_BOX.getPicture(getValue(node)));
                 // Add tickbox
                 content.append(tickBoxHtml);
@@ -132,7 +132,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                         documentType.getDisplayType(),
                         documentType.getIcon(),
-                        getCellClassName() + "-icon");
+                        getCellClassName() + "__icon");
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
 
                 if (showAlerts) {
@@ -140,19 +140,19 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         builder.append(SvgImageUtil.toSafeHtml(
                                 buildAlertText(node),
                                 SvgImage.ALERT_SIMPLE,
-                                "svgIcon", "small", getCellClassName() + "-alert-icon"));
+                                "svgIcon", "small", getCellClassName() + "__alert-icon"));
                     }
                 }
 
                 content.append(template.div(
-                        getCellClassName() + "-icon-wrapper",
+                        getCellClassName() + "__icon-wrapper",
                         builder.toSafeHtml()));
             }
 
             if (node.getDisplayValue() != null) {
                 // Add text
                 final SafeHtml text = SafeHtmlUtils.fromString(node.getDisplayValue());
-                content.append(template.text(getCellClassName() + "-text", text.asString(), text));
+                content.append(template.text(getCellClassName() + "__text", text.asString(), text));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
@@ -167,9 +167,9 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             // We style the non-matches rather than the matches
             final String filterMatchClass;
             if (node.hasNodeFlag(NodeFlag.FILTER_MATCH)) {
-                filterMatchClass = getCellClassName() + "-" + "filter-match";
+                filterMatchClass = getCellClassName() + "--filter-match";
             } else if (node.hasNodeFlag(NodeFlag.FILTER_NON_MATCH)) {
-                filterMatchClass = getCellClassName() + "-" + "filter-no-match";
+                filterMatchClass = getCellClassName() + "--filter-no-match";
             } else {
                 filterMatchClass = "";
             }
@@ -228,7 +228,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
         SafeHtml text(String className, String title, SafeHtml content);
 
-        @Template("<div class=\"explorerCell {0}\">{1}</div>")
+        @Template("<div class=\"explorer-cell {0}\">{1}</div>")
         SafeHtml outer(String extraClassName, SafeHtml content);
     }
 }

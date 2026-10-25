@@ -207,7 +207,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     /// real `<label for>`. The rest cannot be: a `for` attribute only
     /// reaches a labelable element, and these rows hold either a composite widget
     /// (whose root is a wrapper `div` with the input nested inside), an
-    /// injected picker view, or two inputs under one label. Each of those is named
+    /// picker (a button named by the value it shows), or two inputs under one label. Each of those is named
     /// here instead — as a group for the row, plus an individual name per input so
     /// "X" and "Y" are distinguishable.
     ///

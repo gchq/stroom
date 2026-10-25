@@ -22,6 +22,7 @@ import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.component.ChooserController;
 import stroom.annotation.client.component.ChooserController.DataSupplier;
 import stroom.annotation.client.component.MultiChooserController;
+import stroom.annotation.client.component.OpenChooser;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
@@ -154,6 +155,7 @@ public class AnnotationEditPresenter
     private final Provider<ChooserController<AnnotationTag>> chooserProvider;
     private final UserRefPopupPresenter assignedToPresenter;
     private final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider;
+    private final OpenChooser openChooser = new OpenChooser();
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private final DurationPresenter retentionDurationProvider;
@@ -1415,6 +1417,9 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
+        if (openChooser.closeIfOpenedFrom(element)) {
+            return;
+        }
         final ChooserController<AnnotationTag> chooser = chooserProvider.get();
         chooser.setDataSupplier(tagSupplier(AnnotationTagType.STATUS));
         chooser.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
@@ -1426,6 +1431,7 @@ public class AnnotationEditPresenter
                 chooser.hide();
             }
         });
+        openChooser.opened(chooser, element);
     }
 
     @Override
@@ -1442,17 +1448,24 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
+        if (openChooser.closeIfOpenedFrom(element)) {
+            return;
+        }
         final MultiChooserController<AnnotationTag> chooser = multiChooserProvider.get();
         chooser.setDataSupplier(tagSupplier(AnnotationTagType.LABEL));
         chooser.setDisplayValueFunction(Lozenge::create);
         chooser.setAccessibleName("Labels");
         chooser.setSelectedItems(currentLabels);
         chooser.show(this, element, "Choose Labels", this::changeAnnotationLabels);
+        openChooser.opened(chooser, element);
     }
 
     @Override
     public void showCollectionChooser(final Element element) {
         if (isReadOnly()) {
+            return;
+        }
+        if (openChooser.closeIfOpenedFrom(element)) {
             return;
         }
         final MultiChooserController<AnnotationTag> chooser = multiChooserProvider.get();
@@ -1461,11 +1474,15 @@ public class AnnotationEditPresenter
         chooser.setAccessibleName("Collections");
         chooser.setSelectedItems(currentCollections);
         chooser.show(this, element, "Choose Collections", this::changeAnnotationCollections);
+        openChooser.opened(chooser, element);
     }
 
     @Override
     public void showCommentChooser(final Element element) {
         if (isReadOnly()) {
+            return;
+        }
+        if (openChooser.closeIfOpenedFrom(element)) {
             return;
         }
         final ChooserController<AnnotationTag> chooser = chooserProvider.get();
@@ -1478,6 +1495,7 @@ public class AnnotationEditPresenter
                 chooser.hide();
             }
         });
+        openChooser.opened(chooser, element);
     }
 
     @Override

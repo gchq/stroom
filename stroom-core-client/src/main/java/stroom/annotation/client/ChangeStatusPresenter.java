@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.component.ChooserController;
+import stroom.annotation.client.component.OpenChooser;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.FindAnnotationTagCriteria;
@@ -49,6 +50,7 @@ public class ChangeStatusPresenter
 
     private final AnnotationResourceClient annotationResourceClient;
     private final Provider<ChooserController<AnnotationTag>> chooserProvider;
+    private final OpenChooser openChooser = new OpenChooser();
     private AnnotationTag currentStatus;
 
     @Inject
@@ -114,6 +116,9 @@ public class ChangeStatusPresenter
 
     @Override
     public void showStatusChooser(final Element element) {
+        if (openChooser.closeIfOpenedFrom(element)) {
+            return;
+        }
         final ChooserController<AnnotationTag> chooser = chooserProvider.get();
         chooser.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
@@ -130,6 +135,7 @@ public class ChangeStatusPresenter
                 chooser.hide();
             }
         });
+        openChooser.opened(chooser, element);
     }
 
     public interface ChangeStatusView extends View, Focus, HasUiHandlers<ChangeStatusUiHandlers> {

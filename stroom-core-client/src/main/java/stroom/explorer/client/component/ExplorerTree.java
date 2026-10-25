@@ -57,7 +57,7 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -133,11 +133,6 @@ public class ExplorerTree extends Component implements Focus {
         expanderClassName = explorerCell.getExpanderClassName();
 
         tree.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
-        tree.setProfile(DataGridProfile.TREE);
-        // The explorer's cells draw their own padding; a long name scrolls the tree sideways
-        tree.setCellPadding(false);
-        tree.setFitWidth(true);
-        tree.hasContextMenu(false);
         tree.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
             public ExplorerNode getValue(final ExplorerNode object) {
@@ -291,13 +286,17 @@ public class ExplorerTree extends Component implements Focus {
     /// @param explorerNode The item.
     /// @param selected     Whether it is ticked.
     public void setTicked(final ExplorerNode explorerNode, final boolean selected) {
-        tickBoxSelectionModel.setSelected(explorerNode, selected);
-        reload();
+        if (tickBoxSelectionModel != null) {
+            tickBoxSelectionModel.setSelected(explorerNode, selected);
+            reload();
+        }
     }
 
-    /// @return The ticked items of a tick tree.
+    /// @return The ticked items of a tick tree, or none for a tree without tick boxes.
     public Set<ExplorerNode> getTickedSet() {
-        return tickBoxSelectionModel.getSelectedSet();
+        return tickBoxSelectionModel != null
+                ? tickBoxSelectionModel.getSelectedSet()
+                : Collections.emptySet();
     }
 
     /// @param handler Told when an item's menu is asked for (a right click, or the context menu key).

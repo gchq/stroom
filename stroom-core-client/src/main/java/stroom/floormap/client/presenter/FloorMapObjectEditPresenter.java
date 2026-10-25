@@ -727,9 +727,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         /// placed purely by its world-to-map matrix.
         void setAreaFieldsVisible(boolean visible);
 
-        /// Installs the image-chooser (asset dropdown) widget into the form.
-        ///
-        /// @param widget the dropdown widget; must not be `null`
+        /// @return The box the image picker (an asset selection controller) is attached to.
         DropDownBox getAssetBox();
 
         /// The display name of the first geometry field holding something that is not a

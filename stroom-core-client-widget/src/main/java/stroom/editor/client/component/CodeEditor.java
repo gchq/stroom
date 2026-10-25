@@ -47,7 +47,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
@@ -55,7 +54,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-/// A code editor (BEM block `code-editor`, `editor.css`): text in Ace ([Editor]), e.g. XSLT or a
+/// A code editor (BEM block `code-editor`, `code-editor.css`): text in Ace ([Editor]), e.g. XSLT or a
 /// query, with an overview bar ([RightBar]) of its errors and warnings beside it, which shows them
 /// in a popup ([IndicatorPopup]) as the mouse moves over it. An error loading the text is shown in
 /// its place ([#setErrorText]).
@@ -66,7 +65,8 @@ import java.util.stream.Collectors;
 public class CodeEditor extends Component implements View {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // Shared by every editor, as only the one under the mouse shows it
+    // Never shown: the overview bar shows its own, which hides itself on a click (see ISSUES.md;
+    // kept until removals are allowed)
     private static final IndicatorPopup INDICATOR_POPUP = new IndicatorPopup();
     private static final String HIGHLIGHT_CLASS = "code-editor__highlight";
 
@@ -216,14 +216,6 @@ public class CodeEditor extends Component implements View {
         }
     }
 
-    /// Sets the mode the text is highlighted for. See [CodeEditorOptions#setMode] for the mode
-    /// that follows Syntax Highlighting.
-    ///
-    /// @param mode The mode, e.g. XML.
-    public void setMode(final AceEditorMode mode) {
-        editor.setMode(mode);
-    }
-
     /// @param theme The Ace theme the text is shown in.
     public void setTheme(final AceEditorTheme theme) {
         editor.setTheme(theme);
@@ -250,7 +242,7 @@ public class CodeEditor extends Component implements View {
         editor.setReadOnly(readOnly);
     }
 
-    // Lays the text and the overview bar out for the size they now have
+    /// Lays the text and the overview bar out for the size they now have.
     void layout() {
         editor.onResize();
         rightBar.render(indicators, showIndicators);

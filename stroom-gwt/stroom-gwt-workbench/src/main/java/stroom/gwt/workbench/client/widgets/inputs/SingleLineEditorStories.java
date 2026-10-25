@@ -27,6 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -55,31 +58,37 @@ public final class SingleLineEditorStories {
                 // A single-line, code-styled editor input
                 .story("Basic", context -> {
                     // The Ace based editor has no placeholder.
-                    final SingleLineCodeEditorController controller = singleLineEditor(context, "${feed}");
-                    return controller.asWidget();
+                    final SingleLineCodeEditorController controller = singleLineEditor(context, "${feed}", false);
+                    return controller.getEditor();
                 })
                 // Read-only - value cannot be edited
                 .story("ReadOnly", context -> {
-                    final SingleLineCodeEditorController controller = singleLineEditor(context, "read-only value");
-                    controller.setReadOnly(true);
-                    return controller.asWidget();
+                    final SingleLineCodeEditorController controller =
+                            singleLineEditor(context, "read-only value", true);
+                    return controller.getEditor();
                 });
     }
 
+    // The editor, owned by a root that says whether it is read only, as a document's tab does
     private static SingleLineCodeEditorController singleLineEditor(final StoryContext context,
-                                                                   final String text) {
+                                                                   final String text,
+                                                                   final boolean readOnly) {
         final SimpleEventBus eventBus = new SimpleEventBus();
+        final SingleLineCodeEditor view = new SingleLineCodeEditor();
         final SingleLineCodeEditorController controller = new SingleLineCodeEditorController(
                 eventBus,
-                new SingleLineCodeEditor(),
                 new AceEditorController(
                         eventBus,
                         getDelegatingAceCompleter(),
                         currentPreferences(),
-                        new NoOpGlobalKeyHandler()));
+                        new NoOpGlobalKeyHandler()))
+                .attach(view);
+        final ControllerNode root = ControllerNode.root("story");
+        root.provide(Contexts.READ_ONLY, ContextValue.of(readOnly));
+        root.adopt(controller.getControllerNode());
         controller.setText(text);
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
-        controller.addValueChangeHandler(event -> onChange.call(event.getValue()));
+        controller.setOnChange(onChange::call);
         return controller;
     }
 

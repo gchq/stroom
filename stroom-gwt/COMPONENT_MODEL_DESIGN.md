@@ -587,8 +587,8 @@ been tried with a screen reader.
 
 ## Pickers
 
-The document and user pickers (`DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, drawn by
-`DropDownView`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
+The document and user pickers (`DocSelectionController` and `UserRefSelectionController`, drawn by
+`DropDownBox`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
 quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of users and groups
 (`UserRefPopupPresenter`). Enter or Space on a picker opens it.
 
@@ -620,7 +620,7 @@ Its field look, and its read-only and disabled looks, are the shared `stroom-con
 A document that can't be found (deleted, or not visible to the user) is a problem with the field's
 value, so it is shown as #5409's form feedback is, not behind a button: the picker is
 `aria-invalid`, with the red border of an invalid field, and described by a message under it
-(`DropDownView.setProblem(short, full)`). The message is short ("'Deleted Feed' can't be found, or
+(`DropDownBox.setProblem(short, full)`). The message is short ("'Deleted Feed' can't be found, or
 you don't have permission to see it."), with the full one (the id, and what to do) as its tooltip
 and what screen readers read; in a form group it is the group's feedback
 (`FormGroup.setFeedback(short, full)`), and outside one a line of the picker's own
@@ -698,7 +698,7 @@ Stroom's code editor (`Editor`, in `CodeEditor` and `SingleLineCodeEditor`) is A
 - **The gutter.** The mode also makes the gutter a tab stop, with the arrow keys through its fold widgets and annotations; `Editor` puts it back as Ace makes it (no `tabindex`, `aria-hidden`), as agreed, so an editor is one tab stop and a thin splitter beside one keeps the room WCAG 2.5.8 asks for. Its errors and folds have Ace's keys while editing instead: Alt+E and Alt+Shift+E (F4 and Shift+F4 on a Mac) go to the next and previous annotation and show its message under its line; F2 folds or unfolds the line's element, Alt+L and Alt+Shift+L fold and unfold at the cursor.
 - **Escape.** The editor handles Escape first: Ace's popups (autocompletion, the search box) close on it, Vim keys leave insert or visual mode on it, and only then does it stop editing. Dialogs leave keys from Ace's text input to Ace (`AbstractPopupPanel` checks for `ace_text-input`), so in a dialog the first Escape stops editing and the next one, from the content, cancels the dialog, as Escape reaches an inner widget first everywhere else.
 - **Names.** Ace names the content ("Editor content, press Enter to start editing, press Escape to exit"), and labels its text input with the cursor's row, after Stroom's name for it ("Code editor, Cursor at row 3", through Ace's `textInputAriaLabel`). The text input is a `textbox`, `aria-readonly` when the editor is read only. Ace hides its drawn lines from screen readers (`aria-hidden`), which read the text through its input.
-- **Focus.** Ace's own ring (a box shadow in a fixed blue, on any focus) is replaced in `editor.css` by a 2px outline inside the content's edge, for keyboard focus only (`:focus-visible`), so it stays in forced colours. Its colour follows the editor's theme (`ace_dark`), not Stroom's, as a user can pair any editor theme with either Stroom theme: `--blue-800` on light editor themes (4.2:1 or more, measured on every theme's gutter), `--blue-300` on dark ones (4.9:1 or more).
+- **Focus.** Ace's own ring (a box shadow in a fixed blue, on any focus) is replaced in `code-editor.css` by a 2px outline inside the content's edge, for keyboard focus only (`:focus-visible`), so it stays in forced colours. Its colour follows the editor's theme (`ace_dark`), not Stroom's, as a user can pair any editor theme with either Stroom theme: `--blue-800` on light editor themes (4.2:1 or more, measured on every theme's gutter), `--blue-300` on dark ones (4.9:1 or more).
 
 Stories `Widgets/Editors & Viewers/AceEditor` (`AceEditorStories`): `KeyboardWayOut` (the one tab stop, Enter, Tab indenting, Escape, Tab out and Shift+Tab back), `KeyboardErrorsAndFolds` (Alt+E and F2 while editing) and `KeyboardReadOnly`; `AceEditorFeatures` `VimKeys` (Escape out of insert mode, then out of editing); `App/Editors/QueryEditor` `ColumnFilterMenu` (Escape in a dialog's editor leaves the dialog open). Real input (`test-runner/lib/real-input/ace-editor.mjs`): real Tab, Enter and Escape through `KeyboardWayOut`, with the focus ring shown.
 

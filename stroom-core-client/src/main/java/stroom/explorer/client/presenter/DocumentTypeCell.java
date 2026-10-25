@@ -39,9 +39,9 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
     @Override
     public void render(final Context context, final DocumentType item, final SafeHtmlBuilder sb) {
         if (item != null) {
-            final SafeHtml iconHtml = SvgImageUtil.toSafeHtml(item.getIcon(), "explorerCell-icon");
+            final SafeHtml iconHtml = SvgImageUtil.toSafeHtml(item.getIcon(), "explorer-cell__icon");
 
-            final SafeHtml textHtml = Templates.div("explorerCell-text",
+            final SafeHtml textHtml = Templates.div("explorer-cell__text",
                     SafeHtmlUtils.fromString(item.getDisplayType()));
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
@@ -50,7 +50,7 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(Templates.div("explorerCell", content.toSafeHtml()));
+            sb.append(Templates.div("explorer-cell", content.toSafeHtml()));
         }
     }
 }

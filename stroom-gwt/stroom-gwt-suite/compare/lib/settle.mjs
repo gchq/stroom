@@ -175,7 +175,7 @@ export async function settleExplorer(page, { label = 'explorer', budget = 15_000
     page,
     async () =>
       page.evaluate(
-        `(() => [...document.querySelectorAll('.explorerCell')].filter((e) => {
+        `(() => [...document.querySelectorAll('.explorer-cell')].filter((e) => {
             const r = e.getBoundingClientRect();
             return r.width > 0 && r.height > 0;
           }).length)()`,

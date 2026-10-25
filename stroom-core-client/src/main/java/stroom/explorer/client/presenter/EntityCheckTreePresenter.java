@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.shared.ExplorerNode;
@@ -29,7 +28,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
 import java.util.Set;
@@ -49,7 +47,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         explorerTree = new ExplorerTree();
         explorerTree.setTickBoxes(true);
         treeController = make(explorerTreeControllerProvider).attach(explorerTree);
-        treeController.setTaskMonitorFactory(this);
         treeController.setShowAlerts(true);
         view.setCellTree(explorerTree);
     }

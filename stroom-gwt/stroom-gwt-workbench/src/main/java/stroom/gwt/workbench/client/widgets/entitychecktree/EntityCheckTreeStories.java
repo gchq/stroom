@@ -85,7 +85,7 @@ public final class EntityCheckTreeStories {
     }
 
     private static Query expander(final Play play, final String name) {
-        return play.within(play.getByText(name).closest(".explorerCell")).querySelector(".explorerCell-expander");
+        return play.within(play.getByText(name).closest(".explorer-cell")).querySelector(".explorer-cell__expander");
     }
 
     /// The tree over the sorted uuids of the ticked nodes.

@@ -52,7 +52,6 @@ import java.util.function.Consumer;
 /// ```java
 /// final ExplorerTree tree = new ExplorerTree();
 /// treeController = make(explorerTreeControllerProvider).attach(tree);
-/// treeController.setTaskMonitorFactory(this);
 /// treeController.setIncludedTypes(...);
 /// treeController.refresh();
 /// ```
@@ -102,12 +101,14 @@ public class ExplorerTreeController extends Controller {
         explorerTree.setOnToggleOpen(this::toggleOpenState);
         explorerTree.setOnReload(this::refresh);
         explorerTree.setIncludeNullSelection(includeNullSelection);
+        explorerTree.setShowAlerts(showAlerts);
         return this;
     }
 
-    /// Says what shows the progress of fetching the nodes, e.g. the screen showing the tree.
+    /// Says what shows the progress of fetching the nodes, in place of what its owners provide
+    /// ([stroom.widget.component.client.Contexts#TASK_MONITOR]), e.g. the explorer's own spinner.
     ///
-    /// @param taskMonitorFactory What shows it, or null for Stroom's busy indicator.
+    /// @param taskMonitorFactory What shows it, or null for what its owners provide.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }
@@ -132,7 +133,9 @@ public class ExplorerTreeController extends Controller {
     /// @param showAlerts Whether to show them.
     public void setShowAlerts(final boolean showAlerts) {
         this.showAlerts = showAlerts;
-        explorerTree.setShowAlerts(showAlerts);
+        if (explorerTree != null) {
+            explorerTree.setShowAlerts(showAlerts);
+        }
     }
 
     /// Filters the tree by name as the user types, fetching once they pause.

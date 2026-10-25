@@ -44,7 +44,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     private static final SafeHtml DICT_ICON_HTML = SvgImageUtil.toSafeHtml(
             "Source Dictionary",
             SvgImage.DOCUMENT_DICTIONARY,
-            "explorerCell-icon");
+            "explorer-cell__icon");
 
     private final Widget widget;
 

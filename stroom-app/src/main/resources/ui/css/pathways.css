@@ -631,8 +631,9 @@
     transition: all 0.2s ease;
 }
 
-/* Operation-name indentation is applied inline (padding-left = depth * 30px) by
- * TraceOverviewWidget.appendOperationItem, so it works at any nesting depth. */
+/* Operation-name indentation is .operation-content's padding-left, from the span's depth
+ * (--operation__depth, set by TraceOverviewWidget.appendOperationContent), so it works at any
+ * nesting depth. */
 
 /* ---- Traces toolbar ---- */
 

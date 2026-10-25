@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.shared.ExplorerNode;
@@ -59,7 +58,6 @@ public class EntityTreePresenter
         // Debatable whether we want to show alerts or not (it doesn't)
         explorerTree = new ExplorerTree();
         treeController = make(explorerTreeControllerProvider).attach(explorerTree);
-        treeController.setTaskMonitorFactory(this);
 
         // Add views.
         view.setCellTree(explorerTree);

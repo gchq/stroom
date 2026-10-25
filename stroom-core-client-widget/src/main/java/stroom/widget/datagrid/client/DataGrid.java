@@ -904,6 +904,13 @@ public class DataGrid<R> extends Widget
         this.hasContextMenu = hasContextMenu;
     }
 
+    /// As [#hasContextMenu(boolean)], as a setter a template can call (`hasContextMenu="false"`).
+    ///
+    /// @param hasContextMenu Whether right-clicking shows the grid's context menu.
+    public void setHasContextMenu(final boolean hasContextMenu) {
+        hasContextMenu(hasContextMenu);
+    }
+
     /// @return Whether right-clicking shows the grid's context menu.
     public boolean hasContextMenu() {
         return hasContextMenu;

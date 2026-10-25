@@ -60,7 +60,7 @@ public final class ExplorerTreeStories {
     private static final String ON_NAME_FILTER_CHANGE = "onNameFilterChange";
     // The tree's chosen items
     private static final String SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
-    private static final String EXPANDER = ".explorerCell-expander";
+    private static final String EXPANDER = ".explorer-cell__expander";
 
     private ExplorerTreeStories() {
         // Static utility
@@ -196,7 +196,7 @@ public final class ExplorerTreeStories {
         // Arrives open: System's children are visible and its arrow points down
         play.findByText(shownText);
         play.expect(play.getByText("Feeds")).toBeInTheDocument();
-        final Query expander = play.within(play.getByText("System").closest(".explorerCell")).querySelector(EXPANDER);
+        final Query expander = play.within(play.getByText("System").closest(".explorer-cell")).querySelector(EXPANDER);
         play.expect(expander.className()).toMatch("arrow-down");
         // One click collapses it
         play.click(expander);
@@ -304,7 +304,7 @@ public final class ExplorerTreeStories {
             if ("treeitem".equals(row.getAttribute("role")) && "true".equals(row.getAttribute("aria-selected"))) {
                 final NodeList<Element> divs = row.getElementsByTagName("div");
                 for (int j = 0; j < divs.getLength(); j++) {
-                    if (divs.getItem(j).hasClassName("explorerCell-text")) {
+                    if (divs.getItem(j).hasClassName("explorer-cell__text")) {
                         names.add(divs.getItem(j).getInnerText());
                     }
                 }

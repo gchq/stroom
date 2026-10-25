@@ -27,7 +27,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// A single line code editor (BEM block `code-editor`, `editor.css`): one line of text in Ace
+/// A single line code editor (BEM block `code-editor`, `code-editor.css`): one line of text in Ace
 /// ([Editor]), e.g. a property's value with `${...}` parameters in it. Its
 /// [SingleLineCodeEditorController] sets it up.
 public class SingleLineCodeEditor extends Component {
