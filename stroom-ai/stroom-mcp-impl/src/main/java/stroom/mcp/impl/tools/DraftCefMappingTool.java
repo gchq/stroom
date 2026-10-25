@@ -55,6 +55,7 @@ import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventStreams;
+import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -127,6 +128,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     private final CefSources sources;
     private final XsltSaves saves;
     private final BuildPlan plan;
+    private final XsltCompileCheck compileCheck;
+    private final CefChoices choices;
 
     @Inject
     DraftCefMappingTool(final AgentInstructions agentInstructions,
@@ -137,7 +140,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                         final DocumentAccess documentAccess,
                         final CefSources sources,
                         final XsltSaves saves,
-                        final BuildPlan plan) {
+                        final BuildPlan plan,
+                        final XsltCompileCheck compileCheck,
+                        final CefChoices choices) {
         this.agentInstructions = agentInstructions;
         this.consent = consent;
         this.eventStreams = eventStreams;
@@ -147,6 +152,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         this.sources = sources;
         this.saves = saves;
         this.plan = plan;
+        this.compileCheck = compileCheck;
+        this.choices = choices;
     }
 
     @Override
@@ -309,7 +316,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     Map<String, Object> draft(final ToolCall call, final ToolCallContext context, final Request request) {
         final Standing standing = instructions(context, request.folders(), request.feeds());
         final Map<String, Object> said = CefInstructions.fromInstructions(standing.texts());
-        final Optional<Boolean> asked = customKeys(call, context, request.customKeys(), said);
+        final Optional<Boolean> asked = customKeys(call, context, request, said);
         if (asked.isEmpty()) {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("status", "needs_guidance");
@@ -328,6 +335,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final List<String> done;
         final Map<CefDocs.KindKey, String> examples;
         final Optional<KeptMappings.KeptXslt> reviewedKept;
+        // The sample Events, for what the documentation says of them.
+        final List<XmlElement> sampled;
         if (request.pipelineUuid() != null) {
             reviewedKept = keptMappings.keptXslt(request.pipelineUuid());
             final Stepped stepped = stepped(context, request.pipelineUuid(), request.streamIds(),
@@ -338,6 +347,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                                       + "Events streams it reads, and step_sample it");
             }
             final List<XmlElement> events = stepped.events().stream().filter(e -> e != null).toList();
+            sampled = events;
             final Map<String, Object> reviewed = CefLines.review(stepped.lines(), events, allowed);
             result.put("review", reviewed);
             if (stepped.stopped()) {
@@ -363,6 +373,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                     : "s"));
             final List<XmlElement> events = CefEvents.eventsOf(eventStreams.read(request.streamIds(), cap)
                     .eventsXml());
+            sampled = events;
             if (request.uuid() != null) {
                 final Applied overridden = apply(keptPlan(request.uuid()), applied);
                 drafted = overridden.plan();
@@ -419,7 +430,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         result.put("plan", drafted.toJson(DumpMode.COMPACT));
         result.put("problems", problems);
         result.put("not_sent", drafted.notSent());
-        result.put("documentation", "## Field mapping\n\n" + drafted.markdown(examples, null, null));
+        result.put("documentation", "## Field mapping\n\n" + drafted.markdown(examples, sampled, null, null));
         fromStandingInstructions(said).ifPresent(from -> result.put("from_standing_instructions", from));
         if (!standing.instructions().isEmpty()) {
             result.put("standing_instructions", standing.instructions());
@@ -477,6 +488,16 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                         : target != null
                                 ? "Saved again from its CEF plan"
                                 : "Created from its CEF plan";
+        // Compiled as Stroom compiles it, so one that wouldn't run isn't saved (not in the Stroom MCP server; seen: a
+        // record key's undeclared prefix found only by Stroom's log when the pipeline ran).
+        final List<String> errors = compileCheck.compile(toSave.xslt()).errors();
+        if (!errors.isEmpty()) {
+            result.put("problems", errors.stream().map(error -> "the XSLT doesn't compile: " + error).toList());
+            result.put("saved", null);
+            result.put("hint", "Not saved: the XSLT the plan writes doesn't compile. Fix what it reads (kafka_key, "
+                               + "an override's path) and call again.");
+            return result;
+        }
         final TranslationDocs.Source source = TranslationDocs.Source.of(toSave);
         final Map<String, Object> saved = target != null
                 ? saves.update(call, context, target, toSave.xslt(), null, source, change, request.discardHandEdit(),
@@ -739,19 +760,50 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                + "Events stream_ids: its Field mapping section is the plan's tables.";
     }
 
-    // The user's answer: given, from the standing instructions, or asked now (a form; else the agent asks).
+    // The user's answer: given, from the standing instructions, the plan kept with the XSLT the call works on, the
+    // user's answer for the build earlier, or asked now (a form; else the agent asks), and then kept for the build.
+    // Not in the Stroom MCP server, which asked every call not given it (seen: asked again to review a pipeline
+    // whose kept plan said, and again to save after that).
     private Optional<Boolean> customKeys(final ToolCall call,
                                          final ToolCallContext context,
-                                         final Boolean given,
+                                         final Request request,
                                          final Map<String, Object> said) {
-        if (given != null) {
-            return Optional.of(given);
+        if (request.customKeys() != null) {
+            choices.chooseCustomKeys(request.build(), request.customKeys());
+            return Optional.of(request.customKeys());
         }
         if (said.get(CefInstructions.CUSTOM_KEYS) instanceof final Boolean instructed) {
             return Optional.of(instructed);
         }
-        return consent.choose(call, context, NAME, CUSTOM_QUESTION, CUSTOM_OPTIONS, null)
+        final Optional<Boolean> kept = keptCustomKeys(request);
+        if (kept.isPresent()) {
+            return kept;
+        }
+        final Optional<Boolean> earlier = choices.customKeys(request.build());
+        if (earlier.isPresent()) {
+            return earlier;
+        }
+        final Optional<Boolean> chosen = consent.choose(call, context, NAME, CUSTOM_QUESTION, CUSTOM_OPTIONS, null)
                 .map(CUSTOM_OPTIONS.get(1)::equals);
+        chosen.ifPresent(allowed -> choices.chooseCustomKeys(request.build(), allowed));
+        return chosen;
+    }
+
+    // What the plan kept with the XSLT the call works on says: one given by uuid, or the one a pipeline runs.
+    private Optional<Boolean> keptCustomKeys(final Request request) {
+        try {
+            if (request.uuid() != null) {
+                return Optional.of(keptPlan(request.uuid()).customKeys());
+            }
+            if (request.pipelineUuid() != null) {
+                return keptMappings.keptXslt(request.pipelineUuid())
+                        .filter(kept -> XsltSaves.CEF.equals(kept.kept().kind()))
+                        .map(kept -> CefPlan.fromJson(kept.kept().payload()).customKeys());
+            }
+        } catch (final RuntimeException e) {
+            // No plan to go by: asked, as without one.
+        }
+        return Optional.empty();
     }
 
     // The standing instructions where the pipeline will be: their texts, and the docs as get_instructions gives
