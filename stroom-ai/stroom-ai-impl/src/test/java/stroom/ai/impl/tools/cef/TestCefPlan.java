@@ -153,6 +153,24 @@ class TestCefPlan {
     }
 
     @Test
+    void theDeviceVersionIsFromTheEventsSystemVersionHoweverFewHaveIt() {
+        // Asked for by the user: a feed can mix systems, so an Event with a version sends it; seen: no sample Event
+        // had one, and the plan's empty constant would have stayed empty for any that did.
+        final String versions = "<Version>11.4</Version>";
+        final String none = CefFixtures.EVENTS.replace(versions, "");
+        final int first = CefFixtures.EVENTS.indexOf(versions) + versions.length();
+        final String one = CefFixtures.EVENTS.substring(0, first)
+                           + CefFixtures.EVENTS.substring(first).replace(versions, "");
+
+        for (final String events : List.of(none, one)) {
+            final CefPlan plan = CefDraft.draft(CefEvents.eventsOf(events), false, List.of(), null, CefPlan.KAFKA,
+                    "t", null).plan();
+            assertThat(plan.header("version")).isEqualTo(CefValue.from("EventSource/System/Version"));
+            assertThat(plan.problems()).isEmpty();
+        }
+    }
+
+    @Test
     void overridesAndStandingInstructionsTakePrecedence() {
         final CefPlan plan = CefFixtures.drafted(false, FieldDocFixtures.json("""
                 [{"path": "EventDetail/Authenticate/User/Id", "key": "deviceCustomString6", "label": "Target user"},
