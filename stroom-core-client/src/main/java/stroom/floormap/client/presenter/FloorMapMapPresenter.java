@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
@@ -62,6 +63,7 @@ import stroom.widget.histogram.client.HistogramQueryHelper;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -91,7 +93,7 @@ import java.util.function.Consumer;
 /// ### Layout slots
 ///
 /// - [#MAP] – the [FloorMapCanvasPresenter] (canvas / visualisation)
-/// - [#DOCK] – the [FloorMapDockPresenter] (right-hand dock; hosts the
+/// - [#DOCK] – the [FloorMapDockController] (right-hand dock; hosts the
 ///   [FloorMapTrackingPresenter] tracking panel as its first tab, then
 ///   [FloorMapLayersPresenter] and [FloorMapGroupsPresenter])
 /// - [#TIMELINE] – the [FloorMapTimelinePresenter] (timeline scrubber)
@@ -387,7 +389,7 @@ public class FloorMapMapPresenter
                                 final Provider<FloorMapTrackingPresenter> floorMapEntityListPresenterProvider,
                                 final Provider<FloorMapLayersPresenter> floorMapLayersPresenterProvider,
                                 final Provider<FloorMapGroupsPresenter> floorMapGroupsPresenterProvider,
-                                final Provider<FloorMapDockPresenter> floorMapDockPresenterProvider,
+                                final Provider<FloorMapDockController> dockProvider,
                                 final Provider<FloorMapClusterPresenter> floorMapClusterPresenter) {
         super(eventBus, view);
 
@@ -397,15 +399,15 @@ public class FloorMapMapPresenter
         this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
         this.floorMapLayersPresenter = make(floorMapLayersPresenterProvider);
         this.floorMapGroupsPresenter = make(floorMapGroupsPresenterProvider);
-        final FloorMapDockPresenter floorMapDockPresenter = make(floorMapDockPresenterProvider);
+        final FloorMapDockController dock = make(dockProvider);
 
         // Default initial time
         this.selectedTime = System.currentTimeMillis();
 
         // The Tracking, Layers and Groups panels live as tabs of the right-hand dock.
-        floorMapDockPresenter.addTab("Tracking", floorMapTrackingPresenter);
-        floorMapDockPresenter.addTab("Layers", floorMapLayersPresenter);
-        floorMapDockPresenter.addTab("Groups", floorMapGroupsPresenter);
+        dock.addTab("Tracking", floorMapTrackingPresenter);
+        dock.addTab("Layers", floorMapLayersPresenter);
+        dock.addTab("Groups", floorMapGroupsPresenter);
         // Layer visibility is a transient view control on the Map tab; push
         // changes to the canvas as hidden / dimmed type sets.
         floorMapLayersPresenter.setChangeHandler(() ->
@@ -427,7 +429,7 @@ public class FloorMapMapPresenter
                 floorMapGroupsPresenter::createGroupWith);
 
         getView().setMapView(floorMapCanvasPresenter.getView());
-        getView().setDockView(floorMapDockPresenter.getView());
+        getView().setDockView(dock);
         getView().setTimelineView(floorMapTimelinePresenter.getView());
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
@@ -1791,7 +1793,7 @@ public class FloorMapMapPresenter
         /// Shows the right-hand dock beside the map.
         ///
         /// @param view Its view.
-        void setDockView(View view);
+        void setDockView(IsWidget view);
 
         /// Shows the timeline below the map.
         ///

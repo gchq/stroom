@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapSetScaleController;
 import stroom.floormap.client.editor.FloorMapDocSession;
@@ -68,6 +69,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -218,7 +220,7 @@ public class FloorMapEditorPresenter
                                    final Provider<FloorMapFactListPresenter> factListProvider,
                                    final Provider<FloorMapTimeListPresenter> timeListProvider,
                                    final Provider<FloorMapObjectEditPresenter> propertiesProvider,
-                                   final Provider<FloorMapDockPresenter> dockProvider,
+                                   final Provider<FloorMapDockController> dockProvider,
                                    final Provider<FloorMapLayersPresenter> layersProvider,
                                    final Provider<FloorMapLayerStyleController> layerStyleProvider,
                                    final Provider<FloorMapSetScaleController> setScaleProvider) {
@@ -239,7 +241,7 @@ public class FloorMapEditorPresenter
         // load.
         this.floorMapObjectEditPresenter.setAspectRatioResolver(
                 floorMapCanvasPresenter::getImageAspectRatio);
-        final FloorMapDockPresenter floorMapDockPresenter = make(dockProvider);
+        final FloorMapDockController dock = make(dockProvider);
         this.setScaleProvider = setScaleProvider;
         this.floorMapLayersPresenter = make(layersProvider);
         this.floorMapLayersPresenter.setEditorMode(true);
@@ -278,7 +280,7 @@ public class FloorMapEditorPresenter
         floorMapTimelinePresenter.setHelpContent(FloorMapEditorHelp.timeline());
 
         // The Layers panel is the Editor dock's tab.
-        floorMapDockPresenter.addTab("Layers", floorMapLayersPresenter);
+        dock.addTab("Layers", floorMapLayersPresenter);
         floorMapLayersPresenter.setChangeHandler(() -> {
             floorMapCanvasPresenter.setLayerVisibility(
                     floorMapLayersPresenter.getHiddenTypes(),
@@ -294,7 +296,7 @@ public class FloorMapEditorPresenter
         floorMapLayersPresenter.setDiscoverHandler(this::onDiscoverTypes);
 
         getView().setCanvasView(floorMapCanvasPresenter.getView());
-        getView().setDockView(floorMapDockPresenter.getView());
+        getView().setDockView(dock);
         getView().setTimelineView(floorMapTimelinePresenter.getView());
         getView().setFactListView(floorMapFactListPresenter.getView());
         getView().setTimeListView(floorMapTimeListPresenter.getView());
@@ -2184,7 +2186,7 @@ public class FloorMapEditorPresenter
         /// Shows the right-hand dock, which holds the Layers panel, beside the canvas.
         ///
         /// @param view Its view.
-        void setDockView(View view);
+        void setDockView(IsWidget view);
 
         /// Shows the timeline scrubber, a fixed-height strip above the lists.
         ///

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
-import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -31,54 +30,63 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/// A reusable, tabbed dock hosted on the right-hand edge of the Floor Map canvas
-/// in both the Map and Editor tabs. It holds control panels as curve tabs (the
+/// A reusable, tabbed dock ([FloorMapDock]) hosted on the right-hand edge of the Floor Map
+/// canvas in both the Map and Editor tabs. It holds control panels as curve tabs (the
 /// same chrome as the document tab bar) and shows the active tab's content in a
 /// [LayerContainer].
 ///
-/// Panels are registered with [#addTab(String, MyPresenterWidget)]; the
+/// Panels are registered with [#addTab(String, Controller)]; the
 /// first tab added becomes the active tab. This single call is the integration
 /// point for further panels — nothing else in the dock needs to
 /// change to host a new tab.
 ///
 /// Dock chrome state (which tab is active) is held transiently here; the host
 /// views own visibility and width (via their split panels).
-public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
+public class FloorMapDockController extends Controller {
 
-    /// Tab → its content presenter, in insertion (display) order.
-    private final Map<TabData, MyPresenterWidget<?>> tabContent = new LinkedHashMap<>();
+    private final FloorMapDock view;
+
+    /// Tab → its content's layer, in insertion (display) order.
+    private final Map<TabData, Layer> tabContent = new LinkedHashMap<>();
 
     private TabData selectedTab;
 
+    /// Made by GIN, with its dock.
+    ///
+    /// @param eventBus The application's event bus, which the tab bar's overflow menu is shown on.
+    /// @param view     The dock.
     @Inject
-    public FloorMapDockPresenter(final EventBus eventBus,
-                                 final FloorMapDockView view) {
-        super(eventBus, view);
-        own(getView().getTabBar()
-                .addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+    public FloorMapDockController(final EventBus eventBus,
+                                  final FloorMapDock view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        own(view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
         // The bar's overflow menu (tabs that don't fit) is shown by whoever handles the event
-        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        own(view.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
-    /// Adds a tab hosting the given content presenter.
+    /// Adds a tab showing the given content; its owner keeps owning it.
     ///
     /// @param label   the tab label
-    /// @param content the presenter shown when the tab is active
+    /// @param content the panel shown when the tab is active, e.g. a presenter
     /// @return the [TabData] handle for the new tab
-    public TabData addTab(final String label, final MyPresenterWidget<?> content) {
+    public TabData addTab(final String label, final Controller content) {
         final TabData tab = new TabDataImpl(label);
         addTab(tab, content);
         return tab;
     }
 
-    /// Adds a tab hosting the given content presenter, with full control over the
+    /// Adds a tab showing the given content, with full control over the
     /// tab's presentation (icon/tooltip/closeable) via the supplied [TabData].
     ///
     /// @param tab     the tab descriptor
-    /// @param content the presenter shown when the tab is active
-    public void addTab(final TabData tab, final MyPresenterWidget<?> content) {
-        tabContent.put(tab, content);
-        getView().getTabBar().addTab(tab);
+    /// @param content the panel shown when the tab is active, e.g. a presenter
+    public void addTab(final TabData tab, final Controller content) {
+        tabContent.put(tab, content instanceof final Layer layer
+                ? layer
+                : new ControllerLayer(content));
+        view.getTabBar().addTab(tab);
         // The first tab added becomes the active tab.
         if (selectedTab == null) {
             selectTab(tab);
@@ -92,12 +100,12 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
         if (tab == null) {
             return;
         }
-        final MyPresenterWidget<?> content = tabContent.get(tab);
+        final Layer content = tabContent.get(tab);
         if (content == null) {
             return;
         }
-        getView().getLayerContainer().show((Layer) content);
-        getView().getTabBar().selectTab(tab);
+        view.getLayerContainer().show(content);
+        view.getTabBar().selectTab(tab);
         selectedTab = tab;
     }
 
@@ -108,15 +116,6 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
 
     /// @return the tab bar, for callers that need to hide/show or query tabs.
     public TabBar getTabBar() {
-        return getView().getTabBar();
-    }
-
-    /// View contract for the dock: a tab bar plus a container for the active
-    /// tab's content.
-    public interface FloorMapDockView extends View {
-
-        TabBar getTabBar();
-
-        LayerContainer getLayerContainer();
+        return view.getTabBar();
     }
 }

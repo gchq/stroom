@@ -24,6 +24,7 @@ import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -169,7 +170,7 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
     }
 
     @Override
-    public void setDockView(final View view) {
+    public void setDockView(final IsWidget view) {
         dockPanel.setWidget(view.asWidget());
     }
 

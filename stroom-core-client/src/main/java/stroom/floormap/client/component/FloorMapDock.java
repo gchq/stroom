@@ -14,52 +14,48 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
-import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
+import stroom.widget.component.client.Component;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.presenter.TabBar;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-/// View for [stroom.floormap.client.presenter.FloorMapDockPresenter] — a
-/// curve-tab bar over a layer container. Structurally the same as
-/// `LinkTabPanelViewImpl`, kept as a dedicated pair to avoid re-binding the
-/// shared `LinkTabPanelView` for a second presenter.
-public class FloorMapDockViewImpl extends ViewImpl implements FloorMapDockView {
+/// The floor map's dock, which its [FloorMapDockController] fills: a curve-tab bar over a layer
+/// container. Structurally the same as `LinkTabPanelViewImpl`.
+public class FloorMapDock extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TabBar tabBar;
     @UiField
     LayerContainer layerContainer;
 
-    @Inject
-    public FloorMapDockViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the dock, with no tabs.
+    public FloorMapDock() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The tab bar.
     public TabBar getTabBar() {
         return tabBar;
     }
 
-    @Override
+    /// @return The container showing the active tab's content.
     public LayerContainer getLayerContainer() {
         return layerContainer;
     }
 
-    public interface Binder extends UiBinder<Widget, FloorMapDockViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FloorMapDock> {
 
     }
 }
