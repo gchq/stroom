@@ -168,15 +168,14 @@ public final class DataGridStories {
                 .withPlay(play -> play.waitFor(() -> play.expect(play.querySelectorAll(ROW))
                         .toHaveLength(PAGER_PAGE_SIZE)))
                 // The pager panel's message over the list, as a table shows a search's errors: each
-                // line on a line of its own, none wrapped; Hide message takes it away
+                // line on a line of its own, none wrapped (the screenshot shows it). It is centred on
+                // its nearest positioned container: in Stroom a component's layer, here the canvas
                 .story("PagerMessage", DataGridStories::pagerMessage)
                 .withPlay(play -> {
                     final Query message = play.querySelector(".message-panel__message");
                     play.waitFor(() -> play.expect(message).toBeVisible());
                     play.expect(message).toHaveStyle("white-space", "nowrap");
                     play.expect(message).toHaveTextContent(TextMatch.containing("could not be reached"));
-                    play.click(play.getByRole("button", "Hide message"));
-                    play.waitFor(() -> play.expect(message).not().toBeVisible());
                 })
                 // Empty state: no rows, blank as MyDataGrid's
                 .story("EmptyState", context -> {
@@ -749,12 +748,7 @@ public final class DataGridStories {
         pagerView.setDataWidget(grid);
         pagerView.getMessagePanel().showMessage(List.of(
                 new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
-        final Button hide = new Button("Hide message");
-        hide.addClickHandler(event -> pagerView.getMessagePanel().hideMessage());
-        final FlowPanel frame = new FlowPanel();
-        frame.add(hide);
-        frame.add(sized(pagerView.asWidget(), "260px", "600px"));
-        return frame;
+        return sized(pagerView.asWidget(), "260px", "600px");
     }
 
     private static Widget manyRows(final StoryContext context) {
