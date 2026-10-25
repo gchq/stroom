@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.view;
+package stroom.credentials.client.component;
 
-import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.credentials.shared.Secret;
+import stroom.credentials.shared.SshKeySecret;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
-import javax.inject.Inject;
+/// The secret of an SSH key credential: the private key, which is required, its pass phrase, and
+/// the known hosts it is verified against.
+public final class SshKeySecretForm extends Component implements SecretForm {
 
-public class SshKeySecretViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements SshKeySecretView {
-
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     PasswordBox passPhrase;
@@ -45,13 +43,11 @@ public class SshKeySecretViewImpl
     @UiField
     TextArea knownHosts;
 
-    @Inject
-    @SuppressWarnings({"unused", "checkstyle:linelength"})
-    public SshKeySecretViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-
-        passPhrase.setPlaceholder("Enter Pass Phrase");
-        passPhrase.setSecretName("pass phrase");
+    /// Makes an empty form, verifying hosts.
+    @SuppressWarnings("checkstyle:linelength")
+    public SshKeySecretForm() {
+        initWidget(BINDER.createAndBindUi(this));
+        // GWT's TextArea has no placeholder setter for its template
         privateKey.getElement().setAttribute("placeholder", """
                 Example:
                 -----BEGIN OPENSSH PRIVATE KEY-----
@@ -68,48 +64,20 @@ public class SshKeySecretViewImpl
     }
 
     @Override
-    public Widget asWidget() {
-        return widget;
+    public Secret getSecret() {
+        return new SshKeySecret(
+                passPhrase.getValue(),
+                privateKey.getValue(),
+                verifyHosts.getValue(),
+                knownHosts.getValue());
     }
 
     @Override
-    public String getPassPhrase() {
-        return passPhrase.getValue();
-    }
-
-    @Override
-    public void setPassPhrase(final String passPhrase) {
-        this.passPhrase.setValue(passPhrase);
-    }
-
-    @Override
-    public String getPrivateKey() {
-        return privateKey.getValue();
-    }
-
-    @Override
-    public void setPrivateKey(final String privateKey) {
-        this.privateKey.setValue(privateKey);
-    }
-
-    @Override
-    public boolean isVerifyHosts() {
-        return verifyHosts.getValue();
-    }
-
-    @Override
-    public void setVerifyHosts(final boolean verifyHosts) {
-        this.verifyHosts.setValue(verifyHosts);
-    }
-
-    @Override
-    public String getKnownHosts() {
-        return knownHosts.getValue();
-    }
-
-    @Override
-    public void setKnownHosts(final String knownHosts) {
-        this.knownHosts.setValue(knownHosts);
+    public String validate() {
+        if (privateKey.getValue().isBlank()) {
+            return "Private key must not be empty";
+        }
+        return null;
     }
 
     @Override
@@ -117,7 +85,11 @@ public class SshKeySecretViewImpl
         passPhrase.focus();
     }
 
-    public interface Binder extends UiBinder<Widget, SshKeySecretViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SshKeySecretForm> {
 
     }
 }

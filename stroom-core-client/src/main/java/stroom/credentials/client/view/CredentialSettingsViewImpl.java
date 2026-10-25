@@ -16,6 +16,7 @@
 
 package stroom.credentials.client.view;
 
+import stroom.credentials.client.component.SecretForm;
 import stroom.credentials.client.presenter.CredentialSettingsPresenter.CredentialSettingsView;
 import stroom.credentials.client.presenter.CredentialSettingsUiHandlers;
 import stroom.credentials.shared.CredentialType;
@@ -23,7 +24,6 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -140,8 +140,8 @@ public class CredentialSettingsViewImpl
     }
 
     @Override
-    public void setSecretView(final View view) {
-        secret.setWidget(view.asWidget());
+    public void setSecretForm(final SecretForm form) {
+        secret.setWidget(form.asWidget());
     }
 
     @Override

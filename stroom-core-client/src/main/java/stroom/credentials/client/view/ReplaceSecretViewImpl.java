@@ -16,10 +16,10 @@
 
 package stroom.credentials.client.view;
 
+import stroom.credentials.client.component.SecretForm;
 import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -27,7 +27,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -50,7 +49,7 @@ public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView
     @UiField
     DateTimeBox expiryTime;
 
-    private View secretView;
+    private SecretForm secretForm;
 
     @Inject
     @SuppressWarnings("unused")
@@ -70,9 +69,9 @@ public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView
     }
 
     @Override
-    public void setSecretView(final View view) {
-        this.secretView = view;
-        secret.setWidget(view.asWidget());
+    public void setSecretForm(final SecretForm form) {
+        this.secretForm = form;
+        secret.setWidget(form.asWidget());
     }
 
     @Override
@@ -93,8 +92,8 @@ public class ReplaceSecretViewImpl extends ViewImpl implements ReplaceSecretView
 
     @Override
     public void focus() {
-        if (secretView instanceof final Focus focus) {
-            focus.focus();
+        if (secretForm != null) {
+            secretForm.focus();
         }
     }
 

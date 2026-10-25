@@ -18,6 +18,10 @@ package stroom.credentials.client.presenter;
 
 import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.component.KeyStoreFileSecretForm;
+import stroom.credentials.client.component.KeyStoreSecretFormController;
+import stroom.credentials.client.component.SecretForm;
+import stroom.credentials.client.component.SecretForms;
 import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
@@ -49,19 +53,19 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
     private static final int DIALOG_HEIGHT = 600;
 
     private final CredentialClient credentialClient;
-    private final SecretPresenters secretPresenters;
+    private final SecretForms secretForms;
 
     @Inject
     public ReplaceSecretPresenter(final EventBus eventBus,
                                   final ReplaceSecretView view,
                                   final CredentialClient credentialClient,
-                                  final SecretPresenters secretPresenters,
+                                  final SecretForms secretForms,
                                   final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         make(dateTimeBoxControllerProvider).attach(view.getExpiryTime());
         this.credentialClient = credentialClient;
-        this.secretPresenters = secretPresenters;
-        secretPresenters.setOwner(this);
+        this.secretForms = secretForms;
+        secretForms.setOwner(this);
     }
 
     /// Shows the dialog to replace the secret of the given credential.
@@ -71,24 +75,24 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
     public void show(final Credential credential,
                      final Consumer<Credential> consumer) {
         final CredentialType credentialType = credential.getCredentialType();
-        final SecretPresenter<?> secretPresenter = secretPresenters.get(credentialType);
-        if (secretPresenter instanceof final KeyStoreSecretPresenter keyStoreSecretPresenter) {
+        final SecretForm secretForm = secretForms.get(credentialType);
+        if (secretForm instanceof final KeyStoreSecretFormController keyStoreSecretForm) {
             // Default to the type of the key store being replaced
-            keyStoreSecretPresenter.setType(NullSafe.getOrElse(
+            keyStoreSecretForm.setType(NullSafe.getOrElse(
                     credential,
                     Credential::getKeyStoreType,
                     KeyStoreType.PKCS12));
-        } else if (secretPresenter instanceof final KeyStoreFileSecretPresenter keyStoreFileSecretPresenter) {
+        } else if (secretForm instanceof final KeyStoreFileSecretForm keyStoreFileSecretForm) {
             // The type and path are not secret, so start from the current ones
-            keyStoreFileSecretPresenter.setType(NullSafe.getOrElse(
+            keyStoreFileSecretForm.setType(NullSafe.getOrElse(
                     credential,
                     Credential::getKeyStoreType,
                     KeyStoreType.PKCS12));
-            keyStoreFileSecretPresenter.getView().setPath(credential.getKeyStorePath());
+            keyStoreFileSecretForm.setPath(credential.getKeyStorePath());
         }
 
         getView().setCredentialName(credential.getName());
-        getView().setSecretView(secretPresenter.getView());
+        getView().setSecretForm(secretForm);
         // A new secret has a new expiry, so start from no expiry rather than the old secret's
         getView().setCredExpire(false);
         getView().getExpiryTime().setValue(System.currentTimeMillis());
@@ -102,11 +106,11 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        onOk(secretPresenter, valid -> {
+                        onOk(secretForm, valid -> {
                             if (valid) {
                                 final ReplaceSecretRequest request = new ReplaceSecretRequest(
                                         credential.getUuid(),
-                                        secretPresenter.getSecret(),
+                                        secretForm.getSecret(),
                                         getView().isCredExpire()
                                                 ? getView().getExpiryTime().getValue()
                                                 : null);
@@ -128,12 +132,17 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                 .fire();
     }
 
-    private void onOk(final SecretPresenter<?> secretPresenter,
+    // Shows what is wrong with the expiry or the secret, if anything, else submits the secret (a key
+    // store's file is uploaded); tells the consumer whether the secret can be saved
+    private void onOk(final SecretForm secretForm,
                       final Consumer<Boolean> consumer) {
-        if (getView().isCredExpire() && !getView().getExpiryTime().isValid()) {
-            AlertEvent.fireError(this, "You must set a valid expiry time", () -> consumer.accept(false));
+        final String message = getView().isCredExpire() && !getView().getExpiryTime().isValid()
+                ? "You must set a valid expiry time"
+                : secretForm.validate();
+        if (message != null) {
+            AlertEvent.fireError(this, message, () -> consumer.accept(false));
         } else {
-            secretPresenter.onOk(consumer);
+            secretForm.submit(consumer);
         }
     }
 
@@ -148,7 +157,10 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
         void setCredentialName(String name);
 
         /// @param view The view holding the fields for the new secret.
-        void setSecretView(View view);
+        /// Shows the form for the secret of the credential's type.
+        ///
+        /// @param form The form.
+        void setSecretForm(SecretForm form);
 
         /// @return True if the new secret expires.
         boolean isCredExpire();

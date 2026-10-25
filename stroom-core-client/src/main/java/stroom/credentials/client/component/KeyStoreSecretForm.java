@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.view;
+package stroom.credentials.client.component;
 
 import stroom.ai.shared.KeyStoreType;
-import stroom.credentials.client.presenter.KeyStoreSecretPresenter.KeyStoreSecretView;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FileChooser;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class KeyStoreSecretViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements KeyStoreSecretView {
+/// The fields of a key store credential's secret: the key store's type, its pass phrase and the
+/// file to upload. Its [KeyStoreSecretFormController] uploads the file.
+public class KeyStoreSecretForm extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SelectionBox<KeyStoreType> type;
@@ -46,51 +43,43 @@ public class KeyStoreSecretViewImpl
     @UiField
     PasswordBox password;
 
-    @Inject
-    public KeyStoreSecretViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty form, for a PKCS12 key store.
+    public KeyStoreSecretForm() {
+        initWidget(BINDER.createAndBindUi(this));
         type.addItems(Arrays.stream(KeyStoreType.values()).sorted().collect(Collectors.toList()));
         type.setValue(KeyStoreType.PKCS12);
-
-        password.setPlaceholder("Enter Password");
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void focus() {
-        type.focus();
-    }
-
-    @Override
+    /// @param type The key store's type, e.g. that of the secret being replaced.
     public void setType(final KeyStoreType type) {
         this.type.setValue(type);
     }
 
-    @Override
+    /// @return The key store's type, or null for none chosen.
     public KeyStoreType getType() {
         return type.getValue();
     }
 
-    @Override
+    /// @return The key store's pass phrase, as entered.
     public String getPassword() {
         return password.getValue();
     }
 
-    @Override
-    public void setPassword(final String password) {
-        this.password.setValue(password);
-    }
-
-    @Override
+    /// @return The chooser of the file to upload, which the controller's file chooser attaches to.
     public FileChooser getFileChooser() {
         return fileChooser;
     }
 
-    public interface Binder extends UiBinder<Widget, KeyStoreSecretViewImpl> {
+    /// Puts the focus on the form's first field.
+    public void focus() {
+        type.focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, KeyStoreSecretForm> {
 
     }
 }

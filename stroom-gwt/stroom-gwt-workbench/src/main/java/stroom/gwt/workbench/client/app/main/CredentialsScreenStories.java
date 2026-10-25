@@ -207,6 +207,35 @@ public final class CredentialsScreenStories {
                             RequestMatcher.post("/credentials/store").toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // A user name and password, the default type, both empty: OK says what is missing, and
+                // stores nothing
+                .story("UsernamePasswordRequired", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Service Account");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: Username must not be empty"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A key store with no file chosen: OK says so, and uploads and stores nothing
+                .story("KeyStoreNoFile", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "TLS Store");
+                    chooseType(play, dialog, "Key Store");
+                    play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).not().toBeNull());
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: You must select a file to import"));
+                    play.expect(play.spy(ScreenHarness.UPLOAD_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                })
                 // Replace Secret is live only for a selected credential the user can edit; it asks for
                 // a whole new secret of the credential's type and sends it with the credential's uuid
                 .story("ReplaceSecret", context -> render(context, SLOW_LIST, false))

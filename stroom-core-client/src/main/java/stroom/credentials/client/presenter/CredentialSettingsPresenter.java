@@ -16,14 +16,14 @@
 
 package stroom.credentials.client.presenter;
 
-import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.credentials.client.component.SecretForm;
+import stroom.credentials.client.component.SecretForms;
 import stroom.credentials.client.presenter.CredentialSettingsPresenter.CredentialSettingsView;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialWithPerms;
-import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.PutCredentialRequest;
 import stroom.credentials.shared.Secret;
 import stroom.docref.DocRef;
@@ -45,7 +45,7 @@ public class CredentialSettingsPresenter
         extends MyPresenterWidget<CredentialSettingsView>
         implements CredentialSettingsUiHandlers {
 
-    private final SecretPresenters secretPresenters;
+    private final SecretForms secretForms;
 
     private DocRef docRef;
 
@@ -55,23 +55,23 @@ public class CredentialSettingsPresenter
     @Inject
     public CredentialSettingsPresenter(final EventBus eventBus,
                                        final CredentialSettingsView view,
-                                       final SecretPresenters secretPresenters,
+                                       final SecretForms secretForms,
                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         view.setUiHandlers(this);
         make(dateTimeBoxControllerProvider).attach(view.getExpiryTime());
 
-        this.secretPresenters = secretPresenters;
-        secretPresenters.setOwner(this);
+        this.secretForms = secretForms;
+        secretForms.setOwner(this);
     }
 
     @Override
     public void onTypeChange(final CredentialType type) {
-        getView().setSecretView(getSecretPresenter(type).getView());
+        getView().setSecretForm(getSecretForm(type));
     }
 
-    private SecretPresenter<?> getSecretPresenter(final CredentialType credentialType) {
-        return secretPresenters.get(credentialType);
+    private SecretForm getSecretForm(final CredentialType credentialType) {
+        return secretForms.get(credentialType);
     }
 
     /**
@@ -104,13 +104,24 @@ public class CredentialSettingsPresenter
             } else {
                 getView().getExpiryTime().setValue(System.currentTimeMillis());
             }
-            // No secret presenter is needed as the secret is hidden for existing credentials
+            // No secret form is needed as the secret is hidden for existing credentials
             getView().setCredentialType(credential.getCredentialType());
         }
     }
 
     private Secret getSecret() {
-        return getSecretPresenter(getView().getCredentialType()).getSecret();
+        return getSecretForm(getView().getCredentialType()).getSecret();
+    }
+
+    // Shows what is wrong with the secret, if anything, else submits it (a key store's file is
+    // uploaded); tells the consumer whether the secret can be saved
+    private void submitSecret(final SecretForm form, final Consumer<Boolean> consumer) {
+        final String message = form.validate();
+        if (message != null) {
+            AlertEvent.fireError(this, message, () -> consumer.accept(false));
+        } else {
+            form.submit(consumer);
+        }
     }
 
     public void onOk(final Consumer<Boolean> consumer) {
@@ -118,7 +129,7 @@ public class CredentialSettingsPresenter
         if (message != null) {
             AlertEvent.fireError(this, message, () -> consumer.accept(false));
         } else if (existingCredential == null) {
-            getSecretPresenter(getView().getCredentialType()).onOk(consumer);
+            submitSecret(getSecretForm(getView().getCredentialType()), consumer);
         } else if (!Objects.equals(existingCredential.getName(), getView().getName())) {
             // Other settings refer to credentials by name, so a rename breaks them
             ConfirmEvent.fireWarn(this,
@@ -192,7 +203,10 @@ public class CredentialSettingsPresenter
 
         DateTimeBox getExpiryTime();
 
-        void setSecretView(View view);
+        /// Shows the form for the secret of the credential's type.
+        ///
+        /// @param form The form.
+        void setSecretForm(SecretForm form);
 
         /// Sets whether existing credentials are being edited. If so the type is fixed and the
         /// secret fields are replaced by a note that the secret can't be shown.
