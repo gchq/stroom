@@ -302,6 +302,9 @@ public class AskStroomAiPresenter
     private boolean overviewShowing;
     private boolean overviewRefreshDue;
     private boolean overviewWorking;
+    // The tool results whose steps for the user (e.g. an Apply button) are held while the agent works, by message id,
+    // in order: shown once it stops, after its answer, so the user isn't asked to act while more is to come.
+    private final Map<Integer, AiChatMessage> heldUserActions = new LinkedHashMap<>();
     // The prompt waiting for the user, kept in view as it grows.
     private Element watchedPrompt;
     // What the overview is searched for, if anything.
@@ -2325,6 +2328,35 @@ public class AskStroomAiPresenter
      * hidden in the tool call's entry). Everything in it was written by Stroom, which checked each step; the
      * server's own text only appears in "Do first" conditions, as plain text.
      */
+    // Shows the steps a tool result offers the user, or holds them while the agent is still working (see
+    // heldUserActions). A card already shown is updated in place.
+    private void showOrHoldUserActions(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
+        final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
+        if (actions == null || actions.size() == 0) {
+            return;
+        }
+        if ((overviewWorking || requestInFlight)
+            && findMessageElement(markdownContainer, msg.getId() + USER_ACTIONS_ID_SUFFIX) == null) {
+            heldUserActions.put(msg.getId(), msg);
+        } else {
+            appendUserActionsCard(markdownContainer, msg, nowMs);
+        }
+    }
+
+    // Shows the steps held while the agent worked, now that it has stopped (answered, asks the user something, or
+    // ended), at the end of the conversation, in the order they were offered.
+    private void showHeldUserActions() {
+        if (heldUserActions.isEmpty()) {
+            return;
+        }
+        final List<AiChatMessage> held = new ArrayList<>(heldUserActions.values());
+        heldUserActions.clear();
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final long nowMs = System.currentTimeMillis();
+        held.forEach(msg -> appendUserActionsCard(markdownContainer, msg, nowMs));
+        scrollToBottom();
+    }
+
     private void appendUserActionsCard(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
         final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
         if (actions == null || actions.size() == 0) {
@@ -3323,6 +3355,11 @@ public class AskStroomAiPresenter
                 msg.getMessageType(), msg.getAttachmentId(), result.toString(), msg.getTurnId(),
                 msg.getTokenCount());
         renderedMessages.put(messageId, updated);
+        if (heldUserActions.containsKey(messageId)) {
+            // Not shown yet: shown as it now is, once the agent stops.
+            heldUserActions.put(messageId, updated);
+            return;
+        }
         appendUserActionsCard(getView().getMarkdownContainer().getElement(), updated, System.currentTimeMillis());
     }
 
@@ -4072,6 +4109,9 @@ public class AskStroomAiPresenter
         }
         getView().setInProgress(working);
         getView().setSendButtonLoadingState(requestInFlight || working);
+        if (!working && !requestInFlight) {
+            showHeldUserActions();
+        }
     }
 
     // True if the latest message shown is an error, which ends the question it was answering.
@@ -4184,7 +4224,7 @@ public class AskStroomAiPresenter
             && findMessageElement(markdownContainer, messageId) == null
             && AiConversationEntries.addResultToCall(markdownContainer, messageElement, msg.getMessage())) {
             // Shown in its call's entry.
-            appendUserActionsCard(markdownContainer, msg, nowMs);
+            showOrHoldUserActions(markdownContainer, msg, nowMs);
             keepProgressInPlace(markdownContainer);
             return;
         }
@@ -4224,7 +4264,7 @@ public class AskStroomAiPresenter
             unwatchPrompt();
         }
         if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
-            appendUserActionsCard(markdownContainer, msg, nowMs);
+            showOrHoldUserActions(markdownContainer, msg, nowMs);
         } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
                    && findInConversation(WORKING_MESSAGE_ID) != null) {
             // While the agent works, shown once the Working line moves on from it (see updateWorkingMessage).
@@ -4352,6 +4392,7 @@ public class AskStroomAiPresenter
         answerFollowUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
+        heldUserActions.clear();
         pendingAttachments.clear();
         sentAttachments.clear();
         sendingAttachments = List.of();
