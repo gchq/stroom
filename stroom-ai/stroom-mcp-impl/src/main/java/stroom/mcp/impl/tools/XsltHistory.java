@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ChatModelNames;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.security.api.SecurityContext;
@@ -30,6 +31,7 @@ import jakarta.inject.Provider;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Optional;
 
 /// The version history kept in the description of each XSLT the tools save ([XsltVersionHistory]), as the Stroom
 /// MCP server's `tools/translation.py` `_pending` and `_previewed` keep it: who made each save, with what, and the
@@ -40,25 +42,32 @@ class XsltHistory {
 
     private final SecurityContext securityContext;
     private final Provider<BuildInfo> buildInfoProvider;
+    private final Provider<ChatModelNames> chatModelNamesProvider;
     private final Clock clock;
 
-    /// @param securityContext   Says who the user is: the change's author.
-    /// @param buildInfoProvider Gives Stroom's version, for what made the change.
+    /// @param securityContext        Says who the user is: the change's author.
+    /// @param buildInfoProvider      Gives Stroom's version, for what made the change.
+    /// @param chatModelNamesProvider Gives a chat's model, for what made the change in a chat.
     @Inject
-    XsltHistory(final SecurityContext securityContext, final Provider<BuildInfo> buildInfoProvider) {
-        this(securityContext, buildInfoProvider, Clock.systemUTC());
+    XsltHistory(final SecurityContext securityContext,
+                final Provider<BuildInfo> buildInfoProvider,
+                final Provider<ChatModelNames> chatModelNamesProvider) {
+        this(securityContext, buildInfoProvider, chatModelNamesProvider, Clock.systemUTC());
     }
 
     /// As the injected constructor, with the clock given, for tests.
     ///
-    /// @param securityContext   Says who the user is.
-    /// @param buildInfoProvider Gives Stroom's version.
-    /// @param clock             The time now.
+    /// @param securityContext        Says who the user is.
+    /// @param buildInfoProvider      Gives Stroom's version.
+    /// @param chatModelNamesProvider Gives a chat's model, or null for none.
+    /// @param clock                  The time now.
     XsltHistory(final SecurityContext securityContext,
                 final Provider<BuildInfo> buildInfoProvider,
+                final Provider<ChatModelNames> chatModelNamesProvider,
                 final Clock clock) {
         this.securityContext = securityContext;
         this.buildInfoProvider = buildInfoProvider;
+        this.chatModelNamesProvider = chatModelNamesProvider;
         this.clock = clock;
     }
 
@@ -82,10 +91,22 @@ class XsltHistory {
     String by(final ToolSession session) {
         final String caller = session == null
                 ? null
-                : session.caller().name();
+                : callerOf(session);
         return NullSafe.isNonBlankString(caller)
                 ? madeBy() + ", " + caller
                 : madeBy();
+    }
+
+    // An external client by its own name; a chat by the model it runs on (asked for by the user: "Stroom AI chat"
+    // said nothing of what made the change), else as a chat.
+    private String callerOf(final ToolSession session) {
+        if (session.isChat() && chatModelNamesProvider != null) {
+            final Optional<String> model = chatModelNamesProvider.get().of(session.chatId().orElseThrow());
+            if (model.isPresent()) {
+                return model.get();
+            }
+        }
+        return session.caller().name();
     }
 
     /// The description with this change pending: the build's changes become one line of the XSLT's version history
