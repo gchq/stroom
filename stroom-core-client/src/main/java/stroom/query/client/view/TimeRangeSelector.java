@@ -16,60 +16,60 @@
 
 package stroom.query.client.view;
 
-import stroom.event.client.StaticEventBus;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
+import stroom.query.api.TimeRanges;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 
 /// The time range a query or dashboard applies to all its queries, shown as a button drawn as a link
-/// (its text the range, e.g. "Today"), which opens the Time Range dialog ([TimeRangeDialog]) to
-/// change it. The button is named "Time range: " and its text, and says it opens a dialog.
+/// (its text the range, e.g. "Today"), which asks to open the Time Range dialog to change it
+/// ([#setOnOpenPicker(Runnable)]); a [TimeRangeSelectorController] attached to it opens it. The
+/// button is named "Time range: " and its text, and says it opens a dialog.
 ///
 /// A disabled or read-only selector stays focusable but doesn't open the dialog; both are
-/// `aria-disabled`, as a button can't be read only. Styled by `time-range-selector.css`.
-public class TimeRangeSelector extends Composite implements HasValue<TimeRange>, Focus {
+/// `aria-disabled`, as a button can't be read only. Styled by `time-range-selector.css`; its markup
+/// is `TimeRangeSelector.ui.xml`.
+public class TimeRangeSelector extends Component implements HasValue<TimeRange>, Focus {
 
-    private static final String BLOCK = "time-range-selector";
-    private static final String READ_ONLY = BLOCK + "--readonly";
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String READ_ONLY = "time-range-selector--readonly";
     private static final String ARIA_DISABLED = "aria-disabled";
 
-    private final LinkButton button;
-    private TimeRangeDialog dialog;
-    private TimeRange value = stroom.query.api.TimeRanges.ALL_TIME;
+    @UiField
+    LinkButton button;
+
+    private TimeRange value = TimeRanges.ALL_TIME;
     private ParamValues paramValues;
     private boolean enabled = true;
-    private boolean readOnly;
+    private Runnable onOpenPicker;
 
     /// Makes a selector of all time.
     public TimeRangeSelector() {
-        button = new LinkButton(getText());
-        button.addStyleName(BLOCK);
-        button.setOpensDialog(true);
-        button.setTitle("Time range to apply to all queries in this dashboard.\n"
-                        + "The selected time range applies to the time field applicable to each "
-                        + "query's data source.");
-        button.addClickHandler(event -> showDialog());
-        updateName();
-
-        initWidget(button);
+        initWidget(BINDER.createAndBindUi(this));
+        button.setOnClick(() -> {
+            if (enabled && !isReadOnly() && onOpenPicker != null) {
+                onOpenPicker.run();
+            }
+        });
+        showValue();
     }
 
-    private void showDialog() {
-        if (enabled && !readOnly) {
-            if (dialog == null) {
-                dialog = new TimeRangeDialog(StaticEventBus.getEventBus(), new TimeRangePopup());
-            }
-            dialog.show(value, button.getElement(), timeRange -> setValue(timeRange, true));
-        }
+    /// @param onOpenPicker Run when the user asks to change the time range in the dialog, unless
+    ///                     the selector is disabled or read only.
+    public void setOnOpenPicker(final Runnable onOpenPicker) {
+        this.onOpenPicker = onOpenPicker;
     }
 
     /// Enables or disables choosing the time range. A disabled one is greyed, announced as
@@ -86,19 +86,19 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     /// it is `aria-disabled`).
     ///
     /// @param readOnly Whether the time range is read only.
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         updateState();
     }
 
     private void updateState() {
-        if (!enabled || readOnly) {
+        if (!enabled || isReadOnly()) {
             button.getElement().setAttribute(ARIA_DISABLED, "true");
         } else {
             button.getElement().removeAttribute(ARIA_DISABLED);
         }
         // Read only (but enabled) has a look of its own, as a read-only field's value does
-        button.setStyleName(READ_ONLY, readOnly && enabled);
+        button.setStyleName(READ_ONLY, isReadOnly() && enabled);
     }
 
     @Override
@@ -120,17 +120,29 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     public void setValue(final TimeRange value, final boolean fireEvents) {
         this.value = value != null
                 ? value
-                : stroom.query.api.TimeRanges.ALL_TIME;
-        button.setText(getText());
-        updateName();
+                : TimeRanges.ALL_TIME;
+        showValue();
         if (fireEvents) {
             ValueChangeEvent.fire(this, this.value);
         }
     }
 
+    /// @param paramValues The parameters a range's text is shown with, or null.
+    public void setParamValues(final ParamValues paramValues) {
+        this.paramValues = paramValues;
+        showValue();
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
+        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
     // Named for what it is as well as its value, which alone ("Today") wouldn't say
-    private void updateName() {
-        button.setAriaLabel("Time range: " + getText());
+    private void showValue() {
+        final String text = getText();
+        button.setText(text);
+        button.setAriaLabel("Time range: " + text);
     }
 
     private String getText() {
@@ -142,7 +154,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
             final String from = ParamUtil.replaceParameters(value.getFrom(), paramValues);
             final String to = ParamUtil.replaceParameters(value.getTo(), paramValues);
             if (NullSafe.isBlankString(from) && NullSafe.isBlankString(to)) {
-                return stroom.query.api.TimeRanges.ALL_TIME.toString();
+                return TimeRanges.ALL_TIME.toString();
             } else if (NullSafe.isNonBlankString(from)) {
                 return "After " + from;
             } else {
@@ -151,15 +163,11 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         }
     }
 
-    @Override
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
-        return addHandler(handler, ValueChangeEvent.getType());
-    }
 
-    /// @param paramValues The parameters a range's text is shown with, or null.
-    public void setParamValues(final ParamValues paramValues) {
-        this.paramValues = paramValues;
-        button.setText(getText());
-        updateName();
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<LinkButton, TimeRangeSelector> {
+
     }
 }

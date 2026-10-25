@@ -400,6 +400,19 @@ public final class QueryEditorStories {
                     play.expect(screen.getByRole("button", "Time range: All time")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A quick setting fills in both times, and OK puts the range in the selector
+                .story("TimeRangeQuickSetting", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByRole("button", "Time range: All time"));
+                    final Play dialog = screen.within(screen.findByRole("dialog", "Time Range"));
+                    play.click(dialog.within(dialog.getByRole("group", "Present")).getByRole("button", "Today"));
+                    play.expect(dialog.getByRole("textbox", "After Time (inclusive)")).toHaveValue("day()");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Time Range")).toBeNull());
+                    play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query help: the root rows load, expanding one loads its children and
                 // selecting a row shows its documentation and enables Insert into Query. The
                 // documentation's link says what it is for and that it opens a new tab, and the

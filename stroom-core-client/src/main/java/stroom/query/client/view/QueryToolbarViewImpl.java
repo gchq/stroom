@@ -93,6 +93,11 @@ public class QueryToolbarViewImpl
     }
 
     @Override
+    public TimeRangeSelector getTimeRangeSelector() {
+        return timeRangeSelector;
+    }
+
+    @Override
     public QueryButtons getQueryButtons() {
         return queryButtons;
     }

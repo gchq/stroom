@@ -24,6 +24,8 @@ import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
+import stroom.query.client.view.TimeRangeSelector;
+import stroom.query.client.view.TimeRangeSelectorController;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
@@ -57,8 +59,10 @@ public class QueryToolbarPresenter
 
     @Inject
     public QueryToolbarPresenter(final EventBus eventBus,
-                                 final QueryToolbarView view) {
+                                 final QueryToolbarView view,
+                                 final TimeRangeSelectorController timeRangeSelectorController) {
         super(eventBus, view);
+        own(timeRangeSelectorController).attach(view.getTimeRangeSelector());
         getView().setErrorsVisible(false);
         view.setUiHandlers(this);
         view.getQueryButtons().setOnStart(this::start);
@@ -170,6 +174,9 @@ public class QueryToolbarPresenter
         void setErrorSeverity(Severity severity);
 
         QueryButtons getQueryButtons();
+
+        /// @return The time range selector, for a controller to open its dialog.
+        TimeRangeSelector getTimeRangeSelector();
 
         TimeRange getTimeRange();
 

@@ -31,6 +31,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
+import stroom.query.client.view.TimeRangeSelectorController;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.presenter.client.View;
@@ -64,9 +65,11 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     public TracesListTabPresenter(final EventBus eventBus,
                                   final TracesView view,
                                   final TracesListPresenter listPresenter,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final TimeRangeSelectorController timeRangeSelectorController) {
         super(eventBus, view);
         own(listPresenter);
+        own(timeRangeSelectorController).attach(timeRangeSelector);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
         traceOverviewWidget = new TraceOverviewWidget(this);
