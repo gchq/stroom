@@ -280,15 +280,28 @@ class TestWorkspaceTools {
         // Literal by default.
         assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event .0 \"}"))
                 .isEqualTo("No lines match.");
-        // A literal miss that looks like a regular expression says how it was searched, so it isn't taken as an answer.
-        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10|event 20\"}"))
+        // A literal miss that looks like a regular expression is searched for as one, saying so (seen: `a|b` sent
+        // again and again without regex, each time matching nothing).
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10 |event 20 \"}"))
+                .startsWith("Nothing matched the pattern as literal text, so it was searched for as a regular "
+                            + "expression")
+                .contains("10: INFO event 10")
+                .contains("20: INFO event 20");
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10 |event 20 \","
+                             + "\"out\":\"/outputs/both.log\"}"))
+                .contains("Wrote 2 matching line(s) to /outputs/both.log.");
+        // Unless told it is literal; a miss then says how it was searched, so it isn't taken as an answer.
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10|event 20\","
+                             + "\"regex\":false}"))
                 .startsWith("No lines match. The pattern was searched for as literal text, but it looks like a "
                             + "regular expression")
                 .contains("regex: true");
-        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10|event 20\","
-                             + "\"out\":\"/outputs/none.log\"}"))
-                .startsWith("Wrote 0 matching line(s) to /outputs/none.log. The pattern was searched for as literal "
-                            + "text");
+        // One that matches nothing either way says so once.
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"nothing|none\"}"))
+                .endsWith("No lines match.");
+        // One that isn't a valid regular expression stays a literal miss.
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"[unclosed|x\"}"))
+                .startsWith("No lines match. The pattern was searched for as literal text");
         assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"no such text\"}"))
                 .isEqualTo("No lines match.");
         assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event [12]0 \","

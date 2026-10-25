@@ -134,11 +134,9 @@ class TestE2ePlanWalk extends AbstractE2eTest {
             final Map<String, Object> next = at(step, FIRST_CALL.get(step));
             detoursBefore(step, map(next, "call"));
             if ("promoted".equals(step)) {
-                final Map<String, Object> status = client.json("build_status", args("build", build));
-                assertThat(list(status, "steps"))
-                        .filteredOn(s -> !"promoted".equals(s.get("step")))
+                assertThat(states())
                         .as("every step done before promotion")
-                        .allSatisfy(s -> assertThat(s.get("state")).isIn("done", "not needed", "not recorded"));
+                        .allSatisfy((name, state) -> assertThat(state).isIn("done", "not needed", "not recorded"));
             }
             result = step(step, map(next, "call"));
             final String following = i + 1 < LUCENE.size()
@@ -355,7 +353,8 @@ class TestE2ePlanWalk extends AbstractE2eTest {
     // Asked for by the user: promotion waits for documentation the build's own change left behind, but a hand edit
     // of the XSLT only warns, so a user's own edits never hold a promotion up. Both put back afterwards.
     private void promotionAndStaleDocumentation() {
-        final Map<String, Object> status = client.json("build_status", args("build", build));
+        // In full: each document's type, name and uuid.
+        final Map<String, Object> status = client.json("build_status", args("build", build, "full", true));
         final Map<String, Object> translation = list(status, "pipelines").stream()
                 .filter(pipeline -> "translation".equals(pipeline.get("stage")))
                 .findFirst()
@@ -495,10 +494,11 @@ class TestE2ePlanWalk extends AbstractE2eTest {
         return all;
     }
 
+    // Each step's state, as build_status gives it briefly (by default), but promotion's own.
     private Map<String, Object> states() {
-        final Map<String, Object> state = new LinkedHashMap<>();
-        list(client.json("build_status", args("build", build)), "steps")
-                .forEach(s -> state.put((String) s.get("step"), s.get("state")));
+        final Map<String, Object> state = new LinkedHashMap<>(map(client.json("build_status", args("build", build)),
+                "steps"));
+        state.remove("promoted");
         return state;
     }
 
