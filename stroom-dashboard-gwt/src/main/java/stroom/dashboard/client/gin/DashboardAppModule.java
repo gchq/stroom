@@ -28,7 +28,6 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
@@ -50,7 +49,6 @@ import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.CharacterNavigatorViewImpl;
 import stroom.data.client.view.CharacterRangeSelectionViewImpl;
-import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.EditExpressionViewImpl;
@@ -175,7 +173,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
 
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
-        bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }
 }

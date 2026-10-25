@@ -30,9 +30,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ClassificationLabel].
 ///
-/// Stroom's label reads the label colours from the theme's `labelColours` in the UI config, so each
-/// story serves them in the UI config fixture of a [ScreenHarness], and creates the label once the
-/// config has been fetched.
+/// Stroom's label is given the label colours from the theme's `labelColours` in the UI config, by
+/// a `ClassificationLabelController`, so each story serves them in the UI config fixture of a
+/// [ScreenHarness], and creates the label once the config has been fetched.
 public final class ClassificationLabelStories {
 
     // Arg names
@@ -92,7 +92,7 @@ public final class ClassificationLabelStories {
     }
 
     private static ClassificationLabel label(final ScreenHarness harness, final String text) {
-        final ClassificationLabel label = new ClassificationLabel(harness.getUiConfigCache());
+        final ClassificationLabel label = DisplayWidgets.withColours(harness, new ClassificationLabel());
         label.setClassification(text);
         return label;
     }

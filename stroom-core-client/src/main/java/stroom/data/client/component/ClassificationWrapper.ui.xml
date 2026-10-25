@@ -4,6 +4,6 @@
              xmlns:l="urn:import:stroom.data.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dock-max"/>
-        <l:ClassificationLabel ui:field="classification" styleName="dock-min classification"/>
+        <l:ClassificationLabel ui:field="classification" styleName="dock-min classification-label"/>
     </g:FlowPanel>
 </ui:UiBinder>

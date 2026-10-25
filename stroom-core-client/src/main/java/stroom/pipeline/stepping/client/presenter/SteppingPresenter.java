@@ -18,7 +18,6 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
@@ -103,8 +102,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SteppingPresenter
-        extends MyPresenterWidget<SteppingPresenter.SteppingView>
-        implements ClassificationUiHandlers {
+        extends MyPresenterWidget<SteppingPresenter.SteppingView> {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final String LOG_PANE_TITLE = "Log Pane";
@@ -207,7 +205,7 @@ public class SteppingPresenter
         toggleLogPaneButton = logPaneButtons.toggle(SvgImage.EXCLAMATION, LOG_PANE_TITLE, this::onToggleLogPane);
         toggleLogPaneButton.setOn();
 
-        sourcePresenter.setClassificationUiHandlers(this);
+        sourcePresenter.setOnClassification(this::setClassification);
 
         this.stepMessage = new SimplePanel();
         stepMessage.addStyleName("stepping-screen__progress-message");
@@ -296,8 +294,7 @@ public class SteppingPresenter
 //        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
-    @Override
-    public void setClassification(final String classification) {
+    private void setClassification(final String classification) {
         this.classification = classification;
         for (final ElementPresenter elementPresenter : elementPresenterMap.values()) {
             elementPresenter.setClassification(classification);

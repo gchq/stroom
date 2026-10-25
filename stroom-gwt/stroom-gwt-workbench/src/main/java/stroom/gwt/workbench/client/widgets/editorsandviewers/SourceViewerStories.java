@@ -16,12 +16,12 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.ItemNavigatorPresenter;
 import stroom.data.client.presenter.ItemSelectionPresenter;
 import stroom.data.client.presenter.MarkerListPresenter;
-import stroom.data.client.view.ClassificationLabel;
-import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
@@ -252,9 +252,8 @@ public final class SourceViewerStories {
                 new HtmlPane(),
                 itemNavigatorPresenter,
                 new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
-                new ClassificationWrapperViewImpl(
-                        GWT.create(ClassificationWrapperViewImpl.Binder.class),
-                        new ClassificationLabel(harness.getUiConfigCache())),
+                new ClassificationWrapper(),
+                new ClassificationLabelController(harness.getUiConfigCache()),
                 EditorWidgets.textPresenter(eventBus),
                 new SourceProgressBar(),
                 new MarkerListPresenter(eventBus, new WrapperViewImpl()),

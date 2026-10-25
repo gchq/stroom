@@ -39,7 +39,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     private final Widget widget;
     @UiField
     SimplePanel content;
-    @UiField(provided = true)
+    @UiField
     ClassificationLabel classification;
     @UiField
     FabButton steppingButton;
@@ -47,8 +47,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     SpinnerLarge spinner;
 
     @Inject
-    public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
-        this.classification = classification;
+    public TextViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         spinner.setVisible(false);
         steppingButton.setIcon(SvgImage.STEPPING);
@@ -67,6 +66,11 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Override
     public void setClassification(final String text) {
         classification.setClassification(text);
+    }
+
+    @Override
+    public ClassificationLabel getClassificationLabel() {
+        return classification;
     }
 
     @Override

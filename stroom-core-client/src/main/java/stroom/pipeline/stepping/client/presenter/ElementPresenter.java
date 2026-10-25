@@ -17,8 +17,8 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.ClassificationUiHandlers;
-import stroom.data.client.presenter.ClassificationWrapperView;
+import stroom.data.client.component.ClassificationWrapper;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -63,12 +63,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ElementPresenter
-        extends MyPresenterWidget<ElementView>
-        implements ClassificationUiHandlers {
+        extends MyPresenterWidget<ElementView> {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
-    private final Provider<ClassificationWrapperView> classificationWrapperViewProvider;
+    private final Provider<ClassificationWrapper> classificationWrapperProvider;
+    private final Provider<ClassificationLabelController> classificationLabelControllerProvider;
     private final Provider<EditorPresenter> editorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final RestFactory restFactory;
@@ -93,8 +93,8 @@ public class ElementPresenter
     private boolean desiredLogPanVisibility = true;
 
     private String classification;
-    private ClassificationWrapperView inputView;
-    private ClassificationWrapperView outputView;
+    private ClassificationWrapper inputView;
+    private ClassificationWrapper outputView;
     private View logView;
     private Consumer<StepType> stepRequestHandler = null;
 
@@ -104,12 +104,14 @@ public class ElementPresenter
     @Inject
     public ElementPresenter(final EventBus eventBus,
                             final ElementView view,
-                            final Provider<ClassificationWrapperView> classificationWrapperViewProvider,
+                            final Provider<ClassificationWrapper> classificationWrapperProvider,
+                            final Provider<ClassificationLabelController> classificationLabelControllerProvider,
                             final Provider<EditorPresenter> editorProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
                             final RestFactory restFactory) {
         super(eventBus, view);
-        this.classificationWrapperViewProvider = classificationWrapperViewProvider;
+        this.classificationWrapperProvider = classificationWrapperProvider;
+        this.classificationLabelControllerProvider = classificationLabelControllerProvider;
         this.editorProvider = editorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
         this.restFactory = restFactory;
@@ -582,7 +584,9 @@ public class ElementPresenter
         return mode;
     }
 
-    @Override
+    /// Shows the data's classification below the element's input and output.
+    ///
+    /// @param classification The classification, or null for none.
     public void setClassification(final String classification) {
         this.classification = classification;
         if (inputView != null) {
@@ -599,7 +603,8 @@ public class ElementPresenter
             presenterMap.put(IndicatorType.INPUT, inputPresenter);
             setCommonEditorOptions(inputPresenter);
             setReadOnlyEditorOptions(inputPresenter);
-            inputView = classificationWrapperViewProvider.get();
+            inputView = classificationWrapperProvider.get();
+            make(classificationLabelControllerProvider).attach(inputView.getClassificationLabel());
             inputView.setContent(inputPresenter.getView());
             inputView.setClassification(classification);
         }
@@ -619,7 +624,8 @@ public class ElementPresenter
                 outputPresenter.getLineNumbersOption().setOn(true);
             }
 
-            outputView = classificationWrapperViewProvider.get();
+            outputView = classificationWrapperProvider.get();
+            make(classificationLabelControllerProvider).attach(outputView.getClassificationLabel());
             outputView.setContent(outputPresenter.getView());
             outputView.setClassification(classification);
         }

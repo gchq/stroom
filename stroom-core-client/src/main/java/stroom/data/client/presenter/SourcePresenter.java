@@ -17,7 +17,9 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -66,14 +68,13 @@ import java.util.function.Consumer;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         TextUiHandlers,
-        ClassificationUiHandlers,
         Focus {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
-    private final ClassificationWrapperView classificationWrapperView;
+    private final ClassificationWrapper classificationWrapper;
     private final SourceProgressBar sourceProgressBar;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
@@ -92,12 +93,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
 
-    private ClassificationUiHandlers classificationUiHandlers;
+    private Consumer<String> onClassification;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
-                           final ClassificationWrapperView classificationWrapperView,
+                           final ClassificationWrapper classificationWrapper,
+                           final ClassificationLabelController classificationLabelController,
                            final SourceProgressBar sourceProgressBar,
                            final TextPresenter textPresenter,
                            final CharacterNavigatorPresenter characterNavigatorPresenter,
@@ -107,7 +109,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         super(eventBus, view);
         own(textPresenter);
         own(characterNavigatorPresenter);
-        this.classificationWrapperView = classificationWrapperView;
+        own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
+        this.classificationWrapper = classificationWrapper;
         this.sourceProgressBar = sourceProgressBar;
         this.textPresenter = textPresenter;
         this.characterNavigatorPresenter = characterNavigatorPresenter;
@@ -117,8 +120,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         setEditorOptions();
 
-        classificationWrapperView.setContent(textPresenter.getView());
-        view.setTextView(classificationWrapperView);
+        classificationWrapper.setContent(textPresenter.getView());
+        view.setTextView(classificationWrapper);
         view.setNavigatorView(characterNavigatorPresenter.getView());
 
         setupProgressBar(view, sourceProgressBar);
@@ -702,16 +705,21 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         beginStepping();
     }
 
-    @Override
+    /// Shows the data's classification below its text, and tells whoever asked
+    /// ([#setOnClassification(Consumer)]).
+    ///
+    /// @param classification The classification, or null for none.
     public void setClassification(final String classification) {
-        classificationWrapperView.setClassification(classification);
-        if (this.classificationUiHandlers != null) {
-            this.classificationUiHandlers.setClassification(classification);
+        classificationWrapper.setClassification(classification);
+        if (onClassification != null) {
+            onClassification.accept(classification);
         }
     }
 
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        this.classificationUiHandlers = classificationUiHandlers;
+    /// @param onClassification Told each data's classification as it is shown, e.g. by the
+    ///                         stepping screen, which shows it on its elements' input and output.
+    public void setOnClassification(final Consumer<String> onClassification) {
+        this.onClassification = onClassification;
     }
 
     @Override

@@ -17,8 +17,10 @@
 package stroom.data.client.presenter;
 
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -85,7 +87,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DataPresenter
-        extends MyPresenterWidget<ClassificationWrapperView>
+        extends MyPresenterWidget<ClassificationWrapper>
         implements TextUiHandlers, Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
@@ -110,7 +112,7 @@ public class DataPresenter
     private final TabData contextTab = new TabDataImpl(CONTEXT_TAB_NAME);
 
     private final DataView dataView;
-    private final ClassificationWrapperView classificationWrapperView;
+    private final ClassificationWrapper classificationWrapper;
     private final HtmlPane htmlPane;
     // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
     private final ControllerLayer htmlLayer;
@@ -162,7 +164,8 @@ public class DataPresenter
                          final HtmlPane htmlPane,
                          final ItemNavigatorPresenter itemNavigatorPresenter,
                          final DataView dataView,
-                         final ClassificationWrapperView classificationWrapperView,
+                         final ClassificationWrapper classificationWrapper,
+                         final ClassificationLabelController classificationLabelController,
                          final TextPresenter textPresenter,
                          final SourceProgressBar sourceProgressBar,
                          final MarkerListPresenter markerListPresenter,
@@ -170,13 +173,14 @@ public class DataPresenter
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
-        super(eventBus, classificationWrapperView);
+        super(eventBus, classificationWrapper);
         own(itemNavigatorPresenter);
         own(textPresenter);
         own(markerListPresenter);
-        classificationWrapperView.setContent(dataView);
+        own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
+        classificationWrapper.setContent(dataView);
         this.dataView = dataView;
-        this.classificationWrapperView = classificationWrapperView;
+        this.classificationWrapper = classificationWrapper;
         this.htmlPane = htmlPane;
         this.htmlLayer = new ControllerLayer(htmlPane);
         this.itemNavigatorPresenter = itemNavigatorPresenter;
@@ -895,14 +899,14 @@ public class DataPresenter
 
             // Let the classification handler know that the classification has
             // changed.
-            classificationWrapperView.setClassification(result.getClassification());
+            classificationWrapper.setClassification(result.getClassification());
 
             refresh(result);
             updateAvailableAndSelectedTabs(
                     result.getStreamTypeName(),
                     result.getAvailableChildStreamTypes());
         } else {
-            classificationWrapperView.setClassification("");
+            classificationWrapper.setClassification("");
 
             refresh(result);
             updateAvailableAndSelectedTabs(null, null);

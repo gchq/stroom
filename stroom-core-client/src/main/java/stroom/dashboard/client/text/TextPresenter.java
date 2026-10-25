@@ -28,6 +28,8 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.data.client.view.ClassificationLabel;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.HtmlPane;
@@ -113,11 +115,13 @@ public class TextPresenter
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
                          final Provider<EditorPresenter> rawPresenterProvider,
                          final RestFactory restFactory,
-                         final ClientSecurityContext securityContext) {
+                         final ClientSecurityContext securityContext,
+                         final ClassificationLabelController classificationLabelController) {
         super(eventBus, view, settingsPresenterProvider);
         this.rawPresenterProvider = rawPresenterProvider;
         this.restFactory = restFactory;
         this.securityContext = securityContext;
+        own(classificationLabelController).attach(view.getClassificationLabel());
 
         view.setUiHandlers(this);
     }
@@ -746,6 +750,9 @@ public class TextPresenter
         void setContent(IsWidget content);
 
         void setClassification(String classification);
+
+        /// @return The classification banner, for a controller to give its colours.
+        ClassificationLabel getClassificationLabel();
 
         void setSteppingVisible(boolean visible);
 

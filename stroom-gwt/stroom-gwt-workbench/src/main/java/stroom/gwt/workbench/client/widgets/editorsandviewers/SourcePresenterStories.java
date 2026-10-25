@@ -16,13 +16,13 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.view.CharacterNavigatorViewImpl;
 import stroom.data.client.view.CharacterRangeSelectionViewImpl;
-import stroom.data.client.view.ClassificationLabel;
-import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -190,9 +190,8 @@ public final class SourcePresenterStories {
         return new SourcePresenter(
                 eventBus,
                 new SourceViewImpl(GWT.create(SourceViewImpl.Binder.class)),
-                new ClassificationWrapperViewImpl(
-                        GWT.create(ClassificationWrapperViewImpl.Binder.class),
-                        new ClassificationLabel(harness.getUiConfigCache())),
+                new ClassificationWrapper(),
+                new ClassificationLabelController(harness.getUiConfigCache()),
                 sourceProgressBar,
                 EditorWidgets.textPresenter(eventBus),
                 characterNavigatorPresenter,
