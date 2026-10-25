@@ -102,6 +102,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.client.CopiedFlash;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.diff.LineDiff;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -522,6 +523,15 @@ public class AskStroomAiPresenter
                 if (link != null) {
                     e.preventDefault();
                     onLinkClick(link.getAttribute("href"));
+                    return;
+                }
+                // A code span in an answer (a TypeId, say) copied by a click, unless text in it is being selected.
+                // By ElementUtil's class name, which an svg element (a button's icon) has as no string.
+                final Element code = ElementUtil.findParent(target, "markdown-copy-code", 3);
+                if (code != null && !hasSelection()) {
+                    if (ClipboardUtil.copy(code.getInnerText())) {
+                        CopiedFlash.show(code);
+                    }
                     return;
                 }
                 final Element button = ElementUtil.findParent(target, element ->
@@ -3357,6 +3367,12 @@ public class AskStroomAiPresenter
      * Shows, for a moment, that a copy button has copied: its icon becomes a tick, and its label (if it has one)
      * says so.
      */
+    // True if the user has text selected, as when dragging over a code span to copy part of it.
+    private static native boolean hasSelection() /*-{
+        var selection = $wnd.getSelection ? $wnd.getSelection() : null;
+        return !!selection && selection.toString().length > 0;
+    }-*/;
+
     private static void flashCopied(final Element button) {
         final Element svgIcon = ElementUtil.findChild(button, "svgIcon");
         final Element icon = svgIcon != null
