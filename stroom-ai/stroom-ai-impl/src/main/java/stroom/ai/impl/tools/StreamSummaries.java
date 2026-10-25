@@ -70,6 +70,10 @@ public class StreamSummaries {
 
     /// The event-logging schema's namespace.
     public static final String EVT = "event-logging:3";
+    /// The key of how often each path (and named Data entry, `<path>[@Name='<name>']/@Value`) is populated, as a
+    /// share of all events, by the action element of the events that have it: for the tools' own use, not for
+    /// summarise_events' reply.
+    public static final String POPULATION_BY_ACTION = "path_population_by_action";
     /// The most Error children of a stream summarised.
     static final int MAX_ERROR_STREAMS = 20;
     /// The most markers read from one Error stream.
@@ -218,7 +222,7 @@ public class StreamSummaries {
     /// @param streamIds The Events streams.
     /// @param maxEvents The most events to read.
     /// @return `events`, `event_types`, `type_ids`, `actions`, `path_population`, `data_names` and `hint`, as the
-    /// Stroom MCP server gave them.
+    /// Stroom MCP server gave them, and [#POPULATION_BY_ACTION].
     /// @throws StreamReadException if a stream can't be read.
     public Map<String, Object> summariseEvents(final List<Long> streamIds, final int maxEvents) {
         final Map<String, Integer> types = new LinkedHashMap<>();
@@ -226,6 +230,8 @@ public class StreamSummaries {
         final Map<String, Integer> actions = new LinkedHashMap<>();
         final Map<String, Integer> populated = new TreeMap<>();
         final Map<List<String>, Integer> dataNames = new LinkedHashMap<>();
+        // Each path (and named Data entry) by the action element of the events that have it.
+        final Map<String, Map<String, Integer>> byAction = new TreeMap<>();
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
         for (final long streamId : streamIds) {
@@ -261,8 +267,21 @@ public class StreamSummaries {
                     if (action != null) {
                         actions.merge(kind + "/" + orNone(child(action, "Action")), 1, Integer::sum);
                     }
-                    leafPaths(event).forEach(path -> populated.merge(path, 1, Integer::sum));
-                    dataNames(event).forEach(name -> dataNames.merge(name, 1, Integer::sum));
+                    final Map<String, Integer> ofAction = action == null
+                            ? null
+                            : byAction.computeIfAbsent(kind, k -> new TreeMap<>());
+                    leafPaths(event).forEach(path -> {
+                        populated.merge(path, 1, Integer::sum);
+                        if (ofAction != null) {
+                            ofAction.merge(path, 1, Integer::sum);
+                        }
+                    });
+                    dataNames(event).forEach(name -> {
+                        dataNames.merge(name, 1, Integer::sum);
+                        if (ofAction != null) {
+                            ofAction.merge(name.get(0) + "[@Name='" + name.get(1) + "']/@Value", 1, Integer::sum);
+                        }
+                    });
                 }
             }
             if (count >= maxEvents) {
@@ -292,6 +311,18 @@ public class StreamSummaries {
         }
         result.put("path_population", population);
         result.put("data_names", names);
+        // Not in the Stroom MCP server: for documenting a field only some kinds of event have under each of them
+        // (seen: source.ip, from EventSource, in 40% of the events, which could be put under no event type).
+        final Map<String, Map<String, Double>> actionShares = new LinkedHashMap<>();
+        if (count > 0) {
+            final int events = count;
+            byAction.forEach((action, paths) -> {
+                final Map<String, Double> shares = new LinkedHashMap<>();
+                paths.forEach((path, n) -> shares.put(path, percent(n, events)));
+                actionShares.put(action, shares);
+            });
+        }
+        result.put(POPULATION_BY_ACTION, actionShares);
         result.put("hint", count >= maxEvents
                 ? "Percentages are of events sampled; raise max_events for a fuller picture."
                 : null);

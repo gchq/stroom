@@ -572,7 +572,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> replaced = replaces == null
                 ? null
                 : replaced(replaces, plan, populated);
-        final Map<String, Object> reply = new LinkedHashMap<>(plans.reply(plan, populated));
+        final Map<String, Double> withNames = IndexingInputs.populationWithDataNames(events);
+        memory.keepPlanPopulation(indexName, withNames);
+        final Map<String, Object> reply = new LinkedHashMap<>(plans.reply(plan, withNames));
         // No XSLT here: save_xslt index_plan= generates it, and half the reply was code the agent never reads.
         final Map<String, Object> result = new LinkedHashMap<>();
         if (replaced != null) {
@@ -1001,10 +1003,12 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         } catch (final IllegalArgumentException e) {
             throw new ToolRefusal("The amended plan isn't valid: " + e.getMessage());
         }
-        Map<String, Double> populated = null;
+        // The streams given, else what the plan was last checked against (not read again).
+        Map<String, Double> populated = memory.planPopulation(indexName);
         if (!streamIds.isEmpty()) {
             inputs.requireEvents(streamIds);
-            populated = IndexingInputs.population(inputs.summariseEvents(streamIds));
+            populated = IndexingInputs.populationWithDataNames(inputs.summariseEvents(streamIds));
+            memory.keepPlanPopulation(indexName, populated);
         }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("changed", applied.done());

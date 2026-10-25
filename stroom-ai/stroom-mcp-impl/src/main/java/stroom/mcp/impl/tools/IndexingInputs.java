@@ -174,6 +174,47 @@ class IndexingInputs {
         }
     }
 
+    /// [#population(Map)], with each Data element's share by its Name as well (`<path>[@Name='<name>']/@Value`), so
+    /// a field read from one Data entry is counted. Not in the Stroom MCP server, whose documentation said "not in
+    /// the sample" for every such field (seen: SecretServer's, read from `EventDetail//Data[@Name='...']/@Value`,
+    /// though the documents written from the sample held their values).
+    ///
+    /// @param summary A profile from [#summariseEvents].
+    /// @return How often each event path, and each named Data entry, is populated (%).
+    static Map<String, Double> populationWithDataNames(final Map<String, Object> summary) {
+        final Map<String, Double> out = population(summary);
+        if (summary.get("data_names") instanceof final Map<?, ?> byPath) {
+            byPath.forEach((path, names) -> {
+                if (names instanceof final Map<?, ?> shares) {
+                    shares.forEach((name, share) -> out.put(path + "[@Name='" + name + "']/@Value",
+                            share instanceof final Number number
+                                    ? number.doubleValue()
+                                    : 0.0));
+                }
+            });
+        }
+        return out;
+    }
+
+    /// @param summary A profile from [#summariseEvents].
+    /// @return How often each path (and named Data entry) is populated, as a share of all events (%), by the action
+    /// element of the events that have it; empty when the profile doesn't say.
+    static Map<String, Map<String, Double>> populationByAction(final Map<String, Object> summary) {
+        final Map<String, Map<String, Double>> out = new LinkedHashMap<>();
+        if (summary.get(StreamSummaries.POPULATION_BY_ACTION) instanceof final Map<?, ?> byAction) {
+            byAction.forEach((action, paths) -> {
+                final Map<String, Double> shares = new LinkedHashMap<>();
+                if (paths instanceof final Map<?, ?> given) {
+                    given.forEach((path, share) -> shares.put(String.valueOf(path), share instanceof final Number n
+                            ? n.doubleValue()
+                            : 0.0));
+                }
+                out.put(String.valueOf(action), shares);
+            });
+        }
+        return out;
+    }
+
     /// @param summary A profile from [#summariseEvents].
     /// @return How often each event path is populated (%).
     static Map<String, Double> population(final Map<String, Object> summary) {
