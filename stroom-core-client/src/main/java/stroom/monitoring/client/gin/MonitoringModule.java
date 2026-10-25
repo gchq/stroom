@@ -56,9 +56,6 @@ import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.datepicker.client.DateTimeViewImpl;
-import stroom.widget.datepicker.client.TimePopup;
-import stroom.widget.datepicker.client.TimePopup.TimeView;
-import stroom.widget.datepicker.client.TimeViewImpl;
 
 public class MonitoringModule extends PluginModule {
 
@@ -80,10 +77,6 @@ public class MonitoringModule extends PluginModule {
                 DateTimePopup.class,
                 DateTimeView.class,
                 DateTimeViewImpl.class);
-        bindPresenterWidget(
-                TimePopup.class,
-                TimeView.class,
-                TimeViewImpl.class);
 
         // Node management.
         bindPlugin(NodeGroupsPlugin.class);

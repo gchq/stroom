@@ -21,7 +21,7 @@ import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePerio
 import stroom.processor.shared.ProfilePeriod;
 import stroom.util.shared.time.Days;
 import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.datepicker.client.TimePopup;
+import stroom.widget.datepicker.client.TimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -45,10 +45,10 @@ public class ProfilePeriodEditPresenter
     @Inject
     public ProfilePeriodEditPresenter(final EventBus eventBus,
                                       final ProfilePeriodEditView view,
-                                      final Provider<TimePopup> timePopupProvider) {
+                                      final Provider<TimeBoxController> timeBoxControllerProvider) {
         super(eventBus, view);
-        view.getStartTime().setPopupProvider(timePopupProvider);
-        view.getEndTime().setPopupProvider(timePopupProvider);
+        make(timeBoxControllerProvider).attach(view.getStartTime());
+        make(timeBoxControllerProvider).attach(view.getEndTime());
     }
 
     public void show(final ProfilePeriod executionSchedule,

@@ -90,7 +90,10 @@ public class IconBox extends Component {
         field = findField(widget.getElement());
         if (field != null) {
             field.addClassName(BLOCK + "__field");
-            applyOpensDialog();
+            // A field may say so itself, so only an attribute given first is added here
+            if (opensDialog) {
+                applyOpensDialog();
+            }
         }
     }
 

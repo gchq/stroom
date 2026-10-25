@@ -16,101 +16,64 @@
 
 package stroom.widget.datepicker.client;
 
-import stroom.item.client.EventBinder;
 import stroom.svg.client.IconBox;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.Time;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Provider;
 
-import java.util.Objects;
+/// A text box for a time (`HH:MM:SS`), with a clock that opens a dialog to choose one: the clock,
+/// Enter or Alt+Down asks to open it ([#setOnOpenPicker(Runnable)]), which a [TimeBoxController]
+/// attached to it answers. Its markup is `TimeBox.ui.xml`, styled by `date-time-box.css`.
+public class TimeBox extends Component implements Focus, HasValueChangeHandlers<String> {
 
-public class TimeBox
-        extends Composite
-        implements Focus, HasValueChangeHandlers<String> {
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private Provider<TimePopup> popupProvider;
-    private final TextBox textBox;
-    private boolean readOnly;
-    private final IconBox iconBox;
-    private Time value;
-    private TimePopup popup;
+    @UiField
+    IconBox iconBox;
+    @UiField
+    TextBox textBox;
 
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(iconBox.addClickHandler(event -> showPopup()));
-            registerHandler(textBox.addKeyDownHandler(event -> {
-                // As a date-time box: Enter or Alt+Down opens the dialog
-                final int keyCode = event.getNativeKeyCode();
-                if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
-                    || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
-                    event.preventDefault();
-                    showPopup();
-                }
-            }));
-            registerHandler(textBox.addValueChangeHandler(event -> {
-                value = Time.parse(textBox.getValue());
-                ValueChangeEvent.fire(TimeBox.this, textBox.getValue());
-            }));
-            registerHandler(textBox.addBlurHandler(event -> onBlur()));
-            registerHandler(textBox.addFocusHandler(event -> onFocus()));
-        }
-    };
+    private Runnable onOpenPicker;
+    private Runnable onChange;
 
-    private TimePopup getPopup() {
-        if (popup == null && popupProvider != null) {
-            popup = popupProvider.get();
-            popup.setTime(Time.ZERO);
-        }
-        return popup;
-    }
-
+    /// Makes a box with no time.
     public TimeBox() {
-        textBox = new TextBox();
-        // A date-time box's look (date-time-box.css), with a clock
-        textBox.addStyleName("date-time-box__input stroom-control allow-focus");
-        textBox.getElement().setAttribute("aria-haspopup", "dialog");
-
-        iconBox = new IconBox();
-        iconBox.addStyleName("date-time-box date-time-box--time");
-        iconBox.setWidget(textBox, SvgImage.HISTORY);
-
-        initWidget(iconBox);
+        initWidget(BINDER.createAndBindUi(this));
+        iconBox.setOnIconClick(this::openPicker);
+        textBox.addKeyDownHandler(event -> {
+            // As a date-time box: Enter or Alt+Down opens the dialog
+            final int keyCode = event.getNativeKeyCode();
+            if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
+                || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
+                event.preventDefault();
+                openPicker();
+            }
+        });
+        textBox.addValueChangeHandler(event -> changed(textBox.getValue()));
+        textBox.addBlurHandler(event -> FieldValidity.setInvalid(textBox.getElement(), !isValid()));
+        textBox.addFocusHandler(event -> FieldValidity.setInvalid(textBox.getElement(), false));
     }
 
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
+    /// @param onOpenPicker Run when the user asks to choose a time in the dialog, unless the box
+    ///                     is read only or disabled.
+    public void setOnOpenPicker(final Runnable onOpenPicker) {
+        this.onOpenPicker = onOpenPicker;
     }
 
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
-    }
-
-    private void showPopup() {
-        if (readOnly || !textBox.isEnabled()) {
-            return;
-        }
-        final TimePopup popup = getPopup();
-        if (popup != null) {
-            final Time time = Time.parse(textBox.getValue());
-            popup.setTime(time);
-            popup.show(newValue -> {
-                if (!Objects.equals(time, newValue)) {
-                    setValue(newValue, true);
-                }
-            });
-        }
+    /// @param onChange Run when the user changes the time, by typing or with the dialog.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     @Override
@@ -118,14 +81,16 @@ public class TimeBox
         textBox.setFocus(true);
     }
 
+    /// @param name The text box's form name.
     public void setName(final String name) {
         textBox.setName(name);
     }
 
+    /// @param enabled Whether the time can be changed, by typing or with the dialog.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
         // So the clock icon can't open the dialog either
-        iconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || isReadOnly());
     }
 
     /// Makes the value read only: it can be read, selected and copied, and stays in the tab
@@ -133,68 +98,67 @@ public class TimeBox
     /// with its value greyed.
     ///
     /// @param readOnly Whether the value is read only.
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         textBox.setReadOnly(readOnly);
         iconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
 
+    /// @return The time typed or chosen; one that can't be read is midnight.
     public Time getValue() {
         return Time.parse(textBox.getValue());
     }
 
+    /// @param value The time to show, or null for midnight.
     public void setValue(final Time value) {
         setValue(value, false);
     }
 
+    /// @param value      The time to show, or null for midnight.
+    /// @param fireEvents Whether to tell its listeners, as when the user changes it.
     public void setValue(final Time value, final boolean fireEvents) {
-        if (value != null) {
-            this.value = value;
-        } else {
-            this.value = Time.ZERO;
-        }
-        textBox.setValue(this.value.toString());
+        textBox.setValue((value != null
+                ? value
+                : Time.ZERO).toString());
         FieldValidity.setInvalid(textBox.getElement(), false);
         if (fireEvents) {
-            ValueChangeEvent.fire(this, null);
+            changed(null);
         }
     }
 
+    /// @return Whether the text is a time.
     public boolean isValid() {
         return Time.isValid(textBox.getValue());
     }
 
-    private void onFocus() {
-        FieldValidity.setInvalid(textBox.getElement(), false);
-    }
-
-    private void onBlur() {
-        if (isValid()) {
-            FieldValidity.setInvalid(textBox.getElement(), false);
-        } else {
-            FieldValidity.setInvalid(textBox.getElement(), true);
-        }
-    }
-
-    public void setHourVisible(final boolean visible) {
-        getPopup().getView().setHourVisible(visible);
-    }
-
-    public void setMinuteVisible(final boolean visible) {
-        getPopup().getView().setMinuteVisible(visible);
-    }
-
-    public void setSecondVisible(final boolean visible) {
-        getPopup().getView().setSecondVisible(visible);
-    }
-
+    /// Kept beside [#setOnChange(Runnable)] until its callers have moved.
+    ///
+    /// @param handler Told when the user changes the time; the event's value is the text typed, or
+    ///                null when the dialog set it.
+    /// @return The handler's registration.
     @Override
-    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
-            final ValueChangeHandler<String> handler) {
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
-    public void setPopupProvider(final Provider<TimePopup> popupProvider) {
-        this.popupProvider = popupProvider;
+    private void openPicker() {
+        if (!isReadOnly() && textBox.isEnabled() && onOpenPicker != null) {
+            onOpenPicker.run();
+        }
+    }
+
+    private void changed(final String text) {
+        ValueChangeEvent.fire(this, text);
+        if (onChange != null) {
+            onChange.run();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<IconBox, TimeBox> {
+
     }
 }
