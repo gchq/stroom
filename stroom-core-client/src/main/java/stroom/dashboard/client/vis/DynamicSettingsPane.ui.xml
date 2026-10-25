@@ -1,0 +1,7 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A tab of a visualisation's settings (DynamicSettingsPane): a form group for each control the
+     visualisation declares, added in Java -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel ui:field="outer" styleName="max form"/>
+</ui:UiBinder>

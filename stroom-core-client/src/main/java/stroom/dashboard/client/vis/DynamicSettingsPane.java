@@ -17,9 +17,11 @@
 package stroom.dashboard.client.vis;
 
 import stroom.entity.client.presenter.HasReadAndWrite;
+import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisInput;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.Layer;
@@ -27,10 +29,13 @@ import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
@@ -42,21 +47,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
+/// A tab of a visualisation's settings: a form group for each control the visualisation declares
+/// (a field, a selection, text, a number, a date or a tick box), made from its JSON as it is read,
+/// so the controls are made in Java. Its markup is `DynamicSettingsPane.ui.xml`.
+public class DynamicSettingsPane extends Component implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
-    private final FlowPanel outer;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    FlowPanel outer;
     private final List<FieldControl> fieldControls = new ArrayList<>();
+    // Each control's read-only setter
+    private final List<Consumer<Boolean>> readOnlySetters = new ArrayList<>();
+    private Runnable onChange;
     // The table's columns the field controls can choose
     private List<VisFieldOption> fieldOptions = Collections.emptyList();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
     private Consumer<DateTimeBox> onDateTimeBoxAdded = box -> {
     };
-//    private double opacity;
 
+    /// Makes a pane with no controls; [#addControls] adds them.
     public DynamicSettingsPane() {
-        outer = new FlowPanel();
-        outer.setStyleName("max form");
-        initWidget(outer);
+        initWidget(BINDER.createAndBindUi(this));
+    }
+
+    /// @param onChange Run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        readOnlySetters.forEach(setter -> setter.accept(readOnly));
     }
 
     /// @param onDateTimeBoxAdded Given each date-time box the pane adds, for its owner's controller
@@ -86,6 +108,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
             final String label = JSONUtil.getString(control.get("label"));
             final Widget widget = createWidget(control);
+            watch(widget);
 
             final FormGroup formGroup = new FormGroup();
             formGroup.setLabel(label);
@@ -105,6 +128,35 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
             outer.add(formGroup);
         }
+    }
+
+    // Tells the owner of changes to the control, and makes it read only with the pane
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void watch(final Widget widget) {
+        if (widget instanceof HasValueChangeHandlers) {
+            ((HasValueChangeHandlers) widget).addValueChangeHandler(event -> {
+                if (onChange != null) {
+                    onChange.run();
+                }
+            });
+        }
+        final Consumer<Boolean> readOnlySetter;
+        if (widget instanceof Component) {
+            readOnlySetter = ((Component) widget)::setReadOnly;
+        } else if (widget instanceof BaseSelectionBox) {
+            readOnlySetter = ((BaseSelectionBox<?, ?>) widget)::setReadOnly;
+        } else if (widget instanceof ValueSpinner) {
+            readOnlySetter = ((ValueSpinner) widget)::setReadOnly;
+        } else if (widget instanceof TickBox) {
+            readOnlySetter = ((TickBox) widget)::setReadOnly;
+        } else if (widget instanceof TextBox) {
+            readOnlySetter = ((TextBox) widget)::setReadOnly;
+        } else {
+            readOnlySetter = readOnly -> {
+            };
+        }
+        readOnlySetter.accept(isReadOnly());
+        readOnlySetters.add(readOnlySetter);
     }
 
     private Widget createWidget(final JSONObject control) {
@@ -389,20 +441,6 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         }
     }
 
-//    @Override
-//    public double getOpacity() {
-//        return opacity;
-//    }
-//
-//    //*************
-//    // Start Layer
-//    //*************/
-//    @Override
-//    public void setOpacity(final double opacity) {
-//        this.opacity = opacity;
-//        getElement().getStyle().setOpacity(opacity);
-//    }
-
     @Override
     public void setLayerVisible(final boolean fade, final boolean visible) {
         Layer.setLayerVisible(getWidget().getElement(), fade, visible);
@@ -410,7 +448,6 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     @Override
     public void addLayer(final LayerContainer layerContainer) {
-//        setOpacity(opacity);
         layerContainer.add(this);
     }
 
@@ -422,14 +459,16 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     @Override
     public void onResize() {
-        // if (asWidget() instanceof RequiresResize) {
-        // ((RequiresResize) asWidget()).onResize();
-        // }
+        // Nothing in it resizes
     }
 
-    //*************
-    // End Layer
-    //*************/
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DynamicSettingsPane> {
+
+    }
 
 
     // --------------------------------------------------------------------------------

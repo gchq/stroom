@@ -74,6 +74,7 @@ import stroom.gwt.workbench.client.widgets.feedback.SourceProgressBarStories;
 import stroom.gwt.workbench.client.widgets.feedback.SpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.TaskCounterStories;
 import stroom.gwt.workbench.client.widgets.formatdatetime.FormatDateTimeStories;
+import stroom.gwt.workbench.client.widgets.inputs.DynamicSettingsPaneStories;
 import stroom.gwt.workbench.client.widgets.inputs.FieldEndStories;
 import stroom.gwt.workbench.client.widgets.inputs.FileChooserStories;
 import stroom.gwt.workbench.client.widgets.inputs.FormGroupStories;
@@ -274,6 +275,8 @@ public final class WidgetsStories {
         EntityCheckTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
         ExpressionBuilderStories.addTo(registry);
+        // Widgets/Inputs/DynamicSettingsPane
+        DynamicSettingsPaneStories.addTo(registry);
         // Widgets/Inputs/FieldEnds
         FieldEndStories.addTo(registry);
         // Widgets/Inputs/FileChooser
