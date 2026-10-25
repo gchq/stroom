@@ -37,6 +37,7 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.text.TextPresenter;
+import stroom.dashboard.client.vis.VisPresenter;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -74,6 +75,7 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
+import stroom.util.client.JSONUtil;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
@@ -95,6 +97,9 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -127,6 +132,9 @@ public class DashboardPresenter
 
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
     private static final String DEFAULT_PARAMS_INPUT = "Params";
+    // What starts the line of a Visualisation's render report in the description, and the most of it given.
+    private static final String RENDER_REPORT = "Render report: ";
+    private static final int MAX_RENDER_REPORT_CHARS = 600;
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
@@ -1074,9 +1082,21 @@ public class DashboardPresenter
     }
 
     /// @return A description of the dashboard as edited, in plain text, for tools and people reading it: each
-    /// query's data source and expression, each table's columns, formatting rules and settings, each other
-    /// component's settings, the parameters, the time range, and the components shown.
+    /// query's data source and expression, each table's columns, formatting rules and settings, each
+    /// Visualisation's document, linked table, settings and latest render report, each other component's
+    /// settings, the parameters, the time range, and the components shown.
     public String getDescription() {
+        return describe(true);
+    }
+
+    /// @return The dashboard's description ([#getDescription()]) without the Visualisations' render reports,
+    /// which change as they render, for telling whether the dashboard itself has changed.
+    public String getComparableDescription() {
+        return describe(false);
+    }
+
+    // The dashboard's description, with the Visualisations' render reports or without them.
+    private String describe(final boolean withRenderReports) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Time range: ").append(queryToolbarPresenter.getTimeRange()).append('\n');
         sb.append("Parameters: ").append(NullSafe.list(dashboardContext.getParams())).append('\n');
@@ -1117,6 +1137,8 @@ public class DashboardPresenter
                         sb.append(i + 1).append(". ").append(describeRule(rules.get(i))).append('\n');
                     }
                 }
+            } else if (component instanceof final VisPresenter visPresenter) {
+                describeVis(sb, visPresenter, withRenderReports);
             }
             final String settings = describeSettings(NullSafe.get(component.getComponentConfig(),
                     ComponentConfig::getSettings));
@@ -1157,6 +1179,46 @@ public class DashboardPresenter
             return null;
         }
         return String.join("; ", parts);
+    }
+
+    // A Visualisation component: the Visualisation it shows, the table it is linked to, its settings as a JSON
+    // object of control ids and values, and (if wanted) its latest render report, on one line and cut short, as the
+    // visualisation's script wrote it.
+    private void describeVis(final StringBuilder sb, final VisPresenter vis, final boolean withRenderReport) {
+        final VisComponentSettings settings = vis.getSettings() instanceof final VisComponentSettings visSettings
+                ? visSettings
+                : null;
+        final DocRef visualisation = NullSafe.get(settings, VisComponentSettings::getVisualisation);
+        sb.append("Visualisation: ").append(visualisation == null
+                ? "none"
+                : "'" + NullSafe.string(visualisation.getName()) + "' (uuid " + visualisation.getUuid() + ")")
+                .append('\n');
+        sb.append("Linked table: ").append(describeComponent(NullSafe.get(settings, VisComponentSettings::getTableId)))
+                .append('\n');
+        final String json = NullSafe.get(settings, VisComponentSettings::getJson);
+        final JSONObject object = parseObject(json);
+        sb.append("Vis settings: ").append(object != null
+                ? object.toString()
+                : NullSafe.string(json).replaceAll("\\s+", " ")).append('\n');
+        final String report = vis.getLastRenderReport();
+        if (withRenderReport && NullSafe.isNonBlankString(report)) {
+            final String line = report.replaceAll("[\\r\\n]+", " ").trim();
+            sb.append(RENDER_REPORT).append(line.length() > MAX_RENDER_REPORT_CHARS
+                    ? line.substring(0, MAX_RENDER_REPORT_CHARS) + "..."
+                    : line).append('\n');
+        }
+    }
+
+    // A JSON object, or null if the text is empty or isn't one.
+    private static JSONObject parseObject(final String json) {
+        if (NullSafe.isBlankString(json)) {
+            return null;
+        }
+        try {
+            return JSONUtil.getObject(JSONUtil.parse(json));
+        } catch (final RuntimeException e) {
+            return null;
+        }
     }
 
     private static String describeDoc(final DocRef doc) {
@@ -1276,7 +1338,7 @@ public class DashboardPresenter
             query = null;
         }
 
-        final String descriptionBefore = getDescription();
+        final String descriptionBefore = getComparableDescription();
         final TableComponentSettings before = TableChange.snapshot(component);
         final ExpressionOperator expressionBefore = query != null
                 ? query.getExpression()
@@ -1308,7 +1370,20 @@ public class DashboardPresenter
                 } else {
                     added.put(NullSafe.string(change.getName()).toLowerCase(), text);
                 }
-            } else if (TableChange.RENAME.equals(change.getOp()) || TableChange.SET_SETTING.equals(change.getOp())) {
+            } else if (TableChange.ADD_VIS.equals(change.getOp())) {
+                final Component linked = change.getTable() == null || change.getTable().equalsIgnoreCase(name)
+                        ? component
+                        : added.get(change.getTable().toLowerCase());
+                final Component vis = linked == null
+                        ? null
+                        : addVis(linked, change);
+                if (vis == null) {
+                    failed = prefix + "the visualisation couldn't be added.";
+                } else {
+                    added.put(NullSafe.string(change.getName()).toLowerCase(), vis);
+                }
+            } else if (TableChange.RENAME.equals(change.getOp()) || TableChange.SET_SETTING.equals(change.getOp())
+                       || TableChange.SET_VIS_SETTINGS.equals(change.getOp())) {
                 final Component target = change.getTargetId() != null
                         ? components.get(change.getTargetId())
                         : change.getTarget() == null
@@ -1323,6 +1398,11 @@ public class DashboardPresenter
                     }
                     if (TableChange.RENAME.equals(change.getOp())) {
                         target.setComponentName(change.getName());
+                    } else if (TableChange.SET_VIS_SETTINGS.equals(change.getOp())) {
+                        failed = applyVisSettings(target, change);
+                        failed = failed == null
+                                ? null
+                                : prefix + failed;
                     } else {
                         failed = ComponentSettingChanges.apply(target, change.getSetting(), change.getValue(),
                                 change.getRef(), change.getDoc());
@@ -1342,6 +1422,7 @@ public class DashboardPresenter
             if (failed != null) {
                 added.values().forEach(this::removeAddedComponent);
                 configsBefore.forEach((id, config) -> ComponentSettingChanges.restore(components.get(id), config));
+                refreshVisData(configsBefore.keySet());
                 TableChange.restore(component, before);
                 syncSettingsDialogs(component, configsBefore.keySet());
                 return failed;
@@ -1356,7 +1437,7 @@ public class DashboardPresenter
             appliedChanges.put(undoKey, new AppliedChanges(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
                     added.values().stream().map(Component::getId).toList(), configsBefore, descriptionBefore,
-                    getDescription()));
+                    getComparableDescription()));
         }
         return null;
     }
@@ -1430,6 +1511,131 @@ public class DashboardPresenter
         return text;
     }
 
+    // Adds a Visualisation component linked to a table, showing the Visualisation the change gives with its settings,
+    // in a new pane below the table or as a tab beside it, with the name asked for (made unique if the dashboard has
+    // the name already).
+    private Component addVis(final Component table, final TableChange change) {
+        final MutableTabConfig tableTab = table.getTabConfig();
+        final ComponentType type = components.getComponentTypes().stream()
+                .filter(componentType -> VisPresenter.TYPE.getId().equals(componentType.getId()))
+                .findFirst()
+                .orElse(null);
+        final String json = mergeVisSettings(null, change.getValue());
+        if (type == null || tableTab == null || tableTab.getParent() == null || change.getDoc() == null
+            || json == null) {
+            return null;
+        }
+        final ComponentId componentId = new ComponentNameSet(components).createUnique(type, change.getName());
+        final ComponentConfig componentConfig = ComponentConfig.builder()
+                .type(type.getId())
+                .id(componentId.id)
+                .name(componentId.name)
+                .settings(VisComponentSettings.builder()
+                        .tableId(table.getId())
+                        .visualisation(change.getDoc())
+                        .json(json)
+                        .build())
+                .build();
+        final Component vis = addComponent(componentConfig.getType(), componentConfig);
+        if (vis == null) {
+            return null;
+        }
+        // Linking it to the table fetches its data, if the table's query has run.
+        vis.link();
+        final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
+        vis.setTabConfig(tabConfig);
+        if (TableChange.TAB.equals(change.getPlacement())
+            || !layoutPresenter.addTabBelow(tableTab.getParent(), tabConfig)) {
+            // Beside the table: asked for, or if it can't go below it.
+            tableTab.getParent().add(tabConfig);
+            layoutPresenter.clear();
+            layoutPresenter.refresh();
+        }
+        onChange();
+        return vis;
+    }
+
+    // Changes a Visualisation component's settings: merges the change's settings into them, switches it to the
+    // change's Visualisation if it gives one, and fetches its data again, as its data depends on them.
+    private String applyVisSettings(final Component target, final TableChange change) {
+        if (!(target instanceof final VisPresenter vis)
+            || !(vis.getSettings() instanceof final VisComponentSettings current)) {
+            return "the component isn't a visualisation.";
+        }
+        final String json = mergeVisSettings(current.getJson(), change.getValue());
+        if (json == null) {
+            return "the visualisation's settings can't be read.";
+        }
+        final VisComponentSettings.Builder builder = current.copy().json(json);
+        if (change.getDoc() != null) {
+            builder.visualisation(change.getDoc());
+        }
+        vis.applySettings(builder.build());
+        refreshVisData(vis);
+        return null;
+    }
+
+    // A Visualisation's settings (a JSON object of control ids and values) with changes merged in: each key the
+    // changes give set to their value, or removed if their value is empty, so the control's default applies.
+    // Null if either can't be read.
+    private static String mergeVisSettings(final String currentJson, final String changesJson) {
+        final JSONObject current = NullSafe.isBlankString(currentJson)
+                ? new JSONObject()
+                : parseObject(currentJson);
+        final JSONObject changes = NullSafe.isBlankString(changesJson)
+                ? new JSONObject()
+                : parseObject(changesJson);
+        if (current == null || changes == null) {
+            return null;
+        }
+        final JSONObject merged = new JSONObject();
+        for (final String key : current.keySet()) {
+            if (!changes.containsKey(key)) {
+                merged.put(key, current.get(key));
+            }
+        }
+        for (final String key : changes.keySet()) {
+            final JSONValue value = changes.get(key);
+            final String text = value == null || value.isNull() != null
+                    ? ""
+                    : value.isString() != null
+                            ? value.isString().stringValue()
+                            : value.toString();
+            if (!text.isEmpty()) {
+                merged.put(key, new JSONString(text));
+            }
+        }
+        return merged.toString();
+    }
+
+    // Fetches the data of each Visualisation component among those named again, e.g. after its settings change.
+    private void refreshVisData(final Collection<String> componentIds) {
+        for (final String id : componentIds) {
+            if (components.get(id) instanceof final VisPresenter vis) {
+                refreshVisData(vis);
+            }
+        }
+    }
+
+    // Fetches a Visualisation's data again, with its settings as they are now, from the query that feeds the table
+    // it is linked to, if that query has run.
+    private void refreshVisData(final VisPresenter vis) {
+        final String tableId = vis.getSettings() instanceof final VisComponentSettings settings
+                ? settings.getTableId()
+                : null;
+        final String queryId = tableId == null
+                ? null
+                : TableChange.queryId(components.get(tableId));
+        if (queryId != null && components.get(queryId) instanceof final QueryPresenter query
+            && query.getSearchModel() != null) {
+            query.getSearchModel().refresh(vis.getId(), result -> {
+                if (result != null) {
+                    vis.setData(result);
+                }
+            });
+        }
+    }
+
     // Removes a component added by applied changes, with its tab.
     private void removeAddedComponent(final Component component) {
         if (component.getTabConfig() != null && component.getTabConfig().getParent() != null) {
@@ -1463,7 +1669,7 @@ public class DashboardPresenter
                 : appliedChanges.get(undoKey);
         return undo != null
                && components.get(undo.componentId) != null
-               && undo.descriptionAfter.equals(getDescription());
+               && undo.descriptionAfter.equals(getComparableDescription());
     }
 
     /// Undoes applied changes, putting the table back as it was before them, as an unsaved edit, if the
@@ -1483,6 +1689,7 @@ public class DashboardPresenter
             }
         }
         undo.configsBefore.forEach((id, config) -> ComponentSettingChanges.restore(components.get(id), config));
+        refreshVisData(undo.configsBefore.keySet());
         if (undo.queryId != null && components.get(undo.queryId) instanceof final QueryPresenter query) {
             query.setExpression(undo.expressionBefore);
             query.onChange();

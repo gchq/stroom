@@ -42,8 +42,9 @@ class TestToolCategories {
                     "summarise_column", "table", "task_list", "wc", "write_file", "xpath"),
             AiToolCategory.SEARCH, List.of("current_results", "describe_data_source", "fetch_events",
                     "list_data_sources", "run_stroomql", "search_events", "search_history", "validate_stroomql"),
-            AiToolCategory.CONTENT, List.of("propose_code_change", "propose_dashboard", "propose_dashboard_change",
-                    "propose_documentation_change", "propose_query", "propose_query_change", "xslt_lookups"),
+            AiToolCategory.CONTENT, List.of("list_visualisations", "propose_code_change", "propose_dashboard",
+                    "propose_dashboard_change", "propose_documentation_change", "propose_query",
+                    "propose_query_change", "propose_visualisation", "xslt_lookups"),
             AiToolCategory.INDEXING, List.of("elastic_index_templates"),
             AiToolCategory.PROCESSING, List.of("processor_tasks", "stream_meta"),
             AiToolCategory.ADMINISTRATION, List.of("config_properties", "server_tasks"));

@@ -29,8 +29,9 @@ import java.util.List;
 /// One change to a dashboard table, made programmatically rather than from its menus or Settings dialog (e.g.
 /// one proposed elsewhere that the user chose to apply): a column (group, add, edit, move, hide, show, sort or
 /// filter one), a conditional formatting rule, the expression of the classic query that feeds the table, a table
-/// or Text widget added beside or below it, or a component's name or settings. The table applies its own changes
-/// as its column menus would ([#apply(Component, List)]); the dashboard applies the rest.
+/// or Text widget added beside or below it, a Visualisation linked to it, or a component's name or settings. The
+/// table applies its own changes as its column menus would ([#apply(Component, List)]); the dashboard applies the
+/// rest.
 public final class TableChange {
 
     public static final String GROUP = "group";
@@ -49,6 +50,18 @@ public final class TableChange {
     public static final String ADD_TABLE = "add_table";
     /// Adds a Text widget below a table, showing the event of its selected row.
     public static final String ADD_TEXT = "add_text";
+    /// Adds a Visualisation component linked to a table ([#getTable()], or the proposal's table if null), named
+    /// [#getName()], showing the Visualisation [#getDoc()] with the settings [#getValue()] (a JSON object of control
+    /// ids and values, or null), placed as [#getPlacement()] says.
+    public static final String ADD_VIS = "add_vis";
+    /// Changes a Visualisation component's settings ([#getTarget()], [#getTargetId()]): merges the JSON object
+    /// [#getValue()] into them (a key whose value is empty is removed, so the control's default applies), and
+    /// switches it to the Visualisation [#getDoc()] if that isn't null.
+    public static final String SET_VIS_SETTINGS = "set_vis_settings";
+    /// For add_vis: in a new pane below the table (the default).
+    public static final String BELOW = "below";
+    /// For add_vis: as a tab beside the table.
+    public static final String TAB = "tab";
     /// Renames a component, and so its tab.
     public static final String RENAME = "rename";
     /// Changes one of a component's settings.
@@ -84,6 +97,7 @@ public final class TableChange {
     private final boolean bold;
     private final boolean italic;
     private final boolean hide;
+    private final String placement;
 
     private TableChange(final Builder builder) {
         this.op = builder.op;
@@ -110,6 +124,7 @@ public final class TableChange {
         this.bold = builder.bold;
         this.italic = builder.italic;
         this.hide = builder.hide;
+        this.placement = builder.placement;
     }
 
     /// @param op What the change does, e.g. [#GROUP].
@@ -230,6 +245,11 @@ public final class TableChange {
         return hide;
     }
 
+    /// @return For add_vis, where to put the Visualisation: [#BELOW] or [#TAB]; null for below.
+    public String getPlacement() {
+        return placement;
+    }
+
     /// @return What it does, e.g. [#GROUP].
     public String getOp() {
         return op;
@@ -324,6 +344,7 @@ public final class TableChange {
         private boolean bold;
         private boolean italic;
         private boolean hide;
+        private String placement;
 
         private Builder(final String op) {
             this.op = op;
@@ -343,8 +364,8 @@ public final class TableChange {
             return this;
         }
 
-        /// @param name For add_column, the new column's name; for edit_column, its new name; for add_table, add_text
-        ///             and rename, the new name.
+        /// @param name For add_column, the new column's name; for edit_column, its new name; for add_table, add_text,
+        ///             add_vis and rename, the new name.
         /// @return This builder.
         public Builder name(final String name) {
             this.name = name;
@@ -439,7 +460,8 @@ public final class TableChange {
             return this;
         }
 
-        /// @param value For set_setting, its value, as the server checked it.
+        /// @param value For set_setting, its value, as the server checked it. For add_vis and set_vis_settings, the
+        ///              Visualisation's settings, as a JSON object of control ids and values.
         /// @return This builder.
         public Builder value(final String value) {
             this.value = value;
@@ -453,7 +475,8 @@ public final class TableChange {
             return this;
         }
 
-        /// @param doc For set_setting of a document, the document, or null.
+        /// @param doc For set_setting of a document, the document; for add_vis, the Visualisation to show; for
+        ///            set_vis_settings, the Visualisation to switch to; or null.
         /// @return This builder.
         public Builder doc(final DocRef doc) {
             this.doc = doc;
@@ -492,6 +515,13 @@ public final class TableChange {
         /// @return This builder.
         public Builder hide(final boolean hide) {
             this.hide = hide;
+            return this;
+        }
+
+        /// @param placement For add_vis, where to put the Visualisation: [#BELOW] (the default, if null) or [#TAB].
+        /// @return This builder.
+        public Builder placement(final String placement) {
+            this.placement = placement;
             return this;
         }
 

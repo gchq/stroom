@@ -21,7 +21,9 @@ import stroom.ai.impl.UserActionRecord.CodeChange;
 import stroom.ai.impl.UserActionRecord.DashboardChange;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
 import stroom.docref.DocRef;
@@ -80,6 +82,7 @@ public class UserActionService {
     private final ProcessorFilterService processorFilterService;
     private final AiAuditLog auditLog;
     private final DashboardBuilder dashboardBuilder;
+    private final VisualisationActions visualisationActions;
 
     @Inject
     UserActionService(final AiService aiService,
@@ -88,7 +91,8 @@ public class UserActionService {
                       final UserActionLookup lookup,
                       final ProcessorFilterService processorFilterService,
                       final AiAuditLog auditLog,
-                      final DashboardBuilder dashboardBuilder) {
+                      final DashboardBuilder dashboardBuilder,
+                      final VisualisationActions visualisationActions) {
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.userActions = userActions;
@@ -96,6 +100,7 @@ public class UserActionService {
         this.processorFilterService = processorFilterService;
         this.auditLog = auditLog;
         this.dashboardBuilder = dashboardBuilder;
+        this.visualisationActions = visualisationActions;
     }
 
     /// Does a user action, if it can still be done.
@@ -154,6 +159,7 @@ public class UserActionService {
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
             case UserActions.CREATE_DASHBOARD -> createDashboard(chatId, action);
+            case UserActions.CREATE_VISUALISATION -> createVisualisation(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
@@ -259,6 +265,34 @@ public class UserActionService {
         auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
                 "Opened the New Dashboard dialog", true);
         return AiUserActionResult.createDashboard(action.name(), built.config());
+    }
+
+    /// Lets the browser open Stroom's New Visualisation dialog with the suggested name in the dashboard's (or
+    /// query's) folder, giving it the Visualisation's settings, built again from the plan now, and puts the ECharts
+    /// adapter in place if it isn't. The user creates the Visualisation in the dialog, which checks their
+    /// permission to create it in the folder they choose; the browser then adds it to the dashboard (or the
+    /// query's `show` clause), unsaved. As it creates nothing the user sees, the button can be used again.
+    /// A chart replacing one Stroom AI generated has its Visualisation rewritten and renamed here instead, if the
+    /// user may edit it, and the browser shows it in the same vis component; using the button again writes the
+    /// same chart again.
+    private AiUserActionResult createVisualisation(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard or query no longer exists, or you can't see it.";
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final AiCreateVisualisation create;
+        try {
+            create = visualisationActions.prepare(action.doc(), action.name(), action.request());
+        } catch (final IllegalStateException e) {
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
+            return new AiUserActionResult(false, e.getMessage(), null);
+        }
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
+                create.getReplaced() != null
+                        ? "Rewrote Visualisation '" + create.getReplaced().getName() + "' for the new chart"
+                        : "Opened the New Visualisation dialog", true);
+        return AiUserActionResult.createVisualisation(create);
     }
 
     /// Lets the browser apply a proposed code change to a stepping element's editor, unsaved, if the user may edit

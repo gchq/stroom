@@ -37,6 +37,30 @@ var stroomLink = function(href, target) {
     }
 }
 
+// True once the current visualisation has sent its own render report.
+var visReportsItself = false;
+var lastReportJson = null;
+
+// Send a render report to Stroom, unless it is the same as the last one.
+var postReport = function(report) {
+    var json = JSON.stringify(report);
+    if (json === lastReportJson) {
+        return;
+    }
+    lastReportJson = json;
+
+    if (stroomParent && stroomFrameId && stroomOrigin) {
+        var obj = {
+          frameId : stroomFrameId,
+          functionName : 'report',
+          report : report,
+        };
+
+        var message = JSON.stringify(obj);
+        stroomParent.postMessage(message, stroomOrigin);
+    }
+}
+
 !function() {
     var stroom = {};
 
@@ -81,6 +105,14 @@ var stroomLink = function(href, target) {
             var message = JSON.stringify(obj);
             stroomParent.postMessage(message, stroomOrigin);
         }
+    };
+
+    // Send Stroom a report on how the visualisation rendered, e.g. what it drew, what it dropped
+    // or why it failed. Stroom keeps the latest report for the visualisation.
+    // e.g. `stroom.report({status: 'ok', series: 2, points: 40, droppedRows: {}, warnings: []})`
+    stroom.report = function(report) {
+        visReportsItself = true;
+        postReport(report);
     };
 
     stroom.dashboard = function(uuid, params, queryOnOpen) {
@@ -211,6 +243,16 @@ function ScriptInjector() {
 }
 
 /**
+ * The message of an error, which may be an Error or a plain string.
+ */
+function errorMessage(ex) {
+  if (ex && ex.message) {
+    return ex.message;
+  }
+  return String(ex);
+}
+
+/**
  * AN OBJECT TO LOAD AND INTERACT WITH VISUALISATIONS
  */
 function VisualisationManager() {
@@ -222,8 +264,48 @@ function VisualisationManager() {
 
   var update = function(callback) {
     if (vis && currentData) {
-      vis.setData(currentContext, currentSettings, currentData);
+      try {
+        vis.setData(currentContext, currentSettings, currentData);
+        scheduleDomCheck();
+      } catch (ex) {
+        // Visualisations that don't report their own errors still get one reported: its kind only, as its
+        // message may hold the data that broke it.
+        console.error(ex);
+        postReport({status : "error", error : (ex && ex.name ? ex.name : "Error")
+            + " in the visualisation's script (see the browser console)"});
+      }
     }
+  };
+
+  var domCheckTimer = null;
+
+  // For visualisations that don't send their own report, report what the DOM holds a moment after
+  // each update: whether anything was drawn and its size, never the data values or labels.
+  var scheduleDomCheck = function() {
+    if (domCheckTimer) {
+      clearTimeout(domCheckTimer);
+    }
+    domCheckTimer = setTimeout(function() {
+      domCheckTimer = null;
+      if (!vis || !vis.element || visReportsItself) {
+        return;
+      }
+      var element = vis.element;
+      var rect = element.getBoundingClientRect();
+      var svgCount = element.querySelectorAll("svg").length;
+      var canvasCount = element.querySelectorAll("canvas").length;
+      var elementCount = element.querySelectorAll("*").length;
+      var drawn = (svgCount + canvasCount) > 0 && rect.width > 0 && rect.height > 0;
+      postReport({
+        status : drawn ? "ok" : "nothing-drawn",
+        source : "dom",
+        svgCount : svgCount,
+        canvasCount : canvasCount,
+        elementCount : elementCount,
+        width : Math.round(rect.width),
+        height : Math.round(rect.height)
+      });
+    }, 1500);
   };
 
   var injectNextScript = function(scripts, callback) {
@@ -235,7 +317,7 @@ function VisualisationManager() {
         },
         onFailure : function(ex) {
           callback.onFailure("Failed to inject script '" + script.name + "' - "
-              + ex.message);
+              + errorMessage(ex));
         }
       };
 
@@ -273,11 +355,14 @@ function VisualisationManager() {
   };
 
   this.setVisType = function(type, className, callback) {
+    visReportsItself = false;
+    lastReportJson = null;
     try {
       vis = eval("new " + type + "()");
       callback.onSuccess(null);
     } catch (ex) {
-      callback.onFailure(ex.message);
+      callback.onFailure(errorMessage(ex));
+      postReport({status : "error", error : "Unable to create '" + type + "' - " + errorMessage(ex)});
     }
 
     if (vis && vis.element) {

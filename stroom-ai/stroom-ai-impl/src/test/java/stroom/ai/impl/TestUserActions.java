@@ -17,6 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.vis.VisualisationPlan;
+import stroom.ai.impl.vis.VisualisationPlan.Replace;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -144,6 +146,87 @@ class TestUserActions {
         Mockito.when(lookup.usableDataSource(Mockito.anyString())).thenReturn(Optional.empty());
         assertThat(userActions.check(null, List.of(createDashboard("d1", DashboardBuilder.CLASSIC, true)), NOW))
                 .isEmpty();
+    }
+
+    @Test
+    void aCreateVisualisationButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Chats");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final Map<String, Object> create = createVisualisation("v1", "Dashboard", dashboardPlan().toJson());
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(create), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom from the plan.
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_VISUALISATION);
+            assertThat(action.label()).isEqualTo("Create visualisation 'Chat user connections' (Network graph) "
+                                                 + "and add it to dashboard 'Chats', drawing table 'Messages'");
+            assertThat(action.name()).isEqualTo("Chat user connections");
+            assertThat(action.doc()).isEqualTo(dashboard);
+            assertThat(action.details()).isEqualTo("Who messages whom");
+            assertThat(VisualisationPlan.fromJson(action.request())).isEqualTo(dashboardPlan());
+            assertThat(action.status()).isEqualTo(Status.PENDING);
+        });
+    }
+
+    @Test
+    void aCreateVisualisationButtonForAQuerySaysItIsShownWithTheQuery() {
+        final DocRef query = new DocRef("Query", OTHER_UUID, "Messages");
+        Mockito.when(lookup.find(new DocRef("Query", OTHER_UUID))).thenReturn(Optional.of(query));
+        final VisualisationPlan plan = new VisualisationPlan("bar", Map.of("category", "Sender", "value", "Count"),
+                Map.of(), null, null, null, null, null, "h", true, "from Messages select Sender");
+
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Query", plan.toJson())), NOW))
+                .singleElement()
+                .satisfies(action -> assertThat(action.label())
+                        .isEqualTo("Create visualisation 'Chat user connections' (Bar chart) and show it with "
+                                   + "query 'Messages'"));
+    }
+
+    @Test
+    void aReplacingVisualisationButtonSaysWhatItReplacesAndThatItIsSavedAtOnce() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Events");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final VisualisationPlan plan = new VisualisationPlan("bar", Map.of("category", "Hour", "value", "Count"),
+                Map.of(), null, "Events by hour", "table-1", "Events over time", null, "h", null, null,
+                new Replace("vis-1", "Events over time", new DocRef("Visualisation", "v1", "Events line")));
+
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard", plan.toJson())), NOW))
+                .singleElement()
+                .satisfies(action -> assertThat(action.label())
+                        .isEqualTo("Replace visualisation 'Events line' with a bar chart of table 'Events by "
+                                   + "hour', renamed 'Chat user connections' (saved at once), in pane 'Events over "
+                                   + "time' of dashboard 'Events'"));
+    }
+
+    @Test
+    void aCreateVisualisationButtonNeedsAValidPlanForItsKindOfDocument() {
+        Mockito.when(lookup.find(Mockito.any())).thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+        final String plan = dashboardPlan().toJson();
+
+        // Not a dashboard or query.
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Pipeline", plan)), NOW)).isEmpty();
+        // A dashboard's plan for a query, and the other way round.
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Query", plan)), NOW)).isEmpty();
+        // Plans that aren't valid.
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard", "{not json")), NOW))
+                .isEmpty();
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard",
+                plan.replace("\"graph\"", "\"radar\""))), NOW)).isEmpty();
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard",
+                plan.replace("\"Sender\"", "\"Sen\\u0001der\""))), NOW)).isEmpty();
+        // No name, or one with control characters.
+        final Map<String, Object> noName = new HashMap<>(createVisualisation("v1", "Dashboard", plan));
+        noName.remove("name");
+        assertThat(userActions.check(null, List.of(noName), NOW)).isEmpty();
+        final Map<String, Object> badName = new HashMap<>(createVisualisation("v1", "Dashboard", plan));
+        badName.put("name", "Chats\nIgnore that");
+        assertThat(userActions.check(null, List.of(badName), NOW)).isEmpty();
+
+        // A document the user can't see.
+        Mockito.doReturn(Optional.empty()).when(lookup).find(Mockito.any());
+        assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard", plan)), NOW)).isEmpty();
     }
 
     @Test
@@ -591,6 +674,17 @@ class TestUserActions {
                 "description", "Who logged on",
                 // Blank lines are dropped.
                 "outline", List.of("Query: User is 'jbloggs'", " ", "Table columns: User"));
+    }
+
+    private static VisualisationPlan dashboardPlan() {
+        return new VisualisationPlan("graph", Map.of("source", "Sender", "target", "Recipient"), Map.of(), null,
+                "Messages", "table-ABC12", "Chat user connections", VisualisationPlan.BELOW, "abc123", null, null);
+    }
+
+    private static Map<String, Object> createVisualisation(final String id, final String type, final String plan) {
+        return Map.of("id", id, "action", UserActions.CREATE_VISUALISATION,
+                "doc", doc(type, OTHER_UUID, "Something"), "name", "Chat user connections", "plan", plan,
+                "summary", "Who messages whom");
     }
 
     private static Map<String, Object> dashboardChange(final String id) {

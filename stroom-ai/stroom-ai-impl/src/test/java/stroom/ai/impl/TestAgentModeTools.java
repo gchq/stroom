@@ -32,6 +32,8 @@ import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.config.global.api.GlobalConfigReader;
 import stroom.dashboard.impl.DashboardService;
+import stroom.dashboard.impl.script.ScriptStore;
+import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
@@ -57,6 +59,7 @@ import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -138,6 +141,9 @@ class TestAgentModeTools {
             Map.entry("propose_dashboard", false),
             // Only offers the user a button: the user applies the change to the Query's editor, unsaved.
             Map.entry("propose_query_change", false),
+            Map.entry("list_visualisations", false),
+            // Only offers the user a button: the user creates the visualisation, added to the dashboard unsaved.
+            Map.entry("propose_visualisation", false),
             // Only offers the user a button: the user applies the change to the editor, unsaved.
             Map.entry("propose_code_change", false),
             Map.entry("stream_meta", false),
@@ -195,6 +201,9 @@ class TestAgentModeTools {
             bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
             bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
             bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
+            bind(ScriptStore.class).toInstance(Mockito.mock(ScriptStore.class));
+            bind(VisualisationStore.class).toInstance(Mockito.mock(VisualisationStore.class));
+            bind(DocumentPermissionService.class).toInstance(Mockito.mock(DocumentPermissionService.class));
             bind(SchemaPool.class).toInstance(Mockito.mock(SchemaPool.class));
             bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
             bind(StroomEventLoggingService.class).toInstance(Mockito.mock(StroomEventLoggingService.class));
