@@ -70,7 +70,9 @@ class GrepTool extends AbstractWorkspaceTool {
                         .general("Finds the lines of a ")
                         .chatOnly("workspace ")
                         .general("file, or of every file in a directory, that contain some text. The text is "
-                                 + "matched literally unless regex is true.")
+                                 + "matched literally unless regex is true; when nothing matches it literally and "
+                                 + "it looks like a regular expression (e.g. `a|b`), it is searched for as one, "
+                                 + "unless regex is false.")
                         .chatOnly(" Give out to write every matching line to a file instead of returning them.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -120,6 +122,60 @@ class GrepTool extends AbstractWorkspaceTool {
         final Path temp = out != null
                 ? workspace.tempFile()
                 : null;
+        try {
+            Found found = search(workspace, files, pattern, temp, maxResults, limits(context).getMaxCharsPerRead());
+            String note = "";
+            final SafePattern asRegex = found.matches() == 0 && rawArg(request, REGEX_ARG) == null
+                    ? asRegex(request, pattern)
+                    : null;
+            if (asRegex != null) {
+                // Seen: patterns such as `a|b` sent again and again without regex, each time matching nothing.
+                found = search(workspace, files, asRegex, temp, maxResults, limits(context).getMaxCharsPerRead());
+                note = "Nothing matched the pattern as literal text, so it was searched for as a regular "
+                       + "expression (give regex: false to search for the text alone).\n";
+            }
+            if (temp != null) {
+                workspace.write(out, temp, found.sourceDocUuid());
+                return ToolResult.text(note + "Wrote " + found.matches() + " matching line(s) to " + out + "."
+                                       + (found.matches() == 0
+                        ? literalNote(pattern, asRegex)
+                        : ""));
+            }
+            if (found.matches() == 0) {
+                return ToolResult.text(note + "No lines match." + literalNote(pattern, asRegex));
+            }
+            final int shown = (int) found.shown().lines().count();
+            return ToolResult.text(note + found.shown().strip() + (found.matches() > shown
+                    ? "\n(" + found.matches() + " matching lines in all; " + (found.matches() - shown) + " not "
+                      + "shown. Give out to write them all to a file.)"
+                    : ""));
+        } finally {
+            if (temp != null) {
+                ChatWorkspace.deleteQuietly(temp);
+            }
+        }
+    }
+
+    // The pattern as a regular expression, when it was searched for literally but looks like one; null if it
+    // doesn't, or isn't a valid one.
+    private SafePattern asRegex(final ToolCall request, final SafePattern pattern) {
+        if (!pattern.isLiteralThatLooksLikeRegex()) {
+            return null;
+        }
+        try {
+            return SafePattern.of(rawArg(request, PATTERN_ARG), true, booleanArg(request, IGNORE_CASE_ARG, false));
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    // Each file's matching lines: written to temp if it is given, else as many as are shown.
+    private Found search(final SessionWorkspace workspace,
+                         final List<WorkspacePath> files,
+                         final SafePattern pattern,
+                         final Path temp,
+                         final int maxResults,
+                         final int maxChars) {
         try (final BufferedWriter writer = temp != null
                 ? Files.newBufferedWriter(temp, StandardCharsets.UTF_8)
                 : null) {
@@ -140,8 +196,7 @@ class GrepTool extends AbstractWorkspaceTool {
                             if (writer != null) {
                                 writer.write(line);
                                 writer.newLine();
-                            } else if (matches <= maxResults
-                                       && sb.length() < limits(context).getMaxCharsPerRead()) {
+                            } else if (matches <= maxResults && sb.length() < maxChars) {
                                 sb.append(files.size() > 1
                                         ? file + ":"
                                         : "").append(lineNo).append(": ").append(shortenLine(line))
@@ -154,37 +209,23 @@ class GrepTool extends AbstractWorkspaceTool {
                     }
                 }
             }
-            if (writer != null) {
-                writer.close();
-                workspace.write(out, temp, sourceDocUuid);
-                return ToolResult.text("Wrote " + matches + " matching line(s) to " + out + "."
-                                       + (matches == 0
-                        ? literalNote(pattern)
-                        : ""));
-            }
-            if (matches == 0) {
-                return ToolResult.text("No lines match." + literalNote(pattern));
-            }
-            final int shown = (int) sb.toString().lines().count();
-            return ToolResult.text(sb.toString().strip() + (matches > shown
-                    ? "\n(" + matches + " matching lines in all; " + (matches - shown) + " not shown. Give out "
-                      + "to write them all to a file.)"
-                    : ""));
+            return new Found(matches, sb.toString(), sourceDocUuid);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
-        } finally {
-            if (temp != null) {
-                ChatWorkspace.deleteQuietly(temp);
-            }
         }
     }
 
     /// @return What to add when nothing matched, if the text was searched for literally but looks like a regular
-    /// expression, so the model doesn't take the miss for an answer.
-    private static String literalNote(final SafePattern pattern) {
-        return pattern.isLiteralThatLooksLikeRegex()
+    /// expression (and wasn't then searched for as one), so the model doesn't take the miss for an answer.
+    private static String literalNote(final SafePattern pattern, final SafePattern asRegex) {
+        return pattern.isLiteralThatLooksLikeRegex() && asRegex == null
                 ? " The pattern was searched for as literal text, but it looks like a regular expression: to search "
                   + "with it as one, call grep again with regex: true."
                 : "";
+    }
+
+    // What a search found: how many lines matched, those shown, and the document the first file came from.
+    private record Found(int matches, String shown, String sourceDocUuid) {
+
     }
 }

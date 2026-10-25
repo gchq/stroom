@@ -844,7 +844,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Finds the lines of a workspace file, or of every file in a directory, that contain some text. The text is matched literally unless regex is true. Give out to write every matching line to a file instead of returning them.
+Finds the lines of a workspace file, or of every file in a directory, that contain some text. The text is matched literally unless regex is true; when nothing matches it literally and it looks like a regular expression (e.g. `a|b`), it is searched for as one, unless regex is false. Give out to write every matching line to a file instead of returning them.
 
 ### Parameters
 
