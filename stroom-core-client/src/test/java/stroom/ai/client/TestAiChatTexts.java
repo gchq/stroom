@@ -156,7 +156,7 @@ class TestAiChatTexts {
     private static AiChatStatus status(final AiChatRunStatus runStatus,
                                        final boolean unread,
                                        final boolean approveEverything) {
-        return new AiChatStatus(1, "t", 0L, runStatus, unread, approveEverything, 0L, null);
+        return new AiChatStatus(1, "t", 0L, runStatus, unread, approveEverything, 0L, null, 0);
     }
 
     @Test

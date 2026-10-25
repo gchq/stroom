@@ -190,6 +190,44 @@ public final class FieldDocs {
                 : path).replaceFirst("$1*");
     }
 
+    /// A path as event types are compared on to group them: its action element as `*`, and every step on the way
+    /// to an object that only says which side of its parent the rest is on ([EventSchema#isSide]: Source and
+    /// Destination, Before and After, AddGroups and RemoveGroups, a Network's Connect and Close...) left out, so the
+    /// same kind of object counts as the same field whichever side it is on. An object's own fields (an Email's From
+    /// and To) are kept: an event holds them together. Not in the Python server, which compared
+    /// [#anyActionPath(String)]; seen: a SecretServer folder's create (`Create/Folder/Id`) and move
+    /// (`Move/Source/Folder/Id`) shared nothing, and its permission grant and revoke (`Authorise/AddGroups/...`,
+    /// `Authorise/RemoveGroups/...`) and session start and end (`Network/Connect/...`, `Network/Close/...`) too
+    /// little, each in a section of its own.
+    ///
+    /// @param path   An event path, e.g. `EventDetail/Move/Source/Folder/Id`; null is taken as "".
+    /// @param schema The event-logging schema, or null to compare by [#anyActionPath(String)] alone.
+    /// @return It as compared, e.g. `EventDetail/*/Folder/Id`; by [#anyActionPath(String)] alone where the schema
+    /// has no such path (a Data entry's, say).
+    public static String comparedPath(final String path, final EventSchema schema) {
+        final String any = anyActionPath(path);
+        if (schema == null || !any.startsWith("EventDetail/*/")) {
+            return any;
+        }
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final IllegalArgumentException e) {
+            return any;
+        }
+        final List<String> steps = new ArrayList<>(List.of("EventDetail", "*"));
+        boolean inObject = false;
+        for (int i = 2; i < chain.size(); i++) {
+            final EventSchema.Child step = chain.get(i);
+            if (!inObject && schema.isSide(chain.get(i - 1).decl(), step)) {
+                continue;
+            }
+            inObject = inObject || schema.isObject(step.decl());
+            steps.add(step.name());
+        }
+        return String.join("/", steps);
+    }
+
     /// `similar_groups`: the groups, in order, those with roughly the same fields together: each joins the first
     /// earlier cluster whose fields it shares at least `share` of (of the two together); the rest stand alone.
     ///

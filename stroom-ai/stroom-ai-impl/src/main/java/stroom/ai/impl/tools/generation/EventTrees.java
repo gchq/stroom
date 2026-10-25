@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -451,11 +452,44 @@ final class EventTrees {
                            + "account.");
         }
         conditionalByRule.put(rule.name(), List.copyOf(conditional));
+        writtenTwice(rule);
         if (!conditional.isEmpty()) {
             note(warnings, "[" + rule.name() + "] required " + PyText.list(conditional) + " are left out when "
                            + "their input fields are empty, which makes the event invalid. Fine if those fields are "
                            + "always filled; otherwise give the mapping a default.");
         }
+    }
+
+    // A field a rule writes as it is to an element and as Data as well: the Data copy says it again. A warning, not a
+    // problem, as a copy may be kept on purpose, alike across event types whose structures differ. Not in the
+    // Python server; seen: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept
+    // beside the elements the agent mapped. TypeId is left out: a TypeId joining a field doesn't hold it alone.
+    private void writtenTwice(final EventRule rule) {
+        final List<FieldMapping> entries = new ArrayList<>(m.common());
+        entries.addAll(rule.fields());
+        final Map<String, String> elements = new LinkedHashMap<>();
+        for (final FieldMapping entry : entries) {
+            if (!isSet(entry.dataName()) && isSet(entry.field()) && asItIs(entry)
+                && !"EventDetail/TypeId".equals(entry.strippedPath())) {
+                elements.putIfAbsent(entry.field(), entry.strippedPath());
+            }
+        }
+        for (final FieldMapping entry : rule.fields()) {
+            if (isSet(entry.dataName()) && isSet(entry.field()) && asItIs(entry)
+                && elements.containsKey(entry.field())) {
+                note(warnings, "[" + rule.name() + "] '" + entry.field() + "' is written as "
+                               + elements.get(entry.field()) + " and as Data '" + entry.dataKey() + "' ("
+                               + entry.strippedPath() + "): the element holds it, so the Data entry says it again. "
+                               + "Remove the Data entry, unless it is kept on purpose (the same Data across event "
+                               + "types that don't all have the element).");
+            }
+        }
+    }
+
+    // Written as the input has it: no transform, map, time format, lookup or dictionary between.
+    private static boolean asItIs(final FieldMapping entry) {
+        return entry.transform() == null && !entry.hasMap() && !isSet(entry.timeFormat()) && entry.lookup() == null
+               && !isSet(entry.dictionary()) && entry.defaultValue() == null;
     }
 
     /// @return Each rule's required elements written only when their inputs have a value (paths below Event), by
@@ -660,6 +694,84 @@ final class EventTrees {
                 }
             }
         }
+    }
+
+    /// Each event rule can take a record: none whose conditions an earlier rule's take every record of, as the
+    /// first rule a record matches is the one that writes it. Told from the conditions alone, so a sample with
+    /// none of a kind doesn't hide it. Not in the Python server; seen: a draft's user_logon (action Login or Login
+    /// Failed) kept above the agent's own user_login and user_login_failed, which never wrote an event, and the
+    /// documentation said of them "none in the sample".
+    void checkReachable() {
+        final List<EventRule> rules = m.events();
+        for (int later = 1; later < rules.size(); later++) {
+            for (int earlier = 0; earlier < later; earlier++) {
+                // One with no conditions before others is said already: a rule without conditions must be last.
+                if (!rules.get(earlier).when().isEmpty()
+                    && takesAll(rules.get(earlier).when(), rules.get(later).when())) {
+                    final List<Condition> when = rules.get(later).when();
+                    note(problems, "[" + rules.get(later).name() + "] can never match: " + rules.get(earlier).name()
+                                   + ", before it, takes every record it would (" + (when.isEmpty()
+                            ? "every record"
+                            : when.stream().map(EventTrees::said).collect(Collectors.joining(", ")))
+                                   + "). Remove one of them, or put the narrower rule first.");
+                    break;
+                }
+            }
+        }
+    }
+
+    // Whether a rule with the first conditions takes every record one with the second would: each of its
+    // conditions follows from one of the second's on the same input.
+    private static boolean takesAll(final List<Condition> first, final List<Condition> second) {
+        return first.stream().allMatch(test -> second.stream().anyMatch(given -> follows(test, given)));
+    }
+
+    // Whether given holding means test holds: the same input, and given's values within test's.
+    private static boolean follows(final Condition test, final Condition given) {
+        if (!Objects.equals(test.field(), given.field()) || !Objects.equals(test.xpath(), given.xpath())
+            || !Objects.equals(test.scope(), given.scope())) {
+            return false;
+        }
+        final Set<String> allowed = values(test);
+        final Set<String> held = values(given);
+        if (allowed != null && held != null) {
+            return allowed.containsAll(held);
+        }
+        if (Boolean.TRUE.equals(test.present())) {
+            return Boolean.TRUE.equals(given.present())
+                   || (held != null && held.stream().noneMatch(PyText::isBlank));
+        }
+        return test.equals(given);
+    }
+
+    // The values an equals or one_of condition allows, or null for any other test.
+    private static Set<String> values(final Condition condition) {
+        if (condition.equalTo() != null) {
+            return Set.of(condition.equalTo());
+        }
+        return condition.oneOf() == null
+                ? null
+                : new HashSet<>(condition.oneOf());
+    }
+
+    private static String said(final Condition condition) {
+        final String input = isSet(condition.field())
+                ? condition.field()
+                : condition.xpath();
+        if (condition.equalTo() != null) {
+            return input + " = " + condition.equalTo();
+        }
+        if (condition.oneOf() != null) {
+            return input + " in " + String.join(", ", condition.oneOf());
+        }
+        if (condition.matches() != null) {
+            return input + " matches " + condition.matches();
+        }
+        return condition.present() != null
+                ? input + (condition.present()
+                        ? " present"
+                        : " empty")
+                : input + " in dictionary " + condition.inDictionary();
     }
 
     /// Each function prefix an xpath calls is bound, by the generator or a shared XSLT in functions, and each

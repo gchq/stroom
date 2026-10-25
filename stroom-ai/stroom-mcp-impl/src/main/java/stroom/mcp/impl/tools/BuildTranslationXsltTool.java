@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.InstructionRules;
@@ -36,6 +37,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -79,8 +81,9 @@ import java.util.TreeSet;
 /// `build_translation_xslt` - writes the event-logging translation XSLT from a field mapping instead of by hand, and
 /// with build and name (or uuid) saves it with its mapping (the Stroom MCP server's `tools/generation.py`
 /// `build_translation_xslt`). The mapping is checked against the schema, compiled as Stroom compiles it, and checked
-/// against the sample; rules kept as Unknown are agreed with the user; an edit made by hand in Stroom since the
-/// tools saved the XSLT is kept ([HandEditGate]).
+/// against the sample; rules kept as Unknown are agreed with the user, as is splitting the domain off a user's Id
+/// whose values carry one ([DomainSplits]); an edit made by hand in Stroom since the tools saved the XSLT is kept
+/// ([HandEditGate]).
 class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
     static final String NAME = "build_translation_xslt";
@@ -231,7 +234,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "only the rules or entries that change, not the whole mapping. With build and name "
                              + "(or uuid, to replace the XSLT saved before) the XSLT is saved with its mapping and "
                              + "the document comes back instead of the code, so step_sample steps it as saved; "
-                             + "without them nothing is saved and the code comes back. The standing instructions "
+                             + "without them nothing is saved and the code comes back. Before saving, a user's Id "
+                             + "whose sample values carry a domain (DOMAIN\\user, user@domain) is put to the user: "
+                             + "split (the account name in the Id, the domain in the Domain beside it) or kept as "
+                             + "is; changes_applied says what a split changed. The standing instructions "
                              + "(AGENTS docs) that apply come back with the result: check the mapping follows "
                              + "them, and set mapping.style from any XSLT style section in them (naming, "
                              + "variables, xsl:maps). With pipeline_uuid and stream_ids it also returns "
@@ -336,6 +342,23 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private Map<String, Object> build(final ToolCall call, final ToolCallContext context) {
         final Request request = Request.of(call, this);
         final Build b = new Build(request);
+        try {
+            return built(call, context, b);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // In the chat a form stops the call, which is made again with the answer and merges its changes
+            // again: kept now, they were merged twice (seen: "changes.common removes 'EventDetail/Purpose', which
+            // the mapping does not have", and the user's answer in the form lost with the call).
+            b.sent = null;
+            throw e;
+        } finally {
+            if (b.sent != null) {
+                SentMappings.remember(context, request.target(), b.sent);
+            }
+        }
+    }
+
+    private Map<String, Object> built(final ToolCall call, final ToolCallContext context, final Build b) {
+        final Request request = b.request;
         final Optional<Map<String, Object>> early = readMapping(context, b);
         if (early.isPresent()) {
             return early.get();
@@ -360,6 +383,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return b.result;
         }
         checkSample(context, b);
+        if (splitDomains(call, context, b)) {
+            // Split as the user chose: generated and checked again, so what is saved and said is the split mapping.
+            generate(context, b);
+            checkSample(context, b);
+        }
         checkAgainstNotes(b);
         checkLookups(b);
         jsonProperties(b);
@@ -433,7 +461,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         final List<String> unknownKeys = new ArrayList<>();
         if (given instanceof final Map<?, ?> map) {
-            SentMappings.remember(context, request.target(), (Map<String, Object>) map);
+            // Kept as sent once the call ends (build).
+            b.sent = (Map<String, Object>) map;
             final Set<String> keys = new TreeSet<>();
             map.keySet().forEach(key -> keys.add(String.valueOf(key)));
             keys.removeAll(MappingProblems.mappingKeys());
@@ -544,6 +573,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     }
 
     // The mapping checked against the sample: its text, or its streams'.
+    @SuppressWarnings("unchecked")
     private void checkSample(final ToolCallContext context, final Build b) {
         final Request request = b.request;
         final List<String> warnings = TranslationBuilds.warnings(b.result);
@@ -579,6 +609,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         final Map<String, Object> check = MappingSampleCheck.check(b.mapping, samples, splitter, b.schema, inferred,
                 clock);
+        b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);
         b.result.put("sample_check", check);
         JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
         final List<String> found = JsonValues.strings(check.get("problems"));
@@ -718,12 +749,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             saved = new LinkedHashMap<>(saved);
             saved.put("version", builds.rememberUnknownAgreed(uuid, agreedNow));
         }
+        if (!b.domainChoices.isEmpty()) {
+            saved = new LinkedHashMap<>(saved);
+            saved.put("version", builds.rememberAgreed(TranslationBuilds.DOMAIN_CHOSEN, uuid, b.domainChoices));
+        }
         final Map<String, Object> summary = new LinkedHashMap<>();
         for (final String key : List.of("type", "uuid", "name", "version")) {
             summary.put(key, saved.get(key));
         }
         b.result.put("saved", summary);
         SentMappings.remember(context, uuid, b.mapping.toJson(DumpMode.COMPACT));
+        if (uuid.equals(request.target())) {
+            // What was saved is what changes start from next, not what was sent before it.
+            b.sent = null;
+        }
         for (final String key : List.of("next", "done")) {
             if (saved.containsKey(key)) {
                 b.result.put(key, saved.get(key));
@@ -815,6 +854,63 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 "Translate the records shown in the chat as Unknown events", details));
         kept.forEach(rule -> agreedNow.put(rule.name(), TranslationBuilds.unknownKey(rule)));
         return Optional.empty();
+    }
+
+    // A user's Id whose sample values carry a domain (domain.com\sam.lee) is put to the user, before saving: split
+    // it, the account name in the Id and the domain in the Domain beside it, or keep it whole. Not in the Stroom MCP
+    // server, which told only the agent; asked for by the user (seen: SecretServer's Ids kept the domain). The
+    // choice is kept with the XSLT, so a field is asked about once (again only if it goes into other Ids); without
+    // forms the warning is left for the agent.
+    private boolean splitDomains(final ToolCall call, final ToolCallContext context, final Build b) {
+        final Request request = b.request;
+        if (b.qualified == null || b.qualified.isEmpty() || !ok(b)
+            || (request.build() == null && request.uuid() == null)) {
+            return false;
+        }
+        final Map<String, String> before = builds.agreed(TranslationBuilds.DOMAIN_CHOSEN, request.uuid(),
+                request.build(), request.name());
+        // One question for the fields not answered before, the answer for them all (seen: an Id written from two
+        // fields, By User in some rules and Target User in others, asked about twice in a row).
+        final List<LocalCheck.QualifiedIds> unasked = b.qualified.stream()
+                .filter(found -> !before.containsKey(DomainSplits.key(found)))
+                .toList();
+        final Optional<String> answer = unasked.isEmpty()
+                ? Optional.empty()
+                : consent.choose(call, context, NAME, DomainSplits.question(unasked),
+                        List.of(DomainSplits.SPLIT, DomainSplits.KEEP), null);
+        TranslationMapping mapping = b.mapping;
+        final List<String> done = new ArrayList<>();
+        for (final LocalCheck.QualifiedIds found : b.qualified) {
+            final String key = DomainSplits.key(found);
+            final Optional<String> chosen = before.containsKey(key)
+                    ? Optional.of(before.get(key))
+                    : answer;
+            if (chosen.isEmpty()) {
+                // No form: the warning is the agent's.
+                continue;
+            }
+            b.domainChoices.put(key, chosen.get());
+            if (DomainSplits.KEEP.equals(chosen.get())) {
+                // The user's answer: the warning to the agent is answered.
+                final List<String> warnings = TranslationBuilds.warnings(b.result);
+                found.paths().forEach(path -> warnings.removeIf(warning -> warning.startsWith(
+                        "sample: " + path + " takes field '" + found.field() + "', whose values are "
+                        + "domain-qualified")));
+                continue;
+            }
+            final DomainSplits.Split split = DomainSplits.split(mapping, found, b.schema);
+            mapping = split.mapping();
+            split.done().forEach(line -> done.add("the domain split off '" + found.field() + "', as the user chose: "
+                                                  + line));
+        }
+        if (done.isEmpty()) {
+            return false;
+        }
+        b.mapping = mapping;
+        final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
+        applied.addAll(done);
+        b.applied = applied;
+        return true;
     }
 
     private static void withChanges(final Build b) {
@@ -1001,6 +1097,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private final Request request;
         private TranslationMapping mapping;
         private List<String> unknownKeys = List.of();
+        private List<LocalCheck.QualifiedIds> qualified;
+        private Map<String, Object> sent;
+        private final Map<String, String> domainChoices = new LinkedHashMap<>();
         private List<String> applied;
         private String basedOn;
         private String version;

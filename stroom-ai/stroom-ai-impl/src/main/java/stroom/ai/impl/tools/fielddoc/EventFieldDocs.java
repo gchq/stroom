@@ -275,6 +275,10 @@ public final class EventFieldDocs {
         for (final FieldKey k : common) {
             lines.add(row(c, k, c.effective().get(c.rules().getFirst().name()).get(k), every));
         }
+        final List<Map<String, FieldKey>> commonData = commonData(c);
+        commonData.forEach(byRule -> lines.add(commonDataRow(c, byRule)));
+        final Set<FieldKey> commonDataKeys = new HashSet<>();
+        commonData.forEach(byRule -> commonDataKeys.addAll(byRule.values()));
         final Set<FieldKey> mapped = new HashSet<>();
         c.effective().values().forEach(fields -> mapped.addAll(fields.keySet()));
         if (sample.sampled()) {
@@ -300,18 +304,32 @@ public final class EventFieldDocs {
         for (final EventRule rule : c.rules()) {
             final Map<FieldKey, FieldMapping> fields = c.effective().get(rule.name());
             final List<FieldKey> keys = new ArrayList<>(fields.keySet().stream()
-                    .filter(k -> !common.contains(k))
+                    .filter(k -> !common.contains(k) && !commonDataKeys.contains(k))
                     .toList());
             keys.sort(Comparator.<FieldKey, Boolean>comparing(k -> !TYPE_AND_DESCRIPTION.contains(k.path()))
                     .thenComparing(fields::get, c.order()));
             own.put(rule.name(), keys);
         }
-        // Judged on what they write besides TypeId and Description, which every event type has.
+        // Judged on what they write besides TypeId and Description, which every event type has, and besides their
+        // Data: what a kind of event is, not what it carries (not in the Python server, which counted Data too;
+        // seen: SecretServer rules with the same Data entries and few elements of their own, an Alert's and
+        // Process ones in one section). A rule that writes only Data (an Unknown one) is judged on its Data, so such
+        // rules still go together, apart from the rest. Each path is compared without the side an object is on
+        // (FieldDocs.comparedPath), so a folder created and a folder moved write the same fields.
         final Map<String, Set<String>> signatures = new LinkedHashMap<>();
-        own.forEach((name, keys) -> signatures.put(name, keys.stream()
-                .filter(k -> !TYPE_AND_DESCRIPTION.contains(k.path()))
-                .map(k -> FieldDocs.anyActionPath(k.xpath()))
-                .collect(Collectors.toCollection(LinkedHashSet::new))));
+        own.forEach((name, keys) -> {
+            final List<FieldKey> judged = keys.stream()
+                    .filter(k -> !TYPE_AND_DESCRIPTION.contains(k.path()))
+                    .toList();
+            final List<FieldKey> typed = judged.stream()
+                    .filter(k -> !JsonValues.truthy(k.name()))
+                    .toList();
+            signatures.put(name, (typed.isEmpty()
+                    ? judged
+                    : typed).stream()
+                    .map(k -> FieldDocs.comparedPath(k.xpath(), c.schema()))
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+        });
         for (final List<String> names : FieldDocs.similarGroups(signatures)) {
             lines.addAll(eventTypeSection(c, names, own, head));
         }
@@ -384,6 +402,65 @@ public final class EventFieldDocs {
     }
 
     // A field's row: its path, description, source, and with a sample the values written.
+    // The Data every event type writes alike, each under its own action element: the same Name, from the same
+    // source. Not in the Python server, whose common fields were EventTime's and EventSource's alone; seen: a
+    // Windows event's System/EventID and the like in each of 23 SecretServer rules, repeated in every event
+    // type's table and, outweighing what told the kinds apart, putting them all in one section.
+    private static List<Map<String, FieldKey>> commonData(final Context c) {
+        final List<Map<String, FieldKey>> out = new ArrayList<>();
+        if (c.rules().size() < 2) {
+            return out;
+        }
+        final Map<FieldKey, FieldMapping> first = c.effective().get(c.rules().getFirst().name());
+        first.forEach((k, entry) -> {
+            if (!JsonValues.truthy(k.name()) || !"EventDetail".equals(PyText.split(k.path(), "/").getFirst())) {
+                return;
+            }
+            final String anyAction = FieldDocs.anyActionPath(k.xpath());
+            final Map<String, FieldKey> byRule = new LinkedHashMap<>();
+            for (final EventRule rule : c.rules()) {
+                c.effective().get(rule.name()).forEach((theirs, theirEntry) -> {
+                    if (!byRule.containsKey(rule.name()) && anyAction.equals(FieldDocs.anyActionPath(theirs.xpath()))
+                        && FieldDocs.sourceText(theirEntry).equals(FieldDocs.sourceText(entry))) {
+                        byRule.put(rule.name(), theirs);
+                    }
+                });
+            }
+            if (byRule.size() == c.rules().size()) {
+                out.add(byRule);
+            }
+        });
+        return out;
+    }
+
+    // A Data every event type writes alike, as one row: under whichever action element the event has.
+    private static String commonDataRow(final Context c, final Map<String, FieldKey> byRule) {
+        final String firstRule = byRule.keySet().iterator().next();
+        final FieldKey key = byRule.get(firstRule);
+        final FieldMapping entry = c.effective().get(firstRule).get(key);
+        final String path = FieldDocs.anyActionPath(key.xpath());
+        final String source = FieldDocs.sourceText(entry);
+        final List<String> found = new ArrayList<>();
+        boolean several = false;
+        for (final Map.Entry<String, FieldKey> member : byRule.entrySet()) {
+            final Values got = valuesOf(c.sample().eventsOf(member.getKey()), member.getValue());
+            found.addAll(got.values());
+            several = several || got.several();
+        }
+        final List<String> values = new ArrayList<>(new LinkedHashSet<>(found));
+        // The schema's words of the first rule's element, said of whichever the event has.
+        final String said = described(c.schema(), key).replaceFirst("a Data element of \\w+",
+                "a Data element of the event's action element");
+        final List<String> cells = new ArrayList<>(List.of("`" + path + "`", c.described().of(path, source, values,
+                Descriptions.eventLogging(said), path, readFrom(entry), List.of(), null), source));
+        if (c.sample().sampled()) {
+            cells.add(orNotSampled(FieldDocs.shown(values, true)) + (several
+                    ? "\n(several per event)"
+                    : ""));
+        }
+        return FieldDocs.row(cells);
+    }
+
     private static String row(final Context c, final FieldKey key, final FieldMapping entry,
                               final List<XmlElement> events) {
         final String source = entry != null

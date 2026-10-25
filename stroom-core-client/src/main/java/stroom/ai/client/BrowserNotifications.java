@@ -37,11 +37,13 @@ final class BrowserNotifications {
     /// @param title The notification's title.
     /// @param body  Its text, shown as plain text.
     /// @param tag   Replaces any earlier notification with the same tag, e.g. one per chat.
+    ///              The user is still alerted: a replacement is silent unless renotified (seen: not each
+    ///              of a chat's forms notified the user).
     static native void show(String title, String body, String tag) /*-{
         if (!$wnd.Notification || $wnd.Notification.permission !== 'granted') {
             return;
         }
-        var notification = new $wnd.Notification(title, {body: body, tag: tag});
+        var notification = new $wnd.Notification(title, {body: body, tag: tag, renotify: true});
         notification.onclick = function () {
             $wnd.focus();
             notification.close();

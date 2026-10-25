@@ -461,14 +461,20 @@ class TestDraftMapping extends DraftFixtures {
         // drafts, kept as fixtures: the port drafts the same.
         final Map<String, Object> kept = json(resource(
                 "/stroom/ai/impl/tools/generation/drafts.json"));
-        assertThat(PyJson.dumps(mappingOf(draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod"))))
-                .isEqualTo(PyJson.dumps(kept.get("fw")));
-        assertThat(PyJson.dumps(mappingOf(draft(samples("test firewall logs 20"), "Firewall Logs"))))
-                .isEqualTo(PyJson.dumps(kept.get("firewall_logs_20")));
-        assertThat(PyJson.dumps(mappingOf(draft(samples("test fortigate"), "Fortigate"))))
-                .isEqualTo(PyJson.dumps(kept.get("fortigate")));
-        assertThat(PyJson.dumps(mappingOf(DraftMapping.draft(samples("test shapes"), "App", "App",
-                "Prod", null, null, null)))).isEqualTo(PyJson.dumps(kept.get("shapes")));
+        // Each rule's Data cut to what its records hold, as the port drafts it.
+        final Map<String, Object> fw = mappingOf(draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod"));
+        asTheRulesRecordsHold(fw, kept.get("fw"));
+        assertThat(PyJson.dumps(fw)).isEqualTo(PyJson.dumps(kept.get("fw")));
+        final Map<String, Object> logs = mappingOf(draft(samples("test firewall logs 20"), "Firewall Logs"));
+        asTheRulesRecordsHold(logs, kept.get("firewall_logs_20"));
+        assertThat(PyJson.dumps(logs)).isEqualTo(PyJson.dumps(kept.get("firewall_logs_20")));
+        final Map<String, Object> fortigate = mappingOf(draft(samples("test fortigate"), "Fortigate"));
+        asTheRulesRecordsHold(fortigate, kept.get("fortigate"));
+        assertThat(PyJson.dumps(fortigate)).isEqualTo(PyJson.dumps(kept.get("fortigate")));
+        final Map<String, Object> shapes = mappingOf(DraftMapping.draft(samples("test shapes"), "App", "App",
+                "Prod", null, null, null));
+        asTheRulesRecordsHold(shapes, kept.get("shapes"));
+        assertThat(PyJson.dumps(shapes)).isEqualTo(PyJson.dumps(kept.get("shapes")));
     }
 
     @Test
@@ -801,6 +807,31 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(DraftMapping.pairExtracts(Map.of("msg", List.of("a=1 b=2", "plain", "text")), Set.of()))
                 .isEmpty();
         assertThat(DraftMapping.pairExtracts(Map.of("msg", values.get("msg")), Set.of("msg"))).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void eachRulesDataIsWhatItsOwnRecordsHold() {
+        // Seen: 23 SecretServer rules, each given the same 63 Data entries (a logon's checkout_id and old_role
+        // among them), which the agent kept beside the elements it then mapped them to.
+        final String sample = """
+                {"ts": "2026-09-28T11:00:00Z", "event": "User", "user": "pat", "mfa_method": "totp"}
+                {"ts": "2026-09-28T11:01:00Z", "event": "User", "user": "sam", "mfa_method": "sms"}
+                {"ts": "2026-09-28T11:02:00Z", "event": "Secret", "user": "pat", "secret_id": "10023"}
+                {"ts": "2026-09-28T11:03:00Z", "event": "Secret", "user": "sam", "secret_id": "10024"}
+                """;
+        final Map<String, Object> mapping = mappingOf(draft(Map.of("s.json", sample), "Vault"));
+        final Map<String, List<String>> data = new LinkedHashMap<>();
+        for (final Object rule : (List<Object>) mapping.get("events")) {
+            final Map<String, Object> drafted = (Map<String, Object>) rule;
+            data.put((String) drafted.get("name"), ((List<Map<String, Object>>) drafted.get("fields")).stream()
+                    .filter(field -> field.containsKey("data_name"))
+                    .map(field -> (String) field.get("data_name"))
+                    .toList());
+        }
+
+        assertThat(data.get("user")).contains("mfa_method").doesNotContain("secret_id");
+        assertThat(data.get("secret")).contains("secret_id").doesNotContain("mfa_method");
     }
 
     @Test
