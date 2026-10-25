@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /// `get_field_conventions` - the field naming conventions for indexes (the Stroom MCP server's
 /// `tools/indexing.py` `get_field_conventions`): without a name it puts the choice to the user (the backend, then for
@@ -210,6 +211,12 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     return result;
                 }
                 chosenBackend = labels.get(picked.get());
+                // The chosen backend's templates come back with the naming, so they needn't be looked up.
+                final String kind = chosenBackend;
+                templates = found.stream()
+                        .filter(candidate -> kind.equals(candidate.get("backend")))
+                        .map(GetFieldConventionsTool::template)
+                        .toList();
             }
         }
         if (name == null && FieldPlan.ELASTICSEARCH.equals(chosenBackend)) {
@@ -303,9 +310,21 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         result.put("status", "chosen");
         result.put("choice", chosen);
         result.put("how", option.get("how"));
+        // What is settled, so it isn't asked again (not in the Stroom MCP server; seen: the user chose
+        // Elasticsearch and ECS in these forms, and the agent, told only the naming, asked the backend again with
+        // an example template to follow, in its own form).
+        result.put("backend", FieldPlan.ELASTICSEARCH);
         if (templates != null) {
             result.put("indexing_templates", templates);
         }
+        result.put("settled", "The user chose the backend (Elasticsearch) and how fields are named (" + chosen
+                              + ") in forms: don't ask about either again, nor offer the other naming choices ("
+                              + options.stream()
+                                      .map(o -> String.valueOf(o.get("choice")))
+                                      .filter(other -> !other.equals(chosen))
+                                      .collect(Collectors.joining("; "))
+                              + "), in ask_user or in the chat. Still open: the cluster, where several are in use "
+                              + "(create_index_doc says).");
         final String kind = String.valueOf(option.get("option"));
         if (FOLLOW.equals(kind) && !existing.isEmpty()) {
             final Map<String, Map<String, Object>> labels = new LinkedHashMap<>();
