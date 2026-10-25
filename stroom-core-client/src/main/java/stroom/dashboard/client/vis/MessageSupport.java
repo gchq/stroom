@@ -16,22 +16,17 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.dashboard.client.vis.VisTooltipPlacement.Direction;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.query.client.presenter.VisComponentSelection;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.JSONUtil;
-import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONNumber;
@@ -39,7 +34,6 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,32 +43,39 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class MessageSupport
-        implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers> {
+public class MessageSupport implements FrameListener {
 
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
     private static int callbackId;
-    private final EventBus eventBus;
     private final Element frame;
     private final int frameId;
-    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
-
-    private SelectionUiHandlers uiHandlers;
+    private Consumer<List<ComponentSelection>> onSelection;
+    private Consumer<Hyperlink> onHyperlink;
     private Consumer<List<VisToolbarButton>> toolbarHandler;
     private BiFunction<String, List<String>, List<String>> coloursHandler;
 
-    public MessageSupport(final EventBus eventBus,
-                          final Element frame) {
-        this.eventBus = eventBus;
+    /// Passes messages between Stroom and a visualisation's frame.
+    ///
+    /// @param frame The frame's element.
+    public MessageSupport(final Element frame) {
         this.frame = frame;
         frameIdCounter++;
         frameId = frameIdCounter;
     }
 
-    @Override
-    public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+    /// Sets what is told when the user selects something in the visualisation.
+    ///
+    /// @param onSelection Given what is selected.
+    public void setOnSelection(final Consumer<List<ComponentSelection>> onSelection) {
+        this.onSelection = onSelection;
+    }
+
+    /// Sets what opens a link the visualisation asks to follow.
+    ///
+    /// @param onHyperlink Given the link.
+    public void setOnHyperlink(final Consumer<Hyperlink> onHyperlink) {
+        this.onHyperlink = onHyperlink;
     }
 
     /// Sets what to do when the visualisation asks for buttons in its toolbar
@@ -130,14 +131,16 @@ public class MessageSupport
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
             final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
-            HyperlinkEvent.fire(this, hyperlink, taskMonitorFactory);
+            if (onHyperlink != null) {
+                onHyperlink.accept(hyperlink);
+            }
 
         } else if ("select".equals(functionName)) {
             final JSONValue selection = message.get("selection");
             GWT.log("Received selection from vis: " + selection.toString());
 
-            if (uiHandlers != null) {
-                uiHandlers.onSelection(VisComponentSelection.create(selection));
+            if (onSelection != null) {
+                onSelection.accept(VisComponentSelection.create(selection));
             }
 
         } else if ("showTooltip".equals(functionName)) {
@@ -262,17 +265,5 @@ public class MessageSupport
     @Override
     public int getFrameId() {
         return frameId;
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
-    }
-
-    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
-    ///
-    /// @param taskMonitorFactory What shows their progress.
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        this.taskMonitorFactory = taskMonitorFactory;
     }
 }

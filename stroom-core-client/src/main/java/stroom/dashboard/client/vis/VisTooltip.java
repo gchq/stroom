@@ -18,12 +18,11 @@ package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisTooltipPlacement.Direction;
 import stroom.dashboard.client.vis.VisTooltipPlacement.Placement;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 
 /// Shows a visualisation's hover tooltip on the page rather than inside the visualisation's
@@ -46,6 +45,7 @@ public final class VisTooltip {
     // see-through when the user's preferences say so (the page's `transparency` class)
     private static final String CLASS_NAME = "popup vis-tooltip";
     private static final String CONTENT_CLASS_NAME = "vis-tooltip__content";
+    private static final String SHOWN_CLASS_NAME = "vis-tooltip--shown";
     private static final int NO_OWNER = 0;
 
     private static Element tooltip;
@@ -70,7 +70,8 @@ public final class VisTooltip {
                             final Direction direction) {
         final Element element = getOrCreateTooltip();
         nativeSetSanitisedContent(content, html);
-        element.getStyle().setDisplay(Display.BLOCK);
+        // Shown before it is placed, so that it can be measured
+        element.addClassName(SHOWN_CLASS_NAME);
 
         final double frameLeft = boundingClientValue(frame, "left");
         final double frameTop = boundingClientValue(frame, "top");
@@ -87,8 +88,8 @@ public final class VisTooltip {
                 Window.getClientWidth(),
                 Window.getClientHeight(),
                 direction);
-        element.getStyle().setLeft(placement.left(), Unit.PX);
-        element.getStyle().setTop(placement.top(), Unit.PX);
+        CssProperties.set(element, "--vis-tooltip__left", placement.left() + "px");
+        CssProperties.set(element, "--vis-tooltip__top", placement.top() + "px");
         ownerFrameId = frameId;
     }
 
@@ -104,7 +105,7 @@ public final class VisTooltip {
     // Called from the page listeners in nativeInstallHideListeners as well
     private static void hideNow() {
         if (tooltip != null) {
-            tooltip.getStyle().setDisplay(Display.NONE);
+            tooltip.removeClassName(SHOWN_CLASS_NAME);
         }
         ownerFrameId = NO_OWNER;
     }
@@ -113,8 +114,8 @@ public final class VisTooltip {
         if (tooltip == null) {
             tooltip = Document.get().createDivElement();
             tooltip.setClassName(CLASS_NAME);
+            // Hidden until shown (vis-tooltip.css)
             tooltip.setAttribute("aria-hidden", "true");
-            tooltip.getStyle().setDisplay(Display.NONE);
             content = Document.get().createDivElement();
             content.setClassName(CONTENT_CLASS_NAME);
             tooltip.appendChild(content);

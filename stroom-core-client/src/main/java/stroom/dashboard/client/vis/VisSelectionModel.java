@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class VisSelectionModel
-        implements SelectionUiHandlers, HasComponentSelection, HasSelectionHandlers<List<ComponentSelection>> {
+        implements HasComponentSelection, HasSelectionHandlers<List<ComponentSelection>> {
 
     private static final List<ColumnRef> COLUMNS = new ArrayList<>();
 
@@ -64,7 +64,10 @@ public class VisSelectionModel
         return COLUMNS;
     }
 
-    @Override
+    /// Takes what is selected in the visualisation (its frame's selection callback), telling the
+    /// selection handlers when it changes.
+    ///
+    /// @param selection What is selected.
     public void onSelection(final List<ComponentSelection> selection) {
         if (!Objects.equals(currentSelection, selection)) {
             currentSelection = selection;

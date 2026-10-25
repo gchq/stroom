@@ -474,6 +474,8 @@ diff around a change always reports them. Seen across dark, light and forced col
   `App/Visualisations/Tree` `Keyboard`, `ShowAndHide` and `Radial`, `App/Visualisations/LineChart`
   `PageKeys` and `ArrowKeysMoveBetweenPoints`, `App/Visualisations/Bubble` `KeyboardZoom`: the
   screenshot catches a tooltip fading in or out, or a transition (a re-layout, a zoom) part of the way.
+  `App/Visualisations/Accessibility` `DoughnutSlices` too (25 October 2026: about 30 pixels in a run
+  of the visualisation stories, then the same as the baseline in three runs on its own).
 * Every `App/Visualisations/Force2D` and `Force3D` story: the dots flowing along the lines are
   wherever the flow has got to.
 

@@ -17,6 +17,8 @@
 package stroom.dashboard.client.vis;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.component.VisFrame;
+import stroom.dashboard.client.component.VisFrameController;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -58,6 +60,8 @@ import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.View;
@@ -142,7 +146,8 @@ public class VisPresenter
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
                         final RestFactory restFactory,
                         final CurrentPreferences currentPreferences,
-                        final DateTimeFormatter dateTimeFormatter) {
+                        final DateTimeFormatter dateTimeFormatter,
+                        final Provider<VisFrameController> visFrameControllerProvider) {
         super(eventBus, view, settingsPresenterProvider);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
@@ -154,9 +159,10 @@ public class VisPresenter
         visSelectionModel.addSelectionHandler(event ->
                 getDashboardContext().fireComponentChangeEvent(VisPresenter.this));
 
-        visFrame = new VisFrame(eventBus);
-        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
-        visFrame.setUiHandlers(visSelectionModel);
+        // The frame's links show their progress on the refresh button
+        provide(Contexts.TASK_MONITOR, ContextValue.of(getView().getRefreshButton()));
+        visFrame = new VisFrame();
+        visFrame.setOnSelection(visSelectionModel::onSelection);
         getView().setOnVisButtonPress(visFrame::toolbarButtonPressed);
         visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons));
         // A value has the same colour in every visualisation of the dashboard
@@ -171,7 +177,8 @@ public class VisPresenter
 
         visFunctionCache.bind();
         scriptCache.bind();
-        visFrame.bind();
+        // Which listens to the visualisation until this is disposed
+        make(visFrameControllerProvider).attach(visFrame);
 
         listen(ChangeCurrentPreferencesEvent.getType(), event -> {
             visFrame.setClassName(getClassName(event.getTheme()));
@@ -231,7 +238,6 @@ public class VisPresenter
 
         visFunctionCache.unbind();
         scriptCache.unbind();
-        visFrame.unbind();
 
         // The frame is on the page's root, so closing a dashboard, which doesn't remove its
         // components, would otherwise leave it (and through it the whole dashboard) loaded

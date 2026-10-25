@@ -16,7 +16,7 @@
 
 package stroom.query.client.view;
 
-import stroom.dashboard.client.vis.VisFrame;
+import stroom.dashboard.client.component.VisFrame;
 import stroom.dashboard.client.vis.VisToolbarButton;
 import stroom.dashboard.client.vis.VisToolbarRow;
 import stroom.data.pager.client.RefreshButton;

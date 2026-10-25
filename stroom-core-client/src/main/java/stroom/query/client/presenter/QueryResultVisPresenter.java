@@ -16,9 +16,10 @@
 
 package stroom.query.client.presenter;
 
+import stroom.dashboard.client.component.VisFrame;
+import stroom.dashboard.client.component.VisFrameController;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.vis.VisFrame;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.client.vis.VisToolbarButton;
 import stroom.data.pager.client.RefreshButton;
@@ -47,6 +48,8 @@ import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.visualisation.shared.VisColourList;
 import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -61,6 +64,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
@@ -111,7 +115,8 @@ public class QueryResultVisPresenter
                                    final QueryResultVisView view,
                                    final RestFactory restFactory,
                                    final CurrentPreferences currentPreferences,
-                                   final DateTimeFormatter dateTimeFormatter) {
+                                   final DateTimeFormatter dateTimeFormatter,
+                                   final Provider<VisFrameController> visFrameControllerProvider) {
         super(eventBus, view);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
@@ -119,10 +124,11 @@ public class QueryResultVisPresenter
         this.currentPreferences = currentPreferences;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        visFrame = new VisFrame(eventBus);
+        // The frame's links show their progress on the refresh button
+        provide(Contexts.TASK_MONITOR, ContextValue.of(getView().getRefreshButton()));
+        visFrame = new VisFrame();
         // Named as the query editor's tab showing it is
         visFrame.setTitle("Visualisation");
-        visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         getView().setOnVisButtonPress(visFrame::toolbarButtonPressed);
         visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons));
         visFrame.setColoursHandler((field, values) -> visColourList.colours(
@@ -139,7 +145,8 @@ public class QueryResultVisPresenter
 
         visFunctionCache.bind();
         scriptCache.bind();
-        visFrame.bind();
+        // Which listens to the visualisation until this is disposed
+        make(visFrameControllerProvider).attach(visFrame);
 
         listen(ChangeCurrentPreferencesEvent.getType(), event -> {
             visFrame.setClassName(getClassName(event.getTheme()));
@@ -155,7 +162,7 @@ public class QueryResultVisPresenter
 
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
         this.visSelectionModel = visSelectionModel;
-        visFrame.setUiHandlers(visSelectionModel);
+        visFrame.setOnSelection(visSelectionModel::onSelection);
     }
 
     /*****************
@@ -230,7 +237,6 @@ public class QueryResultVisPresenter
 
         visFunctionCache.unbind();
         scriptCache.unbind();
-        visFrame.unbind();
     }
 
     @Override

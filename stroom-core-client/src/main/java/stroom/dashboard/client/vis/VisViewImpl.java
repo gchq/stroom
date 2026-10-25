@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.component.VisFrame;
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.data.pager.client.RefreshButton;
 import stroom.widget.datagrid.client.MessagePanel;

@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.vis;
+package stroom.dashboard.client.component;
 
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.vis.MessageSupport;
+import stroom.dashboard.client.vis.VisToolbarButton;
+import stroom.hyperlink.client.Hyperlink;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.script.shared.ScriptDoc;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
+import stroom.widget.component.client.Component;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.Callback;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
@@ -35,10 +40,12 @@ import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
@@ -46,27 +53,32 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class VisFrame extends Composite implements VisPane {
+/// A visualisation's frame: the page (`ui/vis.html`, or a visualisation's own assets) that runs it,
+/// in a container that clips it, both placed by the view showing it. What Stroom says to the
+/// visualisation (its scripts, data, settings, colours and time zone) goes in as messages through
+/// its methods; what it asks of Stroom comes out through callbacks: toolbar buttons, colours, a
+/// selection and a link to follow. [VisFrameController] opens its links and listens to it while it
+/// is in use.
+public class VisFrame extends Component implements RequiresResize {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private final MessageSupport messageSupport;
     private VisFunction function;
-    private final SimplePanel container;
-    private final Frame frame;
+    @UiField
+    SimplePanel container;
+    @UiField
+    Frame frame;
     // The messages to send once the frame's page has loaded. vis.js only hears messages once it
     // has run, so one sent sooner, e.g. scripts to inject when the server replies quickly, is lost
     private final List<Runnable> pendingMessages = new ArrayList<>();
     private boolean frameLoaded;
 
-    public VisFrame(final EventBus eventBus) {
-        // + "?time=" + System.currentTimeMillis());
-        frame = new Frame("ui/vis.html");
-        frame.addStyleName("VisFrame-frame");
+    /// Makes a frame showing Stroom's visualisation page, e.g. one a template declares.
+    public VisFrame() {
+        initWidget(BINDER.createAndBindUi(this));
         frame.addLoadHandler(event -> onFrameLoaded());
-        messageSupport = new MessageSupport(eventBus, frame.getElement());
-
-        container = new SimplePanel(frame);
-        container.addStyleName("VisFrame-container");
-        initWidget(container);
+        messageSupport = new MessageSupport(frame.getElement());
     }
 
     /**
@@ -104,52 +116,69 @@ public class VisFrame extends Composite implements VisPane {
         frame.setTitle(title);
     }
 
+    /// Places the container that clips the frame, relative to what holds it.
+    ///
+    /// @param left   Its left, in pixels.
+    /// @param top    Its top, in pixels.
+    /// @param width  Its width, in pixels.
+    /// @param height Its height, in pixels.
     public void setContainerPositionAndSize(final double left,
                                             final double top,
                                             final double width,
                                             final double height) {
-        setPositionAndSize(
-                container.getElement().getStyle(),
-                left,
-                top,
-                width,
-                height);
+        setPositionAndSize(container.getElement(), "--vis-frame__container-", left, top, width, height);
     }
 
+    /// Places the frame in its container.
+    ///
+    /// @param left   Its left, in pixels.
+    /// @param top    Its top, in pixels.
+    /// @param width  Its width, in pixels.
+    /// @param height Its height, in pixels.
     public void setInnerPositionAndSize(final double left,
                                         final double top,
                                         final double width,
                                         final double height) {
-        setPositionAndSize(
-                frame.getElement().getStyle(),
-                left,
-                top,
-                width,
-                height);
+        setPositionAndSize(frame.getElement(), "--vis-frame__frame-", left, top, width, height);
     }
 
-    private void setPositionAndSize(final Style style,
-                                    final double left,
-                                    final double top,
-                                    final double width,
-                                    final double height) {
-        style.setLeft(left, Unit.PX);
-        style.setTop(top, Unit.PX);
-        style.setWidth(width, Unit.PX);
-        style.setHeight(height, Unit.PX);
+    // Custom properties that dashboard.css's VisFrame-container and VisFrame-frame use, named for
+    // the part as they inherit into the frame
+    private static void setPositionAndSize(final Element element,
+                                           final String prefix,
+                                           final double left,
+                                           final double top,
+                                           final double width,
+                                           final double height) {
+        CssProperties.set(element, prefix + "left", left + "px");
+        CssProperties.set(element, prefix + "top", top + "px");
+        CssProperties.set(element, prefix + "width", width + "px");
+        CssProperties.set(element, prefix + "height", height + "px");
     }
 
-    public void bind() {
+    // Starts listening to the visualisation (its controller does, while it is in use)
+    void bind() {
         messageSupport.bind();
     }
 
-    public void unbind() {
+    // Stops listening to it, and hides its tooltip
+    void unbind() {
         messageSupport.unbind();
     }
 
-    @Override
-    public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
-        messageSupport.setUiHandlers(uiHandlers);
+    /// Sets what is told when the user selects something in the visualisation, e.g. the selection
+    /// model that other components filter on.
+    ///
+    /// @param onSelection Given what is selected.
+    public void setOnSelection(final Consumer<List<ComponentSelection>> onSelection) {
+        messageSupport.setOnSelection(onSelection);
+    }
+
+    /// Sets what opens a link the visualisation asks to follow (its controller sets it).
+    ///
+    /// @param onHyperlink Given the link.
+    public void setOnHyperlink(final Consumer<Hyperlink> onHyperlink) {
+        messageSupport.setOnHyperlink(onHyperlink);
     }
 
     /// Sets what to do when the visualisation asks for buttons in its toolbar.
@@ -221,7 +250,6 @@ public class VisFrame extends Composite implements VisPane {
         send(() -> messageSupport.postMessage(message));
     }
 
-    @Override
     public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
     }
@@ -306,7 +334,6 @@ public class VisFrame extends Composite implements VisPane {
         send(() -> messageSupport.postMessage(message, callback));
     }
 
-    @Override
     public void setClassName(final String className) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(className));
@@ -317,21 +344,18 @@ public class VisFrame extends Composite implements VisPane {
         send(() -> messageSupport.postMessage(message));
     }
 
-    @Override
     public void start() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.start"));
         send(() -> messageSupport.postMessage(message));
     }
 
-    @Override
     public void end() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.end"));
         send(() -> messageSupport.postMessage(message));
     }
 
-    @Override
     public void setVisType(final String visType, final String className) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(visType));
@@ -357,7 +381,6 @@ public class VisFrame extends Composite implements VisPane {
         send(() -> messageSupport.postMessage(message, callback));
     }
 
-    @Override
     public void setData(final JavaScriptObject context, final JavaScriptObject settings, final JavaScriptObject data) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONObject(context));
@@ -383,14 +406,15 @@ public class VisFrame extends Composite implements VisPane {
         // Do nothing...
     }
 
-    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
-    ///
-    /// @param taskMonitorFactory What shows their progress.
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        messageSupport.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
     public HandlerRegistration addLoadHandler(final LoadHandler loadHandler) {
         return frame.addLoadHandler(loadHandler);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, VisFrame> {
+
     }
 }

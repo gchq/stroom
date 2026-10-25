@@ -451,8 +451,13 @@
     color: var(--text-color--disabled);
 }
 
+/* Placed by VisFrame (setContainerPositionAndSize), with its own names as they inherit into the frame */
 .VisFrame-container {
     position: absolute;
+    left: var(--vis-frame__container-left, auto);
+    top: var(--vis-frame__container-top, auto);
+    width: var(--vis-frame__container-width, auto);
+    height: var(--vis-frame__container-height, auto);
     margin: 0;
     padding: 0;
     border-width: 0;
@@ -460,8 +465,13 @@
     overflow: hidden;
 }
 
+/* Placed by VisFrame (setInnerPositionAndSize) */
 .VisFrame-frame {
     position: absolute;
+    left: var(--vis-frame__frame-left, auto);
+    top: var(--vis-frame__frame-top, auto);
+    width: var(--vis-frame__frame-width, auto);
+    height: var(--vis-frame__frame-height, auto);
     margin: 0;
     padding: 0;
     border-width: 0;
