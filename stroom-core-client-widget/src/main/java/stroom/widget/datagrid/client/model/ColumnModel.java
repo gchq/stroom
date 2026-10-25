@@ -276,6 +276,31 @@ public final class ColumnModel<C> {
         }
     }
 
+    /// Set a column's width as its content needs (e.g. a tree's expander column, as the tree
+    /// deepens), taking what it gains back from the fill columns where the columns would otherwise
+    /// run past `outerWidth`. Only what the column gains is taken, so the columns still overflow
+    /// as far as they did before, e.g. after the user widened one. The fill columns are never made
+    /// narrower than their floor.
+    ///
+    /// @param index      The column index.
+    /// @param width      The width in pixels.
+    /// @param outerWidth The grid's visible width in pixels.
+    public void setWidthWithinFill(final int index, final int width, final int outerWidth) {
+        final int before = getTotalWidth();
+        setWidth(index, width);
+        final int after = getTotalWidth();
+        final int amount = Math.min(after - before, after - outerWidth);
+        if (amount > 0) {
+            final int[] widths = getWidths();
+            if (ColumnWidthResolver.unfill(getSizings(), widths, amount) > 0) {
+                for (int i = 0; i < widths.length; i++) {
+                    entries.get(i).width = widths[i];
+                }
+                widthVersion++;
+            }
+        }
+    }
+
     /// Set a column's width as the result of a user resize. The width is never set below the
     /// column's minimum width (R-CR7).
     ///

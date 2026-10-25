@@ -455,6 +455,24 @@ public class DataGrid<R> extends Widget
         }
     }
 
+    /// Set a column's width as its content needs (e.g. a tree's expander column), the fill columns
+    /// giving back what it gains where the columns would otherwise run past the grid's edge.
+    ///
+    /// @param column The column.
+    /// @param width  The width in pixels.
+    public void setColumnWidthWithinFill(final Column<R, ?> column, final int width) {
+        final int index = columnModel.indexOf(column);
+        if (index != -1) {
+            final int outerWidth = getElement().getClientWidth();
+            if (isAttached() && columnModel.isResolved() && outerWidth > 0) {
+                columnModel.setWidthWithinFill(index, width, outerWidth);
+            } else {
+                columnModel.setWidth(index, width);
+            }
+            scheduleRender();
+        }
+    }
+
     /// Declare whether a column's content wraps. Any wrapping column switches virtual mode off for
     /// the whole grid, because rows then vary in height.
     ///

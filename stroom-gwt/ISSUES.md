@@ -1509,13 +1509,18 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   doesn't also close them on a history change.~~ Fixed: both also call
   `setAutoHideOnHistoryEventsEnabled(true)`. No story: the workbench's own navigation is the
   history, so a story can't change it.
-* Adopting the tab bars' `TabSelector` (wave 3's audit, 25 October 2026) changes one screenshot,
-  `App/Main/ServerTasksScreen` `SeededFilter`, every run: the task list's last column (Info) now
-  ends at the screen's edge with an ellipsis, where it ran past it under a horizontal scrollbar.
-  Bisected to the one line (`add(tabSelector, root)` in place of appending its element); the
-  screen has no tab bar of its own, so how it reaches the list's column widths isn't known yet.
-  The other server task stories don't change. Find the link (a tab bar made at start-up whose
-  attach, or child count, changes when the list is first sized?) before taking a new baseline.
+* Fixed (25 October 2026): a tree grid's columns ran past its edge, under a horizontal scroll
+  bar, once the tree deepened (Server Tasks, expanding a task or filtering). `TreeRowHandler`
+  widens the expander column for the deepest row, but the fill columns (Info) had already taken
+  the spare width and only ever grow, so the expander's 20px pushed the last column off the edge.
+  The expander now takes what it gains back from the fill columns' share above their floor
+  (`DataGrid.setColumnWidthWithinFill`, `ColumnModel.setWidthWithinFill`), and only where the
+  columns would overflow, so a column the user widened keeps its width. The `TaskTree` story
+  checks the columns end within the grid after expanding (it fails without the fix, 20px over).
+  It showed up in wave 3's audit as a screenshot change in `SeededFilter` that seemed to follow
+  adopting the tab bars' `TabSelector`: that screen fetches unfiltered first (its name filter is
+  debounced by 300ms), and whether that reply was laid out before the filtered one, deepening the
+  tree, was a race the change only shifted the timing of. The screen has no tab bar.
 * A `PopupType.POPUP` given a size (`PopupUtil`) still sets an inline width and height on its
   content (found 25 October 2026 in wave 3's audit): a class wouldn't beat the content's own width
   rules as the inline size does. Fix it as the popups' contents convert (menus, lists).

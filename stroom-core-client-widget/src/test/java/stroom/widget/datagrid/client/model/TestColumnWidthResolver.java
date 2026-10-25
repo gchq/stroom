@@ -132,4 +132,37 @@ class TestColumnWidthResolver {
         assertThat(ColumnWidthResolver.fill(sizings, widths, 300)).isTrue();
         assertThat(widths).containsExactly(100, 200);
     }
+
+    @Test
+    void testUnfillSharesByWeight() {
+        final List<ColumnSizing> sizings = Arrays.asList(
+                ColumnSizing.fixed(100), ColumnSizing.fill(100, 100), ColumnSizing.fill(300, 100));
+        final int[] widths = {100, 200, 400};
+
+        assertThat(ColumnWidthResolver.unfill(sizings, widths, 40)).isEqualTo(40);
+        assertThat(widths).containsExactly(100, 190, 370);
+    }
+
+    @Test
+    void testUnfillStopsAtTheFloor() {
+        final List<ColumnSizing> sizings = Arrays.asList(ColumnSizing.fill(100), ColumnSizing.fill(100));
+        final int[] widths = {110, 150};
+
+        // Half each is asked for, but the first has only 10 above its floor; the last makes it up
+        assertThat(ColumnWidthResolver.unfill(sizings, widths, 60)).isEqualTo(60);
+        assertThat(widths).containsExactly(100, 100);
+
+        // Nothing is left above the floors
+        assertThat(ColumnWidthResolver.unfill(sizings, widths, 10)).isZero();
+        assertThat(widths).containsExactly(100, 100);
+    }
+
+    @Test
+    void testUnfillWithoutFillColumns() {
+        final int[] widths = {100, 200};
+
+        assertThat(ColumnWidthResolver.unfill(
+                Arrays.asList(ColumnSizing.fixed(100), ColumnSizing.resizable(200)), widths, 20)).isZero();
+        assertThat(widths).containsExactly(100, 200);
+    }
 }

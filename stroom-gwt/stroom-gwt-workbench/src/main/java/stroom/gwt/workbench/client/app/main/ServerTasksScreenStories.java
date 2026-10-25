@@ -139,6 +139,13 @@ public final class ServerTasksScreenStories {
                     play.click(play.querySelector(".expander-cell__icon.expander-cell__icon--active"));
                     play.findByText("Stream Processor A");
                     play.findByText("Stream Processor B");
+                    // The expander column widens for the deeper tree, taking its width from the Info
+                    // column (a fill column), so the columns still end within the grid (they once
+                    // ran past its edge, under a horizontal scroll bar)
+                    final Value<Double> lastRight = play.querySelector("[data-hcol=\"8\"]").right();
+                    final Value<Double> gridRight = play.querySelector(".data-grid").right();
+                    play.waitFor(() -> play.expect("the space right of the columns",
+                            () -> gridRight.get() - lastRight.get()).toBeGreaterThanOrEqual(0));
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
                     play.click(play.within(play.getByText("Stream Processor A").closest(StroomDom.GRID_ROW))
                             .querySelector(".tick-box"));

@@ -102,4 +102,48 @@ public final class ColumnWidthResolver {
         }
         return changed;
     }
+
+    /// Take up to `amount` pixels back from the fill columns in `widths`, from the width they were
+    /// given above their floor, sharing it by weight (any left over comes from the last first).
+    /// The opposite of [#fill], for a column that has grown into the space they filled.
+    ///
+    /// @param sizings The column sizings in display order.
+    /// @param widths  The current widths, one per column. Updated in place.
+    /// @param amount  The most to take back, in pixels.
+    /// @return The number of pixels taken back.
+    public static int unfill(final List<ColumnSizing> sizings, final int[] widths, final int amount) {
+        double totalWeight = 0;
+        for (final ColumnSizing sizing : sizings) {
+            if (sizing.isFill()) {
+                totalWeight += sizing.getFillWeight();
+            }
+        }
+        if (amount <= 0 || totalWeight <= 0) {
+            return 0;
+        }
+
+        int left = amount;
+        for (int i = 0; i < widths.length && left > 0; i++) {
+            final ColumnSizing sizing = sizings.get(i);
+            if (sizing.isFill()) {
+                final int share = (int) Math.ceil(amount * sizing.getFillWeight() / totalWeight);
+                final int taken = Math.min(Math.min(share, left), spareAboveFloor(sizing, widths[i]));
+                widths[i] -= taken;
+                left -= taken;
+            }
+        }
+        for (int i = widths.length - 1; i >= 0 && left > 0; i--) {
+            final ColumnSizing sizing = sizings.get(i);
+            if (sizing.isFill()) {
+                final int taken = Math.min(left, spareAboveFloor(sizing, widths[i]));
+                widths[i] -= taken;
+                left -= taken;
+            }
+        }
+        return amount - left;
+    }
+
+    private static int spareAboveFloor(final ColumnSizing sizing, final int width) {
+        return Math.max(0, width - sizing.getWidth());
+    }
 }

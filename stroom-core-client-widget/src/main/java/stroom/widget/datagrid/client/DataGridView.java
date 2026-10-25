@@ -137,6 +137,13 @@ public interface DataGridView<R> extends HasData<R>, IsWidget {
     /// @param unit   The width's unit.
     void setColumnWidth(Column<R, ?> column, int width, Unit unit);
 
+    /// Set a column's width as its content needs (e.g. a tree's expander column), the fill columns
+    /// giving back what it gains where the columns would otherwise run past the grid's edge.
+    ///
+    /// @param column The column.
+    /// @param width  The width in pixels.
+    void setColumnWidthWithinFill(Column<R, ?> column, int width);
+
     /// @return The number of columns.
     int getColumnCount();
 

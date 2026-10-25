@@ -22,7 +22,6 @@ import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
 import stroom.widget.datagrid.client.DataGridView;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 
 import java.util.List;
@@ -64,9 +63,9 @@ public class TreeRowHandler<R> {
             maxDepth = -1;
         }
 
-        // Set the width of the expander column so
-        // that all expanders can be seen.
-        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
+        // Set the width of the expander column so that all expanders can be seen. A wider one takes
+        // its width back from the fill columns, or the columns would run past the grid's edge
+        dataGrid.setColumnWidthWithinFill(expanderColumn, ExpanderCell.getColumnWidth(maxDepth));
         // Give any width the expander column gave up to the fill columns. DataGrid sizes its
         // columns before the first rows arrive, so without this a narrowed expander column leaves a
         // gap at the right
