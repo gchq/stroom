@@ -125,7 +125,7 @@ public class ExplorerNodeEditTagsViewImpl
         addFromInputButton.setEnabled(false);
 
         nodeTagsList.setMultiSelect(true);
-        nodeTagsList.init(nodeTagsModel);
+        nodeTagsList.setModel(nodeTagsModel);
         nodeTagsList.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
                 removeSelectedNodeTags();
@@ -140,7 +140,7 @@ public class ExplorerNodeEditTagsViewImpl
         textBox.setTitle("Enter tags manually or filter 'All Known Tags'");
 
         allTagsList.setMultiSelect(true);
-        allTagsList.init(allTagsModel);
+        allTagsList.setModel(allTagsModel);
         allTagsList.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
                 addSelectedTags();

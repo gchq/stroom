@@ -123,7 +123,7 @@ public final class SelectionListStateStories {
         final SelectionList<String, SimpleSelectionItemWrapper<String>> list = new SelectionList<>();
         list.setMultiSelect(true);
         list.addStyleName("selection-list--field");
-        list.init(model);
+        list.setModel(model);
         list.getSelectionModel().setSelectedItems(chosen.stream().map(model::wrap).collect(Collectors.toList()));
         list.setAccessibleName("Row states");
         list.getElement().getStyle().setProperty("width", "260px");

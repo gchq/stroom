@@ -60,7 +60,8 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         protected void onBind() {
             super.onBind();
             registerHandler(popupPanel.addCloseHandler(event -> hide()));
-            registerHandler(selectionList.addCloseHandler(event -> hide()));
+            selectionList.setOnClose(SelectionPopup.this::hide);
+            registerHandler(() -> selectionList.setOnClose(null));
         }
     };
 
@@ -121,7 +122,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     }
 
     public void init(final SelectionListModel<T, I> model) {
-        selectionList.init(model);
+        selectionList.setModel(model);
     }
 
     public void refresh() {

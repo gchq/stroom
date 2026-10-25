@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A list of options (selection-list.css): a quick filter for a long list, a breadcrumb back up
+  through the levels of a list of lists (filled from the model's path), and the options, a list box
+  that SelectionList puts in the pager panel.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:qf="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="selection-list dock-container-vertical">
+        <qf:QuickFilter ui:field="quickFilter" addStyleNames="dock-min selection-list__filter"/>
+        <c:AriaPanel ui:field="links" styleName="dock-min selection-list__path" role="navigation"
+                     ariaLabel="Breadcrumb"/>
+        <g:SimplePanel styleName="dock-max selection-list__options">
+            <dg:PagerPanel ui:field="pagerView"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

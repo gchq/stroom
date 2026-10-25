@@ -51,7 +51,7 @@ public class ExplorerNodeRemoveTagsViewImpl
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
         nodeTagsList.setMultiSelect(true);
-        nodeTagsList.init(nodeTagsModel);
+        nodeTagsList.setModel(nodeTagsModel);
     }
 
     @Override

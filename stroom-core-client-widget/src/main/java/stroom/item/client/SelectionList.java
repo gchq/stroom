@@ -20,13 +20,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.tab.client.event.CloseEvent;
-import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -35,22 +34,22 @@ import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 import stroom.widget.util.client.TypeAhead;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,24 +65,26 @@ import java.util.function.Supplier;
 /// `selection-list__path-current`) and `selection-list__options`.
 public class SelectionList<T, I extends SelectionItem> extends Composite {
 
-    // The block's classes (selection-list.css)
+    private static final Binder BINDER = GWT.create(Binder.class);
+    // The block's classes (selection-list.css); the rest are in the template
     private static final String BLOCK = "selection-list";
-    private static final String FILTER = BLOCK + "__filter";
-    private static final String PATH = BLOCK + "__path";
     private static final String PATH_LINK = BLOCK + "__path-link";
     private static final String PATH_SEPARATOR = BLOCK + "__path-separator";
     private static final String PATH_CURRENT = BLOCK + "__path-current";
-    private static final String OPTIONS = BLOCK + "__options";
 
-    private final QuickFilter quickFilter;
+    @UiField
+    QuickFilter quickFilter;
+    @UiField
+    AriaPanel links;
+    @UiField
+    PagerPanel pagerView;
     private final SelectionEventManager<T, I> selectionEventManager;
     // What has been typed to jump to an option (in a list with no quick filter)
     private final TypeAhead typeAhead = new TypeAhead();
-    private final FlowPanel links;
-    private final PagerPanel pagerView;
     // The options: a list (listbox) on the data grid
     private final DataGrid<I> cellTable;
     private SelectionListModel<T, I> model;
+    private Runnable onClose;
     private final MultiSelectionModelImpl<I> selectionModel;
     private final List<NavigationState<I>> navigationStates = new ArrayList<>();
     private String lastFilter;
@@ -102,7 +103,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     };
 
+    /// Makes an empty list, e.g. one a template declares; [#setModel] gives it its options.
     public SelectionList() {
+        initWidget(BINDER.createAndBindUi(this));
         cellTable = new DataGrid<>(100);
         cellTable.setProfile(DataGridProfile.LISTBOX);
         // An option with no text (e.g. the blank one that clears a value) is named None
@@ -134,39 +137,17 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 };
         cellTable.addColumn(expanderColumn, "", 100);
 
-        pagerView = new PagerPanel();
         pagerView.setDataWidget(cellTable);
 
-        quickFilter = new QuickFilter() {
-            @Override
-            protected void onKeyDown(final KeyDownEvent event) {
-                super.onKeyDown(event);
-                if (event.isDownArrow()) {
-                    cellTable.setKeyboardSelectedRow(0, true);
-                } else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-                    CloseEvent.fire(SelectionList.this);
-                }
+        // After the filter's own keys (e.g. Escape clearing it): Down goes into the options, and
+        // Escape in an empty filter closes the list
+        quickFilter.addKeyDownHandler(event -> {
+            if (event.isDownArrow()) {
+                cellTable.setKeyboardSelectedRow(0, true);
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
+                close();
             }
-        };
-
-        quickFilter.addStyleName("dock-min " + FILTER);
-
-        // A breadcrumb trail: where the list is, with a button to go back to each level above
-        links = new FlowPanel("nav");
-        links.setStyleName("dock-min " + PATH);
-        links.getElement().setAttribute("aria-label", "Breadcrumb");
-
-        final SimplePanel elementChooser = new SimplePanel();
-        elementChooser.setStyleName("dock-max " + OPTIONS);
-        elementChooser.add(pagerView.asWidget());
-
-        final FlowPanel layout = new FlowPanel();
-        layout.setStyleName(BLOCK + " dock-container-vertical");
-        layout.add(quickFilter);
-        layout.add(links);
-        layout.add(elementChooser);
-
-        initWidget(layout);
+        });
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
@@ -273,7 +254,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                     new SelectionType(true, false, false, false, false),
                     true);
         } else {
-            CloseEvent.fire(SelectionList.this);
+            close();
         }
     }
 
@@ -389,9 +370,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
-    public void init(final SelectionListModel<T, I> model) {
+    /// Gives the list its options, once, and shows them.
+    ///
+    /// @param model The options, and whether the list has a filter, a breadcrumb and a pager.
+    /// @throws IllegalStateException If the list already has a model.
+    public void setModel(final SelectionListModel<T, I> model) {
         if (this.model != null) {
-            throw new RuntimeException("Already initialised.");
+            throw new IllegalStateException("Already has a model.");
         }
 
         this.model = model;
@@ -419,8 +404,18 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         return selectionModel;
     }
 
-    public HandlerRegistration addCloseHandler(final CloseHandler handler) {
-        return addHandler(handler, CloseEvent.getType());
+    /// Sets what closes the list, e.g. its popup, when the user leaves it: Escape, or choosing with
+    /// nothing to choose.
+    ///
+    /// @param onClose What closes it, or null for nothing.
+    public void setOnClose(final Runnable onClose) {
+        this.onClose = onClose;
+    }
+
+    private void close() {
+        if (onClose != null) {
+            onClose.run();
+        }
     }
 
     /// The list's choosing, on the grid's keyboard and the mouse: moving only moves the focus (as a
@@ -546,7 +541,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 nativeEvent.preventDefault();
                 selectionList.chooseKeyboardSelected();
             } else if (BrowserEvents.KEYDOWN.equals(type) && nativeEvent.getKeyCode() == KeyCodes.KEY_ESCAPE) {
-                CloseEvent.fire(selectionList);
+                selectionList.close();
             } else {
                 super.onCellPreview(e);
             }
@@ -780,5 +775,15 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         public Range getRange() {
             return range;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The owner is raw: a binder can't name a type variable
+    @SuppressWarnings("rawtypes")
+    interface Binder extends UiBinder<Widget, SelectionList> {
+
     }
 }

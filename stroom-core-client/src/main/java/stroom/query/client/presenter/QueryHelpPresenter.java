@@ -25,7 +25,6 @@ import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
@@ -81,7 +80,7 @@ public class QueryHelpPresenter
         this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-        view.getSelectionList().init(model);
+        view.getSelectionList().setModel(model);
 
         // Set up the tooltip for the quickfilter
         uiConfigCache.get(uiConfig ->
