@@ -20,6 +20,9 @@ import stroom.ai.impl.workspace.ExpressionFunctions;
 import stroom.ai.impl.workspace.ExpressionFunctions.TextCall;
 import stroom.util.shared.NullSafe;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +46,8 @@ public final class ChartCheck {
     private static final double NUMERIC_SHARE = 0.9;
     // More categories than this make a bar chart's axis unreadable.
     static final int MAX_READABLE_CATEGORIES = 100;
+    // More distinct times than this, raw, is more points than a chart over time reads well.
+    static final int MAX_TIME_POINTS = 500;
     // More points than this on a category axis line chart are better on a time or value axis.
     static final int MAX_LINE_CATEGORIES = 500;
 
@@ -100,6 +105,7 @@ public final class ChartCheck {
 
         if (sample != null && !sample.rows().isEmpty()) {
             checkSize(kind, mapped, style, sample, result);
+            checkTimeInterval(kind, mapped, style, columns, sample, result);
         }
         return result;
     }
@@ -378,6 +384,98 @@ public final class ChartCheck {
             result.warnings.add("The table has more rows (" + sample.rows().size() + "+) than the chart's Max "
                                 + "Rows (" + maxValues + "), so only the first " + maxValues + " will be drawn.");
         }
+    }
+
+    // For a chart over time (a line chart's or a scatter plot's Date Time x) whose table gives a row per event, or
+    // per raw time, rather than per interval: an interval to group the table by first, from the time the sample
+    // spans, so Stroom aggregates over all the data rather than the chart showing only the first Max Rows rows.
+    private static void checkTimeInterval(final ChartKind kind,
+                                          final Map<String, String> mapped,
+                                          final Map<String, String> style,
+                                          final List<TableColumn> columns,
+                                          final Sample sample,
+                                          final Result result) {
+        if (kind != ChartKind.LINE && kind != ChartKind.SCATTER) {
+            return;
+        }
+        final TableColumn x = findColumn(columns, mapped.get("x")).orElse(null);
+        if (x == null || !"DATE_TIME".equals(x.format()) || isRounded(x.expression())) {
+            return;
+        }
+        final int maxValues = intStyle(style, StyleSetting.MAX_VALUES);
+        final int times = distinct(sample, x.name());
+        if (sample.rows().size() < maxValues && times <= MAX_TIME_POINTS) {
+            return;
+        }
+        final Optional<Duration> span = span(sample, x.name());
+        final Optional<String> floor = span.flatMap(ChartCheck::intervalFunction);
+        if (floor.isEmpty()) {
+            return;
+        }
+        result.stats.put("timeSpanDays", (int) Math.min(Integer.MAX_VALUE, span.get().toDays()));
+        final String time = NullSafe.isNonBlankString(x.expression())
+                ? x.expression().strip()
+                : "${" + x.name() + "}";
+        result.warnings.add("'" + x.name() + "' is a raw time spanning about " + describe(span.get()) + " ("
+                            + sample.rows().size() + "+ rows sampled, " + times + " distinct times), so the "
+                            + "chart would show only the first " + maxValues + " rows, unaggregated. Offer to "
+                            + "aggregate the table first: a column " + floor.get() + "(" + time + "), formatted "
+                            + "as Date Time and grouped, with count() (or the measure summed or averaged), then "
+                            + "chart that column as x.");
+    }
+
+    // True if a column's expression already rounds its time to an interval (e.g. floorDay()).
+    private static boolean isRounded(final String expression) {
+        final String lower = NullSafe.string(expression).toLowerCase(Locale.ROOT);
+        return lower.contains("floor") || lower.contains("round") || lower.contains("ceiling");
+    }
+
+    // The time a column's sampled dates span, if it holds any.
+    private static Optional<Duration> span(final Sample sample, final String column) {
+        final int index = sample.index(column);
+        Instant min = null;
+        Instant max = null;
+        for (final List<String> row : sample.rows()) {
+            try {
+                final Instant time = Instant.parse(cell(row, index).strip());
+                min = min == null || time.isBefore(min)
+                        ? time
+                        : min;
+                max = max == null || time.isAfter(max)
+                        ? time
+                        : max;
+            } catch (final DateTimeParseException e) {
+                // Not a date: left out.
+            }
+        }
+        return min == null
+                ? Optional.empty()
+                : Optional.of(Duration.between(min, max));
+    }
+
+    /// @param span The time a chart's data spans.
+    /// @return The rounding function giving a few dozen to a few hundred intervals over it, or empty if it is
+    /// short enough to chart as it is.
+    static Optional<String> intervalFunction(final Duration span) {
+        if (span.compareTo(Duration.ofDays(5 * 365)) > 0) {
+            return Optional.of("floorMonth");
+        } else if (span.compareTo(Duration.ofDays(365)) > 0) {
+            return Optional.of("floorWeek");
+        } else if (span.compareTo(Duration.ofDays(14)) > 0) {
+            return Optional.of("floorDay");
+        } else if (span.compareTo(Duration.ofHours(12)) > 0) {
+            return Optional.of("floorHour");
+        } else if (span.compareTo(Duration.ofMinutes(30)) > 0) {
+            return Optional.of("floorMinute");
+        }
+        return Optional.empty();
+    }
+
+    private static String describe(final Duration span) {
+        if (span.toDays() >= 2) {
+            return span.toDays() + " days";
+        }
+        return Math.max(1, span.toHours()) + " hours";
     }
 
     // Nodes and links: a network graph's, a Sankey diagram's or a chord diagram's.

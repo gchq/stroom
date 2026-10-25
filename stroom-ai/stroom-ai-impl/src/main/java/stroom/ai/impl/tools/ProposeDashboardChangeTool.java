@@ -72,6 +72,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// `propose_dashboard_change` - offers the user a change to a table on the dashboard in their attached tab (group or
 /// ungroup, add, edit, hide or show a column, sort, or filter a column), shown as a plain-language list with an
@@ -98,14 +100,19 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     /// The most fields read to check a column expression's fields.
     static final int MAX_FIELDS = 10_000;
 
-    static final String NOT_DASHBOARD = "No dashboard tab is attached to the chat, so no change was proposed. Ask the "
-                                        + "user to open the dashboard and attach its tab (+ by the chat's input), then "
-                                        + "ask again.";
+    static final String NO_CHANGE = "no change was proposed";
 
     // The column ids a click on a generated chart selects.
-    private static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
+    static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
             "target", "date");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
+    /// The selection key of a time range dragged on a time-series chart: its terms keep what is within the
+    /// selection's from and to.
+    static final String RANGE_SELECTION = "range";
+    // The selection keys of a clicked link's two ends.
+    private static final Set<String> LINK_ENDS = Set.of("source", "target");
+    // A selection filter's id, as the dashboard file gives it.
+    private static final Pattern SELECTION_FILTER_ID = Pattern.compile("\\[id ([^\\]\\s]+)]");
 
     private final TabSnapshots tabSnapshots;
     private final DocumentAccess documentAccess;
@@ -192,7 +199,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addStringProperty("target", "For rename or set_setting: the component (table, query or text), "
                                              + "by its name as the user sees it; default the component. For "
                                              + "set_vis_settings: the Visualisation component. For "
-                                             + "add_selection_filter: the query, embedded query or table to filter.")
+                                             + "add_selection_filter: the query, embedded query or table to filter; "
+                                             + "for remove_selection_filter, the one it filters.")
                 .addStringProperty("chart", "For add_selection_filter: the Visualisation component whose "
                                             + "selection (what the user clicks on it) filters the target.")
                 .addEnumProperty("mode", DashboardChanges.FILTER_MODES, "For add_selection_filter: query filters "
@@ -215,7 +223,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                 .required("field", "selection")
                                 .build())
                         .description("For add_selection_filter: each field and the selection it must equal. A "
-                                     + "term drops out while nothing is selected.")
+                                     + "term drops out while nothing is selected. Selection range (a time "
+                                     + "range dragged on a time-series chart) keeps a date field or column "
+                                     + "within the range.")
                         .build())
                 .addStringProperty("visualisation", "For add_vis: the UUID of the Visualisation document to show. "
                                                     + "For set_vis_settings: the UUID of one to switch to, if any.")
@@ -250,7 +260,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addIntegerProperty("priority", "For sort: its priority, from 1 (sorted by first). By default "
                                                 + "after the table's other sorts.")
                 .addStringProperty("filter", "For filter: the column's filter text, as its filter box takes "
-                                             + "it; empty to clear it.")
+                                             + "it; empty to clear it. For remove_selection_filter: the filter's "
+                                             + "id, as the dashboard file gives it (e.g. ab12c from [id ab12c]).")
                 .addStringProperty("where", "For set_expression: the whole new set of conditions for the "
                                             + "classic query that feeds the table, written as a StroomQL where "
                                             + "clause has them (without 'where'), e.g. Text = \"*Afghan*\" or "
@@ -279,6 +290,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                  + "which changes the controls of a Visualisation component, or the Visualisation it "
                                  + "shows; add_selection_filter, which filters a query's search or a table's rows "
                                  + "by what the user clicks on a chart (a slice, bar, point or node); "
+                                 + "remove_selection_filter, which removes one (by its id in the dashboard file; to "
+                                 + "change one, remove it and add the new one in the same proposal); "
                                  + "add_format_rule or "
                                  + "remove_format_rule, for the table's conditional formatting (rows matching "
                                  + "conditions on its columns coloured, bold, italic or hidden); rename, which "
@@ -351,7 +364,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
         final DocRef dashboard = NullSafe.get(tab, StoredTabSnapshot::docRef);
         if (dashboard == null || !DashboardDoc.TYPE.equals(dashboard.getType())) {
-            return ToolResult.text(NOT_DASHBOARD);
+            return ToolResult.text(TabSnapshots.notAttached(tab,
+                    tabSnapshots.latestOfType(chatId, Set.of(DashboardDoc.TYPE)).orElse(null), "dashboard",
+                    NO_CHANGE));
         }
         if (!documentAccess.canView(dashboard)) {
             return ToolResult.text(DocumentAccess.NO_PERMISSION);
@@ -382,14 +397,16 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             final List<String> notSettings = changes.stream()
                     .map(Change::op)
                     .filter(op -> !DashboardChanges.SET_SETTING.equals(op) && !DashboardChanges.RENAME.equals(op)
-                                  && !DashboardChanges.ADD_SELECTION_FILTER.equals(op))
+                                  && !DashboardChanges.ADD_SELECTION_FILTER.equals(op)
+                                  && !DashboardChanges.REMOVE_SELECTION_FILTER.equals(op))
                     .distinct()
                     .toList();
             if (!notSettings.isEmpty()) {
                 return ToolResult.text("No change was proposed: '" + tableName + "' is an embedded query, whose "
                                        + "StroomQL makes its results, so it takes only " + DashboardChanges.SET_SETTING
-                                       + " (e.g. queryOnOpen), " + DashboardChanges.RENAME + " and "
-                                       + DashboardChanges.ADD_SELECTION_FILTER + " changes, not "
+                                       + " (e.g. queryOnOpen), " + DashboardChanges.RENAME + ", "
+                                       + DashboardChanges.ADD_SELECTION_FILTER + " and "
+                                       + DashboardChanges.REMOVE_SELECTION_FILTER + " changes, not "
                                        + String.join(", ", notSettings) + ". Its StroomQL is in the dashboard's "
                                        + "description: tell the user the StroomQL to use instead.");
             }
@@ -402,7 +419,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         problems.addAll(expressionProblems(checked.changes(), table));
         final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withQueryExpressions(
                         checked.changes(), table, problems), settings.text(), tableName, problems), checked,
-                settings.text(), NullSafe.list(tab.searches()), tableName, problems), settings.text(),
+                settings.text(), NullSafe.list(tab.searches()), tableName, problems), checked, settings.text(),
                 NullSafe.list(tab.searches()), problems);
         if (!problems.isEmpty()) {
             return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
@@ -789,6 +806,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     // checks its mode suits the component, its selection keys are ones the chart gives, and its fields are the
     // query's (or its columns the table's), and builds its filter. Adds why to the problems for any that can't be.
     private List<Change> withSelectionFilters(final List<Change> changes,
+                                              final Checked checked,
                                               final String dashboardText,
                                               final List<AiTabSearch> searches,
                                               final List<String> problems) {
@@ -799,11 +817,15 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final List<Change> resolved = new ArrayList<>();
         for (int i = 0; i < changes.size(); i++) {
             final Change change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
+            if (DashboardChanges.REMOVE_SELECTION_FILTER.equals(change.op())) {
+                resolved.add(withFilterToRemove(prefix, change, components, dashboardText, problems));
+                continue;
+            }
             if (!DashboardChanges.ADD_SELECTION_FILTER.equals(change.op())) {
                 resolved.add(change);
                 continue;
             }
-            final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
             final Component target = DashboardComponents.find(components, change.target()).orElse(null);
             final Component chart = DashboardComponents.find(charts, change.name()).orElse(null);
             if (target == null) {
@@ -821,22 +843,109 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 continue;
             }
             final List<String> before = List.copyOf(problems);
-            checkSelectionFilter(prefix, change, target, chart, searches, problems);
+            checkSelectionFilter(prefix, change, target, chart, checked, searches, problems);
             if (!problems.equals(before)) {
                 resolved.add(change);
                 continue;
             }
-            final ExpressionOperator.Builder filter = ExpressionOperator.builder().op("any".equals(change.filter())
+            // Stroom ANDs the terms of an operator that name the same component's selection, whatever the
+            // operator, so for any of them to match, each is put in an operator of its own (seen in testing: a
+            // filter on a sender or a recipient being the clicked node matched only messages to oneself).
+            final boolean any = "any".equals(change.filter());
+            final ExpressionOperator.Builder filter = ExpressionOperator.builder().op(any
                     ? Op.OR
                     : Op.AND);
-            change.settings().forEach((field, key) -> filter.addTerm(ExpressionTerm.builder()
-                    .field(field)
-                    .condition(Condition.EQUALS)
-                    .value("${component." + chart.id() + ".selection." + key + "}")
-                    .build()));
+            // A clicked link's source and target terms stay together: both ends must match (the chart sends a link
+            // that is the same either way round both ways, so it matches in either direction).
+            final List<ExpressionTerm> linkTerms = new ArrayList<>();
+            final long termCount = change.settings().values().stream()
+                    .mapToLong(selections -> DashboardChanges.selectionsOf(selections).size())
+                    .sum();
+            change.settings().forEach((field, selections) -> DashboardChanges.selectionsOf(selections)
+                    .forEach(key -> {
+                        final List<ExpressionTerm> terms = selectionTerms(field, key, chart.id());
+                        if (any && LINK_ENDS.contains(key)) {
+                            linkTerms.addAll(terms);
+                        } else if (any && termCount > 1) {
+                            filter.addOperator(ExpressionOperator.builder().addTerms(terms).build());
+                        } else {
+                            terms.forEach(filter::addTerm);
+                        }
+                    }));
+            if (!linkTerms.isEmpty()) {
+                filter.addOperator(ExpressionOperator.builder().addTerms(linkTerms).build());
+            }
             resolved.add(change.toBuilder().targetId(target.id()).ref(chart.id()).query(filter.build()).build());
         }
         return resolved;
+    }
+
+    // The terms comparing a field (or column) with what a chart's selection holds: equal to it, or, for a time range
+    // (the selection's from and to), within it. Stroom ANDs the terms naming one selection, and leaves out each
+    // whose value isn't held, so a range's terms keep what is within it, and drop out while nothing is selected.
+    static List<ExpressionTerm> selectionTerms(final String field, final String key, final String chartId) {
+        final String selection = "${component." + chartId + ".selection.";
+        if (RANGE_SELECTION.equals(key)) {
+            return List.of(
+                    ExpressionTerm.builder()
+                            .field(field)
+                            .condition(Condition.GREATER_THAN_OR_EQUAL_TO)
+                            .value(selection + "from}")
+                            .build(),
+                    ExpressionTerm.builder()
+                            .field(field)
+                            .condition(Condition.LESS_THAN_OR_EQUAL_TO)
+                            .value(selection + "to}")
+                            .build());
+        }
+        return List.of(ExpressionTerm.builder()
+                .field(field)
+                .condition(Condition.EQUALS)
+                .value(selection + key + "}")
+                .build());
+    }
+
+    // A remove_selection_filter with the id of the component it removes the filter from, if the component has a
+    // filter with that id; otherwise as given, with what is wrong.
+    private static Change withFilterToRemove(final String prefix,
+                                             final Change change,
+                                             final List<Component> components,
+                                             final String dashboardText,
+                                             final List<String> problems) {
+        final Component target = DashboardComponents.find(components, change.target()).orElse(null);
+        if (target == null) {
+            problems.add(prefix + "the dashboard has no component '" + change.target() + "'. Its components are: "
+                         + DashboardComponents.describe(components) + ".");
+            return change;
+        }
+        final List<String> ids = selectionFilterIds(dashboardText, target.id());
+        if (!ids.contains(change.filter())) {
+            problems.add(prefix + "'" + target.name() + "' has no selection filter '" + change.filter() + "'. "
+                         + (ids.isEmpty()
+                    ? "It has none."
+                    : "Its selection filters' ids are: " + String.join(", ", ids) + "."));
+            return change;
+        }
+        return change.toBuilder().targetId(target.id()).build();
+    }
+
+    // The ids of a component's selection filters, as the dashboard file gives them ([id ab12c]) on its "Query
+    // selection filters" and "Table selection filters" lines.
+    static List<String> selectionFilterIds(final String dashboardText, final String componentId) {
+        final List<String> ids = new ArrayList<>();
+        boolean inComponent = false;
+        for (final String line : NullSafe.string(dashboardText).split("\n")) {
+            if (line.startsWith("## ")) {
+                inComponent = line.endsWith("(id " + componentId + ")");
+            } else if (inComponent && (line.startsWith("Query selection filters: ")
+                                       || line.startsWith("Table selection filters: "))) {
+                final Matcher matcher = SELECTION_FILTER_ID.matcher(line);
+                while (matcher.find()) {
+                    ids.add(matcher.group(1));
+                }
+            }
+        }
+        return ids;
     }
 
     // Whether a selection filter suits what it filters and the chart it is filtered by.
@@ -844,6 +953,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                       final Change change,
                                       final Component target,
                                       final Component chart,
+                                      final Checked checked,
                                       final List<AiTabSearch> searches,
                                       final List<String> problems) {
         final boolean query = DashboardChanges.QUERY_FILTER.equals(change.value());
@@ -861,6 +971,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         }
         final Set<String> keys = selectionKeys(chart);
         change.settings().values().stream()
+                .flatMap(selections -> DashboardChanges.selectionsOf(selections).stream())
                 .filter(key -> !keys.isEmpty() && !keys.contains(key))
                 .distinct()
                 .forEach(key -> problems.add(prefix + "chart '" + chart.name() + "' doesn't select '" + key + "'. "
@@ -874,11 +985,16 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                     : fieldsOf(target.dataSource());
             what = "field";
         } else {
-            known = searches.stream()
-                    .filter(search -> target.id().equals(search.getComponentId()))
-                    .findFirst()
-                    .map(AiTabSearch::getColumns)
-                    .orElse(null);
+            // The table's columns as the proposal's changes leave them (e.g. with a column it adds for the filter),
+            // if they change the table; otherwise as the table has them.
+            final List<String> changed = checked.columnsOf(target.name());
+            known = changed != null
+                    ? changed
+                    : searches.stream()
+                            .filter(search -> target.id().equals(search.getComponentId()))
+                            .findFirst()
+                            .map(AiTabSearch::getColumns)
+                            .orElse(null);
             what = "column";
         }
         if (known != null) {
@@ -903,6 +1019,10 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         });
         if (keys.contains("source")) {
             keys.add("node");
+        }
+        // A time-series chart's range tool selects a range of its x axis.
+        if (keys.contains("x")) {
+            keys.add(RANGE_SELECTION);
         }
         return keys;
     }
