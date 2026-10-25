@@ -16,9 +16,12 @@
   -->
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:t="urn:import:stroom.document.asset.client.presenter.assets">
 
-    <!-- The asset tree, which scrolls itself -->
-    <g:SimplePanel ui:field="treePanel" styleName="max form-control-border form-control-background" />
+    <!-- The asset tree, which scrolls itself, in a bordered panel -->
+    <g:SimplePanel styleName="max form-control-border form-control-background">
+        <t:DocumentAssetTree ui:field="tree" accessibleName="Assets"/>
+    </g:SimplePanel>
 
 </ui:UiBinder>

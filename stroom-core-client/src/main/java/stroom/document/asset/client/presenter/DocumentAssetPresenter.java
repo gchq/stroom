@@ -83,7 +83,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Servlet path - start of the URL for the asset as retrieved via the Servlet
      */
-    static final String ASSET_SERVLET_PATH_PREFIX = "/assets/";
+    public static final String ASSET_SERVLET_PATH_PREFIX = "/assets/";
 
     /**
      * REST interface

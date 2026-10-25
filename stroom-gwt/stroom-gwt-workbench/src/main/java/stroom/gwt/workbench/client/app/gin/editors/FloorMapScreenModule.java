@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.document.asset.client.presenter.DocumentAssetChooserPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetChooserPresenter.DocumentAssetChooserView;
-import stroom.document.asset.client.view.DocumentAssetChooserViewImpl;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
 import stroom.floormap.client.presenter.FloorMapClusterPresenter;
@@ -142,8 +139,5 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapInitPresenter.class,
                 FloorMapInitView.class,
                 FloorMapInitViewImpl.class);
-        bindPresenterWidget(DocumentAssetChooserPresenter.class,
-                DocumentAssetChooserView.class,
-                DocumentAssetChooserViewImpl.class);
     }
 }

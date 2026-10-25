@@ -18,7 +18,7 @@ package stroom.floormap.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
+import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
@@ -36,12 +36,12 @@ import stroom.floormap.shared.TypeStyle;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -73,7 +73,7 @@ import javax.inject.Inject;
 /// is invoked; otherwise an [IllegalStateException] is thrown.
 public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjectEditView> {
 
-    private final DocumentAssetDropDownPresenter documentAssetDropDownPresenter;
+    private final DocumentAssetSelectionController assetSelection;
     private String objectId;
     private String mapName;
     private FloorMapDoc floorMapDoc;
@@ -186,7 +186,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     /// @param floorMapDoc the floor-map document, or `null` to clear
     public void setFloorMapDoc(final FloorMapDoc floorMapDoc) {
         this.floorMapDoc = floorMapDoc;
-        documentAssetDropDownPresenter.setDocument(floorMapDoc);
+        assetSelection.setDocument(floorMapDoc);
         // Always called before the form is populated, so the position boxes know
         // their scale by the time they are filled in.
         getView().setMeasurementUnits(floorMapDoc != null
@@ -197,14 +197,12 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     @Inject
     public FloorMapObjectEditPresenter(final EventBus eventBus,
                                        final FloorMapObjectEditView view,
-                                       final DocumentAssetDropDownPresenter documentAssetDropDownPresenter,
+                                       final Provider<DocumentAssetSelectionController> assetSelectionProvider,
                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
-        own(documentAssetDropDownPresenter);
         make(dateTimeBoxControllerProvider).attach(view.getEffectiveTimeBox());
-        this.documentAssetDropDownPresenter = documentAssetDropDownPresenter;
 
-        getView().setChooseImgView(documentAssetDropDownPresenter.getView().asWidget());
+        assetSelection = make(assetSelectionProvider).attach(getView().getAssetBox());
         // Typing "area" into a fresh Add-Object dialog reveals the area fields.
         getView().setTypeChangedHandler(this::onTypeChanged);
     }
@@ -419,7 +417,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     /// @param entry the entry to display, or `null` to clear and disable the form
     public void loadEntry(final TemporalEntry entry) {
         getView().setEnabled(entry != null);
-        documentAssetDropDownPresenter.setEnabled(entry != null);
+        assetSelection.setEnabled(entry != null);
         resetInputs(entry);
     }
 
@@ -443,9 +441,9 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         accessor.setString(newValue, pathForRole(Role.TYPE), getView().getType());
         accessor.setString(newValue, pathForRole(Role.LABEL), getView().getName());
         accessor.setString(newValue, pathForRole(Role.IMAGE),
-                documentAssetDropDownPresenter.getSelectedAssetPath() == null
+                assetSelection.getSelectedAssetPath() == null
                         ? ""
-                        : documentAssetDropDownPresenter.getSelectedAssetPath());
+                        : assetSelection.getSelectedAssetPath());
 
         accessor.setArray(newValue, pathForRole(Role.POSITION),
                 new double[]{getView().getX(), getView().getY()});
@@ -579,7 +577,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             getView().setY(y);
             getView().setName(name);
             getView().setType(type);
-            documentAssetDropDownPresenter.setSelectedAssetPath(img);
+            assetSelection.setSelectedAssetPath(img);
             getView().setWorldToMapMatrix(w2m);
             // Before setFill: the swatch shows the default while Default is ticked.
             getView().setDefaultFill(defaultFillForType(type));
@@ -599,7 +597,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             getView().setType(background
                     ? FloorMapJsonKeys.BACKGROUND
                     : "");
-            documentAssetDropDownPresenter.setSelectedAssetPath("");
+            assetSelection.setSelectedAssetPath("");
             getView().setWorldToMapMatrix(new double[]{1.0, 0.0, 0.0, 1.0, 0.0, 0.0});
             getView().setDefaultFill(defaultFillForType(background
                     ? FloorMapJsonKeys.BACKGROUND
@@ -732,7 +730,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         /// Installs the image-chooser (asset dropdown) widget into the form.
         ///
         /// @param widget the dropdown widget; must not be `null`
-        void setChooseImgView(Widget widget);
+        DropDownBox getAssetBox();
 
         /// The display name of the first geometry field holding something that is not a
         /// usable number, or `null` when they are all fine.

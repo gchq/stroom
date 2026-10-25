@@ -16,8 +16,6 @@
 
 package stroom.document.asset.client.gin;
 
-import stroom.document.asset.client.presenter.DocumentAssetChooserPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 
 import com.google.inject.Provider;
@@ -27,7 +25,4 @@ public interface DocumentAssetGinjector {
 
     Provider<DocumentAssetPresenter> getDocumentAssetPresenter();
 
-    Provider<DocumentAssetChooserPresenter> getDocumentAssetChooserPresenter();
-
-    Provider<DocumentAssetDropDownPresenter> getDocumentAssetDropDownPresenter();
 }

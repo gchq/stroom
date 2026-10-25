@@ -24,6 +24,7 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -68,6 +69,8 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     TextBox typeBox;
     @UiField
     SimplePanel chooseImgContainer;
+    @UiField
+    DropDownBox assetBox;
 
     @UiField
     TextBox posX;
@@ -424,8 +427,8 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     }
 
     @Override
-    public void setChooseImgView(final Widget widget) {
-        chooseImgContainer.setWidget(widget);
+    public DropDownBox getAssetBox() {
+        return assetBox;
     }
 
     @Override

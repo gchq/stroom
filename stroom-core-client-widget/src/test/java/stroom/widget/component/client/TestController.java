@@ -17,7 +17,11 @@
 package stroom.widget.component.client;
 
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.popup.client.event.DisablePopupEvent;
+import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -227,6 +231,49 @@ class TestController {
         } finally {
             ControllerDialog.deferred = scheduler;
         }
+    }
+
+    @Test
+    void aDialogsButtonsAreEnabledThroughItsHost() {
+        final EventBus eventBus = new SimpleEventBus();
+        final Parent opener = new Parent(null);
+        final Parent dialog = new Parent(eventBus);
+        final List<String> seen = new ArrayList<>();
+        // The popup manager knows a dialog by its host, the presenter it is shown through
+        eventBus.addHandler(DisablePopupEvent.getType(), e ->
+                seen.add("disable " + e.getAction() + " " + shows(e.getPresenterWidget(), dialog)));
+        eventBus.addHandler(EnablePopupEvent.getType(), e ->
+                seen.add("enable " + e.getAction() + " " + shows(e.getPresenterWidget(), dialog)));
+        ControllerDialog.showOnce(opener, dialog);
+
+        ControllerDialog.setActionEnabled(dialog, DialogAction.OK, false);
+        ControllerDialog.setActionEnabled(dialog, DialogAction.OK, true);
+        assertThat(seen).containsExactly("disable OK true", "enable OK true");
+
+        // Once it is gone, nothing
+        opener.dispose();
+        ControllerDialog.setActionEnabled(dialog, DialogAction.OK, false);
+        assertThat(seen).hasSize(2);
+    }
+
+    @Test
+    void aDialogsButtonIsPressedThroughItsHost() {
+        final EventBus eventBus = new SimpleEventBus();
+        final Parent opener = new Parent(null);
+        final Parent dialog = new Parent(eventBus);
+        final List<String> seen = new ArrayList<>();
+        eventBus.addHandler(HidePopupRequestEvent.getType(), e ->
+                seen.add((e.isOk() ? "OK" : "not OK") + " " + shows(e.getPresenterWidget(), dialog)));
+        ControllerDialog.showOnce(opener, dialog);
+
+        ControllerDialog.pressAction(dialog, DialogAction.OK);
+        assertThat(seen).containsExactly("OK true");
+    }
+
+    // Whether a popup's presenter shows a controller as a dialog
+    private static boolean shows(final MyPresenterWidget<?> presenterWidget, final Controller dialog) {
+        return presenterWidget instanceof ControllerDialog.DialogHost
+               && ((ControllerDialog.DialogHost) presenterWidget).getContent() == dialog;
     }
 
     @Test

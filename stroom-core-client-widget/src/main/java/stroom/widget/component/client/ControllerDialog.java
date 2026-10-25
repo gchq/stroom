@@ -16,12 +16,18 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.popup.client.event.DisablePopupEvent;
+import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.Scheduler;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -47,6 +53,8 @@ public final class ControllerDialog {
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
+    // The presenter each dialog shown is shown through, while it is (for setActionEnabled)
+    private static final Map<Controller, DialogHost> HOSTS = new HashMap<>();
 
     private ControllerDialog() {
         // Static utility
@@ -67,9 +75,39 @@ public final class ControllerDialog {
                                             + " can't be shown as a dialog: it was made without an event bus");
         }
         final DialogHost host = new DialogHost(dialog);
+        HOSTS.put(dialog, host);
         opener.getControllerNode().adopt(host.getControllerNode());
         disposeWhenHidden(host);
         return ShowPopupEvent.builder(host);
+    }
+
+    /// Enables or disables one of a dialog's buttons, e.g. OK until something is chosen, as
+    /// `EnablePopupEvent` and `DisablePopupEvent` do for a presenter's.
+    ///
+    /// @param dialog  The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param action  The button's action, e.g. `DialogAction.OK`.
+    /// @param enabled Whether the button can be pressed.
+    public static void setActionEnabled(final Controller dialog, final DialogAction action, final boolean enabled) {
+        final DialogHost host = HOSTS.get(dialog);
+        if (host != null) {
+            if (enabled) {
+                EnablePopupEvent.builder(host).action(action).fire();
+            } else {
+                DisablePopupEvent.builder(host).action(action).fire();
+            }
+        }
+    }
+
+    /// Presses one of a dialog's buttons as the user would, e.g. OK on a double click on what is
+    /// chosen: its hide request handler is told, as for any dialog.
+    ///
+    /// @param dialog The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param action The button's action, e.g. `DialogAction.OK`.
+    public static void pressAction(final Controller dialog, final DialogAction action) {
+        final DialogHost host = HOSTS.get(dialog);
+        if (host != null) {
+            HidePopupRequestEvent.builder(host).action(action).fire();
+        }
     }
 
     // Disposes a presenter shown as a popup for one use once it is hidden, after the popup manager
@@ -96,6 +134,7 @@ public final class ControllerDialog {
         private DialogHost(final Controller content) {
             super(content.getEventBus(), new ControllerView(content));
             own(content);
+            onDispose(() -> HOSTS.remove(content));
         }
 
         Controller getContent() {

@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
-import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
+import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
@@ -33,6 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -235,10 +236,11 @@ public final class VisualisationAssetsStories {
         frame.getElement().getStyle().setProperty("width", "300px");
         harness.add(frame);
         harness.afterStartUp(() -> {
-            final DocumentAssetDropDownPresenter picker = harness.own(
-                    injector.getDocumentAssetDropDownPresenter());
+            final DropDownBox box = new DropDownBox();
+            final DocumentAssetSelectionController picker = harness.own(
+                    injector.getDocumentAssetSelectionController()).attach(box);
             picker.setDocument(VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build());
-            frame.setWidget(picker.getWidget());
+            frame.setWidget(box);
         });
         return harness.asWidget();
     }

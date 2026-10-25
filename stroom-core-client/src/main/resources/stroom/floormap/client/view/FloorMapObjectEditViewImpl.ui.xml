@@ -20,7 +20,8 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:colour="urn:import:stroom.widget.colour.client"
-             xmlns:t="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
 
     <ui:style>
         .matrixBox {
@@ -68,7 +69,9 @@
                             drawn as that image (a background is simply an image fact); leave it
                             empty to draw the type's default shape instead.</p>
                     </form:HelpHTML>
-                    <g:SimplePanel ui:field="chooseImgContainer" addStyleNames="wide-control" />
+                    <g:SimplePanel ui:field="chooseImgContainer" addStyleNames="wide-control">
+                        <dd:DropDownBox ui:field="assetBox"/>
+                    </g:SimplePanel>
                 </form:FormGroup>
 
                 <form:FormGroup ui:field="fillGroup" label="Area Fill Colour">

@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
+import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
@@ -142,7 +142,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A document's asset picker, as a floor map's settings have it, which opens the
     /// 'Choose Asset' dialog.
-    DocumentAssetDropDownPresenter getDocumentAssetDropDownPresenter();
+    DocumentAssetSelectionController getDocumentAssetSelectionController();
 
     /// @return A SQL temporal store's 'Settings' tab (its entry count and Reset Store).
     SqlTemporalStoreSettingsPresenter getSqlTemporalStoreSettingsPresenter();

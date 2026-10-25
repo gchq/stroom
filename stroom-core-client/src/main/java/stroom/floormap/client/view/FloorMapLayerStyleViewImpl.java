@@ -25,6 +25,7 @@ import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.colour.client.ColourBox;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.RadioGroup;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -76,6 +77,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
     private final FloorMapIconPicker iconPicker = new FloorMapIconPicker();
     private final ColourBox colourBox = new ColourBox();
     private final SimplePanel assetPickerPanel = new SimplePanel();
+    private final DropDownBox assetBox = new DropDownBox();
     private final Button uploadButton = new Button();
     private final SimplePanel previewPanel = new SimplePanel();
 
@@ -136,6 +138,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         // The picker is an injected view rather than a control of its own, so the
         // name has to hang off the container as a group.
         FloorMapAria.group(assetPickerPanel, "Image");
+        assetPickerPanel.setWidget(assetBox);
         // "Upload" alone does not say what is being uploaded or where it goes.
         uploadButton.getElement().setAttribute("aria-label",
                 "Upload a new image into this document's assets");
@@ -195,6 +198,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         shapeBox.setEnabled(mode == GraphicMode.SHAPE);
         iconPicker.setEnabled(mode == GraphicMode.ICON);
         uploadButton.setEnabled(mode == GraphicMode.IMAGE);
+        assetBox.setEnabled(mode == GraphicMode.IMAGE);
         setRowDimmed(ROW_SHAPE, mode != GraphicMode.SHAPE);
         setRowDimmed(ROW_ICON, mode != GraphicMode.ICON);
         setRowDimmed(ROW_IMAGE, mode != GraphicMode.IMAGE);
@@ -270,8 +274,8 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
     }
 
     @Override
-    public void setAssetPickerView(final Widget assetPickerView) {
-        assetPickerPanel.setWidget(assetPickerView);
+    public DropDownBox getAssetBox() {
+        return assetBox;
     }
 
     @Override

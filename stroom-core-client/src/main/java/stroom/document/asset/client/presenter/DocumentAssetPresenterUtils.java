@@ -41,7 +41,7 @@ public class DocumentAssetPresenterUtils {
      * @param tree The GWT tree to add paths to. Must not be null.
      * @param assets The list of assets from the server. Might be null.
      */
-    static void addPathsToTree(final DocumentAssetTree tree,
+    public static void addPathsToTree(final DocumentAssetTree tree,
                                final List<DocumentAsset> assets) {
         if (assets != null) {
             // Convert list of paths into a tree
@@ -110,7 +110,7 @@ public class DocumentAssetPresenterUtils {
     /**
      * Stores the state of the tree in the variable treeItemPathToOpenState.
      */
-    static void storeOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
+    public static void storeOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
             final DocumentAssetTreeItem treeItem = tree.getItem(i);
             recurseStoreOpenClosedState(treeItem, treeItemPathToOpenState);
@@ -136,7 +136,7 @@ public class DocumentAssetPresenterUtils {
     /**
      * Sets the state of the tree from the given set of open item paths (keyed by path, not id).
      */
-    static void restoreOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
+    public static void restoreOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
             final DocumentAssetTreeItem treeItem = tree.getItem(i);
             recurseRestoreOpenClosedState(treeItem, treeItemPathToOpenState);
@@ -223,7 +223,7 @@ public class DocumentAssetPresenterUtils {
      * @param item The item to find the path to. Can be null if this is the root path.
      * @return The path as a String, with / separators. Never returns null.
      */
-    static String getItemPath(final DocumentAssetTreeItem item) {
+    public static String getItemPath(final DocumentAssetTreeItem item) {
         final List<String> pathList = new ArrayList<>();
         DocumentAssetTreeItem currentItem = item;
         while (currentItem != null) {

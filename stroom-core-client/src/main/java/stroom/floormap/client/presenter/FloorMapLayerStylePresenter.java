@@ -18,19 +18,19 @@ package stroom.floormap.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
+import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.presenter.DocumentAssetQuickUploadPresenter;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView.GraphicMode;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -58,7 +58,7 @@ import java.util.function.Consumer;
 /// type-styles bridge.
 public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayerStyleView> {
 
-    private final DocumentAssetDropDownPresenter assetDropDownPresenter;
+    private final DocumentAssetSelectionController assetSelection;
     private final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider;
 
     /// The document owning the asset store the graphic is picked from.
@@ -72,26 +72,24 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
     @Inject
     public FloorMapLayerStylePresenter(final EventBus eventBus,
                                        final FloorMapLayerStyleView view,
-                                       final DocumentAssetDropDownPresenter assetDropDownPresenter,
+                                       final Provider<DocumentAssetSelectionController> assetSelectionProvider,
                                        final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider) {
         super(eventBus, view);
-        own(assetDropDownPresenter);
-        this.assetDropDownPresenter = assetDropDownPresenter;
         this.quickUploadProvider = quickUploadProvider;
 
-        view.setAssetPickerView(assetDropDownPresenter.getView().asWidget());
+        assetSelection = make(assetSelectionProvider).attach(view.getAssetBox());
         view.setUploadHandler(this::uploadGraphic);
         // Mode / shape / colour changes all alter what the preview should show.
         view.setChangeHandler(this::refreshPreview);
-        //noinspection unused event
-        assetDropDownPresenter.addSelectionListener(event -> refreshPreview());
+        //noinspection unused path
+        assetSelection.setOnChange(path -> refreshPreview());
     }
 
     /// Sets the document whose asset store supplies layer graphics. Must be called
     /// before the dialog is shown, otherwise the picker has nothing to browse.
     public void setDocument(final AbstractDoc document) {
         this.document = document;
-        assetDropDownPresenter.setDocument(document);
+        assetSelection.setDocument(document);
     }
 
     /// Uploads a new image into the document's asset store and selects it, so the
@@ -107,7 +105,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
             if (requestedFor != showCount) {
                 return;
             }
-            assetDropDownPresenter.setSelectedAssetPath(url);
+            assetSelection.setSelectedAssetPath(url);
             getView().setMode(GraphicMode.IMAGE);
             refreshPreview();
         });
@@ -117,7 +115,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
     /// live only in the mode that uses it.
     private void refreshPreview() {
         final GraphicMode mode = getView().getMode();
-        assetDropDownPresenter.setEnabled(mode == GraphicMode.IMAGE);
+        assetSelection.setEnabled(mode == GraphicMode.IMAGE);
         getView().setPreview(styleFrom(null, mode));
     }
 
@@ -142,7 +140,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
 
     /// The picked asset URL, or `null` when nothing is selected.
     private String selectedGraphic() {
-        final String path = assetDropDownPresenter.getSelectedAssetPath();
+        final String path = assetSelection.getSelectedAssetPath();
         return path == null || path.isEmpty()
                 ? null
                 : path;
@@ -172,7 +170,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
         // type, so that is what the picker must show — offering black instead both
         // misstated the current appearance and turned the layer black on OK.
         getView().setColour(TypeStyle.colourForType(type, Collections.singletonList(style)));
-        assetDropDownPresenter.setSelectedAssetPath(style.getGraphic());
+        assetSelection.setSelectedAssetPath(style.getGraphic());
         getView().setIcon(style.iconOrNull());
         getView().setMode(style.hasGraphic()
                 ? GraphicMode.IMAGE
@@ -246,8 +244,8 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
 
         FloorMapIcon getIcon();
 
-        /// Installs the asset picker widget the presenter owns.
-        void setAssetPickerView(Widget assetPickerView);
+        /// The box the asset picker the presenter owns is attached to.
+        DropDownBox getAssetBox();
 
         /// Registers the handler run when the user clicks the upload button.
         void setUploadHandler(Runnable handler);
