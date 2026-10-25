@@ -81,6 +81,10 @@ public final class ChartCheck {
         if (!result.problems.isEmpty()) {
             return result;
         }
+        checkGrouping(kind, mapped, columns, result);
+        if (!result.problems.isEmpty()) {
+            return result;
+        }
 
         if (sample == null || sample.rows().isEmpty()) {
             result.warnings.add("There were no rows to check the data against, so only the columns were checked. "
@@ -133,6 +137,39 @@ public final class ChartCheck {
             result.problems.add("Source and target are both '" + mapped.get("source") + "', so every link would "
                                 + "join a node to itself. A network needs two columns, e.g. the sender and the "
                                 + "recipient of each message.");
+        }
+    }
+
+    // A chart gets only its table's top-level rows (Stroom doesn't open a table's groups for it), so a column
+    // grouped below the top level is blank in every row it gets.
+    private static void checkGrouping(final ChartKind kind,
+                                      final Map<String, String> mapped,
+                                      final List<TableColumn> columns,
+                                      final Result result) {
+        final int top = columns.stream()
+                .map(TableColumn::group)
+                .filter(Objects::nonNull)
+                .min(Integer::compare)
+                .orElse(-1);
+        if (top < 0) {
+            return;
+        }
+        final List<String> topNames = columns.stream()
+                .filter(column -> Objects.equals(column.group(), top))
+                .map(column -> "'" + column.name() + "'")
+                .toList();
+        for (final Entry<String, String> entry : mapped.entrySet()) {
+            final TableColumn column = findColumn(columns, entry.getValue()).orElseThrow();
+            if (column.group() != null && column.group() > top) {
+                final String name = "'" + column.name() + "'";
+                final String topLevel = "level " + (top + 1);
+                result.problems.add(name + " can't be " + entry.getKey() + ": it is grouped at level "
+                                    + (column.group() + 1) + ", but a " + kind.displayName().toLowerCase(Locale.ROOT)
+                                    + " gets only the table's top-level rows (one per "
+                                    + String.join(" and ", topNames) + ", grouped at " + topLevel + "), where "
+                                    + name + " is blank. Group " + name + " at " + topLevel + " too (a group "
+                                    + "change), so each row is one combination of them.");
+            }
         }
     }
 
@@ -420,14 +457,25 @@ public final class ChartCheck {
     /// @param format     Its format's type, e.g. NUMBER, DATE_TIME, TEXT or GENERAL, or null if not known (a
     ///                   StroomQL query's columns).
     /// @param expression Its expression, or null if not known (a StroomQL query's columns).
-    public record TableColumn(String name, String format, String expression) {
+    /// @param group      The level it is grouped at, from 0 for the top level, or null if it isn't grouped (or not
+    ///                   known).
+    public record TableColumn(String name, String format, String expression, Integer group) {
 
-        /// A column whose expression isn't known.
+        /// A column whose expression and grouping aren't known.
         ///
         /// @param name   Its name, as the table shows it.
         /// @param format Its format's type, or null if not known.
         public TableColumn(final String name, final String format) {
-            this(name, format, null);
+            this(name, format, null, null);
+        }
+
+        /// A column that isn't grouped.
+        ///
+        /// @param name       Its name, as the table shows it.
+        /// @param format     Its format's type, or null if not known.
+        /// @param expression Its expression, or null if not known.
+        public TableColumn(final String name, final String format, final String expression) {
+            this(name, format, expression, null);
         }
     }
 

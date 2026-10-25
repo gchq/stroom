@@ -326,6 +326,58 @@ class TestChartCheck {
     }
 
     @Test
+    void aColumnGroupedBelowTheTopLevelIsAProblem() {
+        // The chat's case: pairs grouped at two levels give a chart one row per User A, with User B blank.
+        final List<TableColumn> columns = List.of(
+                new TableColumn("User A", "TEXT", "${user.name}", 0),
+                new TableColumn("User B", "TEXT", "${user.target.id}", 1),
+                new TableColumn("Messages", "NUMBER", "count()", null));
+        final Result result = ChartCheck.check(ChartKind.GRAPH,
+                Map.of("source", "User A", "target", "User B", "weight", "Messages"), Map.of(), columns, null);
+
+        assertThat(result.problems()).singleElement().asString()
+                .isEqualTo("'User B' can't be target: it is grouped at level 2, but a network graph gets only the "
+                           + "table's top-level rows (one per 'User A', grouped at level 1), where 'User B' is "
+                           + "blank. Group 'User B' at level 1 too (a group change), so each row is one "
+                           + "combination of them.");
+    }
+
+    @Test
+    void columnsGroupedTogetherAtTheTopLevelAreOk() {
+        final Sample sample = new Sample(List.of("User A", "User B", "Messages"),
+                List.of(List.of("alice", "bob", "3"), List.of("bob", "carol", "2")));
+        final Result together = ChartCheck.check(ChartKind.GRAPH,
+                Map.of("source", "User A", "target", "User B", "weight", "Messages"), Map.of(), List.of(
+                        new TableColumn("User A", "TEXT", "${user.name}", 0),
+                        new TableColumn("User B", "TEXT", "${user.target.id}", 0),
+                        new TableColumn("Messages", "NUMBER", "count()", null)), sample);
+        // A deeper level the chart doesn't use doesn't matter.
+        final Result deeperUnused = ChartCheck.check(ChartKind.BAR,
+                Map.of("category", "User A", "value", "Messages"), Map.of(), List.of(
+                        new TableColumn("User A", "TEXT", "${user.name}", 0),
+                        new TableColumn("User B", "TEXT", "${user.target.id}", 1),
+                        new TableColumn("Messages", "NUMBER", "count()", null)),
+                new Sample(List.of("User A", "Messages"), List.of(List.of("alice", "5"))));
+
+        assertThat(together.ok()).isTrue();
+        assertThat(deeperUnused.ok()).isTrue();
+    }
+
+    @Test
+    void groupLevelsAreTakenFromTheTopmostGroupedLevel() {
+        // Levels needn't start at 0 for the check to find the top one.
+        final Result result = ChartCheck.check(ChartKind.BAR,
+                Map.of("category", "A", "value", "N", "series", "B"), Map.of(), List.of(
+                        new TableColumn("A", "TEXT", "${a}", 2),
+                        new TableColumn("B", "TEXT", "${b}", 3),
+                        new TableColumn("N", "NUMBER", "count()", null)), null);
+
+        assertThat(result.problems()).singleElement().asString()
+                .startsWith("'B' can't be series: it is grouped at level 4")
+                .contains("(one per 'A', grouped at level 3)");
+    }
+
+    @Test
     void pieWithManyNamesWarnsAboutOther() {
         final List<List<String>> rows = new ArrayList<>();
         for (int i = 0; i < 15; i++) {

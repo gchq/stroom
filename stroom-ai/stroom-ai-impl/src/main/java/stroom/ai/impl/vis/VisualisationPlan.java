@@ -44,7 +44,8 @@ import java.util.Set;
 /// @param style        The style settings chosen, by setting id.
 /// @param options      ECharts option overrides as a JSON object, or null.
 /// @param table        The name of the table it draws, as the user sees it; null for a StroomQL query.
-/// @param componentId  The dashboard table's component id, or null for a StroomQL query.
+/// @param componentId  The dashboard table's component id, or null for a StroomQL query; for an embedded query on a
+///                     dashboard, its component id.
 /// @param componentName The name of the new vis component on the dashboard, or null for a StroomQL query.
 /// @param placement    Where it goes on the dashboard: below the table or as a tab beside it.
 /// @param snapshotHash The hash of the dashboard description it was planned against, or of the query's text.
@@ -185,6 +186,12 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
             }
             checkText("the replaced component's name", replace.componentName());
         }
+    }
+
+    /// @return True if it is for the `show` clause of an embedded query on a dashboard, rather than a Query's.
+    @JsonIgnore
+    public boolean isEmbeddedQuery() {
+        return isQuery() && NullSafe.isNonBlankString(componentId);
     }
 
     /// @return True if it replaces a chart Stroom AI generated earlier, rather than adding a new one.

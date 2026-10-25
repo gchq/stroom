@@ -40,8 +40,20 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 | graph | **source**, **target**, weight, sourceGroup, targetGroup | Relationships and how connected things are, e.g. who messages whom |
 
 A network graph sizes each node by its number of connections (its degree) and draws each link as wide as its
-weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient with a `count()` as the
-weight; links between the same pair are added up, and links from a node to itself are left out.
+weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a
+`count()` as the weight; links between the same pair are added up, and links from a node to itself are left out.
+
+## Embedded queries
+
+A dashboard's Embedded Query component runs StroomQL (shown in the dashboard's description) with its own results
+table and chart. `current_results` snapshots its results by its name, as a table's.
+
+- Chart it with `propose_visualisation` (library echarts), naming it as the table: Stroom puts the chart's `show`
+  clause at the end of its StroomQL, unsaved, and runs it. It has one chart, so a new one takes the old one's place.
+- One that shows a Query by reference is charted in that Query: ask the user to open and attach it.
+- Its settings (`queryOnOpen`, `autoRefresh`, `refreshInterval`) change with a `set_setting` in
+  `propose_dashboard_change`, giving its name as the component and target. Table changes don't apply to it: its
+  StroomQL makes its results.
 
 ## Tailoring a chart
 
@@ -58,6 +70,9 @@ weight; links between the same pair are added up, and links from a node to itsel
 
 ## Notes
 
+- A chart gets only its table's top-level rows: Stroom doesn't open a table's groups for it. Group every column
+  the chart uses at the same level (level 1), e.g. sender and recipient both at level 1 for one row per pair; a
+  column grouped at level 2 is blank in every row the chart gets.
 - Dates must be in a column formatted as Date Time to go on a time axis; dates held as text are drawn as
   categories, or can't be placed at all on a scatter plot.
 - Bar, line and scatter charts zoom with the mouse wheel and pan by dragging (a scatter plot on both axes), and a

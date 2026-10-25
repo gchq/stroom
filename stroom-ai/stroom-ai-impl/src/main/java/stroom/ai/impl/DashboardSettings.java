@@ -55,6 +55,13 @@ public final class DashboardSettings {
             new Setting(DashboardComponents.QUERY, "autoRefresh", Kind.BOOLEAN, "run the query again on a timer"),
             new Setting(DashboardComponents.QUERY, "refreshInterval", Kind.DURATION,
                     "how often to refresh, e.g. 30s, 10m or 1h"),
+            // As a query's: a change's label and value are found by key alone.
+            new Setting(DashboardComponents.EMBEDDED_QUERY, "queryOnOpen", Kind.BOOLEAN,
+                    "run the query when the dashboard opens"),
+            new Setting(DashboardComponents.EMBEDDED_QUERY, "autoRefresh", Kind.BOOLEAN,
+                    "run the query again on a timer"),
+            new Setting(DashboardComponents.EMBEDDED_QUERY, "refreshInterval", Kind.DURATION,
+                    "how often to refresh, e.g. 30s, 10m or 1h"),
             new Setting(DashboardComponents.TEXT, "table", Kind.TABLE_COMPONENT,
                     "the table whose selected row it shows (a table's name, or none for any)"),
             new Setting(DashboardComponents.TEXT, "pipeline", Kind.PIPELINE_OR_NONE,
