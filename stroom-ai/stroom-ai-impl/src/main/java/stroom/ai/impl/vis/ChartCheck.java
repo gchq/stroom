@@ -21,6 +21,7 @@ import stroom.ai.impl.workspace.ExpressionFunctions.TextCall;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -219,6 +220,20 @@ public final class ChartCheck {
                                         + "numbers, and " + role.id() + " needs numbers or dates.");
                 }
             }
+            case DATE -> {
+                if ("TEXT".equals(format) || "NUMBER".equals(format)) {
+                    result.problems.add("'" + column.name() + "' can't be " + role.id() + ": its format is "
+                                        + format + " and " + role.id() + " needs dates. Set the column's format to "
+                                        + "Date Time, or map another column.");
+                } else if (!"DATE_TIME".equals(format) && values.nonBlank > 0
+                           && (double) values.dates / values.nonBlank < NUMERIC_SHARE) {
+                    result.problems.add("'" + column.name() + "' can't be " + role.id() + ": only " + values.dates
+                                        + " of the " + values.nonBlank + " values sampled are dates, and "
+                                        + role.id() + " needs dates.");
+                } else if (known && !"DATE_TIME".equals(format) && values.dates > 0) {
+                    result.problems.add(dateFormatProblem(role, column, textCall));
+                }
+            }
             case ANY -> {
                 if (kind == ChartKind.LINE && "x".equals(role.id()) && known && !"DATE_TIME".equals(format)
                     && values.dates > 0 && values.dates >= values.nonBlank / 2) {
@@ -343,48 +358,114 @@ public final class ChartCheck {
                 }
             }
             case SCATTER -> seriesWarning(mapped, sample, maxSeries, result);
-            case GRAPH -> {
-                final int sourceIndex = sample.index(mapped.get("source"));
-                final int targetIndex = sample.index(mapped.get("target"));
-                final Set<String> nodes = new HashSet<>();
-                final Set<String> links = new HashSet<>();
-                int selfLinks = 0;
-                for (final List<String> row : sample.rows()) {
-                    final String source = cell(row, sourceIndex);
-                    final String target = cell(row, targetIndex);
-                    if (source.isBlank() || target.isBlank()) {
-                        continue;
-                    }
-                    if (source.equals(target)) {
-                        selfLinks++;
-                        continue;
-                    }
-                    nodes.add(source);
-                    nodes.add(target);
-                    links.add(source + "\u0000" + target);
-                }
-                final int maxNodes = intStyle(style, StyleSetting.MAX_NODES);
-                result.stats.put("nodes", nodes.size());
-                result.stats.put("links", links.size());
-                if (links.isEmpty()) {
-                    result.problems.add("None of the rows sampled link two different nodes (each has a blank "
-                                        + "source or target, or the same one in both), so there's no network "
-                                        + "to draw.");
-                } else if (nodes.size() > maxNodes) {
-                    result.warnings.add(nodes.size() + " nodes: only the " + maxNodes + " most connected will be "
-                                        + "drawn (Max Nodes). Filter or group the table first, or raise Max "
-                                        + "Nodes, which makes the layout slower.");
-                }
-                if (selfLinks > 0) {
-                    result.warnings.add(selfLinks + " rows link a node to itself and won't be drawn.");
+            case GRAPH, SANKEY, CHORD -> networkSize(kind, mapped, style, sample, result);
+            case HEATMAP -> {
+                final int columns = distinct(sample, mapped.get("x"));
+                final int rows = distinct(sample, mapped.get("y"));
+                result.stats.put("xValues", columns);
+                result.stats.put("yValues", rows);
+                if (columns > MAX_READABLE_CATEGORIES || rows > MAX_READABLE_CATEGORIES) {
+                    result.warnings.add(columns + " x values by " + rows + " y values is too many cells to read. "
+                                        + "Group the table more coarsely (e.g. by hour rather than minute), or "
+                                        + "filter it.");
                 }
             }
+            case CALENDAR -> result.stats.put("days", distinct(sample, mapped.get("date")));
+            case HISTOGRAM -> seriesWarning(mapped, sample, maxSeries, result);
         }
         final int maxValues = intStyle(style, StyleSetting.MAX_VALUES);
         if (sample.rows().size() > maxValues) {
             result.warnings.add("The table has more rows (" + sample.rows().size() + "+) than the chart's Max "
                                 + "Rows (" + maxValues + "), so only the first " + maxValues + " will be drawn.");
         }
+    }
+
+    // Nodes and links: a network graph's, a Sankey diagram's or a chord diagram's.
+    private static void networkSize(final ChartKind kind,
+                                    final Map<String, String> mapped,
+                                    final Map<String, String> style,
+                                    final Sample sample,
+                                    final Result result) {
+        final int sourceIndex = sample.index(mapped.get("source"));
+        final int targetIndex = sample.index(mapped.get("target"));
+        final Set<String> nodes = new HashSet<>();
+        final Set<String> links = new HashSet<>();
+        int selfLinks = 0;
+        for (final List<String> row : sample.rows()) {
+            final String source = cell(row, sourceIndex);
+            final String target = cell(row, targetIndex);
+            if (source.isBlank() || target.isBlank()) {
+                continue;
+            }
+            if (source.equals(target)) {
+                selfLinks++;
+                continue;
+            }
+            nodes.add(source);
+            nodes.add(target);
+            links.add(source + "\u0000" + target);
+        }
+        final int maxNodes = intStyle(style, StyleSetting.MAX_NODES);
+        result.stats.put("nodes", nodes.size());
+        result.stats.put("links", links.size());
+        final String chart = kind == ChartKind.GRAPH
+                ? "network"
+                : kind.displayName().toLowerCase(Locale.ROOT);
+        if (links.isEmpty()) {
+            result.problems.add("None of the rows sampled link two different nodes (each has a blank source or "
+                                + "target, or the same one in both), so there's no " + chart + " to draw.");
+        } else if (nodes.size() > maxNodes) {
+            result.warnings.add(nodes.size() + " nodes: only the " + maxNodes + " most connected will be drawn "
+                                + "(Max Nodes). Filter or group the table first, or raise Max Nodes"
+                                + (kind == ChartKind.GRAPH
+                    ? ", which makes the layout slower."
+                    : "."));
+        }
+        if (selfLinks > 0) {
+            result.warnings.add(selfLinks + " rows link a node to itself and won't be drawn.");
+        }
+        if (kind == ChartKind.SANKEY && hasLoop(links)) {
+            result.warnings.add("Some flows loop back (e.g. a to b and b to a): a Sankey diagram can't draw a "
+                                + "loop, so the flows closing one will be left out. A chord diagram or network "
+                                + "graph draws them all.");
+        }
+    }
+
+    // Whether links (source and target joined by \u0000) make a loop.
+    private static boolean hasLoop(final Set<String> links) {
+        final Map<String, List<String>> next = new HashMap<>();
+        for (final String link : links) {
+            final String[] ends = link.split("\u0000", 2);
+            next.computeIfAbsent(ends[0], key -> new ArrayList<>()).add(ends[1]);
+        }
+        final Set<String> done = new HashSet<>();
+        final Set<String> onPath = new HashSet<>();
+        for (final String start : next.keySet()) {
+            if (loopsFrom(start, next, done, onPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean loopsFrom(final String node,
+                                     final Map<String, List<String>> next,
+                                     final Set<String> done,
+                                     final Set<String> onPath) {
+        if (onPath.contains(node)) {
+            return true;
+        }
+        if (!done.add(node)) {
+            return false;
+        }
+        onPath.add(node);
+        for (final String to : next.getOrDefault(node, List.of())) {
+            if (loopsFrom(to, next, done, onPath)) {
+                return true;
+            }
+        }
+        onPath.remove(node);
+        return false;
     }
 
     private static void seriesWarning(final Map<String, String> mapped,

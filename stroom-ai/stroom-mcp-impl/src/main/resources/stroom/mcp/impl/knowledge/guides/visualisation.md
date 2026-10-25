@@ -38,6 +38,15 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 | pie | **name**, **value** | Shares of a whole with few parts (12 or fewer; the rest become Other) |
 | scatter | **x**, **y**, size, series | How two measures relate, e.g. bytes against duration |
 | graph | **source**, **target**, weight, sourceGroup, targetGroup | Relationships and how connected things are, e.g. who messages whom |
+| heatmap | **x**, **y**, **value** | A value across two dimensions, e.g. events by hour of day and day of week |
+| calendar | **date**, **value** | A value a day over weeks or months, e.g. daily event counts (`floorDay()`, Date Time) |
+| histogram | **value**, series | How a number is spread, e.g. response times or bytes; one row per event, not grouped |
+| sankey | **source**, **target**, value | Flows from one thing to the next, e.g. source IP to port; loops are left out |
+| chord | **source**, **target**, weight | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
+
+A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
+selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair; a Sankey
+diagram leaves out the weakest flow that would close a loop (a to b, b to a), and says so.
 
 A network graph sizes each node by its number of connections (its degree) and draws each link as wide as its
 weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a

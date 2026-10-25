@@ -534,6 +534,18 @@ class TestProposeVisualisationTool {
     }
 
     @Test
+    void aKindTheD3PackDoesntHaveIsDrawnWithECharts() {
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.KIND_ARG, "sankey");
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("source", "From", "target", "To", "value", "Count"));
+
+        assertThat(call(args)).isEqualTo("No chart was offered: the visualisations content pack has no D3 sankey "
+                                         + "diagram. Draw it with ECharts (library echarts).");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
     void aD3KindThatIsntInstalledIsSaid() {
         Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
         final Map<String, Object> args = graphArgs();
