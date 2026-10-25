@@ -863,6 +863,12 @@ public class AiDaoImpl implements AiDao {
                     AiMessageType.MEMORY_UPDATE)
             .map(type -> (int) type.getPrimitiveValue())
             .toList();
+    // Messages that are forms for the user: an approval, or a question.
+    private static final List<Integer> FORM_TYPES = Stream.of(
+                    AiMessageType.APPROVAL_REQUEST,
+                    AiMessageType.ELICITATION)
+            .map(type -> (int) type.getPrimitiveValue())
+            .toList();
 
     @Override
     public void markRead(final int chatId, final int messageId) {
@@ -970,6 +976,16 @@ public class AiDaoImpl implements AiDao {
                     .groupBy(AI_CHAT_MESSAGE.FK_AI_CHAT_ID)
                     .fetch()
                     .forEach(r -> lastMessages.put(r.value1(), r.value2()));
+            // The newest form of each, so the client can tell a chat waiting with another form from one still
+            // waiting with the same (seen: a form following one just answered, between two polls, notified no one).
+            final Map<Integer, Integer> lastForms = new HashMap<>();
+            context.select(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, DSL.max(AI_CHAT_MESSAGE.ID))
+                    .from(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.in(ids))
+                    .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.in(FORM_TYPES))
+                    .groupBy(AI_CHAT_MESSAGE.FK_AI_CHAT_ID)
+                    .fetch()
+                    .forEach(r -> lastForms.put(r.value1(), r.value2()));
             return chats.stream()
                     .map(r -> {
                         final int id = r.get(AI_CHAT.ID);
@@ -986,7 +1002,8 @@ public class AiDaoImpl implements AiDao {
                                 Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)),
                                 r.get(AI_CHAT.LAST_OPENED_MS),
                                 AiAgentMode.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                                        r.get(AI_CHAT.AGENT_MODE), AiAgentMode.AGENT));
+                                        r.get(AI_CHAT.AGENT_MODE), AiAgentMode.AGENT),
+                                lastForms.getOrDefault(id, 0));
                     })
                     .toList();
         });

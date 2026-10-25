@@ -55,6 +55,7 @@ class TestDraftParity extends DraftFixtures {
             }
             final Map<String, Object> actual = withoutMessageNotes(drafted(entry, splitter));
             assertThat(typeIdSaid(actual, "problems")).isEqualTo(typeIdSaid(expected, "warnings"));
+            asTheRulesRecordsHold(actual.get("mapping"), expected.get("mapping"));
             assertThat(PyJson.dumps(inCatalogueOrder(actual), 1))
                     .isEqualTo(PyJson.dumps(inCatalogueOrder(expected), 1));
         }));

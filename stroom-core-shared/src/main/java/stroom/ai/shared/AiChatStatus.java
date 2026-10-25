@@ -48,6 +48,8 @@ public class AiChatStatus {
     private final long lastOpenedMs;
     @JsonProperty
     private final AiAgentMode agentMode;
+    @JsonProperty
+    private final int formMessageId;
 
     /**
      * @param chatId            The chat.
@@ -57,6 +59,8 @@ public class AiChatStatus {
      * @param unread            True if it has messages the user has not seen.
      * @param approveEverything True if 'approve everything' is on for it.
      * @param lastOpenedMs      When the user last looked at it, or 0.
+     * @param agentMode         How the agent works in it.
+     * @param formMessageId     The id of its newest form (an approval or a question for the user), or 0 if none.
      */
     @JsonCreator
     public AiChatStatus(@JsonProperty("chatId") final Integer chatId,
@@ -66,7 +70,8 @@ public class AiChatStatus {
                         @JsonProperty("unread") final Boolean unread,
                         @JsonProperty("approveEverything") final Boolean approveEverything,
                         @JsonProperty("lastOpenedMs") final Long lastOpenedMs,
-                        @JsonProperty("agentMode") final AiAgentMode agentMode) {
+                        @JsonProperty("agentMode") final AiAgentMode agentMode,
+                        @JsonProperty("formMessageId") final Integer formMessageId) {
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.title = title;
         this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
@@ -75,6 +80,7 @@ public class AiChatStatus {
         this.approveEverything = Objects.requireNonNullElse(approveEverything, false);
         this.lastOpenedMs = Objects.requireNonNullElse(lastOpenedMs, 0L);
         this.agentMode = Objects.requireNonNullElse(agentMode, AiAgentMode.AGENT);
+        this.formMessageId = Objects.requireNonNullElse(formMessageId, 0);
     }
 
     public int getChatId() {
@@ -115,6 +121,12 @@ public class AiChatStatus {
         return agentMode;
     }
 
+    /// @return The id of the chat's newest form (an approval or a question for the user), or 0 if none: a chat that
+    /// is waiting for the user again, with another form, has another id.
+    public int getFormMessageId() {
+        return formMessageId;
+    }
+
     /**
      * @return True if the chat is waiting for the user, e.g. to approve something.
      */
@@ -145,6 +157,7 @@ public class AiChatStatus {
                && approveEverything == that.approveEverything
                && lastOpenedMs == that.lastOpenedMs
                && agentMode == that.agentMode
+               && formMessageId == that.formMessageId
                && Objects.equals(title, that.title)
                && runStatus == that.runStatus;
     }
@@ -152,6 +165,6 @@ public class AiChatStatus {
     @Override
     public int hashCode() {
         return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything, lastOpenedMs,
-                agentMode);
+                agentMode, formMessageId);
     }
 }

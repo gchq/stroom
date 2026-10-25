@@ -65,6 +65,8 @@ class TranslationBuilds {
 
     /// The block an XSLT keeps the rules the user agreed to keep as Unknown in.
     static final String UNKNOWN_AGREED = "unknown agreed";
+    // What the user chose for each field whose Ids carry a domain: split or kept (not in the Stroom MCP server).
+    static final String DOMAIN_CHOSEN = "domain split chosen";
     /// What changes_applied_to says when changes went onto the session's draft.
     static final String ON_THE_DRAFT = "the draft draft_translation_mapping made";
 
@@ -316,6 +318,16 @@ class TranslationBuilds {
     /// @return The rules the user agreed to keep as Unknown in this XSLT, kept with it: rule name to what they
     /// agreed to. Nothing known to have been agreed when it can't be read: the user is asked.
     Map<String, String> unknownAgreed(final String uuid, final String build, final String name) {
+        return agreed(UNKNOWN_AGREED, uuid, build, name);
+    }
+
+    /// @param block What was agreed to, e.g. [#UNKNOWN_AGREED] or [#DOMAIN_CHOSEN].
+    /// @param uuid  The XSLT, or null.
+    /// @param build The build, or null.
+    /// @param name  The build's XSLT of that name, or null.
+    /// @return What the user agreed to in this XSLT, kept with it. Nothing known to have been agreed when it can't
+    /// be read: the user is asked.
+    Map<String, String> agreed(final String block, final String uuid, final String build, final String name) {
         try {
             String found = uuid;
             if (found == null && NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)) {
@@ -325,8 +337,8 @@ class TranslationBuilds {
                 return Map.of();
             }
             final Map<String, String> agreed = new LinkedHashMap<>();
-            KeptMapping.readBlock(translationDocs.readXslt(found).getDescription(), UNKNOWN_AGREED)
-                    .ifPresent(block -> block.forEach((rule, key) -> agreed.put(rule, String.valueOf(key))));
+            KeptMapping.readBlock(translationDocs.readXslt(found).getDescription(), block)
+                    .ifPresent(kept -> kept.forEach((rule, key) -> agreed.put(rule, String.valueOf(key))));
             return agreed;
         } catch (final RuntimeException e) {
             return Map.of();
@@ -338,13 +350,23 @@ class TranslationBuilds {
     /// @param uuid   The XSLT.
     /// @param agreed Rule name to what the user agreed to.
     /// @return Its new version.
-    @SuppressWarnings("unchecked")
     String rememberUnknownAgreed(final String uuid, final Map<String, String> agreed) {
+        return rememberAgreed(UNKNOWN_AGREED, uuid, agreed);
+    }
+
+    /// Keeps what the user agreed to with the saved XSLT.
+    ///
+    /// @param block  What was agreed to, e.g. [#UNKNOWN_AGREED] or [#DOMAIN_CHOSEN].
+    /// @param uuid   The XSLT.
+    /// @param agreed What was agreed to, by its key.
+    /// @return Its new version.
+    @SuppressWarnings("unchecked")
+    String rememberAgreed(final String block, final String uuid, final Map<String, String> agreed) {
         final XsltDoc doc = translationDocs.readXslt(uuid);
         final DocumentActionHandler<XsltDoc> handler = documentAccess.handler(XsltDoc.TYPE)
                 .orElseThrow(() -> new ToolRefusal("Stroom has no XSLT store"));
         return handler.writeDocument(doc.copy()
-                .description(KeptMapping.withBlock(doc.getDescription(), UNKNOWN_AGREED, agreed))
+                .description(KeptMapping.withBlock(doc.getDescription(), block, agreed))
                 .build()).getVersion();
     }
 

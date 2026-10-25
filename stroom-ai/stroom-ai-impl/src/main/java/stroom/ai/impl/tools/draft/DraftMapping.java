@@ -1021,6 +1021,7 @@ public final class DraftMapping {
             final WindowsEvent windows = EVENT_ID_KEYS.contains(key(naming))
                     ? WINDOWS_LOGON.get(kind)
                     : null;
+            final List<Map<String, Object>> ofKind = records.stream().filter(r -> kind.equals(r.get(naming))).toList();
             if (PyText.search(AUTH, kind) || windows != null) {
                 final String action;
                 final Boolean success;
@@ -1045,13 +1046,12 @@ public final class DraftMapping {
                     entry.putAll(ActionRules.read(user));
                     fields.add(entry);
                 }
-                fields.addAll(dataEntries("Authenticate", rest));
+                fields.addAll(dataEntries("Authenticate", held(ofKind, rest)));
                 rules.add(kindRule(name, naming, kind, fields));
                 return;
             }
             // The kind's own records often show its actions in another field (a firewall's TRAFFIC: action ALLOW
             // or DENY; ADMIN: LOGIN_SUCCESS, LOGOUT, CONFIG_CHANGE): a rule per action, before the kind's own rule.
-            final List<Map<String, Object>> ofKind = records.stream().filter(r -> kind.equals(r.get(naming))).toList();
             ActionRules.Found found = ActionRules.actionRules(ofKind, names,
                     List.of(dict(FIELD, naming, "equals", kind)), name, user, message, Set.of(naming), null);
             if (found.rules().isEmpty()) {
@@ -1070,7 +1070,7 @@ public final class DraftMapping {
                 final Set<Object> mapped = new HashSet<>();
                 fields.forEach(f -> mapped.add(f.get(FIELD)));
                 mapped.add(found.split());
-                for (final String n : rest) {
+                for (final String n : held(taken(ofKind, foundRule), rest)) {
                     if (!mapped.contains(n)) {
                         fields.add(dict(PATH, dataHome(element, n) + "/Data", DATA_NAME, n, FIELD, n));
                     }
@@ -1081,8 +1081,43 @@ public final class DraftMapping {
                 recognised.add(kind + ": " + ActionRules.described(found.rules()));
             }
             if (found.rules().isEmpty() || !found.left().isEmpty()) {
-                rules.add(kindRule(name, naming, kind, dataEntries("Unknown", rest)));
+                final List<String> kept = held(ofKind, rest);
+                // Its records holding none of the rest, the kind field: a rule with no action element fails the
+                // mapping. With no rest at all, as the Python server drafted it.
+                rules.add(kindRule(name, naming, kind, dataEntries("Unknown", kept.isEmpty() && !rest.isEmpty()
+                        ? List.of(naming)
+                        : kept)));
             }
+        }
+
+        // The fields of the rest a rule's records hold: what its Data carries. Not the Python server's draft, which
+        // gave every rule the whole rest (seen: 23 SecretServer rules, each with the same 63 Data entries, a logon's
+        // checkout_id and old_role among them, kept by the agent beside the elements it then mapped them to).
+        private static List<String> held(final List<Map<String, Object>> taken, final List<String> rest) {
+            return rest.stream()
+                    .filter(n -> taken.stream()
+                            .anyMatch(r -> r.get(n) != null && !PyText.isBlank(PyText.str(r.get(n)))))
+                    .toList();
+        }
+
+        // The records a drafted rule takes, by its conditions (each a field equal to a value, or one of values).
+        @SuppressWarnings("unchecked")
+        private static List<Map<String, Object>> taken(final List<Map<String, Object>> records,
+                                                       final Map<String, Object> rule) {
+            final List<Map<String, Object>> when = (List<Map<String, Object>>) rule.getOrDefault("when", List.of());
+            return records.stream().filter(r -> when.stream().allMatch(c -> {
+                final Object value = r.get(c.get(FIELD));
+                final String text = value == null
+                        ? null
+                        : PyText.str(value);
+                if (c.get("equals") != null) {
+                    return PyText.str(c.get("equals")).equals(text);
+                }
+                if (c.get("one_of") instanceof final List<?> values) {
+                    return values.stream().map(PyText::str).toList().contains(text);
+                }
+                return true;
+            })).toList();
         }
 
         // A rule for one kind: the records whose naming field holds it.

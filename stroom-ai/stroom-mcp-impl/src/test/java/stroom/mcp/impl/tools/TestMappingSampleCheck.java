@@ -172,6 +172,37 @@ class TestMappingSampleCheck {
     }
 
     @Test
+    void dataNoneOfARulesRecordsHoldIsWarnedOf() {
+        // Seen: a SecretServer launch rule's rpc_account, target and duration_ms, in none of its records: listed by
+        // the documentation as "(not in the sample)".
+        final String sample = "<records><record><t>2022-01-15T14:52:23.000Z</t><action>Login</action><who>pat</who>"
+                              + "<node>ss-web-02</node></record><record><t>2022-01-15T14:52:24.000Z</t>"
+                              + "<action>Login</action><who>sam</who></record></records>";
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "xml", "root", "records",
+                "record", "record", "common", List.of(
+                        Map.of("path", "EventTime/TimeCreated", "field", "t"),
+                        Map.of("path", "EventSource/System/Name", "value", "S"),
+                        Map.of("path", "EventSource/System/Environment", "value", "Dev"),
+                        Map.of("path", "EventSource/Generator", "value", "g"),
+                        Map.of("path", "EventSource/Device/HostName", "value", "h"),
+                        Map.of("path", "EventSource/User/Id", "field", "who"),
+                        Map.of("path", "EventDetail/TypeId", "value", "Logon"))));
+        json.put("events", List.of(Map.of("name", "logon", "when", List.of(Map.of("field", "action",
+                "equals", "Login")), "fields", List.of(
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "who"),
+                Map.of("path", "EventDetail/Authenticate/Data", "data_name", "server_node", "field", "node"),
+                Map.of("path", "EventDetail/Authenticate/Data", "data_name", "rpc_account", "field", "rpc"),
+                Map.of("path", "EventDetail/Authenticate/Data", "data_name", "target", "field", "target")))));
+
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .contains("[logon] Data 'rpc_account', 'target' read fields none of the 2 sample records this rule "
+                          + "takes holds: remove them, unless other records will have them.")
+                .noneMatch(warning -> warning.contains("'server_node'"));
+    }
+
+    @Test
     void theCheckSaysWhichExtractionsMatchNoneAndWhichSome() {
         // The user key is missing from every seventh record: 342 of the 400 match.
         final TranslationMapping m = kvMapping(List.of(extraction("(?:^|[\\s,;])absent=(\\S*)", "absent"),
