@@ -19,18 +19,22 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.MetricValueSchema;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class MetricValueSchemaSettingsWidget
-        extends AbstractSettingsWidget
-        implements MetricValueSchemaSettingsView {
+public class MetricValueSchemaSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<MaxValueSize> maxValue;
@@ -45,14 +49,13 @@ public class MetricValueSchemaSettingsWidget
     @UiField
     TickBox storeSum;
 
-    @Inject
-    public MetricValueSchemaSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public MetricValueSchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new MetricValueSchema.Builder().build());
     }
 
-    @Override
     public MetricValueSchema getValueSchema() {
         return new MetricValueSchema.Builder()
                 .valueType(maxValue.getValue())
@@ -64,7 +67,6 @@ public class MetricValueSchemaSettingsWidget
                 .build();
     }
 
-    @Override
     public void setValueSchema(final MetricValueSchema valueSchema) {
         final MetricValueSchema schema = new MetricValueSchema.Builder(valueSchema).build();
         maxValue.setValue(schema.getValueType());
@@ -75,7 +77,8 @@ public class MetricValueSchemaSettingsWidget
         storeSum.setValue(schema.getStoreSum());
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         maxValue.setReadOnly(readOnly);
         storeLatestValue.setReadOnly(readOnly);
         storeMin.setReadOnly(readOnly);
@@ -114,7 +117,26 @@ public class MetricValueSchemaSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, MetricValueSchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, MetricValueSchemaSettingsWidget> {
 
     }
 }

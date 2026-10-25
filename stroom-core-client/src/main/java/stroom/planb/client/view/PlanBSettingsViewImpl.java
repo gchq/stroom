@@ -21,13 +21,13 @@ import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.presenter.StateTypeChangeUiHandlers;
 import stroom.planb.shared.StateType;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -80,8 +80,8 @@ public class PlanBSettingsViewImpl
     }
 
     @Override
-    public void setSettingsView(final View view) {
-        settings.setWidget(view.asWidget());
+    public void setSettingsEditor(final IsWidget editor) {
+        settings.setWidget(editor.asWidget());
     }
 
     @Override

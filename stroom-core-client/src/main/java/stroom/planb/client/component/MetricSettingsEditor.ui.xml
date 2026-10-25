@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.planb.client.view">
+    <!-- The settings of a metric store, each group a titled set of Plan B's settings widgets -->
+    <g:FlowPanel styleName="max form">
+        <v:SettingsGroup label="General">
+            <v:GeneralSettingsWidget ui:field="general"/>
+        </v:SettingsGroup>
+        <v:SettingsGroup label="Snapshot">
+            <v:SnapshotSettingsWidget ui:field="snapshot"/>
+        </v:SettingsGroup>
+        <v:SettingsGroup label="Data Retention">
+            <v:RetentionSettingsWidget ui:field="retention"/>
+        </v:SettingsGroup>
+        <v:SettingsGroup label="Key Schema">
+            <v:MetricKeySchemaSettingsWidget ui:field="keySchema"/>
+        </v:SettingsGroup>
+        <v:SettingsGroup label="Value Schema">
+            <v:MetricValueSchemaSettingsWidget ui:field="valueSchema"/>
+        </v:SettingsGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -20,18 +20,24 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.RetentionSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class RetentionSettingsWidget extends AbstractSettingsWidget implements RetentionSettingsView {
+public class RetentionSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     TickBox retentionEnabled;
@@ -55,14 +61,12 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     private boolean useStateTimeVisible = true;
     private boolean checkIntervalVisible;
 
-    @Inject
-    public RetentionSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public RetentionSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
 
         retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
 
-        retentionAge.setMin(1);
-        retentionAge.setMax(9999);
         retentionAge.setValue(1);
 
         retentionTimeUnit.addItem(TimeUnit.DAYS);
@@ -71,8 +75,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionTimeUnit.addItem(TimeUnit.YEARS);
         retentionTimeUnit.setValue(TimeUnit.YEARS);
 
-        retentionCheckInterval.setMin(1);
-        retentionCheckInterval.setMax(9999);
         retentionCheckInterval.setValue(1);
 
         retentionCheckIntervalTimeUnit.addItem(TimeUnit.MINUTES);
@@ -81,7 +83,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
     }
 
-    @Override
     public RetentionSettings getRetention() {
         return new RetentionSettings.Builder()
                 .enabled(retentionEnabled.getValue())
@@ -99,7 +100,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                 .build();
     }
 
-    @Override
     public void setRetention(final RetentionSettings retention) {
         final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
         this.retentionAge.setValue(1);
@@ -143,7 +143,7 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     }
 
     private void updateStates() {
-        // Whether each field applies is independent of read only, which onReadOnly() handles
+        // Whether each field applies is independent of read only, which onReadOnlyChange() handles
         final boolean retentionOn = retentionEnabled.getValue();
         retentionAgePanel.setStyleName("section--disabled", !retentionOn);
         if (checkIntervalVisible) {
@@ -156,7 +156,8 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         useStateTime.setEnabled(retentionOn);
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         retentionEnabled.setReadOnly(readOnly);
         retentionAge.setReadOnly(readOnly);
         retentionTimeUnit.setReadOnly(readOnly);
@@ -196,7 +197,26 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, RetentionSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, RetentionSettingsWidget> {
 
     }
 }

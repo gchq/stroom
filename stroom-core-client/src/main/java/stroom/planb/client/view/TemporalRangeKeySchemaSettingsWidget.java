@@ -20,32 +20,35 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalRangeKeySchema;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class TemporalRangeKeySchemaSettingsWidget
-        extends AbstractSettingsWidget
-        implements TemporalRangeKeySchemaSettingsView {
+public class TemporalRangeKeySchemaSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<RangeType> rangeType;
     @UiField
     SelectionBox<TemporalPrecision> temporalPrecision;
 
-    @Inject
-    public TemporalRangeKeySchemaSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public TemporalRangeKeySchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         rangeType.addItems(RangeType.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         setKeySchema(new TemporalRangeKeySchema.Builder().build());
     }
 
-    @Override
     public TemporalRangeKeySchema getKeySchema() {
         return new TemporalRangeKeySchema.Builder()
                 .rangeType(rangeType.getValue())
@@ -53,14 +56,14 @@ public class TemporalRangeKeySchemaSettingsWidget
                 .build();
     }
 
-    @Override
     public void setKeySchema(final TemporalRangeKeySchema keySchema) {
         final TemporalRangeKeySchema schema = new TemporalRangeKeySchema.Builder(keySchema).build();
         rangeType.setValue(schema.getRangeType());
         temporalPrecision.setValue(schema.getTemporalPrecision());
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         rangeType.setReadOnly(readOnly);
         temporalPrecision.setReadOnly(readOnly);
     }
@@ -75,7 +78,26 @@ public class TemporalRangeKeySchemaSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, TemporalRangeKeySchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, TemporalRangeKeySchemaSettingsWidget> {
 
     }
 }

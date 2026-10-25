@@ -21,18 +21,23 @@ import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Objects;
 
-public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
-        implements TemporalStateKeySchemaSettingsView {
+public class TemporalStateKeySchemaSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<KeyType> keyType;
@@ -41,9 +46,9 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
     @UiField
     SelectionBox<TemporalPrecision> temporalPrecision;
 
-    @Inject
-    public TemporalStateKeySchemaSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public TemporalStateKeySchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
@@ -51,7 +56,6 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
         onKeyTypeChange();
     }
 
-    @Override
     public TemporalStateKeySchema getKeySchema() {
         return new TemporalStateKeySchema.Builder()
                 .keyType(keyType.getValue())
@@ -60,7 +64,6 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
                 .build();
     }
 
-    @Override
     public void setKeySchema(final TemporalStateKeySchema keySchema) {
         final TemporalStateKeySchema schema = new TemporalStateKeySchema.Builder(keySchema).build();
         keyType.setValue(schema.getKeyType());
@@ -69,7 +72,8 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
         onKeyTypeChange();
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
         temporalPrecision.setReadOnly(readOnly);
@@ -77,7 +81,7 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     private void onKeyTypeChange() {
         final KeyType value = keyType.getValue();
-        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
         hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
                               Objects.equals(value, KeyType.VARIABLE));
     }
@@ -98,7 +102,26 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, TemporalStateKeySchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, TemporalStateKeySchemaSettingsWidget> {
 
     }
 }

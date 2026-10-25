@@ -18,27 +18,33 @@ package stroom.planb.client.view;
 
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 /**
  * General settings that only apply to a Traces store, shown alongside
  * {@link GeneralSettingsWidget} so that widget stays store-type agnostic.
  */
-public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
+public class TraceGeneralSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     TextBox maxSpansPerTrace;
 
-    @Inject
-    public TraceGeneralSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public TraceGeneralSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     public Long getMaxSpansPerTrace() {
@@ -64,7 +70,8 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
     /// Shows whether the user may change the settings.
     ///
     /// @param readOnly Whether they may not be changed.
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         maxSpansPerTrace.setReadOnly(readOnly);
     }
 
@@ -73,7 +80,26 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, TraceGeneralSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, TraceGeneralSettingsWidget> {
 
     }
 }

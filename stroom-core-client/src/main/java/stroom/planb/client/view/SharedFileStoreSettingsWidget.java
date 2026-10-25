@@ -17,15 +17,16 @@
 package stroom.planb.client.view;
 
 import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.widget.component.client.Component;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 /**
  * Where a store's data lives on the shared filesystem and how many ways it is split. Both decide
@@ -38,9 +39,12 @@ import com.google.inject.Inject;
  * back to, so there is nothing to switch off; an empty path is a save-blocking error rather than a
  * mode.
  */
-public class SharedFileStoreSettingsWidget
-        extends AbstractSettingsWidget
-        implements SharedFileStoreSettingsView {
+public class SharedFileStoreSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     TextBox sharedPath;
@@ -49,23 +53,19 @@ public class SharedFileStoreSettingsWidget
 
     private boolean locked;
 
-    @Inject
-    public SharedFileStoreSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public SharedFileStoreSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        shardCount.setMin(1);
-        shardCount.setMax(999);
         shardCount.setValue(1);
     }
 
-    @Override
     public SharedFileStoreSettings getSharedFileStore() {
         return new SharedFileStoreSettings(
                 shardCount.getIntValue(),
                 sharedPath.getValue());
     }
 
-    @Override
     public void setSharedFileStore(final SharedFileStoreSettings settings) {
         final SharedFileStoreSettings sharedFileStore = settings != null
                 ? settings
@@ -77,20 +77,19 @@ public class SharedFileStoreSettingsWidget
         updateStates();
     }
 
-    @Override
     public void setSharedFileStoreLocked(final boolean locked) {
         this.locked = locked;
         updateStates();
     }
 
     private void updateStates() {
-        // Locking is independent of read only, which onReadOnly() handles
+        // Locking is independent of read only, which onReadOnlyChange() handles
         sharedPath.setEnabled(!locked);
         shardCount.setEnabled(!locked);
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         sharedPath.setReadOnly(readOnly);
         shardCount.setReadOnly(readOnly);
     }
@@ -105,7 +104,26 @@ public class SharedFileStoreSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, SharedFileStoreSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SharedFileStoreSettingsWidget> {
 
     }
 }

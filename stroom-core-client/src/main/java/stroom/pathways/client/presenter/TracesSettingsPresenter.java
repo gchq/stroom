@@ -34,10 +34,6 @@ import com.google.web.bindery.event.shared.EventBus;
  * contract required by {@link stroom.entity.client.presenter.DocTabProvider}.
  * All settings form logic is delegated to {@link PlanBSettingsPresenter}, which
  * is locked to {@link StateType#TRACE} so the state-type dropdown is hidden.
- *
- * <p>The {@code updateTraceSettingsForSharding} logic previously in this class has
- * moved to {@link stroom.planb.client.presenter.TraceSettingsPresenter#onChange()},
- * where it belongs alongside the sharding field state.
  */
 public class TracesSettingsPresenter
         extends DocPresenter<TracesSettingsView, TracesDoc> {

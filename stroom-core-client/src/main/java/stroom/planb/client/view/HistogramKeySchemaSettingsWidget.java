@@ -23,22 +23,23 @@ import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeZoneBox;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Objects;
 
-public class HistogramKeySchemaSettingsWidget
-        extends AbstractSettingsWidget
-        implements HistogramKeySchemaSettingsView {
+public class HistogramKeySchemaSettingsWidget extends Component {
 
-    private final TimeZoneBox timeZoneBox;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<KeyType> keyType;
@@ -47,28 +48,18 @@ public class HistogramKeySchemaSettingsWidget
     @UiField
     SelectionBox<TemporalResolution> temporalResolution;
     @UiField
-    SimplePanel timeZone;
+    TimeZoneBox timeZoneBox;
 
-    @Inject
-    public HistogramKeySchemaSettingsWidget(final Binder binder,
-                                            final TimeZoneBox timeZoneBox) {
-        this.timeZoneBox = timeZoneBox;
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public HistogramKeySchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        timeZone.setWidget(timeZoneBox.asWidget());
         setKeySchema(new HistogramKeySchema.Builder().build());
         onKeyTypeChange();
     }
 
-    @Override
-    public void setOnChange(final Runnable onChange) {
-        super.setOnChange(onChange);
-        timeZoneBox.setOnChange(onChange);
-    }
-
-    @Override
     public HistogramKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneBox.getUserTimeZone();
         return new HistogramKeySchema.Builder()
@@ -79,7 +70,6 @@ public class HistogramKeySchemaSettingsWidget
                 .build();
     }
 
-    @Override
     public void setKeySchema(final HistogramKeySchema keySchema) {
         final HistogramKeySchema schema = new HistogramKeySchema.Builder(keySchema).build();
         keyType.setValue(schema.getKeyType());
@@ -89,7 +79,8 @@ public class HistogramKeySchemaSettingsWidget
         onKeyTypeChange();
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
         temporalResolution.setReadOnly(readOnly);
@@ -98,7 +89,7 @@ public class HistogramKeySchemaSettingsWidget
 
     private void onKeyTypeChange() {
         final KeyType value = keyType.getValue();
-        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
         hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
                               Objects.equals(value, KeyType.VARIABLE));
     }
@@ -119,7 +110,27 @@ public class HistogramKeySchemaSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, HistogramKeySchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+        timeZoneBox.setOnChange(this.onChange);
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, HistogramKeySchemaSettingsWidget> {
 
     }
 }

@@ -20,18 +20,24 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.DurationSetting;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class CondenseSettingsWidget extends AbstractSettingsWidget implements CondenseSettingsView {
+public class CondenseSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     TickBox condenseEnabled;
@@ -42,12 +48,10 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
     @UiField
     SelectionBox<TimeUnit> condenseTimeUnit;
 
-    @Inject
-    public CondenseSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public CondenseSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        condenseAge.setMin(1);
-        condenseAge.setMax(9999);
         condenseAge.setValue(1);
 
         condenseTimeUnit.addItem(TimeUnit.DAYS);
@@ -59,7 +63,6 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
         setCondenseEnabled(this.condenseEnabled.getValue());
     }
 
-    @Override
     public DurationSetting getCondense() {
         return new DurationSetting.Builder()
                 .enabled(condenseEnabled.getValue())
@@ -71,7 +74,6 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
                 .build();
     }
 
-    @Override
     public void setCondense(final DurationSetting condense) {
         this.condenseEnabled.setValue(false);
         this.condenseAge.setValue(1);
@@ -93,7 +95,8 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
         condenseTimeUnit.setEnabled(enabled);
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         condenseEnabled.setReadOnly(readOnly);
         condenseAge.setReadOnly(readOnly);
         condenseTimeUnit.setReadOnly(readOnly);
@@ -115,7 +118,26 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, CondenseSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CondenseSettingsWidget> {
 
     }
 }

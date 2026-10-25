@@ -121,9 +121,9 @@ public class FloorMapEventStoreSettingsViewImpl
     @Override
     public void setUiHandlers(final DirtyUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers::onDirty);
-        condenseSettingsWidget.setUiHandlers(uiHandlers::onDirty);
-        retentionSettingsWidget.setUiHandlers(uiHandlers::onDirty);
+        generalSettingsWidget.setOnChange(uiHandlers::onDirty);
+        condenseSettingsWidget.setOnChange(uiHandlers::onDirty);
+        retentionSettingsWidget.setOnChange(uiHandlers::onDirty);
     }
 
     @Override
@@ -179,9 +179,9 @@ public class FloorMapEventStoreSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        generalSettingsWidget.onReadOnly(readOnly);
-        condenseSettingsWidget.onReadOnly(readOnly);
-        retentionSettingsWidget.onReadOnly(readOnly);
+        generalSettingsWidget.setReadOnly(readOnly);
+        condenseSettingsWidget.setReadOnly(readOnly);
+        retentionSettingsWidget.setReadOnly(readOnly);
         expiryTime.setEnabled(!readOnly);
         expiryTimeUnit.setEnabled(!readOnly);
     }

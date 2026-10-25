@@ -19,42 +19,45 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.planb.shared.MaxValueSize;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class HistogramValueSchemaSettingsWidget
-        extends AbstractSettingsWidget
-        implements HistogramValueSchemaSettingsView {
+public class HistogramValueSchemaSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<MaxValueSize> maxValue;
 
-    @Inject
-    public HistogramValueSchemaSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public HistogramValueSchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new HistogramValueSchema.Builder().build());
     }
 
-    @Override
     public HistogramValueSchema getValueSchema() {
         return new HistogramValueSchema.Builder()
                 .valueType(maxValue.getValue())
                 .build();
     }
 
-    @Override
     public void setValueSchema(final HistogramValueSchema valueSchema) {
         final HistogramValueSchema schema = new HistogramValueSchema.Builder(valueSchema).build();
         maxValue.setValue(schema.getValueType());
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         maxValue.setReadOnly(readOnly);
     }
 
@@ -63,7 +66,26 @@ public class HistogramValueSchemaSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, HistogramValueSchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, HistogramValueSchemaSettingsWidget> {
 
     }
 }

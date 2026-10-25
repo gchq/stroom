@@ -18,18 +18,24 @@ package stroom.planb.client.view;
 
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class GeneralSettingsWidget extends AbstractSettingsWidget implements GeneralSettingsView {
+public class GeneralSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     FormGroup maxStoreSizePanel;
@@ -46,13 +52,12 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     private boolean writeOptionsVisible = true;
 
-    @Inject
-    public GeneralSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public GeneralSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         setOverwrite(true);
     }
 
-    @Override
     public Long getMaxStoreSize() {
         final String value = maxStoreSize.getValue();
         try {
@@ -67,7 +72,6 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
         return AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE;
     }
 
-    @Override
     public void setMaxStoreSize(final Long maxStoreSize) {
         this.maxStoreSize.setValue(ModelStringUtil.formatIECByteSizeString(
                 maxStoreSize == null
@@ -116,13 +120,13 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     }
 
     private void updateStates() {
-        // Whether the write options apply is independent of read only, which onReadOnly() handles
+        // Whether the write options apply is independent of read only, which onReadOnlyChange() handles
         synchroniseMerge.setEnabled(writeOptionsVisible);
         overwrite.setEnabled(writeOptionsVisible);
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         maxStoreSize.setReadOnly(readOnly);
         synchroniseMerge.setReadOnly(readOnly);
         overwrite.setReadOnly(readOnly);
@@ -144,7 +148,26 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, GeneralSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, GeneralSettingsWidget> {
 
     }
 }

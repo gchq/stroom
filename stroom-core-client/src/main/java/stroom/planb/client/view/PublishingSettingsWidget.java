@@ -21,14 +21,15 @@ import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 /**
  * The two settings that decide when a store's data can be queried: how wide each bucket is, and the
@@ -38,9 +39,12 @@ import com.google.inject.Inject;
  * affects records published from then on, and buckets already written are read back using the layout
  * recorded in their own directory names.
  */
-public class PublishingSettingsWidget
-        extends AbstractSettingsWidget
-        implements PublishingSettingsView {
+public class PublishingSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<BucketGranularity> granularity;
@@ -49,17 +53,15 @@ public class PublishingSettingsWidget
     @UiField
     SelectionBox<TimeUnit> maxWaitForDataTimeUnit;
 
-    @Inject
-    public PublishingSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public PublishingSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
 
         granularity.addItem(BucketGranularity.HOUR);
         granularity.addItem(BucketGranularity.DAY);
         granularity.addItem(BucketGranularity.WEEK);
         granularity.setValue(BucketGranularity.DAY);
 
-        maxWaitForData.setMin(1);
-        maxWaitForData.setMax(9999);
 
         maxWaitForDataTimeUnit.addItem(TimeUnit.MINUTES);
         maxWaitForDataTimeUnit.addItem(TimeUnit.HOURS);
@@ -70,19 +72,16 @@ public class PublishingSettingsWidget
         setMaxWaitForData(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
     }
 
-    @Override
     public BucketGranularity getGranularity() {
         return granularity.getValue();
     }
 
-    @Override
     public void setGranularity(final BucketGranularity granularity) {
         this.granularity.setValue(granularity == null
                 ? BucketGranularity.DAY
                 : granularity);
     }
 
-    @Override
     public SimpleDuration getMaxWaitForData() {
         return SimpleDuration.builder()
                 .time(maxWaitForData.getValue())
@@ -90,7 +89,6 @@ public class PublishingSettingsWidget
                 .build();
     }
 
-    @Override
     public void setMaxWaitForData(final SimpleDuration maxWaitForData) {
         final SimpleDuration maxWait = maxWaitForData == null
                 ? HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA
@@ -100,7 +98,7 @@ public class PublishingSettingsWidget
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         granularity.setReadOnly(readOnly);
         maxWaitForData.setReadOnly(readOnly);
         maxWaitForDataTimeUnit.setReadOnly(readOnly);
@@ -121,7 +119,26 @@ public class PublishingSettingsWidget
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, PublishingSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, PublishingSettingsWidget> {
 
     }
 }

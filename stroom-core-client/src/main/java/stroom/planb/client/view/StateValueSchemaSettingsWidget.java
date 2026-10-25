@@ -20,33 +20,38 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Objects;
 
-public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget implements StateValueSchemaSettingsView {
+public class StateValueSchemaSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     SelectionBox<StateValueType> stateValueType;
     @UiField
     SelectionBox<HashLength> hashLength;
 
-    @Inject
-    public StateValueSchemaSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public StateValueSchemaSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
         stateValueType.addItems(StateValueType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         setValueSchema(new StateValueSchema.Builder().build());
         onStateValueTypeChange();
     }
 
-    @Override
     public StateValueSchema getValueSchema() {
         return new StateValueSchema.Builder()
                 .stateValueType(stateValueType.getValue())
@@ -54,7 +59,6 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
                 .build();
     }
 
-    @Override
     public void setValueSchema(final StateValueSchema valueSchema) {
         final StateValueSchema schema = new StateValueSchema.Builder(valueSchema).build();
         stateValueType.setValue(schema.getStateValueType());
@@ -62,14 +66,15 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
         onStateValueTypeChange();
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         stateValueType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
     }
 
     private void onStateValueTypeChange() {
         final StateValueType value = stateValueType.getValue();
-        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        // Hash length only applies to some types; read only is set separately in onReadOnlyChange()
         hashLength.setEnabled(Objects.equals(value, StateValueType.HASH_LOOKUP) ||
                               Objects.equals(value, StateValueType.VARIABLE));
     }
@@ -85,7 +90,26 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, StateValueSchemaSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, StateValueSchemaSettingsWidget> {
 
     }
 }

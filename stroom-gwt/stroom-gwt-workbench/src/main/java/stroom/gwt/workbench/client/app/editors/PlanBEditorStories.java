@@ -38,6 +38,8 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBPresenter` (a Plan B store's
 /// editor tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
@@ -185,6 +187,39 @@ public final class PlanBEditorStories {
                     play.expect(play.queryByText("Value Schema", GROUP_LABEL)).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Changing the type shows that type's groups, and keeps the settings every type has:
+                // here the document's maximum store size, 1G, where a new type's default is 10G
+                .story("ChangingTypeKeepsCommonSettings", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    for (final String type : List.of("Temporal State", "Range State", "Temporal Range State",
+                            "Histogram")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveValue("1G"));
+                    }
+                    // A histogram store's groups: no condense settings
+                    play.expect(play.getByText("Key Schema", GROUP_LABEL)).toBeInTheDocument();
+                    play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The temporal, ranged and histogram types show their own groups
+                .story("OtherTypes", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
+                    for (final String type : List.of("Temporal State", "Temporal Range State")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(play.getByText("Condense Data", GROUP_LABEL))
+                                .toBeInTheDocument());
+                        play.expect(play.getByText("Value Schema", GROUP_LABEL)).toBeInTheDocument();
+                    }
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Histogram", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull());
+                    play.expect(selection(play, "Key Schema", "Temporal Resolution")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Editing a setting makes the document dirty, so Save is enabled
                 .story("EditEnablesSave", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
@@ -281,6 +316,12 @@ public final class PlanBEditorStories {
         final PlanBPresenter presenter = ScreenHarness.shownContent();
         presenter.setReadOnly(readOnly);
         presenter.read(presenter.getDocRef(), presenter.getEntity());
+    }
+
+    // The State Type selection box's text box
+    private static Query stateType(final Play play) {
+        return play.within(play.getByText("State Type", "label").closest(FORM_GROUP))
+                .querySelector(StroomDom.SELECTION_BOX);
     }
 
     private static Query maxStoreSize(final Play play) {

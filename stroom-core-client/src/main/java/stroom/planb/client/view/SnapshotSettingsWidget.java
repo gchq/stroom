@@ -17,21 +17,27 @@
 package stroom.planb.client.view;
 
 import stroom.planb.shared.SnapshotSettings;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 /**
  * Whether reads come from snapshots pushed to other nodes. Only a store served over HTTP has
  * snapshots, so this has no place in a trace store — see
  * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
  */
-public class SnapshotSettingsWidget extends AbstractSettingsWidget {
+public class SnapshotSettingsWidget extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Runnable onChange = () -> {
+    };
 
     @UiField
     TickBox useSnapshotsForLookup;
@@ -40,9 +46,9 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
     @UiField
     TickBox useSnapshotsForQuery;
 
-    @Inject
-    public SnapshotSettingsWidget(final Binder binder) {
-        initWidget(binder.createAndBindUi(this));
+    /// Makes the settings, at their defaults.
+    public SnapshotSettingsWidget() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     public SnapshotSettings getSnapshotSettings() {
@@ -60,7 +66,8 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
         }
     }
 
-    public void onReadOnly(final boolean readOnly) {
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         useSnapshotsForLookup.setReadOnly(readOnly);
         useSnapshotsForGet.setReadOnly(readOnly);
         useSnapshotsForQuery.setReadOnly(readOnly);
@@ -81,7 +88,26 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
         changed();
     }
 
-    public interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {
+    /// Sets what is told when the user changes a setting.
+    ///
+    /// @param onChange Run each time, or null for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
+    }
+
+    // Says that the user changed a setting
+    private void changed() {
+        onChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {
 
     }
 }
