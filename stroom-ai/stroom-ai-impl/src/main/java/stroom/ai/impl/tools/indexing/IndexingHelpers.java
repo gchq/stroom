@@ -162,12 +162,37 @@ public final class IndexingHelpers {
     public static List<String> populatedNotMapped(final FieldPlan plan, final Map<String, ? extends Number> populated) {
         final Set<String> unmapped = new TreeSet<>();
         populated.forEach((path, share) -> {
-            if (share != null && share.doubleValue() != 0
+            // A named Data entry's share is counted on its Data path too: that path is the one listed.
+            if (share != null && share.doubleValue() != 0 && !path.contains("[@Name=")
                 && plan.fields().stream().noneMatch(field -> FieldPlans.sourceMatches(field.source(), path))) {
                 unmapped.add(FieldPlans.anyAction(path));
             }
         });
         return unmapped.stream().limit(40).toList();
+    }
+
+    /// The planned fields no event of the sample fills: their source is a path the Events never have (seen: an
+    /// agent's user.target.name from EventDetail/*/User/Name, which the translation never writes, documented as
+    /// "not in the sample"). Not in the Stroom MCP server. The ids, and fields a shared template writes, are left
+    /// out.
+    ///
+    /// @param plan      A plan.
+    /// @param populated The % of events each path (and each named Data entry) is populated in.
+    /// @return Each such field as `name <- source`, in the plan's order.
+    public static List<String> plannedNotPopulated(final FieldPlan plan,
+                                                   final Map<String, ? extends Number> populated) {
+        final List<String> out = new ArrayList<>();
+        for (final PlannedField field : plan.fields()) {
+            final String source = field.source();
+            if (source == null || source.isEmpty() || source.startsWith("@") || plan.writtenBy(field.name()) != null) {
+                continue;
+            }
+            final Double share = FieldPlans.populationOf(source, populated);
+            if (share == null || share == 0) {
+                out.add(field.name() + " <- " + source);
+            }
+        }
+        return out;
     }
 
     /// @param knowledge The bundled knowledge.
