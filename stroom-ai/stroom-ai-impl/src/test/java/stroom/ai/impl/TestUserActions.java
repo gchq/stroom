@@ -171,6 +171,34 @@ class TestUserActions {
     }
 
     @Test
+    void aCreateVisualisationsButtonCreatesSeveralChartsOfADashboard() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Chats");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final Map<String, Object> create = Map.of("id", "vs1", "action", UserActions.CREATE_VISUALISATIONS,
+                "doc", doc("Dashboard", OTHER_UUID, "Something else"),
+                "charts", List.of(Map.of("name", "Links", "plan", dashboardPlan().toJson()),
+                        Map.of("name", "Links again", "plan", dashboardPlan().toJson())));
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(create), NOW)).isEmpty();
+
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_VISUALISATIONS);
+            assertThat(action.label()).isEqualTo("Create 2 visualisations (network graph, network graph) and add "
+                                                 + "them to dashboard 'Chats'");
+            assertThat(action.doc()).isEqualTo(dashboard);
+            assertThat(action.request()).contains("Links again");
+        });
+
+        // Only charts of a dashboard's tables: not a query's show clause.
+        final VisualisationPlan queryPlan = new VisualisationPlan("bar", Map.of("category", "Sender", "value",
+                "Count"), Map.of(), null, null, null, null, null, "h", true, "from Messages select Sender");
+        final Map<String, Object> withQuery = new HashMap<>(create);
+        withQuery.put("charts", List.of(Map.of("name", "Senders", "plan", queryPlan.toJson())));
+        assertThat(userActions.check(null, List.of(withQuery), NOW)).isEmpty();
+    }
+
+    @Test
     void aCreateVisualisationButtonForAQuerySaysItIsShownWithTheQuery() {
         final DocRef query = new DocRef("Query", OTHER_UUID, "Messages");
         Mockito.when(lookup.find(new DocRef("Query", OTHER_UUID))).thenReturn(Optional.of(query));
