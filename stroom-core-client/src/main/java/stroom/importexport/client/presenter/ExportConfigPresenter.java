@@ -124,7 +124,7 @@ public class ExportConfigPresenter
     public void onExport(final ExportConfigEvent event) {
         if (event.getSelection() != null) {
             for (final ExplorerNode node : event.getSelection()) {
-                treePresenter.getTreeModel().setEnsureVisible(new HashSet<>(event.getSelection()));
+                treePresenter.getTreeController().setEnsureVisible(new HashSet<>(event.getSelection()));
                 treePresenter.setSelected(node, true);
             }
         }

@@ -70,9 +70,9 @@ public class MoveDocumentPresenter
                     .build();
         }
         entityTreePresenter.setSelectedItem(firstChild);
-        entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(firstChild);
-        entityTreePresenter.getModel().refresh();
+        entityTreePresenter.getTreeController().reset();
+        entityTreePresenter.getTreeController().setEnsureVisible(firstChild);
+        entityTreePresenter.getTreeController().refresh();
 
         // We want to select the parent folder, so we have a default dest to move into.
         entityTreePresenter.setSelectParentIfNotFound(true);

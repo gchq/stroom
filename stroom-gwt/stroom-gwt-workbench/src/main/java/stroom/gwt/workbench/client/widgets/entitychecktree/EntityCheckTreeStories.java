@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.entitychecktree;
 
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.shared.ExplorerNode;
@@ -100,7 +101,8 @@ public final class EntityCheckTreeStories {
 
         final EntityCheckTreeViewImpl view = new EntityCheckTreeViewImpl(
                 GWT.create(EntityCheckTreeViewImpl.Binder.class));
-        final EntityCheckTreePresenter presenter = new EntityCheckTreePresenter(view, harness.getRestFactory());
+        final EntityCheckTreePresenter presenter = new EntityCheckTreePresenter(view,
+                () -> new ExplorerTreeController(harness.getRestFactory()));
         harness.own(presenter);
         presenter.refresh();
 

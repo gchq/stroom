@@ -77,13 +77,13 @@ public class CreateDocumentPresenter
 
         entityTreePresenter.setSelectedItem(null);
         entityTreePresenter.setSelectedItem(event.getSelected());
-        entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
+        entityTreePresenter.getTreeController().reset();
+        entityTreePresenter.getTreeController().setEnsureVisible(event.getSelected());
 
         // We want to select the parent folder, so we have a default dest to move into.
         entityTreePresenter.setSelectParentIfNotFound(true);
 
-        entityTreePresenter.getModel().refresh();
+        entityTreePresenter.getTreeController().refresh();
 
         caption = event.getDialogCaption();
         if (event.getInitialDocName() != null) {

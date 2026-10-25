@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.client.component;
 
-import stroom.dispatch.client.RestFactory;
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.event.ExplorerItemKeyEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.NodeFlag;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.TokenError;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
@@ -44,22 +44,24 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// The explorer's tree of documents, on the data grid with its tree profile ([DataGridProfile#TREE]):
@@ -73,103 +75,97 @@ import java.util.function.Consumer;
 /// context menu key or Shift+F10 shows the item's menu, as a right click does. Keys for some of the
 /// menu's actions (F2 to rename, Alt+Enter for info, which the user can change) act on the item, and
 /// a screen reader is told when they can't.
-public abstract class AbstractExplorerTree extends Composite implements Focus {
+///
+/// A tick tree's items have tick boxes instead ([#setTickBoxes]): choosing one ticks it.
+///
+/// It shows what it is given; its [ExplorerTreeController] fetches the nodes and keeps which are
+/// open, as the tree asks.
+public class ExplorerTree extends Component implements Focus {
 
+    /// The tree's first item where a picker may choose nothing (see [ExplorerTreeController]).
+    public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
+            .docRef(DocRef.builder()
+                    .uuid("")
+                    .name("None")
+                    .type("")
+                    .build())
+            .build();
+
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final Action[] ITEM_KEY_ACTIONS = {Action.EXPLORER_RENAME, Action.EXPLORER_INFO};
 
-    private final ExplorerTreeModel treeModel;
-    private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
-    private final DataGrid<ExplorerNode> tree;
+    @UiField
+    DataGrid<ExplorerNode> tree;
+    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
+    @UiField
+    Element liveRegion;
+
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
-    private final boolean allowMultiSelect;
     private final String expanderClassName;
     private final ExplorerCell explorerCell;
-    private final ExplorerTreeSelectionEventManager selectionEventManager;
-    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
-    private final Element liveRegion;
+    // The choice, or null for a tick tree, whose ticks are its choice
+    private MultiSelectionModelImpl<ExplorerNode> selectionModel = new MultiSelectionModelImpl<>();
+    private TickBoxSelectionModel tickBoxSelectionModel;
+    private ExplorerTreeSelectionEventManager selectionEventManager;
+    private boolean allowMultiSelect;
+    private boolean includeNullSelection;
+    // The keys set by the owner, kept for a selection manager made again
+    private Runnable moveUpFromFirst;
+    private Consumer<String> typedHandler;
+    private boolean selectionFollowsFocus;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
     private List<ExplorerNode> rows;
-    private boolean showAlerts;
-    private Consumer<FetchExplorerNodeResult> changeHandler = null;
-    private Consumer<String> filterErrorConsumer = null;
+    private List<ExplorerNode> rootNodes;
 
-    AbstractExplorerTree(final RestFactory restFactory,
-                         final TaskMonitorFactory taskMonitorFactory,
-                         final boolean allowMultiSelect,
-                         final boolean showAlerts) {
-        this.allowMultiSelect = allowMultiSelect;
-        this.showAlerts = showAlerts;
+    // What the owner is told
+    private BiConsumer<ExplorerNode, Boolean> onOpenChange;
+    private Consumer<ExplorerNode> onToggleOpen;
+    private Runnable onReload;
+    private BiConsumer<ExplorerNode, SelectionType> onChoose;
+    private Consumer<ExplorerNode> onInitialSelect;
 
-        explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
+    /// Makes a tree with nothing in it, choosing one item at a time; its controller fills it.
+    public ExplorerTree() {
+        initWidget(BINDER.createAndBindUi(this));
+        explorerCell = new ExplorerCell(null, false);
         expanderClassName = explorerCell.getExpanderClassName();
 
-        tree = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        tree.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         tree.setProfile(DataGridProfile.TREE);
         // The explorer's cells draw their own padding; a long name scrolls the tree sideways
         tree.setCellPadding(false);
         tree.setFitWidth(true);
         tree.hasContextMenu(false);
-        tree.addStyleName("explorerTree");
         tree.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
             public ExplorerNode getValue(final ExplorerNode object) {
                 return object;
             }
         }, "", 100);
-        selectionModel = getSelectionModel();
-
-        treeModel = new ExplorerTreeModel(this, restFactory, taskMonitorFactory) {
-            @Override
-            protected void onDataChanged(final FetchExplorerNodeResult result) {
-                onData(result);
-                super.onDataChanged(result);
-
-                // A rejected filter comes back as an empty tree like any other, so surface the
-                // reason on whichever quick filter is driving this tree. Every explorer surface -
-                // navigation, entity tree, the explorer popup, export config - shares this one
-                // callback. See FetchExplorerNodeResult.filterError.
-                if (filterErrorConsumer != null) {
-                    filterErrorConsumer.accept(
-                            NullSafe.get(result.getFilterError(), TokenError::getText));
-                }
-
-                if (changeHandler != null) {
-                    changeHandler.accept(result);
-                }
-            }
-        };
-        treeModel.setShowAlerts(showAlerts);
 
         // The items' levels and open state, which Right, Left and * change as the expander does
-        tree.setTreeRows(AbstractExplorerTree::expanderOf, treeModel::setItemOpen);
+        tree.setTreeRows(ExplorerTree::expanderOf, (item, open) -> {
+            if (onOpenChange != null) {
+                onOpenChange.accept(item, open);
+            }
+        });
         // Each item's type, read after its name (#5411): "Countries, tree item, Dictionary"
-        tree.setRowDescription(AbstractExplorerTree::typeOf);
-        final TickBoxSelectionModel tickBoxSelectionModel = getTickBoxSelectionModel();
-        if (tickBoxSelectionModel != null) {
-            // A tick tree's items say whether they are ticked
-            tree.setRowChecked(tickBoxSelectionModel::getState);
-        }
+        tree.setRowDescription(ExplorerTree::typeOf);
+        installSelectionManager();
+    }
+
+    // The grid's choosing, made again when what can be chosen changes
+    private void installSelectionManager() {
         selectionEventManager = new ExplorerTreeSelectionEventManager(tree,
                 selectionModel != null
                         ? selectionModel
                         : new MultiSelectionModelImpl<>());
+        selectionEventManager.setMoveUpFromFirst(moveUpFromFirst);
+        selectionEventManager.setTypedHandler(typedHandler);
+        selectionEventManager.selectionFollowsFocus = selectionFollowsFocus;
         tree.setSelectionModel(selectionModel, selectionEventManager);
-
-        final FlowPanel flowPanel = new FlowPanel();
-        flowPanel.getElement().getStyle().setPosition(Style.Position.RELATIVE);
-        flowPanel.setWidth("100%");
-        flowPanel.setHeight("100%");
-        flowPanel.add(tree);
-
-        liveRegion = Document.get().createDivElement();
-        liveRegion.setClassName("sr-only");
-        liveRegion.setAttribute("role", "status");
-        liveRegion.setAttribute("aria-live", "polite");
-        flowPanel.getElement().appendChild(liveRegion);
-
-        initWidget(flowPanel);
     }
 
     // An item's level, and whether it is a leaf or open
@@ -190,13 +186,57 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         tree.setFocus(true);
     }
 
-    abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
+    /// Lets more than one item be chosen (Ctrl and Shift with a click or Space, Shift with the
+    /// arrows), as in the explorer.
+    ///
+    /// @param allowMultiSelect Whether more than one can be chosen.
+    public void setMultiSelect(final boolean allowMultiSelect) {
+        this.allowMultiSelect = allowMultiSelect;
+        installSelectionManager();
+    }
+
+    /// Gives the items tick boxes, which choosing an item ticks (or unticks), in place of a choice;
+    /// a tick tree has no item menus.
+    ///
+    /// @param tickBoxes Whether the items have tick boxes.
+    public void setTickBoxes(final boolean tickBoxes) {
+        if (tickBoxes == (tickBoxSelectionModel != null)) {
+            return;
+        }
+        if (tickBoxes) {
+            tickBoxSelectionModel = new TickBoxSelectionModel();
+            selectionModel = null;
+            explorerCell.setSelectionModel(tickBoxSelectionModel);
+            // A tick tree's items say whether they are ticked
+            tree.setRowChecked(tickBoxSelectionModel::getState);
+        } else {
+            tickBoxSelectionModel = null;
+            selectionModel = new MultiSelectionModelImpl<>();
+            explorerCell.setSelectionModel(null);
+            tree.setRowChecked(null);
+        }
+        installSelectionManager();
+    }
+
+    /// Shows (or not) the alert icon of an item with problems, e.g. a broken dependency.
+    ///
+    /// @param showAlerts Whether to show them.
+    public void setShowAlerts(final boolean showAlerts) {
+        explorerCell.setShowAlerts(showAlerts);
+    }
+
+    /// @return The choice, or null for a tick tree (see [#getTickedSet()]).
+    public MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
+        return selectionModel;
+    }
 
     /// Sets the keys of a tree with a filter above it, as in a picker's dialog.
     ///
     /// @param moveUpFromFirst What Up on the first item does, e.g. moves the focus to the filter.
     /// @param typedHandler    Given each character typed in the tree, e.g. to type it in the filter.
     public void setFilterKeys(final Runnable moveUpFromFirst, final Consumer<String> typedHandler) {
+        this.moveUpFromFirst = moveUpFromFirst;
+        this.typedHandler = typedHandler;
         selectionEventManager.setMoveUpFromFirst(moveUpFromFirst);
         selectionEventManager.setTypedHandler(typedHandler);
     }
@@ -206,6 +246,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     ///
     /// @param selectionFollowsFocus Whether the selection follows the focus.
     public void setSelectionFollowsFocus(final boolean selectionFollowsFocus) {
+        this.selectionFollowsFocus = selectionFollowsFocus;
         selectionEventManager.selectionFollowsFocus = selectionFollowsFocus;
     }
 
@@ -229,50 +270,96 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         }
     }
 
-    private ExplorerNode getSelected() {
-        return selectionModel == null
-                ? null
-                : selectionModel.getSelected();
+    /// Sets what is told after an item is chosen, by the user or by the tree, e.g. for a picker to
+    /// take it.
+    ///
+    /// @param onChoose Given the item (or null for none) and how it was chosen.
+    public void setOnChoose(final BiConsumer<ExplorerNode, SelectionType> onChoose) {
+        this.onChoose = onChoose;
     }
 
-    void onData(final FetchExplorerNodeResult result) {
+    /// Sets what is told after the tree chooses an item for itself once it is filled, e.g. one it
+    /// was asked to show.
+    ///
+    /// @param onInitialSelect Given the item.
+    public void setOnInitialSelect(final Consumer<ExplorerNode> onInitialSelect) {
+        this.onInitialSelect = onInitialSelect;
     }
 
-    void addChangeHandler(final Consumer<FetchExplorerNodeResult> changeHandler) {
-        this.changeHandler = changeHandler;
+    /// Ticks (or unticks) an item of a tick tree.
+    ///
+    /// @param explorerNode The item.
+    /// @param selected     Whether it is ticked.
+    public void setTicked(final ExplorerNode explorerNode, final boolean selected) {
+        tickBoxSelectionModel.setSelected(explorerNode, selected);
+        reload();
     }
 
+    /// @return The ticked items of a tick tree.
+    public Set<ExplorerNode> getTickedSet() {
+        return tickBoxSelectionModel.getSelectedSet();
+    }
+
+    /// @param handler Told when an item's menu is asked for (a right click, or the context menu key).
+    /// @return Its registration.
+    public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {
+        return addHandler(handler, ShowExplorerMenuEvent.getType());
+    }
+
+    /// Adds a handler for the keys for an item's actions (e.g. F2 to rename it).
+    ///
+    /// @param handler The handler.
+    /// @return Its registration.
+    public HandlerRegistration addItemKeyHandler(final ExplorerItemKeyEvent.Handler handler) {
+        return addHandler(handler, ExplorerItemKeyEvent.getType());
+    }
+
+    /// @param focused Whether the tree has the focus.
+    public void setFocus(final boolean focused) {
+        tree.setFocus(focused);
+    }
+
+    // --------------------------------------------------------------------------------
+    // For the controller
+
+    /// Sets what is told when an item is opened or closed with the keyboard (Right, Left, `*`).
+    void setOnOpenChange(final BiConsumer<ExplorerNode, Boolean> onOpenChange) {
+        this.onOpenChange = onOpenChange;
+    }
+
+    /// Sets what is told when an item's expander is pressed.
+    void setOnToggleOpen(final Consumer<ExplorerNode> onToggleOpen) {
+        this.onToggleOpen = onToggleOpen;
+    }
+
+    /// Sets what fills the tree again, e.g. once a tick changes the ticks shown.
+    void setOnReload(final Runnable onReload) {
+        this.onReload = onReload;
+    }
+
+    /// Sets whether the first item is [#NULL_SELECTION], which a picker chooses for nothing.
+    void setIncludeNullSelection(final boolean includeNullSelection) {
+        this.includeNullSelection = includeNullSelection;
+    }
+
+    /// Shows the items, the open ones' children after them.
     void setData(final List<ExplorerNode> rows) {
         this.rows = rows;
         tree.setRowData(0, rows);
         tree.setRowCount(rows.size(), true);
     }
 
-    public void setIncludedTypeSet(final Set<String> types) {
-        treeModel.setIncludedTypeSet(types);
-        refresh();
+    /// The tree's roots, which a tick tree ticks through.
+    void setRootNodes(final List<ExplorerNode> rootNodes) {
+        this.rootNodes = rootNodes;
+        if (tickBoxSelectionModel != null) {
+            tickBoxSelectionModel.setRoots(rootNodes);
+        }
     }
 
-    public void changeNameFilter(final String name) {
-        treeModel.changeNameFilter(name);
-    }
-
-    public void setShowAlerts(final boolean showAlerts) {
-        this.showAlerts = showAlerts;
-        treeModel.setShowAlerts(showAlerts);
-        explorerCell.setShowAlerts(showAlerts);
-        treeModel.refresh();
-    }
-
-    public void refresh() {
-        treeModel.refresh();
-    }
-
-    /**
-     * @return The node immediately above the given node in the currently displayed rows, or null if the
-     * node is not present or is the first row. Used to pick a sensible item to keep in view when the
-     * current selection is removed (e.g. after a delete).
-     */
+    /// @return The node immediately above the given node in the currently displayed rows, or null
+    /// if the node is not present or is the first row. Used to pick a sensible item to keep in view
+    /// when the current selection is removed (e.g. after a delete).
     ExplorerNode getNodeAbove(final ExplorerNode node) {
         if (rows != null && node != null) {
             final int index = rows.indexOf(node);
@@ -281,6 +368,41 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             }
         }
         return null;
+    }
+
+    /// Chooses an item for itself once filled, and scrolls it into view.
+    void setInitialSelectedItem(final ExplorerNode selection) {
+        if (selectionModel != null) {
+            selectionModel.clear();
+        }
+        setSelectedItem(selection);
+        scrollSelectedIntoView();
+        if (onInitialSelect != null) {
+            onInitialSelect.accept(selection);
+        }
+    }
+
+    /// Points the tree's keyboard at an item and gives it the focus, e.g. after the rows changed.
+    ///
+    /// @param row The item's index among those shown, or -1 for none (nothing changes).
+    void setKeyboardSelectedRow(final int row) {
+        if (row >= 0) {
+            tree.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+    private ExplorerNode getSelected() {
+        return selectionModel == null
+                ? null
+                : selectionModel.getSelected();
+    }
+
+    private void reload() {
+        if (onReload != null) {
+            onReload.run();
+        }
     }
 
     private int getItemIndex(final ExplorerNode item) {
@@ -296,23 +418,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         return -1;
     }
 
-    protected void setInitialSelectedItem(final ExplorerNode selection) {
-        if (selectionModel != null) {
-            selectionModel.clear();
-        }
-        setSelectedItem(selection);
-        scrollSelectedIntoView();
-    }
-
-    /// Points the tree's keyboard at an item and gives it the focus, e.g. after the rows changed.
-    ///
-    /// @param row The item's index among those shown, or -1 for none (nothing changes).
-    void setKeyboardSelectedRow(final int row) {
-        if (row >= 0) {
-            tree.setKeyboardSelectedRow(row, true);
-        }
-    }
-
     private void scrollSelectedIntoView() {
         if (selectionModel != null) {
             final ExplorerNode selected = selectionModel.getSelected();
@@ -325,15 +430,32 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         }
     }
 
-    void setSelectedItem(ExplorerNode selection) {
-        if (treeModel.isIncludeNullSelection() && selection == null) {
-            selection = ExplorerTreeModel.NULL_SELECTION;
+    /// Chooses an item as a click on it does, e.g. one to show; a picker's [#NULL_SELECTION] for
+    /// none, where it has one.
+    ///
+    /// @param selection The item, or null for none.
+    public void setSelectedItem(ExplorerNode selection) {
+        if (includeNullSelection && selection == null) {
+            selection = NULL_SELECTION;
         }
-
+        // As a choice (its owner is told, see setOnChoose), then as the tree's own
         doSelect(selection, new SelectionType());
     }
 
-    void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+    // Chooses an item, by the user or the tree: in a tick tree, ticks it
+    private void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+        if (tickBoxSelectionModel != null) {
+            toggleTick(row);
+            reload();
+        } else {
+            choose(row, selectionType);
+        }
+        if (onChoose != null) {
+            onChoose.accept(row, selectionType);
+        }
+    }
+
+    private void choose(final ExplorerNode row, final SelectionType selectionType) {
         if (selectionModel != null) {
             final Selection<ExplorerNode> selection = selectionModel.getSelection();
 
@@ -379,31 +501,32 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 selectionModel.setSelected(row);
             }
 
-            MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
+            MultiSelectEvent.fire(this, selectionType);
         }
     }
 
-    public ExplorerTreeModel getTreeModel() {
-        return treeModel;
+    private void toggleTick(final ExplorerNode node) {
+        if (node != null) {
+            tickBoxSelectionModel.setSelected(node, tickBoxSelectionModel.getState(node) != TickBoxState.TICK);
+        }
     }
 
-    public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {
-        return addHandler(handler, ShowExplorerMenuEvent.getType());
-    }
-
-    public void setFocus(final boolean focused) {
-        tree.setFocus(focused);
-    }
-
-    TickBoxSelectionModel getTickBoxSelectionModel() {
-        return null;
+    private void selectAll() {
+        if (tickBoxSelectionModel != null && rootNodes != null && rootNodes.size() == 1) {
+            toggleTick(rootNodes.get(0));
+            reload();
+        }
     }
 
     /// Shows an item's menu: by the pointer for a right click, else by the item.
     ///
     /// @param item        The item.
     /// @param nativeEvent The right click's mouse down, or null for a key.
-    void showMenu(final ExplorerNode item, final NativeEvent nativeEvent) {
+    private void showMenu(final ExplorerNode item, final NativeEvent nativeEvent) {
+        // A tick tree has no item menus
+        if (tickBoxSelectionModel != null) {
+            return;
+        }
         final int row = tree.getVisibleItems().indexOf(item);
         final PopupPosition popupPosition;
         if (nativeEvent != null) {
@@ -419,7 +542,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             chooseToActOn(item, row, nativeEvent);
             Scheduler.get().scheduleDeferred(() -> {
                 ShowExplorerMenuEvent.fire(
-                        AbstractExplorerTree.this,
+                        ExplorerTree.this,
                         selectionModel,
                         popupPosition);
             });
@@ -448,13 +571,13 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     /// @param item   The item with the focus.
     /// @param action The action whose key was pressed.
     /// @return Whether there is anything to act on the item (the key goes no further).
-    boolean actOnItem(final ExplorerNode item, final Action action) {
+    private boolean actOnItem(final ExplorerNode item, final Action action) {
         if (selectionModel == null || getHandlerCount(ExplorerItemKeyEvent.getType()) == 0) {
             return false;
         }
         chooseToActOn(item, tree.getVisibleItems().indexOf(item), null);
         Scheduler.get().scheduleDeferred(() ->
-                ExplorerItemKeyEvent.fire(AbstractExplorerTree.this, action, this::announce));
+                ExplorerItemKeyEvent.fire(ExplorerTree.this, action, this::announce));
         return true;
     }
 
@@ -462,17 +585,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private void announce(final String message) {
         liveRegion.setInnerText("");
         Scheduler.get().scheduleDeferred(() -> liveRegion.setInnerText(message));
-    }
-
-    /// Adds a handler for the keys for an item's actions (e.g. F2 to rename it).
-    ///
-    /// @param handler The handler.
-    /// @return Its registration.
-    public HandlerRegistration addItemKeyHandler(final ExplorerItemKeyEvent.Handler handler) {
-        return addHandler(handler, ExplorerItemKeyEvent.getType());
-    }
-
-    void selectAll() {
     }
 
 
@@ -570,7 +682,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 if (!selectedItem.hasNodeFlag(NodeFlag.LEAF)
                     && ElementUtil.hasClassName(element, expanderClassName, 5)) {
                     // The expander
-                    treeModel.toggleOpenState(selectedItem);
+                    if (onToggleOpen != null) {
+                        onToggleOpen.accept(selectedItem);
+                    }
                 } else {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
                     doSelect(selectedItem,
@@ -584,11 +698,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         }
     }
 
-    /**
-     * Receives the reason the server rejected the current filter, or null when it was applied.
-     */
-    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
-        this.filterErrorConsumer = filterErrorConsumer;
-    }
 
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ExplorerTree> {
+
+    }
 }

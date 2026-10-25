@@ -46,7 +46,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     private static final String DESCENDANT_ISSUES_MSG = "Descendants have issues";
 
     private static Template template;
-    private final SelectionModel<ExplorerNode> selectionModel;
+    private SelectionModel<ExplorerNode> selectionModel;
     private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
 
     // Whether the items have tick boxes (a tick tree's)
@@ -54,12 +54,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     private boolean showAlerts;
 
     public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel, final boolean showAlerts) {
-        this.selectionModel = selectionModel;
+        setSelectionModel(selectionModel);
         this.showAlerts = showAlerts;
-
-        if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
-            tickBoxes = true;
-        }
 
         if (template == null) {
             template = GWT.create(Template.class);
@@ -78,6 +74,15 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         return getCellClassName() + "-tickBox";
     }
 
+    /// Sets what the tick boxes show, for a tick tree, whose items have them.
+    ///
+    /// @param selectionModel The ticks (a [TickBoxSelectionModel], which gives the items tick
+    ///                       boxes), or null for none.
+    public void setSelectionModel(final SelectionModel<ExplorerNode> selectionModel) {
+        this.selectionModel = selectionModel;
+        tickBoxes = selectionModel instanceof TickBoxSelectionModel;
+    }
+
     public void setShowAlerts(final boolean showAlerts) {
         this.showAlerts = showAlerts;
     }
@@ -87,8 +92,6 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         if (node != null) {
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
-            final int expanderPadding = 4;
-
             SvgImage expanderIcon = null;
             if (node.hasNodeFlag(NodeFlag.OPEN)) {
                 expanderIcon = SvgImage.ARROW_DOWN;
@@ -96,9 +99,9 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 expanderIcon = SvgImage.ARROW_RIGHT;
             }
 
-            int indent = node.getDepth();
-            indent = expanderPadding + (indent * 17);
-            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
+            // Indented by its depth (explorer-tree.css's explorerCell-expander)
+            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
+                    "--explorer-cell__depth", String.valueOf(node.getDepth()));
 
             // Add expander.
             final SafeHtml expanderIconSafeHtml;

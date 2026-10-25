@@ -17,6 +17,8 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.component.ExplorerTree;
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
@@ -26,6 +28,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
@@ -34,14 +37,20 @@ import java.util.Set;
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
         implements Focus {
 
-    private final ExplorerTickBoxTree explorerTree;
+    private final ExplorerTree explorerTree;
+    private final ExplorerTreeController treeController;
 
     @Inject
     public EntityCheckTreePresenter(final EntityCheckTreeView view,
-                                    final RestFactory restFactory) {
+                                    final Provider<ExplorerTreeController> explorerTreeControllerProvider) {
         super(new SimpleEventBus(), view);
 
-        explorerTree = new ExplorerTickBoxTree(restFactory, this);
+        // A tick tree, showing alerts
+        explorerTree = new ExplorerTree();
+        explorerTree.setTickBoxes(true);
+        treeController = make(explorerTreeControllerProvider).attach(explorerTree);
+        treeController.setTaskMonitorFactory(this);
+        treeController.setShowAlerts(true);
         view.setCellTree(explorerTree);
     }
 
@@ -51,49 +60,50 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     }
 
     public void setIncludedTypes(final String... includedTypes) {
-        explorerTree.getTreeModel().setIncludedTypes(includedTypes);
+        treeController.setIncludedTypes(includedTypes);
     }
 
     public void setIncludedTypeSet(final Set<String> types) {
-        explorerTree.getTreeModel().setIncludedTypeSet(types);
+        treeController.setIncludedTypeSet(types);
         refresh();
     }
 
     public void setIncludedRootTypes(final String... types) {
-        explorerTree.getTreeModel().setIncludedRootTypes(types);
+        treeController.setIncludedRootTypes(types);
     }
 
     public void changeNameFilter(final String name) {
-        explorerTree.getTreeModel().changeNameFilter(name);
+        treeController.changeNameFilter(name);
         refresh();
     }
 
     public void setTags(final String... tags) {
-        explorerTree.getTreeModel().setTags(tags);
+        treeController.setTags(tags);
     }
 
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerTree.getTreeModel().setNodeFlags(nodeFlags);
+        treeController.setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
-        explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
+        treeController.setRequiredPermissions(requiredPermissions);
     }
 
     public void refresh() {
-        explorerTree.getTreeModel().refresh();
+        treeController.refresh();
     }
 
-    public ExplorerTreeModel getTreeModel() {
-        return explorerTree.getTreeModel();
+    /// @return What fills the tree, e.g. to show items in it.
+    public ExplorerTreeController getTreeController() {
+        return treeController;
     }
 
     public void setSelected(final ExplorerNode explorerNode, final boolean selected) {
-        explorerTree.setSelected(explorerNode, selected);
+        explorerTree.setTicked(explorerNode, selected);
     }
 
     public Set<ExplorerNode> getSelectedSet() {
-        return explorerTree.getSelectedSet();
+        return explorerTree.getTickedSet();
     }
 
 
@@ -106,7 +116,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
      * See {@code FetchExplorerNodeResult.filterError}.
      */
     public void setFilterErrorConsumer(final java.util.function.Consumer<String> filterErrorConsumer) {
-        explorerTree.setFilterErrorConsumer(filterErrorConsumer);
+        treeController.setOnFilterError(filterErrorConsumer);
     }
 
     public interface EntityCheckTreeView extends View {

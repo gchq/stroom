@@ -17,11 +17,13 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class DocSelectionPopup extends ExplorerPopupPresenter {
@@ -30,9 +32,15 @@ public class DocSelectionPopup extends ExplorerPopupPresenter {
     DocSelectionPopup(final EventBus eventBus,
                       final ExplorerPopupView view,
                       final RestFactory restFactory,
+                      final Provider<ExplorerTreeController> explorerTreeControllerProvider,
                       final UiConfigCache uiConfigCache,
                       final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, restFactory, uiConfigCache, quickFilterContextHandlerFactory);
+        super(eventBus,
+                view,
+                restFactory,
+                explorerTreeControllerProvider,
+                uiConfigCache,
+                quickFilterContextHandlerFactory);
         setIncludeNullSelection(false);
     }
 }

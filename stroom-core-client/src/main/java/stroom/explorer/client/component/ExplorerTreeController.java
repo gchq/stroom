@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.client.component;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
@@ -29,35 +28,45 @@ import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.TokenError;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
+/// Fills an [ExplorerTree] with the explorer's nodes, fetched from the server, and keeps which are
+/// open: the tree's filters (name, types, tags, flags, permissions), what it is to show and choose
+/// once fetched, and whether it shows alerts. Its owner configures it; the tree asks it to open,
+/// close and fetch again.
+///
+/// ```java
+/// final ExplorerTree tree = new ExplorerTree();
+/// treeController = make(explorerTreeControllerProvider).attach(tree);
+/// treeController.setTaskMonitorFactory(this);
+/// treeController.setIncludedTypes(...);
+/// treeController.refresh();
+/// ```
 @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
-public class ExplorerTreeModel {
+public class ExplorerTreeController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
-            .docRef(DocRef.builder()
-                    .uuid("")
-                    .name("None")
-                    .type("")
-                    .build())
-            .build();
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
     private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();
-    private final AbstractExplorerTree explorerTree;
     private final RestFactory restFactory;
-    private final TaskMonitorFactory taskMonitorFactory;
+    private ExplorerTree explorerTree;
+    private TaskMonitorFactory taskMonitorFactory;
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
@@ -71,59 +80,129 @@ public class ExplorerTreeModel {
 
     private List<ExplorerNode> currentRootNodes;
     private boolean selectParentIfNotFound = false;
+    private Consumer<FetchExplorerNodeResult> onData;
+    private Consumer<String> onFilterError;
 
-    ExplorerTreeModel(final AbstractExplorerTree explorerTree,
-                      final RestFactory restFactory,
-                      final TaskMonitorFactory taskMonitorFactory) {
-        this.explorerTree = explorerTree;
+    /// Made by GIN; [#attach(ExplorerTree)] gives it its tree.
+    ///
+    /// @param restFactory Fetches the nodes.
+    @Inject
+    public ExplorerTreeController(final RestFactory restFactory) {
         this.restFactory = restFactory;
+        onDispose(nameFilterTimer::cancel);
+    }
+
+    /// Attaches this to the tree it fills, which tells it what is opened and closed.
+    ///
+    /// @param explorerTree The tree.
+    /// @return This, for its owner to keep.
+    public ExplorerTreeController attach(final ExplorerTree explorerTree) {
+        this.explorerTree = Objects.requireNonNull(explorerTree, "explorerTree");
+        explorerTree.setOnOpenChange(this::setItemOpen);
+        explorerTree.setOnToggleOpen(this::toggleOpenState);
+        explorerTree.setOnReload(this::refresh);
+        explorerTree.setIncludeNullSelection(includeNullSelection);
+        return this;
+    }
+
+    /// Says what shows the progress of fetching the nodes, e.g. the screen showing the tree.
+    ///
+    /// @param taskMonitorFactory What shows it, or null for Stroom's busy indicator.
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }
 
-    /**
-     * For use when the filter input is being typed by a user.
-     */
+    /// Sets what is told the nodes each time they are fetched.
+    ///
+    /// @param onData Given what was fetched.
+    public void setOnData(final Consumer<FetchExplorerNodeResult> onData) {
+        this.onData = onData;
+    }
+
+    /// Sets what is told why the server rejected the name filter, or null when it applied it, each
+    /// time the nodes are fetched, e.g. the quick filter driving the tree.
+    ///
+    /// @param onFilterError Given the reason, or null.
+    public void setOnFilterError(final Consumer<String> onFilterError) {
+        this.onFilterError = onFilterError;
+    }
+
+    /// Shows (or not) the alert icons of items with problems, which the next fetch asks for.
+    ///
+    /// @param showAlerts Whether to show them.
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
+        explorerTree.setShowAlerts(showAlerts);
+    }
+
+    /// Filters the tree by name as the user types, fetching once they pause.
+    ///
+    /// @param name The filter.
     public void changeNameFilter(final String name) {
         nameFilterTimer.setName(name);
         nameFilterTimer.cancel();
         nameFilterTimer.schedule(400);
     }
 
-    /**
-     * For use when setting an initial value for the filter.
-     */
+    /// Sets the name filter the tree starts with, for the next fetch.
+    ///
+    /// @param name The filter.
     public void setInitialNameFilter(final String name) {
         explorerTreeFilterBuilder.setNameFilter(name, true);
     }
 
+    /// Shows only documents of some types (and the folders holding them), from the next fetch.
+    ///
+    /// @param types The types, or null for all.
     public void setIncludedTypeSet(final Set<String> types) {
         explorerTreeFilterBuilder.includedTypeSet(types);
     }
 
+    /// Shows only documents of some types (and the folders holding them), from the next fetch.
+    ///
+    /// @param types The types.
     public void setIncludedTypes(final String... types) {
         explorerTreeFilterBuilder.includedTypes(types);
     }
 
+    /// Shows only the roots of some types, from the next fetch.
+    ///
+    /// @param types The types.
     public void setIncludedRootTypes(final String... types) {
         explorerTreeFilterBuilder.includedRootTypes(types);
     }
 
+    /// Shows only documents with all of some tags, from the next fetch.
+    ///
+    /// @param tags The tags.
     public void setTags(final String... tags) {
         explorerTreeFilterBuilder.tags(tags);
     }
 
+    /// Shows only nodes with some flags, from the next fetch.
+    ///
+    /// @param nodeFlags The flags.
     public void setNodeFlags(final NodeFlag... nodeFlags) {
         explorerTreeFilterBuilder.nodeFlags(NullSafe.asSet(nodeFlags));
     }
 
+    /// Shows only documents the user has some permissions on, from the next fetch.
+    ///
+    /// @param requiredPermissions The permissions.
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         explorerTreeFilterBuilder.requiredPermissions(requiredPermissions);
     }
 
+    /// Chooses an item once the next fetch has shown it.
+    ///
+    /// @param forceSelection The item.
     public void setForceSelection(final ExplorerNode forceSelection) {
         this.forceSelection = forceSelection;
     }
 
+    /// Opens the folders holding some items in the next fetch, and chooses the first.
+    ///
+    /// @param ensureVisible The items, or null for none.
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
@@ -137,6 +216,9 @@ public class ExplorerTreeModel {
         }
     }
 
+    /// Opens the folders holding some items in the next fetch, and chooses the first.
+    ///
+    /// @param ensureVisible The items.
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
@@ -150,14 +232,15 @@ public class ExplorerTreeModel {
         }
     }
 
-    public void setShowAlerts(final boolean showAlerts) {
-        this.showAlerts = showAlerts;
-    }
-
+    /// Sets whether an item to show that isn't found (e.g. a document, where only folders are
+    /// shown) has its folder chosen instead, as when copying or moving it.
+    ///
+    /// @param selectParentIfNotFound Whether to choose its folder.
     public void setSelectParentIfNotFound(final boolean selectParentIfNotFound) {
         this.selectParentIfNotFound = selectParentIfNotFound;
     }
 
+    /// Fetches the nodes again and shows them.
     public void refresh() {
         // Fetch data from the server to update the tree.
         fetchData();
@@ -199,6 +282,7 @@ public class ExplorerTreeModel {
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
+                            .owner(this)
                             .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 });
@@ -258,7 +342,7 @@ public class ExplorerTreeModel {
                 // If we are allowing null selection then select the NULL node if we have been
                 // asked to ensure NULL is selected after refresh.
                 if (nextSelection == null && includeNullSelection) {
-                    nextSelection = NULL_SELECTION;
+                    nextSelection = ExplorerTree.NULL_SELECTION;
                 }
                 final int index = rows.indexOf(nextSelection);
                 if (index == -1) {
@@ -312,7 +396,7 @@ public class ExplorerTreeModel {
             // want to close some folders. To do this we need to forget which nodes we wanted to
             // ensure visibility of. We can forget them now as we have a result that should have
             // opened required folders to make them visible.
-            if (nextSelection != null && !NULL_SELECTION.equals(nextSelection)) {
+            if (nextSelection != null && !ExplorerTree.NULL_SELECTION.equals(nextSelection)) {
 //                GWT.log("Clearing ensureVisible & forceSelection");
                 ensureVisible = null;
                 forceSelection = null;
@@ -330,14 +414,14 @@ public class ExplorerTreeModel {
         // If we are allowing null selection then insert a node at the root to make it
         // possible.
         if (includeNullSelection) {
-            if (rows.isEmpty() || rows.get(0) != NULL_SELECTION) {
-                // If there is any quick filter then NULL_SELECTION is a non-match
+            if (rows.isEmpty() || rows.get(0) != ExplorerTree.NULL_SELECTION) {
+                // If there is any quick filter then ExplorerTree.NULL_SELECTION is a non-match
                 final boolean isFilterMatch = NullSafe.isBlankString(NullSafe.get(
                         currentCriteria,
                         FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
-                rows.add(0, NULL_SELECTION.copy()
+                rows.add(0, ExplorerTree.NULL_SELECTION.copy()
                         .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFilterMatch)
                         .build());
             }
@@ -374,13 +458,28 @@ public class ExplorerTreeModel {
         }
     }
 
-    protected void onDataChanged(final FetchExplorerNodeResult result) {
+    private void onDataChanged(final FetchExplorerNodeResult result) {
+        explorerTree.setRootNodes(result.getRootNodes());
+        // A rejected filter comes back as an empty tree like any other, so surface the reason on
+        // whichever quick filter is driving this tree. Every explorer surface - navigation, entity
+        // tree, the explorer popup, export config - shares this one callback. See
+        // FetchExplorerNodeResult.filterError.
+        if (onFilterError != null) {
+            onFilterError.accept(NullSafe.get(result.getFilterError(), TokenError::getText));
+        }
+        if (onData != null) {
+            onData.accept(result);
+        }
     }
 
+    /// Forgets the open folders, what to show and the name filter, and empties the tree.
     public void reset() {
         reset(null);
     }
 
+    /// Forgets the open folders and what to show, and empties the tree, with a name filter.
+    ///
+    /// @param initialNameFilter The name filter, or null for none.
     public void reset(final String initialNameFilter) {
 //        GWT.log("reset with initialQuickFilter: " + initialNameFilter);
         explorerTreeFilterBuilder.setNameFilter(initialNameFilter);
@@ -390,6 +489,7 @@ public class ExplorerTreeModel {
         ensureVisible = null;
     }
 
+    /// Opens every folder, and fetches them.
     public void expandAll() {
 //        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
@@ -398,6 +498,7 @@ public class ExplorerTreeModel {
         refresh();
     }
 
+    /// Closes every folder but the roots, and fetches again.
     public void collapseAll() {
 //        explorerTreeFilterBuilder.setNameFilter(null);
         openItems.clear();
@@ -406,14 +507,26 @@ public class ExplorerTreeModel {
         refresh();
     }
 
+    /// @return Whether the tree's first item is [ExplorerTree#NULL_SELECTION].
     public boolean isIncludeNullSelection() {
         return includeNullSelection;
     }
 
+    /// Sets whether the tree's first item is [ExplorerTree#NULL_SELECTION], which a picker
+    /// chooses for nothing.
+    ///
+    /// @param includeNullSelection Whether it is.
     public void setIncludeNullSelection(final boolean includeNullSelection) {
         this.includeNullSelection = includeNullSelection;
+        if (explorerTree != null) {
+            explorerTree.setIncludeNullSelection(includeNullSelection);
+        }
     }
 
+    /// Opens or closes a folder, fetching it if it hasn't been.
+    ///
+    /// @param item The folder.
+    /// @param open Whether it is open.
     public void setItemOpen(final ExplorerNode item, final boolean open) {
         if (item != null) {
             if (open != openItems.isOpen(item.getUniqueKey())) {
@@ -422,6 +535,9 @@ public class ExplorerTreeModel {
         }
     }
 
+    /// Opens a closed folder, or closes an open one.
+    ///
+    /// @param item The folder.
     public void toggleOpenState(final ExplorerNode item) {
         if (item != null) {
             refresh(openItems.toggleOpenState(item.getUniqueKey()));

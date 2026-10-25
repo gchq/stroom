@@ -32,6 +32,8 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.client.component.ExplorerTree;
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerEndTaskEvent;
 import stroom.explorer.client.event.ExplorerStartTaskEvent;
@@ -108,6 +110,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
     private final CurrentActivity currentActivity;
     private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private final ExplorerTree explorerTree;
+    private final ExplorerTreeController treeController;
     private final SimplePanel activityOuter = new SimplePanel();
     private final Button activityButton = new Button();
 
@@ -132,6 +135,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
                                final NavigationView view,
                                final MenuItems menuItems,
                                final RestFactory restFactory,
+                               final Provider<ExplorerTreeController> explorerTreeControllerProvider,
                                final DocumentTypeCache documentTypeCache,
                                final DocumentPluginRegistry documentPluginRegistry,
                                final TypeFilterPresenter typeFilterPresenter,
@@ -165,11 +169,11 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(
-                restFactory,
-                getView().getTaskListener(),
-                true,
-                showAlertsBtn.isPressed());
+        explorerTree = new ExplorerTree();
+        explorerTree.setMultiSelect(true);
+        treeController = make(explorerTreeControllerProvider).attach(explorerTree);
+        treeController.setTaskMonitorFactory(getView().getTaskListener());
+        treeController.setShowAlerts(showAlertsBtn.isPressed());
 
         // Add views.
         uiConfigCache.get(uiConfig -> {
@@ -254,8 +258,10 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         listen(ExplorerEndTaskEvent.getType(), e ->
                 taskMonitor.onEnd(e.getTask()));
 
-        own(typeFilterPresenter.addSelectionListener(event -> explorerTree.setIncludedTypeSet(
-                typeFilterPresenter.getIncludedTypes().orElse(null))));
+        own(typeFilterPresenter.addSelectionListener(event -> {
+            treeController.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes().orElse(null));
+            treeController.refresh();
+        }));
 
         // Fire events from the explorer tree globally.
         own(explorerTree.getSelectionModel().addSelectionHandler(event -> {
@@ -314,7 +320,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
 
     @Override
     public void changeQuickFilter(final String name) {
-        explorerTree.changeNameFilter(name);
+        treeController.changeNameFilter(name);
     }
 
     @Override
@@ -363,8 +369,8 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
     }
 
     private void onShowAlerts(final boolean showAlerts) {
-        explorerTree.setShowAlerts(showAlerts);
-        explorerTree.refresh();
+        treeController.setShowAlerts(showAlerts);
+        treeController.refresh();
     }
 
     private void onLocate() {
@@ -372,13 +378,13 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
     }
 
     private void onExpandAll() {
-        explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
-        explorerTree.getTreeModel().expandAll();
+        treeController.setForceSelection(explorerTree.getSelectionModel().getSelected());
+        treeController.expandAll();
     }
 
     private void onCollapseAll() {
-        explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
-        explorerTree.getTreeModel().collapseAll();
+        treeController.setForceSelection(explorerTree.getSelectionModel().getSelected());
+        treeController.collapseAll();
     }
 
     // The filter is only pressed when a filter has been set, not just when clicked
@@ -408,16 +414,16 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
 
-        explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setRequiredPermissions(DocumentPermission.VIEW);
-        explorerTree.getTreeModel().setIncludedTypeSet(null);
+        treeController.reset();
+        treeController.setRequiredPermissions(DocumentPermission.VIEW);
+        treeController.setIncludedTypeSet(null);
 
         // Show the tree.
         if (!shown) {
             shown = true;
-            explorerTree.getTreeModel().refresh();
+            treeController.refresh();
             getView().setNavigationWidget(explorerTree);
-            explorerTree.setFilterErrorConsumer(getView()::setFilterError);
+            treeController.setOnFilterError(getView()::setFilterError);
             getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                     ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         }
@@ -430,18 +436,18 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
     @Override
     public void onHighlight(final HighlightExplorerNodeEvent event) {
         explorerTree.setSelectedItem(event.getExplorerNode());
-        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode());
-        explorerTree.getTreeModel().refresh();
+        treeController.setEnsureVisible(event.getExplorerNode());
+        treeController.refresh();
     }
 
     @Override
     public void onRefresh(final RefreshExplorerTreeEvent event) {
 //        GWT.log("onRefresh " + event);
-        explorerTree.getTreeModel().refresh();
+        treeController.refresh();
     }
 
     public void refresh() {
-        explorerTree.getTreeModel().refresh();
+        treeController.refresh();
     }
 
     @Override

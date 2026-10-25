@@ -40,6 +40,8 @@
 
 .explorerCell-expander {
 	display: flex;
+	/* Indented by its item's depth (ExplorerCell, DocumentAssetTree's cell) */
+	padding-left: calc(4px + var(--explorer-cell__depth, 0) * 17px);
 }
 
 .explorerCell-expander svg {
@@ -91,3 +93,7 @@
     opacity: 50%;
 }
 
+/* What holds an explorer tree (ExplorerTree, DocumentAssetTree), which its grid fills */
+.explorer-tree-panel {
+	position: relative;
+}

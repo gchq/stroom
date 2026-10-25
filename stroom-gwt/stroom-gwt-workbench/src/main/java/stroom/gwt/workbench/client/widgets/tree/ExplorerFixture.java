@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /// A fake of Stroom's explorer tree service (`POST /explorer/v2/fetchExplorerNodes`), answering
-/// the requests of Stroom's real `ExplorerTreeModel` from a fixed tree of folders and documents.
+/// the requests of Stroom's real `ExplorerTreeController` from a fixed tree of folders and documents.
 ///
 /// It does what the server's `ExplorerServiceImpl` does that the GWT tree depends on:
 ///

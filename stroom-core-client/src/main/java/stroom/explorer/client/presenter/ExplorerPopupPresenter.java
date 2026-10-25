@@ -20,6 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
+import stroom.explorer.client.component.ExplorerTree;
+import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -44,6 +46,7 @@ import stroom.widget.util.client.SelectionType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Arrays;
@@ -57,7 +60,8 @@ public class ExplorerPopupPresenter
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final ExtendedExplorerTree explorerTree;
+    private final ExplorerTree explorerTree;
+    private final ExplorerTreeController treeController;
     private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private String caption = "Choose item";
@@ -71,6 +75,7 @@ public class ExplorerPopupPresenter
     ExplorerPopupPresenter(final EventBus eventBus,
                            final ExplorerPopupView view,
                            final RestFactory restFactory,
+                           final Provider<ExplorerTreeController> explorerTreeControllerProvider,
                            final UiConfigCache uiConfigCache,
                            final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
@@ -79,14 +84,21 @@ public class ExplorerPopupPresenter
 
         getView().setUiHandlers(this);
 
-        explorerTree = new ExtendedExplorerTree(this, restFactory, this);
+        explorerTree = new ExplorerTree();
+        treeController = make(explorerTreeControllerProvider).attach(explorerTree);
+        treeController.setTaskMonitorFactory(this);
+        treeController.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
+        // The popup takes what the tree chooses, as it is chosen and as the tree chooses it
+        explorerTree.setOnChoose((row, selectionType) -> setSelectedTreeItem(resolve(row), selectionType, false));
+        explorerTree.setOnInitialSelect(selection ->
+                setSelectedTreeItem(resolve(selection), new SelectionType(), true));
         // A picker's keys: Down in the filter goes to the chosen document, Up from the first item
         // back to the filter, and typing in the tree goes to the filter; moving chooses
         explorerTree.setAccessibleName("Documents");
         explorerTree.setSelectionFollowsFocus(true);
         explorerTree.setFilterKeys(getView()::focus, getView()::typeInFilter);
         getView().setFilterMoveDown(explorerTree::focusSelected);
-        explorerTree.setFilterErrorConsumer(getView()::setFilterError);
+        treeController.setOnFilterError(getView()::setFilterError);
         getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         setIncludeNullSelection(true);
@@ -192,7 +204,7 @@ public class ExplorerPopupPresenter
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
-        explorerTree.getTreeModel().setIncludeNullSelection(includeNullSelection);
+        treeController.setIncludeNullSelection(includeNullSelection);
     }
 
     protected void setSelectedTreeItem(final ExplorerNode selected,
@@ -231,37 +243,37 @@ public class ExplorerPopupPresenter
     @Override
     public void nameFilterChanged(final String text) {
 //        GWT.log("nameFilterChanged: " + text + ", selected: " + explorerTree.getSelectionModel().getSelected());
-        explorerTree.changeNameFilter(text);
+        treeController.changeNameFilter(text);
     }
 
     public void refresh() {
         // Refresh gets called on show so no point doing it before then
         getView().setQuickFilter(initialQuickFilter);
-        explorerTree.getTreeModel().setInitialNameFilter(initialQuickFilter);
-        explorerTree.getTreeModel().reset(initialQuickFilter);
-        explorerTree.getTreeModel().setEnsureVisible(explorerTree.getSelectionModel().getSelected());
-        explorerTree.getTreeModel().refresh();
+        treeController.setInitialNameFilter(initialQuickFilter);
+        treeController.reset(initialQuickFilter);
+        treeController.setEnsureVisible(explorerTree.getSelectionModel().getSelected());
+        treeController.refresh();
     }
 
     public void setIncludedTypes(final String... includedTypes) {
         this.includedTypes = Arrays.asList(includedTypes);
-        explorerTree.getTreeModel().setIncludedTypes(includedTypes);
+        treeController.setIncludedTypes(includedTypes);
     }
 
     public void setIncludedRootTypes(final String... types) {
-        explorerTree.getTreeModel().setIncludedRootTypes(types);
+        treeController.setIncludedRootTypes(types);
     }
 
     public void setTags(final String... tags) {
-        explorerTree.getTreeModel().setTags(tags);
+        treeController.setTags(tags);
     }
 
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerTree.getTreeModel().setNodeFlags(nodeFlags);
+        treeController.setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
-        explorerTree.getTreeModel().setRequiredPermissions(requiredPermissions);
+        treeController.setRequiredPermissions(requiredPermissions);
     }
 
     public DocRef getSelectedEntityReference() {
@@ -307,7 +319,7 @@ public class ExplorerPopupPresenter
     }
 
     private static ExplorerNode resolve(final ExplorerNode selection) {
-        if (ExplorerTreeModel.NULL_SELECTION.equals(selection)) {
+        if (ExplorerTree.NULL_SELECTION.equals(selection)) {
             return null;
         }
 
@@ -320,36 +332,5 @@ public class ExplorerPopupPresenter
 
     public void setInitialQuickFilter(final String initialQuickFilter) {
         this.initialQuickFilter = initialQuickFilter;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ExtendedExplorerTree extends ExplorerTree {
-
-        private final ExplorerPopupPresenter explorerDropDownTreePresenter;
-
-        public ExtendedExplorerTree(final ExplorerPopupPresenter explorerDropDownTreePresenter,
-                                    final RestFactory restFactory,
-                                    final TaskMonitorFactory taskMonitorFactory) {
-            super(restFactory, taskMonitorFactory, false, false);
-            this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-            this.getTreeModel()
-                    .setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
-        }
-
-        @Override
-        protected void setInitialSelectedItem(final ExplorerNode selection) {
-            super.setInitialSelectedItem(selection);
-            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection),
-                    new SelectionType(), true);
-        }
-
-        @Override
-        protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
-            super.doSelect(row, selectionType);
-            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(row), selectionType, false);
-        }
     }
 }
