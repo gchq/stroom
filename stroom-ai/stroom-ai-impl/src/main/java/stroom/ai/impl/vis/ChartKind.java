@@ -86,8 +86,8 @@ public enum ChartKind {
                             "colours the source node by this column"),
                     new ChartRole("targetGroup", "Target Group (Optional)", false, ChartRole.Values.ANY,
                             "colours the target node by this column")),
-            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.SHOW_LABELS_AUTO,
-                    StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES));
+            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS,
+                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES));
 
     private final String id;
     private final String displayName;

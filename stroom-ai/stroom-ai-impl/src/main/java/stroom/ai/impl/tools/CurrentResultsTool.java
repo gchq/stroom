@@ -193,7 +193,8 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                         .addIntegerProperty(ROWS_ARG, "Optional. Only the first n rows, when the user asks about "
                                                       + "a scope like that.")
                         .addBooleanProperty(REFRESH_ARG, "Optional. Run the search again, as the tab now stands, "
-                                                         + "and take a new snapshot. Only with the user's yes.")
+                                                         + "and take a new snapshot. Only with the user's yes to "
+                                                         + "running it again, for this question.")
                         .addBooleanProperty(WITH_EVENT_IDS_ARG, "Optional. Take each row's StreamId and EventId, "
                                                                 + "one row per event, for the events behind the "
                                                                 + "table.")

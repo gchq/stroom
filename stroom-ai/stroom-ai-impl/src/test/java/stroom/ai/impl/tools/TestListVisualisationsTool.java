@@ -90,6 +90,19 @@ class TestListVisualisationsTool {
     }
 
     @Test
+    void aNetworkGraphsColoursPhysicsAndOptionsAreDescribed() {
+        assertThat(run())
+                .contains("nodeColours (one of group, node, default 'group'): group colours nodes by their "
+                          + "sourceGroup and targetGroup columns")
+                .contains("Layout (echarts): force-directed, animating as it settles (up to 500 nodes)")
+                .contains("{\"seriesDefaults\": {\"force\": {...}}}: repulsion (default 160")
+                .contains("Options (echarts): for what the style settings can't do")
+                .contains("seriesDefaults, textStyle, tooltip, xAxis, yAxis (seriesDefaults is merged into every "
+                          + "series)")
+                .contains("giving options again replaces all of them");
+    }
+
+    @Test
     void echartsNotInstalledSaysHowToInstallItAndNamesUnrecognisedBuilds() {
         assertThat(run())
                 .contains("- ECharts: not installed. An administrator installs it")
