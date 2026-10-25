@@ -19,6 +19,8 @@ package stroom.iframe.client.view;
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
+import stroom.util.client.ClipboardUtil;
+import stroom.util.client.CopiedFlash;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -104,6 +106,82 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         }
     }-*/;
 
+    /// A rendered markdown table as markdown again (asked for by the user): a header row, the alignment of each
+    /// column, then its rows; in a cell, code, links, bold and italic as markdown, a pipe escaped and a line break
+    /// as `<br>`.
+    ///
+    /// @param table The table's element.
+    /// @return Its markdown.
+    private static native String tableMarkdown(Element table) /*-{
+        var inline = function (node) {
+            if (node.nodeType === 3) {
+                return node.nodeValue.replace(/\s+/g, ' ');
+            }
+            if (node.nodeType !== 1) {
+                return '';
+            }
+            var inner = '';
+            for (var i = 0; i < node.childNodes.length; i++) {
+                inner += inline(node.childNodes[i]);
+            }
+            switch (node.tagName) {
+                case 'CODE':
+                    var text = node.textContent;
+                    var ticks = /`/.test(text) ? '``' : '`';
+                    return ticks + (ticks.length > 1 ? ' ' + text + ' ' : text) + ticks;
+                case 'A':
+                    return '[' + inner + '](' + node.getAttribute('href') + ')';
+                case 'STRONG':
+                case 'B':
+                    return '**' + inner + '**';
+                case 'EM':
+                case 'I':
+                    return '_' + inner + '_';
+                case 'BR':
+                    return '<br>';
+                default:
+                    return inner;
+            }
+        };
+        var cell = function (element) {
+            return inline(element).trim().replace(/\|/g, '\\|');
+        };
+        var line = function (cells) {
+            return '| ' + cells.join(' | ') + ' |';
+        };
+        var rows = Array.prototype.slice.call(table.rows);
+        if (rows.length === 0) {
+            return '';
+        }
+        var head = Array.prototype.slice.call(rows[0].cells);
+        var lines = [line(head.map(cell))];
+        lines.push(line(head.map(function (th) {
+            var align = (th.getAttribute('align') || th.style.textAlign || '').toLowerCase();
+            return align === 'center'
+                ? ':---:'
+                : align === 'right'
+                    ? '---:'
+                    : align === 'left'
+                        ? ':---'
+                        : '---';
+        })));
+        rows.slice(1).forEach(function (row) {
+            var cells = Array.prototype.slice.call(row.cells).map(cell);
+            while (cells.length < head.length) {
+                cells.push('');
+            }
+            lines.push(line(cells));
+        });
+        return lines.join('\n') + '\n';
+    }-*/;
+
+    // Copies the text, and shows on the element that it was.
+    private void copy(final String text, final Element shown) {
+        if (ClipboardUtil.copy(text)) {
+            CopiedFlash.show(shown);
+        }
+    }
+
     private boolean onFrameLinkClick(final String href) {
         return getUiHandlers() != null && getUiHandlers().onFrameLinkClick(href);
     }
@@ -129,7 +207,28 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
                     || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
                     return;
                 }
-                var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+                var target = event.target && event.target.closest ? event.target : null;
+                // Rendered markdown's copy buttons and code spans (see MarkdownConverter): copied from here, as
+                // the frame's document has no script of its own.
+                var button = target ? target.closest('.markdown-copy') : null;
+                if (button) {
+                    var block = button.parentNode.querySelector('pre, table');
+                    if (block) {
+                        // A table as markdown; a code block's text as it is.
+                        self.@stroom.iframe.client.view.IFrameViewImpl::copy(*)(block.tagName === 'TABLE'
+                            ? @stroom.iframe.client.view.IFrameViewImpl::tableMarkdown(*)(block)
+                            : block.textContent, button);
+                    }
+                    event.preventDefault();
+                    return;
+                }
+                var code = target ? target.closest('code.markdown-copy-code') : null;
+                var selected = doc.getSelection ? doc.getSelection().toString() : '';
+                if (code && !code.closest('a') && !selected) {
+                    self.@stroom.iframe.client.view.IFrameViewImpl::copy(*)(code.textContent, code);
+                    return;
+                }
+                var link = target ? target.closest('a[href]') : null;
                 if (!link || (link.getAttribute('href') || '').charAt(0) === '#') {
                     return;
                 }
