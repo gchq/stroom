@@ -33,21 +33,18 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.ArrayList;
@@ -63,41 +60,37 @@ import java.util.function.Consumer;
 ///
 /// The items ([DocumentAssetTreeItem]) are the tree's model: the top ones are added to the tree,
 /// their children to them, and changing them redraws the tree.
-public class DocumentAssetTree extends Composite implements Focus, HasSelectionHandlers<DocumentAssetTreeItem> {
+public class DocumentAssetTree extends Composite implements Focus {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String EXPANDER_CLASS_NAME = "explorerCell-expander";
-    // How far each level is indented, and the expander's own padding, as the explorer's
-    private static final int INDENT = 17;
-    private static final int EXPANDER_PADDING = 4;
 
     private static Template template;
 
     private final List<DocumentAssetTreeItem> items = new ArrayList<>();
-    private final DataGrid<DocumentAssetTreeItem> grid;
+    @UiField
+    DataGrid<DocumentAssetTreeItem> grid;
     private final MultiSelectionModelImpl<DocumentAssetTreeItem> selectionModel = new MultiSelectionModelImpl<>();
 
     private List<DocumentAssetTreeItem> rows = new ArrayList<>();
     private DocumentAssetTreeItem selected;
     private Consumer<DocumentAssetTreeItem> openHandler;
+    private Consumer<DocumentAssetTreeItem> onSelect;
     private boolean redrawScheduled;
 
-    /// Creates an empty tree.
-    ///
-    /// @param accessibleName The tree's name for screen readers, e.g. `Assets`.
-    public DocumentAssetTree(final String accessibleName) {
+    /// Creates an empty tree, e.g. one a template declares; name it with [#setAccessibleName].
+    public DocumentAssetTree() {
         if (template == null) {
             template = GWT.create(Template.class);
         }
 
-        grid = new DataGrid<>(DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        initWidget(BINDER.createAndBindUi(this));
+        grid.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         grid.setProfile(DataGridProfile.TREE);
         // The cells draw their own padding, as the explorer's do; a long name scrolls the tree sideways
         grid.setCellPadding(false);
         grid.setFitWidth(true);
         grid.hasContextMenu(false);
-        grid.addStyleName("explorerTree");
-        grid.addStyleName("documentAssetTree");
-        grid.setAccessibleName(accessibleName);
         grid.addColumn(new Column<DocumentAssetTreeItem, DocumentAssetTreeItem>(new ItemCell()) {
             @Override
             public DocumentAssetTreeItem getValue(final DocumentAssetTreeItem item) {
@@ -108,12 +101,20 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
         grid.setSelectionModel(selectionModel, new SelectionEventManager());
         selectionModel.addSelectionHandler(this::onSelect);
 
-        final FlowPanel panel = new FlowPanel();
-        panel.getElement().getStyle().setPosition(Style.Position.RELATIVE);
-        panel.setWidth("100%");
-        panel.setHeight("100%");
-        panel.add(grid);
-        initWidget(panel);
+    }
+
+    /// Names the tree for screen readers, e.g. `Assets`.
+    ///
+    /// @param accessibleName The name.
+    public void setAccessibleName(final String accessibleName) {
+        grid.setAccessibleName(accessibleName);
+    }
+
+    /// Sets what is told when the choice changes (it follows the focus).
+    ///
+    /// @param onSelect Given the item chosen, or null for none.
+    public void setOnSelect(final Consumer<DocumentAssetTreeItem> onSelect) {
+        this.onSelect = onSelect;
     }
 
     // An item's level, and whether it is open, or a leaf (a file or an empty folder)
@@ -189,14 +190,9 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
         final boolean changed = item != selected;
         selected = item;
         selectionModel.setSelected(item, new SelectionType(), false);
-        if (changed && fireEvents) {
-            SelectionEvent.fire(this, item);
+        if (changed && fireEvents && onSelect != null) {
+            onSelect.accept(item);
         }
-    }
-
-    @Override
-    public HandlerRegistration addSelectionHandler(final SelectionHandler<DocumentAssetTreeItem> handler) {
-        return addHandler(handler, SelectionEvent.getType());
     }
 
     /// Takes an item from the top of the tree.
@@ -248,7 +244,9 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
         final DocumentAssetTreeItem item = selectionModel.getSelected();
         if (item != selected) {
             selected = item;
-            SelectionEvent.fire(this, item);
+            if (onSelect != null) {
+                onSelect.accept(item);
+            }
         }
         if (item != null && event.getSelectionType().isDoubleSelect()) {
             if (item.isLeaf()) {
@@ -305,8 +303,9 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
             if (item == null) {
                 return;
             }
-            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString(
-                    "padding-left:" + (EXPANDER_PADDING + item.getDepth() * INDENT) + "px;");
+            // Indented by its depth, as the explorer's (explorer-tree.css's explorerCell-expander)
+            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedNameAndValue(
+                    "--explorer-cell__depth", String.valueOf(item.getDepth()));
             final SafeHtml expanderIcon;
             String expanderClassName = EXPANDER_CLASS_NAME;
             if (item.getChildCount() > 0) {
@@ -326,6 +325,14 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
             content.append(template.text("explorerCell-text", SafeHtmlUtils.fromString(item.getLabel())));
             sb.append(template.outer(content.toSafeHtml()));
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DocumentAssetTree> {
+
     }
 
 

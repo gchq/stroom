@@ -99,7 +99,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Tree representing file assets and folders
      */
-    private final DocumentAssetTree tree = new DocumentAssetTree("Assets");
+    private final DocumentAssetTree tree = new DocumentAssetTree();
 
     /**
      * Button to revert any changes and go back to live version
@@ -204,9 +204,8 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         this.editAssetDialog = editAssetDialog;
         this.editorPresenter = make(editorPresenterProvider);
 
-        tree.addSelectionHandler(event -> {
-            DocumentAssetPresenter.this.onSelectionChange();
-        });
+        tree.setAccessibleName("Assets");
+        tree.setOnSelect(item -> onSelectionChange());
         this.getView().setTreeAndEditor(tree, editorPresenter);
 
         // Hook up the dirty events on the editor

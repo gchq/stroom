@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  A document's assets as a tree (explorer-tree.css, as the explorer's tree): the grid, with its tree
+  profile set in Java, filling the panel.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="max explorer-tree-panel">
+        <dg:DataGrid ui:field="grid" addStyleNames="explorerTree documentAssetTree"/>
+    </g:FlowPanel>
+</ui:UiBinder>

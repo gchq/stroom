@@ -43,13 +43,13 @@ public class DocumentAssetChooserPresenter
                                          final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.tree = new DocumentAssetTree("Assets");
+        this.tree = new DocumentAssetTree();
+        tree.setAccessibleName("Assets");
         // Enter on a file, or a double click on one, chooses it, as OK does
         this.tree.setOpenHandler(item -> HidePopupRequestEvent.builder(this).fire());
         view.setTree(tree);
 
-        own(tree.addSelectionHandler(event -> {
-            final DocumentAssetTreeItem item = event.getSelectedItem();
+        tree.setOnSelect(item -> {
             if (item != null && item.isLeaf()) {
                 selectedItem = item;
                 EnablePopupEvent.builder(this).action(DialogAction.OK).fire();
@@ -57,7 +57,7 @@ public class DocumentAssetChooserPresenter
                 selectedItem = null;
                 DisablePopupEvent.builder(this).action(DialogAction.OK).fire();
             }
-        }));
+        });
     }
 
     public void setDocument(final AbstractDoc document) {
