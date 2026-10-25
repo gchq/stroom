@@ -43,9 +43,6 @@ import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
 import stroom.node.client.view.NodeGroupEditViewImpl;
 import stroom.node.client.view.NodeViewImpl;
-import stroom.schedule.client.SchedulePopup;
-import stroom.schedule.client.SchedulePopup.ScheduleView;
-import stroom.schedule.client.ScheduleViewImpl;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
@@ -66,10 +63,6 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(JobListPlugin.class);
         bindPlugin(ExecutionScheduleManagerPlugin.class);
 
-        bindPresenterWidget(
-                SchedulePopup.class,
-                ScheduleView.class,
-                ScheduleViewImpl.class);
 
         // Node management.
         bindPlugin(NodeGroupsPlugin.class);

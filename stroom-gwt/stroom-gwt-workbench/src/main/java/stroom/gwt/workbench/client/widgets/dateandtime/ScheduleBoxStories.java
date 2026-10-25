@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.dateandtime;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -26,26 +27,28 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.ScheduleBox;
-import stroom.schedule.client.SchedulePopup;
-import stroom.schedule.client.ScheduleViewImpl;
+import stroom.schedule.client.ScheduleBoxController;
 import stroom.schedule.client.ScheduledTimeClient;
+import stroom.schedule.client.component.SchedulePicker;
+import stroom.schedule.client.component.SchedulePickerController;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.form.client.AccessibleName;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ScheduleBox] (a text field for a schedule's expression, whose clock icon
-/// opens the Change Schedule dialog, [SchedulePopup], used by e.g. the execution schedule dialogs).
+/// opens the Change Schedule dialog, [SchedulePickerController], used by e.g. the execution schedule
+/// dialogs).
 ///
-/// The dialog is made as Stroom's GIN module makes it; `POST /scheduledTime/v1`, which checks a
+/// The box's controller is made as Stroom's GIN module makes it; `POST /scheduledTime/v1`, which checks a
 /// schedule and works out its next time, always accepts it, replying with the schedule (as Stroom
 /// does), which the box takes as its value.
 public final class ScheduleBoxStories {
 
     private static final String ON_NEW_DIALOG = "onNewDialog";
+    private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
     private static final String TITLE = "Change Schedule";
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .post("/scheduledTime/v1", RestReply.json("{\"schedule\": {\"type\": \"CRON\", "
@@ -96,37 +99,70 @@ public final class ScheduleBoxStories {
                     play.expect(screen.getByRole("textbox", "Expression"))
                             .toHaveValue(CronExpressions.EVERY_HOUR.getExpression());
                 })
-                // Checking the expression (each time the box is left, as here) uses the box's one
-                // dialog: it once made a new dialog for every check
-                .story("CheckingReusesTheDialog", ScheduleBoxStories::render)
+                // Checking the expression (each time the box is left, as here) asks the server and
+                // makes no dialog: it once made a new dialog for every check
+                .story("CheckingMakesNoDialog", ScheduleBoxStories::render)
                 .withPlay(play -> {
                     for (int i = 0; i < 3; i++) {
                         play.tab();
                         play.keyboard("{Shift>}{Tab}{/Shift}");
                     }
-                    play.waitFor(() -> play.expect(play.spy(ON_NEW_DIALOG)).toHaveBeenCalledTimes(1));
-                    play.sleep(200);
-                    play.expect(play.spy(ON_NEW_DIALOG)).toHaveBeenCalledTimes(1);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledTimes(4));
+                    play.expect(play.spy(ON_NEW_DIALOG)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // OK puts the schedule chosen in the box (the server, here, accepts any)
+                .story("ChooseSchedule", ScheduleBoxStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    screen.findByText(TITLE);
+                    play.click(screen.within(screen.getByRole("group", "Hour"))
+                            .getByRole("button", CronExpressions.EVERY_HOUR.getName()));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TITLE)).toBeNull());
+                    play.expect(screen.getByRole("textbox", "Schedule"))
+                            .toHaveValue(CronExpressions.EVERY_HOUR.getExpression());
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ON_NEW_DIALOG)).toHaveBeenCalledTimes(1);
+                })
+                // Cancel leaves the box as it was
+                .story("CancelKeepsSchedule", ScheduleBoxStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    screen.findByText(TITLE);
+                    play.click(screen.within(screen.getByRole("group", "Hour"))
+                            .getByRole("button", CronExpressions.EVERY_HOUR.getName()));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TITLE)).toBeNull());
+                    play.expect(screen.getByRole("textbox", "Schedule")).toHaveValue("0 0 2 * * ?");
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 });
     }
 
     private static Widget render(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
         final Spy onNewDialog = context.fn(ON_NEW_DIALOG);
+        final Spy onChange = context.fn(ON_CHANGE);
         final ScheduleBox box = new ScheduleBox();
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Schedule");
-        // As Stroom's presenters give it its dialog, e.g. ScheduledProcessEditPresenter
-        box.setSchedulePresenterProvider(() -> {
+        // As Stroom's presenters attach one, e.g. ScheduledProcessEditPresenter
+        final ScheduledTimeClient scheduledTimeClient =
+                new ScheduledTimeClient(harness.getEventBus(), harness.getRestFactory());
+        harness.own(new ScheduleBoxController(() -> {
             onNewDialog.call();
-            return new SchedulePopup(harness.getEventBus(),
-                    new ScheduleViewImpl(GWT.create(ScheduleViewImpl.Binder.class)),
-                    new ScheduledTimeClient(harness.getEventBus(), harness.getRestFactory()),
+            return new SchedulePickerController(harness.getEventBus(),
+                    new SchedulePicker(),
+                    scheduledTimeClient,
                     new DateTimeFormatter(harness.getUserPreferencesManager()));
-        });
+        }, scheduledTimeClient)).attach(box);
         box.setValue(Schedule.builder().type(ScheduleType.CRON).expression("0 0 2 * * ?").build());
+        box.setOnChange(onChange::call);
         harness.add(box);
         return harness.asWidget();
     }

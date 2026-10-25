@@ -1,9 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The "Change Schedule" dialog's content (SchedulePicker) -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:c="urn:import:stroom.widget.component.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min"
                         helpText="How the schedule is defined. Instant runs as often as possible. Frequency runs at a fixed interval. Cron runs at set times."
@@ -12,7 +14,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
                         helpText="Presets that fill in the expression with a common schedule.">
-            <g:SimplePanel ui:field="quickSettings" addStyleNames="w-100"/>
+            <b:QuickSettings ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression"
                         helpText="For Frequency, an interval such as 10m or 1h (units s, m, h, d). For Cron, six fields starting with seconds, e.g. 0 0 2 * * ? for 2am every day."
@@ -25,8 +27,12 @@
         </form:FormGroup>
         <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time"
                         helpText="When this will next run, based on the expression. Shows an error if the expression is not valid. Select Calculate to update it.">
-            <g:Label ui:field="nextScheduledTime"/>
+            <!-- Changes as the expression is calculated, so screen readers are told the new time
+                 (or why the expression isn't valid) -->
+            <c:AriaPanel ariaLive="polite">
+                <g:Label ui:field="nextScheduledTime"/>
+            </c:AriaPanel>
         </form:FormGroup>
-        <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate"/>
+        <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate" icon="HISTORY"/>
     </g:FlowPanel>
 </ui:UiBinder>

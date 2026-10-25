@@ -34,7 +34,7 @@ import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.component.SchedulePickerController;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -48,6 +48,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -79,11 +80,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
     public NodeJobListPresenter(final EventBus eventBus,
                                 final PagerViewWithHeading view,
                                 final RestFactory restFactory,
-                                final SchedulePopup schedulePresenter,
+                                final Provider<SchedulePickerController> schedulePickerProvider,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
-        own(schedulePresenter);
         this.nodeClient = nodeClient;
         this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Node Jobs");
@@ -95,7 +95,8 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.jobNodeListHelper = new JobNodeListHelper(
                 dateTimeFormatter,
                 restFactory,
-                schedulePresenter,
+                schedulePickerProvider,
+                this,
                 selectionModel,
                 getView(),
                 NodeJobListPresenter.this,

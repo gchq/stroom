@@ -24,7 +24,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
 import stroom.schedule.client.ScheduleBox;
-import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.ScheduleBoxController;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
@@ -54,6 +54,7 @@ public class BatchExecutionScheduleEditPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
+    private final ScheduleBoxController scheduleBox;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final DocSelectionBoxPresenter errorFeedPresenter;
 
@@ -63,7 +64,7 @@ public class BatchExecutionScheduleEditPresenter
                                                final BatchExecutionScheduleEditView view,
                                                final DocSelectionBoxPresenter errorFeedPresenter,
                                                final NodeClient nodeClient,
-                                               final Provider<SchedulePopup> schedulePresenterProvider,
+                                               final Provider<ScheduleBoxController> scheduleBoxControllerProvider,
                                                final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                                final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter) {
         super(eventBus, view);
@@ -76,8 +77,8 @@ public class BatchExecutionScheduleEditPresenter
         make(dateTimeBoxControllerProvider).attach(view.getStartTime());
         make(dateTimeBoxControllerProvider).attach(view.getEndTime());
 
-        view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
-        view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
+        scheduleBox = make(scheduleBoxControllerProvider).attach(view.getScheduleBox());
+        scheduleBox.setScheduleRestriction(new ScheduleRestriction(false, false, true));
 
 
         nodeClient.listAllNodes(
@@ -120,7 +121,7 @@ public class BatchExecutionScheduleEditPresenter
     }
 
     public void validate(final Consumer<Boolean> consumer) {
-        getView().getScheduleBox().validate(scheduledTimes -> {
+        scheduleBox.validate(scheduledTimes -> {
             if (scheduledTimes == null) {
                 consumer.accept(false);
             } else if (getView().getScheduleBox().isEnabled() && scheduledTimes.isError()) {

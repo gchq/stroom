@@ -29,7 +29,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
-import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.ScheduleBoxController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
@@ -59,6 +59,7 @@ public class ScheduledProcessEditPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
+    private final ScheduleBoxController scheduleBox;
     private final DocSelectionBoxPresenter errorFeedPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
@@ -72,7 +73,7 @@ public class ScheduledProcessEditPresenter
                                          final ScheduledProcessEditView view,
                                          final DocSelectionBoxPresenter errorFeedPresenter,
                                          final NodeClient nodeClient,
-                                         final Provider<SchedulePopup> schedulePresenterProvider,
+                                         final Provider<ScheduleBoxController> scheduleBoxControllerProvider,
                                          final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                          final RestFactory restFactory,
                                          final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
@@ -96,9 +97,9 @@ public class ScheduledProcessEditPresenter
         make(dateTimeBoxControllerProvider).attach(view.getEndTime());
         this.errorFeedPresenter = errorFeedPresenter;
 
-        view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
-        view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
-        view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> restFactory
+        scheduleBox = make(scheduleBoxControllerProvider).attach(view.getScheduleBox());
+        scheduleBox.setScheduleRestriction(new ScheduleRestriction(false, false, true));
+        scheduleBox.setScheduleReferenceTimeSupplier(scheduleReferenceTimeConsumer -> restFactory
                 .create(EXECUTION_SCHEDULE_RESOURCE)
                 .method(res -> res.fetchTracker(executionSchedule))
                 .onSuccess(tracker -> {
@@ -183,7 +184,7 @@ public class ScheduledProcessEditPresenter
 
     public void write(final Consumer<ExecutionSchedule> consumer,
                       final HidePopupRequestEvent event) {
-        getView().getScheduleBox().validate(scheduledTimes -> {
+        scheduleBox.validate(scheduledTimes -> {
             if (scheduledTimes == null) {
                 event.reset();
             } else if (scheduledTimes.isError()) {

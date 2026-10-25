@@ -37,7 +37,7 @@ import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.component.SchedulePickerController;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -47,6 +47,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGridView;
 import stroom.widget.menu.client.presenter.Item;
@@ -61,12 +62,14 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Provider;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -76,7 +79,8 @@ public class JobNodeListHelper {
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private final SchedulePopup schedulePresenter;
+    private final Provider<SchedulePickerController> schedulePickerProvider;
+    private final HasControllerNode opener;
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final TaskMonitorFactory taskMonitorFactory;
@@ -87,14 +91,16 @@ public class JobNodeListHelper {
 
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
-                             final SchedulePopup schedulePresenter,
+                             final Provider<SchedulePickerController> schedulePickerProvider,
+                             final HasControllerNode opener,
                              final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskMonitorFactory taskMonitorFactory,
                              final HasHandlers hasHandlers,
                              final Runnable refreshFunc) {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
-        this.schedulePresenter = schedulePresenter;
+        this.schedulePickerProvider = schedulePickerProvider;
+        this.opener = opener;
         this.selectionModel = selectionModel;
         this.taskMonitorFactory = taskMonitorFactory;
         this.hasHandlers = hasHandlers;
@@ -186,7 +192,6 @@ public class JobNodeListHelper {
             final ScheduleReferenceTime referenceTime = new ScheduleReferenceTime(
                     info.getScheduleReferenceTime(),
                     info.getLastExecutedTime());
-            schedulePresenter.setSchedule(currentSchedule, referenceTime);
 
             final int nodeCount = selectionModel.getSelectedCount();
             if (nodeCount > 1) {
@@ -216,7 +221,7 @@ public class JobNodeListHelper {
 
                     ConfirmEvent.fire(hasHandlers, msg, isConfirm -> {
                         if (isConfirm) {
-                            schedulePresenter.show(schedule -> {
+                            editSchedule(currentSchedule, referenceTime, schedule -> {
 //                                jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                                 final Set<Integer> ids = selectedItems.stream()
                                         .map(JobNode::getId)
@@ -238,7 +243,7 @@ public class JobNodeListHelper {
                     });
                 }
             } else {
-                schedulePresenter.show(schedule -> {
+                editSchedule(currentSchedule, referenceTime, schedule -> {
 //                    jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                     restFactory
                             .create(JOB_NODE_RESOURCE)
@@ -253,6 +258,12 @@ public class JobNodeListHelper {
                 });
             }
         }
+    }
+
+    private void editSchedule(final Schedule schedule,
+                              final ScheduleReferenceTime referenceTime,
+                              final Consumer<Schedule> onOk) {
+        schedulePickerProvider.get().edit(opener, schedule, referenceTime, onOk);
     }
 
     public String getCurrentTaskCountAsStr(final JobNodeAndInfo jobNodeAndInfo) {

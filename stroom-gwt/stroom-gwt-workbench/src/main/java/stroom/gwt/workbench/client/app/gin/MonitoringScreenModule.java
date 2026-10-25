@@ -33,9 +33,6 @@ import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
 import stroom.node.client.view.NodeGroupEditViewImpl;
 import stroom.node.client.view.NodeViewImpl;
-import stroom.schedule.client.SchedulePopup;
-import stroom.schedule.client.SchedulePopup.ScheduleView;
-import stroom.schedule.client.ScheduleViewImpl;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.client.view.TaskManagerViewImpl;
@@ -50,9 +47,6 @@ public class MonitoringScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(SchedulePopup.class,
-                ScheduleView.class,
-                ScheduleViewImpl.class);
         bindPresenterWidget(NodePresenter.class,
                 NodeView.class,
                 NodeViewImpl.class);

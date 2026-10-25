@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,160 +16,90 @@
 
 package stroom.schedule.client;
 
-import stroom.item.client.EventBinder;
-import stroom.job.shared.ScheduleReferenceTime;
-import stroom.job.shared.ScheduleRestriction;
-import stroom.job.shared.ScheduledTimes;
 import stroom.svg.client.IconBox;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Provider;
-
-import java.util.Objects;
-import java.util.function.Consumer;
 
 /// A text field for a schedule's expression (a frequency such as `10m`, or a cron expression), with a
-/// clock icon at its end. Enter or Alt+Down in the field, or a click on the icon, opens the Change
-/// Schedule dialog ([SchedulePopup]), where the schedule's type can be changed too. The field says
-/// it opens a dialog (`aria-haspopup="dialog"`); the icon is a picture, hidden from screen readers.
-/// An expression the server rejects marks the field invalid when it is left.
+/// clock icon at its end. Enter or Alt+Down in the field, or a click on the icon, asks to open the
+/// Change Schedule dialog ([#setOnOpenPicker(Runnable)]), where the schedule's type can be changed
+/// too; a [ScheduleBoxController] attached to it opens it, and checks the schedule with the server
+/// when the box asks ([#setOnCheck(Runnable)]), marking it invalid ([#setInvalid(boolean)]) if the
+/// server rejects it. The field says it opens a dialog (`aria-haspopup="dialog"`); the icon is a
+/// picture, hidden from screen readers.
 ///
-/// The BEM block is `schedule-box` (`schedule-box.css`); its field is a text field.
+/// The BEM block is `schedule-box` (`schedule-box.css`); its field is a text field. Its markup is
+/// `ScheduleBox.ui.xml`.
 public class ScheduleBox
-        extends Composite
+        extends Component
         implements Focus, HasValueChangeHandlers<Schedule> {
 
-    private Provider<SchedulePopup> schedulePresenterProvider;
-    private final TextBox textBox;
-    private final IconBox iconBox;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    IconBox iconBox;
+    @UiField
+    TextBox textBox;
+
     private Schedule value = Schedule
             .builder()
             .type(ScheduleType.CRON)
             .build();
-    private SchedulePopup popup;
     private boolean enabled = true;
-    private boolean readOnly;
-    private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
+    private Runnable onOpenPicker;
+    private Runnable onCheck;
+    private Runnable onChange;
 
-    private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer = (consumer) ->
-            consumer.accept(null);
-
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(iconBox.addClickHandler(event -> showPopup()));
-            registerHandler(textBox.addKeyDownHandler(event -> {
-                // As a date-time box: Enter or Alt+Down opens the dialog
-                final int keyCode = event.getNativeKeyCode();
-                if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
-                    || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
-                    event.preventDefault();
-                    showPopup();
-                }
-            }));
-            registerHandler(textBox.addBlurHandler(event -> validate()));
-            registerHandler(textBox.addFocusHandler(event ->
-                    FieldValidity.setInvalid(textBox.getElement(), false)));
-        }
-    };
-
-    public void validate() {
-        validate(scheduledTimes -> {
-        });
-    }
-
-    public void validate(final Consumer<ScheduledTimes> consumer) {
-        final Schedule schedule = value.copy().expression(textBox.getValue()).build();
-        final SchedulePopup popup = getSchedulePresenter();
-        if (popup != null) {
-            // The box's own dialog checks it (it once made a new dialog for every check, e.g. each
-            // time the box was left)
-            popup.validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (isEnabled() && !isInstant() && (scheduledTimes == null || scheduledTimes.isError())) {
-                    FieldValidity.setInvalid(textBox.getElement(), true);
-                } else {
-                    FieldValidity.setInvalid(textBox.getElement(), false);
-                }
-                if (scheduledTimes != null && scheduledTimes.getSchedule() != null) {
-                    value = scheduledTimes.getSchedule();
-                    updateReadOnly();
-                }
-                consumer.accept(scheduledTimes);
-            });
-        } else {
-            FieldValidity.setInvalid(textBox.getElement(), false);
-            consumer.accept(new ScheduledTimes(schedule, null,
-                    "No schedule presenter has been configured"));
-        }
-    }
-
+    /// Makes a box with an empty cron schedule.
     public ScheduleBox() {
-        textBox = new TextBox();
-        textBox.addStyleName("schedule-box__input stroom-control allow-focus");
-        textBox.getElement().setAttribute("aria-haspopup", "dialog");
-
-        iconBox = new IconBox();
-        iconBox.addStyleName("schedule-box");
-        iconBox.setWidget(textBox, SvgImage.HISTORY);
-
-        initWidget(iconBox);
+        initWidget(BINDER.createAndBindUi(this));
+        iconBox.setOnIconClick(this::openPicker);
+        textBox.addKeyDownHandler(event -> {
+            // As a date-time box: Enter or Alt+Down opens the dialog
+            final int keyCode = event.getNativeKeyCode();
+            if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
+                || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
+                event.preventDefault();
+                openPicker();
+            }
+        });
+        textBox.addBlurHandler(event -> check());
+        textBox.addFocusHandler(event -> FieldValidity.setInvalid(textBox.getElement(), false));
     }
 
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
+    /// @param onOpenPicker Run when the user asks to change the schedule in the dialog, unless the
+    ///                     box is read only or disabled.
+    public void setOnOpenPicker(final Runnable onOpenPicker) {
+        this.onOpenPicker = onOpenPicker;
     }
 
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
+    /// @param onCheck Run when the schedule should be checked: when the box is left, enabled or
+    ///                given a schedule.
+    public void setOnCheck(final Runnable onCheck) {
+        this.onCheck = onCheck;
     }
 
-    public void setSchedulePresenterProvider(final Provider<SchedulePopup> schedulePresenterProvider) {
-        this.schedulePresenterProvider = schedulePresenterProvider;
+    /// @param onChange Run when the user changes the schedule with the dialog.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
-    private void showPopup() {
-        if (!enabled || readOnly) {
-            return;
-        }
-        final SchedulePopup popup = getSchedulePresenter();
-        if (popup != null) {
-            value = value.copy().expression(textBox.getValue()).build();
-            popup.validate(value,
-                    new ScheduleRestriction(true, true, true),
-                    scheduledTimes -> {
-                        if (scheduledTimes != null) {
-                            this.value = scheduledTimes.getSchedule();
-                        }
-                        scheduleReferenceTimeConsumer.accept(scheduleReferenceTime -> {
-                            popup.setScheduleRestriction(scheduleRestriction);
-                            popup.setSchedule(value, scheduleReferenceTime);
-                            popup.show(schedule -> {
-                                if (!Objects.equals(value, schedule)) {
-                                    setValue(schedule, true);
-                                }
-                            });
-                        });
-                    });
-        }
-    }
-
-    private SchedulePopup getSchedulePresenter() {
-        if (popup == null && schedulePresenterProvider != null) {
-            popup = schedulePresenterProvider.get();
-        }
-        return popup;
+    /// @param invalid Whether the schedule is shown as invalid, e.g. as the server rejected it.
+    public void setInvalid(final boolean invalid) {
+        FieldValidity.setInvalid(textBox.getElement(), invalid);
     }
 
     @Override
@@ -177,6 +107,7 @@ public class ScheduleBox
         textBox.setFocus(true);
     }
 
+    /// @param name The text box's form name.
     public void setName(final String name) {
         textBox.setName(name);
     }
@@ -187,9 +118,9 @@ public class ScheduleBox
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         textBox.setEnabled(enabled);
-        iconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || isReadOnly());
         updateReadOnly();
-        validate();
+        check();
     }
 
     /// Makes the schedule read only: it can be read, selected and copied, and stays in the tab
@@ -197,65 +128,99 @@ public class ScheduleBox
     /// with its value greyed.
     ///
     /// @param readOnly Whether the schedule is read only.
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         iconBox.setReadOnly(!enabled || readOnly);
         updateReadOnly();
     }
 
+    /// @return Whether the schedule can be changed.
     public boolean isEnabled() {
         return enabled;
     }
 
-    private boolean isInstant() {
+    /// @return Whether the schedule is an instant one, which has no expression.
+    public boolean isInstant() {
         return ScheduleType.INSTANT.equals(value.getType());
+    }
+
+    /// @return The schedule, as last given or checked.
+    public Schedule getValue() {
+        return value;
+    }
+
+    /// @return The schedule with the expression typed in the field, which may not have been
+    ///         checked yet.
+    public Schedule getEnteredSchedule() {
+        return value.copy().expression(textBox.getValue()).build();
+    }
+
+    /// @param value The schedule to show; null leaves the box as it is.
+    public void setValue(final Schedule value) {
+        setValue(value, false);
+    }
+
+    /// @param value      The schedule to show; null leaves the box as it is.
+    /// @param fireEvents Whether to tell its listeners, as when the user changes it.
+    public void setValue(final Schedule value, final boolean fireEvents) {
+        if (value != null) {
+            setCheckedSchedule(value);
+            textBox.setValue(value.getExpression() != null
+                    ? value.getExpression()
+                    : "");
+            if (fireEvents) {
+                ValueChangeEvent.fire(this, value);
+                if (onChange != null) {
+                    onChange.run();
+                }
+            }
+            check();
+        }
+    }
+
+    /// Takes the schedule as the server read it, without changing the text, e.g. its type.
+    ///
+    /// @param schedule The schedule.
+    public void setCheckedSchedule(final Schedule schedule) {
+        this.value = schedule;
+        updateReadOnly();
+    }
+
+    /// Kept beside [#setOnChange(Runnable)] until its callers have moved.
+    ///
+    /// @param handler Told when the user changes the schedule with the dialog.
+    /// @return The handler's registration.
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Schedule> handler) {
+        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    private void openPicker() {
+        if (enabled && !isReadOnly() && onOpenPicker != null) {
+            onOpenPicker.run();
+        }
+    }
+
+    // Without a controller to check it, it isn't shown as invalid
+    private void check() {
+        if (onCheck != null) {
+            onCheck.run();
+        } else {
+            setInvalid(false);
+        }
     }
 
     // An instant schedule has no expression to type, so the text is read-only, but it stays
     // focusable and Enter (or the icon) still opens the dialog to change the type.
     private void updateReadOnly() {
-        textBox.setReadOnly(readOnly || (enabled && isInstant()));
+        textBox.setReadOnly(isReadOnly() || (enabled && isInstant()));
     }
 
-    public Schedule getValue() {
-        return value;
-    }
 
-    public void setValue(final Schedule value) {
-        setValue(value, false);
-    }
+    // --------------------------------------------------------------------------------
 
-    public void setValue(final Schedule value, final boolean fireEvents) {
-        if (value != null) {
-            this.value = value;
-            if (value.getExpression() != null) {
-                textBox.setValue(value.getExpression());
-            } else {
-                textBox.setValue("");
-            }
 
-            updateReadOnly();
+    interface Binder extends UiBinder<IconBox, ScheduleBox> {
 
-            if (fireEvents) {
-                ValueChangeEvent.fire(this, value);
-            }
-
-            validate();
-        }
-    }
-
-    public void setScheduleRestriction(final ScheduleRestriction scheduleRestriction) {
-        this.scheduleRestriction = scheduleRestriction;
-    }
-
-    @Override
-    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
-            final ValueChangeHandler<Schedule> handler) {
-        return addHandler(handler, ValueChangeEvent.getType());
-    }
-
-    public void setScheduleReferenceTimeConsumer(
-            final Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer) {
-        this.scheduleReferenceTimeConsumer = scheduleReferenceTimeConsumer;
     }
 }
