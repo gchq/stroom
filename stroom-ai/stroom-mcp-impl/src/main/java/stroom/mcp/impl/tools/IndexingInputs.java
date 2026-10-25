@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -200,8 +201,26 @@ class IndexingInputs {
     /// @return How often each path (and named Data entry) is populated, as a share of all events (%), by the action
     /// element of the events that have it; empty when the profile doesn't say.
     static Map<String, Map<String, Double>> populationByAction(final Map<String, Object> summary) {
+        return sharesByAction(summary, StreamSummaries.POPULATION_BY_ACTION);
+    }
+
+    /// @param summary A profile from [#summariseEvents].
+    /// @return Each TypeId's share of all events (%), by the action element of its events, most first; empty when
+    /// the profile doesn't say.
+    static Map<String, Map<String, Double>> typeIdsByAction(final Map<String, Object> summary) {
+        return sharesByAction(summary, StreamSummaries.TYPE_IDS_BY_ACTION);
+    }
+
+    /// @param summary A profile from [#summariseEvents].
+    /// @return What the documentation of an index is given of the events by their action element.
+    static IndexFieldDocs.ByAction byAction(final Map<String, Object> summary) {
+        return new IndexFieldDocs.ByAction(populationByAction(summary), typeIdsByAction(summary));
+    }
+
+    private static Map<String, Map<String, Double>> sharesByAction(final Map<String, Object> summary,
+                                                                   final String key) {
         final Map<String, Map<String, Double>> out = new LinkedHashMap<>();
-        if (summary.get(StreamSummaries.POPULATION_BY_ACTION) instanceof final Map<?, ?> byAction) {
+        if (summary.get(key) instanceof final Map<?, ?> byAction) {
             byAction.forEach((action, paths) -> {
                 final Map<String, Double> shares = new LinkedHashMap<>();
                 if (paths instanceof final Map<?, ?> given) {
