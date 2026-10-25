@@ -327,7 +327,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                         // dialog open but dead: Escape is the only way out, and it discards
                         // everything the user typed. The three sibling dialogs
                         // (FloorMapSetScaleController, FloorMapGroupEditController,
-                        // FloorMapLayerStylePresenter) all pass e::reset for this reason.
+                        // FloorMapLayerStyleController) all pass e::reset for this reason.
                         final String type = getView().getType();
                         if (type == null || type.trim().isEmpty()) {
                             AlertEvent.fireError(this,

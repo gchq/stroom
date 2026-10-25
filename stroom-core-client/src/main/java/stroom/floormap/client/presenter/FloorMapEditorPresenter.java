@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapSetScaleController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
@@ -155,7 +156,7 @@ public class FloorMapEditorPresenter
     /// The dialog that turns a measured line into the map's scale.
     private final Provider<FloorMapSetScaleController> setScaleProvider;
     private final FloorMapLayersPresenter floorMapLayersPresenter;
-    private final FloorMapLayerStylePresenter floorMapLayerStylePresenter;
+    private final FloorMapLayerStyleController layerStyle;
 
     /// Cumulative set of types observed this document session — fact types from
     /// the canvas plus event types from the events query and the Map tab
@@ -219,7 +220,7 @@ public class FloorMapEditorPresenter
                                    final Provider<FloorMapObjectEditPresenter> propertiesProvider,
                                    final Provider<FloorMapDockPresenter> dockProvider,
                                    final Provider<FloorMapLayersPresenter> layersProvider,
-                                   final Provider<FloorMapLayerStylePresenter> layerStyleProvider,
+                                   final Provider<FloorMapLayerStyleController> layerStyleProvider,
                                    final Provider<FloorMapSetScaleController> setScaleProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -242,7 +243,7 @@ public class FloorMapEditorPresenter
         this.setScaleProvider = setScaleProvider;
         this.floorMapLayersPresenter = make(layersProvider);
         this.floorMapLayersPresenter.setEditorMode(true);
-        this.floorMapLayerStylePresenter = make(layerStyleProvider);
+        this.layerStyle = make(layerStyleProvider);
 
         // Always in edit mode, with the grid overlay shown as an editing aid.
         floorMapCanvasPresenter.setEditMode(true);
@@ -288,7 +289,7 @@ public class FloorMapEditorPresenter
         floorMapLayersPresenter.setTypeStylesEditHandler(this::onLayerTypeStylesEdited);
         // Open the appearance dialog (shape or image, plus colour) for a layer,
         // then hand the edited style back to the panel.
-        floorMapLayersPresenter.setStyleEditor(floorMapLayerStylePresenter::show);
+        floorMapLayersPresenter.setStyleEditor(layerStyle::show);
         // Full facts-store type-discovery scan behind the panel's Discover action.
         floorMapLayersPresenter.setDiscoverHandler(this::onDiscoverTypes);
 
@@ -380,7 +381,7 @@ public class FloorMapEditorPresenter
         docSession.reconcileAfterRead(document);
 
         // The appearance dialog picks layer graphics from this document's assets.
-        floorMapLayerStylePresenter.setDocument(document);
+        layerStyle.setDocument(document);
 
         // Populate the Layers panel from the document's type styles. Reset the
         // observed-type accumulator for the (re-)opened document.

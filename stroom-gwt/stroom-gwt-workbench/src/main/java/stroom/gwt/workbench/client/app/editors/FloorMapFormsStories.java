@@ -17,10 +17,10 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.floormap.client.component.FloorMapGroupEdit;
+import stroom.floormap.client.component.FloorMapLayerStyle;
+import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
 import stroom.floormap.client.component.FloorMapSetScale;
 import stroom.floormap.client.component.MemberCandidate;
-import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView.GraphicMode;
-import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
@@ -173,7 +173,7 @@ public final class FloorMapFormsStories {
     // The layer style dialog's content, drawing a graphic, with no image chosen, as its presenter
     // shows it
     private static Widget layerStyle(final GraphicMode mode) {
-        final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
+        final FloorMapLayerStyle view = new FloorMapLayerStyle();
         view.setMode(mode);
         view.getAssetBox().setText("None");
         return view.asWidget();

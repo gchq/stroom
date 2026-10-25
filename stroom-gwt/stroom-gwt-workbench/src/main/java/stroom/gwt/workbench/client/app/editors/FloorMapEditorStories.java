@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -57,6 +58,12 @@ public final class FloorMapEditorStories {
             {"type": "FloorMap", "uuid": "floormap-1", "name": "Office",
               "factsStoreRef": {"type": "SqlTemporalStore", "uuid": "store-1", "name": "office"}}""";
 
+    // The map with a layer for desks, drawn as blue circles
+    private static final String DOC_WITH_LAYER = """
+            {"type": "FloorMap", "uuid": "floormap-1", "name": "Office",
+              "factsStoreRef": {"type": "SqlTemporalStore", "uuid": "store-1", "name": "office"},
+              "typeStyles": [{"type": "desk", "shape": "CIRCLE", "colour": "#336699"}]}""";
+
     private static final String FIND = "/sqltemporalstore/v1/find";
 
     // FloorMapEditorPresenter.DISCOVER_PAGE_SIZE
@@ -78,9 +85,29 @@ public final class FloorMapEditorStories {
                   "value": "{\\"type\\": \\"gate\\", \\"coords\\": [50, 0]}"}],
               "pageResponse": {"offset": 2, "length": 1, "total": 3, "exact": true}}""";
 
-    private static final RestFixtures FIXTURES = DocEditors.docSelectionRoutes(
-                    DocEditors.permissionRoutes(RestFixtures.builder()))
-            .get("/floormap/v1/floormap-1", RestReply.json(DOC))
+    private static final RestFixtures FIXTURES = fixtures(DOC);
+
+    // The canvas's focusable element (FloorMapCanvasViewImpl's focus panel)
+    private static final String CANVAS = ".stroom-floormap-canvas-focus";
+
+    // The canvas's context menu with nothing selected, named for what it acts on
+    private static final String MAP_ACTIONS = "Map Actions";
+
+    // The desk layer's swatch, which opens its appearance
+    // The desk layer's appearance dialog's title
+    private static final String APPEARANCE = "Appearance — desk";
+
+    private static final String DESK_SWATCH = "Edit the appearance of the desk layer (shape & colour)";
+
+    private FloorMapEditorStories() {
+        // Static utility
+    }
+
+    // The tab's routes, for a document
+    private static RestFixtures fixtures(final String doc) {
+        return DocEditors.docSelectionRoutes(
+                        DocEditors.permissionRoutes(RestFixtures.builder()))
+                .get("/floormap/v1/floormap-1", RestReply.json(doc))
             .put("/floormap/v1/floormap-1", request -> RestReply.json(request.getBody()))
             // An empty store: no time range and no facts
             .post("/sqltemporalstore/v1/timeRange", RestReply.json("{}"))
@@ -93,16 +120,7 @@ public final class FloorMapEditorStories {
             .post("/sqltemporalstore/v1/find", RestReply.json(
                     "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, \"total\": 0, "
                     + "\"exact\": true}}"))
-            .build();
-
-    // The canvas's focusable element (FloorMapCanvasViewImpl's focus panel)
-    private static final String CANVAS = ".stroom-floormap-canvas-focus";
-
-    // The canvas's context menu with nothing selected, named for what it acts on
-    private static final String MAP_ACTIONS = "Map Actions";
-
-    private FloorMapEditorStories() {
-        // Static utility
+                .build();
     }
 
     /// Adds the stories to the registry.
@@ -157,7 +175,35 @@ public final class FloorMapEditorStories {
                                     "{\"pageRequest\": {\"length\": " + DISCOVER_PAGE_SIZE + "}}")).size())
                             .toBe(2);
                     DocEditors.expectNoProblems(play);
+                })
+                // A layer's swatch opens its appearance, drawing its shape in its colour; Cancel
+                // closes it, and it opens again, where OK keeps what it shows
+                .story("LayerAppearance", context -> render(context, fixtures(DOC_WITH_LAYER)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", DESK_SWATCH));
+                    Play dialog = appearance(screen);
+                    play.expect(dialog.getByRole("radio", "Shape")).toBeChecked();
+                    play.expect(dialog.getByRole("combobox", "Shape")).toHaveValue("CIRCLE");
+                    play.expect(dialog.getByRole("radio", "Icon")).not().toBeChecked();
+                    play.expect(dialog.getByRole("button",
+                            "Upload a new image into this document's assets")).toBeDisabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(APPEARANCE)).toBeNull());
+
+                    play.click(play.getByRole("button", DESK_SWATCH));
+                    dialog = appearance(screen);
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText(APPEARANCE)).toBeNull());
+                    play.expect(play.getByRole("button", DESK_SWATCH)).toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // The desk layer's appearance dialog, once it is shown
+    private static Play appearance(final Play screen) {
+        final Query title = screen.findByText(APPEARANCE, StroomDom.DIALOG_TITLE);
+        return screen.within(title.closest(StroomDom.DIALOG));
     }
 
     // Discover's find of the page starting at offset
@@ -175,8 +221,12 @@ public final class FloorMapEditorStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
-        return DocEditors.render(context, FIXTURES, false,
+        return DocEditors.render(context, fixtures, false,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
                         injector.getFloorMapEditorPresenter(),

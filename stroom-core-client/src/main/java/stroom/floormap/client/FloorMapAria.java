@@ -228,6 +228,24 @@ public final class FloorMapAria {
         control.setAttribute(ARIA_LABELLEDBY, cellId(grid, row, column));
     }
 
+    /// As [#labelledBy(UIObject, String)], for a composite widget whose real control is inside it,
+    /// e.g. a selection box, whose combobox is its text box: the name goes on that control, where on
+    /// the wrapper it would be dropped (see [#labelInnerControl(UIObject, String)]).
+    ///
+    /// @param target The composite widget holding the control to name.
+    /// @param id     The id of the element whose text names it.
+    public static void labelledByInnerControl(final UIObject target, final String id) {
+        if (target == null) {
+            return;
+        }
+        final Element control = firstFocusable(target.getElement());
+        if (control == null) {
+            labelledBy(target, id);
+            return;
+        }
+        control.setAttribute(ARIA_LABELLEDBY, id);
+    }
+
     // The id of a grid cell, given one if it has none
     private static String cellId(final Grid grid, final int row, final int column) {
         final Element cell = grid.getCellFormatter().getElement(row, column);

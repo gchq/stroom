@@ -1608,6 +1608,11 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals
   are allowed.
+* Unused code met in wave 7 (25 October 2026): `FloorMapAria.labelledByCell`,
+  `labelledByCellInnerControl`, `layoutTable` and their private `cellId`, for a `Grid` laying out a
+  form; the floor map's dialogs are templates with `<table role="presentation">` now, and name
+  their controls with `labelledBy` and `labelledByInnerControl`. Delete them once removals are
+  allowed.
 * ~~The item selection dialog's spinner (a data viewer's "Select Record") had no accessible name:
   its name label was never given text (found 25 October 2026 in wave 4).~~ Fixed: the spinner is
   named "Item number" in `ItemSelection.ui.xml`; story `Widgets/Editors & Viewers/ItemNavigator`
