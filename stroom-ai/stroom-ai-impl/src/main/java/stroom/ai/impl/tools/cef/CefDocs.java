@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.generation.XmlElement;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +38,9 @@ import java.util.stream.Collectors;
 public final class CefDocs {
 
     private static final Pattern QUOTED = Pattern.compile("'[^']*'");
+    // The most examples given a field the lines gave none of, or a field not sent.
+    private static final int MAX_EXAMPLES = 3;
+    private static final Pattern NETWORK_ACTION = Pattern.compile("^EventDetail/Network/[^/]+/");
     private static final List<String> TABLE_HEAD = List.of(
             "| Event path | CEF key | ArcSight field | What it holds | Example |",
             "| --- | --- | --- | --- | --- |");
@@ -69,6 +73,25 @@ public final class CefDocs {
                                       final Map<KindKey, String> examples,
                                       final String layout,
                                       final Descriptions described) {
+        return planMarkdown(plan, examples, null, layout, described);
+    }
+
+    /// [#planMarkdown(CefPlan, Map, String, Descriptions)], with what the sample Events show, for a pipeline's
+    /// administrators (asked for by the user; not in the Stroom MCP server): an example for each field the lines
+    /// gave none of, from the Events of its kind; under each event type, the TypeIds its Events have; and at the
+    /// bottom of each, the fields not sent, with a sample of each.
+    ///
+    /// @param plan      The plan.
+    /// @param examples  Example values by (kind or `common` or `header`, key), from sampled lines.
+    /// @param events    The sample Events, or null for none (the section as the Stroom MCP server wrote it).
+    /// @param layout    [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described The field descriptions (what each means here), or null for ArcSight's words.
+    /// @return The section's text, ending with a new line.
+    public static String planMarkdown(final CefPlan plan,
+                                      final Map<KindKey, String> examples,
+                                      final List<XmlElement> events,
+                                      final String layout,
+                                      final Descriptions described) {
         final List<String> out = new ArrayList<>();
         out.add("Each Event becomes one CEF (ArcSight Common Event Format) line: `CEF:0|Device Vendor|Device "
                 + "Product|Device Version|Device Event Class ID|Name|Severity|` then key=value pairs. "
@@ -91,8 +114,12 @@ public final class CefDocs {
                     + " | " + cell(examples.getOrDefault(new KindKey("header", field.name()), "")) + " |");
         }
         out.add("");
-        final Tables tables = new Tables(examples, described);
+        final Tables tables = new Tables(events == null
+                ? examples
+                : withEventExamples(plan, examples, events), described);
         final boolean compact = FieldDocs.COMPACT.equals(layout);
+        final boolean bySection = events != null && !compact;
+        final List<Map<String, String>> placed = new ArrayList<>();
         if (compact) {
             out.addAll(List.of("### Fields", "", "| Event type | Event path | CEF key | ArcSight field | What it "
                                                  + "holds | Example |", "| --- | --- | --- | --- | --- | --- |"));
@@ -105,6 +132,9 @@ public final class CefDocs {
             out.addAll(TABLE_HEAD);
             out.addAll(tables.rows(plan.common(), "common", false));
             out.add("");
+            if (bySection) {
+                out.addAll(notIncluded(plan, List.of(CefDraft.EVERY_EVENT), events, placed));
+            }
         }
         // Kinds with roughly the same keys together, under one heading naming each (asked for by the user: Send and
         // Receive, say): one row per key, its paths together, the examples each kind got.
@@ -116,26 +146,125 @@ public final class CefDocs {
                 ? List.of()
                 : FieldDocs.similarGroups(signatures);
         for (final List<String> group : groups) {
-            if (group.size() == 1) {
-                out.addAll(List.of("### " + group.getFirst() + " events", ""));
-                out.addAll(TABLE_HEAD);
-                out.addAll(tables.rows(plan.events().get(group.getFirst()), group.getFirst(), false));
-                out.add("");
-                continue;
-            }
             out.addAll(List.of("### " + String.join(", ", group) + " events", ""));
+            if (bySection) {
+                final String typeIds = typeIdsOf(group, events);
+                if (!typeIds.isEmpty()) {
+                    out.addAll(List.of(typeIds, ""));
+                }
+            }
             out.addAll(TABLE_HEAD);
-            out.addAll(mergedRows(plan, group, tables, examples));
+            out.addAll(group.size() == 1
+                    ? tables.rows(plan.events().get(group.getFirst()), group.getFirst(), false)
+                    : mergedRows(plan, group, tables, tables.examples()));
             out.add("");
+            if (bySection) {
+                out.addAll(notIncluded(plan, group, events, placed));
+            }
         }
-        if (!plan.notSent().isEmpty()) {
+        // What no section took (all of it, without the sample Events or in the compact layout).
+        final List<Map<String, String>> rest = plan.notSent().stream()
+                .filter(n -> !placed.contains(n))
+                .toList();
+        if (!rest.isEmpty()) {
             out.addAll(List.of("### Not sent", "", "Event values the sample holds that no CEF key carries.", "",
                     "| Event path | Event type | Why |", "| --- | --- | --- |"));
-            plan.notSent().forEach(n -> out.add("| `" + cell(n.get("path")) + "` | " + cell(n.get("event_type"))
-                                                + " | " + cell(n.get("why")) + " |"));
+            rest.forEach(n -> out.add("| `" + cell(n.get("path")) + "` | " + cell(n.get("event_type"))
+                                      + " | " + cell(n.get("why")) + " |"));
             out.add("");
         }
         return PyText.rstrip(String.join("\n", out)) + "\n";
+    }
+
+    // The lines' examples, and for each field they gave none of, up to three values of its path in the Events of its
+    // kind (every Event's, for a field every event gets). A path the draft computes (a fallback, local-name()) is
+    // read by no Event, and keeps none.
+    private static Map<KindKey, String> withEventExamples(final CefPlan plan,
+                                                          final Map<KindKey, String> examples,
+                                                          final List<XmlElement> events) {
+        final Map<KindKey, String> out = new LinkedHashMap<>(examples);
+        for (final CefField f : plan.common()) {
+            out.computeIfAbsent(new KindKey("common", f.key()), k -> said(valuesOf(events, null, f.path())));
+        }
+        plan.events().forEach((kind, fields) -> fields.forEach(f -> out.computeIfAbsent(new KindKey(kind, f.key()),
+                k -> said(valuesOf(events, List.of(kind), f.path())))));
+        out.values().removeIf(String::isEmpty);
+        return out;
+    }
+
+    // Up to three distinct values a path holds in the Events of the kinds (all of them for null).
+    private static List<String> valuesOf(final List<XmlElement> events, final List<String> kinds, final String path) {
+        final String key = NETWORK_ACTION.matcher(path).replaceFirst("EventDetail/Network/*/");
+        final Set<String> found = new LinkedHashSet<>();
+        for (final XmlElement event : events) {
+            if (kinds != null && !kinds.contains(CefEvents.eventKind(event))) {
+                continue;
+            }
+            final String value = CefEvents.eventValues(event).get(key);
+            if (JsonValues.truthy(value) && !value.isBlank()) {
+                found.add(value.strip());
+            }
+            if (found.size() == MAX_EXAMPLES) {
+                break;
+            }
+        }
+        return List.copyOf(found);
+    }
+
+    private static String said(final List<String> values) {
+        return String.join(", ", values);
+    }
+
+    // The TypeIds a section's Events have, most first, each with its share of the sample's Events.
+    private static String typeIdsOf(final List<String> kinds, final List<XmlElement> events) {
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        for (final XmlElement event : events) {
+            if (kinds.contains(CefEvents.eventKind(event))) {
+                final String typeId = CefEvents.eventValues(event).get("EventDetail/TypeId");
+                if (JsonValues.truthy(typeId)) {
+                    counts.merge(typeId.strip(), 1, Integer::sum);
+                }
+            }
+        }
+        if (counts.isEmpty()) {
+            return "";
+        }
+        return "TypeIds: " + counts.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(e -> "`" + e.getKey() + "` (" + PyText.formatG(100.0 * e.getValue() / events.size()) + "%)")
+                .collect(Collectors.joining(", ")) + ".";
+    }
+
+    // A section's fields not sent, with a sample of each: those of its kinds (or of every event), noted as placed.
+    private static List<String> notIncluded(final CefPlan plan,
+                                            final List<String> kinds,
+                                            final List<XmlElement> events,
+                                            final List<Map<String, String>> placed) {
+        final List<Map<String, String>> entries = plan.notSent().stream()
+                .filter(n -> kinds.contains(n.get("event_type")))
+                .toList();
+        if (entries.isEmpty()) {
+            return List.of();
+        }
+        placed.addAll(entries);
+        final boolean several = kinds.size() > 1;
+        final List<String> out = new ArrayList<>(List.of("#### Fields not included", "",
+                "Event values the sample holds that no CEF key carries.", "", several
+                        ? "| Event path | Event type | Why | Example |"
+                        : "| Event path | Why | Example |", several
+                        ? "| --- | --- | --- | --- |"
+                        : "| --- | --- | --- |"));
+        for (final Map<String, String> n : entries) {
+            final String kind = n.get("event_type");
+            final String example = said(valuesOf(events, CefDraft.EVERY_EVENT.equals(kind)
+                    ? null
+                    : List.of(kind), n.get("path")));
+            out.add("| `" + cell(n.get("path")) + "` | " + (several
+                    ? cell(kind) + " | "
+                    : "") + cell(n.get("why")) + " | " + cell(example) + " |");
+        }
+        out.add("");
+        return out;
     }
 
     // One row per key of kinds shown together: its paths together, and each kind's example where they differ.

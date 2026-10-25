@@ -114,6 +114,20 @@ class TestCefPlan {
     }
 
     @Test
+    void aRecordKeyIsAPathFromTheEventWithNoPrefix() {
+        // Seen: //d:EventSource/d:SessionId, its prefix declared nowhere, failing only once Stroom ran the XSLT.
+        assertThat(CefPlan.kafkaKeyProblems("//d:EventSource/d:SessionId")).hasSize(2)
+                .anySatisfy(problem -> assertThat(problem).contains("no namespace prefix ('d:')"))
+                .anySatisfy(problem -> assertThat(problem).contains("a path from the Event, not from the document"));
+        assertThat(CefPlan.kafkaKeyProblems("EventSource/SessionId")).isEmpty();
+        // Functions, axes and the prefixes the XSLT declares are not prefixes to refuse.
+        assertThat(CefPlan.kafkaKeyProblems("concat(EventSource/User/Id, '-', xs:string(EventSource/SessionId))"))
+                .isEmpty();
+        assertThat(CefPlan.kafkaKeyProblems("child::EventSource/SessionId")).isEmpty();
+        assertThat(CefPlan.kafkaKeyProblems(null)).isEmpty();
+    }
+
+    @Test
     void aValueThatDoesNotFitItsStandardKeyGoesToASlot() {
         // One Client "IPAddress" is a host name: src takes IPv4 addresses only.
         final CefDraft.Drafted drafted = CefFixtures.drafted();
@@ -246,6 +260,35 @@ class TestCefPlan {
         final String compact = plan.markdown(examples, FieldDocs.COMPACT, null);
         assertThat(compact).doesNotContain("### Every event", "### View events")
                 .contains("| View | the event's kind (View) | act | deviceAction |", "| every event | ");
+    }
+
+    @Test
+    void withTheSampleEventsEachSectionSaysItsTypeIdsExamplesAndFieldsNotIncluded() {
+        // Asked for by the user, for a pipeline's administrators: an example for every field, the TypeIds of each
+        // event type, and the fields not sent at the bottom of each, with a sample of each.
+        final CefPlan plan = CefFixtures.drafted().plan().withEvents(Map.of("Authenticate", List.of(
+                CefField.of("EventDetail/Authenticate/User/Id", "duser"))));
+        final List<Map<String, String>> notSent = new ArrayList<>(plan.notSent());
+        notSent.add(Map.of("path", "EventDetail/Authenticate/Data[@Name='session_id']/@Value", "event_type",
+                "Authenticate", "why", "left out by the user"));
+        final CefPlan withNotSent = plan.withNotSent(notSent);
+        final List<XmlElement> events = CefFixtures.events();
+
+        final String text = withNotSent.markdown(Map.of(), events, FieldDocs.BY_EVENT_TYPE, null);
+
+        final String logons = text.split("### Authenticate events")[1].split("\n### ")[0];
+        assertThat(logons).contains("TypeIds: `User-Login` (", "| `EventDetail/Authenticate/User/Id` | duser |");
+        // An example from the Events, though no line gave one.
+        assertThat(logons.lines().filter(line -> line.startsWith("| `EventDetail/Authenticate/User/Id`")))
+                .singleElement().asString().doesNotEndWith("|  |");
+        assertThat(logons).contains("#### Fields not included",
+                "| `EventDetail/Authenticate/Data[@Name='session_id']/@Value` | left out by the user | 6857 |");
+        // Placed in its section: not again at the end.
+        assertThat(text.split("### Not sent", -1).length == 1
+                   || !text.split("### Not sent")[1].contains("session_id")).isTrue();
+        // Without the Events: as the Stroom MCP server wrote it.
+        assertThat(withNotSent.markdown(Map.of(), FieldDocs.BY_EVENT_TYPE, null))
+                .doesNotContain("#### Fields not included", "TypeIds:").contains("### Not sent");
     }
 
     @Test
