@@ -165,6 +165,22 @@ public final class FloorMapMapStories {
                     play.expect(tracking.queryByText("desk-1")).toBeNull();
                     DocEditors.expectNoProblems(play);
                 })
+                // The timeline's Playback Settings button opens its settings, looping playback, with
+                // Show All off until there is data; a second press closes them
+                .story("TimelineSettings", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Play screen = play.screen();
+                    final Query button = play.getByRole("button", "Playback Settings");
+                    play.click(button);
+                    final Query loop = screen.findByRole("checkbox", "Loop Playback");
+                    play.expect(loop).toBeChecked();
+                    play.expect(screen.getByRole("button", StroomDom.button("Show All"))).toBeDisabled();
+                    play.expect(screen.getByRole("group", "Timeline start date and time")).toBeInTheDocument();
+                    play.click(button);
+                    play.waitFor(() -> play.expect(screen.queryByRole("checkbox", "Loop Playback")).toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Groups panel lists the document's groups, each with its number of members
                 // and how many of them have a position on the map at this time
                 .story("Groups", FloorMapMapStories::render)

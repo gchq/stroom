@@ -25,7 +25,7 @@
         <!-- Loop playback toggle -->
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-row">
             <g:Label text="Loop Playback" addStyleNames="stroom-floormap-timeline-settings-label" />
-            <tickbox:TickBox ui:field="loopCheckBox" identity="floorMapTimelineLoop" label="" />
+            <tickbox:TickBox ui:field="loopCheckBox" identity="floorMapTimelineLoop" label="" ariaLabel="Loop Playback"/>
         </g:FlowPanel>
 
         <!-- Date Range -->

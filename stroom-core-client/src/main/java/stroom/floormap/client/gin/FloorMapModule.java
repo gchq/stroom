@@ -51,16 +51,12 @@ import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObje
 import stroom.floormap.client.presenter.FloorMapPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
-import stroom.floormap.client.presenter.FloorMapSetScalePresenter;
-import stroom.floormap.client.presenter.FloorMapSetScalePresenter.FloorMapSetScaleView;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
-import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter;
-import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorMapTimelineSettingsView;
 import stroom.floormap.client.presenter.FloorMapTrackingPresenter;
 import stroom.floormap.client.presenter.FloorMapTrackingPresenter.FloorMapTrackingView;
 import stroom.floormap.client.view.FloorMapCanvasViewImpl;
@@ -78,10 +74,8 @@ import stroom.floormap.client.view.FloorMapLayersViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapQueryViewImpl;
-import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimeListViewImpl;
-import stroom.floormap.client.view.FloorMapTimelineSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineViewImpl;
 import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 
@@ -130,10 +124,6 @@ public class FloorMapModule extends PluginModule {
                 FloorMapTimelineView.class,
                 FloorMapTimelineViewImpl.class);
 
-        bindPresenterWidget(FloorMapTimelineSettingsPresenter.class,
-                FloorMapTimelineSettingsView.class,
-                FloorMapTimelineSettingsViewImpl.class);
-
         bindPresenterWidget(FloorMapQueryPresenter.class,
                 FloorMapQueryView.class,
                 FloorMapQueryViewImpl.class);
@@ -173,9 +163,5 @@ public class FloorMapModule extends PluginModule {
         bindPresenterWidget(FloorMapGroupEditPresenter.class,
                 FloorMapGroupEditView.class,
                 FloorMapGroupEditViewImpl.class);
-
-        bindPresenterWidget(FloorMapSetScalePresenter.class,
-                FloorMapSetScaleView.class,
-                FloorMapSetScaleViewImpl.class);
     }
 }

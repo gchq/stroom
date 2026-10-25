@@ -326,7 +326,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                         // reset() or hide() releases it. Returning without either leaves the
                         // dialog open but dead: Escape is the only way out, and it discards
                         // everything the user typed. The three sibling dialogs
-                        // (FloorMapSetScalePresenter, FloorMapGroupEditPresenter,
+                        // (FloorMapSetScaleController, FloorMapGroupEditPresenter,
                         // FloorMapLayerStylePresenter) all pass e::reset for this reason.
                         final String type = getView().getType();
                         if (type == null || type.trim().isEmpty()) {

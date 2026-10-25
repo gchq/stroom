@@ -19,6 +19,7 @@ package stroom.floormap.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FloorMapTimelineSettingsController;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
@@ -75,7 +76,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// so the server is not overwhelmed at high playback speeds.
     private static final double PLAYBACK_QUERY_INTERVAL_MS = 300.0;
 
-    private final FloorMapTimelineSettingsPresenter settingsPresenter;
+    private final FloorMapTimelineSettingsController settings;
 
     private long startTime;
     private long endTime;
@@ -153,11 +154,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     @Inject
     public FloorMapTimelinePresenter(final EventBus eventBus,
                                      final FloorMapTimelineView view,
-                                     final FloorMapTimelineSettingsPresenter settingsPresenter,
+                                     final FloorMapTimelineSettingsController settings,
                                      final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(settingsPresenter);
-        this.settingsPresenter = settingsPresenter;
+        this.settings = own(settings);
         this.dateTimeFormatter = dateTimeFormatter;
 
         view.setScrubHandler(percentage -> {
@@ -201,15 +201,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         });
 
         // Forward date changes from the settings popup back to the timeline.
-        //noinspection unused, CodeBlock2Expr
-        own(settingsPresenter.addStartTimeChangeHandler(e -> {
-            applyRange(settingsPresenter.getStartTime(), this.endTime);
-        }));
-
-        //noinspection unused, CodeBlock2Expr
-        own(settingsPresenter.addEndTimeChangeHandler(e -> {
-            applyRange(this.startTime, settingsPresenter.getEndTime());
-        }));
+        settings.setOnStartChange(() -> applyRange(settings.getStartTime(), this.endTime));
+        settings.setOnEndChange(() -> applyRange(this.startTime, settings.getEndTime()));
 
         getView().setPlayPauseHandler(() -> {
             // applyRange and setTimeRange both refuse an unusable range, so one can
@@ -265,17 +258,17 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         });
 
         // Settings button opens the popup anchored above the settings icon.
-        getView().setSettingsHandler(() -> settingsPresenter.show(getView().getSettingsButtonWidget()));
+        getView().setSettingsHandler(() -> settings.show(getView().getSettingsButtonWidget()));
 
         // Speed badge opens a menu of playback speeds anchored above the badge.
         getView().setSpeedBadgeHandler(this::showSpeedMenu);
 
         // Loop/stop-at-end toggle: default to looping.
-        settingsPresenter.setLoopPlayback(true);
+        settings.setLoopPlayback(true);
 
         // Wire the Show All button: disabled until we have histogram data with a valid range.
-        settingsPresenter.setShowAllEnabled(false);
-        settingsPresenter.setShowAllHandler(() -> {
+        settings.setShowAllEnabled(false);
+        settings.setOnShowAll(() -> {
             if (FloorMapPlaybackRange.canFitTo(dataRangeMin, dataRangeMax)) {
                 // Apply a small 5% padding on each side so the first/last events are not
                 // flush against the edges of the histogram.
@@ -344,8 +337,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// and fires no change event.
     private void applyRange(final long start, final long end) {
         if (!FloorMapPlaybackRange.isUsable(start, end)) {
-            settingsPresenter.setStartTime(this.startTime);
-            settingsPresenter.setEndTime(this.endTime);
+            settings.setStartTime(this.startTime);
+            settings.setEndTime(this.endTime);
             return;
         }
         this.startTime = start;
@@ -404,8 +397,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
         this.startTime = start;
         this.endTime = end;
-        settingsPresenter.setStartTime(start);
-        settingsPresenter.setEndTime(end);
+        settings.setStartTime(start);
+        settings.setEndTime(end);
         // Re-evaluate: if the current time now falls within the new range, clear the indicator.
         if (currentTime >= start && currentTime <= end) {
             clearOutOfRange();
@@ -652,7 +645,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                     long newTime = currentTime + (long) (delta * playbackSpeed * SPEED_MULTIPLIER);
 
                     if (newTime > endTime) {
-                        if (settingsPresenter.isLoopPlayback()) {
+                        if (settings.isLoopPlayback()) {
                             // Loop: wrap back to the start.
                             newTime = startTime;
                             // Deliberately NOT resetting the query throttle here. Forcing a
@@ -739,7 +732,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         if (FloorMapPlaybackRange.canFitTo(min, max)) {
             this.dataRangeMin = min;
             this.dataRangeMax = max;
-            settingsPresenter.setShowAllEnabled(true);
+            settings.setShowAllEnabled(true);
         } else {
             clearDataRange();
         }
@@ -753,7 +746,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     public void clearDataRange() {
         this.dataRangeMin = Long.MAX_VALUE;
         this.dataRangeMax = Long.MIN_VALUE;
-        settingsPresenter.setShowAllEnabled(false);
+        settings.setShowAllEnabled(false);
     }
 
     /// Whether a data extent is known, i.e. whether "Show All" is enabled.

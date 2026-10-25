@@ -74,10 +74,40 @@ public final class ControllerDialog {
             throw new IllegalStateException(dialog.getControllerNode().getName()
                                             + " can't be shown as a dialog: it was made without an event bus");
         }
-        final DialogHost host = new DialogHost(dialog);
+        final DialogHost host = new DialogHost(dialog, true);
         HOSTS.put(dialog, host);
         opener.getControllerNode().adopt(host.getControllerNode());
         disposeWhenHidden(host);
+        return ShowPopupEvent.builder(host);
+    }
+
+    /// Starts showing a controller as a dialog or popup that is shown again, e.g. settings kept
+    /// between showings: it stays owned by what owns it, and isn't disposed when it is hidden. Each
+    /// showing is through the same presenter, so showing it while it is shown hides it, as the popup
+    /// manager does for any popup asked to show twice (a second click on the button that opens it).
+    ///
+    /// ```java
+    /// // In the timeline's presenter, which owns its settings' controller
+    /// ControllerDialog.show(settings).popupType(PopupType.POPUP).caption("Timeline Settings").fire();
+    /// ```
+    ///
+    /// @param dialog The controller, owned by what shows it. It must have been made with the event
+    ///               bus, which the popup manager listens to.
+    /// @return The popup's builder: set its type, caption and handlers, then `fire()` it.
+    /// @throws IllegalStateException If the controller was made without an event bus.
+    public static ShowPopupEvent.Builder show(final Controller dialog) {
+        Objects.requireNonNull(dialog, "dialog");
+        if (dialog.getEventBus() == null) {
+            throw new IllegalStateException(dialog.getControllerNode().getName()
+                                            + " can't be shown as a dialog: it was made without an event bus");
+        }
+        DialogHost host = HOSTS.get(dialog);
+        if (host == null) {
+            host = new DialogHost(dialog, false);
+            HOSTS.put(dialog, host);
+            // The controller owns the presenter it is shown through, so it goes with it
+            dialog.getControllerNode().adopt(host.getControllerNode());
+        }
         return ShowPopupEvent.builder(host);
     }
 
@@ -141,13 +171,15 @@ public final class ControllerDialog {
     // --------------------------------------------------------------------------------
 
 
-    // The presenter the popup manager shows, which owns the controller, so disposing it (once
-    // hidden) disposes the controller
+    // The presenter the popup manager shows. One for one use owns the controller, so disposing it
+    // (once hidden) disposes the controller; one shown again is owned by it instead
     static final class DialogHost extends MyPresenterWidget<ControllerView> {
 
-        private DialogHost(final Controller content) {
+        private DialogHost(final Controller content, final boolean ownsContent) {
             super(content.getEventBus(), new ControllerView(content));
-            own(content);
+            if (ownsContent) {
+                own(content);
+            }
             onDispose(() -> HOSTS.remove(content));
         }
 

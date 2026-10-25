@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FloorMapSetScaleController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.editor.FloorMapFactEndMessages;
@@ -152,7 +153,7 @@ public class FloorMapEditorPresenter
     private final FloorMapObjectEditPresenter floorMapObjectEditPresenter;
 
     /// The dialog that turns a measured line into the map's scale.
-    private final FloorMapSetScalePresenter floorMapSetScalePresenter;
+    private final Provider<FloorMapSetScaleController> setScaleProvider;
     private final FloorMapLayersPresenter floorMapLayersPresenter;
     private final FloorMapLayerStylePresenter floorMapLayerStylePresenter;
 
@@ -219,7 +220,7 @@ public class FloorMapEditorPresenter
                                    final Provider<FloorMapDockPresenter> dockProvider,
                                    final Provider<FloorMapLayersPresenter> layersProvider,
                                    final Provider<FloorMapLayerStylePresenter> layerStyleProvider,
-                                   final Provider<FloorMapSetScalePresenter> setScaleProvider) {
+                                   final Provider<FloorMapSetScaleController> setScaleProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.model = new FloorMapEditorModel(
@@ -238,7 +239,7 @@ public class FloorMapEditorPresenter
         this.floorMapObjectEditPresenter.setAspectRatioResolver(
                 floorMapCanvasPresenter::getImageAspectRatio);
         final FloorMapDockPresenter floorMapDockPresenter = make(dockProvider);
-        this.floorMapSetScalePresenter = make(setScaleProvider);
+        this.setScaleProvider = setScaleProvider;
         this.floorMapLayersPresenter = make(layersProvider);
         this.floorMapLayersPresenter.setEditorMode(true);
         this.floorMapLayerStylePresenter = make(layerStyleProvider);
@@ -1742,7 +1743,8 @@ public class FloorMapEditorPresenter
     ///
     /// @param mapLength the measured length in map units
     private void onScaleMeasured(final double mapLength) {
-        floorMapSetScalePresenter.show(
+        setScaleProvider.get().show(
+                this,
                 mapLength,
                 sessionEntity().getMeasurementUnits(),
                 units -> {

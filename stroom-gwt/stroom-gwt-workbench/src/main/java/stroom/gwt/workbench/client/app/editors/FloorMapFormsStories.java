@@ -16,12 +16,12 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
+import stroom.floormap.client.component.FloorMapSetScale;
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView.GraphicMode;
 import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
 import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
-import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -116,7 +116,7 @@ public final class FloorMapFormsStories {
                 // The set scale dialog: the distance's unit is a selection box of the metric units,
                 // named for what it is
                 .story("SetScale", context -> {
-                    final FloorMapSetScaleViewImpl view = new FloorMapSetScaleViewImpl();
+                    final FloorMapSetScale view = new FloorMapSetScale();
                     view.setCurrentReading("3.2 m");
                     view.setDistance("2.4");
                     view.setUnit(Unit.CENTIMETRE);

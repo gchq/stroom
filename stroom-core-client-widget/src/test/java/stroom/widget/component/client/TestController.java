@@ -21,6 +21,7 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -268,6 +269,40 @@ class TestController {
 
         ControllerDialog.pressAction(dialog, DialogAction.OK);
         assertThat(seen).containsExactly("OK true");
+    }
+
+    @Test
+    void aDialogShownAgainIsShownThroughOneHostAndKeptWhenHidden() {
+        final Consumer<Runnable> scheduler = ControllerDialog.deferred;
+        final List<Runnable> deferred = new ArrayList<>();
+        ControllerDialog.deferred = deferred::add;
+        try {
+            final EventBus eventBus = new SimpleEventBus();
+            final Parent owner = new Parent(null);
+            final Parent dialog = new Parent(eventBus);
+            owner.getControllerNode().adopt(dialog.getControllerNode());
+            final List<MyPresenterWidget<?>> shown = new ArrayList<>();
+            eventBus.addHandler(ShowPopupEvent.getType(), e -> shown.add(e.getPresenterWidget()));
+
+            ControllerDialog.show(dialog).fire();
+            ControllerDialog.show(dialog).fire();
+            assertThat(shown).hasSize(2);
+            assertThat(shown.get(1)).isSameAs(shown.get(0));
+            assertThat(shows(shown.get(0), dialog)).isTrue();
+
+            // Hidden, it is kept, to be shown again
+            ControllerDialog.hide(dialog, false, false);
+            deferred.forEach(Runnable::run);
+            assertThat(dialog.isDisposed()).isFalse();
+            assertThat(shown.get(0).isDisposed()).isFalse();
+
+            // It goes with what owns it, and its presenter with it
+            owner.dispose();
+            assertThat(dialog.isDisposed()).isTrue();
+            assertThat(shown.get(0).isDisposed()).isTrue();
+        } finally {
+            ControllerDialog.deferred = scheduler;
+        }
     }
 
     @Test
