@@ -43,6 +43,7 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 | histogram | **value**, series | How a number is spread, e.g. response times or bytes; one row per event, not grouped |
 | sankey | **source**, **target**, value | Flows from one thing to the next, e.g. source IP to port; loops are left out |
 | chord | **source**, **target**, weight | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
+| gauge | **value**, name | A value against its range, e.g. the latest or the maximum; a gauge per name when a name column is mapped, else the first row's value |
 
 A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
 selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair; a Sankey
@@ -84,6 +85,22 @@ rest are left out, not summarised, and the chart says "First N rows". When `prop
 time column is raw, offer to aggregate the table first: group it by a rounded time (`floorMonth()`,
 `floorWeek()`, `floorDay()`, `floorHour()` or `floorMinute()`, as the warning suggests, formatted as Date Time)
 with a `count()`, or the measure summed or averaged, then chart that column.
+
+## Several charts at once
+
+Asked for a set of charts, by some rule, of some value, possibly summarised first (a gauge per numeric column, a
+line chart per metric, a pie per event type), propose them together: one `propose_visualisation` with `charts`
+(up to 12, each with its own `kind`, `columns`, `name` and, if not the default, `table`, `style` or `options`).
+They are offered with one "Create visualisations" button: the user picks one folder, and each is created there.
+
+- Work out the items from the request and a snapshot of the rows: column types or names, or a column's distinct
+  values. If the rule is vague, list them and ask before proposing.
+- One chart per item, or one chart of them all when that reads better (e.g. a bar per column), saying why.
+- For a summary (the maximum of each column), propose the table change first (an aggregate table or columns),
+  then the charts on it. A gauge without a name column shows one value: the first row's.
+- `layout` arranges them on the dashboard: `row` (side by side), `column` (one below another), `grid` (rows of up
+  to three) or `tabs` (stacked as tabs in one pane). Ask the user unless they have said; the tool asks you to.
+- A chart the data can't make is left out, and the result says why; the rest are still offered.
 
 ## Filtering by a chart
 

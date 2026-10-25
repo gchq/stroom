@@ -378,6 +378,21 @@ public final class ChartCheck {
             }
             case CALENDAR -> result.stats.put("days", distinct(sample, mapped.get("date")));
             case HISTOGRAM -> seriesWarning(mapped, sample, maxSeries, result);
+            case GAUGE -> {
+                final int gauges = mapped.containsKey("name")
+                        ? distinct(sample, mapped.get("name"))
+                        : 1;
+                final int maxGauges = intStyle(style, StyleSetting.MAX_GAUGES);
+                result.stats.put("gauges", gauges);
+                if (!mapped.containsKey("name") && sample.rows().size() > 1) {
+                    result.warnings.add("A gauge without a name column shows only the first of the "
+                                        + sample.rows().size() + "+ rows. Group the table to one row (e.g. max() "
+                                        + "of the column), or map a name column for a gauge per row.");
+                } else if (gauges > maxGauges) {
+                    result.warnings.add(gauges + " names: only the first " + maxGauges + " gauges are drawn (Max "
+                                        + "Gauges). Filter the table, or raise Max Gauges (up to 24).");
+                }
+            }
         }
         final int maxValues = intStyle(style, StyleSetting.MAX_VALUES);
         if (sample.rows().size() > maxValues) {
