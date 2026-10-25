@@ -101,17 +101,32 @@ class TestAiSuggestions {
 
     @Test
     void documentsAreAskedAboutByWhatTheirTypeOffers() {
+        // Onboarding first for a feed (asked for by the user).
         assertThat(AiSuggestions.forDocument(new DocRef("Feed", "f1", "ACME-EVENTS")))
-                .containsExactly("What data has 'ACME-EVENTS' received recently?",
-                        "Which pipelines process 'ACME-EVENTS'?",
+                .containsExactly("Onboard 'ACME-EVENTS' (translate and index its data)",
+                        "What data has 'ACME-EVENTS' received recently?",
                         "Are there processing errors for 'ACME-EVENTS'?");
         assertThat(AiSuggestions.forDocument(new DocRef("ElasticIndex", "e1", "logs")))
                 .first().isEqualTo("What fields does 'logs' have?");
         assertThat(AiSuggestions.forDocument(new DocRef("Folder", "fo1", "Security")))
                 .first().isEqualTo("What's in the 'Security' folder?");
+        assertThat(AiSuggestions.forDocument(new DocRef("Folder", "fo1", "Security")))
+                .contains("Onboard a new data source into the 'Security' folder");
         assertThat(AiSuggestions.forDocument(new DocRef("AnalyticRule", "a1", "Brute force")))
                 .containsExactly("Explain 'Brute force'", "What uses 'Brute force'?");
         assertThat(AiSuggestions.forDocument(null)).isEmpty();
+    }
+
+    @Test
+    void aFeedOrFolderTabOffersOnboarding() {
+        assertThat(AiSuggestions.forTab(new DocRef("Feed", "f1", "ACME"), false, List.of(), null))
+                .first().isEqualTo("Onboard this feed (translate and index its data)");
+        assertThat(AiSuggestions.forTab(new DocRef("Folder", "fo1", "Security"), false, List.of(), null))
+                .contains("Onboard a new data source into this folder");
+        // And the model suggesting from the hint is told it can.
+        assertThat(AiSuggestions.documentHint(new DocRef("Feed", "f1", "ACME"))).contains("onboard it");
+        assertThat(AiSuggestions.tabHint(new DocRef("Folder", "fo1", "Security"), null, false, List.of(), null))
+                .contains("onboard a new data source into it");
     }
 
     @Test
