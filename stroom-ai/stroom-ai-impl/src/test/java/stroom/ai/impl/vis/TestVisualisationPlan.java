@@ -69,6 +69,24 @@ class TestVisualisationPlan {
     }
 
     @Test
+    void aThresholdTakesAnyNumberOrBlank() {
+        assertThat(VisualisationPlan.normaliseStyle(ChartKind.BAR, Map.of("threshold", " 1.5e3 ")))
+                .containsEntry("threshold", "1.5e3");
+        assertThat(VisualisationPlan.normaliseStyle(ChartKind.LINE, Map.of("threshold", "")))
+                .containsEntry("threshold", "");
+        assertThatThrownBy(() -> VisualisationPlan.normaliseStyle(ChartKind.SCATTER, Map.of("threshold", "high")))
+                .hasMessageContaining("give a number, or blank for none");
+        assertThatThrownBy(() -> VisualisationPlan.normaliseStyle(ChartKind.BAR, Map.of("threshold", "NaN")))
+                .hasMessageContaining("give a number, or blank for none");
+        // Not a chart without a value axis.
+        assertThatThrownBy(() -> VisualisationPlan.normaliseStyle(ChartKind.PIE, Map.of("threshold", "1")))
+                .hasMessageContaining("has no setting 'threshold'");
+        assertThat(VisualisationPlan.normaliseStyle(ChartKind.GRAPH, Map.of("physics", "Lively", "thumbnail", "on")))
+                .containsEntry("physics", "lively")
+                .containsEntry("thumbnail", "true");
+    }
+
+    @Test
     void refusesStyleTheKindDoesntHave() {
         assertThatThrownBy(() -> VisualisationPlan.normaliseStyle(ChartKind.PIE, Map.of("horizontal", "true")))
                 .hasMessageContaining("has no setting 'horizontal'");

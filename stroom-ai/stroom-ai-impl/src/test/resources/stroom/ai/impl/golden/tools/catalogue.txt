@@ -1740,8 +1740,16 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for area, as text.",
           "type" : "string"
         },
+        "averageLine" : {
+          "description" : "The value for averageLine, as text.",
+          "type" : "string"
+        },
         "bins" : {
           "description" : "The value for bins, as text.",
+          "type" : "string"
+        },
+        "breakOutliers" : {
+          "description" : "The value for breakOutliers, as text.",
           "type" : "string"
         },
         "colourScale" : {
@@ -1760,8 +1768,16 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for horizontal, as text.",
           "type" : "string"
         },
+        "jitter" : {
+          "description" : "The value for jitter, as text.",
+          "type" : "string"
+        },
         "legend" : {
           "description" : "The value for legend, as text.",
+          "type" : "string"
+        },
+        "logScale" : {
+          "description" : "The value for logScale, as text.",
           "type" : "string"
         },
         "maxNodes" : {
@@ -1788,6 +1804,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for orient, as text.",
           "type" : "string"
         },
+        "physics" : {
+          "description" : "The value for physics, as text.",
+          "type" : "string"
+        },
         "showLabels" : {
           "description" : "The value for showLabels, as text.",
           "type" : "string"
@@ -1804,12 +1824,32 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for stack, as text.",
           "type" : "string"
         },
+        "threshold" : {
+          "description" : "The value for threshold, as text.",
+          "type" : "string"
+        },
+        "thresholdLabel" : {
+          "description" : "The value for thresholdLabel, as text.",
+          "type" : "string"
+        },
+        "thumbnail" : {
+          "description" : "The value for thumbnail, as text.",
+          "type" : "string"
+        },
+        "units" : {
+          "description" : "The value for units, as text.",
+          "type" : "string"
+        },
         "xAxisName" : {
           "description" : "The value for xAxisName, as text.",
           "type" : "string"
         },
         "yAxisName" : {
           "description" : "The value for yAxisName, as text.",
+          "type" : "string"
+        },
+        "zoomSlider" : {
+          "description" : "The value for zoomSlider, as text.",
           "type" : "string"
         }
       },

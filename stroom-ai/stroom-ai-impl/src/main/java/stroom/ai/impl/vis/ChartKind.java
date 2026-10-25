@@ -37,6 +37,8 @@ public enum ChartKind {
                             "splits each category's bar by this column, shown in the legend")),
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.SORT, StyleSetting.HORIZONTAL, StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF,
+                    StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
+                    StyleSetting.AVERAGE_LINE, StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER,
                     StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     LINE("line", "Line chart", "one line per series over x; a time axis when x is a date",
@@ -49,6 +51,8 @@ public enum ChartKind {
                             "one line per value of this column, shown in the legend")),
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.SMOOTH, StyleSetting.AREA, StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF,
+                    StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
+                    StyleSetting.AVERAGE_LINE, StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER,
                     StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     PIE("pie", "Pie chart", "slices of a whole; a doughnut as an option",
@@ -57,7 +61,7 @@ public enum ChartKind {
                             "what each slice is, e.g. EventType"),
                     new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
                             "each slice's size, e.g. a count() column; must not be negative")),
-            List.of(StyleSetting.LEGEND, StyleSetting.DOUGHNUT, StyleSetting.SHOW_LABELS_ON,
+            List.of(StyleSetting.LEGEND, StyleSetting.DOUGHNUT, StyleSetting.SHOW_LABELS_ON, StyleSetting.UNITS,
                     StyleSetting.MAX_SLICES, StyleSetting.MAX_VALUES)),
 
     SCATTER("scatter", "Scatter plot", "points placed by two numbers or dates, optionally sized by a third",
@@ -71,6 +75,8 @@ public enum ChartKind {
                     new ChartRole("series", "Series (Optional)", false, ChartRole.Values.ANY,
                             "colours points by this column, shown in the legend")),
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
+                    StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
+                    StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER, StyleSetting.JITTER,
                     StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     GRAPH("graph", "Network graph", "a force-directed graph of links between things; each node is sized by its "
@@ -87,7 +93,8 @@ public enum ChartKind {
                     new ChartRole("targetGroup", "Target Group (Optional)", false, ChartRole.Values.ANY,
                             "colours the target node by this column")),
             List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS,
-                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
+                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.PHYSICS, StyleSetting.THUMBNAIL,
+                    StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
 
     HEATMAP("heatmap", "Heatmap", "a grid with a cell for each x and y pair, coloured by its value",
             List.of(
@@ -97,7 +104,8 @@ public enum ChartKind {
                             "the grid's rows, e.g. the day of the week or a UserId"),
                     new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
                             "each cell's value, e.g. a count() column; drawn as its colour")),
-            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.SHOW_LABELS_OFF, StyleSetting.MAX_VALUES)),
+            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.SHOW_LABELS_OFF, StyleSetting.UNITS,
+                    StyleSetting.MAX_VALUES)),
 
     CALENDAR("calendar", "Calendar heatmap", "a calendar of days, each coloured by its value",
             List.of(
@@ -105,7 +113,7 @@ public enum ChartKind {
                             "the day, e.g. EventTime rounded with floorDay(), formatted as Date Time"),
                     new ChartRole("value", "Value", true, ChartRole.Values.NUMBER,
                             "each day's value, e.g. a count() column; days in several rows are added up")),
-            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.MAX_VALUES)),
+            List.of(StyleSetting.COLOUR_SCALE, StyleSetting.UNITS, StyleSetting.MAX_VALUES)),
 
     HISTOGRAM("histogram", "Histogram", "how a number is spread: bars counting the rows in each range of it",
             List.of(
@@ -114,7 +122,7 @@ public enum ChartKind {
                     new ChartRole("series", "Series (Optional)", false, ChartRole.Values.ANY,
                             "splits each range's bar by this column, shown in the legend")),
             List.of(StyleSetting.BINS, StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
-                    StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF, StyleSetting.MAX_SERIES,
+                    StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF, StyleSetting.UNITS, StyleSetting.MAX_SERIES,
                     StyleSetting.MAX_VALUES)),
 
     SANKEY("sankey", "Sankey diagram", "flows from one thing to the next, each as wide as how much flows",

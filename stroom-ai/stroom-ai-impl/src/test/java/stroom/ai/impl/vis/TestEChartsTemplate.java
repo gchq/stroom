@@ -80,6 +80,24 @@ class TestEChartsTemplate {
     }
 
     @Test
+    void aThresholdIsATextControlOnTheStyleTab() {
+        final Map<String, Object> settings = JsonUtil.readValue(EChartsTemplate.settingsJson(ChartKind.BAR,
+                Map.of("category", "C", "value", "V"), Map.of("threshold", "100"), null), Map.class);
+        final Map<String, Map<String, Object>> controls = controls((List<?>) settings.get("tabs"));
+
+        assertThat(controls.get("threshold"))
+                .containsEntry("type", "text")
+                .containsEntry("defaultValue", "100");
+        assertThat(controls.get("units")).containsEntry("defaultValue", "none");
+        assertThat(((List<?>) settings.get("tabs")).stream()
+                .map(tab -> (Map<?, ?>) tab)
+                .filter(tab -> "Style".equals(tab.get("name")))
+                .flatMap(tab -> ((List<?>) tab.get("controls")).stream())
+                .map(control -> String.valueOf(((Map<?, ?>) control).get("id"))))
+                .contains("threshold", "units", "logScale", "zoomSlider");
+    }
+
+    @Test
     void fieldOrderFollowsTheRoles() {
         assertThat(EChartsTemplate.fieldOrder(ChartKind.BAR)).isEqualTo("category,value,series");
         assertThat(EChartsTemplate.fieldOrder(ChartKind.SCATTER)).isEqualTo("x,y,size,series");
