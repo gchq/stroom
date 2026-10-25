@@ -49,7 +49,7 @@ the choosers and menu, the trace overview, the code editor, and the records). Fi
   order's rows, `A11Y.md`'s scrolling regions, the stale names in `COMPONENTS.md`,
   `COMPONENT_MODEL_DESIGN.md` and the suite's `dirty.mjs`, and the GWT inventory, regenerated.
 
-All 1,622 stories passed with the leak check after the fixes (the 39 screenshots that differed are the noise named above), and the app and the
+All 1,622 stories passed with the leak check after the fixes (the 39 screenshots that differed are the noise named in Done, below), and the app and the
 standalone dashboard GWT compile.
 
 ## Done (25 October 2026)
