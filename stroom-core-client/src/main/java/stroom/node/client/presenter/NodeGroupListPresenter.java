@@ -31,7 +31,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -44,7 +44,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
+public class NodeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final NodeGroupClient nodeGroupClient;
     private final DataGrid<NodeGroup> dataGrid;
@@ -53,7 +53,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public NodeGroupListPresenter(final EventBus eventBus,
-                                  final PagerView view,
+                                  final PagerPanel view,
                                   final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
         this.nodeGroupClient = nodeGroupClient;

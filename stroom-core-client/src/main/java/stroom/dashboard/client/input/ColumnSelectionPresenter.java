@@ -27,7 +27,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.TextCell;
@@ -50,7 +50,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ColumnSelectionPresenter
-        extends MyPresenterWidget<PagerView>
+        extends MyPresenterWidget<PagerPanel>
         implements Refreshable, HasValueChangeHandlers<Set<ColumnRef>> {
 
     private final DataGrid<ColumnRef> dataGrid;
@@ -61,7 +61,7 @@ public class ColumnSelectionPresenter
 
     @Inject
     public ColumnSelectionPresenter(final EventBus eventBus,
-                                    final PagerView view) {
+                                    final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

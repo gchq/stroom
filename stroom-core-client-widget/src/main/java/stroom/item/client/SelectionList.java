@@ -23,7 +23,7 @@ import stroom.widget.button.client.LinkButton;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.tab.client.event.CloseEvent;
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
@@ -35,7 +35,6 @@ import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 import stroom.widget.util.client.TypeAhead;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -81,7 +80,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // What has been typed to jump to an option (in a list with no quick filter)
     private final TypeAhead typeAhead = new TypeAhead();
     private final FlowPanel links;
-    private final PagerViewImpl pagerView;
+    private final PagerPanel pagerView;
     // The options: a list (listbox) on the data grid
     private final DataGrid<I> cellTable;
     private SelectionListModel<T, I> model;
@@ -135,7 +134,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 };
         cellTable.addColumn(expanderColumn, "", 100);
 
-        pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        pagerView = new PagerPanel();
         pagerView.setDataWidget(cellTable);
 
         quickFilter = new QuickFilter() {

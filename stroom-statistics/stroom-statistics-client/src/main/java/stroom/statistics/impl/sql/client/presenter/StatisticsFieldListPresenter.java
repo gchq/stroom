@@ -25,7 +25,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class StatisticsFieldListPresenter extends DocPresenter<PagerView, StatisticStoreDoc> {
+public class StatisticsFieldListPresenter extends DocPresenter<PagerPanel, StatisticStoreDoc> {
 
     private final DataGrid<Field> dataGrid;
     private final MultiSelectionModelImpl<Field> selectionModel;
@@ -52,7 +52,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
-                                        final PagerView view,
+                                        final PagerPanel view,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
         super(eventBus, view);
         own(statisticsFieldEditPresenter);

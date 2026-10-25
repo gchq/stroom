@@ -37,7 +37,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -54,7 +54,7 @@ import java.util.function.Consumer;
 /**
  * Shows the list of credentials.
  */
-public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
+public class CredentialsListPresenter extends MyPresenterWidget<PagerPanel> {
 
     /**
      * Used to talk to the server
@@ -130,7 +130,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     @SuppressWarnings("unused")
     @Inject
     public CredentialsListPresenter(final EventBus eventBus,
-                                    final PagerView view,
+                                    final PagerPanel view,
                                     final CredentialClient credentialClient,
                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
                                     final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider,
@@ -280,7 +280,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     @SuppressWarnings("checkstyle:LineLength")
     private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(final EventBus eventBus,
-                                                                                                      final PagerView view) {
+                                                                                                      final PagerPanel view) {
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,

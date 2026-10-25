@@ -23,7 +23,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  * Columns are dynamically created from the markdown table header row returned by
  * the server. Uses {@link DataGrid} for fixed headers and column resizing.
  */
-public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
+public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final AskStroomAiClient askStroomAiClient;
     private final DataGrid<List<String>> dataGrid;
@@ -55,7 +55,7 @@ public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public AiAttachmentDataPresenter(final EventBus eventBus,
-                                     final PagerView view,
+                                     final PagerPanel view,
                                      final AskStroomAiClient askStroomAiClient) {
         super(eventBus, view);
         this.askStroomAiClient = askStroomAiClient;

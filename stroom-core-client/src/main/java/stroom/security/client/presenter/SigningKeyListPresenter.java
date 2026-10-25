@@ -26,7 +26,7 @@ import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -44,19 +44,19 @@ import java.util.List;
  * perhaps one or two on their way out, so both would be furniture rather than help.
  * </p>
  */
-public class SigningKeyListPresenter extends MyPresenterWidget<PagerView> {
+public class SigningKeyListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final SigningKeyResource SIGNING_KEY_RESOURCE = GWT.create(SigningKeyResource.class);
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<SigningKeyRow> dataGrid;
     private final MultiSelectionModelImpl<SigningKeyRow> selectionModel;
 
     @Inject
     public SigningKeyListPresenter(final EventBus eventBus,
-                                   final PagerView pagerView,
+                                   final PagerPanel pagerView,
                                    final RestFactory restFactory,
                                    final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, pagerView);

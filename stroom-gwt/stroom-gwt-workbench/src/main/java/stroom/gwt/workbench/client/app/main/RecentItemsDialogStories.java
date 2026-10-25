@@ -33,7 +33,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -156,7 +156,7 @@ public final class RecentItemsDialogStories {
         // The presenter, with the views and child presenter that GIN would inject
         final FindDocResultListPresenter resultList = new FindDocResultListPresenter(
                 eventBus,
-                new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class)),
+                new PagerPanel(),
                 harness.getRestFactory());
         final RecentItemsPresenter presenter = new RecentItemsPresenter(
                 eventBus,

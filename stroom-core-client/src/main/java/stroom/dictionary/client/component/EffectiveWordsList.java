@@ -30,7 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
@@ -55,7 +55,7 @@ public class EffectiveWordsList extends Controller {
     private static final String FIELD_TYPE = "Types";
 
     private final RestFactory restFactory;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<Word> dataGrid;
     private WordList wordList = WordList.EMPTY;
     private DocRef docRef;
@@ -63,7 +63,7 @@ public class EffectiveWordsList extends Controller {
 
     @Inject
     public EffectiveWordsList(final EventBus eventBus,
-                              final PagerView pagerView,
+                              final PagerPanel pagerView,
                               final RestFactory restFactory) {
         super(eventBus);
         this.restFactory = restFactory;

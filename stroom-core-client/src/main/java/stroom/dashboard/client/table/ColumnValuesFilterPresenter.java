@@ -30,7 +30,7 @@ import stroom.util.shared.PageResponse;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -65,7 +65,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         ColumnValuesFilterUiHandlers,
         QuickFilterUiHandlers {
 
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<ColumnValue> list;
     private final ColumnValueRowStyles rowStyles;
 
@@ -81,7 +81,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     @Inject
     public ColumnValuesFilterPresenter(final EventBus eventBus,
                                        final ColumnValuesFilterView view,
-                                       final PagerView pagerView,
+                                       final PagerPanel pagerView,
                                        final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
         view.setUiHandlers(this);

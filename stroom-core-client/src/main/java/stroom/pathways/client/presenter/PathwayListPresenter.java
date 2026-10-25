@@ -40,7 +40,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -66,7 +66,7 @@ public class PathwayListPresenter
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final DateTimeFormatter dateTimeFormatter;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final RestFactory restFactory;
     private final DataGrid<Pathway> dataGrid;
     private final MultiSelectionModelImpl<Pathway> selectionModel;
@@ -84,7 +84,7 @@ public class PathwayListPresenter
     @Inject
     public PathwayListPresenter(final EventBus eventBus,
                                 final QuickFilterPageView view,
-                                final PagerView pagerView,
+                                final PagerPanel pagerView,
                                 final RestFactory restFactory,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final PathwayEditPresenter pathwayEditPresenter) {

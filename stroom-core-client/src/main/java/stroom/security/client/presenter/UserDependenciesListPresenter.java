@@ -34,7 +34,7 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -60,7 +60,7 @@ public class UserDependenciesListPresenter
     private final MultiSelectionModelImpl<UserDependency> selectionModel;
     private final RestFactory restFactory;
     private final FindUserDependenciesCriteria.Builder criteriaBuilder = FindUserDependenciesCriteria.builder();
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
 
     private UserRef userRef;
     private RestDataProvider<UserDependency, ResultPage<UserDependency>> dataProvider;
@@ -70,7 +70,7 @@ public class UserDependenciesListPresenter
 
     @Inject
     public UserDependenciesListPresenter(final EventBus eventBus,
-                                         final PagerView pagerView,
+                                         final PagerPanel pagerView,
                                          final RestFactory restFactory,
                                          final QuickFilterPageView dependenciesListView,
                                          final UiConfigCache uiConfigCache,

@@ -23,7 +23,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class RuleListPresenter extends MyPresenterWidget<PagerView> {
+public class RuleListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private Runnable onChange = () -> {
     };
@@ -48,7 +48,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public RuleListPresenter(final EventBus eventBus,
-                             final PagerView view) {
+                             final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

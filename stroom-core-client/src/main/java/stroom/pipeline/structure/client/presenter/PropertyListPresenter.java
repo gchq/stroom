@@ -40,7 +40,7 @@ import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -71,7 +71,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PropertyListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -98,7 +98,7 @@ public class PropertyListPresenter
 
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
-                                 final PagerView view,
+                                 final PagerPanel view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
                                  final RestFactory restFactory,
                                  final DocumentPluginRegistry documentPluginRegistry,

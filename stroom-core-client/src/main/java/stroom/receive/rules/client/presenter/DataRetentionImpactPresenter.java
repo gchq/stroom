@@ -39,7 +39,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -62,7 +62,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class DataRetentionImpactPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE =
             GWT.create(DataRetentionRulesResource.class);
@@ -106,7 +106,7 @@ public class DataRetentionImpactPresenter
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
-                                        final PagerView view,
+                                        final PagerPanel view,
                                         final RestFactory restFactory,
                                         final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
         super(eventBus, view);

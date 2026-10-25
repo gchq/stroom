@@ -66,10 +66,6 @@ import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.presenter.MainScreens;
 import stroom.main.client.view.MainViewImpl;
 import stroom.widget.contextmenu.client.ContextMenuManager;
-import stroom.widget.datagrid.client.PagerView;
-import stroom.widget.datagrid.client.PagerViewImpl;
-import stroom.widget.datagrid.client.PagerViewWithHeading;
-import stroom.widget.datagrid.client.PagerViewWithHeadingImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
@@ -155,8 +151,6 @@ public class AppModule extends AbstractPresenterModule {
 
         // Widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
-        bindSharedView(PagerView.class, PagerViewImpl.class);
-        bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         bindSharedView(TabSessionChooserView.class, TabSessionChooserViewImpl.class);
     }

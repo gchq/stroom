@@ -24,7 +24,7 @@ import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -38,7 +38,7 @@ import java.util.UUID;
 
 @SuppressWarnings("checkstyle:Indentation")
 public class ProfilePeriodListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final String NEW_TITLE = "New Profile Period";
     private static final String EDIT_TITLE = "Edit Selected Profile Period";
@@ -57,7 +57,7 @@ public class ProfilePeriodListPresenter
 
     @Inject
     public ProfilePeriodListPresenter(final EventBus eventBus,
-                                      final PagerView view,
+                                      final PagerPanel view,
                                       final Provider<ProfilePeriodEditPresenter> newConcurrencyTimeRangePresenter) {
         super(eventBus, view);
 

@@ -272,7 +272,7 @@ public final class SelectionBoxStories {
                             .toBeVisible());
                     play.expect(play.screen().querySelector(".selection-list__filter .quick-filter__input"))
                             .not().toBeNull();
-                    // The pager is Stroom's PagerViewImpl, so it reads "N to M of T"
+                    // The pager is Stroom's PagerPanel, so it reads "N to M of T"
                     play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))
                             .toBeInTheDocument();
                 })
@@ -310,7 +310,7 @@ public final class SelectionBoxStories {
         play.expect(inList.querySelector(":scope > .selection-list__filter")).not().toBeNull();
         play.expect(inList.querySelector(":scope > .selection-list__path")).not().toBeNull();
         play.expect(inList.querySelector(":scope > .selection-list__options")).not().toBeNull();
-        // PagerViewImpl: the pager container above the list container
+        // PagerPanel: the pager container above the list container
         play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
         play.expect(popup.querySelector(".listContainer")).not().toBeNull();
         // The rows are the data grid's, as a list's: a listbox of options, each holding its cell

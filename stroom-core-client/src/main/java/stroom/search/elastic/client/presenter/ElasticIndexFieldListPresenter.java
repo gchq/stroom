@@ -23,7 +23,7 @@ import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.Ela
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.cell.client.TextCell;
@@ -47,7 +47,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
     @Inject
     public ElasticIndexFieldListPresenter(final EventBus eventBus,
                                           final ElasticIndexFieldListView view,
-                                          final PagerView pagerView,
+                                          final PagerPanel pagerView,
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;

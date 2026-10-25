@@ -27,7 +27,7 @@ import stroom.query.api.ConditionalFormattingType;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -42,7 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
+public class AnnotationTagListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<AnnotationTag> dataGrid;
     private final MultiSelectionModelImpl<AnnotationTag> selectionModel;
@@ -53,7 +53,7 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public AnnotationTagListPresenter(final EventBus eventBus,
-                                      final PagerView view,
+                                      final PagerPanel view,
                                       final AnnotationResourceClient annotationResourceClient) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;

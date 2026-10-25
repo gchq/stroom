@@ -21,7 +21,7 @@ import stroom.dashboard.client.vis.VisToolbarButton;
 import stroom.dashboard.client.vis.VisToolbarRow;
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
-import stroom.widget.datagrid.client.MessagePanelImpl;
+import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
@@ -40,7 +40,7 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
-    private final MessagePanelImpl messagePanel;
+    private final MessagePanel messagePanel;
     // Above the visualisation: its buttons and its pause and resume button
     private final VisToolbarRow toolbarRow;
 
@@ -48,7 +48,7 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
 
     @Inject
     public QueryResultVisViewImpl() {
-        messagePanel = new MessagePanelImpl();
+        messagePanel = new MessagePanel();
 
         visContainer = new SimplePanel();
         visContainer.setStyleName("queryVis-innerLayout");

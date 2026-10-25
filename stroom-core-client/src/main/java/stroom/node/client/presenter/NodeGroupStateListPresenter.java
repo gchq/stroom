@@ -31,7 +31,7 @@ import stroom.node.shared.NodeStatusResult;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -44,7 +44,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
+public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<NodeStatusResult> dataGrid;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
@@ -56,7 +56,7 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public NodeGroupStateListPresenter(final EventBus eventBus,
-                                       final PagerView view,
+                                       final PagerPanel view,
                                        final NodeClient nodeClient,
                                        final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);

@@ -22,7 +22,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -34,14 +34,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.function.Function;
 
-public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
+public class DocRefListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<DocRef> dataGrid;
     private final MultiSelectionModelImpl<DocRef> selectionModel;
 
     @Inject
     public DocRefListPresenter(final EventBus eventBus,
-                               final PagerView view) {
+                               final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

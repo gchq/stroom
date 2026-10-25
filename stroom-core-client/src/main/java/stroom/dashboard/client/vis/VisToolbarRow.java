@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/// The toolbar row above a visualisation, laid out as a table's (`PagerViewImpl`): the buttons the
+/// The toolbar row above a visualisation, laid out as a table's (`PagerPanel`): the buttons the
 /// visualisation asks for (`stroom.setToolbarButtons` in `vis.js`) at the start, and its pause and
 /// resume button at the end. Being above the visualisation's frame rather than over it, neither
 /// covers what the visualisation draws. Its markup is `VisToolbarRow.ui.xml`.

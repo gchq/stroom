@@ -45,7 +45,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -66,7 +66,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class IndexShardPresenter
-        extends DocPresenter<PagerView, LuceneIndexDoc>
+        extends DocPresenter<PagerPanel, LuceneIndexDoc>
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
@@ -93,7 +93,7 @@ public class IndexShardPresenter
 
     @Inject
     public IndexShardPresenter(final EventBus eventBus,
-                               final PagerView view,
+                               final PagerPanel view,
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
                                final NodeClient nodeClient,

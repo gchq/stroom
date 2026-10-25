@@ -30,7 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules> {
+public class FieldListPresenter extends DocPresenter<PagerPanel, ReceiveDataRules> {
 
     private static final String NAME_FIELD = "name";
     private static final String TYPE_FIELD = "type";
@@ -65,7 +65,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
     @Inject
     public FieldListPresenter(final EventBus eventBus,
-                              final PagerView view,
+                              final PagerPanel view,
                               final Provider<FieldEditorController> fieldEditorProvider,
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);

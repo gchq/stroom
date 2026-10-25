@@ -31,7 +31,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -55,7 +55,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
@@ -71,7 +71,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     @Inject
     public SolrIndexFieldListPresenter(final EventBus eventBus,
                                        final SolrIndexFieldListView view,
-                                       final PagerView pagerView,
+                                       final PagerPanel pagerView,
                                        final SolrIndexFieldEditPresenter indexFieldEditPresenter,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {

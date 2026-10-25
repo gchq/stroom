@@ -23,7 +23,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 
@@ -100,7 +100,7 @@ public final class SelectorWidgets {
     public static UserRefSelectionBoxPresenter userRefSelectionBox(final ScreenHarness harness) {
         final UserRefPopupPresenter popup = new UserRefPopupPresenter(harness.getEventBus(),
                 new QuickFilterDialogViewImpl(GWT.create(QuickFilterDialogViewImpl.Binder.class)),
-                new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class)),
+                new PagerPanel(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness));

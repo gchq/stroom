@@ -45,7 +45,7 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -83,7 +83,7 @@ public class DocumentUserPermissionsListPresenter
             new FetchDocumentUserPermissionsRequest.Builder();
     private final DataGrid<DocumentUserPermissions> dataGrid;
     private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
     private DocRef docRef;
 
@@ -92,7 +92,7 @@ public class DocumentUserPermissionsListPresenter
     @Inject
     public DocumentUserPermissionsListPresenter(final EventBus eventBus,
                                                 final QuickFilterPageView userListView,
-                                                final PagerView pagerView,
+                                                final PagerPanel pagerView,
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
                                                 final DocumentTypeCache documentTypeCache,
@@ -364,7 +364,7 @@ public class DocumentUserPermissionsListPresenter
         return selectionModel;
     }
 
-    public PagerView getPagerView() {
+    public PagerPanel getPagerView() {
         return pagerView;
     }
 

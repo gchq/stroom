@@ -26,7 +26,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> implements Focus {
+public class ContentTemplateListPresenter extends MyPresenterWidget<PagerPanel> implements Focus {
 
     private final DataGrid<ContentTemplate> dataGrid;
     private final MultiSelectionModelImpl<ContentTemplate> selectionModel;
@@ -64,7 +64,7 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
 
     @Inject
     public ContentTemplateListPresenter(final EventBus eventBus,
-                                        final PagerView view,
+                                        final PagerPanel view,
                                         final RefCellsController refCells) {
         super(eventBus, view);
         this.refCells = own(refCells);

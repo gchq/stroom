@@ -24,7 +24,7 @@ import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -34,7 +34,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public MetaListPresenter(final EventBus eventBus,
-                             final PagerView view,
+                             final PagerPanel view,
                              final RestFactory restFactory,
                              final LocationManager locationManager,
                              final DateTimeFormatter dateTimeFormatter,

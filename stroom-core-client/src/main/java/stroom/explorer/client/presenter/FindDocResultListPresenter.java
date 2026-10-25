@@ -30,7 +30,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -42,7 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
+public class FindDocResultListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -72,7 +72,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public FindDocResultListPresenter(final EventBus eventBus,
-                                      final PagerView view,
+                                      final PagerPanel view,
                                       final RestFactory restFactory) {
         super(eventBus, view);
 

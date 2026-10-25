@@ -26,7 +26,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ public class SteppingMetaListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public SteppingMetaListPresenter(final EventBus eventBus,
-                                     final PagerView view,
+                                     final PagerPanel view,
                                      final RestFactory restFactory,
                                      final LocationManager locationManager,
                                      final DateTimeFormatter dateTimeFormatter,

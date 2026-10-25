@@ -28,7 +28,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerView> {
+public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<AiChat> resultList;
     private final RestDataProvider<AiChat, ResultPage<AiChat>> dataProvider;
@@ -63,7 +63,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
 
     @Inject
     public AiChatHistoryResultListPresenter(final EventBus eventBus,
-                                            final PagerView view,
+                                            final PagerPanel view,
                                             final AskStroomAiClient askStroomAiClient,
                                             final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);

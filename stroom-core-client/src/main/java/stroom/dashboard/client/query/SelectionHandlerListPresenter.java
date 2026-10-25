@@ -23,7 +23,7 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -36,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class SelectionHandlerListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<ComponentSelectionHandler> dataGrid;
     private final MultiSelectionModelImpl<ComponentSelectionHandler> selectionModel;
@@ -44,7 +44,7 @@ public class SelectionHandlerListPresenter
 
     @Inject
     public SelectionHandlerListPresenter(final EventBus eventBus,
-                                         final PagerView view) {
+                                         final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

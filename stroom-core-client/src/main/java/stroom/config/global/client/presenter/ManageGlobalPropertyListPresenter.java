@@ -31,7 +31,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -55,7 +55,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ManageGlobalPropertyListPresenter
-        extends MyPresenterWidget<PagerView>
+        extends MyPresenterWidget<PagerPanel>
         implements ColumnSortEvent.Handler {
 
     private static final String NODES_UNAVAILABLE_MSG = "[Error getting values]";
@@ -111,7 +111,7 @@ public class ManageGlobalPropertyListPresenter
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
-                                             final PagerView view,
+                                             final PagerPanel view,
                                              final RestFactory restFactory,
                                              final NodeClient nodeClient) {
         super(eventBus, view);

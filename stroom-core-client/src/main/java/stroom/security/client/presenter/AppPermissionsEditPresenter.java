@@ -33,7 +33,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -73,7 +73,7 @@ public class AppPermissionsEditPresenter
     @Inject
     public AppPermissionsEditPresenter(final EventBus eventBus,
                                        final AppPermissionsEditView view,
-                                       final PagerView pagerView,
+                                       final PagerPanel pagerView,
                                        final RestFactory restFactory,
                                        final ClientSecurityContext securityContext) {
         super(eventBus, view);

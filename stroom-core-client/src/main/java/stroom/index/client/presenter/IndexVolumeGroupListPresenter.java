@@ -25,7 +25,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
+public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
@@ -50,7 +50,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
 
     @Inject
     public IndexVolumeGroupListPresenter(final EventBus eventBus,
-                                         final PagerView view,
+                                         final PagerPanel view,
                                          final RestFactory restFactory) {
         super(eventBus, view);
 

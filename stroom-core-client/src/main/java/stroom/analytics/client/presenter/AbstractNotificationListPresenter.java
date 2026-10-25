@@ -35,7 +35,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocPresenter<PagerView, D> {
+        extends DocPresenter<PagerPanel, D> {
 
     private final DataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
@@ -69,7 +69,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     @Inject
     public AbstractNotificationListPresenter(final EventBus eventBus,
-                                             final PagerView view,
+                                             final PagerPanel view,
                                              final Provider<AnalyticNotificationEditPresenter> editPresenterProvider) {
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;

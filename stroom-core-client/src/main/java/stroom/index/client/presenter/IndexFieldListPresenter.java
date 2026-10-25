@@ -40,7 +40,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -63,7 +63,7 @@ public class IndexFieldListPresenter
     private static final String EDIT_TITLE = "Edit Selected Index Field";
     private static final String DELETE_TITLE = "Delete Selected Index Fields";
 
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final RestFactory restFactory;
     private final DataGrid<IndexFieldImpl> dataGrid;
     private final MultiSelectionModelImpl<IndexFieldImpl> selectionModel;
@@ -81,7 +81,7 @@ public class IndexFieldListPresenter
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
                                    final QuickFilterPageView view,
-                                   final PagerView pagerView,
+                                   final PagerPanel pagerView,
                                    final RestFactory restFactory,
                                    final IndexFieldEditPresenter indexFieldEditPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {

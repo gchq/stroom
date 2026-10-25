@@ -21,7 +21,7 @@ import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -35,14 +35,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.function.Function;
 
-public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implements Focus {
+public class RuleSetListPresenter extends MyPresenterWidget<PagerPanel> implements Focus {
 
     private final DataGrid<ReceiveDataRule> dataGrid;
     private final MultiSelectionModelImpl<ReceiveDataRule> selectionModel;
 
     @Inject
     public RuleSetListPresenter(final EventBus eventBus,
-                                final PagerView view) {
+                                final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

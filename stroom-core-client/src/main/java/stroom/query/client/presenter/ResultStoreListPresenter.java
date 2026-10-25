@@ -33,7 +33,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -46,7 +46,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
+public class ResultStoreListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final MultiSelectionModelImpl<ResultStoreInfo> selectionModel;
     private final RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>> dataProvider;
@@ -61,7 +61,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public ResultStoreListPresenter(final EventBus eventBus,
-                                    final PagerView view,
+                                    final PagerPanel view,
                                     final ResultStoreModel resultStoreModel,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ResultStoreSettingsPresenter resultStoreSettingsPresenter,

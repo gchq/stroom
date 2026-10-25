@@ -418,6 +418,8 @@
 
 	color: white;
 	background-color: #1f77b4;
+	/* Each line of the message on one line (MessagePanel), as GWT's Label with no word wrap was */
+	white-space: nowrap;
 }
 
 .KeyValueInputView,

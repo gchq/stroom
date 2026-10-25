@@ -57,7 +57,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -78,7 +78,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
+public class ProcessorListPresenter extends MyPresenterWidget<PagerPanel>
         implements Refreshable, HasDocumentRead<Object> {
 
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
@@ -107,7 +107,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
-                                  final PagerView view,
+                                  final PagerPanel view,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
                                   final ProcessorInfoBuilder processorInfoBuilder,

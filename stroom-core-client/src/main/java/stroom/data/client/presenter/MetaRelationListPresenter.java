@@ -33,7 +33,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
@@ -58,7 +58,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public MetaRelationListPresenter(final EventBus eventBus,
-                                     final PagerView view,
+                                     final PagerPanel view,
                                      final RestFactory restFactory,
                                      final LocationManager locationManager,
                                      final DateTimeFormatter dateTimeFormatter,

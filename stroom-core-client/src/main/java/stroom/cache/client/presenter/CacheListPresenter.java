@@ -30,7 +30,7 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheIdentity;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -53,7 +53,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CacheListPresenter extends MyPresenterWidget<PagerView> {
+public class CacheListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
     private static final int ICON_COL = 18;
@@ -70,7 +70,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
-                              final PagerView view,
+                              final PagerPanel view,
                               final RestFactory restFactory,
                               final NodeClient nodeClient) {
         super(eventBus, view);

@@ -27,7 +27,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.HeadingBuilder;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -54,7 +54,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerView> implements Focus {
+public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPanel> implements Focus {
 
     private final DataGrid<DataRetentionRule> dataGrid;
     private final MultiSelectionModelImpl<DataRetentionRule> selectionModel;
@@ -63,7 +63,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
     @Inject
     public DataRetentionPolicyListPresenter(final EventBus eventBus,
-                                            final PagerView view) {
+                                            final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

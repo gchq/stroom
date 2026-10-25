@@ -20,9 +20,8 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -78,7 +77,7 @@ final class SplitPaneContent {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[0]).build(), "Name", 200);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[1]).build(), "Role", 120);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[2]).build(), "Notes", 400);
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         final List<String[]> rows = new ArrayList<>();
         for (int i = 1; i <= 200; i++) {

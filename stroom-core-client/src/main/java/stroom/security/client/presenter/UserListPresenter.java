@@ -43,7 +43,7 @@ import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridView;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -68,7 +68,7 @@ public class UserListPresenter
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
@@ -95,7 +95,7 @@ public class UserListPresenter
     @Inject
     public UserListPresenter(final EventBus eventBus,
                              final QuickFilterPageView userListView,
-                             final PagerView pagerView,
+                             final PagerPanel pagerView,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
@@ -458,7 +458,7 @@ public class UserListPresenter
         this.additionalTerm = additionalTerm;
     }
 
-    public PagerView getPagerView() {
+    public PagerPanel getPagerView() {
         return pagerView;
     }
 

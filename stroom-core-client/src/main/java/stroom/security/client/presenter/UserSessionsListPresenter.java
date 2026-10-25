@@ -29,7 +29,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -50,7 +50,7 @@ import java.util.List;
  * its owner.
  * </p>
  */
-public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
+public class UserSessionsListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final UserAccessResource USER_ACCESS_RESOURCE = GWT.create(UserAccessResource.class);
     private static final SessionResource SESSION_RESOURCE = GWT.create(SessionResource.class);
@@ -66,7 +66,7 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public UserSessionsListPresenter(final EventBus eventBus,
-                                     final PagerView view,
+                                     final PagerPanel view,
                                      final RestFactory restFactory,
                                      final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);

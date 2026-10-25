@@ -104,7 +104,7 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -147,7 +147,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final EventBus eventBus;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataSourceClient dataSourceClient;
     private final LocationManager locationManager;
     private final UiConfigCache uiConfigCache;
@@ -194,7 +194,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Inject
     public TablePresenter(final EventBus eventBus,
                           final TableView view,
-                          final PagerView pagerView,
+                          final PagerPanel pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,

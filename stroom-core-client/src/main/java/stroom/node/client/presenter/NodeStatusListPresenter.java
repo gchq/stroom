@@ -42,7 +42,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -70,7 +70,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
+public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> implements Refreshable {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
@@ -100,7 +100,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
 
     @Inject
     public NodeStatusListPresenter(final EventBus eventBus,
-                                   final PagerView view,
+                                   final PagerPanel view,
                                    final NodeClient nodeClient,
                                    final TooltipPresenter tooltipPresenter,
                                    final DateTimeFormatter dateTimeFormatter,

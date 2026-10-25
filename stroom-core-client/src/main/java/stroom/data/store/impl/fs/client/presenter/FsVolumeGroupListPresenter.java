@@ -28,7 +28,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -41,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
+public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
@@ -52,7 +52,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public FsVolumeGroupListPresenter(final EventBus eventBus,
-                                      final PagerView view,
+                                      final PagerPanel view,
                                       final RestFactory restFactory) {
         super(eventBus, view);
 

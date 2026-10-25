@@ -33,7 +33,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -48,7 +48,7 @@ import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
+public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
@@ -62,7 +62,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
 
     @Inject
     public IndexVolumeStatusListPresenter(final EventBus eventBus,
-                                          final PagerView view,
+                                          final PagerPanel view,
                                           final RestFactory restFactory,
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);

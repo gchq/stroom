@@ -44,7 +44,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -71,7 +71,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DependenciesPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -89,7 +89,7 @@ public class DependenciesPresenter
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
-                                 final PagerView view,
+                                 final PagerPanel view,
                                  final RestFactory restFactory) {
         super(eventBus, view);
 

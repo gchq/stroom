@@ -32,7 +32,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -52,7 +52,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AnalyticDataShardListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =
             GWT.create(AnalyticDataShardResource.class);
@@ -77,7 +77,7 @@ public class AnalyticDataShardListPresenter
 
     @Inject
     public AnalyticDataShardListPresenter(final EventBus eventBus,
-                                          final PagerView view,
+                                          final PagerPanel view,
                                           final RestFactory restFactory,
                                           final NodeClient nodeClient,
                                           final DateTimeFormatter dateTimeFormatter) {

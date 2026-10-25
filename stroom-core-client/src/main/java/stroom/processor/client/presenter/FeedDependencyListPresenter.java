@@ -25,7 +25,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class FeedDependencyListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final String NEW_TITLE = "New Feed Dependency";
     private static final String EDIT_TITLE = "Edit Selected Feed Dependency";
@@ -63,7 +63,7 @@ public class FeedDependencyListPresenter
 
     @Inject
     public FeedDependencyListPresenter(final EventBus eventBus,
-                                       final PagerView view,
+                                       final PagerPanel view,
                                        final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter,
                                        final RefCellsController refCells) {
         super(eventBus, view);

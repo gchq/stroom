@@ -41,7 +41,7 @@ import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -64,7 +64,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class ScheduledProcessListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -89,7 +89,7 @@ public class ScheduledProcessListPresenter
 
     @Inject
     public ScheduledProcessListPresenter(final EventBus eventBus,
-                                         final PagerView view,
+                                         final PagerPanel view,
                                          final RestFactory restFactory,
                                          final DateTimeFormatter dateTimeFormatter,
                                          final NodeClient nodeClient,

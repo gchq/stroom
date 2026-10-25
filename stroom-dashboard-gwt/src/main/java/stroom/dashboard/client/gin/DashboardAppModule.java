@@ -59,8 +59,6 @@ import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
-import stroom.widget.datagrid.client.PagerView;
-import stroom.widget.datagrid.client.PagerViewImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
@@ -142,8 +140,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 SourcePresenter.class,
                 SourceView.class,
                 SourceViewImpl.class);
-
-        bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }

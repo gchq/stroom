@@ -27,7 +27,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -48,7 +48,7 @@ import java.util.function.Consumer;
  * Content Tab.
  */
 public class ContentStoreContentPackListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     /** Points to top level of this page. Allows updating state of everything. */
     private ContentStorePresenter contentStorePresenter = null;
@@ -74,7 +74,7 @@ public class ContentStoreContentPackListPresenter
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreContentPackListPresenter(final EventBus eventBus,
-                                                final PagerView view,
+                                                final PagerPanel view,
                                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -180,7 +180,7 @@ public class ContentStoreContentPackListPresenter
                              ResultPage<ContentStoreContentPackWithDynamicState>>
 
         createDataProvider(final EventBus eventBus,
-                           final PagerView view,
+                           final PagerPanel view,
                            final RestFactory restFactory) {
 
         return new RestDataProvider<>(eventBus) {

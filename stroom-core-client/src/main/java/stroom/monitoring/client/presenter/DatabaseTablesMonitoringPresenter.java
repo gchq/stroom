@@ -30,7 +30,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -41,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class DatabaseTablesMonitoringPresenter
-        extends ContentTabPresenter<PagerView> {
+        extends ContentTabPresenter<PagerPanel> {
 
     public static final String TAB_TYPE = "DatabaseTables";
 
@@ -54,7 +54,7 @@ public class DatabaseTablesMonitoringPresenter
 
     @Inject
     public DatabaseTablesMonitoringPresenter(final EventBus eventBus,
-                                             final PagerView view,
+                                             final PagerPanel view,
                                              final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;

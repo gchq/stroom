@@ -37,7 +37,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -58,7 +58,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
+public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerPanel>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
@@ -74,7 +74,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
-                                         final PagerView view,
+                                         final PagerPanel view,
                                          final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter,
                                          final RefCellsController refCells) {

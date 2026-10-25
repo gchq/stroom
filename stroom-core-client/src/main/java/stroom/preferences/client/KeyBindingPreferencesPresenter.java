@@ -24,7 +24,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -70,7 +70,7 @@ public final class KeyBindingPreferencesPresenter
     @Inject
     public KeyBindingPreferencesPresenter(final EventBus eventBus,
                                           final KeyBindingPreferencesView view,
-                                          final PagerView pagerView,
+                                          final PagerPanel pagerView,
                                           final KeyShortcutRecorderPresenter keyShortcutRecorderPresenter) {
         super(eventBus, view);
         own(keyShortcutRecorderPresenter);

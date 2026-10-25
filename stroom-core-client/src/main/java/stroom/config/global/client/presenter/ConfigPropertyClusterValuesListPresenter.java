@@ -20,7 +20,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.TextCell;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ConfigPropertyClusterValuesListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private final ListDataProvider<ClusterValuesRow> dataProvider;
@@ -49,7 +49,7 @@ public class ConfigPropertyClusterValuesListPresenter
 
     @Inject
     public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus,
-                                                    final PagerView view) {
+                                                    final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>(1000);

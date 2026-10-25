@@ -36,10 +36,6 @@ import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
 import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
-import stroom.widget.datagrid.client.PagerView;
-import stroom.widget.datagrid.client.PagerViewImpl;
-import stroom.widget.datagrid.client.PagerViewWithHeading;
-import stroom.widget.datagrid.client.PagerViewWithHeadingImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
@@ -61,7 +57,7 @@ import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,
-/// but without plugins or the app shell, so that e.g. a list presenter's `PagerView` is created
+/// but without plugins or the app shell, so that e.g. a list presenter's `PagerPanel` is created
 /// as in Stroom.
 ///
 /// GIN checks the whole graph of every binding of an injector's modules, used or not, so a widget
@@ -75,8 +71,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
     protected void configure() {
         // AppModule: widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
-        bindSharedView(PagerView.class, PagerViewImpl.class);
-        bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         // AppModule: menus and tool tips
         bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);

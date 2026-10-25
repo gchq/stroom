@@ -28,7 +28,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -44,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final String NEW_TITLE = "New Constraint";
     private static final String EDIT_TITLE = "Edit Selected Constraint";
@@ -53,7 +53,7 @@ public class ConstraintListPresenter
 //    private static final ConstraintsResource PATHWAYS_RESOURCE = GWT.create(ConstraintsResource.class);
 
     //    private final DateTimeFormatter dateTimeFormatter;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final RestFactory restFactory;
     private final DataGrid<Constraint> dataGrid;
     private final MultiSelectionModelImpl<Constraint> selectionModel;
@@ -70,7 +70,7 @@ public class ConstraintListPresenter
 
     @Inject
     public ConstraintListPresenter(final EventBus eventBus,
-                                   final PagerView view,
+                                   final PagerPanel view,
                                    final RestFactory restFactory,
 //                                   final DateTimeFormatter dateTimeFormatter,
                                    final ConstraintEditPresenter constraintEditPresenter) {

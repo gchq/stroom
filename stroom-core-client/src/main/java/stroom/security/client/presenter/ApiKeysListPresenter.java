@@ -41,7 +41,7 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -74,7 +74,7 @@ public class ApiKeysListPresenter
     private final RestFactory restFactory;
     private final ExpiryFormatter expiryFormatter;
     private final ClientSecurityContext securityContext;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
 
     //    private final Set<Integer> selectedApiKeyIds = new HashSet<>();
     private final Selection<Integer> selection = new Selection<>(false, new HashSet<>());
@@ -95,7 +95,7 @@ public class ApiKeysListPresenter
 
     @Inject
     public ApiKeysListPresenter(final EventBus eventBus,
-                                final PagerView pagerView,
+                                final PagerPanel pagerView,
                                 final QuickFilterPageView listView,
                                 final RestFactory restFactory,
                                 final ExpiryFormatter expiryFormatter,

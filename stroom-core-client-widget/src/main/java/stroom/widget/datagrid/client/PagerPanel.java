@@ -20,74 +20,92 @@ import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 
-import javax.inject.Inject;
+/// A list's frame: a bar with the list's toolbar and a pager, above the list (e.g. a data grid)
+/// and a message over it. Its refresh button spins while the list's requests run, when it is
+/// their task monitor.
+///
+/// A presenter's view as well as a component, until the list presenters become controllers.
+public class PagerPanel extends Component implements View, TaskMonitorFactory {
 
-public class PagerViewImpl extends ViewImpl implements PagerView {
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FlowPanel pagerContainer;
     @UiField
-    Pager pager;
+    Toolbar toolbar;
     @UiField
     FlowPanel toolbarWidgets;
     @UiField
+    Pager pager;
+    @UiField
     FlowPanel listContainer;
+    @UiField
+    MessagePanel messagePanel;
 
     private int taskCount;
-    // Made when first asked for, so that a list without buttons has no toolbar
-    private Toolbar toolbar;
 
-    private final Widget widget;
-    private final MessagePanelImpl messagePanel = new MessagePanelImpl();
-
-    @Inject
-    public PagerViewImpl(final Binder binder) {
-        // Create the UiBinder.
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty panel, e.g. one a template declares, or one GIN makes for a list presenter.
+    public PagerPanel() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// Shows a data widget, e.g. a grid, in the panel, with the pager paging it.
+    ///
+    /// @param widget The data widget.
+    /// @param <W>    The widget's type.
     public <W extends Widget & HasRows> void setDataWidget(final W widget) {
         pager.setDisplay(widget);
-        listContainer.add(widget);
-        listContainer.add(messagePanel);
+        // Under the message, which shows over it
+        listContainer.insert(widget, 0);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// The toolbar beside the pager, for the list's own buttons, e.g.
+    /// `getToolbar().button(SvgImage.ADD, "Add", this::add)`. Name it after the list with
+    /// [Toolbar#setName(String)]. It shows once asked for, so a list with no buttons has none.
+    ///
+    /// @return The toolbar.
     public Toolbar getToolbar() {
-        if (toolbar == null) {
-            toolbar = new Toolbar("List actions");
-            toolbarWidgets.add(toolbar);
-        }
+        toolbar.setVisible(true);
         return toolbar;
     }
 
-    @Override
+    /// Adds a widget after the toolbar, e.g. a label saying how many rows are selected.
+    ///
+    /// @param widget The widget.
+    public void addToolbarWidget(final Widget widget) {
+        toolbarWidgets.add(widget);
+    }
+
+    /// @return The pager's refresh button.
     public RefreshButton getRefreshButton() {
         return pager.getRefreshButton();
     }
 
-    @Override
+    /// @param visible Whether the bar with the toolbar and pager shows.
     public void setPagerVisible(final boolean visible) {
         pagerContainer.setVisible(visible);
     }
 
+    /// @return The message shown over the list, e.g. for its errors.
+    public MessagePanel getMessagePanel() {
+        return messagePanel;
+    }
+
+    /// A task monitor that spins the refresh button while any of its tasks run.
+    ///
+    /// @return The task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
         return new TaskMonitor() {
@@ -110,32 +128,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
         };
     }
 
-    @Override
-    public MessagePanel getMessagePanel() {
-        return messagePanel;
-    }
 
-    @Override
-    public void addInfoLabel(final HTML label) {
-        toolbarWidgets.add(label);
-    }
+    // --------------------------------------------------------------------------------
 
-    @Override
-    public HTML getInfoLabel(final int index) {
-        int countSeen = 0;
-        for (final Widget widget : toolbarWidgets) {
-            if (widget instanceof HTML) {
-                if (countSeen == index) {
-                    return (HTML) widget;
-                } else {
-                    countSeen++;
-                }
-            }
-        }
-        return null;
-    }
 
-    public interface Binder extends UiBinder<Widget, PagerViewImpl> {
+    interface Binder extends UiBinder<Widget, PagerPanel> {
 
     }
 }

@@ -32,7 +32,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -59,7 +59,7 @@ public class UserAccessListPresenter
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<UserAccessRow> dataGrid;
     private final MultiSelectionModelImpl<UserAccessRow> selectionModel;
 
@@ -68,7 +68,7 @@ public class UserAccessListPresenter
 
     @Inject
     public UserAccessListPresenter(final EventBus eventBus,
-                                   final PagerView pagerView,
+                                   final PagerPanel pagerView,
                                    final QuickFilterPageView listView,
                                    final RestFactory restFactory,
                                    final DateTimeFormatter dateTimeFormatter) {

@@ -40,7 +40,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -83,7 +83,7 @@ public class TracesListPresenter
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final TraceHistogramChart histogram;
     private final DataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
@@ -98,7 +98,7 @@ public class TracesListPresenter
     @Inject
     public TracesListPresenter(final EventBus eventBus,
                                final QuickFilterPageView view,
-                               final PagerView pagerView,
+                               final PagerPanel pagerView,
                                final RestFactory restFactory,
                                final DateTimeFormatter dateTimeFormatter,
                                final UiConfigCache uiConfigCache,

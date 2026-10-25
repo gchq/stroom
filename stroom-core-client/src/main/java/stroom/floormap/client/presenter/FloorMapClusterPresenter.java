@@ -26,7 +26,7 @@ import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapCluster
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -111,7 +111,7 @@ public class FloorMapClusterPresenter
     @Inject
     public FloorMapClusterPresenter(final EventBus eventBus,
                                     final FloorMapClusterView view,
-                                    final PagerView pagerView) {
+                                    final PagerPanel pagerView) {
         super(eventBus, view);
         view.setDataView(pagerView);
         view.setUiHandlers(this);

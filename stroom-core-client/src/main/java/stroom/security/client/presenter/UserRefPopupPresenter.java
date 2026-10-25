@@ -38,7 +38,7 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -80,7 +80,7 @@ public class UserRefPopupPresenter
 
     private static final UserRefResource RESOURCE = GWT.create(UserRefResource.class);
 
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<UserRef> dataGrid;
     private RestDataProvider<UserRef, ResultPage<UserRef>> dataProvider;
     private final MultiSelectionModelImpl<UserRef> selectionModel;
@@ -100,7 +100,7 @@ public class UserRefPopupPresenter
     @Inject
     public UserRefPopupPresenter(final EventBus eventBus,
                                  final QuickFilterDialogView userListView,
-                                 final PagerView pagerView,
+                                 final PagerPanel pagerView,
                                  final RestFactory restFactory,
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {

@@ -25,7 +25,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -38,7 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> {
+public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<ProcessorProfile> dataGrid;
     private final MultiSelectionModelImpl<ProcessorProfile> selectionModel;
@@ -46,7 +46,7 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
 
     @Inject
     public ProcessorProfileListPresenter(final EventBus eventBus,
-                                         final PagerView view,
+                                         final PagerPanel view,
                                          final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
 

@@ -71,7 +71,7 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -114,7 +114,7 @@ public class QueryResultTablePresenter
 
     private final RestFactory restFactory;
     private final LocationManager locationManager;
-    private final PagerView pagerView;
+    private final PagerPanel pagerView;
     private final DataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
 
@@ -167,7 +167,7 @@ public class QueryResultTablePresenter
                                      final RestFactory restFactory,
                                      final LocationManager locationManager,
                                      final QueryResultTableView tableView,
-                                     final PagerView pagerView,
+                                     final PagerPanel pagerView,
                                      final DownloadPresenter downloadPresenter,
                                      final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,

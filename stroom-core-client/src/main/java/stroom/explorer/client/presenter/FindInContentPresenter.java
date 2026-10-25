@@ -37,7 +37,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -93,7 +93,7 @@ public class FindInContentPresenter
     @Inject
     public FindInContentPresenter(final EventBus eventBus,
                                   final FindInContentView view,
-                                  final PagerView pagerView,
+                                  final PagerPanel pagerView,
                                   final EditorPresenter editorPresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view);

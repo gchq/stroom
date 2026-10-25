@@ -53,7 +53,7 @@ import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -78,7 +78,7 @@ import java.util.function.Consumer;
 //
 
 public class ExecutionScheduleManager
-        extends ContentTabPresenter<PagerView> {
+        extends ContentTabPresenter<PagerPanel> {
 
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
@@ -87,6 +87,8 @@ public class ExecutionScheduleManager
     public static final String TAB_TYPE = "ExecutionScheduleManager";
 
     private final DataGrid<ExecutionSchedule> dataGrid;
+    // How many schedules are selected, after the toolbar
+    private final HTML selectionCountLabel = new HTML();
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -110,7 +112,7 @@ public class ExecutionScheduleManager
 
     @Inject
     public ExecutionScheduleManager(final EventBus eventBus,
-                                    final PagerView view,
+                                    final PagerPanel view,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final RestFactory restFactory,
                                     final ScheduledProcessEditPresenter scheduledProcessEditPresenter,
@@ -149,9 +151,8 @@ public class ExecutionScheduleManager
 
         createButtons();
 
-        final HTML label = new HTML();
-        label.addStyleName("paging-bar paging-bar__label");
-        view.addInfoLabel(label);
+        selectionCountLabel.addStyleName("paging-bar paging-bar__label");
+        view.addToolbarWidget(selectionCountLabel);
         updateSelectionCountLabel();
 
         createIconColumn();
@@ -462,7 +463,7 @@ public class ExecutionScheduleManager
 
 
     private void updateSelectionCountLabel() {
-        this.getView().getInfoLabel(0).setText(
+        selectionCountLabel.setText(
                 selectionModel.getSelectedCount()
                 + " schedule"
                 + (selectionModel.getSelectedCount() == 1 ? "" : "s")

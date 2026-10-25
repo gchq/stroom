@@ -326,7 +326,7 @@ The workbench measures this: `ButtonRuns` reports the runs of adjacent image but
 
 | Problem | How it happens | Scale (approx.) |
 | --- | --- | --- |
-| Pass-through methods | `addButton(Preset)`, `addButton(ButtonView)` and `addToggleButton(...)` re-declared on view interfaces and presenters so callers can reach a `ButtonPanel` (`PagerView`, `PagerViewWithHeading`, `QueryView.addButtonLeft/Right`, `EditExpressionView`, ...) | ~265 `addButton` calls in 99 files |
+| Pass-through methods | `addButton(Preset)`, `addButton(ButtonView)` and `addToggleButton(...)` re-declared on view interfaces and presenters so callers can reach a `ButtonPanel` (`PagerPanel`, `HeadedPagerPanel`, `QueryView.addButtonLeft/Right`, `EditExpressionView`, ...) | ~265 `addButton` calls in 99 files |
 | Presets | `SvgPresets` bundles an icon, a name and a default enabled state (`ADD` enabled, `EDIT` and `DELETE` disabled); names are overridden with `.title(...)`; icons reused under other names | 299 references; 69 `.title(...)` overrides |
 | Clicks wired separately | Buttons kept in fields and wired with `registerHandler(button.addClickHandler(...))` | Most toolbars |
 | Toolbars merged by hand | `HasToolbar.getToolbars()` returns widgets that `DocTabPresenter` adds beside its Save buttons, so adjacent buttons are separate groups | 11 implementers |
@@ -386,7 +386,7 @@ A toolbar can be declared in a template. `@UiConstructor Toolbar(String name)` m
 ### Contributions
 
 - Done: `HasToolbar.getDocumentButtons()` gives the groups of buttons that join the document tab's toolbar after Save and Save As (nested in it, so they are one group and one tab stop), and `HasToolbar.getToolbars()` the controls apart from them on the row (e.g. a query's time range and Execute button at its end). They are `Toolbar`s; when their buttons are made in the document's toolbar itself (`addTo(Toolbar)`), the transitional `.toolbar > .toolbar` rule in `toolbar.css` can be removed.
-- Done: `PagerView` exposes its actions `Toolbar` once (`getToolbar()`), and the list presenters' and views' pass-through methods are `getToolbar()` too. `PagerView.addButton(ButtonView)` stays for the button widgets built on `ToolbarButton` (e.g. table expand and collapse) until they can be made in a toolbar.
+- Done: `PagerPanel` exposes its actions `Toolbar` once (`getToolbar()`), and the list presenters' and views' pass-through methods are `getToolbar()` too. `PagerPanel.addButton(ButtonView)` stays for the button widgets built on `ToolbarButton` (e.g. table expand and collapse) until they can be made in a toolbar.
 
 ### Lifetime
 
@@ -397,7 +397,7 @@ A toolbar is self-contained (case 1): its callbacks are on its buttons and `Butt
 1. Done: `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton` and `ToolbarToggleButton` (with `setOnClick` and `setOnToggle`), styled by `toolbar.css` alone, with stories for the Java and UiBinder forms (`Widgets/Buttons/Toolbar`). `ButtonPanel`'s `Preset` methods and `SvgToggleButton` are deprecated; existing toolbars keep working, already with the keyboard behaviour. `InlineSvgToggleButton` now says it is a toggle (`aria-pressed="false"`) before it is first pressed.
 2. Convert the Dictionary editor first, the pilot's screen, using its `ToolbarTabStops` numbers as the before and after.
 3. Done: convert by area: the plain `FlowPanel` groups (explorer header, pagers, main toolbar, data navigators), `HasToolbar` and the document tab, then the remaining `addButton` callers, removing pass-throughs as they go. `SvgButton` and `ButtonPanel` are deleted (`Toolbar.setVertical` replaces `ButtonPanel.setVertical`). A form group's help button is a form control of its own (`FormGroupHelpButton`), not a toolbar button.
-4. Done: make the button widgets built on `ToolbarButton` in a toolbar: the quick filter's, the date picker's, `RefreshButton` (a `ToolbarButton`, made by `Toolbar.refresh`) and table expand and collapse (regular buttons, made by `GroupLevelButtons`; `PagerView.addButton(ButtonView)` is gone).
+4. Done: make the button widgets built on `ToolbarButton` in a toolbar: the quick filter's, the date picker's, `RefreshButton` (a `ToolbarButton`, made by `Toolbar.refresh`) and table expand and collapse (regular buttons, made by `GroupLevelButtons`; `PagerPanel.addButton(ButtonView)` is gone).
 5. Done: replace `Preset` where cells and menus use it, then delete `Preset` and `SvgPresets`. Cells take a `CellIcon` (icon, name, enabled; `stroom.cell.info.client`), made where it is used (`CellIcon.of(SvgImage.LOCKED, "Locked Stream")`); menus and the plugins' icons take an `SvgImage`.
 
 ## Split panes

@@ -32,7 +32,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +66,7 @@ public class LinkedEventPresenter
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
                                 final LinkedEventView view,
-                                final PagerView pagerView,
+                                final PagerPanel pagerView,
                                 final AnnotationResourceClient annotationResourceClient,
                                 final DataPresenter dataPresenter,
                                 final AddEventLinkPresenter addEventLinkPresenter) {

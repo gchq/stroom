@@ -106,7 +106,7 @@ public class FloorMapModule extends PluginModule {
                 FloorMapEventStoreDataViewImpl.class);
 
         // Lists a cluster's members, with a search box and filters over the
-        // app-wide PagerView that holds the grid.
+        // app-wide PagerPanel that holds the grid.
         bindPresenterWidget(FloorMapClusterPresenter.class,
                 FloorMapClusterView.class,
                 FloorMapClusterViewImpl.class);

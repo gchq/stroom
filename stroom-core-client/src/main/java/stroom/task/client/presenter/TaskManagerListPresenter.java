@@ -65,7 +65,7 @@ import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -102,7 +102,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TaskManagerListPresenter
-        extends MyPresenterWidget<PagerView>
+        extends MyPresenterWidget<PagerPanel>
         implements Refreshable {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
@@ -143,7 +143,7 @@ public class TaskManagerListPresenter
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
-                                    final PagerView view,
+                                    final PagerPanel view,
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient,

@@ -32,7 +32,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DuplicateManagementListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final DuplicateCheckResource DUPLICATE_CHECK_RESOURCE =
             GWT.create(DuplicateCheckResource.class);
@@ -65,7 +65,7 @@ public class DuplicateManagementListPresenter
 
     @Inject
     public DuplicateManagementListPresenter(final EventBus eventBus,
-                                            final PagerView view,
+                                            final PagerPanel view,
                                             final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;

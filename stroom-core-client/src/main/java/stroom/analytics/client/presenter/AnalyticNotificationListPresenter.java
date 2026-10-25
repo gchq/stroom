@@ -17,7 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -30,7 +30,7 @@ public class AnalyticNotificationListPresenter
 
     @Inject
     public AnalyticNotificationListPresenter(final EventBus eventBus,
-                                             final PagerView view,
+                                             final PagerPanel view,
                                              final Provider<AnalyticNotificationEditPresenter> editPresenterProvider) {
         super(eventBus, view, editPresenterProvider);
     }

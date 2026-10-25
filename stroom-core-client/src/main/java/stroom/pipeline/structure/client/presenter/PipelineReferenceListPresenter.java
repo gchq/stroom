@@ -38,7 +38,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -66,7 +66,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerPanel> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -100,7 +100,7 @@ public class PipelineReferenceListPresenter
 
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
-                                          final PagerView view,
+                                          final PagerPanel view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
                                           final RestFactory restFactory,
                                           final PipelineElementTypesFactory pipelineElementTypesFactory,

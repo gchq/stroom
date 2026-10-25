@@ -32,7 +32,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -693,7 +693,7 @@ public final class DataGridStories {
         grid.setWidth("100%");
         grid.setHeight("100%");
         addPlainColumns(grid);
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         final ListDataProvider<Person> dataProvider = new ListDataProvider<>(DataGridRows.people());
         dataProvider.addDataDisplay(grid);
@@ -708,7 +708,7 @@ public final class DataGridStories {
         grid.setHeight("100%");
         grid.setVirtual(true);
         addPlainColumns(grid);
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         final ListDataProvider<Person> dataProvider = new ListDataProvider<>(DataGridRows.generatedPeople(MANY_ROWS));
         dataProvider.addDataDisplay(grid);
@@ -997,9 +997,9 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Layout
 
-    /// The grid in Stroom's [PagerViewImpl], as Stroom's list presenters show their grids.
+    /// The grid in Stroom's [PagerPanel], as Stroom's list presenters show their grids.
     private static Widget paged(final DataGrid<?> grid) {
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
         return pagerView.asWidget();
     }

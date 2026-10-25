@@ -20,9 +20,11 @@ import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,16 +34,16 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 
-import javax.inject.Inject;
+/// A [PagerPanel] with a heading: the bar with the list's toolbar and a pager above the list, all
+/// in a form group labelled with the heading. Its own layout (the toolbar fills the bar, and there
+/// is no message), as putting a form group in every list's panel broke them. Its refresh button
+/// spins while the list's requests run, when it is their task monitor.
+///
+/// A presenter's view as well as a component, until the list presenters become controllers.
+public class HeadedPagerPanel extends Component implements View, TaskMonitorFactory {
 
-/**
- * Including a form in the pager view breaks a bunch of stuff so leaving this version for specific uses.
- */
-public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithHeading {
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    /**
-     * The pager used to change the range of data.
-     */
     @UiField
     FormGroup pagerFormGroup;
     @UiField
@@ -55,45 +57,49 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
 
     private int taskCount;
 
-    private final Widget widget;
-
-    @Inject
-    public PagerViewWithHeadingImpl(final Binder binder) {
-        // Create the UiBinder.
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty panel with no heading, e.g. one GIN makes for a list presenter.
+    public HeadedPagerPanel() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// Shows a data widget, e.g. a grid, in the panel, with the pager paging it.
+    ///
+    /// @param widget The data widget.
+    /// @param <W>    The widget's type.
     public <W extends Widget & HasRows> void setDataWidget(final W widget) {
         pager.setDisplay(widget);
         listContainer.setWidget(widget);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// Sets the heading. With none, it takes up no space.
+    ///
+    /// @param heading The heading.
+    public void setHeading(final String heading) {
+        pagerFormGroup.setLabel(heading);
     }
 
-    @Override
-    public void setHeading(final String string) {
-        pagerFormGroup.setLabel(string);
-    }
-
-    @Override
+    /// The toolbar beside the pager, for the list's own buttons, e.g.
+    /// `getToolbar().button(SvgImage.ADD, "Add", this::add)`. Name it after the list with
+    /// [Toolbar#setName(String)].
+    ///
+    /// @return The toolbar.
     public Toolbar getToolbar() {
         return toolbar;
     }
 
-    @Override
+    /// @return The pager's refresh button.
     public RefreshButton getRefreshButton() {
         return pager.getRefreshButton();
     }
 
-    @Override
+    /// @param visible Whether the bar with the toolbar and pager shows.
     public void setPagerVisible(final boolean visible) {
         pagerContainer.setVisible(visible);
     }
 
+    /// A task monitor that spins the refresh button while any of its tasks run.
+    ///
+    /// @return The task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
         return new TaskMonitor() {
@@ -116,7 +122,11 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
         };
     }
 
-    public interface Binder extends UiBinder<Widget, PagerViewWithHeadingImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, HeadedPagerPanel> {
 
     }
 }

@@ -31,7 +31,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.cache.CacheInfo;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.Cell.Context;
@@ -60,7 +60,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
+public class CacheNodeListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
@@ -91,7 +91,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
-                                  final PagerView view,
+                                  final PagerPanel view,
                                   final RestFactory restFactory,
                                   final NodeClient nodeClient) {
         super(eventBus, view);

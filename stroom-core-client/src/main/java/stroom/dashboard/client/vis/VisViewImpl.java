@@ -18,7 +18,7 @@ package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.data.pager.client.RefreshButton;
-import stroom.widget.datagrid.client.MessagePanelImpl;
+import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
@@ -37,7 +37,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
-    private final MessagePanelImpl messagePanel;
+    private final MessagePanel messagePanel;
     // Above the visualisation: its buttons and its pause and resume button
     private final VisToolbarRow toolbarRow;
 
@@ -45,7 +45,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Inject
     public VisViewImpl() {
-        messagePanel = new MessagePanelImpl();
+        messagePanel = new MessagePanel();
 
         visContainer = new SimplePanel();
         visContainer.setStyleName("dashboardVis-innerLayout");

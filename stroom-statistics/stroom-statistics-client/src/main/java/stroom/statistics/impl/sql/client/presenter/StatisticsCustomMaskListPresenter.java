@@ -28,7 +28,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class StatisticsCustomMaskListPresenter
-        extends DocPresenter<PagerView, StatisticStoreDoc> {
+        extends DocPresenter<PagerPanel, StatisticStoreDoc> {
 
     private final DataGrid<Mask> dataGrid;
     private final MultiSelectionModelImpl<Mask> selectionModel;
@@ -54,7 +54,7 @@ public class StatisticsCustomMaskListPresenter
 
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
-                                             final PagerView view) {
+                                             final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

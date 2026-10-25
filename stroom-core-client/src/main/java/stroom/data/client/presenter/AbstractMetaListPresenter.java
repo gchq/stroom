@@ -62,7 +62,7 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -88,7 +88,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public abstract class AbstractMetaListPresenter
-        extends MyPresenterWidget<PagerView>
+        extends MyPresenterWidget<PagerPanel>
         implements Refreshable {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -120,7 +120,7 @@ public abstract class AbstractMetaListPresenter
     private final Listeners<Selection<Long>> selectionListeners = new Listeners<>();
 
     AbstractMetaListPresenter(final EventBus eventBus,
-                              final PagerView view,
+                              final PagerPanel view,
                               final RestFactory restFactory,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,

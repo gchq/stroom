@@ -28,7 +28,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -41,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
+public class FindAnnotationListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private final DataGrid<Annotation> resultList;
     private final RestDataProvider<Annotation, ResultPage<Annotation>> dataProvider;
@@ -70,7 +70,7 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public FindAnnotationListPresenter(final EventBus eventBus,
-                                       final PagerView view,
+                                       final PagerPanel view,
                                        final AnnotationResourceClient resourceClient,
                                        final DurationLabel durationLabel) {
         super(eventBus, view);

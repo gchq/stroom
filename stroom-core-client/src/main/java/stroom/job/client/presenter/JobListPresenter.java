@@ -32,7 +32,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 /**
  * Top pane of JobPresenter (Jobs tab). Lists jobs (i.e. the parent job)
  */
-public class JobListPresenter extends MyPresenterWidget<PagerView> {
+public class JobListPresenter extends MyPresenterWidget<PagerPanel> {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
@@ -61,7 +61,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     @Inject
     public JobListPresenter(final EventBus eventBus,
-                            final PagerView view,
+                            final PagerPanel view,
                             final RestFactory restFactory,
                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
@@ -84,7 +84,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static RestDataProvider<JobWrapper, ResultPage<JobWrapper>> createDataProvider(
             final EventBus eventBus,
-            final PagerView view,
+            final PagerPanel view,
             final RestFactory restFactory) {
         return new RestDataProvider<JobWrapper, ResultPage<JobWrapper>>(eventBus) {
             @Override

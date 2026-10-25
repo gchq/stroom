@@ -22,7 +22,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -35,7 +35,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 
-public class XPathListPresenter extends MyPresenterWidget<PagerView>
+public class XPathListPresenter extends MyPresenterWidget<PagerPanel>
         implements Refreshable {
 
     private final DataGrid<XPathFilter> dataGrid;
@@ -44,7 +44,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
 
     @Inject
     public XPathListPresenter(final EventBus eventBus,
-                              final PagerView view) {
+                              final PagerPanel view) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();

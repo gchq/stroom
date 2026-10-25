@@ -7,8 +7,8 @@ Make DataGridWidget usable in templates and free of the bus: requests bubble thr
 ## Progress (25 October 2026)
 
 Done: the cells (`CopyTextCell`, `SvgCell`, `ActionMenuCell`, the checks of `CommandLinkCell`,
-`HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`), the three ref cells and `DataGrid`.
-Still to do: `PagerView`, `PagerViewWithHeading`, `SelectionList`, `SelectionPopup` and
+`HasContextMenusCell`, `SelectionBoxCell` and `MyCellTable`), the three ref cells, `DataGrid`,
+`PagerView` and `PagerViewWithHeading`. Still to do: `SelectionList`, `SelectionPopup` and
 `VisFrame`. What was decided on the way, where it differs from the plans below:
 
 - **`SvgCell` is `IconCell`**, named for what it is, with its stylesheet `icon-cell.css` (BEM:
@@ -37,6 +37,16 @@ Still to do: `PagerView`, `PagerViewWithHeading`, `SelectionList`, `SelectionPop
   `ScreenHarness` and `StoryPopups.withPageRequests()` (was `withMenuRequests`) relay them. Going
   through the grid fixed a bug: a dashboard opened from a table's menu got no parent dashboard
   (stories `LinkMenuThroughTheGrid` and `LinkMenuToTheApp`; a changelog entry).
+- **`PagerView` is `PagerPanel`**, a component with its template beside it, which declares its
+  toolbar (hidden until `getToolbar()`) and its `MessagePanel`; `addInfoLabel`/`getInfoLabel(index)`
+  became `addToolbarWidget(Widget)` (its one user keeps its label). It is still a `View` (the list
+  presenters are `MyPresenterWidget<PagerPanel>`; GIN makes it unbound) and still a
+  `TaskMonitorFactory`: 83 REST calls pass it, and moving them to `Contexts.TASK_MONITOR` is left
+  for when the list presenters become controllers. `MessagePanel` is one concrete component, with
+  `white-space: nowrap` on `dashboardVis-messageInner` in place of GWT's `Label` with no word wrap.
+- **`PagerViewWithHeading` is `HeadedPagerPanel`**, the plans' fallback, not a heading on
+  `PagerPanel`: its layout differs (the toolbar fills the bar, the list is in a `SimplePanel`, no
+  message), so merging them would have changed every list or its two.
 - `setHideHeader` called after the first render now hides the header: `render` only set its
   display when the header's structure changed. The root's `data-grid--no-header` hides it now.
 

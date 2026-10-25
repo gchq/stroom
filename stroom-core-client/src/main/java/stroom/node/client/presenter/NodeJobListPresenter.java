@@ -40,7 +40,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerViewWithHeading;
+import stroom.widget.datagrid.client.HeadedPagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 /**
  * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
  */
-public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading> implements Refreshable {
+public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
 
@@ -78,7 +78,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     @Inject
     public NodeJobListPresenter(final EventBus eventBus,
-                                final PagerViewWithHeading view,
+                                final HeadedPagerPanel view,
                                 final RestFactory restFactory,
                                 final Provider<SchedulePickerController> schedulePickerProvider,
                                 final DateTimeFormatter dateTimeFormatter,
@@ -165,7 +165,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
             final EventBus eventBus,
-            final PagerViewWithHeading view,
+            final HeadedPagerPanel view,
             final RestFactory restFactory) {
 
         //noinspection Convert2Diamond

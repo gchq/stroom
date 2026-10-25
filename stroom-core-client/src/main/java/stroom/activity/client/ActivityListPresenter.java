@@ -28,7 +28,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -45,7 +45,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class ActivityListPresenter
-        extends MyPresenterWidget<PagerView>
+        extends MyPresenterWidget<PagerPanel>
         implements Refreshable {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
@@ -60,7 +60,7 @@ public class ActivityListPresenter
 
     @Inject
     public ActivityListPresenter(final EventBus eventBus,
-                                 final PagerView view,
+                                 final PagerPanel view,
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
