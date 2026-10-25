@@ -27,6 +27,8 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
@@ -45,7 +47,8 @@ import java.util.function.Supplier;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
-    private static final String JSON_EDITOR_HEIGHT = "240px";
+    private static final String JSON_EDITOR_MIN_HEIGHT = "160px";
+    private static final String FORM_GROUP_CONTROL_ROW = "form-group-control-row";
 
     private final boolean utc;
     // Makes the code editors of `json` controls, or null to show them as text boxes.
@@ -90,6 +93,9 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             formGroup.add(widget);
 
             outer.add(formGroup);
+            if ("json".equals(JSONUtil.getString(control.get("type"))) && editorSupplier != null) {
+                fillRemainingHeight(formGroup);
+            }
         }
     }
 
@@ -222,7 +228,8 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
         final Widget widget = editor.getWidget();
         widget.addStyleName("w-100");
-        widget.setHeight(JSON_EDITOR_HEIGHT);
+        widget.getElement().getStyle().setProperty("minHeight", JSON_EDITOR_MIN_HEIGHT);
+        widget.getElement().getStyle().setProperty("flex", "1 1 auto");
 
         controls.add(new HasReadAndWrite<JSONObject>() {
             @Override
@@ -257,6 +264,24 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             return text;
         }
     }-*/;
+
+    // Lets a code editor's form group fill the height the pane (a column, as a form) has left below the controls
+    // before it: the group and its control row grow into it, and the editor stretches to the row's height.
+    private void fillRemainingHeight(final FormGroup formGroup) {
+        final Element group = formGroup.getElement();
+        group.getStyle().setProperty("flex", "1 1 auto");
+        group.getStyle().setDisplay(Display.FLEX);
+        group.getStyle().setProperty("flexDirection", "column");
+        group.getStyle().setProperty("minHeight", JSON_EDITOR_MIN_HEIGHT);
+        for (Element child = group.getFirstChildElement(); child != null; child = child.getNextSiblingElement()) {
+            if (child.hasClassName(FORM_GROUP_CONTROL_ROW)) {
+                child.getStyle().setProperty("flex", "1 1 auto");
+                child.getStyle().setProperty("alignItems", "stretch");
+                child.getStyle().setProperty("minHeight", "0");
+            }
+        }
+        resizeEditors();
+    }
 
     // The code editors are drawn at their size only once shown.
     private void resizeEditors() {
