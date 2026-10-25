@@ -1103,10 +1103,12 @@ if (!window.visualisations) {
             });
         }
 
+        // Each node its own colour, or coloured by its group (one colour if there are none).
+        var colourEachNode = String(textSetting(settings, "nodeColours") || "group").toLowerCase() === "node";
         var groups = [];
         var groupIndex = {};
         nodeNames.forEach(function (name) {
-            var group = nodes[name].group;
+            var group = colourEachNode ? name : nodes[name].group;
             if (group !== null && groupIndex[group] === undefined) {
                 groupIndex[group] = groups.length;
                 groups.push(group);
@@ -1157,7 +1159,9 @@ if (!window.visualisations) {
         var nodeCount = nodeNames.length;
 
         return {
-            legend: legendOption(settings, groups.length > 1, style),
+            // Each node's own colour needs no legend: its label names it.
+            legend: legendOption(settings, groups.length > 1 && !colourEachNode, style),
+            color: colourEachNode ? distinctColours(groups.length, style) : undefined,
             tooltip: {
                 trigger: "item",
                 formatter: function (params) {
@@ -1209,7 +1213,8 @@ if (!window.visualisations) {
                         weight: n.weight,
                         groupName: n.group,
                         value: n.degree,
-                        category: n.group !== null ? groupIndex[n.group] : undefined,
+                        category: colourEachNode ? groupIndex[name]
+                            : (n.group !== null ? groupIndex[n.group] : undefined),
                         symbolSize: scaleSqrt(n.degree, minDegree, maxDegree, 8, 48),
                         label: {show: labelled[name] === true}
                     };
@@ -1225,6 +1230,20 @@ if (!window.visualisations) {
                 })
             }]
         };
+    }
+
+    // ECharts' own palette, then as many more as are needed, spread round the colour wheel by the golden angle so
+    // neighbouring ones differ, lighter on a dark theme.
+    var BASE_PALETTE = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4",
+        "#ea7ccc"];
+
+    function distinctColours(count, style) {
+        var colours = BASE_PALETTE.slice(0, Math.min(count, BASE_PALETTE.length));
+        for (var i = colours.length; i < count; i++) {
+            var hue = Math.round(((i - BASE_PALETTE.length) * 137.508 + 20) % 360);
+            colours.push("hsl(" + hue + ", 60%, " + (style.dark ? "62%" : "48%") + ")");
+        }
+        return colours;
     }
 
     var MODELS = {

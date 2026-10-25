@@ -45,6 +45,9 @@ public enum StyleSetting {
             "draws a ring instead of a full pie"),
     DIRECTED("directed", "Directed", Control.BOOLEAN, "false", List.of(), null, null,
             "draws an arrow from source to target"),
+    NODE_COLOURS("nodeColours", "Node Colours", Control.SELECTION, "group", List.of("group", "node"), null, null,
+            "group colours nodes by their sourceGroup and targetGroup columns (one colour if neither is mapped), "
+            + "with a legend; node gives each node its own colour"),
     SHOW_LABELS_OFF("showLabels", "Show Labels", Control.BOOLEAN, "false", List.of(), null, null,
             "shows each value on the chart"),
     SHOW_LABELS_ON("showLabels", "Show Labels", Control.BOOLEAN, "true", List.of(), null, null,

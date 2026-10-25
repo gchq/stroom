@@ -77,7 +77,7 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
 
     /// The top-level ECharts option keys the adapter accepts as overrides (kept in step with
     /// `ALLOWED_TOP_LEVEL_KEYS` in `echarts-generic.js`).
-    static final Set<String> OPTION_KEYS = Set.of("legend", "grid", "xAxis", "yAxis", "tooltip", "color",
+    public static final Set<String> OPTION_KEYS = Set.of("legend", "grid", "xAxis", "yAxis", "tooltip", "color",
             "textStyle", "animation", "animationDuration", "dataZoom", "seriesDefaults");
 
     /// Reads a plan from JSON, by its components.

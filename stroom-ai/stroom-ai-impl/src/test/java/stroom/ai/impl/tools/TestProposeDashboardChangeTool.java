@@ -433,6 +433,32 @@ class TestProposeDashboardChangeTool {
         });
     }
 
+    @Test
+    void aChartsPaneNameIsTakenForItsLinkedTable() {
+        final String withVis = SETTINGS + "## Visualisation 'Chart' (id vis-1)\n"
+                               + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
+                               + "Linked table: 'Events'\n"
+                               + "Vis settings: {\"category\":\"UserId\"}\n"
+                               + "## Visualisation 'Unlinked' (id vis-2)\n"
+                               + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
+                               + "Linked table: none\n";
+        dashboardTab(false, withVis);
+        visualisation("vis-uuid", "Bar chart");
+
+        assertThat(run("Chart", List.of(Map.of("op", "set_vis_settings", "target", "Chart",
+                "settings", Map.of("value", "EventType")))))
+                .contains("shown the change to table 'Events'")
+                .contains("- Change visualisation 'Chart': set value 'EventType'");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(action).containsEntry("component", "Events"));
+
+        // A pane linked to no table isn't taken for the only one.
+        assertThat(run("Unlinked", List.of(Map.of("op", "set_vis_settings", "target", "Unlinked",
+                "settings", Map.of("value", "EventType")))))
+                .startsWith("The dashboard has no table or embedded query 'Unlinked'.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
     // A Visualisation the user can view, with two field controls.
     private void visualisation(final String uuid, final String name) {
         final VisualisationDoc doc = VisualisationDoc.builder()
