@@ -148,6 +148,7 @@ class SummariseStreamsTool extends AbstractBuiltInTool {
         // The by-action shares are for documenting fields, too much to read here.
         final Map<String, Object> shown = new LinkedHashMap<>(result);
         shown.remove(StreamSummaries.POPULATION_BY_ACTION);
+        shown.remove(StreamSummaries.TYPE_IDS_BY_ACTION);
         return JsonResults.of(shown);
     }
 

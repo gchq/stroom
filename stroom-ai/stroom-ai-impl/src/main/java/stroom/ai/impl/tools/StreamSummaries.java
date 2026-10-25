@@ -74,6 +74,9 @@ public class StreamSummaries {
     /// share of all events, by the action element of the events that have it: for the tools' own use, not for
     /// summarise_events' reply.
     public static final String POPULATION_BY_ACTION = "path_population_by_action";
+    /// The key of each TypeId's share of all events (%), by the action element of its events: for the tools' own
+    /// use, not for summarise_events' reply.
+    public static final String TYPE_IDS_BY_ACTION = "type_ids_by_action";
     /// The most Error children of a stream summarised.
     static final int MAX_ERROR_STREAMS = 20;
     /// The most markers read from one Error stream.
@@ -222,7 +225,7 @@ public class StreamSummaries {
     /// @param streamIds The Events streams.
     /// @param maxEvents The most events to read.
     /// @return `events`, `event_types`, `type_ids`, `actions`, `path_population`, `data_names` and `hint`, as the
-    /// Stroom MCP server gave them, and [#POPULATION_BY_ACTION].
+    /// Stroom MCP server gave them, and [#POPULATION_BY_ACTION] and [#TYPE_IDS_BY_ACTION].
     /// @throws StreamReadException if a stream can't be read.
     public Map<String, Object> summariseEvents(final List<Long> streamIds, final int maxEvents) {
         final Map<String, Integer> types = new LinkedHashMap<>();
@@ -232,6 +235,7 @@ public class StreamSummaries {
         final Map<List<String>, Integer> dataNames = new LinkedHashMap<>();
         // Each path (and named Data entry) by the action element of the events that have it.
         final Map<String, Map<String, Integer>> byAction = new TreeMap<>();
+        final Map<String, Map<String, Integer>> typeIdsByAction = new TreeMap<>();
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
         for (final long streamId : streamIds) {
@@ -270,6 +274,10 @@ public class StreamSummaries {
                     final Map<String, Integer> ofAction = action == null
                             ? null
                             : byAction.computeIfAbsent(kind, k -> new TreeMap<>());
+                    if (action != null) {
+                        typeIdsByAction.computeIfAbsent(kind, k -> new LinkedHashMap<>())
+                                .merge(orNone(typeId), 1, Integer::sum);
+                    }
                     leafPaths(event).forEach(path -> {
                         populated.merge(path, 1, Integer::sum);
                         if (ofAction != null) {
@@ -323,6 +331,20 @@ public class StreamSummaries {
             });
         }
         result.put(POPULATION_BY_ACTION, actionShares);
+        // Which TypeIds each action element's events have, most first (seen: an index's section per action element
+        // said nothing of which kinds of event, by TypeId, it was).
+        final Map<String, Map<String, Double>> typeIdShares = new LinkedHashMap<>();
+        if (count > 0) {
+            final int events = count;
+            typeIdsByAction.forEach((action, ids) -> {
+                final Map<String, Double> shares = new LinkedHashMap<>();
+                ids.entrySet().stream()
+                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                        .forEach(entry -> shares.put(entry.getKey(), percent(entry.getValue(), events)));
+                typeIdShares.put(action, shares);
+            });
+        }
+        result.put(TYPE_IDS_BY_ACTION, typeIdShares);
         result.put("hint", count >= maxEvents
                 ? "Percentages are of events sampled; raise max_events for a fuller picture."
                 : null);
