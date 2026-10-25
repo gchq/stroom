@@ -203,6 +203,38 @@
   }
 }
 
+/* Pinned headings, where the frame's sections are measured for them (see IFrameViewImpl.pinHeadings): each
+   section's heading stays at the top while its section is in view, below those of the sections it is in, on
+   the page's background (its gutter too, where the arrow is) so the text scrolls out of sight beneath it. */
+.markdown-pinned-headings .markdown-section__heading {
+  position: sticky;
+  /* Out to the page's edges, over its padding: the gutter, or the page's own (see --markdown-page-inset). */
+  margin-right: calc(-1 * var(--markdown-page-inset-right, 0px));
+  margin-left: calc(-1 * var(--markdown-page-inset, 1.6em));
+  padding-right: var(--markdown-page-inset-right, 0px);
+  padding-left: var(--markdown-page-inset, 1.6em);
+  background-color: var(--markdown-background__color);
+  transition: box-shadow 0.15s ease;
+}
+
+/* No rule under a top heading, nor the room above that rule, where headings are pinned: each pinned heading is a
+   plain row, with the shadow beneath the lowest to set them apart. */
+.markdown-pinned-headings .markdown-section__heading > h1 {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* The lowest heading pinned casts a soft shadow on the text scrolling beneath it. */
+.markdown-pinned-headings .markdown-section__heading--lowest-pinned {
+  box-shadow: 0 10px 14px -6px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-pinned-headings .markdown-section__heading {
+    transition: none;
+  }
+}
+
 .markdown-section__heading:hover > :is(h1, h2, h3, h4, h5, h6)::before {
   color: var(--markdown-heading__color);
 }
@@ -278,9 +310,17 @@
   margin: 1.5em 0;
 }
 
+/* A table fits the width it has where it can, its cells wrapping, a long word or path too, rather than running
+   off the side. */
 .markdown table {
   border-collapse: collapse;
   border: 1px solid var(--markdown-tbl__border-color);
+  max-width: 100%;
+}
+
+.markdown table th,
+.markdown table td {
+  overflow-wrap: anywhere;
 }
 
 .markdown table th {
@@ -430,12 +470,81 @@ hide the standard control and replace it with something more fancy that we can c
 }
 
 /* A rendered document (e.g. an entity's Documentation tab or its preview): room around the page, so text
-   is not crammed against the panel's edges, and a readable line length. */
+   is not crammed against the panel's edges, and a readable line length, the page's width alone, which the user
+   can change by dragging its right edge (see IFrameViewImpl.resizableWidth). */
+/* The pane beyond the page's right edge is shaded darker than the page. */
 .info-page.markdown-container {
   box-sizing: border-box;
-  padding: 10px 4px 20px;
+  padding: 0;
+  background-color: rgb(0 0 0 / 0.18);
 }
 
+/* The page: its own room around the text (as much on the right as on the left, its arrows' gutter too), on the
+   page's background, at least as tall as the pane so its edge runs from top to bottom, casting a shadow on the
+   shade to its right only (clipped above and below, so it never falls over the pinned headings). */
 .info-page.markdown-container > .markdown {
-  max-width: 60em;
+  position: relative;
+  box-sizing: border-box;
+  max-width: 80em;
+  min-height: 100%;
+  padding: 10px 4px 20px;
+  background-color: var(--markdown-background__color);
+  box-shadow: 4px 0 12px -2px rgb(0 0 0 / 0.45);
+  clip-path: inset(0 -24px 0 0);
+}
+
+.info-page.markdown-container > .markdown:has(> .markdown-section) {
+  /* How far a pinned heading reaches out to the page's edges. */
+  --markdown-page-inset: calc(1.6em + 4px);
+  --markdown-page-inset-right: calc(1.6em + 4px);
+  padding-right: var(--markdown-page-inset-right);
+  padding-left: var(--markdown-page-inset);
+}
+
+.info-page.markdown-container > .markdown :is(p, li, h1, h2, h3) {
+  max-width: none;
+}
+
+/* The page's right edge: a faint line, always there from the top of the pane to its bottom, a clear bar under
+   the pointer, dragged to change the page's width; over the pinned headings, which would otherwise hide it. */
+.markdown-width-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 8px;
+  cursor: col-resize;
+}
+
+.markdown-width-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--markdown-tbl__border-color);
+  opacity: 0.6;
+  transition: opacity 0.15s ease, width 0.15s ease, background-color 0.15s ease;
+}
+
+/* Under the pointer, and while dragged, a clear bar in the accent colour. */
+.markdown-width-handle:hover::after,
+.markdown-resizing .markdown-width-handle::after {
+  width: 3px;
+  background-color: var(--markdown-accent__color);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-width-handle::after {
+    transition: none;
+  }
+}
+
+.markdown-resizing,
+.markdown-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
 }
