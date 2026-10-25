@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.docref.DocRef;
+import stroom.query.shared.QueryDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,6 +48,9 @@ public final class DashboardComponents {
     public static final String TEXT = "Text";
     /// A visualisation (vis) component.
     public static final String VISUALISATION = "Visualisation";
+    /// An embedded query component: a StroomQL query, embedded in the dashboard or a Query shown by reference,
+    /// with its own results table and chart.
+    public static final String EMBEDDED_QUERY = "Embedded Query";
     /// What starts the line of a visualisation component that gives its latest render report. The report is
     /// written by the visualisation's script, so it changes as the visualisation renders: it is left out when
     /// telling whether the dashboard has changed (see [#withoutRenderReports(String)]).
@@ -57,6 +61,10 @@ public final class DashboardComponents {
     private static final Pattern VIS_DOC = Pattern.compile("^Visualisation: '(.*)' \\(uuid ([^)]+)\\)$");
     private static final Pattern LINKED_TABLE = Pattern.compile("^Linked table: '(.*)'$");
     private static final String VIS_SETTINGS = "Vis settings: ";
+    private static final Pattern REFERENCED_QUERY = Pattern.compile("^Query: Query '(.*)' \\(uuid ([^)]+)\\) by "
+                                                                    + "reference$");
+    private static final String STROOM_QL = "StroomQL:";
+    private static final String FENCE = "```";
 
     private DashboardComponents() {
         // Static methods only.
@@ -139,6 +147,49 @@ public final class DashboardComponents {
         }
     }
 
+    /// Reads an embedded query's StroomQL from the dashboard's description.
+    ///
+    /// @param text        The dashboard's description, as the browser gives it.
+    /// @param componentId The embedded query's component id.
+    /// @return Its StroomQL and the Query it shows by reference, if it does; empty if there is no such embedded
+    /// query, or its StroomQL isn't given in full.
+    public static Optional<EmbeddedQuery> embeddedQuery(final String text, final String componentId) {
+        boolean in = false;
+        boolean opened = false;
+        DocRef referenced = null;
+        StringBuilder query = null;
+        for (final String line : NullSafe.string(text).split("\n", -1)) {
+            if (query != null) {
+                // Within the StroomQL: up to the closing fence.
+                if (FENCE.equals(line)) {
+                    return Optional.of(new EmbeddedQuery(query.toString().strip(), referenced));
+                }
+                query.append(line).append('\n');
+                continue;
+            }
+            final Matcher heading = HEADING.matcher(line);
+            if (heading.matches()) {
+                if (in) {
+                    break;
+                }
+                in = EMBEDDED_QUERY.equals(heading.group(1)) && heading.group(3).equals(componentId);
+                continue;
+            }
+            if (!in) {
+                continue;
+            }
+            final Matcher reference = REFERENCED_QUERY.matcher(line);
+            if (reference.matches()) {
+                referenced = new DocRef(QueryDoc.TYPE, reference.group(2), reference.group(1));
+            } else if (STROOM_QL.equals(line)) {
+                opened = true;
+            } else if (opened && FENCE.equals(line)) {
+                query = new StringBuilder();
+            }
+        }
+        return Optional.empty();
+    }
+
     /// @param components A dashboard's components.
     /// @param name       A component's name, as the user sees it.
     /// @return The component with the name: exactly, else ignoring case if only one matches.
@@ -189,6 +240,19 @@ public final class DashboardComponents {
         /// @param dataSource For a query, its data source, or null.
         public Component(final String type, final String name, final String id, final DocRef dataSource) {
             this(type, name, id, dataSource, null, null, Map.of());
+        }
+    }
+
+    /// An embedded query's StroomQL.
+    ///
+    /// @param query      Its StroomQL, as the dashboard has it.
+    /// @param referenced The Query it shows by reference, whose StroomQL it is, or null if it is embedded in the
+    ///                   dashboard.
+    public record EmbeddedQuery(String query, DocRef referenced) {
+
+        /// @return True if its StroomQL is a Query's, shown by reference, so changed in that Query.
+        public boolean isReference() {
+            return referenced != null;
         }
     }
 }

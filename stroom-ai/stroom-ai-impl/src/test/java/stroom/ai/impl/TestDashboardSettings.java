@@ -23,9 +23,11 @@ import stroom.docref.DocRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// The dashboard components and settings the agent can change: components read from the dashboard's description,
 /// and each setting's value checked before it is offered.
@@ -62,6 +64,14 @@ class TestDashboardSettings {
     }
 
     @Test
+    void anEmbeddedQueryHasItsRunSettings() {
+        assertThat(DashboardSettings.keys(DashboardComponents.EMBEDDED_QUERY))
+                .containsExactly("queryOnOpen", "autoRefresh", "refreshInterval");
+        assertThat(DashboardSettings.normalise(setting(DashboardComponents.EMBEDDED_QUERY, "refreshInterval"), "5m"))
+                .isEqualTo("5m");
+    }
+
+    @Test
     void eachKindOfValueIsChecked() {
         assertThat(DashboardSettings.normalise(setting("Table", "showDetail"), "Yes")).isEqualTo("true");
         assertThat(DashboardSettings.normalise(setting("Table", "showDetail"), "off")).isEqualTo("false");
@@ -86,10 +96,16 @@ class TestDashboardSettings {
         assertThat(DashboardSettings.find("Table", "queryOnOpen")).isEmpty();
         assertThat(DashboardSettings.keys("Text")).containsExactly("table", "pipeline", "showAsHtml",
                 "showStepping");
-        assertThat(DashboardSettings.keys("Embedded Query")).isEmpty();
-        // Keys are unique, so a change names a setting by its key alone.
-        assertThat(DashboardSettings.SETTINGS.stream().map(Setting::key).distinct().count())
-                .isEqualTo(DashboardSettings.SETTINGS.size());
+        assertThat(DashboardSettings.keys("Embedded Query")).containsExactly("queryOnOpen", "autoRefresh",
+                "refreshInterval");
+        // A key two component types share means the same for both, as a change's label and value are found by key
+        // alone.
+        assertThat(DashboardSettings.SETTINGS.stream()
+                .collect(Collectors.groupingBy(Setting::key))
+                .values())
+                .allSatisfy(same -> assertThat(same).extracting(Setting::kind, Setting::label)
+                        .containsOnly(tuple(same.getFirst().kind(),
+                                same.getFirst().label())));
     }
 
     private static Setting setting(final String type, final String key) {

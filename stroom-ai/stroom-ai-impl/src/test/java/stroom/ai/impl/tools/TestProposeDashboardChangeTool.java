@@ -30,6 +30,7 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
@@ -43,6 +44,7 @@ import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -303,7 +305,8 @@ class TestProposeDashboardChangeTool {
     void anUnknownTableIsRefusedNamingTheTables() {
         final String result = run("Nope", List.of(Map.of("op", "hide_column", "column", "UserId")));
 
-        assertThat(result).isEqualTo("The dashboard has no table 'Nope'. Its tables are: 'Events'.");
+        assertThat(result).isEqualTo("The dashboard has no table or embedded query 'Nope'. Its tables and embedded "
+                                     + "queries are: 'Events'.");
     }
 
     @Test
@@ -440,6 +443,61 @@ class TestProposeDashboardChangeTool {
                 .build();
         Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class))
                 .thenReturn(Optional.of(doc));
+    }
+
+    @Test
+    void anEmbeddedQueryTakesSettingChangesOnly() {
+        embeddedQueryTab();
+
+        assertThat(run("Pairs", List.of(Map.of("op", "set_setting", "target", "Pairs", "setting", "queryOnOpen",
+                "value", "true"))))
+                .doesNotStartWith("Error")
+                .doesNotStartWith("No change");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
+                .containsEntry("action", UserActions.APPLY_DASHBOARD_CHANGE)
+                .containsEntry("component", "Pairs"));
+
+        assertThat(run("Pairs", List.of(Map.of("op", "add_column", "name", "Count", "expression", "count()"))))
+                .isEqualTo("No change was proposed: 'Pairs' is an embedded query, whose StroomQL makes its "
+                           + "results, so it takes only set_setting (e.g. queryOnOpen) and rename changes, not "
+                           + "add_column. Its StroomQL is in the dashboard's description: tell the user the StroomQL "
+                           + "to use instead.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void anEmbeddedQuerysSettingsAreChecked() {
+        embeddedQueryTab();
+
+        assertThat(run("Pairs", List.of(Map.of("op", "set_setting", "target", "Pairs", "setting", "pageSize",
+                "value", "10"))))
+                .startsWith("No change was proposed")
+                .contains("pageSize");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    // A dashboard whose only component is an embedded query, 'Pairs'.
+    private void embeddedQueryTab() {
+        final QueryTableContext live = new QueryTableContext("Embedded query 'Pairs'", null,
+                QuerySearchRequest.builder().query("from \"Chats\" select UserA, UserB").build());
+        final AiTabSearch pairs = new AiTabSearch("Pairs", "query-1", null, live, List.of("UserA", "UserB"), 5L,
+                false);
+        final StoredTabSnapshot snapshot = new StoredTabSnapshot(5, 1, DASHBOARD, "/", "Logons", "Dashboard", false,
+                null, "h", 0L, List.of(), List.of(pairs), null);
+        Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
+        Mockito.when(tabSnapshots.part(CHAT, snapshot, AiTabSnapshotPart.DASHBOARD))
+                .thenReturn(Optional.of(new UnsavedPart("""
+                        Time range: All time
+                        Shown components: Pairs
+
+                        ## Embedded Query 'Pairs' (id query-1)
+                        Query: embedded in the dashboard
+                        StroomQL:
+                        ```
+                        from "Chats" select UserA, UserB
+                        ```
+                        Settings: queryOnOpen false; autoRefresh false; refreshInterval 10s
+                        """, false, "/tabs/1/dashboard.md")));
     }
 
     private void dashboardTab(final boolean cut) {

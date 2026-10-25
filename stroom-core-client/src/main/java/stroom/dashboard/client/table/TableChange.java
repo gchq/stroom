@@ -58,6 +58,9 @@ public final class TableChange {
     /// [#getValue()] into them (a key whose value is empty is removed, so the control's default applies), and
     /// switches it to the Visualisation [#getDoc()] if that isn't null.
     public static final String SET_VIS_SETTINGS = "set_vis_settings";
+    /// Changes an embedded query's StroomQL ([#getTargetId()]) to [#getValue()], and runs it, if it is still
+    /// [#getRef()] (the text it was planned against), so a change made since isn't written over.
+    public static final String SET_QUERY = "set_query";
     /// For add_vis: in a new pane below the table (the default).
     public static final String BELOW = "below";
     /// For add_vis: as a tab beside the table.

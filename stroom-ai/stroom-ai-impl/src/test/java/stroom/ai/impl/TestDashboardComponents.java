@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.DashboardComponents.Component;
+import stroom.ai.impl.DashboardComponents.EmbeddedQuery;
 import stroom.docref.DocRef;
 
 import org.junit.jupiter.api.Test;
@@ -82,5 +83,53 @@ class TestDashboardComponents {
         assertThat(without).isEqualTo(DASHBOARD.replace("Render report: {\"rendered\":true,\"nodes\":12}\n", ""));
         assertThat(DashboardComponents.withoutRenderReports("\nA\nB\n")).isEqualTo("\nA\nB\n");
         assertThat(DashboardComponents.withoutRenderReports(null)).isNull();
+    }
+
+    @Test
+    void anEmbeddedQuerysStroomQlIsRead() {
+        final String dashboard = """
+                Time range: All time
+                Shown components: Pairs
+
+                ## Embedded Query 'Pairs' (id query-1)
+                Query: embedded in the dashboard
+                StroomQL:
+                ```
+                from "Chats"
+                where event.code = "ChatMessage"
+
+                select UserA, UserB
+                ```
+                Settings: queryOnOpen false; autoRefresh false; refreshInterval 10s
+
+                ## Embedded Query 'Saved' (id query-2)
+                Query: Query 'Chat pairs' (uuid q-uuid) by reference
+                StroomQL:
+                ```
+                from "Chats" select UserA
+                ```
+                """;
+
+        assertThat(DashboardComponents.embeddedQuery(dashboard, "query-1")).contains(new EmbeddedQuery(
+                "from \"Chats\"\nwhere event.code = \"ChatMessage\"\n\nselect UserA, UserB", null));
+        assertThat(DashboardComponents.embeddedQuery(dashboard, "query-2")).hasValueSatisfying(query -> {
+            assertThat(query.query()).isEqualTo("from \"Chats\" select UserA");
+            assertThat(query.isReference()).isTrue();
+            assertThat(query.referenced()).isEqualTo(new DocRef("Query", "q-uuid", "Chat pairs"));
+        });
+        assertThat(DashboardComponents.parse(dashboard)).extracting(Component::type)
+                .containsExactly(DashboardComponents.EMBEDDED_QUERY, DashboardComponents.EMBEDDED_QUERY);
+    }
+
+    @Test
+    void anEmbeddedQueryWithoutItsStroomQlInFullIsntRead() {
+        // No such component, or a table of that id.
+        assertThat(DashboardComponents.embeddedQuery(DASHBOARD, "query-1")).isEmpty();
+        assertThat(DashboardComponents.embeddedQuery(DASHBOARD, "table-1")).isEmpty();
+        // Cut short before its closing fence.
+        assertThat(DashboardComponents.embeddedQuery("## Embedded Query 'Pairs' (id query-1)\n"
+                                                     + "Query: embedded in the dashboard\nStroomQL:\n```\n"
+                                                     + "from \"Chats\"", "query-1")).isEmpty();
+        assertThat(DashboardComponents.embeddedQuery(null, "query-1")).isEmpty();
     }
 }

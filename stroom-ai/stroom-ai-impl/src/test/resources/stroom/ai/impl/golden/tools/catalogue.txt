@@ -1422,7 +1422,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "integer"
           },
           "setting" : {
-            "description" : "For set_setting: the setting. Table: pageSize (rows per page); maxResults (the most rows at each group level, e.g. 1000,10 (the top level first)); showDetail (show the detail rows (events) under grouped rows, which a Text widget needs to show an event); extractValues (extract values with the extraction pipeline); extractionPipeline (the extraction pipeline (its UUID)); showValueFilters (show the row of column filters); query (the query that feeds it (a query component's name)); maxStringFieldLength (the longest text a cell shows). Query: dataSource (the data source (its name or UUID)); queryOnOpen (run the query when the dashboard opens); autoRefresh (run the query again on a timer); refreshInterval (how often to refresh, e.g. 30s, 10m or 1h). Text: table (the table whose selected row it shows (a table's name, or none for any)); pipeline (the pipeline it shows the data through (its UUID, or none for the raw data)); showAsHtml (show the data as HTML); showStepping (show the stepping button).",
+            "description" : "For set_setting: the setting. Table: pageSize (rows per page); maxResults (the most rows at each group level, e.g. 1000,10 (the top level first)); showDetail (show the detail rows (events) under grouped rows, which a Text widget needs to show an event); extractValues (extract values with the extraction pipeline); extractionPipeline (the extraction pipeline (its UUID)); showValueFilters (show the row of column filters); query (the query that feeds it (a query component's name)); maxStringFieldLength (the longest text a cell shows). Query: dataSource (the data source (its name or UUID)); queryOnOpen (run the query when the dashboard opens); autoRefresh (run the query again on a timer); refreshInterval (how often to refresh, e.g. 30s, 10m or 1h). Embedded Query: queryOnOpen (run the query when the dashboard opens); autoRefresh (run the query again on a timer); refreshInterval (how often to refresh, e.g. 30s, 10m or 1h). Text: table (the table whose selected row it shows (a table's name, or none for any)); pipeline (the pipeline it shows the data through (its UUID, or none for the raw data)); showAsHtml (show the data as HTML); showStepping (show the stepping button).",
             "type" : "string"
           },
           "settings" : {
@@ -1463,7 +1463,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
       "type" : "array"
     },
     "component" : {
-      "description" : "The table the changes are for, by its name as the user sees it. Changes to other components name them as their target.",
+      "description" : "The table the changes are for, by its name as the user sees it. Changes to other components name them as their target. Or an embedded query's name, for set_setting and rename changes only.",
       "type" : "string"
     },
     "summary" : {
@@ -1774,7 +1774,7 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     },
     "table" : {
-      "description" : "Optional. The dashboard table to chart, by the name the user sees, when the dashboard has several.",
+      "description" : "Optional. The dashboard table (or embedded query) to chart, by the name the user sees, when the dashboard has several.",
       "type" : "string"
     }
   },
