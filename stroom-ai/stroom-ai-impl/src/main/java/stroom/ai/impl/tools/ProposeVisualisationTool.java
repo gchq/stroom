@@ -577,6 +577,13 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                           final String placement,
                           final String name,
                           final StringBuilder notes) {
+        if (D3Visualisation.find(kind).isEmpty()) {
+            return ToolResult.text("No chart was offered: the visualisations content pack has no D3 "
+                                   + kind.displayName().toLowerCase(Locale.ROOT) + ". Draw it with ECharts "
+                                   + "(library echarts)" + (chartLibraries.findECharts().isPresent()
+                    ? "."
+                    : ", which an administrator would need to install."));
+        }
         final DocRef visualisation = chartLibraries.findD3().get(kind);
         if (visualisation == null) {
             return ToolResult.text("No chart was offered: the visualisations content pack's D3 "
