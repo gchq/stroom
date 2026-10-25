@@ -32,6 +32,7 @@ import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.QueryTableContext;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
@@ -60,9 +61,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// propose_dashboard_change: offers a change to a table on the dashboard in the tab the user attached as a button,
 /// after checking the dashboard is the latest snapshot's tab, the user can view it, the table and its columns
@@ -316,7 +319,25 @@ class TestProposeDashboardChangeTool {
                 new DocRef("XSLT", "x", "X"), "/", "X", null, false, null, "h", 0L, List.of(), List.of(), null)));
 
         assertThat(run(List.of(Map.of("op", "hide_column", "column", "UserId"))))
-                .isEqualTo(ProposeDashboardChangeTool.NOT_DASHBOARD);
+                .startsWith("The tab attached to this question is XSLT 'X', not a dashboard, so no change was "
+                            + "proposed. No dashboard has been attached to this chat, so it isn't known which one "
+                            + "the user means");
+    }
+
+    @Test
+    void withoutATabTheDashboardAttachedEarlierIsNamed() {
+        // Seen in testing: asked a follow-up without the tab attached, the agent couldn't tell the user clearly
+        // what to attach again.
+        Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.empty());
+        Mockito.when(tabSnapshots.latestOfType(CHAT, Set.of(DashboardDoc.TYPE))).thenReturn(Optional.of(
+                new StoredTabSnapshot(5, 9, new DocRef(DashboardDoc.TYPE, "d9", "Chat logs"), "/", "Chat logs",
+                        null, false, null, "h", 0L, List.of(), List.of(), null)));
+
+        assertThat(run(List.of(Map.of("op", "hide_column", "column", "UserId"))))
+                .startsWith("No tab is attached to this question, so no change was proposed. Dashboard 'Chat logs' "
+                            + "(uuid d9) was attached to an earlier question: its files in /tabs/9/ show it as it "
+                            + "was then")
+                .contains("ask them to open Dashboard 'Chat logs' and attach its tab");
     }
 
     @Test
@@ -457,6 +478,122 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void aSelectionFilterIsRemovedByItsId() {
+        // Seen in testing: a selection filter that did the wrong thing couldn't be removed or changed.
+        dashboardTab(false, SETTINGS.replace("## Table 'Events' (id table-1)\n- UserId\n",
+                "## Table 'Events' (id table-1)\n- UserId\nTable selection filters: [id ab12c] OR {UserId = "
+                + "${component.vis-1.selection.node}}; [id cd34e] UserId = x\n")
+                                       + "## Visualisation 'Chart' (id vis-1)\n"
+                                       + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
+                                       + "Linked table: 'Events'\n"
+                                       + "Vis settings: {\"category\":\"UserId\",\"value\":\"Count\"}\n");
+
+        assertThat(run(List.of(Map.of("op", "remove_selection_filter", "target", "Events", "filter", "ab12c"))))
+                .contains("- Remove the selection filter ab12c from 'Events'");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(asMap(((List<?>) action.get("changes")).getFirst()))
+                        .containsEntry("op", "remove_selection_filter")
+                        .containsEntry("target_id", "table-1")
+                        .containsEntry("filter", "ab12c"));
+
+        // An id the component doesn't have is refused, naming those it has.
+        assertThat(run(List.of(Map.of("op", "remove_selection_filter", "target", "Events", "filter", "zz999"))))
+                .contains("'Events' has no selection filter 'zz999'. Its selection filters' ids are: ab12c, cd34e.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aFilterMatchingAnyTermGivesEachItsOwnOperator() {
+        // Seen in testing: Stroom ANDs the terms of an operator that name the same chart's selection, whatever the
+        // operator, so "sender or recipient is the clicked node" matched only messages to oneself: no data.
+        chartTab();
+
+        run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart", "mode", "table",
+                "match", "any", "terms", List.of(Map.of("field", "UserId", "selection", "category"),
+                        Map.of("field", "EventType", "selection", "category")))));
+
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat(query).containsEntry("op", "OR");
+            assertThat((List<?>) query.get("children")).hasSize(2).allSatisfy(child ->
+                    assertThat((List<?>) asMap(child).get("children")).singleElement().satisfies(term ->
+                            assertThat(asMap(term)).containsEntry("value", "${component.vis-1.selection.category}")));
+        });
+
+        // Matching all of them, they stay together.
+        run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart", "mode", "table",
+                "terms", List.of(Map.of("field", "UserId", "selection", "category"),
+                        Map.of("field", "EventType", "selection", "category")))));
+
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat(query).containsEntry("op", "AND");
+            assertThat((List<?>) query.get("children")).hasSize(2).allSatisfy(child ->
+                    assertThat(asMap(child)).containsKey("field").doesNotContainKey("children"));
+        });
+    }
+
+    @Test
+    void aTimeRangeKeepsWhatIsWithinItAndDropsOutWithoutOne() {
+        // Two terms, not between: Stroom leaves out each whose value isn't held, where a between term's value would
+        // be a bare comma while nothing is selected.
+        assertThat(ProposeDashboardChangeTool.selectionTerms("EventTime", "range", "vis-1"))
+                .extracting(ExpressionTerm::getField, ExpressionTerm::getCondition, ExpressionTerm::getValue)
+                .containsExactly(
+                        tuple("EventTime", Condition.GREATER_THAN_OR_EQUAL_TO, "${component.vis-1.selection.from}"),
+                        tuple("EventTime", Condition.LESS_THAN_OR_EQUAL_TO, "${component.vis-1.selection.to}"));
+        assertThat(ProposeDashboardChangeTool.selectionTerms("UserId", "category", "vis-1"))
+                .extracting(ExpressionTerm::getCondition, ExpressionTerm::getValue)
+                .containsExactly(tuple(Condition.EQUALS, "${component.vis-1.selection.category}"));
+        // A chart with an x axis can select a range of it.
+        assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation", "Trend", "vis-1", null,
+                null, "Events", Map.of("x", "Time", "y", "Count")))).contains("range");
+    }
+
+    @Test
+    void aLinksEndsStayTogetherWhenAnyTermMayMatch() {
+        // Seen in testing: clicking a link filtered nothing, as the filter had only node terms. With the link's
+        // ends too, a node matches either end, and a link matches both its ends (either way round, as the chart
+        // sends an undirected link both ways).
+        dashboardTab(false, SETTINGS + "## Visualisation 'Network' (id vis-1)\n"
+                            + "Visualisation: 'Network' (uuid vis-uuid)\n"
+                            + "Linked table: 'Events'\n"
+                            + "Vis settings: {\"source\":\"UserId\",\"target\":\"EventType\"}\n");
+
+        run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Network", "mode", "table",
+                "match", "any", "terms", List.of(Map.of("field", "UserId", "selection", "node"),
+                        Map.of("field", "EventType", "selection", "node"),
+                        Map.of("field", "UserId", "selection", "source"),
+                        Map.of("field", "EventType", "selection", "target")))));
+
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat(query).containsEntry("op", "OR");
+            assertThat((List<?>) query.get("children")).extracting(child ->
+                            ((List<?>) asMap(child).get("children")).size())
+                    .containsExactly(1, 1, 2);
+        });
+    }
+
+    @Test
+    void aTableFilterCanUseAColumnTheProposalAdds() {
+        // Seen in testing: a column added for a table filter, and the filter on it, were refused together, as the
+        // filter was checked against the table's columns before the proposal's changes.
+        chartTab();
+
+        assertThat(run(List.of(
+                Map.of("op", "add_column", "name", "Sender", "expression", "${UserId}"),
+                Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart", "mode", "table",
+                        "terms", List.of(Map.of("field", "Sender", "selection", "category"))))))
+                .contains("- Filter the rows of 'Events' by what is selected in chart 'Chart': Sender = its "
+                          + "category");
+        assertThat(takeUserActions()).hasSize(1);
+    }
+
+    @Test
     void aQueryFilterNeedsTheQuerysFields() {
         chartTab();
 
@@ -566,8 +703,9 @@ class TestProposeDashboardChangeTool {
 
         assertThat(run("Pairs", List.of(Map.of("op", "add_column", "name", "Count", "expression", "count()"))))
                 .isEqualTo("No change was proposed: 'Pairs' is an embedded query, whose StroomQL makes its "
-                           + "results, so it takes only set_setting (e.g. queryOnOpen), rename and "
-                           + "add_selection_filter changes, not add_column. Its StroomQL is in the dashboard's "
+                           + "results, so it takes only set_setting (e.g. queryOnOpen), rename, "
+                           + "add_selection_filter and remove_selection_filter changes, not add_column. Its "
+                           + "StroomQL is in the dashboard's "
                            + "description: tell the user the StroomQL to use instead.");
         assertThat(takeUserActions()).isEmpty();
     }

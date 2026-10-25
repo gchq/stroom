@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /// Builds what the model is sent for a question: the system prompt, the earlier conversation (compacted turns as
 /// digests or a summary, later turns in full, with attached tables and a short record of the tools used for each
@@ -257,6 +258,29 @@ public class ContextAssembler {
             column of the table); an existing one, such as the content pack's D3 visualisations, can be added \
             directly, and propose_visualisation generates a new one. Change a Visualisation component's controls \
             with set_vis_settings; its render report in the dashboard file says how it last rendered.
+            - Asked to suggest a chart, choose it from the dashboard: a table no chart is linked to first; its \
+            columns (their values' types in a snapshot, formats, grouping, sorting and filters) and the charts \
+            already there (their kinds and tables, so as not to repeat one). Pick the kind that suits the data \
+            (e.g. a date and a count: line; a category and a measure: bar; two categories and a measure: \
+            heatmap; pairs of things: graph), say why in a sentence or two with the columns it maps, and offer \
+            it with propose_visualisation. Suggest one chart, with at most one alternative.
+            - Asked for a chart described in words (e.g. "a calendar-like heatmap of user activity"), map the \
+            description to a kind and its settings from list_visualisations (here: a calendar of counts by day, \
+            or a heatmap of weekday by hour of day), say which you chose and why, and the variant you didn't. If \
+            the table lacks the columns that kind needs, propose that table change first, then the chart: e.g. \
+            a day as floorDay() formatted as a date (a date the chart can read, unlike formatDate()'s text), or \
+            an hour and a weekday as formatDate() text (categories), grouped, with a count().
+            - Asked which charts are supported, take the kinds from list_visualisations and sort them by the \
+            data (a snapshot's column types, and the table's grouping): those it can make now, with the columns \
+            each would map; those it could make after a table change, naming the change; and those that don't \
+            suit it. Keep it short, and offer the likeliest.
+            - Asked why a chart shows nothing (or an error), check in turn: its render report (status, rows, \
+            droppedRows, warnings, error; selected true means something is clicked on it); the rows of its \
+            table (current_results); that table's filters, grouping and query; and the selection filters on the \
+            queries and tables that feed it. A selection filter whose terms name the same chart's selection in \
+            one operator needs all of them to hold, even under OR. Say what filters the rows out, and offer the \
+            fix: clear the selection (the chart's Selected bar), correct or remove the filter, or remove every \
+            selection filter in one proposal.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
             filter a column), the expression of the classic query that feeds it (set_expression, conditions \
             in where), its conditional formatting (add_format_rule, remove_format_rule), a Text widget for \
@@ -506,7 +530,7 @@ public class ContextAssembler {
         // Only the latest question is given its tab in full; earlier ones say where theirs is.
         messages.add(new UserMessage(tab != null
                 ? request.getMessage() + "\n\n" + tabSnapshots.note(chatId, tab)
-                : request.getMessage()));
+                : request.getMessage() + detachedTabNote(chatId)));
         // A run carrying on with the question (e.g. after the user approved tool calls) picks up where it was.
         messages.addAll(currentTurn(history));
         return messages;
@@ -766,6 +790,18 @@ public class ContextAssembler {
         return documentReferences != null
                 ? documentReferences.note(attachment)
                 : DocumentReferences.unavailableNote(attachment.getDescription());
+    }
+
+    /// @return For a question sent without a tab, after a blank line, which tab was attached to an earlier one and
+    /// that it isn't attached now (seen in testing: the model took an earlier tab's files to be the dashboard as it
+    /// is, and only found the tab wasn't attached when its change was refused); otherwise an empty string.
+    private String detachedTabNote(final int chatId) {
+        if (tabSnapshots == null || !tabSnapshots.isEnabled()) {
+            return "";
+        }
+        return tabSnapshots.latestOfType(chatId, Set.of())
+                .map(earlier -> "\n\n" + TabSnapshots.detachedNote(earlier))
+                .orElse("");
     }
 
     /// @return The snapshot of the tab the user attached sent with the latest question, or null if none was, it can no

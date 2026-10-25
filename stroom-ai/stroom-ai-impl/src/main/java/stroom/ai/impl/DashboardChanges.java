@@ -101,6 +101,9 @@ public final class DashboardChanges {
     /// Filters a query's search, or a table's rows, by what is selected in a chart: its terms compare fields (or
     /// columns) with what the chart's selection holds, and drop out while nothing is selected.
     public static final String ADD_SELECTION_FILTER = "add_selection_filter";
+    /// Removes a selection filter from a component, by the id the dashboard file gives it. To change one, a proposal
+    /// removes it and adds the new one.
+    public static final String REMOVE_SELECTION_FILTER = "remove_selection_filter";
     /// For add_selection_filter: filters a query's search, re-run as the selection changes, so every table it feeds
     /// (the chart's own too) narrows.
     public static final String QUERY_FILTER = "query";
@@ -108,12 +111,14 @@ public final class DashboardChanges {
     public static final String TABLE_FILTER = "table";
     /// For add_selection_filter, what it filters.
     public static final List<String> FILTER_MODES = List.of(QUERY_FILTER, TABLE_FILTER);
+    /// Separates the selections a field of a selection filter is compared with (see [#selectionsOf(String)]).
+    public static final String SELECTIONS_SEPARATOR = ",";
     /// The most terms one selection filter may have.
     public static final int MAX_FILTER_TERMS = 10;
     /// The operations, in the order they are described to the model.
     public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, MOVE_COLUMN,
             HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE, ADD_TEXT, ADD_VIS, SET_VIS_SETTINGS,
-            ADD_SELECTION_FILTER, RENAME, SET_SETTING, ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
+            ADD_SELECTION_FILTER, REMOVE_SELECTION_FILTER, RENAME, SET_SETTING, ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
     /// The most tables one proposal may add.
     public static final int MAX_TABLES = 10;
     /// The deepest an expression may nest, and the most items it may have, as read back from a stored change.
@@ -197,7 +202,7 @@ public final class DashboardChanges {
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
             if (SET_EXPRESSION.equals(change.op()) || RENAME.equals(change.op())
                 || SET_SETTING.equals(change.op()) || SET_VIS_SETTINGS.equals(change.op())
-                || ADD_SELECTION_FILTER.equals(change.op())) {
+                || ADD_SELECTION_FILTER.equals(change.op()) || REMOVE_SELECTION_FILTER.equals(change.op())) {
                 // Of the table's query, or of a component: checked against the dashboard's components.
                 checked.add(change);
                 continue;
@@ -448,6 +453,19 @@ public final class DashboardChanges {
         }
         if (ADD_SELECTION_FILTER.equals(op)) {
             return selectionFilterChange(map, prefix);
+        }
+        if (REMOVE_SELECTION_FILTER.equals(op)) {
+            final String target = text(map, "target", prefix);
+            if (target == null || filter == null || filter.isBlank()) {
+                throw new IllegalArgumentException(prefix + "remove_selection_filter needs the target (the query, "
+                                                   + "embedded query or table it filters) and the filter: its id, "
+                                                   + "as the dashboard file gives it, e.g. [id ab12c].");
+            }
+            return Change.builder(op)
+                    .target(target)
+                    .targetId(text(map, "target_id", prefix))
+                    .filter(filter.strip())
+                    .build();
         }
         if (ADD_FORMAT_RULE.equals(op)) {
             return formatRule(map, query, position, table, prefix);
@@ -879,6 +897,18 @@ public final class DashboardChanges {
     // (match, kept as filter), and each term's field or column and the selection key it is compared with (terms,
     // kept as settings). The components are resolved, and the filter built, once the dashboard is known.
     private static Change selectionFilterChange(final Map<?, ?> map, final String prefix) {
+        // A proposal's action is checked again from the form the browser is given (see Change#toMap): the chart as
+        // name, the mode as value, the match as filter and the terms as settings, with what was resolved for it
+        // (the target's and the chart's ids, and the filter built from the terms).
+        if (!map.containsKey("terms") && map.get("settings") instanceof final Map<?, ?> settings) {
+            return selectionFilterChange(asProposed(map, settings), prefix).toBuilder()
+                    .targetId(text(map, "target_id", prefix))
+                    .ref(text(map, "ref", prefix))
+                    .query(map.get("query") == null
+                            ? null
+                            : expressionFromMap(map.get("query"), prefix))
+                    .build();
+        }
         final String target = text(map, "target", prefix);
         final String chart = text(map, "chart", prefix);
         if (target == null || chart == null) {
@@ -915,9 +945,18 @@ public final class DashboardChanges {
             if (field == null || selection == null) {
                 throw new IllegalArgumentException(prefix + "each term needs a field and a selection.");
             }
-            if (fields.put(field, selection) != null) {
-                throw new IllegalArgumentException(prefix + "'" + field + "' is in two terms.");
+            if (selection.contains(SELECTIONS_SEPARATOR)) {
+                throw new IllegalArgumentException(prefix + "a term's selection may not have a comma in it.");
             }
+            // A field may be compared with more than one part of the selection (e.g. a sender with a clicked node
+            // and with a clicked link's source): each field's selections are kept, comma separated.
+            final String before = fields.get(field);
+            if (before != null && selectionsOf(before).contains(selection)) {
+                throw new IllegalArgumentException(prefix + "'" + field + "' = " + selection + " is in two terms.");
+            }
+            fields.put(field, before == null
+                    ? selection
+                    : before + SELECTIONS_SEPARATOR + selection);
         }
         return Change.builder(ADD_SELECTION_FILTER)
                 .target(target)
@@ -926,6 +965,33 @@ public final class DashboardChanges {
                 .filter(match)
                 .settings(fields)
                 .build();
+    }
+
+    /// @param selections The selections a field of a selection filter is compared with, as its change holds them.
+    /// @return Each of them.
+    public static List<String> selectionsOf(final String selections) {
+        return Arrays.stream(NullSafe.string(selections).split(SELECTIONS_SEPARATOR))
+                .map(String::strip)
+                .filter(selection -> !selection.isEmpty())
+                .toList();
+    }
+
+    // An add_selection_filter in the form the browser is given, in the form the model proposes it.
+    private static Map<String, Object> asProposed(final Map<?, ?> map, final Map<?, ?> settings) {
+        final Map<String, Object> proposed = new LinkedHashMap<>();
+        proposed.put("target", map.get("target"));
+        proposed.put("chart", map.get("name"));
+        proposed.put("mode", map.get("value"));
+        proposed.put("match", map.get("filter"));
+        final List<Map<String, Object>> terms = new ArrayList<>();
+        settings.forEach((field, selections) -> selectionsOf(String.valueOf(selections)).forEach(selection -> {
+            final Map<String, Object> term = new LinkedHashMap<>();
+            term.put("field", field);
+            term.put("selection", selection);
+            terms.add(term);
+        }));
+        proposed.put("terms", terms);
+        return proposed;
     }
 
     private static String text(final Map<?, ?> map, final String key, final String prefix) {
@@ -1166,8 +1232,12 @@ public final class DashboardChanges {
                                               + String.join("any".equals(filter)
                         ? " or "
                         : " and ", NullSafe.map(settings).entrySet().stream()
-                        .map(term -> term.getKey() + " = its " + term.getValue())
+                        .flatMap(term -> selectionsOf(term.getValue()).stream()
+                                .map(selection -> "range".equals(selection)
+                                        ? term.getKey() + " within its time range"
+                                        : term.getKey() + " = its " + selection))
                         .toList());
+                case REMOVE_SELECTION_FILTER -> "Remove the selection filter " + filter + " from '" + target + "'";
                 case RENAME -> "Rename " + (target == null
                         ? "this table"
                         : "'" + target + "'") + " to '" + name + "'";

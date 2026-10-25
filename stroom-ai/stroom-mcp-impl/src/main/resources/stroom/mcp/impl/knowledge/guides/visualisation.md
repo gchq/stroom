@@ -52,6 +52,39 @@ A network graph sizes each node by its number of connections (its degree) and dr
 weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a
 `count()` as the weight; links between the same pair are added up, and links from a node to itself are left out.
 
+## Suggesting a chart
+
+Asked to suggest a chart for a dashboard, start with a table no chart is linked to. Look at its columns (the types
+of their values in a snapshot, their formats, grouping, sorting and filters) and at the charts already on the
+dashboard (their kinds and tables), so as not to repeat one. Pick the kind from the table above that suits the
+data, say why in a sentence or two with the columns it maps, and offer it. Suggest one chart, with at most one
+alternative.
+
+Asked for a chart described in words, map the description to a kind and its settings, and say which variant you
+chose and which you didn't. For example, "a calendar-like heatmap of user activity" is either a calendar of counts
+by day, or a heatmap of weekday by hour of day. If the table lacks the columns the kind needs, propose that change
+to the table first, then the chart:
+
+- A day for a calendar or line: `floorDay(${EventTime})` formatted as Date Time. Text from `formatDate()` isn't
+  read as a date.
+- An hour and a weekday for a heatmap: `formatDate(${EventTime}, 'HH')` and `formatDate(${EventTime}, 'EEE')`
+  as text (they are categories), both grouped at level 1, with a `count()`.
+
+Asked which charts are supported, take the kinds from `list_visualisations` and sort them by the data. Use the
+types of the columns in a snapshot of the rows, and the table's grouping. Give three groups:
+
+- the kinds it can make now, with the columns each would map;
+- the kinds it could make after a change to the table, naming the change;
+- the kinds that don't suit it.
+
+Keep it short, and offer the likeliest.
+
+A chart over time should have a row per interval, not per event. The chart is sent at most its Max Rows rows; the
+rest are left out, not summarised, and the chart says "First N rows". When `propose_visualisation` warns that a
+time column is raw, offer to aggregate the table first: group it by a rounded time (`floorMonth()`,
+`floorWeek()`, `floorDay()`, `floorHour()` or `floorMinute()`, as the warning suggests, formatted as Date Time)
+with a `count()`, or the measure summed or averaged, then chart that column.
+
 ## Filtering by a chart
 
 Clicking a chart Stroom AI generated (a slice, bar, point, link or node) selects it; clicking it again, or empty
@@ -65,9 +98,44 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
 - `mode` table filters one table's rows (or an Embedded Query's results) and the chart stays whole, e.g. clicking
   a slice to list its events in a detail table. Its fields are the table's columns.
 - Unless the user has said which, ask them (`ask_user`), saying what each does.
+- A new chart isn't given a filter. When `propose_visualisation` says its clicks could filter the dashboard (and
+  by which fields or columns), offer it in one line, and propose it once the user has created the chart.
 - A network graph's node selects `node`: to filter by it at either end of a link, give a term for each end with
-  `match` any.
+  `match` any. A link selects its `source` and `target`: add a term for each (the source's field with `source`,
+  the target's with `target`), which are kept together, so a link filters by both its ends. An undirected graph
+  or a chord diagram sends a link both ways round, so it matches in either direction; a Sankey diagram's flows,
+  and a directed graph's links, match only their own direction.
+- Ctrl-click (or Shift-click) selects several items, and the filter matches any of them.
+- A line chart or scatter plot whose x is a Date Time column has a range tool: dragging along its time axis
+  selects a time range. A term with `"selection": "range"` keeps a date field (or column) within it, e.g.
+  `{"field": "EventTime", "selection": "range"}` to narrow the dashboard to a period. It becomes two terms
+  (on or after the start, on or before the end); `between` isn't used, as its value would be a bare comma while
+  nothing is selected.
 - With nothing selected, the filter's terms drop out and the target shows everything.
+- While something is selected, the chart shows a "Selected: …" bar with a button that clears the selection, even
+  if the filter has left the chart with nothing to draw.
+- The dashboard file lists each component's selection filters, each with its id, e.g. `[id ab12c]`. To remove
+  one, use a `remove_selection_filter` change naming the `target` and the id as its `filter`. To change one,
+  remove it and add the new one in the same proposal.
+
+### When a chart shows nothing
+
+Check these in turn:
+
+1. The chart's render report: `status`, `rows`, `droppedRows`, `warnings` and `error`. `selected` true means
+   something is clicked on the chart, so its selection is filtering whatever uses it.
+2. The rows of the chart's table (`current_results`).
+3. That table's filters, grouping and query.
+4. The selection filters on the queries and tables that feed the chart.
+
+A selection filter whose terms name the same chart's selection in one operator needs all of them to hold, even
+under OR.
+
+Say what is filtering the rows out, and offer the fix:
+
+- clear the selection, with the ✕ on the chart's "Selected: …" bar;
+- correct the filter or remove it;
+- or remove every selection filter, in one proposal.
 
 ## Embedded queries
 

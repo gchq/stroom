@@ -1173,7 +1173,8 @@ public class DashboardPresenter
                                          final List<ComponentSelectionHandler> handlers) {
         final List<String> described = NullSafe.list(handlers).stream()
                 .filter(handler -> handler.getExpression() != null)
-                .map(handler -> handler.getExpression().toString() + (handler.isEnabled()
+                .map(handler -> "[id " + NullSafe.nonBlankStringElse(handler.getId(), "none") + "] "
+                                + handler.getExpression().toString() + (handler.isEnabled()
                         ? ""
                         : " (disabled)"))
                 .toList();
@@ -1425,6 +1426,21 @@ public class DashboardPresenter
                     failed = prefix + "the visualisation couldn't be added.";
                 } else {
                     added.put(NullSafe.string(change.getName()).toLowerCase(), vis);
+                }
+            } else if (TableChange.REMOVE_SELECTION_FILTER.equals(change.getOp())) {
+                final Component target = change.getTargetId() == null
+                        ? null
+                        : components.get(change.getTargetId());
+                if (target == null) {
+                    failed = prefix + "there is no component '" + NullSafe.string(change.getTarget()) + "'.";
+                } else {
+                    if (!added.containsValue(target) && !configsBefore.containsKey(target.getId())) {
+                        configsBefore.put(target.getId(), ComponentSettingChanges.snapshot(target));
+                    }
+                    final String problem = ComponentSettingChanges.removeSelectionFilter(target, change.getFilter());
+                    failed = problem == null
+                            ? null
+                            : prefix + problem;
                 }
             } else if (TableChange.ADD_SELECTION_FILTER.equals(change.getOp())) {
                 final Component target = change.getTargetId() == null

@@ -22,6 +22,8 @@ import stroom.ai.impl.vis.ChartCheck.TableColumn;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +118,43 @@ class TestChartCheck {
 
         assertThat(result.ok()).isTrue();
         assertThat(result.warnings()).singleElement().asString().contains("1 of the 21 values sampled");
+    }
+
+    @Test
+    void aLongRawTimeSeriesIsAdvisedAnInterval() {
+        // A row per event over 30 days: more distinct times than a chart over time reads well.
+        final List<List<String>> rows = new ArrayList<>();
+        final Instant start = Instant.parse("2026-09-01T00:00:00Z");
+        for (int i = 0; i < 600; i++) {
+            rows.add(List.of(start.plus(Duration.ofMinutes(72L * i)).toString(), "1"));
+        }
+        final List<TableColumn> columns = List.of(new TableColumn("Time", "DATE_TIME", "${EventTime}", null),
+                new TableColumn("Bytes", "NUMBER", "${Bytes}", null));
+
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Time", "y", "Bytes"), Map.of(),
+                columns, new Sample(List.of("Time", "Bytes"), rows));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).anySatisfy(warning -> assertThat(warning)
+                .contains("'Time' is a raw time spanning about 29 days")
+                .contains("a column floorDay(${EventTime}), formatted as Date Time and grouped, with count()"));
+
+        // Already rounded to an interval: no advice.
+        final Result rounded = ChartCheck.check(ChartKind.LINE, Map.of("x", "Time", "y", "Bytes"), Map.of(),
+                List.of(new TableColumn("Time", "DATE_TIME", "floorHour(${EventTime})", 1),
+                        new TableColumn("Bytes", "NUMBER", "sum(${Bytes})", null)),
+                new Sample(List.of("Time", "Bytes"), rows));
+        assertThat(rounded.warnings()).noneSatisfy(warning -> assertThat(warning).contains("raw time"));
+    }
+
+    @Test
+    void anIntervalGivesAFewDozenToAFewHundredPoints() {
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(6 * 365))).contains("floorMonth");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(400))).contains("floorWeek");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(90))).contains("floorDay");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(3))).contains("floorHour");
+        assertThat(ChartCheck.intervalFunction(Duration.ofHours(2))).contains("floorMinute");
+        assertThat(ChartCheck.intervalFunction(Duration.ofMinutes(10))).isEmpty();
     }
 
     @Test

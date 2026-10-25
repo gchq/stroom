@@ -65,6 +65,8 @@ public final class TableChange {
     /// chart's selection, e.g. `${component.vis-1.selection.category}`. [#getValue()] says what it filters: a
     /// query's search (`query`, re-run with it) or a table's rows (`table`).
     public static final String ADD_SELECTION_FILTER = "add_selection_filter";
+    /// Removes a selection handler from a component ([#getTargetId()]), by its id ([#getFilter()]).
+    public static final String REMOVE_SELECTION_FILTER = "remove_selection_filter";
     /// For add_selection_filter: filters the query's search.
     public static final String QUERY_FILTER = "query";
     /// For add_selection_filter: filters a table's rows.

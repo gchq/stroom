@@ -308,6 +308,56 @@ public class ChartLibraries {
         });
     }
 
+    /// Puts each ECharts adapter Stroom has created back to the bundled one, if its content differs, so the charts
+    /// already generated draw with this version of Stroom's adapter (e.g. with its click selection), not only the
+    /// charts generated from now on. Run as Stroom starts. Each keeps its dependencies and permissions, which
+    /// [#ensureAdapter(EChartsInstall)] puts back when a chart is next generated.
+    ///
+    /// @return The adapters that were put back.
+    public List<DocRef> updateAdapters() {
+        return securityContext.asProcessingUserResult(() -> {
+            final ScriptStore scriptStore = scriptStoreProvider.get();
+            final String source = adapterSource();
+            final List<DocRef> updated = new ArrayList<>();
+            for (final DocRef ref : NullSafe.list(scriptStore.list())) {
+                final ScriptDoc doc = read(scriptStore, ref);
+                if (doc != null && adapterVersion(doc.getData()).isPresent()
+                    && !normalise(source).equals(normalise(doc.getData()))) {
+                    LOGGER.info("Putting the ECharts adapter {} back to Stroom's version {}", ref,
+                            adapterVersion(source).orElse(0));
+                    scriptStore.writeDocument(doc.copy().data(source).build());
+                    updated.add(ref);
+                }
+            }
+            return updated;
+        });
+    }
+
+    /// Brings each Visualisation Stroom AI generated up to date with the template's options control (a code editor
+    /// for the chart's options, see [EChartsTemplate#withCurrentOptionsControl(String)]), so charts generated
+    /// before it get it too. Run as Stroom starts. Their other settings, and the options set, are kept.
+    ///
+    /// @return The Visualisations that were updated.
+    public List<DocRef> updateGeneratedVisualisations() {
+        return securityContext.asProcessingUserResult(() -> {
+            final VisualisationStore store = visualisationStoreProvider.get();
+            final List<DocRef> updated = new ArrayList<>();
+            for (final DocRef ref : NullSafe.list(store.list())) {
+                final VisualisationDoc doc = readVisualisation(store, ref);
+                if (doc == null || !EChartsTemplate.FUNCTION_NAME.equals(doc.getFunctionName())) {
+                    continue;
+                }
+                final String settings = EChartsTemplate.withCurrentOptionsControl(doc.getSettings());
+                if (!Objects.equals(settings, doc.getSettings())) {
+                    LOGGER.info("Giving the generated Visualisation {} the current chart options control", ref);
+                    store.writeDocument(doc.copy().settings(settings).build());
+                    updated.add(ref);
+                }
+            }
+            return updated;
+        });
+    }
+
     /// @return The bundled adapter's source.
     public String adapterSource() {
         String source = adapterSource;

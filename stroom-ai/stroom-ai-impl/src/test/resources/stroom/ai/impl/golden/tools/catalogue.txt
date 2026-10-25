@@ -1314,7 +1314,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-While the tab the user attached is a dashboard, proposes a change to one of its tables: group or ungroup, add_column, edit_column, move_column, hide_column, show_column, sort, or filter, applied in order; set_expression, which replaces the expression of the classic query that feeds the table (give its conditions in where, and show the user the expression, never StroomQL); add_table, which adds a table as a tab beside it, fed by the same query, that the changes after it set up by naming it as their table (e.g. a tab per event category: add_table, its columns, and a filter on the category column); add_text, which adds a Text widget below the table (or a table added before it, named as its table) showing the event of the selected row, that later set_setting changes can set up by naming it as their target; add_vis, which adds a Visualisation component linked to the table (or a table added before it), below it or as a tab beside it, showing an existing Visualisation document by its UUID (e.g. one of the content pack's D3 visualisations) with settings for its controls; set_vis_settings, which changes the controls of a Visualisation component, or the Visualisation it shows; add_selection_filter, which filters a query's search or a table's rows by what the user clicks on a chart (a slice, bar, point or node); add_format_rule or remove_format_rule, for the table's conditional formatting (rows matching conditions on its columns coloured, bold, italic or hidden); rename, which renames any component and its tab; or set_setting, which changes a setting of any table, query or text component, as its Settings dialog has it. The user is shown the changes with an 'Apply to dashboard' button; nothing changes until they click it, and it is never saved. Columns and the table are named as the user sees them. Expressions are checked first; an invalid change is refused with the reason.
+While the tab the user attached is a dashboard, proposes a change to one of its tables: group or ungroup, add_column, edit_column, move_column, hide_column, show_column, sort, or filter, applied in order; set_expression, which replaces the expression of the classic query that feeds the table (give its conditions in where, and show the user the expression, never StroomQL); add_table, which adds a table as a tab beside it, fed by the same query, that the changes after it set up by naming it as their table (e.g. a tab per event category: add_table, its columns, and a filter on the category column); add_text, which adds a Text widget below the table (or a table added before it, named as its table) showing the event of the selected row, that later set_setting changes can set up by naming it as their target; add_vis, which adds a Visualisation component linked to the table (or a table added before it), below it or as a tab beside it, showing an existing Visualisation document by its UUID (e.g. one of the content pack's D3 visualisations) with settings for its controls; set_vis_settings, which changes the controls of a Visualisation component, or the Visualisation it shows; add_selection_filter, which filters a query's search or a table's rows by what the user clicks on a chart (a slice, bar, point or node); remove_selection_filter, which removes one (by its id in the dashboard file; to change one, remove it and add the new one in the same proposal); add_format_rule or remove_format_rule, for the table's conditional formatting (rows matching conditions on its columns coloured, bold, italic or hidden); rename, which renames any component and its tab; or set_setting, which changes a setting of any table, query or text component, as its Settings dialog has it. The user is shown the changes with an 'Apply to dashboard' button; nothing changes until they click it, and it is never saved. Columns and the table are named as the user sees them. Expressions are checked first; an invalid change is refused with the reason.
 
 ### Parameters
 
@@ -1373,7 +1373,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "string"
           },
           "filter" : {
-            "description" : "For filter: the column's filter text, as its filter box takes it; empty to clear it.",
+            "description" : "For filter: the column's filter text, as its filter box takes it; empty to clear it. For remove_selection_filter: the filter's id, as the dashboard file gives it (e.g. ab12c from [id ab12c]).",
             "type" : "string"
           },
           "format" : {
@@ -1414,7 +1414,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
           },
           "op" : {
             "description" : "What to do.",
-            "enum" : [ "group", "ungroup", "add_column", "edit_column", "move_column", "hide_column", "show_column", "sort", "filter", "set_expression", "add_table", "add_text", "add_vis", "set_vis_settings", "add_selection_filter", "rename", "set_setting", "add_format_rule", "remove_format_rule" ],
+            "enum" : [ "group", "ungroup", "add_column", "edit_column", "move_column", "hide_column", "show_column", "sort", "filter", "set_expression", "add_table", "add_text", "add_vis", "set_vis_settings", "add_selection_filter", "remove_selection_filter", "rename", "set_setting", "add_format_rule", "remove_format_rule" ],
             "type" : "string"
           },
           "placement" : {
@@ -1450,11 +1450,11 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "string"
           },
           "target" : {
-            "description" : "For rename or set_setting: the component (table, query or text), by its name as the user sees it; default the component. For set_vis_settings: the Visualisation component. For add_selection_filter: the query, embedded query or table to filter.",
+            "description" : "For rename or set_setting: the component (table, query or text), by its name as the user sees it; default the component. For set_vis_settings: the Visualisation component. For add_selection_filter: the query, embedded query or table to filter; for remove_selection_filter, the one it filters.",
             "type" : "string"
           },
           "terms" : {
-            "description" : "For add_selection_filter: each field and the selection it must equal. A term drops out while nothing is selected.",
+            "description" : "For add_selection_filter: each field and the selection it must equal. A term drops out while nothing is selected. Selection range (a time range dragged on a time-series chart) keeps a date field or column within the range.",
             "items" : {
               "properties" : {
                 "field" : {

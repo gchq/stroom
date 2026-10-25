@@ -142,6 +142,52 @@ public final class ComponentSettingChanges {
         return null;
     }
 
+    /// Removes a selection handler from a component: from its query filters or its table filters, whichever has it.
+    ///
+    /// @param component The query, embedded query or table.
+    /// @param id        The handler's id.
+    /// @return Why it couldn't be removed, or null if it was.
+    static String removeSelectionFilter(final Component component, final String id) {
+        if (!(component instanceof final AbstractComponentPresenter<?> presenter)) {
+            return "The component has no selection filters.";
+        }
+        if (id == null) {
+            return "The selection filter's id is missing.";
+        }
+        final ComponentSettings current = presenter.getSettings();
+        final ComponentSettings changed;
+        if (current instanceof final TableComponentSettings table && has(table.getSelectionFilter(), id)) {
+            changed = table.copy().selectionFilter(without(table.getSelectionFilter(), id)).build();
+        } else if (current instanceof final QueryComponentSettings settings && has(settings.getSelectionQuery(), id)) {
+            changed = settings.copy().selectionQuery(without(settings.getSelectionQuery(), id)).build();
+        } else if (current instanceof final EmbeddedQueryComponentSettings embedded
+                   && has(embedded.getSelectionQuery(), id)) {
+            changed = embedded.copy().selectionQuery(without(embedded.getSelectionQuery(), id)).build();
+        } else if (current instanceof final EmbeddedQueryComponentSettings embedded
+                   && has(embedded.getSelectionFilter(), id)) {
+            changed = embedded.copy().selectionFilter(without(embedded.getSelectionFilter(), id)).build();
+        } else {
+            return "It has no selection filter '" + id + "'.";
+        }
+        presenter.applySettings(changed);
+        return null;
+    }
+
+    private static boolean has(final List<ComponentSelectionHandler> handlers, final String id) {
+        return NullSafe.list(handlers).stream().anyMatch(handler -> id.equals(handler.getId()));
+    }
+
+    private static List<ComponentSelectionHandler> without(final List<ComponentSelectionHandler> handlers,
+                                                           final String id) {
+        final List<ComponentSelectionHandler> list = new ArrayList<>();
+        for (final ComponentSelectionHandler handler : NullSafe.list(handlers)) {
+            if (!id.equals(handler.getId())) {
+                list.add(handler);
+            }
+        }
+        return list;
+    }
+
     private static List<ComponentSelectionHandler> with(final List<ComponentSelectionHandler> handlers,
                                                         final ComponentSelectionHandler handler) {
         final List<ComponentSelectionHandler> list = new ArrayList<>(NullSafe.list(handlers));
