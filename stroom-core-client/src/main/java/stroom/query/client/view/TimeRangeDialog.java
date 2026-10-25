@@ -17,6 +17,10 @@
 package stroom.query.client.view;
 
 import stroom.query.api.TimeRange;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.datepicker.client.component.DateTimePicker;
+import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -30,6 +34,7 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /// The Time Range dialog a [TimeRangeSelector] opens: its quick settings and its After and Before
@@ -45,6 +50,10 @@ public class TimeRangeDialog extends MyPresenterWidget<TimeRangeDialog.TimeRange
     /// @param view     The dialog's content.
     public TimeRangeDialog(final EventBus eventBus, final TimeRangeView view) {
         super(eventBus, view);
+        for (final DateTimeBox box : view.getDateTimeBoxes()) {
+            own(new DateTimeBoxController(() ->
+                    new DateTimePickerController(eventBus, new DateTimePicker()))).attach(box);
+        }
     }
 
     /// Shows the dialog on a time range.
@@ -75,6 +84,9 @@ public class TimeRangeDialog extends MyPresenterWidget<TimeRangeDialog.TimeRange
 
     /// The dialog's content: the time range it edits.
     public interface TimeRangeView extends View, Focus, HasValue<TimeRange> {
+
+        /// @return Its After and Before boxes, for a controller to open their dialogs.
+        List<DateTimeBox> getDateTimeBoxes();
 
     }
 }

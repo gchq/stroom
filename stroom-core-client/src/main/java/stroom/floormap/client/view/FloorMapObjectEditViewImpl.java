@@ -24,7 +24,6 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -174,10 +173,8 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     private String defaultFill = TypeStyle.DEFAULT_COLOUR;
 
     @Inject
-    public FloorMapObjectEditViewImpl(final Binder binder,
-                                      final Provider<DateTimePopup> dateTimePopupProvider) {
+    public FloorMapObjectEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        effectiveTimeBox.setPopupProvider(dateTimePopupProvider);
         nameControlsForScreenReaders();
         setAreaFieldsVisible(false);
         fillDefaultCheck.setValue(true);
@@ -718,6 +715,11 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     }
 
     // --------------------------------------------------------------------------------
+
+    @Override
+    public DateTimeBox getEffectiveTimeBox() {
+        return effectiveTimeBox;
+    }
 
     public interface Binder extends UiBinder<Widget, FloorMapObjectEditViewImpl> {
 

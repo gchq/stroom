@@ -28,6 +28,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datagrid.client.MouseHelper;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -69,10 +70,12 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                final UiConfigCache uiConfigCache) {
 
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefProvider, userRefProvider, uiConfigCache);
+        termEditor = new TermEditor(docRefProvider, userRefProvider, dateTimeBoxControllerProvider,
+                uiConfigCache);
 
         final FlowPanel panel = new FlowPanel();
         panel.setStyleName("expression-tree");

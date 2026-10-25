@@ -229,8 +229,8 @@ public final class ScreenHarness {
         eventBus.addHandler(ShowPopupEvent.getType(), event -> popups.onShow(event.getPresenterWidget()));
         eventBus.addHandler(HidePopupEvent.getType(), event -> popups.onHide(event.getPresenterWidget()));
         new PopupManager(eventBus);
-        // Widgets with no event bus of their own show their dialogs on Stroom's static one (e.g. a
-        // DateTimeBox not given a dialog provider), as in Stroom
+        // Widgets with no event bus of their own show their dialogs on Stroom's static one, as in
+        // Stroom
         new StaticEventBus(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's MenuManager does
         new MenuManager(eventBus, this::createMenuPresenter, appRoot);

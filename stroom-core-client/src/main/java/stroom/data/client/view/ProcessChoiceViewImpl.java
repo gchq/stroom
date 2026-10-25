@@ -114,6 +114,16 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
         setMaxMetaCreateTimeMs(System.currentTimeMillis());
     }
 
+    @Override
+    public DateTimeBox getMinMetaCreateTimeBox() {
+        return minMetaCreateTimeMs;
+    }
+
+    @Override
+    public DateTimeBox getMaxMetaCreateTimeBox() {
+        return maxMetaCreateTimeMs;
+    }
+
     public interface Binder extends UiBinder<Widget, ProcessChoiceViewImpl> {
 
     }

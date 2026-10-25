@@ -31,6 +31,8 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -44,6 +46,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
@@ -68,9 +71,11 @@ public class EditApiKeyPresenter
                                final RestFactory restFactory,
                                final ClientSecurityContext securityContext,
                                final UiConfigCache uiConfigCache,
-                               final UserRefSelectionBoxPresenter ownerPresenter) {
+                               final UserRefSelectionBoxPresenter ownerPresenter,
+                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         own(ownerPresenter);
+        make(dateTimeBoxControllerProvider).attach(view.getExpiresOnBox());
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;
@@ -338,6 +343,9 @@ public class EditApiKeyPresenter
 
 
     public interface EditApiKeyView extends View, HasUiHandlers<HideRequestUiHandlers> {
+
+        /// @return The expires on box, for a controller to open its dialog.
+        DateTimeBox getExpiresOnBox();
 
         void setMode(final Mode mode);
 

@@ -24,6 +24,7 @@ import stroom.gwt.workbench.client.app.main.ContentStorySupport;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.UserFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
@@ -970,6 +971,7 @@ public final class ExpressionBuilderStories {
         final ExpressionTreeViewImpl view = new ExpressionTreeViewImpl(
                 SelectorWidgets.docSelectionBoxProvider(harness),
                 SelectorWidgets.userRefSelectionBoxProvider(harness),
+                DateTimeWidgets.dateTimeBoxControllers(harness),
                 harness.getUiConfigCache());
         return new ExpressionTreePresenter(harness.getEventBus(), view);
     }

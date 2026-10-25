@@ -179,6 +179,16 @@ public class ProcessorEditViewImpl
         }
     }
 
+    @Override
+    public DateTimeBox getMinMetaCreateTimeBox() {
+        return minMetaCreateTimeMs;
+    }
+
+    @Override
+    public DateTimeBox getMaxMetaCreateTimeBox() {
+        return maxMetaCreateTimeMs;
+    }
+
     public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
 
     }

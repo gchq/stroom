@@ -306,6 +306,25 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Daily digest");
                     expectNoErrors(play);
                 })
+                // The start time's calendar opens the Set Date And Time dialog (the box's controller,
+                // attached by the edit dialog, opens it), whose OK puts the time chosen in the box
+                .story("EditStartTimeWithDialog", context -> render(context, EDIT_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Daily report");
+                    openEditor(play);
+                    final Play dialog = dialog(screen, "Edit Schedule");
+                    final Query startTime = dialog.querySelectorAll(".date-time-box__input").nth(0);
+                    play.expect("the start time", () -> startTime.value().get()).not().toMatch("T12:00:00.000");
+                    play.click(dialog.querySelectorAll(".date-time-box .icon-box__icon").nth(0));
+                    final Play picker = dialog(screen, "Set Date And Time");
+                    play.click(picker.getByRole("button", "Midday"));
+                    play.click(picker.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect("the start time", () -> startTime.value().get()).toMatch("T12:00:00.000");
+                    expectNoErrors(play);
+                })
                 // The first fetch carries the default sort, Name A to Z ignoring case
                 .story("DefaultSortIsNameAscending", context -> render(context, FIXTURES, false))
                 .withPlay(play -> {

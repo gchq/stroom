@@ -24,6 +24,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
 import stroom.gwt.workbench.client.widgets.query.ExpressionBuilderStories;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -51,9 +52,6 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeModel;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
 import stroom.widget.datepicker.client.TimeBox;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
@@ -476,11 +474,8 @@ public final class ViewStateStories {
     }
 
     private static Widget dateTimeBox(final ScreenHarness harness) {
-        final DateTimeBox box = new DateTimeBox();
         // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
-        box.setPopupProvider(() -> new DateTimePopup(harness.getEventBus(),
-                new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),
-                new DateTimeModel()));
+        final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         box.setValue(DATE_TIME);
         return box;
     }

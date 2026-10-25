@@ -30,6 +30,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.MySingleSelectionModel;
@@ -77,14 +78,17 @@ public class ExpressionTreeViewImpl
     @Inject
     public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                   final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                   final UiConfigCache uiConfigCache) {
         treePanel = new ExpressionTreePanel(
                 docRefProvider,
                 userRefProvider,
+                dateTimeBoxControllerProvider,
                 uiConfigCache);
         final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(
                 docRefProvider,
                 userRefProvider,
+                dateTimeBoxControllerProvider,
                 uiConfigCache);
         node.adopt(treePanel.getControllerNode());
         node.adopt(subTreePanel.getControllerNode());

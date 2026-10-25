@@ -30,6 +30,8 @@ import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.form.client.FileChooser;
 import stroom.widget.form.client.FileChooserController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -42,6 +44,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class DataUploadPresenter
@@ -63,12 +66,14 @@ public class DataUploadPresenter
                                final RestFactory restFactory,
                                final FeedClient feedClient,
                                final DataTypeUiManager dataTypeUiManager,
-                               final FileChooserController fileChooser) {
+                               final FileChooserController fileChooser,
+                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
         this.feedClient = feedClient;
         this.restFactory = restFactory;
         this.fileChooser = own(fileChooser);
+        make(dateTimeBoxControllerProvider).attach(view.getEffectiveBox());
         fileChooser.attach(view.getFileChooser());
         fileChooser.setTaskMonitorFactory(this, "Uploading Data");
     }
@@ -190,6 +195,9 @@ public class DataUploadPresenter
 
 
     public interface DataUploadView extends View, Focus {
+
+        /// @return The effective date box, for a controller to open its dialog.
+        DateTimeBox getEffectiveBox();
 
         void setType(final String type);
 

@@ -29,7 +29,7 @@ import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -64,7 +64,7 @@ public class BatchExecutionScheduleEditPresenter
                                                final DocSelectionBoxPresenter errorFeedPresenter,
                                                final NodeClient nodeClient,
                                                final Provider<SchedulePopup> schedulePresenterProvider,
-                                               final Provider<DateTimePopup> dateTimePopupProvider,
+                                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                                final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter) {
         super(eventBus, view);
         own(errorFeedPresenter);
@@ -73,8 +73,8 @@ public class BatchExecutionScheduleEditPresenter
         this.errorFeedPresenter = errorFeedPresenter;
 
         view.setUiHandlers(this);
-        view.getStartTime().setPopupProvider(dateTimePopupProvider);
-        view.getEndTime().setPopupProvider(dateTimePopupProvider);
+        make(dateTimeBoxControllerProvider).attach(view.getStartTime());
+        make(dateTimeBoxControllerProvider).attach(view.getEndTime());
 
         view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));

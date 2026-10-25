@@ -42,6 +42,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -62,6 +64,7 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -93,10 +96,12 @@ public class ImportConfigConfirmPresenter extends
                                         final ImportConfigConfirmView view,
                                         final TooltipPresenter tooltipPresenter,
                                         final DocSelectionBoxPresenter rootFolderPresenter,
-                                        final RestFactory restFactory) {
+                                        final RestFactory restFactory,
+                                        final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         own(tooltipPresenter);
         own(rootFolderPresenter);
+        make(dateTimeBoxControllerProvider).attach(view.getEnableFromBox());
         this.rootFolderPresenter = rootFolderPresenter;
 
         rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);
@@ -551,6 +556,9 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public interface ImportConfigConfirmView extends View, Focus {
+
+        /// @return The enable from box, for a controller to open its dialog.
+        DateTimeBox getEnableFromBox();
 
         void setDataGrid(Widget widget);
 

@@ -42,9 +42,6 @@ import stroom.widget.datagrid.client.PagerViewWithHeading;
 import stroom.widget.datagrid.client.PagerViewWithHeadingImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
@@ -94,7 +91,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
 
         // MonitoringModule
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
-        bindPresenterWidget(DateTimePopup.class, DateTimeView.class, DateTimeViewImpl.class);
 
         // StreamStoreModule: editors, expressions and the explorer drop downs
         bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);

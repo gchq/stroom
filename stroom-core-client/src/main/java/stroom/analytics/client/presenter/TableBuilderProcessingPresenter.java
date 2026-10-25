@@ -28,6 +28,8 @@ import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -39,6 +41,7 @@ import stroom.widget.util.client.TableBuilder;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -64,11 +67,14 @@ public class TableBuilderProcessingPresenter
                                            final TableBuilderProcessingView view,
                                            final DateTimeFormatter dateTimeFormatter,
                                            final RestFactory restFactory,
-                                           final NodeClient nodeClient) {
+                                           final NodeClient nodeClient,
+                                           final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
+        make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
+        make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
     }
 
     /// Shows the table builder processing settings of a rule.
@@ -186,6 +192,12 @@ public class TableBuilderProcessingPresenter
     }
 
     public interface TableBuilderProcessingView extends View, HasUiHandlers<ProcessingStatusUiHandlers> {
+
+        /// @return The minimum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMinMetaCreateTimeBox();
+
+        /// @return The maximum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMaxMetaCreateTimeBox();
 
         boolean isEnabled();
 

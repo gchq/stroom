@@ -32,6 +32,7 @@ import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
@@ -41,6 +42,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -57,6 +59,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private final DocSelectionBoxPresenter visualisationPresenter;
     private final RestFactory restFactory;
+    private final Provider<DateTimeBoxController> dateTimeBoxControllerProvider;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
@@ -70,9 +73,11 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public BasicVisSettingsPresenter(final EventBus eventBus,
                                      final BasicVisSettingsView view,
                                      final DocSelectionBoxPresenter visualisationPresenter,
-                                     final RestFactory restFactory) {
+                                     final RestFactory restFactory,
+                                     final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         own(visualisationPresenter);
+        this.dateTimeBoxControllerProvider = dateTimeBoxControllerProvider;
         this.visualisationPresenter = visualisationPresenter;
         this.restFactory = restFactory;
         view.setUiHandlers(this);
@@ -163,6 +168,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
             if (controls != null) {
                 final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane();
+                dynamicSettingsPane.setOnDateTimeBoxAdded(box ->
+                        make(dateTimeBoxControllerProvider).attach(box));
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 

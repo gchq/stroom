@@ -43,6 +43,8 @@ import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -88,10 +90,13 @@ public class ProcessorEditPresenter
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                   final ClientSecurityContext clientSecurityContext,
                                   final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
-                                  final ProcessorProfileClient processorProfileClient) {
+                                  final ProcessorProfileClient processorProfileClient,
+                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         own(editExpressionPresenter);
         own(userRefSelectionBoxPresenter);
+        make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
+        make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
         view.setUiHandlers(this);
 
         this.editExpressionPresenter = editExpressionPresenter;
@@ -477,6 +482,12 @@ public class ProcessorEditPresenter
 
 
     public interface ProcessorEditView extends View, HasUiHandlers<ProcessorEditUiHandlers> {
+
+        /// @return The minimum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMinMetaCreateTimeBox();
+
+        /// @return The maximum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMaxMetaCreateTimeBox();
 
         void setExpressionView(View view);
 

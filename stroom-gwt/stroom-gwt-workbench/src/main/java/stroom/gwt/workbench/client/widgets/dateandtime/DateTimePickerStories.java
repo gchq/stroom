@@ -26,8 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.client.IconBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
-import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.datepicker.client.DateTimeViewImpl;
+import stroom.widget.datepicker.client.component.DateTimePickerController;
 import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.GWT;
@@ -35,7 +34,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [DateTimeBox] (a text box for an ISO date-time, whose calendar icon opens
-/// the "Set Date And Time" dialog, [DateTimePopup], used by e.g. the schedule dialogs).
+/// the "Set Date And Time" dialog, [DateTimePickerController], used by e.g. the schedule dialogs).
 ///
 /// The dialog is shown with Stroom's `ShowPopupEvent`, so the stories use a [ScreenHarness] for
 /// its event bus and popup manager (no REST requests are made). Times are shown in Stroom's
@@ -201,13 +200,10 @@ public final class DateTimePickerStories {
     private static DateTimeBox dateTimeBox(final StoryContext context,
                                            final ScreenHarness harness,
                                            final Long valueMs) {
-        final DateTimeBox box = new DateTimeBox();
+        // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
+        final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Start Time");
-        // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
-        box.setPopupProvider(() -> new DateTimePopup(harness.getEventBus(),
-                new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),
-                new DateTimeModel()));
         box.setValue(valueMs);
         final Spy onChange = context.fn(ON_CHANGE);
         box.addValueChangeHandler(event -> onChange.call(box.getValue()));

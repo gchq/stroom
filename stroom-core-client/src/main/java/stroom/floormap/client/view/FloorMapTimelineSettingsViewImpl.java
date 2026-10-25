@@ -21,7 +21,6 @@ import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorM
 import stroom.util.client.Console;
 import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -56,12 +55,8 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
     Button showAllButton;
 
     @Inject
-    public FloorMapTimelineSettingsViewImpl(final Binder binder,
-                                            final Provider<DateTimePopup> dateTimePopupProvider) {
+    public FloorMapTimelineSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        startDateTimeBox.setPopupProvider(dateTimePopupProvider);
-        endDateTimeBox.setPopupProvider(dateTimePopupProvider);
 
         // The visible "Start Date" / "End Date" / "Loop Playback" text is a plain
         // Label beside each control, not a <label for> — and DateTimeBox is a
@@ -147,6 +142,16 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
     @Override
     public HandlerRegistration addEndTimeChangeHandler(final ValueChangeHandler<String> handler) {
         return endDateTimeBox.addValueChangeHandler(handler);
+    }
+
+    @Override
+    public DateTimeBox getStartBox() {
+        return startDateTimeBox;
+    }
+
+    @Override
+    public DateTimeBox getEndBox() {
+        return endDateTimeBox;
     }
 
     public interface Binder extends UiBinder<Widget, FloorMapTimelineSettingsViewImpl> {

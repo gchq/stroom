@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
@@ -48,12 +49,21 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     // The table's columns the field controls can choose
     private List<VisFieldOption> fieldOptions = Collections.emptyList();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
+    private Consumer<DateTimeBox> onDateTimeBoxAdded = box -> {
+    };
 //    private double opacity;
 
     public DynamicSettingsPane() {
         outer = new FlowPanel();
         outer.setStyleName("max form");
         initWidget(outer);
+    }
+
+    /// @param onDateTimeBoxAdded Given each date-time box the pane adds, for its owner's controller
+    ///                           to attach a [stroom.widget.datepicker.client.DateTimeBoxController]
+    ///                           to, which opens its dialog. Set before [#addControls].
+    public void setOnDateTimeBoxAdded(final Consumer<DateTimeBox> onDateTimeBoxAdded) {
+        this.onDateTimeBoxAdded = onDateTimeBoxAdded;
     }
 
     @Override
@@ -246,6 +256,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         final DateTimeBox ctrl = new DateTimeBox();
         ctrl.setExpressionsAllowed(true);
         ctrl.addStyleName("w-100");
+        onDateTimeBoxAdded.accept(ctrl);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override

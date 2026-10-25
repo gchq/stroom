@@ -32,6 +32,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /// The content of the Time Range dialog ([TimeRangeDialog]): quick settings for common ranges, and
 /// the After and Before times, each a date-time box that also takes expressions such as `now()-1d`.
 public class TimeRangePopup extends ViewImpl implements TimeRangeDialog.TimeRangeView {
@@ -118,6 +120,11 @@ public class TimeRangePopup extends ViewImpl implements TimeRangeDialog.TimeRang
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public List<DateTimeBox> getDateTimeBoxes() {
+        return List.of(timeFrom, timeTo);
     }
 
     public interface Binder extends UiBinder<Widget, TimeRangePopup> {

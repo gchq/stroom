@@ -31,6 +31,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -125,6 +126,9 @@ class TestProcessorEditPresenter {
         final ProcessorEditView view = Mockito.mock(ProcessorEditView.class, Mockito.RETURNS_DEEP_STUBS);
         Mockito.when(view.getProfile().getValue()).thenReturn(null);
         Mockito.when(view.getMaxTaskCreationDelay()).thenReturn(null);
+        // A date-time box can't be made (or mocked) outside a browser; the controllers are mocks
+        Mockito.doReturn(null).when(view).getMinMetaCreateTimeBox();
+        Mockito.doReturn(null).when(view).getMaxMetaCreateTimeBox();
         final EditExpressionPresenter editExpressionPresenter = Mockito.mock(EditExpressionPresenter.class);
         Mockito.when(editExpressionPresenter.write()).thenReturn(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.EQUALS).value("TEST").build())
@@ -138,7 +142,8 @@ class TestProcessorEditPresenter {
                 Mockito.mock(UserRefSelectionBoxPresenter.class),
                 Mockito.mock(ClientSecurityContext.class),
                 () -> null,
-                Mockito.mock(ProcessorProfileClient.class));
+                Mockito.mock(ProcessorProfileClient.class),
+                () -> Mockito.mock(DateTimeBoxController.class));
 
         // The dialog's size is worked out from the browser window's
         try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {

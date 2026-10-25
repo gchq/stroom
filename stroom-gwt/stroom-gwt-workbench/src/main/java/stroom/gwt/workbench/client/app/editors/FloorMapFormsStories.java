@@ -153,8 +153,7 @@ public final class FloorMapFormsStories {
                 // An area's fill: 'Default' is a tick box, ticked to use its type's colour
                 .story("AreaFill", context -> {
                     final FloorMapObjectEditViewImpl view = new FloorMapObjectEditViewImpl(
-                            GWT.create(FloorMapObjectEditViewImpl.Binder.class),
-                            () -> null);
+                            GWT.create(FloorMapObjectEditViewImpl.Binder.class));
                     view.setAreaFieldsVisible(true);
                     view.setDefaultFill("#336699");
                     return view.asWidget();

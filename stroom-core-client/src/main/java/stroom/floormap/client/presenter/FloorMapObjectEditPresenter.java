@@ -34,12 +34,15 @@ import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.shared.TemporalEntry;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
@@ -194,9 +197,11 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     @Inject
     public FloorMapObjectEditPresenter(final EventBus eventBus,
                                        final FloorMapObjectEditView view,
-                                       final DocumentAssetDropDownPresenter documentAssetDropDownPresenter) {
+                                       final DocumentAssetDropDownPresenter documentAssetDropDownPresenter,
+                                       final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         own(documentAssetDropDownPresenter);
+        make(dateTimeBoxControllerProvider).attach(view.getEffectiveTimeBox());
         this.documentAssetDropDownPresenter = documentAssetDropDownPresenter;
 
         getView().setChooseImgView(documentAssetDropDownPresenter.getView().asWidget());
@@ -615,6 +620,9 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     /// effective time, coordinates, name, type, image chooser, and the two
     /// affine-transform matrices.
     public interface FloorMapObjectEditView extends View {
+
+        /// @return The effective from time box, for a controller to open its dialog.
+        DateTimeBox getEffectiveTimeBox();
 
         /// Whether the effective-time field currently holds a parseable date-time.
         ///

@@ -16,10 +16,8 @@
 
 package stroom.widget.datepicker.client;
 
-import stroom.event.client.StaticEventBus;
-import stroom.item.client.EventBinder;
 import stroom.svg.client.IconBox;
-import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.core.client.GWT;
@@ -30,17 +28,17 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.inject.Provider;
 
-import java.util.Objects;
 
 /// A text field for a date and time, in ISO 8601 (e.g. `2024-01-15T09:50:00.000Z`), with a
-/// calendar icon at its end. Enter or Alt+Down in the field, or a click on the icon, opens the Set
-/// Date And Time dialog ([DateTimePopup]) on the field's time; choosing OK puts the time chosen in
-/// the field, in the user's time zone. It never opens on focus.
+/// calendar icon at its end. Enter or Alt+Down in the field, or a click on the icon, asks to open
+/// the Set Date And Time dialog ([#setOnOpenPicker(Runnable)]), which a [DateTimeBoxController]
+/// attached to it opens on the field's time; choosing OK puts the time chosen in the field, in the
+/// user's time zone. It never opens on focus.
 ///
 /// The field says it opens a dialog (`aria-haspopup="dialog"`). The icon is a picture, hidden from
 /// screen readers, as the keys open the same dialog.
@@ -51,105 +49,81 @@ import java.util.Objects;
 /// such a box, which is typed in first, Enter is the screen's (e.g. to run a query), and only Alt+Down
 /// or the icon opens the dialog.
 ///
-/// The BEM block is `date-time-box` (`date-time-box.css`); its field is a text field.
+/// The BEM block is `date-time-box` (`date-time-box.css`); its field is a text field. Its markup is
+/// `DateTimeBox.ui.xml`.
 public class DateTimeBox
-        extends Composite
+        extends Component
         implements Focus, HasValueChangeHandlers<String> {
 
-    private static final String BLOCK = "date-time-box";
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final DateTimeModel FORMAT_MODEL = new DateTimeModel();
 
-    private Provider<DateTimePopup> popupProvider;
-    private final TextBox textBox;
-    private boolean readOnly;
-    private final IconBox iconBox;
+    @UiField
+    IconBox iconBox;
+    @UiField
+    TextBox textBox;
+
+    private Runnable onOpenPicker;
+    private Runnable onChange;
     private String stringValue;
     private Long longValue;
-    private DateTimePopup popup;
     // Allows the box to be empty
     private boolean optional = false;
     // Allows text that isn't a plain time, e.g. now()-1d
     private boolean expressionsAllowed = false;
 
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            registerHandler(iconBox.addClickHandler(event -> showPopup()));
-            registerHandler(textBox.addKeyDownHandler(DateTimeBox.this::onKeyDown));
-            registerHandler(textBox.addValueChangeHandler(event -> {
-                stringValue = textBox.getValue();
-                ValueChangeEvent.fire(DateTimeBox.this, stringValue);
-            }));
-            registerHandler(textBox.addBlurHandler(event -> onBlur()));
-            registerHandler(textBox.addFocusHandler(event -> onFocus()));
-        }
-    };
-
     /// Makes an empty box.
     public DateTimeBox() {
-        textBox = new TextBox();
-        textBox.addStyleName(BLOCK + "__input stroom-control allow-focus");
-        textBox.getElement().setAttribute("aria-haspopup", "dialog");
+        initWidget(BINDER.createAndBindUi(this));
         stringValue = textBox.getText();
-
-        iconBox = new IconBox();
-        iconBox.addStyleName(BLOCK);
-        iconBox.setWidget(textBox, SvgImage.CALENDAR);
-
-        initWidget(iconBox);
+        iconBox.setOnIconClick(this::openPicker);
+        textBox.addKeyDownHandler(this::onKeyDown);
+        textBox.addValueChangeHandler(event -> {
+            stringValue = textBox.getValue();
+            changed();
+        });
+        textBox.addBlurHandler(event -> onBlur());
+        textBox.addFocusHandler(event -> onFocus());
     }
 
-    @Override
-    protected void onLoad() {
-        eventBinder.bind();
+    /// @param onOpenPicker Run when the user asks to choose a time in the dialog, unless the box
+    ///                     is read only or disabled.
+    public void setOnOpenPicker(final Runnable onOpenPicker) {
+        this.onOpenPicker = onOpenPicker;
     }
 
-    @Override
-    protected void onUnload() {
-        eventBinder.unbind();
+    /// @param onChange Run when the user changes the text, by typing or with the dialog.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     private void onKeyDown(final KeyDownEvent event) {
         final int keyCode = event.getNativeKeyCode();
         if (KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown() && !expressionsAllowed) {
             event.preventDefault();
-            showPopup();
+            openPicker();
         } else if (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown()) {
             event.preventDefault();
-            showPopup();
+            openPicker();
         }
     }
 
-    private DateTimePopup getPopup() {
-        if (popup == null) {
-            popup = popupProvider != null
-                    ? popupProvider.get()
-                    : new DateTimePopup(StaticEventBus.getEventBus(),
-                            new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),
-                            new DateTimeModel());
-            popup.setTime(System.currentTimeMillis());
+    private void openPicker() {
+        if (!isReadOnly() && isEnabled() && onOpenPicker != null) {
+            onOpenPicker.run();
         }
-        return popup;
     }
 
-    private void showPopup() {
-        if (readOnly || !isEnabled()) {
-            return;
-        }
-        final DateTimePopup popup = getPopup();
+    // The time the dialog starts on: the field's, else the last one set (unless any text is
+    // allowed, when the field's text may be an expression), else now; for its controller
+    long getPickerStartTime() {
         final Long time = parse(textBox.getValue());
         if (time != null) {
-            popup.setTime(time);
+            return time;
         } else if (longValue != null && !expressionsAllowed) {
-            popup.setTime(longValue);
-        } else {
-            popup.setTime(System.currentTimeMillis());
+            return longValue;
         }
-        popup.show(newValue -> {
-            if (!Objects.equals(time, newValue)) {
-                setValue(newValue, true);
-            }
-        });
+        return System.currentTimeMillis();
     }
 
     @Override
@@ -169,7 +143,7 @@ public class DateTimeBox
     /// @param enabled Whether the box is enabled.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        iconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || isReadOnly());
         updateInvalidState();
     }
 
@@ -178,8 +152,8 @@ public class DateTimeBox
     /// with its value greyed.
     ///
     /// @param readOnly Whether the value is read only.
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
         textBox.setReadOnly(readOnly);
         iconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
@@ -245,7 +219,7 @@ public class DateTimeBox
         textBox.setValue(text);
         FieldValidity.setInvalid(textBox.getElement(), false);
         if (fireEvents) {
-            ValueChangeEvent.fire(this, textBox.getValue());
+            changed();
         }
     }
 
@@ -315,11 +289,18 @@ public class DateTimeBox
         return textBox.addKeyDownHandler(handler);
     }
 
-    /// Sets how the box makes its dialog, e.g. from GIN. Without one, it makes its own, shown on
-    /// the app's event bus ([StaticEventBus]).
-    ///
-    /// @param popupProvider The dialog's provider.
-    public void setPopupProvider(final Provider<DateTimePopup> popupProvider) {
-        this.popupProvider = popupProvider;
+    private void changed() {
+        ValueChangeEvent.fire(this, textBox.getValue());
+        if (onChange != null) {
+            onChange.run();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<IconBox, DateTimeBox> {
+
     }
 }

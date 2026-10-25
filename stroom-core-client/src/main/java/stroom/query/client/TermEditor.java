@@ -38,6 +38,7 @@ import stroom.util.shared.UserRef;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
 
@@ -86,6 +87,7 @@ public class TermEditor extends Composite implements HasControllerNode {
     // Owns the selection boxes' presenters, so whatever owns this editor's view disposes them
     private final ControllerNode node = new ControllerNode("TermEditor");
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
+    private final Provider<DateTimeBoxController> dateTimeBoxControllerProvider;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
@@ -103,7 +105,9 @@ public class TermEditor extends Composite implements HasControllerNode {
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
                       final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                      final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                       final UiConfigCache uiConfigCache) {
+        this.dateTimeBoxControllerProvider = dateTimeBoxControllerProvider;
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
@@ -636,6 +640,10 @@ public class TermEditor extends Composite implements HasControllerNode {
     private DateTimeBox createDateBox(final String widthClassName, final String name) {
         // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
         final DateTimeBox dateBox = new DateTimeBox();
+        // Its dialog is opened by a controller this owns
+        final DateTimeBoxController controller = dateTimeBoxControllerProvider.get();
+        node.adopt(controller.getControllerNode());
+        controller.attach(dateBox);
         dateBox.setExpressionsAllowed(true);
         AccessibleName.set(dateBox, name);
         dateBox.addStyleName(ITEM_CLASS_NAME);

@@ -29,7 +29,7 @@ import stroom.credentials.shared.Secret;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -56,10 +56,10 @@ public class CredentialSettingsPresenter
     public CredentialSettingsPresenter(final EventBus eventBus,
                                        final CredentialSettingsView view,
                                        final SecretPresenters secretPresenters,
-                                       final Provider<DateTimePopup> dateTimePopupProvider) {
+                                       final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
         view.setUiHandlers(this);
-        view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
+        make(dateTimeBoxControllerProvider).attach(view.getExpiryTime());
 
         this.secretPresenters = secretPresenters;
         secretPresenters.setOwner(this);

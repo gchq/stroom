@@ -253,6 +253,11 @@ public class EditApiKeyViewImpl
     // --------------------------------------------------------------------------------
 
 
+    @Override
+    public DateTimeBox getExpiresOnBox() {
+        return expiresOnDateBox;
+    }
+
     public interface Binder extends UiBinder<Widget, EditApiKeyViewImpl> {
 
     }

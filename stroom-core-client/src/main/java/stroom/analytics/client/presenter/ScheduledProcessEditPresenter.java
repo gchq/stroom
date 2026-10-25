@@ -37,7 +37,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.ScheduleType;
-import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -73,7 +73,7 @@ public class ScheduledProcessEditPresenter
                                          final DocSelectionBoxPresenter errorFeedPresenter,
                                          final NodeClient nodeClient,
                                          final Provider<SchedulePopup> schedulePresenterProvider,
-                                         final Provider<DateTimePopup> dateTimePopupProvider,
+                                         final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
                                          final RestFactory restFactory,
                                          final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                          final ClientSecurityContext clientSecurityContext,
@@ -92,8 +92,8 @@ public class ScheduledProcessEditPresenter
         view.setUiHandlers(this);
         // Only an administrator can change a global property, so don't offer it to anyone else.
         view.setSetDefaultVisible(configDefaultSetter.isAllowed());
-        view.getStartTime().setPopupProvider(dateTimePopupProvider);
-        view.getEndTime().setPopupProvider(dateTimePopupProvider);
+        make(dateTimeBoxControllerProvider).attach(view.getStartTime());
+        make(dateTimeBoxControllerProvider).attach(view.getEndTime());
         this.errorFeedPresenter = errorFeedPresenter;
 
         view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);

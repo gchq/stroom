@@ -25,7 +25,7 @@ import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -56,9 +56,9 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                                   final ReplaceSecretView view,
                                   final CredentialClient credentialClient,
                                   final SecretPresenters secretPresenters,
-                                  final Provider<DateTimePopup> dateTimePopupProvider) {
+                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
-        view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
+        make(dateTimeBoxControllerProvider).attach(view.getExpiryTime());
         this.credentialClient = credentialClient;
         this.secretPresenters = secretPresenters;
         secretPresenters.setOwner(this);

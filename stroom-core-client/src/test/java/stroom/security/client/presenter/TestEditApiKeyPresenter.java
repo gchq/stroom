@@ -23,6 +23,7 @@ import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.junit.GWTMockUtilities;
@@ -71,7 +72,8 @@ class TestEditApiKeyPresenter {
                 new FakeRestFactory(),
                 Mockito.mock(ClientSecurityContext.class),
                 uiConfigCache,
-                Mockito.mock(UserRefSelectionBoxPresenter.class));
+                Mockito.mock(UserRefSelectionBoxPresenter.class),
+                () -> Mockito.mock(DateTimeBoxController.class));
     }
 
     @AfterEach

@@ -17,6 +17,8 @@
 package stroom.data.client.presenter;
 
 import stroom.util.shared.Selection;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -24,14 +26,18 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePresenter.ProcessChoiceView> {
 
     @Inject
     public ProcessChoicePresenter(final EventBus eventBus,
-                                  final ProcessChoiceView view) {
+                                  final ProcessChoiceView view,
+                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
+        make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
+        make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
     }
 
     public void show(final Selection<Long> selection,
@@ -62,6 +68,12 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
     }
 
     public interface ProcessChoiceView extends View, Focus {
+
+        /// @return The minimum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMinMetaCreateTimeBox();
+
+        /// @return The maximum stream create time box, for a controller to open its dialog.
+        DateTimeBox getMaxMetaCreateTimeBox();
 
         int getPriority();
 

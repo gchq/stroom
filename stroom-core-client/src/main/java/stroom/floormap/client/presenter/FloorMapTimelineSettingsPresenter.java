@@ -17,6 +17,8 @@
 package stroom.floormap.client.presenter;
 
 import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorMapTimelineSettingsView;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -29,6 +31,7 @@ import stroom.widget.util.client.Rect;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -40,8 +43,11 @@ public class FloorMapTimelineSettingsPresenter
 
     @Inject
     public FloorMapTimelineSettingsPresenter(final EventBus eventBus,
-                                             final FloorMapTimelineSettingsView view) {
+                                             final FloorMapTimelineSettingsView view,
+                                             final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
+        make(dateTimeBoxControllerProvider).attach(view.getStartBox());
+        make(dateTimeBoxControllerProvider).attach(view.getEndBox());
     }
 
     /// Show the settings popup positioned relative to the anchor widget (e.g. the settings button).
@@ -130,6 +136,12 @@ public class FloorMapTimelineSettingsPresenter
     }
 
     public interface FloorMapTimelineSettingsView extends View {
+
+        /// @return The start date and time box, for a controller to open its dialog.
+        DateTimeBox getStartBox();
+
+        /// @return The end date and time box, for a controller to open its dialog.
+        DateTimeBox getEndBox();
 
         boolean isLoopPlayback();
 
