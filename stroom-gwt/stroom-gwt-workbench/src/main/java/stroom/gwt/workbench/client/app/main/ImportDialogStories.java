@@ -190,7 +190,7 @@ public final class ImportDialogStories {
         final Play dialog = importDialog(screen);
         // Chooses the file as a user does, which fires the input's change event
         play.upload(dialog.querySelector(StroomDom.FILE_INPUT), FILE_NAME, FILE_CONTENT, FILE_TYPE);
-        // CustomFileUpload shows the chosen name
+        // FileChooser shows the chosen name
         dialog.findByText(FILE_NAME);
         play.click(dialog.getByRole("button", StroomDom.button("OK")));
         play.waitFor(() -> play.expect(screen.getByText("Confirm Import")).toBeInTheDocument());

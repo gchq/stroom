@@ -24,7 +24,7 @@
                         helpText="The file to upload. A .zip file is unpacked as a Stroom zip; .gz and .gzip files are treated as gzip compressed. Other files are stored as they are."
                         screenReaderText=".zip and .gz files are handled as compressed data."
                         required="true">
-            <form:CustomFileUpload ui:field="fileUpload"/>
+            <form:FileChooser ui:field="fileChooser"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

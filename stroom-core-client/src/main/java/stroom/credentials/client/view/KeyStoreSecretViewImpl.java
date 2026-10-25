@@ -20,7 +20,7 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.client.presenter.KeyStoreSecretPresenter.KeyStoreSecretView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.FileChooser;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -42,7 +42,7 @@ public class KeyStoreSecretViewImpl
     @UiField
     SelectionBox<KeyStoreType> type;
     @UiField
-    CustomFileUpload fileUpload;
+    FileChooser fileChooser;
     @UiField
     PasswordBox password;
 
@@ -86,8 +86,8 @@ public class KeyStoreSecretViewImpl
     }
 
     @Override
-    public CustomFileUpload getFileUpload() {
-        return fileUpload;
+    public FileChooser getFileChooser() {
+        return fileChooser;
     }
 
     public interface Binder extends UiBinder<Widget, KeyStoreSecretViewImpl> {

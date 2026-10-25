@@ -17,7 +17,7 @@
 package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.FileChooser;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +30,7 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
     private final Widget widget;
 
     @UiField
-    CustomFileUpload fileUpload;
+    FileChooser fileChooser;
 
     @Inject
     public ImportConfigViewImpl(final Binder binder) {
@@ -44,12 +44,12 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
 
     @Override
     public void focus() {
-        fileUpload.focus();
+        fileChooser.focus();
     }
 
     @Override
-    public CustomFileUpload getFileUpload() {
-        return fileUpload;
+    public FileChooser getFileChooser() {
+        return fileChooser;
     }
 
     public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {

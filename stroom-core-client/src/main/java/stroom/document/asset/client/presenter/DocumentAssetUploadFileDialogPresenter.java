@@ -21,7 +21,9 @@ import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPrese
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.util.shared.ResourceKey;
+import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.FileChooserController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,6 +42,7 @@ public class DocumentAssetUploadFileDialogPresenter
     /**
      * Allows us to stop the hide request for the dialog
      */
+    private final FileChooserController fileChooser;
     private HidePopupRequestEvent currentHideRequest;
 
     /** What to call when the upload has been successful */
@@ -69,25 +72,12 @@ public class DocumentAssetUploadFileDialogPresenter
     @SuppressWarnings("unused")
     @Inject
     public DocumentAssetUploadFileDialogPresenter(final EventBus eventBus,
-                                                        final DocumentAssetUploadFileDialogView view) {
+                                                        final DocumentAssetUploadFileDialogView view,
+                                                        final FileChooserController fileChooser) {
         super(eventBus, view);
-
-        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-        view.getFileUpload()
-                .onSuccess(resourceKey -> {
-                    final String fileName =
-                            addFileCallback.getNonClashingLabel(
-                                    parentFolderItem,
-                                    removeIllegalCharacters(getView().getFileUpload().getFilename()),
-                                    null);
-
-                    addFileCallback.addUploadedFile(parentFolderItem, fileName, resourceKey);
-                    currentHideRequest.hide();
-                })
-                .onFailure(message -> AlertEvent.fireError(DocumentAssetUploadFileDialogPresenter.this,
-                        message,
-                        currentHideRequest::reset))
-                .taskMonitorFactory(this, "Uploading file");
+        this.fileChooser = own(fileChooser);
+        fileChooser.attach(view.getFileChooser());
+        fileChooser.setTaskMonitorFactory(this, "Uploading file");
     }
 
     /**
@@ -119,8 +109,8 @@ public class DocumentAssetUploadFileDialogPresenter
                     currentHideRequest = e;
                     if (e.isOk()) {
                         if (checkValid()) {
-                            // Upload the selected file via XHR (attaches the X-CSRF header).
-                            getView().getFileUpload().submit();
+                            fileChooser.upload(ImportUtil.getImportFileURL(), this::onUploaded,
+                                    message -> AlertEvent.fireError(this, message, currentHideRequest::reset));
                         } else {
                             e.reset();
                         }
@@ -130,13 +120,22 @@ public class DocumentAssetUploadFileDialogPresenter
                 }).fire();
     }
 
+    private void onUploaded(final ResourceKey resourceKey) {
+        final String fileName = addFileCallback.getNonClashingLabel(
+                parentFolderItem,
+                removeIllegalCharacters(fileChooser.getFilename()),
+                null);
+        addFileCallback.addUploadedFile(parentFolderItem, fileName, resourceKey);
+        currentHideRequest.hide();
+    }
+
     /**
      * Checks if the data in the dialog is valid. If not shows a warning dialog and returns false.
      *
      * @return true if everything is ok. False if not ok.
      */
     public boolean checkValid() {
-        final String filename = getView().getFileUpload().getFilename();
+        final String filename = fileChooser.getFilename();
         if (NullSafe.isBlankString(filename)) {
             AlertEvent.fireWarn(this, "File not set", null);
             return false;
@@ -176,6 +175,6 @@ public class DocumentAssetUploadFileDialogPresenter
         /**
          * Gets the file upload widget.
          */
-        CustomFileUpload getFileUpload();
+        FileChooser getFileChooser();
     }
 }

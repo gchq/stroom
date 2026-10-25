@@ -29,7 +29,9 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.util.shared.ResourceKey;
+import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.FileChooserController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -51,6 +53,8 @@ public class DataUploadPresenter
     private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
     private final FeedClient feedClient;
+    private final RestFactory restFactory;
+    private final FileChooserController fileChooser;
     private HidePopupRequestEvent currentHideRequest;
 
     @Inject
@@ -58,41 +62,41 @@ public class DataUploadPresenter
                                final DataUploadView view,
                                final RestFactory restFactory,
                                final FeedClient feedClient,
-                               final DataTypeUiManager dataTypeUiManager) {
+                               final DataTypeUiManager dataTypeUiManager,
+                               final FileChooserController fileChooser) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
         this.feedClient = feedClient;
+        this.restFactory = restFactory;
+        this.fileChooser = own(fileChooser);
+        fileChooser.attach(view.getFileChooser());
+        fileChooser.setTaskMonitorFactory(this, "Uploading Data");
+    }
 
-        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
+    private void onUploaded(final ResourceKey resourceKey) {
+        final String fileName = fileChooser.getFilename();
+        final Long effectiveMs = getView().getEffectiveDate();
+        final UploadDataRequest request = new UploadDataRequest(
+                resourceKey,
+                feedRef.getName(),
+                getView().getType().getValue(),
+                effectiveMs,
+                getView().getMetaData(),
+                fileName);
 
-        view.getFileUpload()
-                .onSuccess(resourceKey -> {
-                    final String fileName = getView().getFileUpload().getFilename();
-                    final Long effectiveMs = getView().getEffectiveDate();
-                    final UploadDataRequest request = new UploadDataRequest(
-                            resourceKey,
-                            feedRef.getName(),
-                            getView().getType().getValue(),
-                            effectiveMs,
-                            getView().getMetaData(),
-                            fileName);
-
-                    //noinspection unused
-                    restFactory
-                            .create(DATA_RESOURCE)
-                            .method(res -> res.upload(request))
-                            .onSuccess(result ->
-                                    AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
-                                            () -> {
-                                                metaPresenter.refresh();
-                                                currentHideRequest.hide();
-                                            }))
-                            .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
-                            .taskMonitorFactory(DataUploadPresenter.this)
-                            .exec();
-                })
-                .onFailure(this::error)
-                .taskMonitorFactory(this, "Uploading Data");
+        //noinspection unused
+        restFactory
+                .create(DATA_RESOURCE)
+                .method(res -> res.upload(request))
+                .onSuccess(result ->
+                        AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file",
+                                () -> {
+                                    metaPresenter.refresh();
+                                    currentHideRequest.hide();
+                                }))
+                .onFailure(throwable -> error("Error uploading file: " + throwable.getMessage()))
+                .taskMonitorFactory(DataUploadPresenter.this)
+                .exec();
     }
 
     public boolean valid() {
@@ -105,7 +109,7 @@ public class DataUploadPresenter
             return false;
         }
 
-        final String fileName = getView().getFileUpload().getFilename();
+        final String fileName = fileChooser.getFilename();
         if (NullSafe.isEmptyString(fileName)) {
             AlertEvent.fireWarn(this, "File not set!", null);
             return false;
@@ -120,7 +124,7 @@ public class DataUploadPresenter
     }
 
     private void submit() {
-        getView().getFileUpload().submit();
+        fileChooser.upload(ImportUtil.getImportFileURL(), this::onUploaded, this::error);
     }
 
     public void show(final MetaPresenter streamPresenter, final DocRef feedRef) {
@@ -195,6 +199,6 @@ public class DataUploadPresenter
 
         String getMetaData();
 
-        CustomFileUpload getFileUpload();
+        FileChooser getFileChooser();
     }
 }

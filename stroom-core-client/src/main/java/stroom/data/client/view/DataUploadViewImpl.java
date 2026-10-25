@@ -19,7 +19,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.FileChooser;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,7 +35,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     SelectionBox<String> type;
     @UiField
-    CustomFileUpload fileUpload;
+    FileChooser fileChooser;
     @UiField
     DateTimeBox effective;
     @UiField
@@ -57,8 +57,8 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     @Override
-    public CustomFileUpload getFileUpload() {
-        return fileUpload;
+    public FileChooser getFileChooser() {
+        return fileChooser;
     }
 
     @Override

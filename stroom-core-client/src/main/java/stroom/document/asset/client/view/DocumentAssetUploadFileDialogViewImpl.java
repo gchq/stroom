@@ -17,7 +17,7 @@
 package stroom.document.asset.client.view;
 
 import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.FileChooser;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,7 +38,7 @@ public class DocumentAssetUploadFileDialogViewImpl extends ViewImpl implements
     private final Widget widget;
 
     @UiField
-    CustomFileUpload fileUpload;
+    FileChooser fileChooser;
     @UiField
     Label lblPath;
 
@@ -71,8 +71,8 @@ public class DocumentAssetUploadFileDialogViewImpl extends ViewImpl implements
      * Gets the file upload widget.
      */
     @Override
-    public CustomFileUpload getFileUpload() {
-        return fileUpload;
+    public FileChooser getFileChooser() {
+        return fileChooser;
     }
 
     /**

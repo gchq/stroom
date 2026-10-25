@@ -24,7 +24,8 @@ import stroom.credentials.shared.Secret;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.FileChooserController;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -38,24 +39,18 @@ import javax.inject.Inject;
 public final class KeyStoreSecretPresenter
         extends MyPresenterWidget<KeyStoreSecretView> implements SecretPresenter<KeyStoreSecretView> {
 
+    private final FileChooserController fileChooser;
     private ResourceKey resourceKey;
     private Consumer<Boolean> afterSubmitConsumer;
 
     @Inject
     public KeyStoreSecretPresenter(final EventBus eventBus,
-                                   final KeyStoreSecretView view) {
+                                   final KeyStoreSecretView view,
+                                   final FileChooserController fileChooser) {
         super(eventBus, view);
-
-        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-
-        view.getFileUpload()
-                .onSuccess(resourceKey -> {
-                    this.resourceKey = resourceKey;
-                    afterSubmitConsumer.accept(true);
-                })
-                .onFailure(message -> AlertEvent.fireError(this, message, () ->
-                        afterSubmitConsumer.accept(false)))
-                .taskMonitorFactory(this, "Uploading Data");
+        this.fileChooser = own(fileChooser);
+        fileChooser.attach(view.getFileChooser());
+        fileChooser.setTaskMonitorFactory(this, "Uploading Data");
     }
 
     public void setType(final KeyStoreType type) {
@@ -82,7 +77,13 @@ public final class KeyStoreSecretPresenter
             AlertEvent.fireError(this, message, () -> consumer.accept(false));
         } else {
             afterSubmitConsumer = consumer;
-            getView().getFileUpload().submit();
+            fileChooser.upload(ImportUtil.getImportFileURL(),
+                    resourceKey -> {
+                        this.resourceKey = resourceKey;
+                        afterSubmitConsumer.accept(true);
+                    },
+                    failure -> AlertEvent.fireError(this, failure, () ->
+                            afterSubmitConsumer.accept(false)));
         }
     }
 
@@ -90,7 +91,7 @@ public final class KeyStoreSecretPresenter
         if (getView().getType() == null) {
             return "You must choose a key store type, e.g. PKCS12";
         }
-        final String fileName = getView().getFileUpload().getFilename();
+        final String fileName = fileChooser.getFilename();
         if (NullSafe.isBlankString(fileName)) {
             return "You must select a file to import";
         }
@@ -107,6 +108,6 @@ public final class KeyStoreSecretPresenter
 
         void setPassword(String password);
 
-        CustomFileUpload getFileUpload();
+        FileChooser getFileChooser();
     }
 }

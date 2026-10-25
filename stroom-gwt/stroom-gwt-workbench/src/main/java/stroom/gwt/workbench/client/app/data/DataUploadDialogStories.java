@@ -92,7 +92,7 @@ public final class DataUploadDialogStories {
                     play.waitFor(() -> play.expect(dialog.getByDisplayValue("Events")).toBeInTheDocument());
                     // The button is named by its form group's label and its own text, and described by the
                     // chosen file and the group's help
-                    final Query choose = dialog.querySelector(".file-upload__button");
+                    final Query choose = dialog.querySelector(".file-chooser__button");
                     play.expect(choose).toHaveAttribute("aria-labelledby");
                     // Required, said in its description, as a button can't be aria-required
                     play.expect(choose).not().toHaveAttribute("aria-required");

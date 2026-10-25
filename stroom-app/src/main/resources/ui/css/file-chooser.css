@@ -15,25 +15,29 @@
  */
 
 /*
-   The file upload (stroom.widget.form.client.CustomFileUpload), the BEM block file-upload: its
-   button (file-upload__button, a Button), which opens the browser's file dialog through the hidden
-   file input (file-upload__input), and the chosen file's name beside it (file-upload__name, with
+   The file chooser (stroom.widget.form.client.FileChooser), the BEM block file-chooser: its
+   button (file-chooser__button, a Button), which opens the browser's file dialog through the hidden
+   file input (file-chooser__input), and the chosen file's name beside it (file-chooser__name, with
    --empty while none is chosen).
 */
 
-.file-upload {
+.file-chooser {
     display: flex;
     align-items: center;
     gap: var(--control__gap--horizontal);
 }
 
-.file-upload__name {
+.file-chooser__name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.file-upload__name--empty {
+.file-chooser__name--empty {
     color: var(--text-color--muted);
+}
+
+.file-chooser__input {
+    display: none;
 }

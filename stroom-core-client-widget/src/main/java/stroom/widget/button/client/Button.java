@@ -167,6 +167,14 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         }
     }
 
+    /// Sets the button's ARIA role, e.g. `button` on a picker's button, which a form group
+    /// ([stroom.widget.form.client.FormGroup]) then names by its label and the button's own text.
+    ///
+    /// @param role The role.
+    public void setRole(final String role) {
+        getElement().setAttribute("role", role);
+    }
+
     /// Marks the button as one that opens a dialog, which screen readers announce.
     ///
     /// @param opensDialog Whether pressing the button opens a dialog.

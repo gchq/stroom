@@ -56,7 +56,7 @@ public final class StroomDom {
     /// The text of an item of a menu (`MenuItemCell`), shown on the page's body. The item itself
     /// (the cell's focusable div) has `role="menuitem"`.
     public static final String MENU_ITEM_TEXT = ".menu__text";
-    /// The file input of a `CustomFileUpload` (Stroom's file chooser), which it hides behind its
+    /// The file input of a `FileChooser` (Stroom's file chooser), which it hides behind its
     /// 'Choose File' button. `play.upload(...)` chooses a file in it all the same.
     public static final String FILE_INPUT = "input[type='file']";
     /// The title of the shared `ActionMenuCell` ('...' button) of a grid row.

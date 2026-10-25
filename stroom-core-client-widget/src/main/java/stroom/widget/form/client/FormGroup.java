@@ -444,7 +444,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private static boolean isHidden(final Element element, final Element root) {
         Element current = element;
         while (current != null && current != root) {
-            if ("none".equals(current.getStyle().getDisplay())) {
+            // Hidden inline, or with the hidden attribute (e.g. a file chooser's file input)
+            if ("none".equals(current.getStyle().getDisplay()) || current.hasAttribute("hidden")) {
                 return true;
             }
             current = current.getParentElement();

@@ -24,7 +24,9 @@ import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.NullSafe;
-import stroom.widget.form.client.CustomFileUpload;
+import stroom.util.shared.ResourceKey;
+import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.FileChooserController;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -46,36 +48,38 @@ public class ImportConfigPresenter
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final RestFactory restFactory;
+    private final FileChooserController fileChooser;
     private HidePopupRequestEvent currentHidePopupRequestEvent;
 
     @Inject
     public ImportConfigPresenter(final EventBus eventBus, final ImportConfigView view,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final FileChooserController fileChooser) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.fileChooser = own(fileChooser);
+        fileChooser.attach(view.getFileChooser());
+        fileChooser.setTaskMonitorFactory(this, "Import");
+    }
 
-        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-
-        getView().getFileUpload()
-                .onSuccess(resourceKey -> restFactory
-                        .create(CONTENT_RESOURCE)
-                        .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
-                                ImportSettings.createConfirmation(),
-                                new ArrayList<>())))
-                        .onSuccess(response -> {
-                            if (response.getConfirmList().isEmpty()) {
-                                warning("The import package contains nothing that can be imported into " +
-                                        "this version of Stroom.");
-                            } else {
-                                currentHidePopupRequestEvent.hide();
-                                ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, response);
-                            }
-                        })
-                        .onFailure(caught -> error(caught.getMessage()))
-                        .taskMonitorFactory(ImportConfigPresenter.this)
-                        .exec())
-                .onFailure(this::error)
-                .taskMonitorFactory(this, "Import");
+    private void onUploaded(final ResourceKey resourceKey) {
+        restFactory
+                .create(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        ImportSettings.createConfirmation(),
+                        new ArrayList<>())))
+                .onSuccess(response -> {
+                    if (response.getConfirmList().isEmpty()) {
+                        warning("The import package contains nothing that can be imported into " +
+                                "this version of Stroom.");
+                    } else {
+                        currentHidePopupRequestEvent.hide();
+                        ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, response);
+                    }
+                })
+                .onFailure(caught -> error(caught.getMessage()))
+                .taskMonitorFactory(ImportConfigPresenter.this)
+                .exec();
     }
 
     private void show() {
@@ -89,9 +93,9 @@ public class ImportConfigPresenter
                 .onHideRequest(e -> {
                     currentHidePopupRequestEvent = e;
                     if (e.isOk()) {
-                        final String filename = getView().getFileUpload().getFilename();
+                        final String filename = fileChooser.getFilename();
                         if (NullSafe.isNonBlankString(filename)) {
-                            getView().getFileUpload().submit();
+                            fileChooser.upload(ImportUtil.getImportFileURL(), this::onUploaded, this::error);
                         } else {
                             error("You must select a file to import.");
                             e.reset();
@@ -118,7 +122,7 @@ public class ImportConfigPresenter
 
     public interface ImportConfigView extends View, Focus {
 
-        CustomFileUpload getFileUpload();
+        FileChooser getFileChooser();
     }
 
 }

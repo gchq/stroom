@@ -91,7 +91,7 @@ import java.util.function.Consumer;
 ///   [StorySecurityContext]...);
 /// * a [FixtureDispatcher] that answers the screen's REST requests from the story's
 ///   [RestFixtures], followed by the [StartupFixtures], so no server is needed;
-/// * a [StoryUploadTransport] that answers the screen's file uploads (Stroom's `CustomFileUpload`)
+/// * a [StoryUploadTransport] that answers the screen's file uploads (Stroom's `FileChooser`)
 ///   from the fixtures' upload replies;
 /// * a [PopupManager], so that dialogs shown with `ShowPopupEvent` appear, on the page's body
 ///   as in Stroom, where play functions find them with `play.screen()`, and Stroom's [Menu], so
@@ -199,7 +199,7 @@ public final class ScreenHarness {
         final RestFixtures fixtures = builder.buildFixtures();
         dispatcher = new FixtureDispatcher(fixtures, Defaults::getServiceRoot,
                 new TimerReplyScheduler(), new HarnessListener());
-        // CustomFileUpload's transport is static: this harness answers uploads until it is
+        // FileChooserController's transport is static: this harness answers uploads until it is
         // disposed (or another harness is created)
         uploadTransport = new StoryUploadTransport(
                 new FixtureUploads(fixtures, new TimerReplyScheduler(), new HarnessUploadListener()));
@@ -348,8 +348,8 @@ public final class ScreenHarness {
     /// keeping the workbench page's own theme classes, which Stroom would replace with the user's).
     /// Screens rely on both:
     ///
-    /// * some read the cached config at once (e.g. a `ClassificationLabel` reads the label colours
-    ///   as it is created), rather than with `UiConfigCache.get(consumer)`, which fetches it first;
+    /// * some read the cached config at once, rather than with `UiConfigCache.get(consumer)`, which
+    ///   fetches it first;
     /// * editors (`EditorPresenter`) read the editor preferences, which are null until set.
     ///
     /// The action isn't run if the story has rendered again meanwhile; a failure in it is reported

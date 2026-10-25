@@ -23,7 +23,7 @@ import stroom.widget.form.client.FileUploadCallback;
 import java.util.Objects;
 
 /// The fake reply to a file upload, the upload equivalent of [RestReply]. Stroom's
-/// `CustomFileUpload` posts the chosen file to the import file servlet
+/// `FileChooser` posts the chosen file to the import file servlet
 /// (`ImportUtil.getImportFileURL()`, `importfile.rpc`), which replies with a `PropertyMap` arg line
 /// (`#PM#success=true name=a.zip key=k1#PM#`) that Stroom's `FileUploadResultHandler` reads into a
 /// `ResourceKey`, or with `success=false` and the server's exception message. Replies are

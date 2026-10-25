@@ -58,8 +58,7 @@ A widget story creates the widget, applies the story's args and returns it. See
 
 * Create views with `new XxxViewImpl(GWT.create(XxxViewImpl.Binder.class))`, presenters with `new`
   and a `SimpleEventBus` (use a `ScreenHarness` only for screens that make REST calls). Widgets with
-  a private constructor that Stroom only creates in UiBinder (e.g. `CustomFileUpload`) are created
-  with `GWT.create(Xxx.class)`. Implement small interfaces (e.g. `GlobalKeyHandler`) with a private
+  a private constructor that Stroom only creates in UiBinder are created with `GWT.create(Xxx.class)`. Implement small interfaces (e.g. `GlobalKeyHandler`) with a private
   no-op nested class.
 * **Args.** Stories that only set args use `fromArgs(context)` with an `ArgType` for each option
   (`.args(...)` for the title's args, `.withArgs(...)` for the story's).
@@ -70,7 +69,7 @@ A widget story creates the widget, applies the story's args and returns it. See
 * **Echoes** of the widget's state (`Clicked: 3`, `Value: x`) are a `StoryPanels.note(...)` or a
   `Label` updated by the widget's own events.
 * **Story-only adapters.** Where Stroom has no callback and reads the value later (e.g.
-  `LineColInput.getLocation()`, `CustomFileUpload.getFilename()`), read it in the story on the
+  `LineColInput.getLocation()`, `FileChooser.getFilename()`), read it in the story on the
   event a user would expect (blur/Enter, the input's change event).
 
 ## Screen stories
@@ -424,9 +423,9 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
 
 ### Uploads
 
-Stroom's `CustomFileUpload` (the import, data upload, visualisation asset and key store dialogs)
+Stroom's `FileChooser` (the import, data upload, visualisation asset and key store dialogs)
 posts the chosen file to the import file servlet (`ImportUtil.getImportFileURL()`,
-`importfile.rpc`) through a static `FileUploadTransport` (`CustomFileUpload.setUploadTransport`),
+`importfile.rpc`) through a static `FileUploadTransport` (`FileChooserController.setUploadTransport`),
 whose default is an `XMLHttpRequest`. The harness installs its own, `StoryUploadTransport`, when it
 is built and restores Stroom's default when the story renders again, so uploads never reach the
 network. It reads the chosen file (a `FileReader`, asynchronously) and answers the upload from the
@@ -464,14 +463,14 @@ RestFixtures.builder()
   `lenient()` it only fails the upload.
 * Choose the file with `play.upload(input, name, content, mimeType)` on the hidden file input
   (`StroomDom.FILE_INPUT`, inside the dialog): it sets the input's files with a `DataTransfer` and
-  fires `input` and `change`, so `CustomFileUpload` shows the name, whether or not the input is
+  fires `input` and `change`, so `FileChooser` shows the name, whether or not the input is
   visible. Then press the dialog's OK, which submits it. Where a story works on what an upload
   returns (e.g. Import's 'Confirm Import'), it uploads the file too.
-* Browsers give a file input's value as `C:\fakepath\<name>`. `CustomFileUpload.getFilename()`
+* Browsers give a file input's value as `C:\fakepath\<name>`. `FileChooser.getFilename()`
   returns just the name (`FileUploadUtil.getFileName`).
-* `CustomFileUpload`'s transport is static, so with several harnesses in one rendering the last
+* `FileChooserController`'s transport is static, so with several harnesses in one rendering the last
   one built answers every upload. Widget stories (no harness) keep Stroom's default transport, so
-  they must not submit a `CustomFileUpload`.
+  they must not upload a `FileChooser`.
 
 ### GIN, not `new`
 
