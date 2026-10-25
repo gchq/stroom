@@ -45,6 +45,9 @@ if (!window.visualisations) {
     var TOOLBOX_ITEM_SIZE = 14;
     // A scatter plot with more points than this is drawn in ECharts' large mode, a batch at a time.
     var LARGE_THRESHOLD = 2000;
+    // A selected item's border, and the solid line drawn either side of a selected link (half as thick).
+    var SELECTED_BORDER = 3;
+    var LINK_OUTLINE = SELECTED_BORDER / 2;
     var PROGRESSIVE_CHUNK = 5000;
 
     // Keys removed from option overrides anywhere they appear: they can carry HTML, code or URLs.
@@ -497,6 +500,12 @@ if (!window.visualisations) {
             }
         });
         return values.length ? values.join(", ") : "an item";
+    }
+
+    // What a selection is outlined in: white on a dark theme, the theme's text colour on a light one (where white
+    // wouldn't show).
+    function selectionColour(style) {
+        return style.dark ? "#ffffff" : style.text;
     }
 
     // A link's selection the other way round: its source and target (and the columns mapped to them) swapped.
@@ -2306,9 +2315,11 @@ if (!window.visualisations) {
                 series.progressive = PROGRESSIVE_CHUNK;
             }
             series.selectedMode = "multiple";
+            // An item is outlined with a border and a glow (white on dark). A network's link is outlined by the
+            // chart class, as ECharts draws no border on a line (see syncLinkOutlines).
             series.select = merge(series.select || {}, {
-                itemStyle: {borderColor: style.text, borderWidth: 2},
-                lineStyle: {width: 4}
+                itemStyle: {borderColor: selectionColour(style), borderWidth: SELECTED_BORDER,
+                    shadowColor: selectionColour(style), shadowBlur: 8}
             });
         });
 
@@ -2338,6 +2349,19 @@ if (!window.visualisations) {
             delete overrides.seriesDefaults;
         }
         merge(option, overrides);
+        // Selection is the chart's own (a click selects an item, Ctrl-click or Shift-click selects more), so an
+        // override of it is put back: one item at a time would leave the others selected but not shown.
+        var modeOverridden = false;
+        (option.series || []).forEach(function (series) {
+            if (series.selectedMode !== "multiple") {
+                modeOverridden = true;
+                series.selectedMode = "multiple";
+            }
+        });
+        if (modeOverridden) {
+            report.warnings.push("selectedMode is the chart's own (a click selects an item, Ctrl-click or "
+                + "Shift-click selects more), so the override was left out.");
+        }
 
         if (rows.length === 0) {
             report.status = "empty";
@@ -2554,6 +2578,92 @@ if (!window.visualisations) {
             reportSelection();
         }
 
+        // Each selected link's outline, by its series and index: a copy of the link's line drawn beneath it, wider
+        // by a solid line either side, kept in step with the link as the layout moves.
+        var linkOutlines = {};
+
+        // The line ECharts drew for a selected network graph link, or null (another chart, or not drawn).
+        function linkLine(item) {
+            try {
+                var series = chart.getModel().getSeriesByIndex(item.seriesIndex);
+                if (!series || series.subType !== "graph") {
+                    return null;
+                }
+                var edge = series.getGraph().getEdgeByIndex(item.dataIndex);
+                var el = edge && edge.getGraphicEl();
+                return el && el.childOfName ? el.childOfName("line") || null : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function copyShape(shape) {
+            var copy = {};
+            Object.keys(shape || {}).forEach(function (key) {
+                if (typeof shape[key] !== "object" && typeof shape[key] !== "function") {
+                    copy[key] = shape[key];
+                }
+            });
+            return copy;
+        }
+
+        function removeLinkOutline(key) {
+            var outline = linkOutlines[key];
+            if (outline && outline.clone.parent) {
+                outline.clone.parent.remove(outline.clone);
+            }
+            delete linkOutlines[key];
+        }
+
+        // Draws, moves or takes away the outlines of the selected links, after each frame ECharts renders.
+        function syncLinkOutlines() {
+            var wanted = {};
+            if (chart && selected && selected.items) {
+                selected.items.forEach(function (item) {
+                    if (item.dataType === "edge" && item.seriesIndex !== undefined) {
+                        wanted[item.seriesIndex + ":" + item.dataIndex] = item;
+                    }
+                });
+            }
+            Object.keys(linkOutlines).forEach(function (key) {
+                if (!wanted[key] || linkOutlines[key].line !== linkLine(wanted[key])) {
+                    removeLinkOutline(key);
+                }
+            });
+            Object.keys(wanted).forEach(function (key) {
+                var line = linkLine(wanted[key]);
+                if (!line || !line.parent) {
+                    return;
+                }
+                var shape = copyShape(line.shape);
+                var shapeKey = JSON.stringify(shape);
+                var outline = linkOutlines[key];
+                try {
+                    if (!outline) {
+                        var clone = new line.constructor({
+                            shape: shape,
+                            silent: true,
+                            z: line.z,
+                            z2: (line.z2 || 0) - 1,
+                            style: {
+                                stroke: selectionColour(lastStyle || {dark: true}),
+                                fill: null,
+                                lineWidth: ((line.style && line.style.lineWidth) || 1) + 2 * LINK_OUTLINE,
+                                lineCap: "round"
+                            }
+                        });
+                        line.parent.add(clone);
+                        linkOutlines[key] = {line: line, clone: clone, shapeKey: shapeKey};
+                    } else if (outline.shapeKey !== shapeKey) {
+                        outline.clone.setShape(shape);
+                        outline.shapeKey = shapeKey;
+                    }
+                } catch (e) {
+                    // Without an outline the link still shows as selected in the selection bar.
+                }
+            });
+        }
+
         function showItem(item, type) {
             if (chart && item.seriesIndex !== undefined) {
                 var action = {type: type, seriesIndex: item.seriesIndex, dataIndex: item.dataIndex};
@@ -2712,6 +2822,8 @@ if (!window.visualisations) {
             chart.on("click", onItemClick);
             chart.on("brushEnd", onBrushEnd);
             chart.on("brush", onBrush);
+            linkOutlines = {};
+            chart.on("rendered", syncLinkOutlines);
             chart.getZr().on("click", function (event) {
                 // A click on no item clears the selection; a time range is cleared with the range tool or the
                 // selection bar, as dragging one ends with a click.
