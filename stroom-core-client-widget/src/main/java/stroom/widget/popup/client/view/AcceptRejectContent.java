@@ -46,6 +46,9 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
     @UiField
     SimplePanel content;
 
+    /// Makes the bar, with its Accept and Reject buttons, and an empty space for the dialog's
+    /// content. Give it its content with [#setContent(Widget)] and its handler with
+    /// [#setOnHideRequest(Consumer)].
     public AcceptRejectContent() {
         initWidget(BINDER.createAndBindUi(this));
         accept.setOnClick(() -> onDialogAction(DialogAction.OK));

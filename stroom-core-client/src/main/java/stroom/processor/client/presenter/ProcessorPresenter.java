@@ -133,6 +133,7 @@ public class ProcessorPresenter
                 }
             }
         }));
+        own(OpenLinkUtil.addClickHandler(this, getWidget()));
     }
 
     @Override
@@ -333,8 +334,6 @@ public class ProcessorPresenter
     private void setData(final ProcessorListRow row) {
         final SafeHtml safeHtml = processorInfoBuilder.get(row);
         getView().setInfo(safeHtml);
-
-        OpenLinkUtil.addClickHandler(this, getWidget());
 
         ExpressionOperator expression = null;
         if (row instanceof ProcessorFilterRow) {

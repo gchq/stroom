@@ -7,7 +7,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:svg="urn:import:stroom.svg.client">
-    <c:AriaPanel styleName="tab-selector" role="button" ariaHasPopup="menu" ariaExpanded="false"
+    <c:AriaPanel ui:field="button" styleName="tab-selector" role="button" ariaHasPopup="menu" ariaExpanded="false"
                  ariaLabel="Show all tabs">
         <g:SimplePanel styleName="tab-selector__arrows">
             <svg:Icon image="DOUBLE_ARROW"/>

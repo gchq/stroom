@@ -100,9 +100,13 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
     }
 
     @Override
-    public void setVisButtons(final List<VisToolbarButton> buttons, final BiConsumer<String, Boolean> onPress) {
-        toolbarRow.setOnPress(onPress);
+    public void setVisButtons(final List<VisToolbarButton> buttons) {
         toolbarRow.setVisButtons(buttons);
+    }
+
+    @Override
+    public void setOnVisButtonPress(final BiConsumer<String, Boolean> onPress) {
+        toolbarRow.setOnPress(onPress);
     }
 
     public void setVisFrame(final VisFrame visFrame) {

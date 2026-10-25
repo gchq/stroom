@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.client.Icon;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
@@ -61,7 +62,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     private static final String RESIZE_HEIGHT = "dialog--resize-height";
 
     @UiField
-    SimplePanel icon;
+    Icon icon;
     @UiField
     Label titleText;
     @UiField
@@ -148,12 +149,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
     @Override
     public void setIcon(final SvgImage icon) {
-        if (icon != null) {
-            this.icon.getElement().setInnerHTML(icon.getSvg());
-            if (icon.getClassName() != null) {
-                this.icon.getElement().addClassName(icon.getClassName());
-            }
-        }
+        this.icon.setImage(icon);
     }
 
     @Override

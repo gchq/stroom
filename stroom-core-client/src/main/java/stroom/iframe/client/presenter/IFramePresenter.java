@@ -62,23 +62,35 @@ public class IFramePresenter extends MyPresenterWidget<View> {
         return updateTitle && customTitle == null;
     }
 
+    /// @param id The frame's element id.
     public void setId(final String id) {
         frame.setId(id);
     }
 
+    /// Shows the page at a URL, whose address is its label until it has a title.
+    ///
+    /// @param url The page's address.
     public void setUrl(final String url) {
         lastTitle = url;
         frame.setUrl(url);
     }
 
+    /// Shows a page of HTML rather than one at a URL.
+    ///
+    /// @param html The page.
     public void setSrcDoc(final String html) {
         frame.setSrcDoc(html);
     }
 
+    /// @param isEnabled      Whether the page is sandboxed.
+    /// @param sandboxOptions What a sandboxed page may still do.
     public void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions) {
         frame.setSandboxEnabled(isEnabled, sandboxOptions);
     }
 
+    /// Gives the page a label of its own, which the page's title then doesn't change.
+    ///
+    /// @param customTitle The label, e.g. a document's name.
     public void setCustomTitle(final String customTitle) {
         this.customTitle = customTitle;
     }
@@ -91,12 +103,15 @@ public class IFramePresenter extends MyPresenterWidget<View> {
         frame.setAccessibleName(name);
     }
 
+    /// @return The label for the tab showing the page: its own label, else its title, else its
+    ///         address.
     public String getLabel() {
         return customTitle != null
                 ? customTitle
                 : lastTitle;
     }
 
+    /// Stops reading the page's title.
     public void close() {
         updateTitle = false;
     }

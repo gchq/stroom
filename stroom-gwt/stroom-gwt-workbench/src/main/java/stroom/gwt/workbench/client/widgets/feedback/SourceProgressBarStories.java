@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.widgets.feedback;
 
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -34,6 +35,7 @@ public final class SourceProgressBarStories {
 
     private static final String ON_CLICK = "onClick";
     private static final double CLICKABLE_UPPER_BOUND = 500.0;
+    private static final String WINDOW = ".source-progress-bar__window";
 
     private SourceProgressBarStories() {
         // Static utility
@@ -48,14 +50,31 @@ public final class SourceProgressBarStories {
                 .layout(StoryLayout.PADDED)
                 // A simple percentage progress bar at 65% (not clickable, so in the disabled colour)
                 .story("Basic", context -> width400(sourceProgressBar(Progress.simplePercentage(65.0))))
+                .withPlay(play -> play.expect(play.querySelector(WINDOW))
+                        .toHaveClass("source-progress-bar__window--disabled"))
                 // A sliding window: showing 200-350 of a 0-1000 range
                 .story("SlidingWindow", context -> width400(
                         sourceProgressBar(Progress.boundedRange(1000.0, 200.0, 350.0))))
                 // Clickable: click to move the visible window; the clicked % is shown
                 .story("Clickable", SourceProgressBarStories::clickable)
+                .withPlay(play -> {
+                    play.expect(play.querySelector(".source-progress-bar__track"))
+                            .toHaveClass("source-progress-bar__track--clickable");
+                    play.click(play.querySelector(".source-progress-bar__track"));
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalled();
+                    play.expect(play.getByText(TextMatch.startingWith("Clicked at "))).toBeInTheDocument();
+                })
                 // Complete: the full range is visible, shown green
                 .story("Complete", context -> width400(
-                        sourceProgressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0))));
+                        sourceProgressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0))))
+                .withPlay(play -> play.expect(play.querySelector(WINDOW))
+                        .toHaveClass("source-progress-bar__window--complete"))
+                // Unbounded: how much there is isn't known (e.g. a stream still being read), shown
+                // amber, with its window a fixed size
+                .story("Unbounded", context -> width400(
+                        sourceProgressBar(Progress.unboundedRange(200.0, 350.0))))
+                .withPlay(play -> play.expect(play.querySelector(WINDOW))
+                        .toHaveClass("source-progress-bar__window--unbounded"));
     }
 
     private static Widget clickable(final StoryContext context) {

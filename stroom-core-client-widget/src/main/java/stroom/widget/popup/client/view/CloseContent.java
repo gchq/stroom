@@ -40,6 +40,9 @@ public class CloseContent extends Composite implements DialogButtons {
     @UiField
     SimplePanel content;
 
+    /// Makes the bar, with its Close buttons, and an empty space for the dialog's
+    /// content. Give it its content with [#setContent(Widget)] and its handler with
+    /// [#setOnHideRequest(Consumer)].
     public CloseContent() {
         initWidget(BINDER.createAndBindUi(this));
         close.setOnClick(() -> onDialogAction(DialogAction.CLOSE));

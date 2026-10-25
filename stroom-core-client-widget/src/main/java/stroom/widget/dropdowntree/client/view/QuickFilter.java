@@ -165,7 +165,7 @@ public class QuickFilter extends Composite
             popup.setOpener(helpButton.getElement());
             // Forget the popup however it is hidden (e.g. auto-hidden by a click elsewhere, or by
             // Escape), so that the next click on the help button shows it again
-            popup.addCloseHandler(event -> {
+            popup.setOnClose(() -> {
                 if (helpPopup == popup) {
                     helpPopup = null;
                 }

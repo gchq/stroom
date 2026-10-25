@@ -25,6 +25,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.Focus;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface TabBar extends
         HasSelectionHandlers<TabData>,
@@ -61,4 +62,12 @@ public interface TabBar extends
     ///
     /// @param panel The panel, or null for none.
     void setTabPanel(Element panel);
+
+    /// @param onSelect Told the tab the user selects (a click, Enter or Space, or the All Tabs menu),
+    ///                 beside the selection event, or null for nothing.
+    void setOnSelect(Consumer<TabData> onSelect);
+
+    /// @param onClose Told the tab the user asks to close (its cross, or Delete), beside the close
+    ///                request event, or null for nothing.
+    void setOnClose(Consumer<TabData> onClose);
 }

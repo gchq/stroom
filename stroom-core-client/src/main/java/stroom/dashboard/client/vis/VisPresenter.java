@@ -157,7 +157,8 @@ public class VisPresenter
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(visSelectionModel);
-        visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons, visFrame::toolbarButtonPressed));
+        getView().setOnVisButtonPress(visFrame::toolbarButtonPressed);
+        visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons));
         // A value has the same colour in every visualisation of the dashboard
         visFrame.setColoursHandler((field, values) -> getDashboardContext().getVisColourList().colours(
                 field,
@@ -567,7 +568,7 @@ public class VisPresenter
                         if (loadedFunction == null || !loadedFunction.equals(function)) {
                             loadedFunction = function;
                             // The buttons were the previous visualisation's
-                            getView().setVisButtons(Collections.emptyList(), visFrame::toolbarButtonPressed);
+                            getView().setVisButtons(Collections.emptyList());
                             visFrame.setVisType(function.getFunctionName(),
                                     getClassName(currentPreferences.getTheme()));
                             visFrame.coloursChanged(VisPalette.fromDisplayValue(
@@ -829,8 +830,10 @@ public class VisPresenter
         /// Shows the buttons the visualisation asks for in its toolbar, replacing any it showed.
         ///
         /// @param buttons The buttons, none for no visualisation buttons.
-        /// @param onPress Given a button's id when it is pressed, and a toggle's new state (null
-        ///                for a button that isn't a toggle).
-        void setVisButtons(List<VisToolbarButton> buttons, BiConsumer<String, Boolean> onPress);
+        void setVisButtons(List<VisToolbarButton> buttons);
+
+        /// @param onPress Given a toolbar button's id when it is pressed, and a toggle's new state
+        ///                (null for a button that isn't a toggle).
+        void setOnVisButtonPress(BiConsumer<String, Boolean> onPress);
     }
 }

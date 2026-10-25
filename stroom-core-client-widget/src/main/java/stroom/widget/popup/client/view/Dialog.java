@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.svg.client.Icon;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
@@ -53,7 +54,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel icon;
+    Icon icon;
     @UiField
     Label titleText;
     @UiField
@@ -98,12 +99,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
     @Override
     public void setIcon(final SvgImage icon) {
-        if (icon != null) {
-            this.icon.getElement().setInnerHTML(icon.getSvg());
-            if (icon.getClassName() != null) {
-                this.icon.getElement().addClassName(icon.getClassName());
-            }
-        }
+        this.icon.setImage(icon);
     }
 
     @Override

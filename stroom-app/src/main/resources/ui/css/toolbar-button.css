@@ -104,6 +104,12 @@
     border: thin solid var(--focus-border) !important;
 }
 
+/* Out of sight but keeping its place, so the toolbar doesn't shift; visibility also takes it out of
+   the tab order and away from screen readers (e.g. a query's errors button while it has none) */
+.toolbar-button--invisible {
+    visibility: hidden;
+}
+
 /* The icon, above the fill */
 .toolbar-button__icon {
     position: relative;

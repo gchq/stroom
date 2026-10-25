@@ -173,7 +173,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     private void initHtmlPane() {
         if (htmlPane == null) {
             htmlPane = new HtmlPane();
-            htmlPane.addDomHandler(event -> {
+            own(htmlPane.addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");
                 if (link != null) {
@@ -182,7 +182,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                         HyperlinkEvent.fire(TextPresenter.this, hyperlink, getView());
                     }
                 }
-            }, ClickEvent.getType());
+            }, ClickEvent.getType()));
         }
     }
 

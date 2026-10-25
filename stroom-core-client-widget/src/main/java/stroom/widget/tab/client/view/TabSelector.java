@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.widget.component.client.AriaPanel;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,8 +33,11 @@ public class TabSelector extends Composite {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
+    AriaPanel button;
+    @UiField
     Label count;
 
+    /// Makes the button, with no count; its bar hides it until some tabs don't fit.
     public TabSelector() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -42,7 +47,7 @@ public class TabSelector extends Composite {
     /// @param hidden The number of tabs that don't fit.
     public void setHiddenCount(final int hidden) {
         count.setText(String.valueOf(hidden));
-        getElement().setAttribute("aria-label", "Show all tabs (" + hidden + " hidden)");
+        button.setAriaLabel("Show all tabs (" + hidden + " hidden)");
     }
 
 

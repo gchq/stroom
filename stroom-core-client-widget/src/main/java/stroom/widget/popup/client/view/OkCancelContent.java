@@ -45,6 +45,9 @@ public class OkCancelContent extends Composite implements DialogButtons {
     @UiField
     SimplePanel content;
 
+    /// Makes the bar, with its OK and Cancel buttons, and an empty space for the dialog's
+    /// content. Give it its content with [#setContent(Widget)] and its handler with
+    /// [#setOnHideRequest(Consumer)].
     public OkCancelContent() {
         initWidget(BINDER.createAndBindUi(this));
         ok.setOnClick(() -> onDialogAction(DialogAction.OK));

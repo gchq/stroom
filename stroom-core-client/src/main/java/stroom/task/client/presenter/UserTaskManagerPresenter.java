@@ -139,6 +139,7 @@ public class UserTaskManagerPresenter
                             delayedUpdate.update();
                             refreshing.remove(nodeName);
                         })
+                        .owner(this)
                         .taskMonitorFactory(this)
                         .exec();
             }
@@ -209,6 +210,7 @@ public class UserTaskManagerPresenter
                 restFactory
                         .create(TASK_RESOURCE)
                         .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                        .owner(this)
                         .taskMonitorFactory(this)
                         .exec();
             }

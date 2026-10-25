@@ -46,6 +46,7 @@ public class OperatorEditor extends Composite {
     private boolean editing;
     private Runnable onChange;
 
+    /// Makes the editor, with every operator to choose from, hidden until [#startEdit] shows it.
     public OperatorEditor() {
         initWidget(BINDER.createAndBindUi(this));
         listBox.addItems(Op.values());
@@ -53,6 +54,10 @@ public class OperatorEditor extends Composite {
         listBox.addValueChangeHandler(event -> onChange());
     }
 
+    /// Shows the editor for an operator, with its operator chosen; a change of choice changes it in
+    /// place. Does nothing while it is already editing one.
+    ///
+    /// @param operator The operator to edit.
     public void startEdit(final Operator operator) {
         if (!editing) {
             reading = true;
@@ -69,6 +74,7 @@ public class OperatorEditor extends Composite {
         }
     }
 
+    /// Does nothing: a change is written to the operator as it is made.
     public void write() {
         if (editing) {
 //            layout.setVisible(false);
@@ -77,6 +83,7 @@ public class OperatorEditor extends Composite {
         }
     }
 
+    /// Hides the editor, if it is editing.
     public void endEdit() {
         if (editing) {
             layout.setVisible(false);

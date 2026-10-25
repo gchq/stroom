@@ -51,10 +51,12 @@ public class MainToolbar extends Composite {
         initWidget(BINDER.createAndBindUi(this));
     }
 
+    /// @return The spinner shown while the app is busy, for its task monitor.
     public TaskSpinner getSpinner() {
         return spinner;
     }
 
+    /// @return The button that shows and hides Ask Stroom AI, whose state its owner keeps.
     public ToolbarToggleButton getShowAi() {
         return showAi;
     }

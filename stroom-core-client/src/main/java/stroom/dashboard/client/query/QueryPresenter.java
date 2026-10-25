@@ -82,7 +82,6 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -897,11 +896,8 @@ public class QueryPresenter
     }
 
     private void setErrorsVisible(final boolean show) {
-        // Hidden rather than removed, so the toolbar doesn't shift; visibility (not opacity) also
-        // takes it out of the tab order and away from screen readers
-        errorsButton.asWidget().getElement().getStyle().setVisibility(show
-                ? Visibility.VISIBLE
-                : Visibility.HIDDEN);
+        // Out of sight rather than removed, so the toolbar doesn't shift (toolbar-button.css)
+        errorsButton.asWidget().setStyleName("toolbar-button--invisible", !show);
     }
 
     @Override

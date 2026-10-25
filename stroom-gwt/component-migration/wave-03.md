@@ -2,9 +2,28 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
-Move the tab-bar family to setOnSelect/setOnClose/setOnMenu, give the dialog chrome and its button bars templates and no-arg constructors (deleting the four Resizable*Content copies), and convert the presenter/view pairs that hold no logic into components. PagerView and PagerViewWithHeading become components; their callers move later.
+Move the tab-bar family to setOnSelect/setOnClose/setOnMenu, give the dialog chrome and its button bars templates and no-arg constructors (deleting the four Resizable*Content copies), and convert the presenter/view pairs that hold no logic into components. (PagerView and PagerViewWithHeading, first planned here, moved to wave 5.)
 
 **Status: done 24 October 2026; see the wave's section in `../COMPONENT_MIGRATION_ORDER.md` for what was done and what was left.**
+
+## Audited (25 October 2026)
+
+Four reviews of the wave's commits (each step, and the whole wave), each finding checked in the code. What was fixed is listed in the wave's section of `../COMPONENT_MIGRATION_ORDER.md`. Decided, against this plan:
+
+- **`Icon` has no block of its own.** It writes the shared `svg-image` block that `SvgImageUtil` writes, so an icon declared in a template looks as one set in Java does; a block of its own would hold no rules. Where it sits is styled by its parent's element class (e.g. `dialog__icon`).
+- **The `TabSelector` is made in Java**, by `AbstractTabBar`'s constructor, which adopts it (`add(selector, root)`): the bars' templates have elements as their roots (the bar widget takes its root as its element), and such a template can't hold widgets.
+- **`draggable="true"` stays with `DraggableTabBar`**, which also listens for the drag: the bar makes its tabs draggable, not the tab's template.
+- **No `setOnShowMenu` on the tab bars yet**: nothing would call it. It is added with its first caller, when the tab layouts convert (`CurveTabLayoutPresenter`, wave 15; the screens on `LinkTabsLayoutView` as they convert); `setOnSelect` and `setOnClose` are on `TabBar`, so callers can move without a cast.
+
+Left, recorded in `../ISSUES.md` or here:
+
+- A `PopupType.POPUP` given a size still sets an inline width and height on its content (`PopupUtil`): a class wouldn't beat the content's own width rules as the inline size does, so it waits for the popups' contents to convert (menus and lists).
+- `Dialog` and `ResizableDialog` keep `implements TaskMonitorFactory` (not a `setBusy(boolean)`), and `ResizableDialog` takes its size in its constructor (not `setPopupSize`); `Dialog` has no `setAutoHide`. They are made only by `PopupSupportImpl`, so this waits until the popup manager can show a controller again.
+- `PopupSupportImpl` casts a dialog to `TaskMonitorFactory` and passes a button bar as both content and buttons; a typed helper can come with the above.
+- Blocks named for an older class: `HtmlPane` uses `info-page`, `IFrame` `iframe-panel`/`iframe-frame` and `NameDialog` the shared `form`, as planned (reuse over new classes); `OperatorEditor` adds `operator` beside `termEditor-item`, as `TermEditor` does, until `TermEditor` converts (wave 7). `QueryButtons`, `MainToolbar` and `OperatorEditor` still extend `Composite`, not `Component` (harmless).
+- `QueryDataViewImpl` and `SteppingPresenter` borrow the `query-buttons__button` classes for their own run and stop buttons; they move to their own blocks when they convert (both wave 13).
+- `LinkTab`'s sizer is an `AriaPanel` filled with `setInnerText`, until `Label` has an `ariaHidden` setter.
+- The suite's crawl-based oracles (`capability-specs`, `handler-inventory`, `route-recipes`) still name classes the wave deleted (`ProgressPresenter`, `UserTaskPresenter`, `TextBoxPopup`, the `Resizable*Content` classes): they are rebuilt from a crawl of a running app, not from the source, so they wait for the next crawl.
 
 ## Decided before starting (24 October 2026)
 

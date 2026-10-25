@@ -26,6 +26,7 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -79,8 +80,15 @@ public class OpenLinkUtil {
         return sb.toSafeHtml();
     }
 
-    public static void addClickHandler(final HasHandlers handlers, final Widget widget) {
-        widget.addDomHandler(event -> {
+    /// Opens the stream or feed of a link [#render] wrote, when its open icon is clicked anywhere in
+    /// `widget`. Add it once for the widget (e.g. in its owner's constructor), not each time its
+    /// content changes, or one click opens the link as many times as it was added.
+    ///
+    /// @param handlers Where the open events are fired from.
+    /// @param widget   The widget the links are shown in.
+    /// @return The click handler's registration, for its owner to own.
+    public static HandlerRegistration addClickHandler(final HasHandlers handlers, final Widget widget) {
+        return widget.addDomHandler(event -> {
             final Element element = Element.as(event.getNativeEvent().getEventTarget());
             if (ElementUtil.hasClassName(element, LINK_OPEN_CLASS_NAME, 5)) {
                 final Element parent = ElementUtil.findParent(element, LINK_CONTAINER_CLASS_NAME, 5);

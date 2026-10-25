@@ -75,7 +75,7 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
 
     @Override
     public void onSearching(final boolean searching) {
-        queryButtons.onSearching(searching);
+        queryButtons.setSearching(searching);
     }
 
     @Override

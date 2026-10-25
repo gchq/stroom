@@ -19,6 +19,7 @@ package stroom.widget.popup.client.component;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -61,22 +62,30 @@ public class NameDialogController extends Controller {
                 .popupSize(PopupSize.resizableX())
                 .caption(caption)
                 .onShow(e -> view.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final String problem = problemWith(view.getName());
-                        if (problem == null) {
-                            view.setValid();
-                            onOk.accept(view.getName());
-                            e.hide();
-                        } else {
-                            view.setInvalid(problem);
-                            e.reset();
-                        }
-                    } else {
-                        e.hide();
-                    }
-                })
+                .onHideRequest(e -> onHideRequest(e, view.getName(), view::setInvalid, view::setValid, onOk))
                 .fire();
+    }
+
+    // OK with a name gives it to onOk and closes the dialog; OK with none says why under the field
+    // and keeps the dialog open; Cancel closes it
+    static void onHideRequest(final HidePopupRequestEvent event,
+                              final String name,
+                              final Consumer<String> onInvalid,
+                              final Runnable onValid,
+                              final Consumer<String> onOk) {
+        if (event.isOk()) {
+            final String problem = problemWith(name);
+            if (problem == null) {
+                onValid.run();
+                onOk.accept(name);
+                event.hide();
+            } else {
+                onInvalid.accept(problem);
+                event.reset();
+            }
+        } else {
+            event.hide();
+        }
     }
 
     /// @param name A name typed.

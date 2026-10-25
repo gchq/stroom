@@ -69,7 +69,9 @@ import java.util.stream.Collectors;
 /// Its root and tab list come from each bar's template (`CurveTabBar.ui.xml`, `LinkTabBar.ui.xml`).
 /// It places the tabs, separators and overflow selector ([TabSelector]) itself, as their positions
 /// depend on their widths: `--tab-bar__left` on a tab or separator, `--tab-selector__left` on the
-/// selector, and `tab-bar__tab--hidden` and `tab-selector--hidden` for those that don't fit.
+/// selector, and `tab-bar__tab--hidden` and `tab-selector--hidden` for those that don't fit. The
+/// selector is made here, not declared in the templates, as a template whose root is an element
+/// (which the bar's own widget takes as its element) can't hold widgets.
 public abstract class AbstractTabBar extends ComplexPanel implements TabBar, RequiresResize {
 
     private static final String TAB_HIDDEN = "tab-bar__tab--hidden";
@@ -86,7 +88,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     private Element currentTabIndexElement;
     private int overflowTabCount;
     private Object currentTargetObject;
-    private TabSelector tabSelector;
+    private final TabSelector tabSelector;
     private List<Element> separators;
     // The tabs and their separators, as a `tablist`; it covers the bar, so the tabs are placed in it
     // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
@@ -100,6 +102,10 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     protected AbstractTabBar(final Element root, final Element tabList) {
         setElement(root);
         this.tabList = tabList;
+        // After the template's own elements, hidden until some tabs don't fit
+        tabSelector = new TabSelector();
+        tabSelector.addStyleName(SELECTOR_HIDDEN);
+        add(tabSelector, root);
         sinkEvents(Event.ONMOUSEDOWN |
                    Event.ONMOUSEUP |
                    Event.ONKEYDOWN);
@@ -131,7 +137,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
         final AbstractTab tab = createTab(tabData);
         initTabElement(tab.getElement());
-        setTabHidden(tab.getElement(), true);
+        setOverflowed(tab.getElement(), true);
         insert(tab, tabList, insertIndex, true);
         tabWidgetMap.put(tabData, tab);
         tabs.add(insertIndex, tabData);
@@ -153,7 +159,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             // A tab closed from the keyboard has the focus, which mustn't be lost with it
             final boolean hadFocus = hasFocus(tab.getElement());
 
-            setTabHidden(tab.getElement(), true);
+            setOverflowed(tab.getElement(), true);
             remove(tab);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
@@ -212,10 +218,11 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     @Override
     public void clear() {
-        tabList.removeAllChildren();
-        if (separators != null) {
-            separators.clear();
+        // The tabs are the bar's widgets (the selector stays)
+        for (final AbstractTab tab : new ArrayList<>(tabWidgetMap.values())) {
+            remove(tab);
         }
+        removeSeparators();
         tabWidgetMap.clear();
         tabs.clear();
         recentTabs.clear();
@@ -367,7 +374,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
                 visible = true;
                 CssProperties.set(tab.getElement(), TAB_LEFT, x + "px");
-                setTabHidden(tab.getElement(), false);
+                setOverflowed(tab.getElement(), false);
                 visibleTabs.add(tabData);
                 x += tab.getOffsetWidth() + tabGap;
 
@@ -377,7 +384,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             }
 
             if (!visible) {
-                setTabHidden(tab.getElement(), true);
+                setOverflowed(tab.getElement(), true);
             }
 
             if (visible && tabData.equals(keyboardSelectedTab)) {
@@ -655,8 +662,8 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
         }
     }
 
-    // A tab that doesn't fit is out of sight (tab-bar.css)
-    private static void setTabHidden(final Element tab, final boolean hidden) {
+    // A tab that doesn't fit (or isn't placed yet) is out of sight (tab-bar.css)
+    private static void setOverflowed(final Element tab, final boolean hidden) {
         if (hidden) {
             tab.addClassName(TAB_HIDDEN);
         } else {
@@ -963,14 +970,12 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
         }
     }
 
-    /// @param onSelect Told the tab the user selects (a click, Enter or Space, or the All Tabs menu),
-    ///                 beside the selection event, or null for nothing.
+    @Override
     public void setOnSelect(final Consumer<TabData> onSelect) {
         this.onSelect = onSelect;
     }
 
-    /// @param onClose Told the tab the user asks to close (its cross, or Delete), beside the close
-    ///                request event, or null for nothing.
+    @Override
     public void setOnClose(final Consumer<TabData> onClose) {
         this.onClose = onClose;
     }
@@ -1031,13 +1036,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
         return visibleTabs;
     }
 
-    // Made when first needed, after the template's own elements, hidden until some tabs don't fit
     private TabSelector getTabSelector() {
-        if (tabSelector == null) {
-            tabSelector = new TabSelector();
-            tabSelector.addStyleName(SELECTOR_HIDDEN);
-            getElement().appendChild(tabSelector.getElement());
-        }
         return tabSelector;
     }
 

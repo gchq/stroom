@@ -279,7 +279,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 tooltipPresenter.show(safeHtml, popupPosition, anchor);
             }
         };
-        OpenLinkUtil.addClickHandler(this, tooltipPresenter.getWidget());
+        own(OpenLinkUtil.addClickHandler(this, tooltipPresenter.getWidget()));
 
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }

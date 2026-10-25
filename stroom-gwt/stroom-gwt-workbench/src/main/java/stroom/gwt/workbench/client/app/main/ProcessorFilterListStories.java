@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -23,6 +24,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -32,6 +34,8 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// Stories of `App/Main/ProcessorFilterList`, showing Stroom's real [ProcessorPresenter] (a
 /// pipeline's 'Processors' tab: the processor and filter tree, as `PipelinePresenter` shows it)
@@ -99,6 +103,14 @@ public final class ProcessorFilterListStories {
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
             }""";
 
+    // The tree, its filter's tracker naming the first stream it read (a link in the filter's details)
+    private static final String LINKED_TREE_ROWS = TREE_ROWS.replace(
+            "\"lastPollTaskCount\": 0}",
+            "\"lastPollTaskCount\": 0, \"minMetaId\": 42}");
+
+    // Told each time a stream is asked to be opened
+    private static final String SHOW_DATA_SPY = "showData";
+
     private ProcessorFilterListStories() {
         // Static utility
     }
@@ -158,6 +170,24 @@ public final class ProcessorFilterListStories {
                     // than as the attribute's text
                     play.expect(play.querySelectorAll(".expander-cell").nth(1)).toHaveStyle("paddingLeft", "20px");
                     expectNoProblems(play);
+                })
+                // Regression: each row selected added another handler for the details' links, so one
+                // click on a link opened its stream once for every selection made
+                .story("DetailsLinkOpensOnce", context -> {
+                    final Spy showData = context.fn(SHOW_DATA_SPY);
+                    return render(context, LINKED_TREE_ROWS, harness -> harness.getEventBus()
+                            .addHandler(ShowDataEvent.getType(), event -> showData.call()));
+                })
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW).count()).toBe(2));
+                    // The filter, the processor, then the filter again
+                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(1));
+                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(0));
+                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(1));
+                    play.waitFor(() -> play.expect(play.querySelector(".docRefLinkOpen")).not().toBeNull());
+                    play.click(play.querySelector(".docRefLinkOpen"));
+                    play.expect(play.spy(SHOW_DATA_SPY)).toHaveBeenCalledTimes(1);
+                    expectNoProblems(play);
                 });
     }
 
@@ -174,6 +204,13 @@ public final class ProcessorFilterListStories {
     }
 
     private static Widget render(final StoryContext context, final String rows) {
+        return render(context, rows, harness -> {
+        });
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final String rows,
+                                 final Consumer<ScreenHarness> beforeShow) {
         final RestFixtures fixtures = RestFixtures.builder()
                 .post(FIND_PATH, RestReply.json(rows))
                 .build();
@@ -183,6 +220,7 @@ public final class ProcessorFilterListStories {
                 .build();
         final DocRef pipelineRef = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("Events Pipeline").build();
         final PipelineDoc pipelineDoc = PipelineDoc.builder().uuid("p1").name("Events Pipeline").build();
+        beforeShow.accept(harness);
         harness.afterStartUp(() -> {
             final ProcessorPresenter presenter = injector.getProcessorPresenter();
             // As PipelinePresenter's 'Processors' tab reads it

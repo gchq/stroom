@@ -35,6 +35,8 @@ public class Icon extends Widget {
 
     private SvgImage image;
 
+    /// Makes an icon showing nothing, until [#setImage(SvgImage)] gives it its picture (in a
+    /// template, its `image` attribute).
     public Icon() {
         final Element element = Document.get().createDivElement();
         element.setAttribute("aria-hidden", "true");

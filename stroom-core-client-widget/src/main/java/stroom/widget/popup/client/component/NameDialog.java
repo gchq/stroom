@@ -18,12 +18,12 @@ package stroom.widget.popup.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of a dialog asking for a name (e.g. a tab session's): the name, which is required,
@@ -33,10 +33,11 @@ public class NameDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox textBox;
+    TextInput textBox;
     @UiField
     Label feedback;
 
+    /// Makes the content with no name, valid.
     public NameDialog() {
         initWidget(BINDER.createAndBindUi(this));
     }

@@ -684,7 +684,8 @@ of them must go:
    `AnnotationPresenter:98`, `SteppingPresenter:533`.
 4. **Timers and global objects:** each Documentation tab's `IFrameViewImpl` (line 71) starts a
    one-second poll that only `IFramePresenter.close()` stops, which `MarkdownEditPresenter` never
-   calls (measured: 2 per Documentation editor, forever); dashboard visualisation iframes are added
+   calls (measured: 2 per Documentation editor, forever; fixed since: the poll is
+   `IFramePresenter`'s, which stops it when disposed, wave 3); dashboard visualisation iframes are added
    to `RootPanel` (`VisPresenter:155`) and removed only by `onRemove()`, which closing a dashboard
    doesn't call; `QueryResultVisPresenter.onRemove()` (line 182) calls `onUnbind()` rather than
    `unbind()`, so each query run that draws a vis keeps the last one.
@@ -821,7 +822,8 @@ last closed dialog for a moment only.
 * `stroom-core-client-widget/src/main/java/stroom/editor/client/presenter/AbstractEditorPresenter.java`
   (line 58)
 * `stroom-core-client/src/main/java/stroom/document/client/DocumentPlugin.java` (`actuallyClose`)
-* `stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)
+* ~~`stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)~~
+  Fixed in wave 3: the view went, and `IFramePresenter` stops its title poll in `onDispose`
 
 ### The leak check fails 50 stories
 
@@ -1304,9 +1306,9 @@ Still to do:
 
 Left as they are, on purpose:
 
-* GWT's `Button` for the task's Terminate (`UserTaskViewImpl`), the navigation logo
-  (`NavigationViewImpl`) and the floor map layer grip (`FloorMapLayersPresenter`): real buttons
-  already, so only their styling differs.
+* GWT's `Button` for the navigation logo (`NavigationViewImpl`) and the floor map layer grip
+  (`FloorMapLayersPresenter`): real buttons already, so only their styling differs. (The task's
+  Terminate, `UserTaskViewImpl`'s, is a `ToolbarButton` in a `Toolbar` since wave 3's `UserTask`.)
 * GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`) and `Anchor` in the content pack
   details (`ContentStoreContentPackDetailsPresenter`): real links already.
 * "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
@@ -1488,10 +1490,31 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   cells aren't highlighted with it, as the grid's rows are no longer elements; the XSD browser's
   wave (8) can mark the row's cells if that is wanted.
 * Unused CSS met in wave 3 (24 October 2026): `acceptRejectContent-button`, `-accept` and `-reject`
-  (`components.css`). Only the fixed-size Accept/Reject bar had the classes, and no screen opens
-  one (the splash screen's is resizable, as is the story's); its resizable copy, which went,
-  didn't. The one `AcceptRejectContent` now looks as the resizable one did. Delete the rules once
-  removals are allowed.
+  (`components.css`; no rules use them), and `resizableAcceptRejectContent-button`, `-accept` and
+  `-reject` (`components.css`, the green Accept and red Reject). Only the fixed-size Accept/Reject
+  bar had the first, and no screen opens one; the resizable copy, which the splash screen uses,
+  had the second. ~~Merging the two bars dropped the splash screen's green Accept (found 25
+  October 2026 in wave 3's audit)~~ Fixed: Accept is `button--contained-green` and Reject stays
+  `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. Delete
+  both rule sets once removals are allowed.
+* ~~A link in a stream's Info tab (`DataPresenter`) or a pipeline processor's details
+  (`ProcessorPresenter`) opened its stream once for every time the info had been loaded or a
+  row selected (found 25 October 2026 in wave 3's audit; older): `OpenLinkUtil.addClickHandler`
+  was called each time, adding another handler.~~ Fixed: it returns its registration, which the
+  presenter owns, added once in its constructor; story `App/Main/ProcessorFilterList`
+  `DetailsLinkOpensOnce`.
+* ~~Menus, lists and help popups stayed open on the browser's Back and Forward (found 25 October
+  2026 in wave 3's audit; from wave 3): `SimplePopup` and `HelpPopup` call
+  `setAutoHideEnabled(true)`, which, unlike GWT's `PopupPanel(true, …)` constructor they used,
+  doesn't also close them on a history change.~~ Fixed: both also call
+  `setAutoHideOnHistoryEventsEnabled(true)`. No story: the workbench's own navigation is the
+  history, so a story can't change it.
+* A `PopupType.POPUP` given a size (`PopupUtil`) still sets an inline width and height on its
+  content (found 25 October 2026 in wave 3's audit): a class wouldn't beat the content's own width
+  rules as the inline size does. Fix it as the popups' contents convert (menus, lists).
+* `CharacterNavigatorPresenter` is given a `SourceProgressBar` it never shows (found 25 October
+  2026 in wave 3's audit): it is only ever hidden, and the code that would show it is commented
+  out. Delete the field and the commented-out code once removals are allowed.
 * A dialog's New button (`CreateOkCancelContent`) shows its busy spinner on Cancel, not on itself,
   while the screen handles it (found 24 October 2026 in wave 3; as it was in
   `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.

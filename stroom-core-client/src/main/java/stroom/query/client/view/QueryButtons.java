@@ -16,7 +16,6 @@
 
 package stroom.query.client.view;
 
-import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -31,9 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// A query's run button: Execute Query (Ctrl+Enter), which becomes Stop Query (Escape) while the
 /// query runs. The BEM block `query-buttons` (`query-buttons.css`), its markup `QueryButtons.ui.xml`.
-public class QueryButtons
-        extends Composite
-        implements SearchStateListener {
+public class QueryButtons extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String PLAY = "query-buttons__button--play";
@@ -44,6 +41,7 @@ public class QueryButtons
 
     private Runnable onStart;
 
+    /// Makes the button, to run the query.
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -55,15 +53,10 @@ public class QueryButtons
     }
 
     @UiHandler("start")
-    public void onStartClick(final ClickEvent event) {
+    void onStartClick(final ClickEvent event) {
         if (onStart != null) {
             onStart.run();
         }
-    }
-
-    @Override
-    public void onSearching(final boolean searching) {
-        setSearching(searching);
     }
 
     /// Shows whether the query is running: the button stops it while it does.
@@ -84,6 +77,7 @@ public class QueryButtons
         }
     }
 
+    /// @param enabled Whether the button can be pressed (e.g. not while the query has no data source).
     public void setEnabled(final boolean enabled) {
         start.setEnabled(enabled);
     }

@@ -33,11 +33,12 @@ public class SimplePopup extends AbstractPopupPanel {
     private static final String ROLE = "role";
     private static final String ARIA_LABEL = "aria-label";
 
-    /// Creates a popup that closes itself when the user clicks outside it. It should not be shown
-    /// until its content has been set with [#setContent(Widget)]; [#setOnAction] tells its owner
-    /// when it is asked to close.
+    /// Creates a popup that closes itself when the user clicks outside it or the browser's history
+    /// changes (e.g. Back). It should not be shown until its content has been set with
+    /// [#setContent(Widget)]; [#setOnAction] tells its owner when it is asked to close.
     public SimplePopup() {
         setAutoHideEnabled(true);
+        setAutoHideOnHistoryEventsEnabled(true);
         // Floating: hidden until PopupUtil has placed it
         setStyleName("popup popup--floating");
     }

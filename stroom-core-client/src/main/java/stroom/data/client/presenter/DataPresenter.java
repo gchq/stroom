@@ -62,7 +62,6 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -188,14 +187,7 @@ public class DataPresenter
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
 
-        markerListPresenter.getWidget()
-                .getElement()
-                .getStyle()
-                .setWidth(100, Unit.PCT);
-        markerListPresenter.getWidget()
-                .getElement()
-                .getStyle()
-                .setHeight(100, Unit.PCT);
+        markerListPresenter.getWidget().addStyleName("max");
         markerListPresenter.setDataPresenter(this);
 
         textPresenter.setUiHandlers(this);
@@ -224,6 +216,7 @@ public class DataPresenter
         own(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
         own(htmlPane.addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
+        own(OpenLinkUtil.addClickHandler(this, htmlPane));
     }
 
     @Override
@@ -1196,8 +1189,6 @@ public class DataPresenter
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
         htmlPane.setHtml(htmlBuilder.toSafeHtml().asString());
-
-        OpenLinkUtil.addClickHandler(this, htmlPane);
     }
 
     private SafeHtml toHtmlLineBreaks(final String key, final String value) {

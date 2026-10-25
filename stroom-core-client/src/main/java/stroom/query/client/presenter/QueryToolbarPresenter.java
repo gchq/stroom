@@ -135,7 +135,7 @@ public class QueryToolbarPresenter
 
     @Override
     public void onSearching(final boolean searching) {
-        getView().getQueryButtons().onSearching(searching);
+        getView().getQueryButtons().setSearching(searching);
     }
 
     public void setEnabled(final boolean enabled) {

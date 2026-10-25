@@ -14,7 +14,7 @@
         <g:SimplePanel styleName="dialog__frame"/>
         <g:FlowPanel styleName="dialog__layout">
             <g:FlowPanel ui:field="titleBar" styleName="dialog__title-bar">
-                <g:SimplePanel ui:field="icon" styleName="dialog__icon"/>
+                <svg:Icon ui:field="icon" addStyleNames="dialog__icon"/>
                 <g:Label ui:field="titleText" styleName="dialog__title">Caption</g:Label>
                 <g:SimplePanel styleName="dialog__spinner">
                     <spinner:SpinnerLarge ui:field="spinner" visible="false"/>

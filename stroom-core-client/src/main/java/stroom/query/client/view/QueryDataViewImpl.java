@@ -42,13 +42,13 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
     public QueryDataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         toolbar.button(SvgImage.UNDO, "Reset to Default", this::onUndo)
-                .addStyleName("query-buttons__button query-buttons__button--undo");
+                .addStyleName("query-buttons__button");
         toolbar.button(SvgImage.PLAY, "Run", this::onRun)
                 .addStyleName("query-buttons__button query-buttons__button--play");
         toolbar.button(SvgImage.STOP, "Stop", this::onStop)
                 .addStyleName("query-buttons__button query-buttons__button--stop");
         toolbar.button(SvgImage.DOCUMENT_DASHBOARD, "Create Dashboard", this::onCreateDashboard)
-                .addStyleName("query-buttons__button query-buttons__button--create-dashboard");
+                .addStyleName("query-buttons__button");
     }
 
     @Override

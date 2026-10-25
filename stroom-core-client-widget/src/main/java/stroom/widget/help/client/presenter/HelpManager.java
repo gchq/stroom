@@ -48,7 +48,7 @@ public class HelpManager {
         popup.setMarkdown(true);
         popup.setAccessibleName("Help");
         popup.setOpener(element);
-        popup.addCloseHandler(event -> {
+        popup.setOnClose(() -> {
             if (currentPopup == popup) {
                 currentPopup = null;
                 currentElement = null;

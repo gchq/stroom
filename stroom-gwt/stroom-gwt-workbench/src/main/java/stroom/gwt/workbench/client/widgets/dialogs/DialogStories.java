@@ -80,7 +80,7 @@ public final class DialogStories {
                             PopupType.OK_CANCEL_DIALOG, "Edit Settings")
                             .size(600, 400)
                             .text("A resizable dialog with OK and Cancel buttons.",
-                                    "Mirrors GWT ResizableOkCancelContent.")))
+                                    "Mirrors GWT OkCancelContent.")))
                 // Resizable both ways: a handle on each side and corner
                 .withPlay(play -> {
                     play.click(play.getByRole("button", StroomDom.button("Open resizable OK/Cancel dialog")));
@@ -118,6 +118,16 @@ public final class DialogStories {
                             .size(550, 350)
                             .text("Review the following changes before accepting or rejecting.",
                                     "Accept = green (GWT pattern), Reject = secondary.")))
+                // Regression: merging the button bars lost the splash screen's green Accept
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open Accept/Reject dialog")));
+                    final Query dialog = play.screen().findByRole("dialog", "Review Changes");
+                    play.expect(play.within(dialog).getByRole("button", StroomDom.button("Accept")))
+                            .toHaveClass("button--contained-green");
+                    play.expect(play.within(dialog).getByRole("button", StroomDom.button("Reject")))
+                            .toHaveClass("button--contained-secondary");
+                    play.keyboard("{Escape}");
+                })
                 // Resizable Dialog — Save / Cancel
                 .story("SaveCancel", "Resizable Dialog — Save / Cancel",
                         context -> trigger(context, "Open Save/Cancel dialog", dialog(

@@ -100,54 +100,31 @@ public class IFrame extends Component {
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * The possible values for the sandbox iframe attribute. Multiple options may be used.
-     */
-    /// What a sandboxed page may still do.
+    /// What a sandboxed page may still do: the values of the iframe's `sandbox` attribute, of which
+    /// several may be used.
     public enum SandboxOption {
-        /**
-         * Allows form submission
-         */
+        /// Allows form submission
         ALLOW_FORMS("allow-forms"),
-        /**
-         * Allows to open modal windows
-         */
+        /// Allows to open modal windows
         ALLOW_MODALS("allow-modals"),
-        /**
-         * Allows to lock the screen orientation
-         */
+        /// Allows to lock the screen orientation
         ALLOW_ORIENTATION_LOCK("allow-orientation-lock"),
-        /**
-         * Allows to use the Pointer Lock API
-         */
+        /// Allows to use the Pointer Lock API
         ALLOW_POINTER_LOCK("allow-pointer-lock"),
-        /**
-         * Allows popups
-         */
+        /// Allows popups
         ALLOW_POPUPS("allow-popups"),
-        /**
-         * Allows popups to open new windows without inheriting the sandboxing
-         */
+        /// Allows popups to open new windows without inheriting the sandboxing
         ALLOW_POPUPS_TO_ESCAPE_SANDBOX("allow-popups-to-escape-sandbox"),
-        /**
-         * Allows to start a presentation session
-         */
+        /// Allows to start a presentation session
         ALLOW_PRESENTATION("allow-presentation"),
-        /**
-         * Allows the iframe content to be treated as being from the same origin
-         */
+        /// Allows the iframe content to be treated as being from the same origin
         ALLOW_SAME_ORIGIN("allow-same-origin"),
-        /**
-         * Allows to run scripts
-         */
+        /// Allows to run scripts
         ALLOW_SCRIPTS("allow-scripts"),
-        /**
-         * Allows the iframe content to navigate its top-level browsing context
-         */
+        /// Allows the iframe content to navigate its top-level browsing context
         ALLOW_TOP_NAVIGATION("allow-top-navigation"),
-        /**
-         * Allows the iframe content to navigate its top-level browsing context, but only if initiated by user
-         */
+        /// Allows the iframe content to navigate its top-level browsing context, but only if initiated by
+        /// the user
         ALLOW_TOP_NAVIGATION_BY_USER_ACTIVATION("allow-top-navigation-by-user-activation");
 
         private final String option;
@@ -156,6 +133,7 @@ public class IFrame extends Component {
             this.option = option;
         }
 
+        /// @return The option as the `sandbox` attribute writes it, e.g. `allow-forms`.
         public String getOption() {
             return option;
         }

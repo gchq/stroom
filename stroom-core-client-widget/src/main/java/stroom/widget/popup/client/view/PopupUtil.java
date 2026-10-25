@@ -203,7 +203,7 @@ public class PopupUtil {
             // Make the popup visible.
             popupPanel.setVisible(true);
             // A floating popup is unseen until it is placed (popup.css)
-            if (popupPanel.getStyleName().contains("popup--floating")) {
+            if (popupPanel.getElement().hasClassName("popup--floating")) {
                 popupPanel.addStyleName("popup--placed");
             }
 
