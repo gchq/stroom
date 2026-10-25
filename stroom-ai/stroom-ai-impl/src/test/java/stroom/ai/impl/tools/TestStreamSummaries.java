@@ -168,6 +168,9 @@ class TestStreamSummaries {
                 .containsEntry("EventDetail/TypeId", 100.0)
                 .containsEntry("EventDetail/Authenticate/User/Id", 50.0)
                 .containsEntry("Data[@Name='host']/@Value", 50.0);
+        // And which TypeIds each action element's events have.
+        assertThat((Map<String, Map<String, Double>>) profile.get(StreamSummaries.TYPE_IDS_BY_ACTION))
+                .isEqualTo(Map.of("Authenticate", Map.of("logon", 100.0)));
     }
 
     @Test
