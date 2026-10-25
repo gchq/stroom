@@ -26,6 +26,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
+import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.component.FloorMapSetScaleController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
@@ -157,7 +158,7 @@ public class FloorMapEditorPresenter
 
     /// The dialog that turns a measured line into the map's scale.
     private final Provider<FloorMapSetScaleController> setScaleProvider;
-    private final FloorMapLayersPresenter floorMapLayersPresenter;
+    private final FloorMapLayers layersPanel;
     private final FloorMapLayerStyleController layerStyle;
 
     /// Cumulative set of types observed this document session — fact types from
@@ -221,7 +222,7 @@ public class FloorMapEditorPresenter
                                    final Provider<FloorMapTimeListPresenter> timeListProvider,
                                    final Provider<FloorMapObjectEditPresenter> propertiesProvider,
                                    final Provider<FloorMapDockController> dockProvider,
-                                   final Provider<FloorMapLayersPresenter> layersProvider,
+                                   final FloorMapLayers layersPanel,
                                    final Provider<FloorMapLayerStyleController> layerStyleProvider,
                                    final Provider<FloorMapSetScaleController> setScaleProvider) {
         super(eventBus, view);
@@ -243,8 +244,8 @@ public class FloorMapEditorPresenter
                 floorMapCanvasPresenter::getImageAspectRatio);
         final FloorMapDockController dock = make(dockProvider);
         this.setScaleProvider = setScaleProvider;
-        this.floorMapLayersPresenter = make(layersProvider);
-        this.floorMapLayersPresenter.setEditorMode(true);
+        this.layersPanel = layersPanel;
+        layersPanel.setEditorMode(true);
         this.layerStyle = make(layerStyleProvider);
 
         // Always in edit mode, with the grid overlay shown as an editing aid.
@@ -280,20 +281,20 @@ public class FloorMapEditorPresenter
         floorMapTimelinePresenter.setHelpContent(FloorMapEditorHelp.timeline());
 
         // The Layers panel is the Editor dock's tab.
-        dock.addTab("Layers", floorMapLayersPresenter);
-        floorMapLayersPresenter.setChangeHandler(() -> {
+        dock.addTab("Layers", layersPanel);
+        layersPanel.setOnChange(() -> {
             floorMapCanvasPresenter.setLayerVisibility(
-                    floorMapLayersPresenter.getHiddenTypes(),
-                    floorMapLayersPresenter.getDimmedTypes());
-            floorMapCanvasPresenter.setLockedTypes(floorMapLayersPresenter.getLockedTypes());
+                    layersPanel.getHiddenTypes(),
+                    layersPanel.getDimmedTypes());
+            floorMapCanvasPresenter.setLockedTypes(layersPanel.getLockedTypes());
         });
         // Persist reorder / appearance / discovered-type edits from the panel.
-        floorMapLayersPresenter.setTypeStylesEditHandler(this::onLayerTypeStylesEdited);
+        layersPanel.setOnTypeStylesEdit(this::onLayerTypeStylesEdited);
         // Open the appearance dialog (shape or image, plus colour) for a layer,
         // then hand the edited style back to the panel.
-        floorMapLayersPresenter.setStyleEditor(layerStyle::show);
+        layersPanel.setOnEditStyle(layerStyle::show);
         // Full facts-store type-discovery scan behind the panel's Discover action.
-        floorMapLayersPresenter.setDiscoverHandler(this::onDiscoverTypes);
+        layersPanel.setOnDiscover(this::onDiscoverTypes);
 
         getView().setCanvasView(floorMapCanvasPresenter.getView());
         getView().setDockView(dock);
@@ -388,12 +389,12 @@ public class FloorMapEditorPresenter
         // Populate the Layers panel from the document's type styles. Reset the
         // observed-type accumulator for the (re-)opened document.
         observedTypes.clear();
-        floorMapLayersPresenter.setSeenTypes(observedTypes);
-        floorMapLayersPresenter.setLayers(typeStyles());
+        layersPanel.setSeenTypes(observedTypes);
+        layersPanel.setLayers(typeStyles());
         floorMapCanvasPresenter.setLayerVisibility(
-                floorMapLayersPresenter.getHiddenTypes(),
-                floorMapLayersPresenter.getDimmedTypes());
-        floorMapCanvasPresenter.setLockedTypes(floorMapLayersPresenter.getLockedTypes());
+                layersPanel.getHiddenTypes(),
+                layersPanel.getDimmedTypes());
+        floorMapCanvasPresenter.setLockedTypes(layersPanel.getLockedTypes());
 
         // Measurement units as this session sees them: a Set Scale calibration
         // is staged in the doc session until save, so read it from there rather
@@ -515,7 +516,7 @@ public class FloorMapEditorPresenter
                 : null;
         if (store == null || store.getName() == null || store.getName().isEmpty()) {
             // No facts store to scan — still commit anything already observed.
-            floorMapLayersPresenter.mergeDiscovered(discovered);
+            layersPanel.mergeDiscovered(discovered);
             return;
         }
         final ExpressionOperator expression = ExpressionOperator.builder()
@@ -550,7 +551,7 @@ public class FloorMapEditorPresenter
                     if (hasMorePages(result)) {
                         discoverTypesFromPage(expression, schema, discovered, offset + entries.size());
                     } else {
-                        floorMapLayersPresenter.mergeDiscovered(discovered);
+                        layersPanel.mergeDiscovered(discovered);
                     }
                 })
                 .exec();
@@ -752,7 +753,7 @@ public class FloorMapEditorPresenter
             }
         }
         if (added) {
-            floorMapLayersPresenter.setSeenTypes(observedTypes);
+            layersPanel.setSeenTypes(observedTypes);
         }
     }
 
@@ -942,7 +943,7 @@ public class FloorMapEditorPresenter
             }
         }
         if (added) {
-            floorMapLayersPresenter.setSeenTypes(observedTypes);
+            layersPanel.setSeenTypes(observedTypes);
         }
         // Restore the full (multi-)selection highlight after re-rendering, so a
         // group stays selected across canvas refreshes (e.g. after a transform).

@@ -24,6 +24,7 @@ import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -35,7 +36,7 @@ import java.util.Map;
 /// same chrome as the document tab bar) and shows the active tab's content in a
 /// [LayerContainer].
 ///
-/// Panels are registered with [#addTab(String, Controller)]; the
+/// Panels are registered with [#addTab(String, IsWidget)]; the
 /// first tab added becomes the active tab. This single call is the integration
 /// point for further panels — nothing else in the dock needs to
 /// change to host a new tab.
@@ -69,9 +70,9 @@ public class FloorMapDockController extends Controller {
     /// Adds a tab showing the given content; its owner keeps owning it.
     ///
     /// @param label   the tab label
-    /// @param content the panel shown when the tab is active, e.g. a presenter
+    /// @param content the panel shown when the tab is active, e.g. a presenter or component
     /// @return the [TabData] handle for the new tab
-    public TabData addTab(final String label, final Controller content) {
+    public TabData addTab(final String label, final IsWidget content) {
         final TabData tab = new TabDataImpl(label);
         addTab(tab, content);
         return tab;
@@ -81,8 +82,8 @@ public class FloorMapDockController extends Controller {
     /// tab's presentation (icon/tooltip/closeable) via the supplied [TabData].
     ///
     /// @param tab     the tab descriptor
-    /// @param content the panel shown when the tab is active, e.g. a presenter
-    public void addTab(final TabData tab, final Controller content) {
+    /// @param content the panel shown when the tab is active, e.g. a presenter or component
+    public void addTab(final TabData tab, final IsWidget content) {
         tabContent.put(tab, content instanceof final Layer layer
                 ? layer
                 : new ControllerLayer(content));

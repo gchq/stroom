@@ -30,6 +30,7 @@ import stroom.gwt.workbench.client.app.security.SecurityPlays;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -196,6 +197,27 @@ public final class FloorMapEditorStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText(APPEARANCE)).toBeNull());
                     play.expect(play.getByRole("button", DESK_SWATCH)).toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
+                })
+                // A layer's eye dims it, then hides it, and its name fades with it; its lock
+                // locks it. Each state is a class, named in the button's title
+                .story("LayerVisibilityAndLock", context -> render(context, fixtures(DOC_WITH_LAYER)))
+                .withPlay(play -> {
+                    final Query eye = play.findByRole("button", "desk layer is visible — click to dim to 30%");
+                    final Query name = play.getByText("desk", ".floormap-layer-name");
+                    play.click(eye);
+                    play.expect(play.getByRole("button", "desk layer is dimmed to 30% — click to hide"))
+                            .toHaveClass("floormap-layer-eye--dim");
+                    play.expect(name).toHaveClass("floormap-layer-name--dim");
+                    play.click(play.getByRole("button", "desk layer is dimmed to 30% — click to hide"));
+                    final Query hidden = play.getByRole("button", "desk layer is hidden — click to show");
+                    play.expect(hidden).toHaveClass("floormap-layer-eye--off");
+                    play.expect(hidden).not().toHaveClass("floormap-layer-eye--dim");
+                    play.expect(name).toHaveClass("floormap-layer-name--off");
+
+                    play.click(play.getByRole("button", TextMatch.startingWith("desk layer is unlocked")));
+                    play.expect(play.getByRole("button", TextMatch.startingWith("desk layer is locked")))
+                            .toHaveClass("floormap-layer-lock--locked");
                     DocEditors.expectNoProblems(play);
                 });
     }

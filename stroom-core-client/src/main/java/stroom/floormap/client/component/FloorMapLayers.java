@@ -14,33 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapSwatchHtml;
-import stroom.floormap.client.presenter.FloorMapLayersPresenter.FloorMapLayersView;
 import stroom.floormap.shared.TypeStyle;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DataTransfer.DropEffect;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DragEndEvent;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,8 +60,8 @@ import java.util.function.Consumer;
 /// Layers map to record types; the ordered list comes from the document's
 /// [TypeStyle] entries (via [#setLayers(List)]). Per-layer visibility
 /// is a *transient* client-side overlay (not persisted): each layer cycles
-/// *full → 30% opacity → off*. Changes are pushed to the canvas through the
-/// [change handler][#setChangeHandler(Runnable)]; the host presenter reads
+/// *full → 30% opacity → off*. Changes are pushed to the canvas through
+/// [#setOnChange(Runnable)]; the owner reads
 /// [#getHiddenTypes()] / [#getDimmedTypes()] and forwards them to
 /// `FloorMapCanvasPresenter.setLayerVisibility(...)`.
 ///
@@ -72,31 +71,58 @@ import java.util.function.Consumer;
 /// lock that stops its items being moved on the canvas, and an appearance dialog
 /// per layer. The lock is transient client-side state; the order and appearance
 /// are document edits.
-public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersView> {
+///
+/// It makes no REST calls and uses no bus, so it is a component its owners (the Map and Editor
+/// tabs) make and give their callbacks.
+public class FloorMapLayers extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// Visibility state per type: 0 = hidden, 1 = 30% opacity, 2 = full.
     private static final int OFF = 0;
     private static final int DIM = 1;
     private static final int FULL = 2;
 
+    /// Size of each row's graphic preview in pixels.
+    private static final int SWATCH_SIZE_PX = 16;
+
+    private static final String ROW_DRAGGING = "floormap-layer-row--dragging";
+    private static final String ROW_DROP_ABOVE = "floormap-layer-row--drop-above";
+    private static final String ROW_DROP_BELOW = "floormap-layer-row--drop-below";
+
+    @UiField
+    FlowPanel list;
+    @UiField
+    Label editorEmpty;
+    @UiField
+    Label mapEmpty;
+    @UiField
+    FlowPanel discoverFooter;
+    @UiField
+    ToolbarButton discover;
+    @UiField
+    Label discoverLabel;
+    @UiField
+    DivElement statusRegion;
+
     private final Map<String, Integer> visibilityByType = new LinkedHashMap<>();
     /// Transient per-type lock state (Editor only): locked items can't be moved.
     private final Set<String> lockedTypes = new HashSet<>();
     /// Types seen in the loaded data but not yet a saved layer (Editor only).
     private final Set<String> seenTypes = new HashSet<>();
-    private final FlowPanel list = new FlowPanel();
+    /// The rows [#rebuild()] adds to the list, before its empty messages and footer.
+    private final List<Widget> rows = new ArrayList<>();
 
     private List<TypeStyle> layers = new ArrayList<>();
     private boolean editorMode;
-    private Runnable changeHandler;
-    private Consumer<List<TypeStyle>> typeStylesEditHandler;
+    private Runnable onChange = () -> {
+    };
+    private Consumer<List<TypeStyle>> onTypeStylesEdit = typeStyles -> {
+    };
     /// Opens the appearance dialog for a layer and calls back with the edited style.
-    private BiConsumer<TypeStyle, Consumer<TypeStyle>> styleEditor;
+    private BiConsumer<TypeStyle, Consumer<TypeStyle>> onEditStyle;
     /// Runs a full-store type discovery scan (Editor only).
-    private Runnable discoverHandler;
-
-    /// Highlight colour for the drag-reorder drop indicator.
-    private static final String DROP_INDICATOR = "#2196f3";
+    private Runnable onDiscover;
     /// Source row index during a drag-reorder, or -1 when not dragging.
     private int dragFromIndex = -1;
 
@@ -108,49 +134,53 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
     /// exactly one move per visit to the panel.
     private String focusGripForType;
 
-    @Inject
-    public FloorMapLayersPresenter(final EventBus eventBus,
-                                   final FloorMapLayersView view) {
-        super(eventBus, view);
-        list.addStyleName("floormap-layers-list");
-        view.setList(list);
+    /// Makes the panel, for the Map tab, with no layers.
+    public FloorMapLayers() {
+        initWidget(BINDER.createAndBindUi(this));
+        discover.setOnClick(this::discover);
+        // GWT's Label has no aria-hidden setter for the template (see FloorMapLayers.ui.xml)
+        discoverLabel.getElement().setAttribute("aria-hidden", "true");
+        //noinspection unused e
+        discoverLabel.addClickHandler(e -> discover());
+        rebuild();
     }
 
     /// @param editorMode `true` on the Editor tab (enables authoring
     ///         controls - reorder, lock, appearance, discovery); `false` on the Map tab
     public void setEditorMode(final boolean editorMode) {
         this.editorMode = editorMode;
+        rebuild();
     }
 
-    /// @param changeHandler run whenever a layer's visibility changes, so the host
+    /// @param onChange run whenever a layer's visibility or lock changes, so the owner
     ///         can push [#getHiddenTypes()]/[#getDimmedTypes()]
     ///         to the canvas
-    public void setChangeHandler(final Runnable changeHandler) {
-        this.changeHandler = changeHandler;
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
-    /// @param handler receives the new ordered type-styles list whenever the
-    ///         panel reorders layers (Editor only), so the host can apply
+    /// @param onTypeStylesEdit receives the new ordered type-styles list whenever the
+    ///         panel edits the layers (Editor only), so the owner can apply
     ///         and persist the change. The list order is the z-order.
-    public void setTypeStylesEditHandler(final Consumer<List<TypeStyle>> handler) {
-        this.typeStylesEditHandler = handler;
+    public void setOnTypeStylesEdit(final Consumer<List<TypeStyle>> onTypeStylesEdit) {
+        this.onTypeStylesEdit = onTypeStylesEdit;
     }
 
-    /// @param styleEditor opens the appearance dialog for a layer's [TypeStyle]
+    /// @param onEditStyle opens the appearance dialog for a layer's [TypeStyle]
     ///         and invokes the callback with the edited style (Editor only)
-    public void setStyleEditor(final BiConsumer<TypeStyle, Consumer<TypeStyle>> styleEditor) {
-        this.styleEditor = styleEditor;
+    public void setOnEditStyle(final BiConsumer<TypeStyle, Consumer<TypeStyle>> onEditStyle) {
+        this.onEditStyle = onEditStyle;
     }
 
-    /// @param discoverHandler runs a full facts-store type-discovery scan; when
+    /// @param onDiscover runs a full facts-store type-discovery scan; when
     ///         set (Editor only) a Discover action is shown
-    public void setDiscoverHandler(final Runnable discoverHandler) {
-        this.discoverHandler = discoverHandler;
+    public void setOnDiscover(final Runnable onDiscover) {
+        this.onDiscover = onDiscover;
         rebuild();
     }
 
     /// Merges the given discovered types into the saved layers (new types are
-    /// appended alphabetically) and persists via the edit handler.
+    /// appended alphabetically) and persists via [#setOnTypeStylesEdit(Consumer)].
     ///
     /// @param types the discovered type names
     public void mergeDiscovered(final Collection<String> types) {
@@ -161,9 +191,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
         layers = newList;
         rebuild();
-        if (typeStylesEditHandler != null) {
-            typeStylesEditHandler.accept(new ArrayList<>(newList));
-        }
+        onTypeStylesEdit.accept(new ArrayList<>(newList));
     }
 
     /// Sets the types observed in the currently-loaded data. Any that aren't yet
@@ -221,6 +249,12 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return new HashSet<>(lockedTypes);
     }
 
+    private void discover() {
+        if (onDiscover != null) {
+            onDiscover.run();
+        }
+    }
+
     private Set<String> typesInState(final int state) {
         final Set<String> result = new HashSet<>();
         for (final Map.Entry<String, Integer> entry : visibilityByType.entrySet()) {
@@ -232,7 +266,11 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
     }
 
     private void rebuild() {
-        list.clear();
+        for (final Widget row : rows) {
+            row.removeFromParent();
+        }
+        rows.clear();
+
         final Set<String> saved = new HashSet<>();
         for (int i = 0; i < layers.size(); i++) {
             final TypeStyle ts = layers.get(i);
@@ -243,7 +281,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
             // no row, and therefore no grip to reorder from.
             if (ts != null && ts.getType() != null) {
                 saved.add(ts.getType());
-                list.add(buildRow(ts, i));
+                addRow(buildRow(ts, i));
             }
         }
 
@@ -252,61 +290,28 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         if (editorMode) {
             for (final String type : new TreeSet<>(seenTypes)) {
                 if (!saved.contains(type)) {
-                    list.add(buildProvisionalRow(type));
+                    addRow(buildProvisionalRow(type));
                 }
             }
-
-            // A Discover action that scans the whole facts store for types.
-            if (discoverHandler != null) {
-                list.add(buildDiscoverFooter());
-            }
         }
 
-        // An empty panel is otherwise indistinguishable from a broken one. This says which it is,
-        // and the wording differs by tab because so does the remedy: the Editor can add layers,
-        // and the read-only Map tab cannot.
-        if (list.getWidgetCount() == 0) {
-            list.add(buildEmptyPlaceholder());
-        }
+        // A Discover action that scans the whole facts store for types.
+        final boolean showDiscover = editorMode && onDiscover != null;
+        discoverFooter.setVisible(showDiscover);
+
+        // A floor map with no type styles saved is a perfectly ordinary state — entities and
+        // facts render with defaults — but a blank panel reads as a failure. On the Editor tab the
+        // message names the action that fills it; on the Map tab it says where that action lives,
+        // since layers cannot be added from here.
+        final boolean empty = rows.isEmpty() && !showDiscover;
+        editorEmpty.setVisible(empty && editorMode);
+        mapEmpty.setVisible(empty && !editorMode);
     }
 
-    /// A line explaining an empty panel.
-    ///
-    /// A floor map with no type styles saved is a perfectly ordinary state — entities and facts
-    /// render with defaults — but a blank panel reads as a failure, and this feature has enough
-    /// silent-empty states already. On the Editor tab the message names the action that fills it; on
-    /// the Map tab it says where that action lives, since layers cannot be added from here.
-    private Widget buildEmptyPlaceholder() {
-        final Label label = new Label(editorMode
-                ? "No layers yet. Types found in the data appear here, or use Discover types."
-                : "No layers configured. They are added on the Editor tab.");
-        label.addStyleName("floormap-layer-empty");
-        return label;
-    }
-
-    private Widget buildDiscoverFooter() {
-        final FlowPanel footer = new FlowPanel();
-        footer.addStyleName("floormap-layers-footer");
-
-        final Toolbar toolbar = new Toolbar("Discover types");
-        toolbar.addStyleName("floormap-layer-toolbar");
-        final ToolbarButton discover = toolbar.button(
-                SvgImage.REFRESH, "Discover types from the facts store", () -> discoverHandler.run());
-        discover.addStyleName("floormap-layers-discover");
-        footer.add(toolbar);
-
-        final Label label = new Label("Discover types");
-        label.addStyleName("floormap-layers-footer-label");
-        // Kept clickable as a larger pointer target for the button beside it. That
-        // is allowed — the action itself is fully keyboard-operable via that
-        // button — but the label must not be announced, or a screen reader reads
-        // "Discover types" twice: once as the button's name, once as loose text
-        // that looks interactive and is not focusable.
-        label.getElement().setAttribute("aria-hidden", "true");
-        //noinspection unused event
-        label.addClickHandler(event -> discoverHandler.run());
-        footer.add(label);
-        return footer;
+    // Adds a row after the others, before the empty messages and footer
+    private void addRow(final Widget row) {
+        list.insert(row, rows.size());
+        rows.add(row);
     }
 
     /// A discovered-but-unsaved type: name + an add button to make it a layer.
@@ -329,18 +334,16 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return row;
     }
 
-    /// Promotes a discovered type to a saved layer and persists via the handler.
+    /// Promotes a discovered type to a saved layer and persists it.
     private void promote(final String type) {
         final List<TypeStyle> newList = TypeStyle.merge(
                 new ArrayList<>(layers), Collections.singletonList(type));
         layers = newList;
         rebuild();
-        if (typeStylesEditHandler != null) {
-            typeStylesEditHandler.accept(new ArrayList<>(newList));
-        }
+        onTypeStylesEdit.accept(new ArrayList<>(newList));
     }
 
-    /// Replaces the style for `edited`'s type and persists via the handler.
+    /// Replaces the style for `edited`'s type and persists it.
     private void applyStyle(final TypeStyle edited) {
         final List<TypeStyle> newList = new ArrayList<>(layers);
         for (int k = 0; k < newList.size(); k++) {
@@ -351,14 +354,12 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
         layers = newList;
         rebuild();
-        if (typeStylesEditHandler != null) {
-            typeStylesEditHandler.accept(new ArrayList<>(newList));
-        }
+        onTypeStylesEdit.accept(new ArrayList<>(newList));
     }
 
     /// Moves the layer from index `from` to the given insertion index
-    /// (0..size, in current-list terms), then notifies the edit handler with the
-    /// new order (Editor only). List order is z-order. `insertionIndex ==
+    /// (0..size, in current-list terms), then gives the owner the new order
+    /// (Editor only). List order is z-order. `insertionIndex ==
     /// size` drops at the very bottom.
     private void reorderTo(final int from, final int insertionIndex) {
         if (from < 0 || from >= layers.size()) {
@@ -404,8 +405,8 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         // from and cannot reach here. An earlier "Layer" fallback implied otherwise, which
         // contradicted that filtering. The count is of layers, so in Editor mode it will be
         // smaller than the number of visible rows, which also lists provisional types.
-        getView().announce(moved.getType() + " layer moved to position "
-                + (to + 1) + " of " + newList.size());
+        announce(moved.getType() + " layer moved to position "
+                 + (to + 1) + " of " + newList.size());
     }
 
     /// Adopts `newList` as the layer order, redraws and persists — the one
@@ -423,10 +424,34 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
         layers = newList;
         rebuild();
-        if (typeStylesEditHandler != null) {
-            typeStylesEditHandler.accept(new ArrayList<>(newList));
-        }
+        onTypeStylesEdit.accept(new ArrayList<>(newList));
         return true;
+    }
+
+    /// Announces `message` through the panel's live region.
+    ///
+    /// A keyboard reorder produces no visible change a screen reader can pick up
+    /// — the row simply appears elsewhere in a list it is not reading — so without
+    /// this the move is silent and the user cannot tell whether the keystroke did
+    /// anything, let alone where the layer ended up.
+    private void announce(final String message) {
+        if (message == null || message.isEmpty()) {
+            return;
+        }
+        // Deliberately no "same as last time" guard, unlike the canvas view. Every
+        // announcement here is one deliberate keystroke, and identical text can legitimately
+        // repeat: move a layer down, drag it back — silent, because the pointer user can see
+        // it — then move it down again, and the correct message is byte-identical to the last
+        // one. Suppressing it would leave that keystroke unannounced, which is the exact
+        // failure this region exists to prevent. The canvas can afford a guard because it
+        // re-announces on state it recomputes, not on discrete commands.
+        //
+        // Setting the same text twice does still need to look like a change to assistive
+        // technology, so clear the region first.
+        if (message.equals(statusRegion.getInnerText())) {
+            statusRegion.setInnerText("");
+        }
+        statusRegion.setInnerText(message);
     }
 
     /// True if the pointer is below the vertical midpoint of the given row.
@@ -442,49 +467,13 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         // Editor-only: drag a row to reorder the layers (z-order). List order is
         // the z-order — earlier = painted behind, later = painted in front.
         if (editorMode) {
-            // Visible drag handle so the row reads as grabbable.
-            //
-            // A real <button> rather than a Label, because dragging cannot be the
-            // only way to reorder (WCAG 2.1.1, and 2.5.7 for the dragging
-            // movement itself). Focus the grip and the arrow keys move the layer;
-            // the mouse drag below is the same operation by another route.
-            //
-            // setStyleName (not addStyleName) drops GWT's "gwt-Button" primary
-            // style, so the app's button chrome cannot fight the dot-grid
-            // background this class paints.
-            final Button grip = new Button();
-            grip.setStyleName("floormap-layer-grip");
-            grip.setTitle("Reorder the " + type
-                    + " layer — drag, or use the up and down arrow keys");
-            grip.addKeyDownHandler(event -> {
-                final int key = event.getNativeKeyCode();
-                if (key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN) {
-                    // Otherwise the arrow scrolls the Layers panel instead.
-                    event.preventDefault();
-                    event.stopPropagation();
-                    // Rebuilding the list destroys this button, so ask rebuild()
-                    // to restore focus to the moved layer's grip — without it,
-                    // one keypress moves the layer and focus falls back to the
-                    // document, making a second press impossible.
-                    focusGripForType = type;
-                    moveBy(index, key == KeyCodes.KEY_UP
-                            ? -1
-                            : 1);
-                }
-            });
-            if (Objects.equals(type, focusGripForType)) {
-                focusGripForType = null;
-                // Deferred: the widget is not attached to the DOM yet, and
-                // setFocus() on a detached element is a no-op.
-                Scheduler.get().scheduleDeferred(() -> grip.setFocus(true));
-            }
-            row.add(grip);
+            row.add(buildGrip(type, index));
 
             row.getElement().setDraggable(Element.DRAGGABLE_TRUE);
             row.addDomHandler(event -> {
                 dragFromIndex = index;
                 event.setData("text", String.valueOf(index));
-                row.getElement().getStyle().setOpacity(0.4);
+                row.addStyleName(ROW_DRAGGING);
             }, DragStartEvent.getType());
             row.addDomHandler(event -> {
                 event.preventDefault();
@@ -492,23 +481,23 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
                 // Indicate drop-above vs drop-below so the last position is reachable.
                 final boolean below = isBelowMidpoint(
                         event.getNativeEvent().getClientY(), row.getElement());
-                row.getElement().getStyle().setProperty("boxShadow", below
-                        ? "inset 0 -2px 0 0 " + DROP_INDICATOR
-                        : "inset 0 2px 0 0 " + DROP_INDICATOR);
+                row.setStyleName(ROW_DROP_BELOW, below);
+                row.setStyleName(ROW_DROP_ABOVE, !below);
             }, DragOverEvent.getType());
             //noinspection unused event
-            row.addDomHandler(event ->
-                    row.getElement().getStyle().clearProperty("boxShadow"), DragLeaveEvent.getType());
+            row.addDomHandler(event -> clearDropIndicator(row), DragLeaveEvent.getType());
             row.addDomHandler(event -> {
                 event.preventDefault();
-                row.getElement().getStyle().clearProperty("boxShadow");
+                clearDropIndicator(row);
                 final boolean below = isBelowMidpoint(
                         event.getNativeEvent().getClientY(), row.getElement());
-                reorderTo(dragFromIndex, index + (below ? 1 : 0));
+                reorderTo(dragFromIndex, index + (below
+                        ? 1
+                        : 0));
             }, DropEvent.getType());
             //noinspection unused event
             row.addDomHandler(event -> {
-                row.getElement().getStyle().clearOpacity();
+                row.removeStyleName(ROW_DRAGGING);
                 dragFromIndex = -1;
             }, DragEndEvent.getType());
         }
@@ -533,9 +522,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
             visibilityByType.put(type, next);
             applyEyeState(eye, type, next);
             applyNameState(name, next);
-            if (changeHandler != null) {
-                changeHandler.run();
-            }
+            onChange.run();
         });
 
         // Editor-only: a lock toggle. Locked layers stay visible but their items
@@ -553,9 +540,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
                     lockedTypes.remove(type);
                 }
                 applyLockState(lock, type, nowLocked);
-                if (changeHandler != null) {
-                    changeHandler.run();
-                }
+                onChange.run();
             });
         }
 
@@ -566,49 +551,83 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         // has one, otherwise its shape in its colour — which opens the appearance
         // dialog for this layer.
         if (editorMode) {
-            // A <button>, not a clickable div: it opens a dialog, so it has to be
-            // reachable and activatable from the keyboard. setStyleName drops
-            // GWT's "gwt-Button" primary style so the app's button chrome does not
-            // box in the preview graphic; the CSS resets what remains.
-            final Button swatch = new Button();
-            swatch.setStyleName("floormap-layer-swatch");
-            swatch.setHTML(FloorMapSwatchHtml.swatch(ts, SWATCH_SIZE_PX));
-            // Names the layer: a panel of identically-titled "Edit appearance"
-            // buttons tells a screen-reader user nothing about which one they are
-            // on. The preview graphic itself is alt="" (decorative), so this
-            // title is the button's whole accessible name.
-            swatch.setTitle("Edit the appearance of the " + type + " layer ("
-                    + (ts.hasGraphic()
-                            ? "image & colour)"
-                            : "shape & colour)"));
-            //noinspection unused event
-            swatch.addDomHandler(event -> {
-                if (styleEditor != null) {
-                    styleEditor.accept(ts, this::applyStyle);
-                }
-            }, ClickEvent.getType());
-            row.add(swatch);
+            row.add(buildSwatch(ts));
         }
 
         return row;
     }
 
-    /// Size of each row's graphic preview in pixels.
-    private static final int SWATCH_SIZE_PX = 16;
+    // Visible drag handle so the row reads as grabbable.
+    //
+    // A real <button> rather than a Label, because dragging cannot be the only way to reorder
+    // (WCAG 2.1.1, and 2.5.7 for the dragging movement itself). Focus the grip and the arrow keys
+    // move the layer; the mouse drag on the row is the same operation by another route.
+    private Widget buildGrip(final String type, final int index) {
+        final LinkButton grip = new LinkButton();
+        // Only its own style (no link-button), so nothing fights the dot-grid background it paints
+        grip.setStyleName("floormap-layer-grip");
+        grip.setTitle("Reorder the " + type
+                      + " layer — drag, or use the up and down arrow keys");
+        grip.addKeyDownHandler(event -> {
+            final int key = event.getNativeKeyCode();
+            if (key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN) {
+                // Otherwise the arrow scrolls the Layers panel instead.
+                event.preventDefault();
+                event.stopPropagation();
+                // Rebuilding the list destroys this button, so ask rebuild()
+                // to restore focus to the moved layer's grip — without it,
+                // one keypress moves the layer and focus falls back to the
+                // document, making a second press impossible.
+                focusGripForType = type;
+                moveBy(index, key == KeyCodes.KEY_UP
+                        ? -1
+                        : 1);
+            }
+        });
+        if (Objects.equals(type, focusGripForType)) {
+            focusGripForType = null;
+            // Deferred: the widget is not attached to the DOM yet, and
+            // setFocus() on a detached element is a no-op.
+            Scheduler.get().scheduleDeferred(() -> grip.setFocus(true));
+        }
+        return grip;
+    }
 
-    /// The lowest opacity an *enabled* control's graphic may be drawn at
-    /// here and still clear 3:1 against the panel background (WCAG 1.4.11).
-    ///
-    /// Body text at 0.45 over the light theme's white composites to about
-    /// #969696 — 2.96:1, just under. These icons are the only indication of a
-    /// layer's visibility and lock state, so they are exactly the "meaningful
-    /// non-text content" the rule is about, and cannot be treated as decoration.
-    /// Disabled controls are exempt, but none of these are disabled.
-    private static final double MIN_ENABLED_ICON_OPACITY = 0.7;
+    // A <button>, not a clickable div: it opens a dialog, so it has to be reachable and activatable
+    // from the keyboard
+    private Widget buildSwatch(final TypeStyle ts) {
+        final LinkButton swatch = new LinkButton();
+        // Only its own style (no link-button); the CSS resets the browser's button look so nothing
+        // boxes in the preview graphic
+        swatch.setStyleName("floormap-layer-swatch");
+        swatch.setHTML(FloorMapSwatchHtml.swatch(ts, SWATCH_SIZE_PX));
+        // Names the layer: a panel of identically-titled "Edit appearance"
+        // buttons tells a screen-reader user nothing about which one they are
+        // on. The preview graphic itself is alt="" (decorative), so this
+        // title is the button's whole accessible name.
+        swatch.setTitle("Edit the appearance of the " + ts.getType() + " layer ("
+                        + (ts.hasGraphic()
+                ? "image & colour)"
+                : "shape & colour)"));
+        swatch.setOnClick(() -> {
+            if (onEditStyle != null) {
+                onEditStyle.accept(ts, this::applyStyle);
+            }
+        });
+        return swatch;
+    }
 
-    private void applyLockState(final ToolbarButton lock,
-                                final String type,
-                                final boolean locked) {
+    private static void clearDropIndicator(final Widget row) {
+        row.removeStyleName(ROW_DROP_ABOVE);
+        row.removeStyleName(ROW_DROP_BELOW);
+    }
+
+    // Its icon's opacity follows from the state class (stroom-floormap.css): never under 0.7, the
+    // lowest an enabled control's graphic may be drawn at here and still clear 3:1 against the
+    // panel (WCAG 1.4.11), as these icons are the only sign of a layer's visibility and lock
+    private static void applyLockState(final ToolbarButton lock,
+                                       final String type,
+                                       final boolean locked) {
         lock.setSvg(locked
                 ? SvgImage.LOCKED_DEFAULT_COLOUR
                 : SvgImage.UNLOCKED_DEFAULT_COLOUR);
@@ -617,58 +636,41 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         lock.setTitle(locked
                 ? type + " layer is locked — items can’t be moved (click to unlock)"
                 : type + " layer is unlocked — items can be moved (click to lock)");
-        lock.getElement().getStyle().setOpacity(locked
-                ? 0.95
-                : MIN_ENABLED_ICON_OPACITY);
+        lock.setStyleName("floormap-layer-lock--locked", locked);
     }
 
-    private void applyEyeState(final ToolbarButton eye,
-                               final String type,
-                               final int state) {
+    private static void applyEyeState(final ToolbarButton eye,
+                                      final String type,
+                                      final int state) {
+        eye.setStyleName("floormap-layer-eye--off", state == OFF);
+        eye.setStyleName("floormap-layer-eye--dim", state == DIM);
         switch (state) {
             case OFF:
                 eye.setSvg(SvgImage.EYE_OFF);
                 eye.setTitle(type + " layer is hidden — click to show");
-                eye.getElement().getStyle().setOpacity(MIN_ENABLED_ICON_OPACITY);
                 break;
             case DIM:
                 eye.setSvg(SvgImage.EYE);
                 eye.setTitle(type + " layer is dimmed to 30% — click to hide");
-                eye.getElement().getStyle().setOpacity(MIN_ENABLED_ICON_OPACITY);
                 break;
             default:
                 eye.setSvg(SvgImage.EYE);
                 eye.setTitle(type + " layer is visible — click to dim to 30%");
-                eye.getElement().getStyle().setOpacity(1.0);
                 break;
         }
     }
 
-    /// Dims a layer's name in step with its visibility state.
-    ///
-    /// The hidden state's floor is 0.65 rather than the icons' 0.7 because this
-    /// is text, which needs 4.5:1 rather than 3:1: 0.55 over white composites to
-    /// about #7e7e7e — 4.06:1, short of the mark.
-    private void applyNameState(final Label name, final int state) {
-        final double opacity = state == OFF
-                ? 0.65
-                : state == DIM
-                        ? 0.75
-                        : 1.0;
-        name.getElement().getStyle().setOpacity(opacity);
+    // Dims a layer's name in step with its visibility state (stroom-floormap.css)
+    private static void applyNameState(final Label name, final int state) {
+        name.setStyleName("floormap-layer-name--off", state == OFF);
+        name.setStyleName("floormap-layer-name--dim", state == DIM);
     }
 
-    /// View contract: a toolbar area (header/actions) above a scrolling list.
-    public interface FloorMapLayersView extends View {
 
-        void setList(Widget listWidget);
+    // --------------------------------------------------------------------------------
 
-        /// Announces `message` through the panel's live region.
-        ///
-        /// A keyboard reorder produces no visible change a screen reader can pick up
-        /// — the row simply appears elsewhere in a list it is not reading — so without
-        /// this the move is silent and the user cannot tell whether the keystroke did
-        /// anything, let alone where the layer ended up.
-        void announce(String message);
+
+    interface Binder extends UiBinder<Widget, FloorMapLayers> {
+
     }
 }

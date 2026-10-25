@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.component.FloorMapDockController;
+import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
@@ -95,7 +96,7 @@ import java.util.function.Consumer;
 /// - [#MAP] – the [FloorMapCanvasPresenter] (canvas / visualisation)
 /// - [#DOCK] – the [FloorMapDockController] (right-hand dock; hosts the
 ///   [FloorMapTrackingPresenter] tracking panel as its first tab, then
-///   [FloorMapLayersPresenter] and [FloorMapGroupsPresenter])
+///   [FloorMapLayers] and [FloorMapGroupsPresenter])
 /// - [#TIMELINE] – the [FloorMapTimelinePresenter] (timeline scrubber)
 ///
 /// Three [QueryModel]-based searches are maintained: the facts query playback,
@@ -110,7 +111,7 @@ public class FloorMapMapPresenter
     private final FloorMapCanvasPresenter floorMapCanvasPresenter;
     private final FloorMapTimelinePresenter floorMapTimelinePresenter;
     private final FloorMapTrackingPresenter floorMapTrackingPresenter;
-    private final FloorMapLayersPresenter floorMapLayersPresenter;
+    private final FloorMapLayers layersPanel;
     private final FloorMapGroupsPresenter floorMapGroupsPresenter;
 
     /// The Map tab's staged document-level edits — just the Groups panel's edits.
@@ -387,7 +388,7 @@ public class FloorMapMapPresenter
                                 final Provider<FloorMapCanvasPresenter> floorMapCanvasPresenterProvider,
                                 final Provider<FloorMapTimelinePresenter> floorMapTimelinePresenterProvider,
                                 final Provider<FloorMapTrackingPresenter> floorMapEntityListPresenterProvider,
-                                final Provider<FloorMapLayersPresenter> floorMapLayersPresenterProvider,
+                                final FloorMapLayers layersPanel,
                                 final Provider<FloorMapGroupsPresenter> floorMapGroupsPresenterProvider,
                                 final Provider<FloorMapDockController> dockProvider,
                                 final Provider<FloorMapClusterPresenter> floorMapClusterPresenter) {
@@ -397,7 +398,7 @@ public class FloorMapMapPresenter
         this.floorMapCanvasPresenter = make(floorMapCanvasPresenterProvider);
         this.floorMapTimelinePresenter = make(floorMapTimelinePresenterProvider);
         this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
-        this.floorMapLayersPresenter = make(floorMapLayersPresenterProvider);
+        this.layersPanel = layersPanel;
         this.floorMapGroupsPresenter = make(floorMapGroupsPresenterProvider);
         final FloorMapDockController dock = make(dockProvider);
 
@@ -406,14 +407,14 @@ public class FloorMapMapPresenter
 
         // The Tracking, Layers and Groups panels live as tabs of the right-hand dock.
         dock.addTab("Tracking", floorMapTrackingPresenter);
-        dock.addTab("Layers", floorMapLayersPresenter);
+        dock.addTab("Layers", layersPanel);
         dock.addTab("Groups", floorMapGroupsPresenter);
         // Layer visibility is a transient view control on the Map tab; push
         // changes to the canvas as hidden / dimmed type sets.
-        floorMapLayersPresenter.setChangeHandler(() ->
+        layersPanel.setOnChange(() ->
                 floorMapCanvasPresenter.setLayerVisibility(
-                        floorMapLayersPresenter.getHiddenTypes(),
-                        floorMapLayersPresenter.getDimmedTypes()));
+                        layersPanel.getHiddenTypes(),
+                        layersPanel.getDimmedTypes()));
 
         // Group membership IS persisted (it is document configuration), so an edit
         // is staged and marks the document dirty. Which groups are *highlighted* is
@@ -664,10 +665,10 @@ public class FloorMapMapPresenter
 
         // Populate the Layers panel from the document's type styles and sync the
         // canvas with the current (transient) layer visibility.
-        floorMapLayersPresenter.setLayers(document.getTypeStyles());
+        layersPanel.setLayers(document.getTypeStyles());
         floorMapCanvasPresenter.setLayerVisibility(
-                floorMapLayersPresenter.getHiddenTypes(),
-                floorMapLayersPresenter.getDimmedTypes());
+                layersPanel.getHiddenTypes(),
+                layersPanel.getDimmedTypes());
 
         // Start timeline (and histogram query) only after models are ready.
         // Initialise the range on the first read only; on a save-triggered

@@ -850,6 +850,20 @@
     background-color: rgba(128, 128, 128, 0.12);
 }
 
+/* The row being dragged to reorder (Editor tab) */
+.floormap-layer-row--dragging {
+    opacity: 0.4;
+}
+
+/* Where a dragged row will drop: above or below this one, so the last position is reachable */
+.floormap-layer-row--drop-above {
+    box-shadow: inset 0 2px 0 0 var(--blue-500);
+}
+
+.floormap-layer-row--drop-below {
+    box-shadow: inset 0 -2px 0 0 var(--blue-500);
+}
+
 /* Whole row is a drag handle for reordering (Editor tab) */
 .floormap-layer-row[draggable="true"] {
     cursor: grab;
@@ -871,6 +885,17 @@
     color: var(--text-color);
 }
 
+/* A layer's name dims in step with its visibility. The hidden state's floor is 0.65 rather than
+   the icons' 0.7 because this is text, which needs 4.5:1 rather than 3:1: 0.55 over white
+   composites to about #7e7e7e, 4.06:1, short of the mark */
+.floormap-layer-name--dim {
+    opacity: 0.75;
+}
+
+.floormap-layer-name--off {
+    opacity: 0.65;
+}
+
 /* The eye / lock icon buttons keep the standard icon-button sizing; nudge
    spacing so they sit tightly at the start of the row */
 /* The eye / lock / add icon buttons. `.toolbar-button` in toolbar-button.css sizes
@@ -884,6 +909,21 @@
     flex: 0 0 auto;
     width: 24px;
     height: 24px;
+}
+
+/* A dimmed or hidden layer's eye, and an unlocked layer's lock, are faded, but no further than
+   0.7: the lowest an enabled control's graphic may be drawn at here and still clear 3:1 against
+   the panel (WCAG 1.4.11). Body text at 0.45 over the light theme's white composites to about
+   #969696, 2.96:1, just under. These icons are the only sign of a layer's visibility and lock, so
+   they are the "meaningful non-text content" the rule is about */
+.floormap-layer-eye--dim,
+.floormap-layer-eye--off,
+.floormap-layer-lock {
+    opacity: 0.7;
+}
+
+.floormap-layer-lock--locked {
+    opacity: 0.95;
 }
 
 /* The toolbar holding a row's (or the footer's) icon buttons, sized to its buttons */
