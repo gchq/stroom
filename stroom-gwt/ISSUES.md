@@ -598,6 +598,18 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
+### Menus that didn't open in the standalone dashboard (remove_gwtp only)
+
+**Fixed (25 October 2026), confirmed in the code.** Widgets with no event bus ask for their menus
+with `MenuRequest`, which bubbles up the page to one relay that fires the `ShowMenuEvent`. Only
+`MainPresenter` installed the relay, and the standalone dashboard (`DashboardApp`) shows
+`FullScreenPresenter`, not the main presenter, so these menus never opened there: a split pane
+splitter's Pane Layout menu, and a dialog's menu button (`DialogWindow`). The relay is now
+installed by `CorePresenter`, which both apps show (once, as a singleton). Only this branch had
+the bug (the widgets moved to `MenuRequest` here), so there is no changelog entry. The workbench's
+`ShellScreen` stories had two relays (`ScreenHarness`'s and the main presenter's); now they have
+one. Not checked in a running dashboard: the workbench has no story of the standalone dashboard.
+
 ## Memory
 
 ### Presenters nothing owned (found and fixed 22 October 2026)

@@ -34,7 +34,6 @@ import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -111,8 +110,6 @@ public class MainPresenter extends MyPresenterWidget<MainPresenter.MainView> {
                     : null;
             updatePageTitle();
         });
-        // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
-        own(MenuRequest.relay(this));
         // F6 and Shift+F6 (unless the user has changed them) move between the main areas
         KeyBinding.addCommand(Action.FOCUS_NEXT_AREA, () -> getView().focusArea(false));
         KeyBinding.addCommand(Action.FOCUS_PREVIOUS_AREA, () -> getView().focusArea(true));

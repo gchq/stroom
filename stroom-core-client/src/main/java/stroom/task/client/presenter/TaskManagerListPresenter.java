@@ -21,6 +21,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.DataViewType;
@@ -43,7 +44,6 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
 import stroom.task.shared.FindTaskCriteria;
@@ -109,7 +109,6 @@ public class TaskManagerListPresenter
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final DateTimeFormatter dateTimeFormatter;
-    private final ClientSecurityContext securityContext;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
@@ -141,6 +140,8 @@ public class TaskManagerListPresenter
     private Consumer<String> filterErrorConsumer;
     private boolean autoRefresh = true;
 
+    private final RefCellsController refCells;
+
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
                                     final PagerView view,
@@ -149,15 +150,15 @@ public class TaskManagerListPresenter
                                     final NodeClient nodeClient,
                                     final FeedClient feedClient,
                                     final DateTimeFormatter dateTimeFormatter,
-                                    final ClientSecurityContext securityContext) {
+                                    final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(tooltipPresenter);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.securityContext = securityContext;
 
         dataGrid = new DataGrid<>(this, 1000);
         dataGrid.setTableName("Server Tasks");
@@ -334,7 +335,7 @@ public class TaskManagerListPresenter
         // User.
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
-                                TaskProgress::getUserRef, getEventBus(), securityContext, DisplayType.AUTO)
+                                TaskProgress::getUserRef, refCells, DisplayType.AUTO)
                         .enabledWhen(taskProgress -> NullSafe
                                 .getOrElse(taskProgress, TaskProgress::getUserRef, UserRef::isEnabled, false))
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)

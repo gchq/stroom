@@ -17,6 +17,7 @@
 package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.shared.StreamTypeNames;
 import stroom.processor.shared.FeedDependency;
@@ -58,11 +59,15 @@ public class FeedDependencyListPresenter
 
     private boolean readOnly = false;
 
+    private final RefCellsController refCells;
+
     @Inject
     public FeedDependencyListPresenter(final EventBus eventBus,
                                        final PagerView view,
-                                       final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter) {
+                                       final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter,
+                                       final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
         dataGrid = new DataGrid<>(this);
@@ -142,7 +147,7 @@ public class FeedDependencyListPresenter
     void addFeedColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.feedRefColumnBuilder(FeedDependency::getFeedName,
-                                getEventBus())
+                                refCells)
                         .build(),
                 "Feed",
                 ColumnSizeConstants.BIG_COL);

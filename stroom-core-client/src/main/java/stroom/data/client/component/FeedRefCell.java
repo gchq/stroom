@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docstore.shared.DocumentType;
-import stroom.feed.client.CopyFeedUrlEvent;
-import stroom.feed.client.OpenFeedEvent;
 import stroom.feed.shared.FeedDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -41,21 +40,24 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+/// A cell showing a feed by its name, with the feed's icon and hover buttons that copy its name and
+/// open it, and the grid's context menu items to open it and copy its details. Opening and copying
+/// its link are its owner's: [Builder#onOpen] and [Builder#onCopyUrl] (see `RefCellsController`).
+///
+/// @param <T_ROW> The row's type.
 public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell, HasContextMenus<T_ROW> {
+        implements EventCell, HasContextMenus<T_ROW> {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
@@ -63,11 +65,12 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
 
-    private final EventBus eventBus;
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, String> nameFunction;
     private final Function<T_ROW, String> cssClassFunction;
+    private final Consumer<String> onOpen;
+    private final Consumer<String> onCopyUrl;
 
     private static volatile Template template;
 
@@ -76,18 +79,22 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
      * @param cellTextFunction Function to provide the cell 'text' in HTML form.
      * @param nameFunction     Function to provide a doc ref if the value can give us one.
      * @param cssClassFunction Function to provide additional css class names.
+     * @param onOpen           What opens a feed by its name, or null if it can't be opened.
+     * @param onCopyUrl        What copies a feed's link by its name, or null for no link.
      */
-    private FeedRefCell(final EventBus eventBus,
-                        final boolean showIcon,
+    private FeedRefCell(final boolean showIcon,
                         final Function<T_ROW, SafeHtml> cellTextFunction,
                         final Function<T_ROW, String> nameFunction,
-                        final Function<T_ROW, String> cssClassFunction) {
+                        final Function<T_ROW, String> cssClassFunction,
+                        final Consumer<String> onOpen,
+                        final Consumer<String> onCopyUrl) {
         super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
-        this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
         this.nameFunction = nameFunction;
         this.cssClassFunction = cssClassFunction;
+        this.onOpen = onOpen;
+        this.onCopyUrl = onCopyUrl;
 
         if (template == null) {
             template = GWT.create(Template.class);
@@ -139,19 +146,16 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         final String type = FeedDoc.DOCUMENT_TYPE.getDisplayType();
         final List<Item> menuItems = new ArrayList<>();
         int priority = 1;
-        menuItems.add(new IconMenuItem.Builder()
-                .priority(priority++)
-                .icon(SvgImage.OPEN)
-                .text("Open " + type)
-                .command(() -> OpenFeedEvent.fire(this, name, true))
-                .build());
+        if (onOpen != null) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.OPEN)
+                    .text("Open " + type)
+                    .command(() -> onOpen.accept(name))
+                    .build());
+        }
         menuItems.add(createCopyAsMenuItem(name, type, priority));
         return menuItems;
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> gwtEvent) {
-        eventBus.fireEvent(gwtEvent);
     }
 
     @Override
@@ -169,9 +173,9 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                 if (text != null) {
                     Clipboard.writeText(text);
                 }
-            } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+            } else if (onOpen != null && ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);
-                OpenFeedEvent.fire(this, name, true);
+                onOpen.accept(name);
             }
         } else {
             final String text = cellTextFunction.apply(value).asString();
@@ -232,15 +236,17 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         "Copy name '" + name + "' to clipboard",
                         copy));
 
-                // A button the keyboard reaches from its row (a row action)
-                final SafeHtml open = SvgImageUtil.toSafeHtml(
-                        SvgImage.OPEN,
-                        ICON_CLASS_NAME,
-                        HOVER_ICON_CLASS_NAME);
-                sb.append(RowActions.button(
-                        OPEN_CLASS_NAME,
-                        "Open " + FeedDoc.TYPE + " " + name,
-                        open));
+                if (onOpen != null) {
+                    // A button the keyboard reaches from its row (a row action)
+                    final SafeHtml open = SvgImageUtil.toSafeHtml(
+                            SvgImage.OPEN,
+                            ICON_CLASS_NAME,
+                            HOVER_ICON_CLASS_NAME);
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
+                            "Open " + FeedDoc.TYPE + " " + name,
+                            open));
+                }
             }
 
             sb.appendHtmlConstant("</div>");
@@ -275,7 +281,9 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .command(() -> Clipboard.writeText(name))
                     .build());
         }
-        childMenuItems.add(createCopyLinkMenuItem(name, priority++));
+        if (onCopyUrl != null) {
+            childMenuItems.add(createCopyLinkMenuItem(name, priority++));
+        }
         return childMenuItems;
     }
 
@@ -284,7 +292,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                 .priority(priority)
                 .icon(SvgImage.SHARE)
                 .text("Link")
-                .command(() -> CopyFeedUrlEvent.fire(this, name))
+                .command(() -> onCopyUrl.accept(name))
                 .build();
     }
 
@@ -311,14 +319,32 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
 
     public static class Builder<T> {
 
-        private EventBus eventBus;
         private boolean showIcon = false;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, String> nameFunction;
         private Function<T, String> cssClassFunction;
+        private Consumer<String> onOpen;
+        private Consumer<String> onCopyUrl;
 
-        public Builder<T> eventBus(final EventBus eventBus) {
-            this.eventBus = eventBus;
+        /// Sets what opens a row's feed, from its open button or its 'Open' menu item, e.g. firing
+        /// the app's open feed event (see `RefCellsController`).
+        ///
+        /// @param onOpen What opens a feed, given its name, or null (the default) for a cell that
+        ///               can't open one: it shows no open button or menu item.
+        /// @return This builder.
+        public Builder<T> onOpen(final Consumer<String> onOpen) {
+            this.onOpen = onOpen;
+            return this;
+        }
+
+        /// Sets what copies a link to a row's feed, from its 'Copy Feed Details > Link' menu item,
+        /// e.g. firing the app's copy feed URL event (see `RefCellsController`).
+        ///
+        /// @param onCopyUrl What copies a feed's link, given its name, or null (the default) for no
+        ///                  'Link' item.
+        /// @return This builder.
+        public Builder<T> onCopyUrl(final Consumer<String> onCopyUrl) {
+            this.onCopyUrl = onCopyUrl;
             return this;
         }
 
@@ -361,11 +387,12 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
             }
 
             return new FeedRefCell<>(
-                    eventBus,
                     showIcon,
                     cellTextFunction,
                     nameFunction,
-                    cssClassFunction);
+                    cssClassFunction,
+                    onOpen,
+                    onCopyUrl);
         }
     }
 }

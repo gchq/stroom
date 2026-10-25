@@ -18,8 +18,9 @@ package stroom.receive.content.client.presenter;
 
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.DocRefCell;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -59,10 +60,14 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     private Function<ContentTemplate, List<Item>> actionMenuItemProvider;
 //    private List<ContentTemplate> currentData;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ContentTemplateListPresenter(final EventBus eventBus,
-                                        final PagerView view) {
+                                        final PagerView view,
+                                        final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         this.dataGrid = new DataGrid<>(this);
         // Rows keyed by number (1 to n): a tick rebuilds the row
         this.dataGrid.setKeyProvider(ContentTemplate::getTemplateNumber);
@@ -152,12 +157,11 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
 
         final DocRefCell.Builder<ContentTemplate> docRefCellBuilder =
                 new DocRefCell.Builder<ContentTemplate>()
-                        .eventBus(getEventBus())
                         .docRefFunction(row ->
                                 NullSafe.get(row, ContentTemplate::getPipeline))
                         .showIcon(true);
         dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder(docRefCellBuilder)
+                DataGridUtil.docRefColumnBuilder(refCells.configure(docRefCellBuilder))
                         .enabledWhen(ContentTemplate::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Pipeline")

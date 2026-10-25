@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -80,13 +81,17 @@ public class ProcessorTaskListPresenter
     // Counts the Info clicks, so that only the latest click's tooltip is shown
     private int infoRequestCount;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
                                       final PagerView view,
                                       final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter,
-                                      final DateTimeFormatter dateTimeFormatter) {
+                                      final DateTimeFormatter dateTimeFormatter,
+                                      final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(tooltipPresenter);
         this.restFactory = restFactory;
 
@@ -180,7 +185,7 @@ public class ProcessorTaskListPresenter
             }
         };
 
-        DataGridUtil.addFeedColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        DataGridUtil.addFeedColumn(refCells, dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
@@ -200,7 +205,7 @@ public class ProcessorTaskListPresenter
             return null;
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
+        DataGridUtil.addDocRefColumn(refCells, dataGrid, "Pipeline", pipelineExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(

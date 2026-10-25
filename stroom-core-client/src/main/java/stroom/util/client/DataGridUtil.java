@@ -29,14 +29,14 @@ import stroom.cell.tickbox.client.TickBoxCell.DefaultAppearance;
 import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.FeedRefCell;
+import stroom.data.client.component.RefCellsController;
+import stroom.data.client.component.UserRefCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
-import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.FeedRefCell;
 import stroom.data.client.presenter.HasContextMenusCell;
-import stroom.data.client.presenter.UserRefCell;
 import stroom.docref.DocRef;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.client.DataGridComparatorFactory.Builder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtUtil;
@@ -60,7 +60,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
 import java.util.OptionalDouble;
@@ -480,15 +479,15 @@ public class DataGridUtil {
      * and to open the user/group.
      *
      * @param valueExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param refCells       What opens the users, and says which may be opened.
      * @param <T_ROW>        The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> userRefColumnBuilder(
             final Function<T_ROW, UserRef> valueExtractor,
-            final EventBus eventBus,
-            final ClientSecurityContext securityContext,
+            final RefCellsController refCells,
             final UserRef.DisplayType displayType) {
-        return userRefColumnBuilder(valueExtractor, eventBus, securityContext, false, displayType);
+        return userRefColumnBuilder(valueExtractor, refCells, false, displayType);
     }
 
     /**
@@ -496,44 +495,41 @@ public class DataGridUtil {
      * and to open the user/group.
      *
      * @param userRefFunction Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param refCells        What opens the users, and says which may be opened.
      * @param <T_ROW>         The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> userRefColumnBuilder(
             final Function<T_ROW, UserRef> userRefFunction,
-            final EventBus eventBus,
-            final ClientSecurityContext securityContext,
+            final RefCellsController refCells,
             final boolean showIcon,
             final UserRef.DisplayType displayType) {
 
         Objects.requireNonNull(userRefFunction);
 
-        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(), () -> new UserRefCell
-                .Builder<T_ROW>()
-                .eventBus(eventBus)
-                .securityContext(securityContext)
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(), () -> refCells
+                .configure(new UserRefCell.Builder<T_ROW>())
                 .showIcon(showIcon)
                 .displayType(displayType)
                 .userRefFunction(userRefFunction)
                 .build());
     }
 
-    public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
+    public static <T_ROW> void addDocRefColumn(final RefCellsController refCells,
                                                final DataGridView<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
-        addDocRefColumn(eventBus, dataGrid, name, docRefExtractionFunction, true);
+        addDocRefColumn(refCells, dataGrid, name, docRefExtractionFunction, true);
     }
 
-    public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
+    public static <T_ROW> void addDocRefColumn(final RefCellsController refCells,
                                                final DataGridView<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction,
                                                final boolean hasOpenAndCopy) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
-                () -> new DocRefCell
-                        .Builder<T_ROW>()
-                        .eventBus(eventBus)
+                () -> refCells
+                        .configure(new DocRefCell.Builder<T_ROW>())
                         .hasOpenAndCopy(hasOpenAndCopy)
                         .docRefFunction(docRefExtractionFunction)
                         .showIcon(true)
@@ -549,13 +545,13 @@ public class DataGridUtil {
         dataGrid.addColumn(colSpec);
     }
 
-    public static <T_ROW> void addFeedColumn(final EventBus eventBus,
+    public static <T_ROW> void addFeedColumn(final RefCellsController refCells,
                                              final DataGridView<T_ROW> dataGrid,
                                              final String name,
                                              final Function<T_ROW, String> nameExtractionFunction) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
-                () -> new FeedRefCell.Builder<T_ROW>()
-                        .eventBus(eventBus)
+                () -> refCells
+                        .configure(new FeedRefCell.Builder<T_ROW>())
                         .nameFunction(nameExtractionFunction)
                         .showIcon(true)
                         .build())
@@ -575,35 +571,34 @@ public class DataGridUtil {
      * and to open the doc.
      *
      * @param docRefExtractionFunction Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param refCells                 What opens the documents.
      * @param <T_ROW>                  The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> docRefExtractionFunction,
-            final EventBus eventBus) {
+            final RefCellsController refCells) {
 
         Objects.requireNonNull(docRefExtractionFunction);
 
         return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
                 Function.identity(),
-                () -> new DocRefCell
-                        .Builder<T_ROW>()
-                        .eventBus(eventBus)
+                () -> refCells
+                        .configure(new DocRefCell.Builder<T_ROW>())
                         .docRefFunction(docRefExtractionFunction)
                         .build());
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> feedRefColumnBuilder(
             final Function<T_ROW, String> nameExtractionFunction,
-            final EventBus eventBus) {
+            final RefCellsController refCells) {
 
         Objects.requireNonNull(nameExtractionFunction);
 
         return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
                 Function.identity(),
-                () -> new FeedRefCell
-                        .Builder<T_ROW>()
-                        .eventBus(eventBus)
+                () -> refCells
+                        .configure(new FeedRefCell.Builder<T_ROW>())
                         .nameFunction(nameExtractionFunction)
                         .build());
     }

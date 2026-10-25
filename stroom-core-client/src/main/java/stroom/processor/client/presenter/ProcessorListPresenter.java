@@ -29,6 +29,7 @@ import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -50,7 +51,6 @@ import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
@@ -84,7 +84,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final ClientSecurityContext securityContext;
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
@@ -104,16 +103,18 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private boolean initiated;
     private ProcessorListRowResultPage currentResultPageResponse;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final PagerView view,
-                                  final ClientSecurityContext securityContext,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
-                                  final ProcessorInfoBuilder processorInfoBuilder) {
+                                  final ProcessorInfoBuilder processorInfoBuilder,
+                                  final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(tooltipPresenter);
-        this.securityContext = securityContext;
 
         this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Processors");
@@ -351,7 +352,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             return docRef;
         };
 
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", extractionFunction);
+        DataGridUtil.addDocRefColumn(refCells, dataGrid, "Pipeline", extractionFunction);
     }
 
 //    private void addTrackerColumns() {
@@ -552,8 +553,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                         return null;
                                     }
                                 },
-                                getEventBus(),
-                                securityContext,
+                                refCells,
                                 true,
                                 DisplayType.AUTO)
                         .enabledWhen((final ProcessorListRow row) -> {

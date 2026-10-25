@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.info.client.CommandLink;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -25,7 +26,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.UsersAndGroupsPlugin;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionResource;
@@ -76,12 +76,13 @@ public class AppUserPermissionsListPresenter
     private final DataGrid<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
     private final UiConfigCache uiConfigCache;
-    private final ClientSecurityContext securityContext;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
     private boolean isExternalIdp = false;
     private boolean resetSelection = false;
     private String lastQuickFilter;
+
+    private final RefCellsController refCells;
 
     @Inject
     public AppUserPermissionsListPresenter(final EventBus eventBus,
@@ -89,14 +90,14 @@ public class AppUserPermissionsListPresenter
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final UiConfigCache uiConfigCache,
-                                           final ClientSecurityContext securityContext,
-                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
+                                           final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.uiConfigCache = uiConfigCache;
-        this.securityContext = securityContext;
 
         dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("User Permissions");
@@ -234,8 +235,7 @@ public class AppUserPermissionsListPresenter
         final Column<AppUserPermissions, AppUserPermissions> displayNameCol =
                 DataGridUtil.userRefColumnBuilder(
                                 AppUserPermissions::getUserRef,
-                                getEventBus(),
-                                securityContext,
+                                refCells,
                                 false,
                                 DisplayType.DISPLAY_NAME)
                         .withSorting(UserFields.FIELD_DISPLAY_NAME, true)

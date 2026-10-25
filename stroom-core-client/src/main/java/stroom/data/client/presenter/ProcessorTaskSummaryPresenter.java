@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -69,12 +70,16 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
     private RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
                                          final PagerView view,
                                          final RestFactory restFactory,
-                                         final TooltipPresenter tooltipPresenter) {
+                                         final TooltipPresenter tooltipPresenter,
+                                         final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(tooltipPresenter);
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
@@ -123,10 +128,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         final Function<ProcessorTaskSummary, DocRef> pipelineExtractionFunction = ProcessorTaskSummary::getPipeline;
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
+        DataGridUtil.addDocRefColumn(refCells, dataGrid, "Pipeline", pipelineExtractionFunction);
 
         final Function<ProcessorTaskSummary, String> feedExtractionFunction = ProcessorTaskSummary::getFeed;
-        DataGridUtil.addFeedColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        DataGridUtil.addFeedColumn(refCells, dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),

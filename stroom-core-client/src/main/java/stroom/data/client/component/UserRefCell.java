@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.cell.info.client.CellIcon;
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.security.client.UserTabPlugin;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.event.OpenUserEvent;
-import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -40,18 +38,22 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
+/// A cell showing a user or group by its name (or another of its details), with its icon and hover
+/// buttons that copy its name and open it. Who can open which user, and opening, are its owner's:
+/// [Builder#canOpen] and [Builder#onOpen] (see `RefCellsController`).
+///
+/// @param <T_ROW> The row's type.
 public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell {
+        implements EventCell {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "userRefLinkCopy";
@@ -59,29 +61,29 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
 
-    private final EventBus eventBus;
-    private final ClientSecurityContext securityContext;
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, UserRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
     private final DisplayType displayType;
+    private final Predicate<UserRef> canOpen;
+    private final Consumer<UserRef> onOpen;
 
-    private UserRefCell(final EventBus eventBus,
-                        final ClientSecurityContext securityContext,
-                        final boolean showIcon,
+    private UserRefCell(final boolean showIcon,
                         final Function<T_ROW, SafeHtml> cellTextFunction,
                         final Function<T_ROW, UserRef> docRefFunction,
                         final Function<T_ROW, String> cssClassFunction,
-                        final DisplayType displayType) {
+                        final DisplayType displayType,
+                        final Predicate<UserRef> canOpen,
+                        final Consumer<UserRef> onOpen) {
         super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
-        this.eventBus = eventBus;
-        this.securityContext = securityContext;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
         this.displayType = displayType;
+        this.canOpen = canOpen;
+        this.onOpen = onOpen;
     }
 
     @Override
@@ -114,11 +116,6 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     }
 
     @Override
-    public void fireEvent(final GwtEvent<?> gwtEvent) {
-        eventBus.fireEvent(gwtEvent);
-    }
-
-    @Override
     protected void onEnterKeyDown(final Context context,
                                   final Element parent,
                                   final T_ROW value,
@@ -133,9 +130,9 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                 if (text != null) {
                     Clipboard.writeText(text);
                 }
-            } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+            } else if (isOpenable(userRef) && ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);
-                OpenUserEvent.fire(this, userRef);
+                onOpen.accept(userRef);
             }
         }
     }
@@ -193,7 +190,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         copySvg));
 
                 // Not all users should be able to open the user
-                if (userRef.getUuid() != null && hasPermissionToOpen(userRef)) {
+                if (isOpenable(userRef)) {
                     // A button the keyboard reaches from its row (a row action)
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME);
@@ -208,25 +205,22 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         }
     }
 
-    private boolean hasPermissionToOpen(final UserRef userRef) {
-        return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
-               || securityContext.isCurrentUser(userRef);
+    // Not every user may open every user (see Builder#canOpen), and one with no UUID can't be opened
+    private boolean isOpenable(final UserRef userRef) {
+        return onOpen != null
+               && userRef.getUuid() != null
+               && (canOpen == null || canOpen.test(userRef));
     }
 
     public static class Builder<T> {
 
-        private EventBus eventBus;
         private boolean showIcon = false;
         private DisplayType displayType = DisplayType.AUTO;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, UserRef> userRefFunction;
         private Function<T, String> cssClassFunction;
-        private ClientSecurityContext securityContext;
-
-        public Builder<T> eventBus(final EventBus eventBus) {
-            this.eventBus = eventBus;
-            return this;
-        }
+        private Predicate<UserRef> canOpen;
+        private Consumer<UserRef> onOpen;
 
         public Builder<T> showIcon(final boolean showIcon) {
             this.showIcon = showIcon;
@@ -253,8 +247,24 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
             return this;
         }
 
-        public Builder<T> securityContext(final ClientSecurityContext securityContext) {
-            this.securityContext = securityContext;
+        /// Sets which users a row's open button is shown for, e.g. all for those who manage users,
+        /// else only the current user (see `RefCellsController`).
+        ///
+        /// @param canOpen Whether a user may be opened, or null (the default) for every user.
+        /// @return This builder.
+        public Builder<T> canOpen(final Predicate<UserRef> canOpen) {
+            this.canOpen = canOpen;
+            return this;
+        }
+
+        /// Sets what opens a row's user, from its open button, e.g. firing the app's open user event
+        /// (see `RefCellsController`).
+        ///
+        /// @param onOpen What opens a user, or null (the default) for a cell that can't open one: it
+        ///               shows no open button.
+        /// @return This builder.
+        public Builder<T> onOpen(final Consumer<UserRef> onOpen) {
+            this.onOpen = onOpen;
             return this;
         }
 
@@ -301,13 +311,13 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
 
             return new UserRefCell<>(
-                    eventBus,
-                    securityContext,
                     showIcon,
                     cellTextFunction,
                     userRefFunction,
                     cssClassFunction,
-                    displayType);
+                    displayType,
+                    canOpen,
+                    onOpen);
         }
     }
 }

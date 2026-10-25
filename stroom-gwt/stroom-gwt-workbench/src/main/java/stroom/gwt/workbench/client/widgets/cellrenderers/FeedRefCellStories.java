@@ -16,9 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
-import stroom.data.client.presenter.FeedRefCell;
-import stroom.feed.client.CopyFeedUrlEvent;
-import stroom.feed.client.OpenFeedEvent;
+import stroom.data.client.component.FeedRefCell;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.EventInit;
@@ -39,17 +37,18 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /// Stories for Stroom's [FeedRefCell]. Each cell is a `CellWidget` in a box (see
 /// [CellRendererWidgets]).
 ///
 /// The rows are the feed names; an empty name is a row with no feed, shown as `(no feed)`. The
-/// `onOpen` and `onCopyLink` spies report Stroom's [OpenFeedEvent] and [CopyFeedUrlEvent], which
-/// the cell fires on its event bus (the latter from the right-click menu of the grid it is in,
-/// which the story shows with Stroom's real menu). The cell copies to the clipboard itself, so the
+/// `onOpen` and `onCopyLink` spies report the cell's `onOpen` and `onCopyUrl` callbacks, which
+/// `RefCellsController` sets in Stroom (to fire an `OpenFeedEvent` and a `CopyFeedUrlEvent`); the
+/// latter is from the right-click menu of the grid it is in, which the story shows with Stroom's
+/// real menu. The cell copies to the clipboard itself, so the
 /// story reports a mouse down on the copy button to the `onCopy` spy.
 public final class FeedRefCellStories {
 
@@ -104,27 +103,27 @@ public final class FeedRefCellStories {
                 })
                 // With and without the feed type icon
                 .story("IconToggle", context -> StoryPanels.column(8,
-                        cellBox(cell(new SimpleEventBus(), true), "TEST_FEED"),
-                        cellBox(cell(new SimpleEventBus(), false), "TEST_FEED")));
+                        cellBox(cell(true), "TEST_FEED"),
+                        cellBox(cell(false), "TEST_FEED")));
     }
 
     private static Widget basic(final StoryContext context) {
         // Stroom's real menu, for the cell's right-click menu
-        final EventBus eventBus = StoryPopups.create(context).withMenus().getEventBus();
+        StoryPopups.create(context).withMenus();
         final InlineLabel lastAction = CellRendererWidgets.lastAction();
         final Spy onOpen = context.fn(ON_OPEN);
         final Spy onCopy = context.fn(ON_COPY);
         final Spy onCopyLink = context.fn(ON_COPY_LINK);
-        eventBus.addHandler(OpenFeedEvent.getType(), event -> {
-            onOpen.call(event.getName());
-            lastAction.setText("Last action: open feed \"" + event.getName() + "\"");
-        });
-        eventBus.addHandler(CopyFeedUrlEvent.getType(), event -> {
-            onCopyLink.call(event.getName());
-            lastAction.setText("Last action: copy link for \"" + event.getName() + "\"");
-        });
-
-        final FeedRefCell<String> cell = cell(eventBus, true);
+        final FeedRefCell<String> cell = cell(
+                name -> {
+                    onOpen.call(name);
+                    lastAction.setText("Last action: open feed \"" + name + "\"");
+                },
+                name -> {
+                    onCopyLink.call(name);
+                    lastAction.setText("Last action: copy link for \"" + name + "\"");
+                },
+                true);
         final FlowPanel column = StoryPanels.column(8);
         for (final String name : new String[]{"TEST_FEED", "ANOTHER_LONG_FEED_NAME_THAT_ELLIPSISES", ""}) {
             final FlowPanel box = cellBox(cell, name);
@@ -146,8 +145,8 @@ public final class FeedRefCellStories {
     private static Widget grid(final StoryContext context) {
         final EventBus eventBus = StoryPopups.create(context).withMenus().getEventBus();
         final Spy onOpen = context.fn(ON_OPEN);
-        eventBus.addHandler(OpenFeedEvent.getType(), event -> onOpen.call(event.getName()));
-        final FeedRefCell<String> cell = cell(eventBus, true);
+        final FeedRefCell<String> cell = cell(onOpen::call, name -> {
+        }, true);
         final DataGrid<String> grid = new DataGrid<>(eventBus::fireEvent);
         grid.setWidth("100%");
         grid.setHeight("100%");
@@ -166,10 +165,21 @@ public final class FeedRefCellStories {
         return panel;
     }
 
+    /// The cell, with a row's name as its value (an empty name is a row with no feed), that can open
+    /// its feed and copy its link but reports neither.
+    private static FeedRefCell<String> cell(final boolean showIcon) {
+        return cell(name -> {
+        }, name -> {
+        }, showIcon);
+    }
+
     /// The cell, with a row's name as its value: an empty name is a row with no feed.
-    private static FeedRefCell<String> cell(final EventBus eventBus, final boolean showIcon) {
+    private static FeedRefCell<String> cell(final Consumer<String> onOpen,
+                                            final Consumer<String> onCopyUrl,
+                                            final boolean showIcon) {
         return new FeedRefCell.Builder<String>()
-                .eventBus(eventBus)
+                .onOpen(onOpen)
+                .onCopyUrl(onCopyUrl)
                 .showIcon(showIcon)
                 .nameFunction(name -> name.isEmpty()
                         ? null

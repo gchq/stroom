@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.core.client.UrlParameters;
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.document.client.event.OpenDocumentEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.EventCell;
@@ -42,22 +42,26 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+/// A cell showing a document by its name (or another of its details), with its type's icon and hover
+/// buttons that copy its name and open it, and the grid's context menu items to open it and copy its
+/// details. Opening is its owner's: [Builder#onOpen] (see `RefCellsController`). With no `onOpen`
+/// the cell offers no way to open the document.
+///
+/// @param <T_ROW> The row's type.
 public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell, HasContextMenus<T_ROW> {
+        implements EventCell, HasContextMenus<T_ROW> {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
@@ -65,35 +69,36 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String HOVER_ICON_CONTAINER_CLASS_NAME = "hoverIconContainer";
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
 
-    private final EventBus eventBus;
     private final boolean showIcon;
     private final boolean hasOpenAndCopy;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
     private final Function<T_ROW, Boolean> canOpenFunction;
+    private final Consumer<DocRef> onOpen;
 
     /**
      * @param showIcon         Set to true to show the type icon next to the text
      * @param cellTextFunction Function to provide the cell 'text' in HTML form.
      * @param docRefFunction   Function to provide a doc ref if the value can give us one.
      * @param cssClassFunction Function to provide additional css class names.
+     * @param onOpen           What opens a document, or null if it can't be opened.
      */
-    private DocRefCell(final EventBus eventBus,
-                       final boolean showIcon,
+    private DocRefCell(final boolean showIcon,
                        final boolean hasOpenAndCopy,
                        final Function<T_ROW, SafeHtml> cellTextFunction,
                        final Function<T_ROW, DocRef> docRefFunction,
                        final Function<T_ROW, String> cssClassFunction,
-                       final Function<T_ROW, Boolean> canOpenFunction) {
+                       final Function<T_ROW, Boolean> canOpenFunction,
+                       final Consumer<DocRef> onOpen) {
         super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
-        this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.hasOpenAndCopy = hasOpenAndCopy;
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
         this.canOpenFunction = canOpenFunction;
+        this.onOpen = onOpen;
     }
 
     @Override
@@ -136,12 +141,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
             int priority = 1;
             final Boolean canOpen = NullSafe.get(value, canOpenFunction);
-            if (canOpen != null && canOpen) {
+            if (onOpen != null && canOpen != null && canOpen) {
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.OPEN)
                         .text("Open " + type)
-                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .command(() -> onOpen.accept(docRef))
                         .build());
             }
             menuItems.add(createCopyAsMenuItem(docRef, type, priority++));
@@ -150,11 +155,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         return menuItems.isEmpty()
                 ? null
                 : menuItems;
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> gwtEvent) {
-        eventBus.fireEvent(gwtEvent);
     }
 
     @Override
@@ -172,9 +172,9 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 if (text != null) {
                     Clipboard.writeText(text);
                 }
-            } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+            } else if (onOpen != null && ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);
-                OpenDocumentEvent.fire(this, docRef, true);
+                onOpen.accept(docRef);
             }
         } else {
             final String text = cellTextFunction.apply(value).asString();
@@ -236,7 +236,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         copy));
 
                 // A broken ref may have an empty UUID, which can't be opened
-                if (NullSafe.isNonBlankString(docRef.getUuid())) {
+                if (onOpen != null && NullSafe.isNonBlankString(docRef.getUuid())) {
                     // A button the keyboard reaches from its row (a row action)
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
@@ -317,7 +317,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
     public static class Builder<T> {
 
-        private EventBus eventBus;
         private boolean showIcon = false;
         private boolean hasOpenAndCopy = true;
         private DocRef.DisplayType displayType = DisplayType.NAME;
@@ -325,9 +324,16 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         private Function<T, DocRef> docRefFunction;
         private Function<T, String> cssClassFunction;
         private Function<T, Boolean> canOpenFunction;
+        private Consumer<DocRef> onOpen;
 
-        public Builder<T> eventBus(final EventBus eventBus) {
-            this.eventBus = eventBus;
+        /// Sets what opens a row's document, from its open button or its 'Open' menu item, e.g.
+        /// firing the app's open document event (see `RefCellsController`).
+        ///
+        /// @param onOpen What opens a document, or null (the default) for a cell that can't open
+        ///               one: it shows no open button or menu item.
+        /// @return This builder.
+        public Builder<T> onOpen(final Consumer<DocRef> onOpen) {
+            this.onOpen = onOpen;
             return this;
         }
 
@@ -417,13 +423,13 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
 
             return new DocRefCell<>(
-                    eventBus,
                     showIcon,
                     hasOpenAndCopy,
                     cellTextFunction,
                     docRefFunction,
                     cssClassFunction,
-                    canOpenFunction);
+                    canOpenFunction,
+                    onOpen);
         }
     }
 }

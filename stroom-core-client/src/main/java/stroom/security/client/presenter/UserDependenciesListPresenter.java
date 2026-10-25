@@ -16,9 +16,10 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -65,14 +66,18 @@ public class UserDependenciesListPresenter
     private RestDataProvider<UserDependency, ResultPage<UserDependency>> dataProvider;
     private String filter;
 
+    private final RefCellsController refCells;
+
     @Inject
     public UserDependenciesListPresenter(final EventBus eventBus,
                                          final PagerView pagerView,
                                          final RestFactory restFactory,
                                          final QuickFilterPageView dependenciesListView,
                                          final UiConfigCache uiConfigCache,
-                                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+                                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
+                                         final RefCellsController refCells) {
         super(eventBus, dependenciesListView);
+        this.refCells = own(refCells);
         getView().setAccessibleName("Filter dependencies");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -195,12 +200,11 @@ public class UserDependenciesListPresenter
         // Doc name col
         final DocRefCell.Builder<UserDependency> cellBuilder =
                 new DocRefCell.Builder<UserDependency>()
-                        .eventBus(getEventBus())
                         .docRefFunction(UserDependency::getDocRef)
                         .showIcon(true);
 
         final Column<UserDependency, UserDependency> docNameCol = DataGridUtil.docRefColumnBuilder(
-                        cellBuilder)
+                        refCells.configure(cellBuilder))
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();
         dataGrid.addResizableColumn(

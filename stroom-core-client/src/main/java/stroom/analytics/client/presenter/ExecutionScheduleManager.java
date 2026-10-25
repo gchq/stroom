@@ -27,6 +27,7 @@ import stroom.analytics.shared.ScheduleBounds;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.IconCell;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.ExpressionPresenter;
@@ -39,7 +40,6 @@ import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -106,18 +106,21 @@ public class ExecutionScheduleManager
 
 //    private final ScheduledQueryAnalyticExecutor scheduledQueryExecutor;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ExecutionScheduleManager(final EventBus eventBus,
                                     final PagerView view,
                                     final DateTimeFormatter dateTimeFormatter,
-                                    final ClientSecurityContext securityContext,
                                     final RestFactory restFactory,
                                     final ScheduledProcessEditPresenter scheduledProcessEditPresenter,
                                     final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter,
                                     final ExecutionScheduleRunNowPresenter executionScheduleRunNowPresenter,
                                     final Provider<ExpressionPresenter> expressionPresenterProvider,
-                                    final ExpressionValidator expressionValidator) {
+                                    final ExpressionValidator expressionValidator,
+                                    final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(scheduledProcessEditPresenter);
         own(batchExecutionScheduleEditPresenter);
         own(executionScheduleRunNowPresenter);
@@ -158,7 +161,7 @@ public class ExecutionScheduleManager
         createNodeNameColumn();
         createScheduleColumn();
         createBoundsColumn(dateTimeFormatter);
-        createRunAsColumn(securityContext);
+        createRunAsColumn();
 
         refresh();
 
@@ -353,12 +356,11 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createRunAsColumn(final ClientSecurityContext securityContext) {
+    private void createRunAsColumn() {
         final Column<ExecutionSchedule, ExecutionSchedule> runAsCol = DataGridUtil
             .userRefColumnBuilder(
                 ExecutionSchedule::getRunAsUser,
-                getEventBus(),
-                securityContext,
+                refCells,
                 true,
                 DisplayType.AUTO)
             .withSorting(ExecutionScheduleFields.RUN_AS_USER, true)

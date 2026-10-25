@@ -22,6 +22,7 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -117,6 +118,8 @@ public abstract class AbstractMetaListPresenter
     private Consumer<ResultPage<MetaRow>> onResult = resultPage -> {
     };
 
+    private final RefCellsController refCells;
+
     private final Listeners<Selection<Long>> selectionListeners = new Listeners<>();
 
     AbstractMetaListPresenter(final EventBus eventBus,
@@ -128,8 +131,10 @@ public abstract class AbstractMetaListPresenter
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<DocSelectionPopup> pipelineSelection,
                               final ExpressionValidator expressionValidator,
-                              final boolean allowSelectAll) {
+                              final boolean allowSelectAll,
+                              final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -384,7 +389,7 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
                                                 .orElse(null),
-                                getEventBus())
+                                refCells)
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -419,7 +424,7 @@ public abstract class AbstractMetaListPresenter
         dataGrid.addResizableColumn(
                 DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
                                         NullSafe.get(metaRow, this::getPipeline),
-                                getEventBus())
+                                refCells)
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",

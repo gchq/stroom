@@ -17,8 +17,9 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.Builder;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.DocRefCell.Builder;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -95,13 +96,17 @@ public class PipelineReferenceListPresenter
 
     private boolean readOnly = true;
 
+    private final RefCellsController refCells;
+
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
                                           final RestFactory restFactory,
-                                          final PipelineElementTypesFactory pipelineElementTypesFactory) {
+                                          final PipelineElementTypesFactory pipelineElementTypesFactory,
+                                          final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
 
         dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Pipeline References");
@@ -141,7 +146,6 @@ public class PipelineReferenceListPresenter
     private void addPipelineColumn() {
         // Pipeline.
         final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .eventBus(getEventBus())
                 .showIcon(true)
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
@@ -157,7 +161,7 @@ public class PipelineReferenceListPresenter
                         PipelineReference::getPipeline));
 
         final Column<PipelineReference, PipelineReference> pipelineCol = DataGridUtil.docRefColumnBuilder(
-                        cellBuilder)
+                        refCells.configure(cellBuilder))
                 .build();
 
         dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
@@ -166,7 +170,6 @@ public class PipelineReferenceListPresenter
     private void addFeedColumn() {
         // Feed.
         final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .eventBus(getEventBus())
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
                     if (pipelineReference == null || pipelineReference.getFeed() == null) {
@@ -181,7 +184,7 @@ public class PipelineReferenceListPresenter
                         PipelineReference::getFeed));
 
         final Column<PipelineReference, PipelineReference> feedCol = DataGridUtil.docRefColumnBuilder(
-                        cellBuilder)
+                        refCells.configure(cellBuilder))
                 .build();
 
         dataGrid.addResizableColumn(feedCol, "Feed", 350);
@@ -204,7 +207,6 @@ public class PipelineReferenceListPresenter
         // Default Value.
         @SuppressWarnings("checkstyle:LineLength") // cos GWT
         final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .eventBus(getEventBus())
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
                     final DocRef source = pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference);
@@ -220,7 +222,7 @@ public class PipelineReferenceListPresenter
                         pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference));
 
         final Column<PipelineReference, PipelineReference> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
-                        cellBuilder)
+                        refCells.configure(cellBuilder))
                 .build();
 
         dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);

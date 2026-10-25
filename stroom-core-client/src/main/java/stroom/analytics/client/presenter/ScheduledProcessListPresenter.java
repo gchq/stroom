@@ -22,6 +22,7 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -30,7 +31,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -74,7 +74,6 @@ public class ScheduledProcessListPresenter
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final ClientSecurityContext securityContext;
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -86,17 +85,19 @@ public class ScheduledProcessListPresenter
     // Whether the enabled tick box column was last built as read only, so we know when to rebuild it
     private boolean columnsReadOnly;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ScheduledProcessListPresenter(final EventBus eventBus,
                                          final PagerView view,
                                          final RestFactory restFactory,
                                          final DateTimeFormatter dateTimeFormatter,
-                                         final ClientSecurityContext securityContext,
-                                         final NodeClient nodeClient) {
+                                         final NodeClient nodeClient,
+                                         final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.securityContext = securityContext;
 
         request = ExecutionScheduleRequest.builder().build();
         dataGrid = new DataGrid<>(this);
@@ -197,8 +198,7 @@ public class ScheduledProcessListPresenter
         final Column<ExecutionSchedule, ExecutionSchedule> runAsCol = DataGridUtil
                 .userRefColumnBuilder(
                         ExecutionSchedule::getRunAsUser,
-                        getEventBus(),
-                        securityContext,
+                        refCells,
                         true,
                         DisplayType.AUTO)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)

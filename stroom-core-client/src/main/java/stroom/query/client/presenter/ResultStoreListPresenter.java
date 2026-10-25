@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
@@ -25,7 +26,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource.SourceType;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -57,14 +57,17 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     private ButtonView deleteButton;
     private ButtonView settingsButton;
 
+    private final RefCellsController refCells;
+
     @Inject
     public ResultStoreListPresenter(final EventBus eventBus,
                                     final PagerView view,
                                     final ResultStoreModel resultStoreModel,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ResultStoreSettingsPresenter resultStoreSettingsPresenter,
-                                    final ClientSecurityContext securityContext) {
+                                    final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         own(resultStoreSettingsPresenter);
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
@@ -89,7 +92,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         // User Id
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
-                                ResultStoreInfo::getOwner, getEventBus(), securityContext, DisplayType.AUTO)
+                                ResultStoreInfo::getOwner, refCells, DisplayType.AUTO)
                         .enabledWhen(taskProgress -> taskProgress.getOwner().isEnabled())
                         .build(),
                 "User Display Name", 300);

@@ -16,7 +16,8 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -65,11 +66,15 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     private boolean focusText;
     private Consumer<ResultPage<FindResultWithPermissions>> currentResultHandler;
 
+    private final RefCellsController refCells;
+
     @Inject
     public DocumentPermissionsListPresenter(final EventBus eventBus,
                                             final PagerView view,
-                                            final RestFactory restFactory) {
+                                            final RestFactory restFactory,
+                                            final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
         this.restFactory = restFactory;
 
         dataGrid = new DataGrid<>(this);
@@ -100,14 +105,13 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         // Display Name
         final DocRefCell.Builder<FindResultWithPermissions> cellBuilder =
                 new DocRefCell.Builder<FindResultWithPermissions>()
-                        .eventBus(getEventBus())
                         .docRefFunction(row2 -> NullSafe.get(
                                 row2,
                                 FindResultWithPermissions::getFindResult,
                                 FindResult::getDocRef))
                         .showIcon(true);
         final Column<FindResultWithPermissions, FindResultWithPermissions> docNameCol =
-                DataGridUtil.docRefColumnBuilder(cellBuilder).build();
+                DataGridUtil.docRefColumnBuilder(refCells.configure(cellBuilder)).build();
 
         dataGrid.addResizableColumn(docNameCol, "Document", 400);
 

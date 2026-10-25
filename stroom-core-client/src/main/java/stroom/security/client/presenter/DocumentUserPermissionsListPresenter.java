@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -27,7 +28,6 @@ import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
@@ -78,7 +78,6 @@ public class DocumentUserPermissionsListPresenter
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
-    private final ClientSecurityContext securityContext;
     private final RestFactory restFactory;
     private final FetchDocumentUserPermissionsRequest.Builder criteriaBuilder =
             new FetchDocumentUserPermissionsRequest.Builder();
@@ -88,6 +87,8 @@ public class DocumentUserPermissionsListPresenter
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
     private DocRef docRef;
 
+    private final RefCellsController refCells;
+
     @Inject
     public DocumentUserPermissionsListPresenter(final EventBus eventBus,
                                                 final QuickFilterPageView userListView,
@@ -95,14 +96,14 @@ public class DocumentUserPermissionsListPresenter
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
                                                 final DocumentTypeCache documentTypeCache,
-                                                final ClientSecurityContext securityContext,
                                                 final QuickFilterContextHandlerFactory
-                                                        quickFilterContextHandlerFactory) {
+                                                        quickFilterContextHandlerFactory,
+                                                        final RefCellsController refCells) {
         super(eventBus, userListView);
+        this.refCells = own(refCells);
         getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        this.securityContext = securityContext;
         documentTypeCache.fetch(this::setupColumns, this);
 
         dataGrid = new DataGrid<>(this);
@@ -223,8 +224,7 @@ public class DocumentUserPermissionsListPresenter
         final Column<DocumentUserPermissions, DocumentUserPermissions> displayNameCol =
                 DataGridUtil.userRefColumnBuilder(
                                 DocumentUserPermissions::getUserRef,
-                                getEventBus(),
-                                securityContext,
+                                refCells,
                                 false,
                                 DisplayType.DISPLAY_NAME)
                         .withSorting(UserFields.FIELD_DISPLAY_NAME, true)

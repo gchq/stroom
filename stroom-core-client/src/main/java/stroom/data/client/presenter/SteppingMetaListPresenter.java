@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
+import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.DataRetentionFields;
@@ -43,7 +44,8 @@ public class SteppingMetaListPresenter extends AbstractMetaListPresenter {
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                                      final Provider<DocSelectionPopup> pipelineSelection,
-                                     final ExpressionValidator expressionValidator) {
+                                     final ExpressionValidator expressionValidator,
+                                     final RefCellsController refCells) {
         super(eventBus,
                 view,
                 restFactory,
@@ -53,7 +55,8 @@ public class SteppingMetaListPresenter extends AbstractMetaListPresenter {
                 processChoicePresenterProvider,
                 pipelineSelection,
                 expressionValidator,
-                true);
+                true,
+                refCells);
     }
 
     @Override

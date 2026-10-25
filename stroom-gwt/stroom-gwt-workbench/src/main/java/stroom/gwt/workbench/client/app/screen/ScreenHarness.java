@@ -237,7 +237,7 @@ public final class ScreenHarness {
         // and the edit menu on text fields, in place of the browser's
         addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
-        // MainPresenter relays them
+        // CorePresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
 
         // Record alerts and confirmations, and optionally show them as Stroom does

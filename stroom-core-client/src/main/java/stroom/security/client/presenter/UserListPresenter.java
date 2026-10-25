@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -27,7 +28,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -68,7 +68,6 @@ public class UserListPresenter
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final ClientSecurityContext securityContext;
     private final PagerView pagerView;
     private final DataGrid<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
@@ -91,17 +90,19 @@ public class UserListPresenter
     private String name = this.getClass().getSimpleName();
     private Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction;
 
+    private final RefCellsController refCells;
+
     @Inject
     public UserListPresenter(final EventBus eventBus,
                              final QuickFilterPageView userListView,
-                             final ClientSecurityContext securityContext,
                              final PagerView pagerView,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
-                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
+                             final RefCellsController refCells) {
         super(eventBus, userListView);
+        this.refCells = own(refCells);
         getView().setAccessibleName("Filter users and groups");
-        this.securityContext = securityContext;
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
@@ -218,7 +219,7 @@ public class UserListPresenter
 //                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
 //                .build();
         final Column<User, User> displayNameCol = DataGridUtil.userRefColumnBuilder(
-                        User::getUserRef, getEventBus(), securityContext, DisplayType.DISPLAY_NAME)
+                        User::getUserRef, refCells, DisplayType.DISPLAY_NAME)
                 .enabledWhen(User::isEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                 .build();
@@ -234,7 +235,7 @@ public class UserListPresenter
         if (mode.includesUsers()) {
             dataGrid.addResizableColumn(
                     DataGridUtil.userRefColumnBuilder(
-                                    User::getUserRef, getEventBus(), securityContext, DisplayType.FULL_NAME)
+                                    User::getUserRef, refCells, DisplayType.FULL_NAME)
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_FULL_NAME, true)
                             .build(),
@@ -254,7 +255,7 @@ public class UserListPresenter
         if (mode == Mode.USERS_ONLY && showUniqueUserIdCol) {
             dataGrid.addResizableColumn(
                     DataGridUtil.userRefColumnBuilder(
-                                    User::getUserRef, getEventBus(), securityContext, DisplayType.SUBJECT_ID)
+                                    User::getUserRef, refCells, DisplayType.SUBJECT_ID)
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_UNIQUE_ID, true)
                             .build(),

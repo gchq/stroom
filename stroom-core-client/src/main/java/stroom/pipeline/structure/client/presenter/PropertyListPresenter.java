@@ -17,8 +17,9 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.Builder;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.DocRefCell.Builder;
+import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -93,13 +94,17 @@ public class PropertyListPresenter
 
     private boolean readOnly = true;
 
+    private final RefCellsController refCells;
+
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
                                  final RestFactory restFactory,
-                                 final DocumentPluginRegistry documentPluginRegistry) {
+                                 final DocumentPluginRegistry documentPluginRegistry,
+                                 final RefCellsController refCells) {
         super(eventBus, view);
+        this.refCells = own(refCells);
 
         dataGrid = new DataGrid<>(this);
         // Rows keyed by element and property name: an edit replaces the row
@@ -149,7 +154,6 @@ public class PropertyListPresenter
         // Value.
         // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
         final DocRefCell.Builder<PipelineProperty> cellBuilder = new Builder<PipelineProperty>()
-                .eventBus(getEventBus())
                 .showIcon(true)
                 .canOpenFunction(property -> property.getValue() != null &&
                                              !property.getValue().isEmbedded())
@@ -174,7 +178,7 @@ public class PropertyListPresenter
                         PipelinePropertyValue::getEntity));
 
         final Column<PipelineProperty, PipelineProperty> valueCol = DataGridUtil.docRefColumnBuilder(
-                        cellBuilder)
+                        refCells.configure(cellBuilder))
                 .build();
 
         dataGrid.addAutoResizableColumn(valueCol, "Value", 30, 200);

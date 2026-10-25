@@ -29,6 +29,7 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -50,6 +51,10 @@ public class CorePresenter extends MyPresenterWidget<CoreView>
                          final ClientSecurityContext securityContext,
                          final UrlParameters urlParameters) {
         super(eventBus, view);
+        // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter).
+        // Here, as both Stroom and the standalone dashboard show this, and only Stroom shows its
+        // main presenter
+        own(MenuRequest.relay(this));
         this.securityContext = securityContext;
         this.urlParameters = urlParameters;
     }
