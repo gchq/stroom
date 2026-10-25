@@ -71,6 +71,54 @@ class TestDashboardChanges {
     }
 
     @Test
+    void aSelectionFilterIsReadAndDescribed() {
+        final Change change = DashboardChanges.parse(List.of(Map.of("op", "add_selection_filter",
+                "target", "Events", "chart", "Codes", "mode", "table", "match", "any",
+                "terms", List.of(Map.of("field", "Sender", "selection", "node"),
+                        Map.of("field", "Recipient", "selection", "node"))))).getFirst();
+
+        assertThat(change.target()).isEqualTo("Events");
+        assertThat(change.name()).isEqualTo("Codes");
+        assertThat(change.value()).isEqualTo(DashboardChanges.TABLE_FILTER);
+        assertThat(change.settings()).containsExactly(Map.entry("Sender", "node"), Map.entry("Recipient", "node"));
+        assertThat(DashboardChanges.describe(List.of(change))).containsExactly(
+                "Filter the rows of 'Events' by what is selected in chart 'Codes': Sender = its node or Recipient "
+                + "= its node");
+    }
+
+    @Test
+    void aSelectionFilterNeedsItsTargetChartModeAndTerms() {
+        final Map<String, Object> filter = Map.of("op", "add_selection_filter", "target", "Events", "chart", "Codes",
+                "mode", "query", "terms", List.of(Map.of("field", "event.code", "selection", "category")));
+        assertThat(DashboardChanges.parse(List.of(filter)).getFirst().filter()).isEqualTo("all");
+
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(without(filter, "mode"))))
+                .hasMessageContaining("needs mode: query")
+                .hasMessageContaining("Ask the user which if they haven't said.");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(without(filter, "chart"))))
+                .hasMessageContaining("needs the target");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "terms", List.of()))))
+                .hasMessageContaining("needs terms");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "terms",
+                List.of(Map.of("field", "a", "selection", "x"), Map.of("field", "a", "selection", "y"))))))
+                .hasMessageContaining("'a' is in two terms");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "match", "most"))))
+                .hasMessageContaining("match must be all or any");
+    }
+
+    private static Map<String, Object> without(final Map<String, Object> map, final String key) {
+        final Map<String, Object> copy = new LinkedHashMap<>(map);
+        copy.remove(key);
+        return copy;
+    }
+
+    private static Map<String, Object> with(final Map<String, Object> map, final String key, final Object value) {
+        final Map<String, Object> copy = new LinkedHashMap<>(map);
+        copy.put(key, value);
+        return copy;
+    }
+
+    @Test
     void aQueryExpressionIsReadBackAsItWasWrittenAndDescribedInWords() {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .op(Op.OR)
