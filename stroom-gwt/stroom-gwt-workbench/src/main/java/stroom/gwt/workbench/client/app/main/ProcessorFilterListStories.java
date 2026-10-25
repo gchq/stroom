@@ -108,6 +108,9 @@ public final class ProcessorFilterListStories {
             "\"lastPollTaskCount\": 0}",
             "\"lastPollTaskCount\": 0, \"minMetaId\": 42}");
 
+    // A stream link's open icon (OpenLinkUtil)
+    private static final String STREAM_LINK_OPEN = "[link-type=\"stream\"] .docRefLinkOpen";
+
     // Told each time a stream is asked to be opened
     private static final String SHOW_DATA_SPY = "showData";
 
@@ -180,12 +183,16 @@ public final class ProcessorFilterListStories {
                 })
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW).count()).toBe(2));
-                    // The filter, the processor, then the filter again
-                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(1));
-                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(0));
-                    play.click(play.querySelectorAll(StroomDom.GRID_ROW).nth(1));
-                    play.waitFor(() -> play.expect(play.querySelector(".docRefLinkOpen")).not().toBeNull());
-                    play.click(play.querySelector(".docRefLinkOpen"));
+                    // The filter, the processor, then the filter again, each by its pipeline's name (the
+                    // middle of a row is the priority spinner, which keeps its clicks)
+                    for (final int row : new int[]{1, 0, 1}) {
+                        play.click(play.within(play.querySelectorAll(StroomDom.GRID_ROW).nth(row))
+                                .getByText("Events Pipeline"));
+                    }
+                    // The filter's details, with its first stream as a link (the grid's pipelines have
+                    // links of their own)
+                    play.waitFor(() -> play.expect(play.getByText("Min Stream Id")).toBeInTheDocument());
+                    play.click(play.querySelector(STREAM_LINK_OPEN));
                     play.expect(play.spy(SHOW_DATA_SPY)).toHaveBeenCalledTimes(1);
                     expectNoProblems(play);
                 });
