@@ -57,6 +57,8 @@ public final class IndexFieldDocs {
 
     private static final String RECORDS = "records:2";
     private static final String IN_SAMPLE = "In sample";
+    // The most TypeIds named under a section.
+    private static final int MAX_TYPE_IDS = 15;
     // What FieldDocs.actionOf gives a path that skips the action element (EventDetail//...).
     private static final String ANY_ACTION = "";
     // An index Stroom did not build may hold raw records, not events.
@@ -219,15 +221,15 @@ public final class IndexFieldDocs {
     /// @param head       The table's head.
     /// @param layout     [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
     /// @param population The share of events (%) each event path is populated in, or null.
-    /// @param byAction   The share of all events (%) each path is populated in, by the action element of the
-    ///                   events that have it, or null: then only a field read from whichever action element is
-    ///                   placed (by its paths' own action elements), and those not of an action element stay common.
+    /// @param byAction   What the sample's events hold by their action element, or null: then only a field read
+    ///                   from whichever action element is placed (by its paths' own action elements), and those not
+    ///                   of an action element stay common.
     /// @return The tables' lines.
     public static List<String> indexTables(final List<IndexRow> rows,
                                            final List<String> head,
                                            final String layout,
                                            final Map<String, Double> population,
-                                           final Map<String, Map<String, Double>> byAction) {
+                                           final ByAction byAction) {
         // The action elements' own fields, then those placed under them.
         final Map<String, List<List<String>>> own = new LinkedHashMap<>();
         final Map<String, Set<String>> sources = new LinkedHashMap<>();
@@ -248,7 +250,7 @@ public final class IndexFieldDocs {
                 continue;
             }
             final Map<String, Double> shares = byAction != null
-                    ? sharesIn(row.source(), byAction)
+                    ? sharesIn(row.source(), byAction.shares())
                     : sharesByAction(row.source(), population);
             if (shares.isEmpty()) {
                 notInSample.add(row.cells());
@@ -307,6 +309,11 @@ public final class IndexFieldDocs {
                     lines.add("In " + String.join(", ", shares) + " of the sample's events.");
                     lines.add("");
                 }
+                final String typeIds = typeIdsOf(group, byAction);
+                if (!typeIds.isEmpty()) {
+                    lines.add(typeIds);
+                    lines.add("");
+                }
                 final List<List<String>> cells = new ArrayList<>();
                 group.forEach(action -> cells.addAll(own.getOrDefault(action, List.of())));
                 group.forEach(action -> cells.addAll(placed.getOrDefault(action, List.of())));
@@ -321,6 +328,30 @@ public final class IndexFieldDocs {
             lines.addAll(table(head, notInSample));
         }
         return lines;
+    }
+
+    // The TypeIds of a section's events, most first, each with its share of all events (not in the Stroom MCP
+    // server; seen: nothing said which kinds of event, Secret-View say, a section's fields come from).
+    private static String typeIdsOf(final List<String> group, final ByAction byAction) {
+        if (byAction == null) {
+            return "";
+        }
+        final Map<String, Double> shares = new LinkedHashMap<>();
+        group.forEach(action -> byAction.typeIds().getOrDefault(action, Map.of()).forEach((typeId, share) ->
+                shares.merge(typeId, share, (a, b) -> Math.min(100.0, a + b))));
+        if (shares.isEmpty()) {
+            return "";
+        }
+        final List<Map.Entry<String, Double>> sorted = shares.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .toList();
+        final String listed = sorted.stream()
+                .limit(MAX_TYPE_IDS)
+                .map(entry -> "`" + entry.getKey() + "` (" + PyText.formatG(entry.getValue()) + "%)")
+                .collect(Collectors.joining(", "));
+        return "TypeIds: " + listed + (sorted.size() > MAX_TYPE_IDS
+                ? " and " + (sorted.size() - MAX_TYPE_IDS) + " more"
+                : "") + ".";
     }
 
     // Each action element whose events have the source, with that share of all events.
@@ -453,8 +484,7 @@ public final class IndexFieldDocs {
     /// @param plan       The index plan.
     /// @param population The share of the sample's events (%) each event path is populated in, or null for no
     ///                   sample.
-    /// @param byAction   The share of all events (%) each path is populated in, by the action element of the
-    ///                   events that have it, or null.
+    /// @param byAction   What the sample's events hold by their action element, or null.
     /// @param documents  The documents the pipeline wrote from the sample, or null.
     /// @param schema     The event-logging schema, or null.
     /// @param layout     [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
@@ -462,7 +492,7 @@ public final class IndexFieldDocs {
     /// @return The section's text, ending with a new line.
     public static String indexFieldMappingMarkdown(final FieldPlan plan,
                                                    final Map<String, Double> population,
-                                                   final Map<String, Map<String, Double>> byAction,
+                                                   final ByAction byAction,
                                                    final List<Map<String, List<String>>> documents,
                                                    final EventSchema schema,
                                                    final String layout,
@@ -478,8 +508,7 @@ public final class IndexFieldDocs {
     /// @param plan        The index plan.
     /// @param population  The share of the sample's events (%) each event path is populated in, or null for no
     ///                    sample.
-    /// @param byAction    The share of all events (%) each path is populated in, by the action element of the
-    ///                    events that have it, or null.
+    /// @param byAction    What the sample's events hold by their action element, or null.
     /// @param documents   The documents the pipeline wrote from the sample, or null.
     /// @param indexValues Example values the index holds, by index field, or null.
     /// @param schema      The event-logging schema, or null.
@@ -488,7 +517,7 @@ public final class IndexFieldDocs {
     /// @return The section's text, ending with a new line.
     public static String indexFieldMappingMarkdown(final FieldPlan plan,
                                                    final Map<String, Double> population,
-                                                   final Map<String, Map<String, Double>> byAction,
+                                                   final ByAction byAction,
                                                    final List<Map<String, List<String>>> documents,
                                                    final Map<String, List<String>> indexValues,
                                                    final EventSchema schema,
@@ -1019,6 +1048,14 @@ public final class IndexFieldDocs {
     /// @param source The event-logging path, or "" (a shared template's field, or none recorded).
     /// @param cells  The row's cells.
     public record IndexRow(String source, List<String> cells) {
+
+    }
+
+    /// What the sample's events hold, by the action element of each.
+    ///
+    /// @param shares  The share of all events (%) each path (and named Data entry) is populated in, by action.
+    /// @param typeIds Each TypeId's share of all events (%), by action, most first.
+    public record ByAction(Map<String, Map<String, Double>> shares, Map<String, Map<String, Double>> typeIds) {
 
     }
 

@@ -464,7 +464,7 @@ class FieldMappingSections {
                 : examplesFromIndex(context, pipeline, plan, missing);
         String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, summary == null
                 ? null
-                : IndexingInputs.populationByAction(summary), documents, fromIndex, schema, layout, described)
+                : IndexingInputs.byAction(summary), documents, fromIndex, schema, layout, described)
                          + agreedLine(pipeline);
         final Optional<String> drift = mappingDrift.planDrift(kept);
         if (drift.isPresent()) {
