@@ -184,7 +184,7 @@ Needs: View (document)
 
 ## propose_dashboard_change {"component":"table-1","changes":[{"op":"hide_column","column":"UserId"}],"summary":"Hide the user."}
 Needs: View (document)
-- everything: runs: The dashboard has no table 'table-1'. Its tables are: .
+- everything: runs: The dashboard has no table or embedded query 'table-1'. Its tables and embedded queries are: .
 - without View (document): REFUSED or limited: You don't have permission to view this document.
 - nothing: REFUSED or limited: You don't have permission to view this document.
 - admin: runs (the same as with everything)

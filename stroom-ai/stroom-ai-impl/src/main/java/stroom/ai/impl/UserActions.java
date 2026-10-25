@@ -414,7 +414,9 @@ public class UserActions {
             LOGGER.debug(() -> "Dropping a visualisation that can't be read: " + e.getMessage());
             return Optional.empty();
         }
-        if (plan.isQuery() != QueryDoc.TYPE.equals(named.getType())) {
+        // A Query's show clause is planned for the Query; an embedded query's, and a table's chart, for a dashboard.
+        final boolean forQueryDoc = plan.isQuery() && !plan.isEmbeddedQuery();
+        if (forQueryDoc != QueryDoc.TYPE.equals(named.getType())) {
             return Optional.empty();
         }
         final DocRef target = lookup.find(named).orElse(null);
@@ -428,7 +430,10 @@ public class UserActions {
                   + "', renamed '" + name + "' (saved at once), in pane '" + plan.replace().componentName()
                   + "' of dashboard '" + target.getName() + "'"
                 : "Create visualisation '" + name + "' (" + plan.chartKind().displayName() + ") "
-                  + (plan.isQuery()
+                  + (plan.isEmbeddedQuery()
+                        ? "and show it with embedded query '" + plan.table() + "' on dashboard '"
+                          + target.getName() + "'"
+                        : plan.isQuery()
                         ? "and show it with query '" + target.getName() + "'"
                         : "and add it to dashboard '" + target.getName() + "', drawing table '" + plan.table()
                           + "'");

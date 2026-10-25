@@ -226,6 +226,20 @@ final class ResultsRequests {
         return expressions;
     }
 
+    /// The group levels of a dashboard table's columns, by column name.
+    ///
+    /// @param context The table's search request.
+    /// @return Each grouped column's level, from 0 for the top level, by name; none for a query's table.
+    static Map<String, Integer> columnGroups(final AskStroomAiContext context) {
+        final Map<String, Integer> groups = new LinkedHashMap<>();
+        for (final Column column : columns(context)) {
+            if (column.getName() != null && column.getGroup() != null) {
+                groups.put(column.getName(), column.getGroup());
+            }
+        }
+        return groups;
+    }
+
     // The columns of a dashboard table's search request, or none for a query.
     private static List<Column> columns(final AskStroomAiContext context) {
         if (!(context instanceof final DashboardTableContext dashboard) || dashboard.getSearchRequest() == null) {
