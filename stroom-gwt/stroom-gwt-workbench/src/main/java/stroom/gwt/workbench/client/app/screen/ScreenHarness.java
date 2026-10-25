@@ -54,10 +54,10 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -235,7 +235,7 @@ public final class ScreenHarness {
         // Stroom
         new StaticEventBus(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's MenuManager does
-        new MenuManager(eventBus, this::createMenuPresenter, appRoot);
+        new MenuManager(eventBus, this::createMenuController, appRoot);
         // and the edit menu on text fields, in place of the browser's
         addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
@@ -256,8 +256,8 @@ public final class ScreenHarness {
     }
 
     // As Stroom's GIN module creates them for its Menu
-    private MenuPresenter createMenuPresenter() {
-        return new MenuPresenter(eventBus, new MenuViewImpl(), this::createMenuPresenter);
+    private MenuController createMenuController() {
+        return new MenuController(eventBus, new Menu(), this::createMenuController);
     }
 
     /// Creates the harness for a story, with the default start-up fixtures and security context

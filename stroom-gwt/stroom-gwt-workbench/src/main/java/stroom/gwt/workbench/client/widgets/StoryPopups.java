@@ -28,10 +28,10 @@ import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
@@ -89,12 +89,12 @@ public final class StoryPopups {
     }
 
     /// Shows menus as Stroom does: Stroom's [Menu] handles `ShowMenuEvent`, creating a
-    /// [MenuPresenter] for each menu and submenu.
+    /// [MenuController] for each menu and submenu.
     ///
     /// @return This, for chaining.
     public StoryPopups withMenus() {
         // Its menus are owned until hidden, as by Stroom's app root
-        new MenuManager(eventBus, this::createMenuPresenter, new AppRoot());
+        new MenuManager(eventBus, this::createMenuController, new AppRoot());
         // and the edit menu on text fields, in place of the browser's
         cleanUps.add(ContextMenuManager.install(eventBus::fireEvent));
         return this;
@@ -127,11 +127,11 @@ public final class StoryPopups {
         return this;
     }
 
-    /// Creates a menu presenter as Stroom's GIN module would.
+    /// Creates a menu's controller as Stroom's GIN injector would.
     ///
-    /// @return A new menu presenter, using this event bus.
-    public MenuPresenter createMenuPresenter() {
-        return new MenuPresenter(eventBus, new MenuViewImpl(), this::createMenuPresenter);
+    /// @return A new menu controller, using this event bus.
+    public MenuController createMenuController() {
+        return new MenuController(eventBus, new Menu(), this::createMenuController);
     }
 
     /// Registers something to undo when the story renders again.

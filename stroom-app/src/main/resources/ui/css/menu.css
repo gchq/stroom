@@ -40,6 +40,21 @@
    The popup holding a menu has no padding of its own, so its items sit 6px in (with its border) */
 .menu__viewport {
     padding: 5px;
+    overflow: auto;
+    min-width: 50px;
+    max-width: 400px;
+    max-height: 500px;
+}
+
+/* A menu given a width (ShowMenuEvent.Builder#width), rather than fitted to its items */
+.menu__viewport--fixed-width {
+    width: var(--menu__width);
+    min-width: var(--menu__width);
+    max-width: var(--menu__width);
+}
+
+.menu {
+    min-width: 50px;
 }
 
 .popup:has(> .popupContent > .menu__viewport) {

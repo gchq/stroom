@@ -44,9 +44,6 @@ import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
@@ -71,7 +68,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         // AppModule: menus and tool tips
-        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
 
         // SecurityModule
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);

@@ -171,7 +171,7 @@ final class PopupHarnesses {
 
     /// Two popups, the child's trigger inside the parent's panel and its panel outside it (on the
     /// body, as every Stroom popup is). Each is shown with `ShowPopupEvent` as an auto-hiding
-    /// `POPUP` with its trigger as the auto-hide partner, as `MenuPresenter` shows a submenu.
+    /// `POPUP` with its trigger as the auto-hide partner, as `MenuController` shows a submenu.
     ///
     /// @param popups The story's popups.
     /// @return The widget.

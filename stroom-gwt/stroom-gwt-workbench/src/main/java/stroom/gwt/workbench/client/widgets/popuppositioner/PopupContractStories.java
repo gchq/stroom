@@ -134,8 +134,8 @@ public final class PopupContractStories {
                 .panel(MENU_PANEL)
                 // The panel's own content box, not a row — clicking a row runs its command
                 .insideTarget(MENU_PANEL + " .popupContent")
-                // Left out of EscapeCloses: a menu's Escape (MenuViewImpl.escape() →
-                // MenuPresenter.escape()) is checked by EscapeClosesOneLevelAtATime
+                // Left out of EscapeCloses: a menu's Escape (MenuController.onClose() →
+                // escape()) is checked by EscapeClosesOneLevelAtATime
                 .storyCases(true, false)
                 // A Stroom menu shown with ShowMenuEvent is placed where the call site asks
                 .placement(".menu-harness-trigger", PopupLocation.BELOW, 0,
@@ -665,7 +665,7 @@ public final class PopupContractStories {
     }
 
     /// `submenu/anchor-clipped-when-item-partly-scrolled`, asserted on GWT's `Rect.min` and
-    /// `growX`/`growY`, which `MenuPresenter.showSubMenu` anchors submenus with.
+    /// `growX`/`growY`, which `MenuController.showSubMenu` anchors submenus with.
     private static void submenuAnchorIsClipped(final Play play) {
         final Rect panel = rect(100, 100, 300, 200);
         // A row hanging below the panel's bottom edge — scrolled half out of view

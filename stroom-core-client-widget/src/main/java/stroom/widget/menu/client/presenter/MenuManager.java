@@ -17,7 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.InputModality;
 
@@ -32,19 +32,19 @@ import javax.inject.Singleton;
 @Singleton
 public class MenuManager {
 
-    private final Provider<MenuPresenter> menuPresenterProvider;
+    private final Provider<MenuController> menuControllerProvider;
 
-    private MenuPresenter menuPresenter;
+    private MenuController menuController;
     private List<Item> currentItems;
 
     private final AppRoot appRoot;
 
     @Inject
     public MenuManager(final EventBus eventBus,
-                       final Provider<MenuPresenter> menuPresenterProvider,
+                       final Provider<MenuController> menuControllerProvider,
                        final AppRoot appRoot) {
         this.appRoot = appRoot;
-        this.menuPresenterProvider = menuPresenterProvider;
+        this.menuControllerProvider = menuControllerProvider;
         // So that a menu knows whether it was opened with the keyboard (and shows its focus ring)
         InputModality.install();
         eventBus.addHandler(ShowMenuEvent.getType(), this::show);
@@ -58,16 +58,18 @@ public class MenuManager {
         } else {
             hide(false, false);
 
-            menuPresenter = appRoot.makeDialog(menuPresenterProvider);
-            menuPresenter.setData(event.getItems());
-            menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
-            setName(menuPresenter, event);
+            // Made for this showing, and disposed once it is hidden
+            final MenuController controller = menuControllerProvider.get();
+            menuController = controller;
+            controller.setData(event.getItems());
+            controller.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
+            setName(controller, event);
             if (event.getWidth() != null) {
-                menuPresenter.setWidth(event.getWidth());
+                controller.setWidth(event.getWidth());
             }
             currentItems = event.getItems();
 
-            ShowPopupEvent.builder(menuPresenter)
+            ControllerDialog.showOnce(appRoot, controller)
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
@@ -77,7 +79,7 @@ public class MenuManager {
                         if (currentItems == event.getItems()) {
                             MenuOpener.setExpanded(event.getOpener(), true);
                         }
-                        menuPresenter.focusItem(event.getFocusItem());
+                        controller.focusItem(event.getFocusItem());
                     })
                     .onHide(e -> {
                         MenuOpener.setExpanded(event.getOpener(), false);
@@ -86,7 +88,7 @@ public class MenuManager {
                         }
                         // Call hide to ensure any delayed sub menus are closed
                         hide(false, false);
-                        menuPresenter = null;
+                        menuController = null;
                         currentItems = null;
                     })
                     .fire();
@@ -96,11 +98,11 @@ public class MenuManager {
     // Names the menu for screen readers: by the name it was given, else by the menu button that
     // opened it. Other openers (e.g. table cells or logos) are only where the menu is shown and
     // may be redrawn, so aren't referred to
-    private static void setName(final MenuPresenter menuPresenter, final ShowMenuEvent event) {
+    private static void setName(final MenuController controller, final ShowMenuEvent event) {
         if (event.getName() != null) {
-            menuPresenter.setName(event.getName());
+            controller.setName(event.getName());
         } else if (MenuOpener.isMarked(event.getOpener())) {
-            menuPresenter.setLabelledBy(MenuOpener.ensureId(event.getOpener()));
+            controller.setLabelledBy(MenuOpener.ensureId(event.getOpener()));
         } else if (!GWT.isProdMode()) {
             GWT.log("Menu shown with no accessible name; give it one with ShowMenuEvent.Builder#name");
         }
@@ -111,9 +113,9 @@ public class MenuManager {
     }
 
     private void hide(final boolean autoClose, final boolean ok) {
-        if (menuPresenter != null) {
-            menuPresenter.hideAll(autoClose, ok);
-            menuPresenter = null;
+        if (menuController != null) {
+            menuController.hideAll(autoClose, ok);
+            menuController = null;
             currentItems = null;
         }
     }

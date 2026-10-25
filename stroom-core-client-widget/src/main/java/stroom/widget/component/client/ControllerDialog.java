@@ -110,6 +110,19 @@ public final class ControllerDialog {
         }
     }
 
+    /// Hides a dialog at once, without asking its hide request handler, as `HidePopupEvent` does
+    /// for a presenter's, e.g. a sub menu closed with its menu. It is then disposed.
+    ///
+    /// @param dialog    The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param autoClose Whether it is hidden by a click outside it, as its hide handler is told.
+    /// @param ok        Whether it is hidden by its OK action, as its hide handler is told.
+    public static void hide(final Controller dialog, final boolean autoClose, final boolean ok) {
+        final DialogHost host = HOSTS.get(dialog);
+        if (host != null) {
+            HidePopupEvent.builder(host).autoClose(autoClose).ok(ok).fire();
+        }
+    }
+
     // Disposes a presenter shown as a popup for one use once it is hidden, after the popup manager
     // has hidden it (see Controller.makeDialog and AppRoot.makeDialog)
     static <P extends MyPresenterWidget<?>> P disposeWhenHidden(final P dialog) {

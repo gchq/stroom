@@ -270,6 +270,33 @@ class TestController {
         assertThat(seen).containsExactly("OK true");
     }
 
+    @Test
+    void aDialogIsHiddenThroughItsHostThenDisposed() {
+        final Consumer<Runnable> scheduler = ControllerDialog.deferred;
+        final List<Runnable> deferred = new ArrayList<>();
+        ControllerDialog.deferred = deferred::add;
+        try {
+            final EventBus eventBus = new SimpleEventBus();
+            final Parent opener = new Parent(null);
+            final Parent dialog = new Parent(eventBus);
+            final List<String> seen = new ArrayList<>();
+            eventBus.addHandler(HidePopupEvent.getType(), e ->
+                    seen.add(e.isAutoClose() + " " + e.isOk() + " " + shows(e.getPresenterWidget(), dialog)));
+            ControllerDialog.showOnce(opener, dialog);
+
+            ControllerDialog.hide(dialog, true, false);
+            assertThat(seen).containsExactly("true false true");
+            deferred.forEach(Runnable::run);
+            assertThat(dialog.isDisposed()).isTrue();
+
+            // Once hidden, it is no longer shown, so nothing is hidden
+            ControllerDialog.hide(dialog, false, false);
+            assertThat(seen).hasSize(1);
+        } finally {
+            ControllerDialog.deferred = scheduler;
+        }
+    }
+
     // Whether a popup's presenter shows a controller as a dialog
     private static boolean shows(final MyPresenterWidget<?> presenterWidget, final Controller dialog) {
         return presenterWidget instanceof ControllerDialog.DialogHost

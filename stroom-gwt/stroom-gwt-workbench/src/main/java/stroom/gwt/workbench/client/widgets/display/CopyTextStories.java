@@ -24,10 +24,9 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.component.client.AppRoot;
+import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -101,12 +100,12 @@ public final class CopyTextStories {
     private static ScreenHarness harness(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
         // Shows ShowMenuEvent's menu, as Stroom's MenuManager singleton does
-        new MenuManager(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()), harness.getAppRoot());
+        new MenuManager(harness.getEventBus(), () -> menuController(harness.getEventBus()), harness.getAppRoot());
         return harness;
     }
 
-    private static MenuPresenter menuPresenter(final EventBus eventBus) {
-        return new MenuPresenter(eventBus, new MenuViewImpl(), () -> menuPresenter(eventBus));
+    private static MenuController menuController(final EventBus eventBus) {
+        return new MenuController(eventBus, new Menu(), () -> menuController(eventBus));
     }
 
     /// The copyable text, as `CurrentSelectionPresenter` shows it.

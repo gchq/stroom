@@ -25,7 +25,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuController;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Style;
@@ -40,7 +40,7 @@ import java.util.List;
 /// Stories for the rows of Stroom's menus (`MenuItemCell`).
 ///
 /// Stroom's menu rows are cells of a menu's cell table, not widgets, so each story shows a
-/// [MenuPresenter]'s view, with the rows, in place rather than as a popup.
+/// [MenuController]'s menu, with the rows, in place rather than as a popup.
 public final class MenuItemWidgetStories {
 
     private static final String LABEL = "label";
@@ -92,9 +92,9 @@ public final class MenuItemWidgetStories {
 
     private static Widget menu(final StoryContext context, final List<Item> items) {
         final StoryPopups popups = StoryPopups.create(context);
-        final MenuPresenter presenter = popups.createMenuPresenter();
-        presenter.setData(items);
-        popups.addCleanUp(presenter::dispose);
-        return presenter.getWidget();
+        final MenuController controller = popups.createMenuController();
+        controller.setData(items);
+        popups.addCleanUp(controller::dispose);
+        return controller.asWidget();
     }
 }

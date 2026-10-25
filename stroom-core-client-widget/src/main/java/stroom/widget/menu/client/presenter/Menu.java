@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.KeyBinding;
@@ -25,8 +26,9 @@ import stroom.widget.util.client.TypeAhead;
 import stroom.widget.util.client.TypedKey;
 
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -35,6 +37,8 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -48,10 +52,11 @@ import java.util.Objects;
 /// [MenuItem], enabled or not, so that a disabled item is still read out.
 ///
 /// The menu only draws and moves: what an item does (choosing it, opening and closing sub menus) is
-/// up to its [Handler], given each key and mouse action. [MenuViewImpl] is the handler for Stroom's
-/// menus.
+/// up to its [Handler], given each key and mouse action. [MenuController] is the handler for
+/// Stroom's menus.
 ///
-/// Its elements (`menu.css`): `menu__viewport`, the scrolling root, holds `menu` (role `menu`),
+/// Its elements (`menu.css`, the first two in `Menu.ui.xml`): `menu__viewport`, the scrolling root,
+/// holds `menu` (role `menu`),
 /// which holds a `menu__row` per item with the item's role (`menuitem`, `menuitemcheckbox`,
 /// `separator` or `none`) and `menu__row--active` on the active one. Each row holds what
 /// [MenuItemCell] draws (`menu__item`, `menu__separator` or `menu__group-heading`).
@@ -61,6 +66,8 @@ public class Menu extends Widget {
     private static final String ACTIVE_ROW_CLASS = "menu__row--active";
     private static final String KEYBOARD_CLASS = "menu--keyboard";
     private static final String FIXED_WIDTH_CLASS = "menu--fixed-width";
+    private static final String VIEWPORT_FIXED_WIDTH_CLASS = "menu__viewport--fixed-width";
+    private static final String WIDTH_PROPERTY = "--menu__width";
     private static final String TEXT_CLASS = "menu__text";
     private static final String INDEX_ATTRIBUTE = "data-index";
     private static final String TAB_INDEX = "tabindex";
@@ -75,7 +82,10 @@ public class Menu extends Widget {
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final int PAGE_SIZE = 10;
 
-    private final Element menuElement;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    DivElement menuElement;
     private final MenuItemCell cell = new MenuItemCell();
     // Typing a character goes to the next item starting with it (the WAI-ARIA menu's type-ahead)
     private final TypeAhead typeAhead = new TypeAhead();
@@ -88,21 +98,9 @@ public class Menu extends Widget {
     private Item openItem;
     private JavaScriptObject focusOutListener;
 
+    /// Makes an empty menu.
     public Menu() {
-        final Element viewport = Document.get().createDivElement();
-        // Its padding is room for an item's focus ring, which the scrolling would otherwise clip
-        viewport.setClassName("menu__viewport");
-        viewport.getStyle().setProperty("overflow", "auto");
-        viewport.getStyle().setProperty("minWidth", 50 + "px");
-        viewport.getStyle().setProperty("maxWidth", 400 + "px");
-        viewport.getStyle().setProperty("maxHeight", 500 + "px");
-        setElement(viewport);
-
-        menuElement = Document.get().createDivElement();
-        menuElement.setClassName("menu");
-        menuElement.setAttribute(ROLE, "menu");
-        menuElement.getStyle().setProperty("minWidth", 50 + "px");
-        viewport.appendChild(menuElement);
+        setElement(BINDER.createAndBindUi(this));
 
         // The focus ring shows only while the keyboard is in use (menu--keyboard): the menu moves the
         // focus itself, as the mouse moves too, so the browser's :focus-visible can't tell
@@ -259,10 +257,8 @@ public class Menu extends Widget {
     ///
     /// @param width The menu's width in pixels.
     public void setFixedWidth(final int width) {
-        final String px = width + "px";
-        getElement().getStyle().setProperty("width", px);
-        getElement().getStyle().setProperty("minWidth", px);
-        getElement().getStyle().setProperty("maxWidth", px);
+        CssProperties.set(getElement(), WIDTH_PROPERTY, width + "px");
+        getElement().addClassName(VIEWPORT_FIXED_WIDTH_CLASS);
         menuElement.addClassName(FIXED_WIDTH_CLASS);
     }
 
@@ -582,5 +578,11 @@ public class Menu extends Widget {
     private interface FocusOutCallback {
 
         void onFocusOut(NativeEvent event);
+    }
+
+    // --------------------------------------------------------------------------------
+
+    interface Binder extends UiBinder<DivElement, Menu> {
+
     }
 }

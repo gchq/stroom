@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /// Stories for Stroom's menus (`ShowMenuEvent`, handled by Stroom's `MenuManager` with a
-/// `MenuPresenter` per menu and submenu).
+/// `MenuController` per menu and submenu).
 public final class MenuPanelStories {
 
     // Stroom's menu (`Menu`) has this class and `role="menu"`.

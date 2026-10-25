@@ -68,9 +68,6 @@ import stroom.main.client.view.MainViewImpl;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuManager;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
-import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
@@ -146,7 +143,6 @@ public class AppModule extends AbstractPresenterModule {
         // Stroom's edit menu on text fields, in place of the browser's context menu
         bind(ContextMenuManager.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);
-        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
 
 
         // Widgets
