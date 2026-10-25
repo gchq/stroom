@@ -31,6 +31,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,6 +44,8 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
 
     static final String NAME = "document_documentation";
     static final String UUID_ARG = "uuid";
+    // The type of a Documentation document.
+    private static final String DOCUMENTATION_TYPE = "Documentation";
     /// The field the Documentation tab edits.
     static final String DESCRIPTION_FIELD = "description";
 
@@ -102,19 +106,46 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
             return ToolResult.text("Error: " + ReadDocumentTool.describe(docRef) + " couldn't be read.");
         }
         final String documentation = description(doc.get()).orElse(null);
+        final String elsewhere = documentedBeside(docRef);
         if (documentation == null || documentation.isBlank()) {
-            return ToolResult.text("none");
+            return ToolResult.text(elsewhere.isEmpty()
+                    ? "none"
+                    : "none on its Documentation tab." + elsewhere);
         }
         if (documentation.length() <= limits(context).getMaxCharsPerRead()) {
             return ToolResult.text(
-                    "Documentation of " + ReadDocumentTool.describe(docRef) + ":\n\n" + documentation.strip());
+                    "Documentation of " + ReadDocumentTool.describe(docRef) + ":" + elsewhere + "\n\n"
+                    + documentation.strip());
         }
         final WorkspacePath path = ReadDocumentTool.documentPath(docRef, "documentation.md");
         workspace.writeDocument(path, documentation, docRef.getUuid());
         return ToolResult.text(
                 "The documentation of " + ReadDocumentTool.describe(docRef) + " is too large to show in full ("
-                + size(documentation.length()) + "), so it has been saved to " + path + ".\n\n"
+                + size(documentation.length()) + "), so it has been saved to " + path + "." + elsewhere + "\n\n"
                 + ReadDocumentTool.previewNote(documentation));
+    }
+
+    // A Documentation document of the same name in the same folder is the document's documentation, as the tools
+    // write a pipeline's: said, so its own tab (which may hold only what the server keeps) isn't taken for all of
+    // it. Not in the Stroom MCP server; seen: an agent read an indexing pipeline's tab, holding only the agreed
+    // index template, as its documentation lost, and rewrote the Documentation document three times over.
+    private String documentedBeside(final DocRef docRef) {
+        if (DOCUMENTATION_TYPE.equals(docRef.getType()) || docRef.getName() == null) {
+            return "";
+        }
+        return documentAccess.parent(docRef)
+                .map(documentAccess::children)
+                .orElse(List.of())
+                .stream()
+                .map(ExplorerNode::getDocRef)
+                .filter(sibling -> DOCUMENTATION_TYPE.equals(sibling.getType())
+                                   && docRef.getName().equals(sibling.getName()))
+                .findFirst()
+                .map(sibling -> " Its documentation is the Documentation document '" + sibling.getName()
+                                + "' beside it (uuid " + sibling.getUuid() + "): read it with read_document. This "
+                                + "tab holds only what is kept with the " + docRef.getType().toLowerCase(Locale.ROOT)
+                                + " itself.")
+                .orElse("");
     }
 
     /// @param doc A document, as its handler read it.
