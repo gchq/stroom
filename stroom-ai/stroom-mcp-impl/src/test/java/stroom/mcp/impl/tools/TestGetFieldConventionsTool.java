@@ -87,6 +87,16 @@ class TestGetFieldConventionsTool {
         assertThat(world.memory.namingChosen()).containsEntry("convention", "ecs");
         assertThat(world.asked).containsExactly("Which backend should the new index use?",
                 "How should the new index's fields be named?");
+        // What is settled comes back, so the agent asks none of it again (seen: told only the naming, it asked the
+        // backend again, with an example template to follow, in its own form), with the backend's templates.
+        assertThat(chosen.get("backend")).isEqualTo("elasticsearch");
+        assertThat(String.valueOf(chosen.get("settled"))).startsWith("The user chose the backend (Elasticsearch) "
+                                                                     + "and how fields are named (ECS")
+                .contains("don't ask about either again, nor offer the other naming choices (From an index "
+                          + "template; Follow an existing index in Stroom; Stroom flat convention)");
+        assertThat((List<Map<String, Object>>) chosen.get("indexing_templates"))
+                .extracting(template -> template.get("uuid"))
+                .containsExactly("t1");
     }
 
     @Test
