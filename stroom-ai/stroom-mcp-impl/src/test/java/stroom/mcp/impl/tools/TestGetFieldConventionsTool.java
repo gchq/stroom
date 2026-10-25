@@ -124,6 +124,19 @@ class TestGetFieldConventionsTool {
     }
 
     @Test
+    void aLuceneNamingChosenInTheFormIsSettledAndRemembered() {
+        // As for Elasticsearch: what the user settled comes back, and draft_index_mapping doesn't ask it again.
+        final Map<String, Object> chosen = call("{\"backend\": \"lucene\"}", world.forms(question ->
+                Map.of("choice", "Stroom flat convention")));
+        assertThat(chosen.get("status")).isEqualTo("chosen");
+        assertThat(chosen.get("backend")).isEqualTo("lucene");
+        assertThat(String.valueOf(chosen.get("settled"))).startsWith("The user chose the backend (Lucene) and how "
+                                                                     + "fields are named (Stroom flat convention)")
+                .contains("no cluster to choose");
+        assertThat(world.memory.namingChosen()).containsEntry("convention", "stroom-flat");
+    }
+
+    @Test
     void luceneWithoutFormsListsTheProfiles() {
         final Map<String, Object> asked = call("{\"backend\": \"lucene\"}", IndexingWorld.noForms());
         assertThat(asked.get("status")).isEqualTo("needs_guidance");

@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /// `get_field_conventions` - the field naming conventions for indexes (the Stroom MCP server's
 /// `tools/indexing.py` `get_field_conventions`): without a name it puts the choice to the user (the backend, then for
@@ -176,6 +175,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         final Map<String, Map<String, Object>> profiles = IndexingHelpers.conventions(knowledge);
         String chosenBackend = backend;
         List<Map<String, Object>> templates = null;
+        boolean asked = false;
         if (name == null && backend == null) {
             // Seen: an agent asked without the backend, got the profiles, then looked the backend up and asked
             // again. When every indexing template has the same backend, that's the index's backend.
@@ -211,6 +211,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     return result;
                 }
                 chosenBackend = labels.get(picked.get());
+                asked = true;
                 // The chosen backend's templates come back with the naming, so they needn't be looked up.
                 final String kind = chosenBackend;
                 templates = found.stream()
@@ -223,7 +224,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
             return elasticsearchNaming(call, context, profiles, templates);
         }
         if (name == null) {
-            return noProfile(call, context, profiles, chosenBackend, templates);
+            return noProfile(call, context, profiles, chosenBackend, templates, asked);
         }
         if (!profiles.containsKey(name)) {
             throw new ToolRefusal("No convention profile '" + name + "'. Profiles: " + (profiles.isEmpty()
@@ -296,6 +297,18 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         return result;
     }
 
+    // What the user settled in the forms, so it isn't asked again (not in the Stroom MCP server; seen: the user chose
+    // Elasticsearch and ECS in these forms, and the agent, told only the naming, asked the backend again with an
+    // example template to follow, in its own form).
+    private static String settled(final String backend,
+                                  final String chosen,
+                                  final List<String> others,
+                                  final String open) {
+        return "The user chose the backend (" + backend + ") and how fields are named (" + chosen + ") in forms: "
+               + "don't ask about either again, nor offer the other naming choices (" + String.join("; ", others)
+               + "), in ask_user or in the chat. " + open;
+    }
+
     private Map<String, Object> chosenNaming(final ToolCall call,
                                              final ToolCallContext context,
                                              final List<Map<String, Object>> options,
@@ -317,14 +330,10 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         if (templates != null) {
             result.put("indexing_templates", templates);
         }
-        result.put("settled", "The user chose the backend (Elasticsearch) and how fields are named (" + chosen
-                              + ") in forms: don't ask about either again, nor offer the other naming choices ("
-                              + options.stream()
-                                      .map(o -> String.valueOf(o.get("choice")))
-                                      .filter(other -> !other.equals(chosen))
-                                      .collect(Collectors.joining("; "))
-                              + "), in ask_user or in the chat. Still open: the cluster, where several are in use "
-                              + "(create_index_doc says).");
+        result.put("settled", settled("Elasticsearch", chosen, options.stream()
+                .map(o -> String.valueOf(o.get("choice")))
+                .filter(other -> !other.equals(chosen))
+                .toList(), "Still open: the cluster, where several are in use (create_index_doc says)."));
         final String kind = String.valueOf(option.get("option"));
         if (FOLLOW.equals(kind) && !existing.isEmpty()) {
             final Map<String, Map<String, Object>> labels = new LinkedHashMap<>();
@@ -359,9 +368,12 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                                           final ToolCallContext context,
                                           final Map<String, Map<String, Object>> profiles,
                                           final String backend,
-                                          final List<Map<String, Object>> templates) {
+                                          final List<Map<String, Object>> templates,
+                                          final boolean asked) {
         final String first;
-        if (templates != null) {
+        if (asked) {
+            first = "";
+        } else if (templates != null) {
             first = "The backend is " + backend + ": every indexing template is a " + backend + " one. ";
         } else if (backend != null) {
             first = "";
@@ -377,12 +389,22 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     List.copyOf(labels.keySet()), null);
             if (chosen.isPresent()) {
                 final String profile = labels.get(chosen.get());
+                // Remembered, as for Elasticsearch: draft_index_mapping convention= doesn't ask it again.
+                memory.chooseNaming(Map.of("convention", profile));
                 final Map<String, Object> result = new LinkedHashMap<>();
                 result.put("status", "chosen");
                 result.put("choice", chosen.get());
                 result.put("convention", profile);
+                result.put("backend", FieldPlan.LUCENE);
+                if (templates != null) {
+                    result.put("indexing_templates", templates);
+                }
+                result.put("settled", settled("Lucene", chosen.get(), labels.keySet().stream()
+                        .filter(other -> !other.equals(chosen.get()))
+                        .toList(), "Lucene keeps the index in Stroom, so there is no cluster to choose."));
                 result.put("hint", "get_field_conventions name=" + profile + " for its field map, then "
-                                   + "draft_index_mapping convention=" + profile + " (with the events streams).");
+                                   + "draft_index_mapping convention=" + profile + " (with the events streams): the "
+                                   + "user chose it in the form, so it isn't asked again.");
                 return result;
             }
         }
