@@ -97,6 +97,23 @@ class TestWorkspaceArguments {
     }
 
     @Test
+    void testAReferenceGivenAsAStringIsPutIn() {
+        // Seen: write_documentation's markdown (a string) given '{"$workspace": ...}', written into the
+        // documentation as it was, in place of the file's text.
+        file("/outputs/doc.md", "# Doc\n\nText.\n");
+
+        final Expansion expansion = workspaceArguments.expand(CHAT_ID,
+                "{\"markdown\":\"{\\\"$workspace\\\": \\\"/outputs/doc.md\\\"}\"}");
+
+        assertThat(expansion.error()).isNull();
+        assertThat(json(expansion).get("markdown").textValue()).isEqualTo("# Doc\n\nText.\n");
+        // A string that only holds one among other keys is text like any other.
+        assertThat(workspaceArguments.expand(CHAT_ID,
+                "{\"note\":\"{\\\"$workspace\\\": \\\"/outputs/doc.md\\\", \\\"x\\\": 1}\"}")
+                .isExpanded()).isFalse();
+    }
+
+    @Test
     void testAStringReferenceToJsonIsPutInAsJson() {
         file("/outputs/template.json", "{\"index_patterns\":[\"logs-*\"]}");
 

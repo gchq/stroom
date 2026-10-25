@@ -111,6 +111,28 @@ class TestDocumentDocumentationTool {
     }
 
     @Test
+    void aDocumentationDocumentOfTheSameNameBesideItIsNamed() {
+        // Seen: an indexing pipeline's tab, holding only the server's hidden block, read as its documentation lost,
+        // and its Documentation document rewritten three times over.
+        canView(true);
+        documentation("<!-- stroom-mcp agreed index template ... -->");
+        final DocRef folder = new DocRef("Folder", "folder-uuid", "Indexing");
+        final DocRef beside = new DocRef("Documentation", "doc-uuid", DICTIONARY.getName());
+        Mockito.when(explorerNodeService.getParent(DICTIONARY))
+                .thenReturn(Optional.of(ExplorerNode.builder().docRef(folder).build()));
+        Mockito.when(explorerNodeService.getChildren(folder)).thenReturn(List.of(
+                ExplorerNode.builder().docRef(DICTIONARY).build(), ExplorerNode.builder().docRef(beside).build()));
+        Mockito.when(securityContext.hasDocumentPermission(beside, DocumentPermission.VIEW)).thenReturn(true);
+
+        assertThat(run()).startsWith("Documentation of Dictionary 'Malicious IPs': Its documentation is the "
+                                     + "Documentation document 'Malicious IPs' beside it (uuid doc-uuid): read it "
+                                     + "with read_document.");
+        documentation(" ");
+        assertThat(run()).startsWith("none on its Documentation tab. Its documentation is the Documentation "
+                                     + "document 'Malicious IPs'");
+    }
+
+    @Test
     void theDescriptionIsTakenFromTheDocumentsJson() {
         assertThat(DocumentDocumentationTool.description(new DictionaryDoc("u", "n", null, null, null, null, null,
                 "Some *markdown*", null, List.of()))).contains("Some *markdown*");

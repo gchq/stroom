@@ -48,12 +48,16 @@ class TestDocumentationVersions {
                 .containsExactly("Created", "Mapped CODE");
         assertThat(second).doesNotContain("## Change log").contains("Newer text.").doesNotContain("New text.");
         assertThat(DocumentationVersions.pendingOf(second)).hasSize(2);
+        // Not in the Stroom MCP server, which ran the changes together with "; " (asked for by the user: a bullet
+        // each, a line each).
+        assertThat(second).contains("| • Rule for Checkout events<br>• Field mapping regenerated |");
 
         final String released = DocumentationVersions.consolidate(second, DAY2).orElseThrow();
         final List<Map<String, String>> rows = DocumentationVersions.rowsOf(released);
         assertThat(rows).extracting(row -> row.get("version")).containsExactly("1", "2", "3");
         assertThat(rows.getLast()).isEqualTo(Map.of("version", "3", "date", "2026-10-12", "by", "peter (agent)",
-                "change", "Rule for Checkout events; Field mapping regenerated", "code", "XSLT Acme @5678abcd"));
+                "change", "• Rule for Checkout events<br>• Field mapping regenerated", "code",
+                "XSLT Acme @5678abcd"));
         assertThat(DocumentationVersions.pendingOf(released)).isEmpty();
         assertThat(DocumentationVersions.consolidate(released, DAY2)).isEmpty();
 
