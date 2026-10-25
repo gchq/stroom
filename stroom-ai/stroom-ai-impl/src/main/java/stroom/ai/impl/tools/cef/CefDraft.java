@@ -294,7 +294,9 @@ public final class CefDraft {
                 // Most events have it; the rest are named by their action rather than left empty.
                 head.put(name, CefValue.from("(" + path + ", " + CefKeys.ACTION_NAME
                                              + ")[normalize-space(.) != ''][1]"));
-            } else if (share >= 0.5) {
+            } else if (share >= 0.5 || "version".equals(name)) {
+                // Not in the Stroom MCP server, for the version: from its path however few of the sample's events
+                // have it (asked for by the user: an empty constant stayed empty for the events that do).
                 head.put(name, CefValue.from(path));
             } else if ("name".equals(name)) {
                 head.put(name, CefValue.from(CefKeys.ACTION_NAME));
@@ -302,8 +304,6 @@ public final class CefDraft {
             } else if ("signature".equals(name)) {
                 head.put(name, CefValue.from("(EventDetail/TypeId, " + CefKeys.ACTION_NAME
                                              + ")[normalize-space(.) != ''][1]"));
-            } else if ("version".equals(name)) {
-                head.put(name, CefValue.constant(""));
             } else {
                 head.put(name, CefValue.constant("TODO " + field.said() + ": the sample's Events have no " + path
                                                  + "; ask the user"));
