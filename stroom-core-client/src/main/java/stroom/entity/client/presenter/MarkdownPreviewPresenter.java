@@ -144,22 +144,19 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
     }
 
     /**
-     * Keeps the preview in step with the editor, including after the preview is re-rendered: at the place the
-     * cursor's line is shown, when the cursor moves (asked for by the user), else scrolled the same proportion of
-     * the way down as the editor. The Ace editor scrolls a real scroll bar element, whose scroll events (which do
-     * not bubble) are caught on the way down to it.
+     * Keeps the preview in step with the editor's cursor, including after the preview is re-rendered: at the place
+     * the cursor's line is shown, scrolled to smoothly as the cursor moves (asked for by the user). Scrolling the
+     * editor alone leaves the preview where it is.
      *
      * @param editorElement  The editor's element.
      * @param previewElement The preview's element: its iframe, or an element containing it.
      */
     private static native void syncScroll(Element editorElement, Element previewElement) /*-{
-        var fraction = 0;
-        // The cursor's line, when the preview last followed the cursor rather than the editor's scrolling.
+        // The cursor's line, once it has moved.
         var cursorRow = -1;
-        var cursorMovedMs = 0;
-        // A scroll this soon after the cursor moved is the editor bringing the cursor into view: the preview
-        // follows the cursor, not that.
-        var cursorWinsMs = 400;
+        // A click of any button but the left (e.g. to open a menu) moves the cursor too: the preview stays put for
+        // that (asked for by the user).
+        var ignoreCursorUntilMs = 0;
         var frameDocument = function () {
             var frame = previewElement.tagName === 'IFRAME'
                 ? previewElement
@@ -233,12 +230,12 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
             return shown.getBoundingClientRect().top + scroller.scrollTop
                    - (page ? 0 : scroller.getBoundingClientRect().top);
         };
-        var followCursor = function () {
+        var followCursor = function (behavior) {
             var doc = frameDocument();
             var scroller = doc ? scrollerOf(doc) : null;
             var editor = aceEditor();
             if (!scroller || !editor || cursorRow < 0) {
-                return false;
+                return;
             }
             var lines = editor.getValue().split('\n');
             var sources = headingLines(lines);
@@ -262,28 +259,18 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
                 target = fromTop + into * Math.max(0, toTop - fromTop);
             }
             // A third of the way down, below any headings pinned at the top.
-            scroller.scrollTo({top: Math.max(0, target - scroller.clientHeight / 3), behavior: 'instant'});
-            return true;
-        };
-        var followScroll = function () {
-            var doc = frameDocument();
-            var scroller = doc ? scrollerOf(doc) : null;
-            if (scroller) {
-                // Instantly, as the container scrolls smoothly, which would lag behind the editor.
-                scroller.scrollTo({
-                    top: fraction * (scroller.scrollHeight - scroller.clientHeight),
-                    behavior: 'instant'
-                });
-            }
+            scroller.scrollTo({top: Math.max(0, target - scroller.clientHeight / 3), behavior: behavior});
         };
         var onCursor = function () {
             var editor = aceEditor();
             if (!editor) {
                 return;
             }
+            if (Date.now() < ignoreCursorUntilMs) {
+                return;
+            }
             cursorRow = editor.getCursorPosition().row;
-            cursorMovedMs = Date.now();
-            followCursor();
+            followCursor('smooth');
         };
         // The editor is made when it is first shown, so its cursor is listened to once it is.
         var listening = null;
@@ -295,23 +282,15 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
             }
         };
         editorElement.addEventListener('focusin', listen, true);
-        editorElement.addEventListener('mousedown', listen, true);
-        editorElement.addEventListener('scroll', function (event) {
-            var bar = event.target;
-            if (bar && bar.classList && bar.classList.contains('ace_scrollbar-v')) {
-                var max = bar.scrollHeight - bar.clientHeight;
-                fraction = max > 0 ? bar.scrollTop / max : 0;
-                if (Date.now() - cursorMovedMs > cursorWinsMs) {
-                    cursorRow = -1;
-                    followScroll();
-                }
-            }
+        editorElement.addEventListener('mousedown', function (event) {
+            listen();
+            ignoreCursorUntilMs = event.button !== 0
+                ? Date.now() + 300
+                : 0;
         }, true);
-        // A re-rendered preview starts at the top, so put it back where the cursor, or the editor, is.
+        // A re-rendered preview starts at the top, so it is put back at the cursor at once, not slid down to it.
         previewElement.addEventListener('load', function () {
-            if (!followCursor()) {
-                followScroll();
-            }
+            followCursor('instant');
         }, true);
     }-*/;
 
