@@ -36,7 +36,9 @@ public record ChartRole(String id,
         /// Numbers.
         NUMBER("numbers"),
         /// Numbers or dates.
-        NUMBER_OR_DATE("numbers or dates");
+        NUMBER_OR_DATE("numbers or dates"),
+        /// Dates.
+        DATE("dates");
 
         private final String description;
 

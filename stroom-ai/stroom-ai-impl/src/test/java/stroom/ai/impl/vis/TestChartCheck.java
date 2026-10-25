@@ -378,6 +378,60 @@ class TestChartCheck {
     }
 
     @Test
+    void aCalendarNeedsDates() {
+        final Sample days = new Sample(List.of("Day", "Count"),
+                List.of(List.of("2026-10-24T00:00:00.000Z", "3"), List.of("2026-10-25T00:00:00.000Z", "5")));
+        final Result ok = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "Day", "value", "Count"), Map.of(),
+                List.of(new TableColumn("Day", "DATE_TIME"), new TableColumn("Count", "NUMBER")), days);
+        final Result text = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "Day", "value", "Count"),
+                Map.of(), List.of(new TableColumn("Day", "TEXT"), new TableColumn("Count", "NUMBER")), days);
+        final Result names = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "User", "value", "Count"),
+                Map.of(), List.of(new TableColumn("User", null), new TableColumn("Count", null)),
+                new Sample(List.of("User", "Count"), List.of(List.of("alice", "1"), List.of("bob", "2"))));
+
+        assertThat(ok.ok()).isTrue();
+        assertThat(ok.stats()).containsEntry("days", 2);
+        assertThat(text.problems()).singleElement().asString()
+                .contains("its format is TEXT and date needs dates. Set the column's format to Date Time");
+        assertThat(names.problems()).singleElement().asString()
+                .contains("only 0 of the 2 values sampled are dates");
+    }
+
+    @Test
+    void aHeatmapWithTooManyCellsWarns() {
+        final List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < 120; i++) {
+            rows.add(List.of("user" + i, "Mon", "1"));
+        }
+        final Result result = ChartCheck.check(ChartKind.HEATMAP, Map.of("x", "User", "y", "Day", "value", "N"),
+                Map.of(), List.of(new TableColumn("User", "TEXT"), new TableColumn("Day", "TEXT"),
+                        new TableColumn("N", "NUMBER")), new Sample(List.of("User", "Day", "N"), rows));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.stats()).containsEntry("xValues", 120).containsEntry("yValues", 1);
+        assertThat(result.warnings()).singleElement().asString().contains("too many cells to read");
+    }
+
+    @Test
+    void aSankeyWithALoopWarnsTheFlowClosingItIsLeftOut() {
+        final Sample loop = new Sample(List.of("From", "To"),
+                List.of(List.of("a", "b"), List.of("b", "c"), List.of("c", "a")));
+        final Sample chain = new Sample(List.of("From", "To"), List.of(List.of("a", "b"), List.of("b", "c")));
+        final List<TableColumn> columns = List.of(new TableColumn("From", "TEXT"), new TableColumn("To", "TEXT"));
+
+        assertThat(ChartCheck.check(ChartKind.SANKEY, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                loop).warnings()).singleElement().asString().contains("a Sankey diagram can't draw a loop");
+        assertThat(ChartCheck.check(ChartKind.SANKEY, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                chain).warnings()).isEmpty();
+        // A chord diagram draws loops.
+        assertThat(ChartCheck.check(ChartKind.CHORD, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                loop).warnings()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.CHORD, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                new Sample(List.of("From", "To"), List.of(List.of("a", "a")))).problems())
+                .singleElement().asString().endsWith("so there's no chord diagram to draw.");
+    }
+
+    @Test
     void pieWithManyNamesWarnsAboutOther() {
         final List<List<String>> rows = new ArrayList<>();
         for (int i = 0; i < 15; i++) {

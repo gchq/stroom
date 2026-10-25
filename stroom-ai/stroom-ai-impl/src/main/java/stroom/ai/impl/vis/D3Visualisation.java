@@ -75,11 +75,17 @@ public enum D3Visualisation {
 
     /// @param kind A chart kind.
     /// @return The D3 Visualisation that draws it.
+    /// @throws java.util.NoSuchElementException if the content pack has none for the kind (see [#find(ChartKind)]).
     public static D3Visualisation forKind(final ChartKind kind) {
+        return find(kind).orElseThrow();
+    }
+
+    /// @param kind A chart kind.
+    /// @return The D3 Visualisation that draws it, if the content pack has one: only ECharts draws the others.
+    public static Optional<D3Visualisation> find(final ChartKind kind) {
         return Arrays.stream(values())
                 .filter(d3 -> d3.kind == kind)
-                .findFirst()
-                .orElseThrow();
+                .findFirst();
     }
 
     /// @param functionName A Visualisation's function name.
