@@ -31,12 +31,44 @@ class TestAiSuggestions {
     private static final DocRef XSLT = new DocRef("XSLT", "x1", "Event translation");
     private static final DocRef PIPELINE = new DocRef("Pipeline", "p1", "Acme-Events");
 
+    // A dashboard as the client describes it: a grouped table charted by a chart Stroom AI drew, and a table with
+    // no chart.
+    private static final String DESCRIPTION = """
+            Time range: All time
+            Parameters: []
+            Shown components: Query, Pairs, Messages, Network
+
+            ## Query 'Query' (id query-1)
+            Data source: ElasticIndex 'Chat' (uuid e1)
+            Expression:
+            AND
+              user.name = jbloggs
+
+            ## Table 'Pairs' (id table-1)
+            Query: query-1
+            Columns:
+            - User A: ${user.name} (grouped, level 1; format Text)
+            - Messages: count() (format Number)
+
+            ## Table 'Messages' (id table-2)
+            Query: query-1
+            Columns:
+            - @timestamp: ${@timestamp}
+
+            ## Visualisation 'Network' (id vis-1)
+            Visualisation: 'User network' (uuid v1)
+            Linked table: 'Pairs'
+            Vis settings: {"source":"User A"}
+            Render report: {"status":"ok", "adapter":"ECharts Generic", "kind":"graph"}
+            """;
+
     @Test
-    void aDashboardIsAskedAboutItsFirstTable() {
+    void aDashboardIsAskedForAChartFirst() {
+        // Without its description, a chart is suggested for a table with rows.
         assertThat(AiSuggestions.forTab(DASHBOARD, false, List.of(table("By user", 20L, false)), null))
-                .containsExactly("What stands out in the 'By user' table?",
-                        "Group the 'By user' table by its most useful column",
-                        "Explain what this dashboard shows and where its data comes from");
+                .containsExactly(AiSuggestions.SUGGEST_A_CHART,
+                        "What stands out in the 'By user' table?",
+                        "Group the 'By user' table by its most useful column");
         // Without tables, only what it shows.
         assertThat(AiSuggestions.forTab(DASHBOARD, false, List.of(), null))
                 .containsExactly("Explain what this dashboard shows and where its data comes from");
@@ -76,9 +108,64 @@ class TestAiSuggestions {
     }
 
     @Test
+    void aDashboardsSuggestionsFollowWhatItHas() {
+        final List<AiTabSearch> tables = List.of(table("Pairs", 20L, false), table("Messages", 90L, false));
+
+        // A chart for the table without one, and filtering by the chart Stroom AI drew, as nothing filters by it.
+        assertThat(AiSuggestions.forTab(DASHBOARD, false, tables, null, DESCRIPTION))
+                .containsExactly(AiSuggestions.SUGGEST_A_CHART,
+                        "Filter the dashboard by what I click on the 'Network' chart",
+                        "What stands out in the 'Pairs' table?");
+
+        // Once each table with rows has a chart and something filters by one: the first table, which is grouped
+        // already.
+        final String charted = DESCRIPTION
+                               + "\n## Visualisation 'Timeline' (id vis-2)\nLinked table: 'Messages'\n"
+                               + "\n## Table 'Filtered' (id table-3)\nTable selection filters: User A = "
+                               + "${component.vis-1.selection.source}\n";
+        assertThat(AiSuggestions.forTab(DASHBOARD, false, tables, null, charted))
+                .containsExactly("What stands out in the 'Pairs' table?",
+                        "Explain what this dashboard shows and where its data comes from");
+
+        // A table with no rows is asked about; no chart is suggested for it.
+        assertThat(AiSuggestions.forTab(DASHBOARD, false, List.of(table("Messages", 0L, false)), null,
+                DESCRIPTION))
+                .startsWith("Why does the 'Messages' table show no results?");
+    }
+
+    @Test
+    void aChartThatDrawsNothingIsAskedAboutFirst() {
+        // Seen in testing: a selection filter left a chart with nothing to draw, and nothing in the chat suggested
+        // finding out why.
+        final String drawnNothing = DESCRIPTION.replace("\"status\":\"ok\"", "\"status\":\"empty\"");
+        final List<AiTabSearch> tables = List.of(table("Pairs", 0L, false), table("Messages", 90L, false));
+        final AiTabSnapshot snapshot = new AiTabSnapshot(DASHBOARD, "Logons", null, false,
+                List.of(new AiTabSnapshotPart(AiTabSnapshotPart.DASHBOARD, null, drawnNothing)), tables, null, null,
+                "hash");
+
+        assertThat(AiSuggestions.forTab(snapshot)).first()
+                .isEqualTo("Why does the 'Network' chart show nothing?");
+        assertThat(AiSuggestions.forTab(AiSuggestions.outline(snapshot))).isEqualTo(AiSuggestions.forTab(snapshot));
+    }
+
+    @Test
+    void aDashboardsOutlineKeepsOnlyItsStructure() {
+        final AiTabSnapshot snapshot = new AiTabSnapshot(DASHBOARD, "Logons", null, false,
+                List.of(new AiTabSnapshotPart(AiTabSnapshotPart.DASHBOARD, null, DESCRIPTION)),
+                List.of(table("Pairs", 20L, false), table("Messages", 90L, false)), null, null, "hash");
+
+        final AiTabSnapshot outline = AiSuggestions.outline(snapshot);
+
+        assertThat(outline.getParts()).singleElement().satisfies(part -> assertThat(part.getText())
+                .contains("'Pairs'", "'Messages'", "'Network'", "ECharts Generic")
+                .doesNotContain("jbloggs", "count()", "User network", "\"source\""));
+        assertThat(AiSuggestions.forTab(outline)).isEqualTo(AiSuggestions.forTab(snapshot));
+    }
+
+    @Test
     void longNamesAreShortened() {
         final String name = "n".repeat(100);
-        assertThat(AiSuggestions.forTab(DASHBOARD, false, List.of(table(name, 1L, false)), null).getFirst())
+        assertThat(AiSuggestions.forTab(DASHBOARD, false, List.of(table(name, 1L, false)), null).get(1))
                 .contains("n".repeat(AiSuggestions.MAX_NAME_CHARS - 1) + "…'")
                 .doesNotContain("n".repeat(AiSuggestions.MAX_NAME_CHARS));
     }

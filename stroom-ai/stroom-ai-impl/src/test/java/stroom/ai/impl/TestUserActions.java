@@ -333,6 +333,36 @@ class TestUserActions {
     }
 
     @Test
+    void aSelectionFilterChangeButtonIsOffered() {
+        // Seen in testing: the tool said an Apply button was shown for a selection filter, but none was, as the
+        // filter, as the browser is given it, couldn't be read again here.
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final DashboardChanges.Change filter = DashboardChanges.parse(List.of(Map.of("op", "add_selection_filter",
+                        "target", "Events", "chart", "Network", "mode", "table",
+                        "terms", List.of(Map.of("field", "User A", "selection", "source")))))
+                .getFirst()
+                .toBuilder()
+                .targetId("table-1")
+                .ref("vis-1")
+                .query(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("User A")
+                                .condition(ExpressionTerm.Condition.EQUALS)
+                                .value("${component.vis-1.selection.source}").build())
+                        .build())
+                .build();
+        final Map<String, Object> change = dashboardChange("d1");
+        change.put("changes", List.of(filter.toMap()));
+
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.dashboardChange().changes()).containsExactly(
+                    "Filter the rows of 'Events' by what is selected in chart 'Network': User A = its source");
+            // As the browser applies it, with what was resolved for it.
+            assertThat(action.dashboardChange().operations()).containsExactly(filter.toMap());
+        });
+    }
+
+    @Test
     void aDocumentationChangeButtonIsOfferedForADashboard() {
         // Seen in testing: asked to document a dashboard, the agent could not, as the only way to write a
         // Documentation tab is the MCP server's, which writes a pipeline's or an XSLT's. No action of Stroom's

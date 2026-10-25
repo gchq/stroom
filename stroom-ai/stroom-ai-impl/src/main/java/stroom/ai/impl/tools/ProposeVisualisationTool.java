@@ -66,6 +66,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// `propose_visualisation` - plans a chart of a table on the dashboard (or the StroomQL query) the user attached,
@@ -104,11 +106,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final int MAX_SAMPLE_ROWS = 5_000;
     static final int MAX_NAME_CHARS = 100;
     static final int MAX_SUMMARY_CHARS = 500;
-    static final String NOT_ATTACHED = "No dashboard or StroomQL Query tab is attached to the chat, so no chart can "
-                                       + "be proposed. Ask the user to attach the dashboard's (or query's) tab (+ by "
-                                       + "the chat's input) and ask again.";
+    static final String NO_CHART = "no chart can be proposed";
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
+    // A column whose expression reads a data source field as it is, e.g. ${user.name}.
+    private static final Pattern PLAIN_FIELD = Pattern.compile("\\$\\{([^}]+)}");
 
     private final TabSnapshots tabSnapshots;
     private final DocumentAccess documentAccess;
@@ -259,7 +261,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final DocRef target = NullSafe.get(tab, StoredTabSnapshot::docRef);
         final boolean query = target != null && QueryDoc.TYPE.equals(target.getType());
         if (target == null || (!query && !DashboardDoc.TYPE.equals(target.getType()))) {
-            return ToolResult.text(NOT_ATTACHED);
+            return ToolResult.text(TabSnapshots.notAttached(tab,
+                    tabSnapshots.latestOfType(chatId, Set.of(DashboardDoc.TYPE, QueryDoc.TYPE)).orElse(null),
+                    "dashboard or StroomQL query", NO_CHART));
         }
         if (!documentAccess.canView(target)) {
             return ToolResult.text(DocumentAccess.NO_PERMISSION);
@@ -352,8 +356,83 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (D3.equals(library)) {
             return d3(kind, mappings, target, query, tableName, placement, name, notes);
         }
+        notes.append(clickFilterNote(kind, mappings, expressions, formats, query, tableName));
         return echarts(kind, mappings, style, options, target, query, embedded, table, tableName, part, name,
                 summary, placement, replace, request, context, notes);
+    }
+
+    // How a click on the chart could filter the dashboard, for the agent to offer once the chart is created: what a
+    // click selects, and the query fields (columns that read a field as it is) and table columns it can be matched
+    // with. Empty if it can't filter anything: a StroomQL Query has no other components, a histogram's bars (ranges)
+    // select nothing, and a chart with no column a click picks out selects nothing either.
+    static String clickFilterNote(final ChartKind kind,
+                                  final Map<String, String> mappings,
+                                  final Map<String, String> expressions,
+                                  final Map<String, String> formats,
+                                  final boolean query,
+                                  final String tableName) {
+        if (query || kind == ChartKind.HISTOGRAM) {
+            return "";
+        }
+        final List<String> selects = new ArrayList<>();
+        final List<String> fields = new ArrayList<>();
+        final List<String> columns = new ArrayList<>();
+        NullSafe.map(mappings).forEach((role, column) -> {
+            if (ProposeDashboardChangeTool.SELECTED_ROLES.contains(role) && NullSafe.isNonBlankString(column)) {
+                selects.add(role + " (column '" + column + "')");
+                columns.add(column);
+                final Matcher matcher = PLAIN_FIELD.matcher(NullSafe.string(NullSafe.get(expressions,
+                        map -> map.get(column))).strip());
+                if (matcher.matches()) {
+                    fields.add(matcher.group(1) + " (by " + role + ")");
+                }
+            }
+        });
+        if (selects.isEmpty()) {
+            return "";
+        }
+        if (kind == ChartKind.GRAPH || kind == ChartKind.SANKEY || kind == ChartKind.CHORD) {
+            selects.add("node (a node's name, from either end)");
+        }
+        return "\nClick filtering: once the chart is created, a click on it selects " + String.join(", ", selects)
+               + ". In one line, offer to make clicks filter the dashboard (add_selection_filter, once its pane is "
+               + "on the dashboard): "
+               + (fields.isEmpty()
+                ? "the rows of table '" + tableName + "' or another table by column(s) " + String.join(", ", columns)
+                  + " (the search can't be filtered by them, as they aren't plain fields of the data source)"
+                : "the search of the query feeding '" + tableName + "' by field(s) " + String.join(", ", fields)
+                  + " (every table it feeds narrows, this chart too), or a table's rows by column(s) "
+                  + String.join(", ", columns) + " (this chart stays whole)")
+               + ". Ask which, unless the user has said; propose it only once they've created the chart."
+               + (kind == ChartKind.GRAPH || kind == ChartKind.SANKEY || kind == ChartKind.CHORD
+                ? " For a network, give match any with a term per end by node, and the link's ends (the source's "
+                  + "field or column with selection source, the target's with selection target), so a clicked "
+                  + "node or link both filter; a link matches either direction unless the chart is directed."
+                : "")
+               + " Ctrl-click or Shift-click selects several items; the filter then matches any of them."
+               + rangeNote(kind, mappings, expressions, formats);
+    }
+
+    // For a chart with a time axis (a line chart's or a scatter plot's x, a Date Time column), how its range tool
+    // can filter by a time range; empty otherwise.
+    private static String rangeNote(final ChartKind kind,
+                                    final Map<String, String> mappings,
+                                    final Map<String, String> expressions,
+                                    final Map<String, String> formats) {
+        final String x = NullSafe.get(mappings, map -> map.get("x"));
+        if ((kind != ChartKind.LINE && kind != ChartKind.SCATTER) || NullSafe.isBlankString(x)
+            || !"DATE_TIME".equals(NullSafe.get(formats, map -> map.get(x)))) {
+            return "";
+        }
+        final Matcher matcher = PLAIN_FIELD.matcher(NullSafe.string(NullSafe.get(expressions,
+                map -> map.get(x))).strip());
+        return " Its time axis has a range tool: dragging along it selects a time range, which a term with "
+               + "selection " + ProposeDashboardChangeTool.RANGE_SELECTION + " keeps what is within ("
+               + (matcher.matches()
+                ? "the query's field " + matcher.group(1) + ", or "
+                : "")
+               + "a table's date column, e.g. '" + x + "'). Offer that too: e.g. to narrow the dashboard to a "
+               + "period.";
     }
 
     // Why an embedded query's chart can't be offered, or null if it can.

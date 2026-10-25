@@ -237,6 +237,26 @@ class TestTabSnapshots {
     }
 
     @Test
+    void aQuestionWithoutATabIsToldWhichTabWasAttachedBefore() {
+        // Seen in testing: a question was sent without the dashboard's tab, and the model took the files of the tab
+        // sent with an earlier question to be the dashboard as it is.
+        viewable.add(XSLT.getUuid());
+        final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, xslt("<a/>", false, "h1"));
+        Mockito.when(aiService.getMessages(CHAT)).thenReturn(List.of(question(stored.snapshotId()), question(null)));
+
+        assertThat(tabSnapshots.forLatestQuestion(CHAT)).isEmpty();
+        assertThat(tabSnapshots.latestOfType(CHAT, Set.of())).hasValueSatisfying(earlier ->
+                assertThat(TabSnapshots.detachedNote(earlier)).startsWith(
+                        "[No tab is attached to this question. XSLT 'Event translation' (uuid xslt-uuid) was "
+                        + "attached to an earlier question: its files in /tabs/1/ show it as it was then"));
+        // Only of the types asked for.
+        assertThat(tabSnapshots.latestOfType(CHAT, Set.of("Dashboard"))).isEmpty();
+        // Nor one the user can no longer view.
+        viewable.clear();
+        assertThat(tabSnapshots.latestOfType(CHAT, Set.of())).isEmpty();
+    }
+
+    @Test
     void aSavedTabHasNoUnsavedParts() {
         viewable.add(XSLT.getUuid());
         final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, xslt("<saved/>", false, "h1"));

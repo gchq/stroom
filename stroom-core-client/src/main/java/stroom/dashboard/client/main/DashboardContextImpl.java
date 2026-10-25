@@ -433,7 +433,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         if (wildcard) {
                             value = value.replaceAll("\\.?\\.", componentState.id);
                         }
-                        value = ParamUtil.replaceParameters(value, paramMap::get);
+                        value = selectionTermValue(value, paramMap);
                         final ExpressionTerm expressionTerm = term.copy().value(value).build();
                         if (ExpressionUtil.isValidTerm(expressionTerm, false)) {
                             innerItems.add(expressionTerm);
@@ -456,6 +456,16 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         }
 
         return Optional.empty();
+    }
+
+    /// A term's value with the selection it names put in, as selected: never quoted (see gh-5100). Quoting a value
+    /// with a space in it (e.g. a person's name) made the term match nothing, as no value holds the quotes.
+    ///
+    /// @param value  The term's value, naming parts of a selection, e.g. `${component.vis-1.selection.node}`.
+    /// @param params The selection's values, by their fully qualified keys.
+    /// @return The value with the selection put in.
+    static String selectionTermValue(final String value, final Map<String, String> params) {
+        return ParamUtil.replaceTermValueParameters(value, params::get, false);
     }
 
     private Optional<ExpressionItem> expandFilterTerm(final ExpressionTerm term,

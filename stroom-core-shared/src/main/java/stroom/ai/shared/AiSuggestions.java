@@ -27,7 +27,9 @@ import stroom.query.shared.QueryDoc;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /// What the user might ask about what they attach to a chat (a tab, a document from the Explorer, or a table of
 /// results), and what the agent can do with it, so suggestions guide the user towards what is possible for that
@@ -48,6 +50,7 @@ public final class AiSuggestions {
     static final String DOCUMENTATION_TYPE = "Documentation";
     static final String ONBOARD_THIS_FEED = "Onboard this feed (translate and index its data)";
     static final String ONBOARD_INTO_FOLDER = "Onboard a new data source into this folder";
+    static final String SUGGEST_A_CHART = "Suggest a chart for this dashboard";
 
     private AiSuggestions() {
         // Static methods only.
@@ -60,7 +63,8 @@ public final class AiSuggestions {
         if (snapshot == null || snapshot.getDocRef() == null) {
             return new ArrayList<>();
         }
-        return forTab(snapshot.getDocRef(), snapshot.isDirty(), snapshot.getSearches(), snapshot.getStepping());
+        return forTab(snapshot.getDocRef(), snapshot.isDirty(), snapshot.getSearches(), snapshot.getStepping(),
+                dashboardDescription(snapshot));
     }
 
     /// @param docRef   The tab's document.
@@ -72,6 +76,21 @@ public final class AiSuggestions {
                                       final boolean dirty,
                                       final List<AiTabSearch> searches,
                                       final AiSteppingContext stepping) {
+        return forTab(docRef, dirty, searches, stepping, null);
+    }
+
+    /// @param docRef      The tab's document.
+    /// @param dirty       True if it has unsaved changes.
+    /// @param searches    The tables of results it shows, if any.
+    /// @param stepping    Its stepping screen, if it is stepping a pipeline.
+    /// @param description For a dashboard, its description (its [AiTabSnapshotPart#DASHBOARD] part, or the outline
+    ///                    of it), or null if not known.
+    /// @return Questions the user might ask about it, most likely first, at most [#MAX_SUGGESTIONS].
+    public static List<String> forTab(final DocRef docRef,
+                                      final boolean dirty,
+                                      final List<AiTabSearch> searches,
+                                      final AiSteppingContext stepping,
+                                      final String description) {
         final List<String> suggestions = new ArrayList<>();
         final String type = NullSafe.string(NullSafe.get(docRef, DocRef::getType));
         if (stepping != null) {
@@ -79,7 +98,7 @@ public final class AiSuggestions {
         } else if (QueryDoc.TYPE.equals(type)) {
             addQuery(suggestions, dirty, firstTable(searches));
         } else if (DashboardDoc.TYPE.equals(type)) {
-            addDashboard(suggestions, firstTable(searches));
+            addDashboard(suggestions, NullSafe.list(searches), DashboardOutline.read(description));
         } else if (PipelineDoc.TYPE.equals(type)) {
             suggestions.add("Explain how this pipeline processes its data");
             suggestions.add("Which feeds does this pipeline process?");
@@ -147,8 +166,13 @@ public final class AiSuggestions {
                             ? null
                             : new ArrayList<>(stepping.getGeneralErrors().subList(0, 1)));
         }
+        // A dashboard's structure, which its suggestions are made from, without its content.
+        final String structure = DashboardOutline.read(dashboardDescription(snapshot)).write();
+        final List<AiTabSnapshotPart> parts = structure.isEmpty()
+                ? null
+                : List.of(new AiTabSnapshotPart(AiTabSnapshotPart.DASHBOARD, null, structure));
         return new AiTabSnapshot(snapshot.getDocRef(), snapshot.getTabLabel(), snapshot.getInnerTab(),
-                snapshot.isDirty(), null, tables, null, steppingOutline, null);
+                snapshot.isDirty(), parts, tables, null, steppingOutline, null);
     }
 
     /// @param docRef A document the user attached to the chat from the Explorer.
@@ -307,8 +331,10 @@ public final class AiSuggestions {
             return "explain or refine the query and offer it with an 'Apply to query' button, analyse the results "
                    + "shown, and look into the events behind them";
         } else if (DashboardDoc.TYPE.equals(type)) {
-            return "analyse a table's rows, propose changes to a table (group, columns, sort, filter) with an "
-                   + "'Apply to dashboard' button, and look into the events behind the rows";
+            return "analyse a table's rows, propose changes to its tables (group, columns, sort, filter, "
+                   + "formatting) with an 'Apply to dashboard' button, suggest and create a chart that suits a "
+                   + "table's data, make a chart filter the dashboard by what is clicked on it, and look into the "
+                   + "events behind the rows";
         } else if (PipelineDoc.TYPE.equals(type)) {
             return "explain its structure, find the feeds it processes and where its output goes, and help step a "
                    + "record through it";
@@ -366,13 +392,61 @@ public final class AiSuggestions {
         suggestions.add("Count these results by their most useful field");
     }
 
-    private static void addDashboard(final List<String> suggestions, final AiTabSearch table) {
+    // A chart first, when a table that has rows has none yet: the agent picks one from the data, the table's settings
+    // and the charts already there. Then why a table is empty, filtering by a chart Stroom AI drew (whose clicks
+    // select what is clicked) if nothing filters by one yet, and the first table's rows.
+    private static void addDashboard(final List<String> suggestions,
+                                     final List<AiTabSearch> searches,
+                                     final DashboardOutline outline) {
+        // A chart that draws nothing is the most pressing: the agent finds out why (e.g. a selection filter).
+        if (!outline.emptyCharts.isEmpty()) {
+            suggestions.add("Why does the '" + shorten(outline.emptyCharts.get(0)) + "' chart show nothing?");
+        }
+        AiTabSearch empty = null;
+        boolean unchartedRows = false;
+        for (final AiTabSearch search : searches) {
+            if (search == null) {
+                continue;
+            }
+            final boolean noRows = !search.isSearching() && Long.valueOf(0).equals(search.getVisibleRows());
+            if (noRows && empty == null) {
+                empty = search;
+            } else if (!noRows && !outline.isCharted(search.getName())) {
+                unchartedRows = true;
+            }
+        }
+        if (unchartedRows) {
+            suggestions.add(SUGGEST_A_CHART);
+        }
+        if (empty != null) {
+            suggestions.add("Why does the '" + shorten(empty.getName()) + "' table show no results?");
+        }
+        if (!outline.clickableCharts.isEmpty() && !outline.selectionFilters) {
+            suggestions.add("Filter the dashboard by what I click on the '" + shorten(outline.clickableCharts.get(0))
+                            + "' chart");
+        }
+        final AiTabSearch table = firstTable(searches);
         if (table != null) {
             final String name = "'" + shorten(table.getName()) + "'";
             suggestions.add("What stands out in the " + name + " table?");
-            suggestions.add("Group the " + name + " table by its most useful column");
+            if (!outline.groupedTables.contains(table.getName())) {
+                suggestions.add("Group the " + name + " table by its most useful column");
+            }
         }
         suggestions.add("Explain what this dashboard shows and where its data comes from");
+    }
+
+    // The dashboard's description in a tab, or null if it isn't one (or isn't known).
+    private static String dashboardDescription(final AiTabSnapshot snapshot) {
+        if (snapshot == null || !DashboardDoc.TYPE.equals(NullSafe.get(snapshot.getDocRef(), DocRef::getType))) {
+            return null;
+        }
+        for (final AiTabSnapshotPart part : NullSafe.list(snapshot.getParts())) {
+            if (part != null && AiTabSnapshotPart.DASHBOARD.equals(part.getName())) {
+                return part.getText();
+            }
+        }
+        return null;
     }
 
     private static AiTabSearch firstTable(final List<AiTabSearch> searches) {
@@ -399,5 +473,127 @@ public final class AiSuggestions {
         return value.length() > MAX_NAME_CHARS
                 ? value.substring(0, MAX_NAME_CHARS - 1) + "…"
                 : value;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a dashboard has, read from its description (see the client's `DashboardPresenter#describe`): its tables
+    /// (and embedded queries), which of them are grouped, its charts and the tables they are linked to, which charts
+    /// Stroom AI drew (by their render reports), and whether anything filters by a chart's selection.
+    static final class DashboardOutline {
+
+        private static final String HEADING = "## ";
+        private static final String ID = "' (id ";
+        private static final String GROUPED = "(grouped";
+        private static final String LINKED_TABLE = "Linked table: ";
+        private static final String QUERY_SELECTION_FILTERS = "Query selection filters: ";
+        private static final String TABLE_SELECTION_FILTERS = "Table selection filters: ";
+        private static final String RENDER_REPORT = "Render report: ";
+        private static final String GENERATED_ADAPTER = "\"adapter\":\"ECharts Generic\"";
+        private static final List<String> NOTHING_DRAWN = List.of("empty", "nothing-drawn", "error");
+        private static final String TABLE = "Table";
+        private static final String EMBEDDED_QUERY = "Embedded Query";
+        private static final String VISUALISATION = "Visualisation";
+
+        private boolean known;
+        private final List<String> tables = new ArrayList<>();
+        private final List<String> groupedTables = new ArrayList<>();
+        // Each chart, and the table it is linked to (null if none).
+        private final Map<String, String> charts = new LinkedHashMap<>();
+        private final List<String> clickableCharts = new ArrayList<>();
+        // The charts whose render reports say they drew nothing: empty, nothing drawn, or an error.
+        private final List<String> emptyCharts = new ArrayList<>();
+        private boolean selectionFilters;
+
+        static DashboardOutline read(final String description) {
+            final DashboardOutline outline = new DashboardOutline();
+            if (description == null) {
+                return outline;
+            }
+            outline.known = true;
+            String type = null;
+            String name = null;
+            for (final String line : description.split("\n")) {
+                if (line.startsWith(HEADING)) {
+                    final int quote = line.indexOf('\'');
+                    final int end = line.lastIndexOf(ID);
+                    type = quote > HEADING.length()
+                            ? line.substring(HEADING.length(), quote).trim()
+                            : null;
+                    name = quote >= 0 && end > quote
+                            ? line.substring(quote + 1, end)
+                            : null;
+                    if (name != null && (TABLE.equals(type) || EMBEDDED_QUERY.equals(type))) {
+                        outline.tables.add(name);
+                    } else if (name != null && VISUALISATION.equals(type)) {
+                        outline.charts.put(name, null);
+                    }
+                } else if (name == null) {
+                    continue;
+                } else if (line.startsWith(QUERY_SELECTION_FILTERS) || line.startsWith(TABLE_SELECTION_FILTERS)) {
+                    outline.selectionFilters = true;
+                } else if (TABLE.equals(type) && line.startsWith("- ") && line.contains(GROUPED)) {
+                    if (!outline.groupedTables.contains(name)) {
+                        outline.groupedTables.add(name);
+                    }
+                } else if (VISUALISATION.equals(type) && line.startsWith(LINKED_TABLE)) {
+                    final String table = line.substring(LINKED_TABLE.length()).trim();
+                    if (table.length() > 1 && table.startsWith("'") && table.endsWith("'")) {
+                        outline.charts.put(name, table.substring(1, table.length() - 1));
+                    }
+                } else if (VISUALISATION.equals(type) && line.startsWith(RENDER_REPORT)) {
+                    final String report = line.replace(" ", "");
+                    if (report.contains(GENERATED_ADAPTER.replace(" ", ""))) {
+                        outline.clickableCharts.add(name);
+                    }
+                    for (final String status : NOTHING_DRAWN) {
+                        if (report.contains("\"status\":\"" + status + "\"") && !outline.emptyCharts.contains(name)) {
+                            outline.emptyCharts.add(name);
+                        }
+                    }
+                }
+            }
+            return outline;
+        }
+
+        // True if a chart is linked to the table. False if the dashboard isn't known.
+        boolean isCharted(final String table) {
+            return known && charts.containsValue(table);
+        }
+
+        // The outline as a description with only what it is read from, which reads back the same.
+        String write() {
+            final StringBuilder sb = new StringBuilder();
+            for (final String table : tables) {
+                sb.append(HEADING).append(TABLE).append(" '").append(table).append(ID).append("-)\n");
+                if (groupedTables.contains(table)) {
+                    sb.append("- ").append(GROUPED).append(")\n");
+                }
+            }
+            for (final Map.Entry<String, String> chart : charts.entrySet()) {
+                sb.append(HEADING).append(VISUALISATION).append(" '").append(chart.getKey()).append(ID)
+                        .append("-)\n");
+                if (chart.getValue() != null) {
+                    sb.append(LINKED_TABLE).append('\'').append(chart.getValue()).append("'\n");
+                }
+                final List<String> report = new ArrayList<>();
+                if (emptyCharts.contains(chart.getKey())) {
+                    report.add("\"status\":\"empty\"");
+                }
+                if (clickableCharts.contains(chart.getKey())) {
+                    report.add(GENERATED_ADAPTER);
+                }
+                if (!report.isEmpty()) {
+                    sb.append(RENDER_REPORT).append('{').append(String.join(",", report)).append("}\n");
+                }
+            }
+            // Under whichever component was written last: only whether there are any is kept.
+            if (selectionFilters && (!tables.isEmpty() || !charts.isEmpty())) {
+                sb.append(TABLE_SELECTION_FILTERS).append("...\n");
+            }
+            return sb.toString();
+        }
     }
 }
