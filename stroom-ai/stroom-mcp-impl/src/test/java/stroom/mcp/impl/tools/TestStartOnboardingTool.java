@@ -151,6 +151,32 @@ class TestStartOnboardingTool {
         assertThat(tool.definition().description().toString()).startsWith("Onboarding start: ");
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void buildStatusIsBriefUnlessAskedForInFull() {
+        // Seen: its 10 KB result saved to the workspace and called for again and again.
+        final BuildStatusTool status = new BuildStatusTool(plan);
+        final Map<String, Object> brief = PortedToolCalls.json(status.execute(PortedToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"b\"}"), PortedToolCalls.context()).text());
+        final Map<String, Object> full = PortedToolCalls.json(status.execute(PortedToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"b\", \"full\": true}"), PortedToolCalls.context()).text());
+
+        assertThat(brief.keySet()).startsWith("next", "before_promotion", "steps");
+        final Map<String, Object> states = (Map<String, Object>) brief.get("steps");
+        final List<Map<String, Object>> steps = (List<Map<String, Object>>) full.get("steps");
+        assertThat(states).hasSize(steps.size());
+        steps.forEach(step -> assertThat(states).containsEntry((String) step.get("step"), step.get("state")));
+        assertThat(brief.get("next")).isEqualTo(full.get("next"));
+        assertThat((String) brief.get("hint")).contains("full: true");
+        assertThat(full).doesNotContainKey("hint");
+
+        assertThat(BuildStatusTool.compact(Map.of("documents", List.of(
+                Map.of("type", "XSLT", "name", "Acme - CEF", "uuid", "u1", "role", "CEF"),
+                Map.of("type", "Pipeline", "name", "Acme", "uuid", "u2", "working_copy_of", "u3"))))
+                .get("documents"))
+                .isEqualTo(List.of("XSLT 'Acme - CEF' (CEF) u1", "Pipeline 'Acme' u2, a working copy of u3"));
+    }
+
     private Map<String, Object> call(final Map<String, Object> arguments) {
         final ToolResult result = tool.execute(PortedToolCalls.call(StartOnboardingTool.NAME,
                 JsonUtil.writeValueAsString(arguments, false)), PortedToolCalls.context());

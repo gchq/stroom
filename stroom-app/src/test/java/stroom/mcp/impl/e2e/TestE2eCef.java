@@ -23,6 +23,7 @@ import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.mcp.impl.McpTestClient;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -205,6 +207,113 @@ class TestE2eCef extends AbstractE2eTest {
                 .contains("## Field mapping", "### View events", "Change ticket", "CHG-3000");
 
         environment(eventsId, xslt, pipelineUuid, kafkaDoc);
+    }
+
+    @Test
+    void aMixedSampleKeepsEachSystemsVersionAndAPlanThatWontCompileIsNotSaved() {
+        // Not in the Stroom MCP server's e2e_cef.py: what changed here since the port, through the real tools.
+        final String build = "cef-mixed";
+        final String feedName = "CEF-MIXED-EVENTS";
+        final Map<String, Object> feed = agreed("create_feed", args("build", build, "name", feedName,
+                "stream_type", "Events"));
+        final long eventsId = number(client.json("upload_sample", args("feed", feedName, "sample", mixedEvents(),
+                "stream_type", "Events")).get("stream_id"));
+        final DocRef kafka = create(KafkaConfigDoc.TYPE, "CEF-MIXED-KAFKA", folder(folderOf((String) feed.get("uuid"))))
+                .getDocRef();
+
+        // Only one of the three Events has a version: it is still taken from the Event (a feed can mix systems).
+        final Map<String, Object> drafted = client.json("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "topic", "arcsight-cef"));
+        dump("mixed drafted", drafted);
+        assertThat(map(drafted, "plan").get("version")).as("the version from each Event")
+                .isEqualTo(Map.of("source", "EventSource/System/Version"));
+        // The fields not sent, once, by why: not in the plan as well.
+        assertThat(map(drafted, "plan")).doesNotContainKey("not_sent");
+        final List<Map<String, Object>> notSent = list(drafted, "not_sent");
+        assertThat(notSent).as("not sent, by why").isNotEmpty().allSatisfy(group -> assertThat(group)
+                .containsKeys("why", "count", "paths"));
+        assertThat(notSent.stream().mapToLong(group -> number(group.get("count"))).sum())
+                .as("every field not sent, counted")
+                .isEqualTo(notSent.stream()
+                        .flatMap(group -> ((Map<String, List<String>>) group.get("paths")).values().stream())
+                        .mapToLong(List::size)
+                        .sum());
+
+        // A record key with a namespace prefix is refused by the plan's checks; one that doesn't parse, by
+        // compiling the XSLT the plan writes, with the real compiler. Neither is saved.
+        final Map<String, Object> prefixed = client.json("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "topic", "arcsight-cef", "kafka_key", "d:EventSource/Device/HostName",
+                "build", build, "name", "CEF-MIXED"));
+        assertThat(prefixed.get("saved")).as("prefixed key: not saved").isNull();
+        assertThat(String.valueOf(prefixed.get("problems"))).contains("no namespace prefix");
+        final Map<String, Object> unparsed = client.json("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "topic", "arcsight-cef", "kafka_key", "EventSource/Device/HostName[",
+                "build", build, "name", "CEF-MIXED"));
+        dump("unparsed key", unparsed);
+        assertThat(unparsed.get("saved")).as("unparsed key: not saved").isNull();
+        assertThat(String.valueOf(unparsed.get("problems"))).contains("the XSLT doesn't compile");
+        assertThat(String.valueOf(unparsed.get("hint"))).startsWith("Not saved: the XSLT the plan writes doesn't "
+                                                                    + "compile");
+
+        // Saved as it should be, then stepped: each Event's line has its own system's version, or none.
+        final Map<String, Object> saved = agreed("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "topic", "arcsight-cef", "kafka_key", "EventSource/Device/HostName",
+                "build", build, "name", "CEF-MIXED"));
+        final Map<String, Object> xslt = map(saved, "saved");
+        assertThat(xslt.get("uuid")).as("XSLT saved").isNotNull();
+        final String pipelineUuid = (String) agreed("create_pipeline", args("build", build,
+                "name", "CEF-MIXED-Kafka", "standalone", "kafka", "set_properties", List.of(
+                        docProperty("xsltFilter", "xslt", (String) xslt.get("uuid"), XsltDoc.TYPE),
+                        docProperty("standardKafkaProducer", "kafkaConfig", kafka.getUuid(), KafkaConfigDoc.TYPE))))
+                .get("uuid");
+        assertThat(stepOutput(pipelineUuid, eventsId, 0, "xsltFilter")).as("the Event with a version")
+                .contains("CEF:0|Delinea|SecretServer|11.4|User-Login|");
+        assertThat(stepOutput(pipelineUuid, eventsId, 1, "xsltFilter")).as("an Event without one")
+                .contains("CEF:0|Delinea|SecretServer||Secret-View|");
+
+        // The kept plan, its not-sent list long, is saved to the workspace rather than shown whole.
+        final String read = McpTestClient.text(client.call("read_document", args("uuid", xslt.get("uuid"),
+                "mapping", true)));
+        final String path = "/documents/" + xslt.get("uuid") + "/mapping.json";
+        assertThat(read).as("read_document's kept mapping")
+                .contains("## Kept mapping\nIt is too large to show")
+                .contains(path)
+                .doesNotContain("\"not_sent\"");
+        assertThat(McpTestClient.text(client.call("jq", args("path", path, "query", ".mapping.not_sent | length"))))
+                .as("the saved plan, read back")
+                .matches("\\d+");
+    }
+
+    // Three Events of three kinds, only the first with its system's version, each with more Data than CEF's
+    // custom slots hold, so that many fields are not sent.
+    private static String mixedEvents() {
+        final StringBuilder sb = new StringBuilder("""
+                <?xml version="1.1" encoding="UTF-8"?>
+                <Events xmlns="event-logging:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+                Version="3.5.2" xsi:schemaLocation="event-logging:3 file://event-logging-v3.5.2.xsd">
+                """);
+        final List<List<String>> kinds = List.of(
+                List.of("User-Login", "Authenticate", "<Action>Logon</Action><User><Id>priya.patel</Id></User>"),
+                List.of("Secret-View", "View", "<Resource><Type>Secret</Type><Name>Edge Admin</Name></Resource>"),
+                List.of("Secret-Create", "Create", "<Resource><Type>Secret</Type><Name>DB Admin</Name></Resource>"));
+        for (int i = 0; i < kinds.size(); i++) {
+            final List<String> kind = kinds.get(i);
+            sb.append("<Event><EventTime><TimeCreated>2026-09-27T23:4").append(i)
+                    .append(":10.000Z</TimeCreated></EventTime><EventSource><System><Name>SecretServer</Name>")
+                    .append("<Organisation>Delinea</Organisation>")
+                    .append(i == 0
+                            ? "<Version>11.4</Version>"
+                            : "")
+                    .append("</System><Device><HostName>ss-web-0").append(i).append("</HostName></Device>")
+                    .append("<User><Id>priya.patel</Id></User></EventSource><EventDetail><TypeId>")
+                    .append(kind.get(0)).append("</TypeId><").append(kind.get(1)).append('>').append(kind.get(2));
+            for (int n = 0; n < 40; n++) {
+                sb.append("<Data Name=\"").append(kind.get(1).toLowerCase(Locale.ROOT))
+                        .append("_attribute_").append(n).append("\" Value=\"value ").append(n).append("\"/>");
+            }
+            sb.append("</").append(kind.get(1)).append("></EventDetail></Event>\n");
+        }
+        return sb.append("</Events>\n").toString();
     }
 
     private void environment(final long eventsId,

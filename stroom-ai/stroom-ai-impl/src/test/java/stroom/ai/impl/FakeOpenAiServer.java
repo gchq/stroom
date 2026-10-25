@@ -32,17 +32,21 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /// An OpenAI-compatible chat completions server running in-process on a random port, for testing a whole agent
 /// run through the real model client, HTTP client and streaming. It streams the replies it is given, in order
-/// (an answer, or a call of a tool), as server-sent events, and records each request it receives.
+/// (an answer, or a call of a tool), as server-sent events, and records each request it receives. A request that
+/// isn't streamed (e.g. for a summary) is answered whole, from replies of its own.
 final class FakeOpenAiServer implements AutoCloseable {
 
     private static final String DEFAULT_ANSWER = "Done.";
+    private static final String DEFAULT_WHOLE_ANSWER = "Summary.";
 
     private final HttpServer server;
     private final Deque<Map<String, Object>> replies = new ConcurrentLinkedDeque<>();
+    private final Deque<String> wholeAnswers = new ConcurrentLinkedDeque<>();
     private final List<Map<String, Object>> requests = Collections.synchronizedList(new ArrayList<>());
 
     private FakeOpenAiServer() throws IOException {
@@ -67,6 +71,12 @@ final class FakeOpenAiServer implements AutoCloseable {
         return this;
     }
 
+    /// Adds an answer to the replies to requests that aren't streamed, given whole.
+    FakeOpenAiServer answerWhole(final String text) {
+        wholeAnswers.add(text);
+        return this;
+    }
+
     /// Adds a call of a tool to the replies.
     FakeOpenAiServer callTool(final String name, final String argumentsJson) {
         replies.add(Map.of("tool", name, "arguments", argumentsJson));
@@ -84,7 +94,12 @@ final class FakeOpenAiServer implements AutoCloseable {
     private void handle(final HttpExchange exchange) throws IOException {
         try (exchange) {
             final String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            requests.add(JsonUtil.readValue(body, Map.class));
+            final Map<String, Object> request = JsonUtil.readValue(body, Map.class);
+            requests.add(request);
+            if (!Boolean.TRUE.equals(request.get("stream"))) {
+                answerWhole(exchange, Objects.requireNonNullElse(wholeAnswers.poll(), DEFAULT_WHOLE_ANSWER));
+                return;
+            }
             final Map<String, Object> reply = replies.isEmpty()
                     ? Map.of("answer", DEFAULT_ANSWER)
                     : replies.poll();
@@ -111,6 +126,22 @@ final class FakeOpenAiServer implements AutoCloseable {
             out.write("data: [DONE]\n\n".getBytes(StandardCharsets.UTF_8));
             out.flush();
         }
+    }
+
+    private static void answerWhole(final HttpExchange exchange, final String text) throws IOException {
+        final byte[] json = JsonUtil.writeValueAsString(Map.of(
+                "id", "c1",
+                "object", "chat.completion",
+                "model", "fake",
+                "choices", List.of(Map.of(
+                        "index", 0,
+                        "message", Map.of("role", "assistant", "content", text),
+                        "finish_reason", "stop")),
+                "usage", Map.of("prompt_tokens", 10, "completion_tokens", 5, "total_tokens", 15)), false)
+                .getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(200, json.length);
+        exchange.getResponseBody().write(json);
     }
 
     private static Map<String, Object> chunk(final Map<String, Object> delta, final String finishReason) {
