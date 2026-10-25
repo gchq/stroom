@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.view;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class StepLocationViewImpl extends ViewImpl implements StepLocationView {
+/// The "Set Location" dialog's content: the stream, part and record to step to, the part and record
+/// counted from 1, as the user sees them. Its markup is `StepLocationPicker.ui.xml`;
+/// [StepLocationPickerController] shows it.
+public class StepLocationPicker extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     ValueSpinner metaId;
     @UiField
@@ -36,40 +39,36 @@ public class StepLocationViewImpl extends ViewImpl implements StepLocationView {
     @UiField
     ValueSpinner recordNo;
 
-    @Inject
-    public StepLocationViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the dialog's content.
+    public StepLocationPicker() {
+        initWidget(BINDER.createAndBindUi(this));
         metaId.setMax(Long.MAX_VALUE);
-        metaId.setMin(0);
         partNo.setMax(Long.MAX_VALUE);
-        partNo.setMin(1);
         recordNo.setMax(Long.MAX_VALUE);
-        recordNo.setMin(1);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the stream.
     public void focus() {
         metaId.focus();
     }
 
-    @Override
+    /// @return The location entered, its part and record zero based.
     public StepLocation getStepLocation() {
         return new StepLocation(metaId.getValue(), partNo.getValue() - 1, recordNo.getValue() - 1);
     }
 
-    @Override
+    /// @param stepLocation The location to show, its part and record zero based.
     public void setStepLocation(final StepLocation stepLocation) {
         metaId.setValue(stepLocation.getMetaId());
         partNo.setValue(stepLocation.getPartIndex() + 1);
         recordNo.setValue(stepLocation.getRecordIndex() + 1);
     }
 
-    public interface Binder extends UiBinder<Widget, StepLocationViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, StepLocationPicker> {
 
     }
 }

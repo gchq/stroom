@@ -44,6 +44,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.client.component.StepLocationLinkController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
@@ -115,7 +116,7 @@ public class SteppingPresenter
     // Tells screen reader users that a step has begun and where it got to (the progress message
     // above changes too often, while searching, to be announced)
     private final Element stepAnnouncement;
-    private final StepLocationLinkPresenter stepLocationLinkPresenter;
+    private final StepLocationLinkController stepLocationLink;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
@@ -157,7 +158,7 @@ public class SteppingPresenter
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> elementPresenterProvider,
-                             final StepLocationLinkPresenter stepLocationLinkPresenter,
+                             final StepLocationLinkController stepLocationLink,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
@@ -167,7 +168,7 @@ public class SteppingPresenter
         super(eventBus, view);
         own(pipelinePathPresenter);
         own(sourcePresenter);
-        own(stepLocationLinkPresenter);
+        own(stepLocationLink);
         own(stepControlPresenter);
         own(steppingFilterPresenter);
         this.restFactory = restFactory;
@@ -175,7 +176,7 @@ public class SteppingPresenter
         this.pipelinePathPresenter = pipelinePathPresenter;
         this.sourcePresenter = sourcePresenter;
         this.elementPresenterProvider = elementPresenterProvider;
-        this.stepLocationLinkPresenter = stepLocationLinkPresenter;
+        this.stepLocationLink = stepLocationLink;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
@@ -199,7 +200,7 @@ public class SteppingPresenter
 
         // Nothing can be stepped until a stream has been chosen (see beginStepping).
         stepControlPresenter.initButtons();
-        stepLocationLinkPresenter.setEnabled(false);
+        stepLocationLink.setEnabled(false);
 
         logPaneButtons = new Toolbar("Log pane");
         toggleLogPaneButton = logPaneButtons.toggle(SvgImage.EXCLAMATION, LOG_PANE_TITLE, this::onToggleLogPane);
@@ -223,7 +224,7 @@ public class SteppingPresenter
         stepAnnouncement.setAttribute("aria-live", "polite");
         stepToolbar.getElement().appendChild(stepAnnouncement);
         view.addWidgetRight(stepToolbar);
-        view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
+        view.addWidgetRight(stepLocationLink.asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.addWidgetRight(buttonPanel);
 
@@ -238,7 +239,7 @@ public class SteppingPresenter
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        stepLocationLinkPresenter.setOnStepLocation(stepLocation -> {
+        stepLocationLink.setOnStepLocation(stepLocation -> {
             step(StepType.REFRESH, stepLocation);
             final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
             steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
@@ -265,7 +266,7 @@ public class SteppingPresenter
             if (resultPage.size() == 1) {
                 final MetaRow metaRow = resultPage.getFirst();
                 steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
-                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
+                stepLocationLink.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
                 // Begin stepping if not already stepping on this stream. This handles the case where the user
                 // changes the filter expression and a single result is auto-selected
                 if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
@@ -752,7 +753,7 @@ public class SteppingPresenter
         requestBuilder.criteria(findMetaCriteria);
         // A step request needs the criteria, so a refresh or new location is only possible from now.
         stepControlPresenter.setRefreshEnabled(true);
-        stepLocationLinkPresenter.setEnabled(true);
+        stepLocationLink.setEnabled(true);
 
         requestBuilder.childStreamType(childStreamType);
 
@@ -1120,7 +1121,7 @@ public class SteppingPresenter
                 // record that was found and update the request with the new
                 // position ready for the next step.
                 requestBuilder.stepLocation(result.getFoundLocation());
-                stepLocationLinkPresenter.setStepLocation(result.getFoundLocation());
+                stepLocationLink.setStepLocation(result.getFoundLocation());
 
                 final Meta meta = Meta.builder().id(result.getFoundLocation().getMetaId()).build();
                 // If the returned meta doesnt match the current selected meta then make sure the stepping doesnt run

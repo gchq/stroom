@@ -1,0 +1,9 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The stepping screen's location (StepLocationLink), the BEM block step-location-link
+     (stepping-screen.css): a link showing the location, with none chosen yet, that opens the
+     "Set Location" dialog -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <b:LinkButton ui:field="button" addStyleNames="step-location-link" title="Set Location" opensDialog="true"
+                  text="[??:??:??]" ariaLabel="Set Location ([??:??:??], none chosen)"/>
+</ui:UiBinder>

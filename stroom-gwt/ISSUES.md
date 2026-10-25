@@ -1499,8 +1499,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   October 2026 in wave 3's audit)~~ Fixed: Accept is `button--contained-green` and Reject stays
   `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. Delete
   both rule sets once removals are allowed.
-* Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`
-  and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
+* Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
+  `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
   `character-navigator.css` and `item-selection.css`). Delete them once removals are allowed.
 * ~~The item selection dialog's spinner (a data viewer's "Select Record") had no accessible name:

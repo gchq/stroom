@@ -36,10 +36,6 @@ import stroom.pipeline.stepping.client.presenter.PipelinePathPresenter;
 import stroom.pipeline.stepping.client.presenter.PipelinePathPresenter.PipelinePathView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
-import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter;
-import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
-import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
-import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
@@ -49,8 +45,6 @@ import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilte
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.PipelinePathViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
-import stroom.pipeline.stepping.client.view.StepLocationLinkViewImpl;
-import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.pipeline.stepping.client.view.XPathFilterViewImpl;
@@ -111,11 +105,6 @@ public class PipelineModule extends PluginModule {
 
         bindPlugin(PipelinePlugin.class);
         bind(PipelinePresenter.class);
-        bindPresenterWidget(
-                StepLocationLinkPresenter.class,
-                StepLocationLinkView.class,
-                StepLocationLinkViewImpl.class);
-        bindPresenterWidget(StepLocationPresenter.class, StepLocationView.class, StepLocationViewImpl.class);
         bindPresenterWidget(StepControlPresenter.class, StepControlView.class, StepControlViewImpl.class);
 
         bindPresenterWidget(PipelineTreePresenter.class, PipelineTreeView.class, PipelineTreeViewImpl.class);

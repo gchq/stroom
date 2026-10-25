@@ -801,23 +801,6 @@
     color: var(--text-color--disabled);
 }
 
-.stepLocationLink {
-    cursor: pointer;
-}
-
-.stepLocationLink:hover {
-   text-decoration: underline;
-}
-
-.stepLocationLink--disabled {
-    cursor: default;
-    color: var(--text-color--disabled);
-}
-
-.stepLocationLink--disabled:hover {
-    text-decoration: none;
-}
-
 .stepLocationViewImpl-layout {
     white-space: nowrap;
 }

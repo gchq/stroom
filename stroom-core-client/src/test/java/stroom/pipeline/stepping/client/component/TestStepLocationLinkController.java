@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
-import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
-import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -37,34 +33,29 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestStepLocationLinkPresenter {
+class TestStepLocationLinkController {
 
     private final EventBus eventBus = new SimpleEventBus();
     private final List<ShowPopupEvent> shown = new ArrayList<>();
-    private StepLocationLinkView view;
-    private StepLocationLinkPresenter presenter;
-    private ClickHandler clickHandler;
-    private LinkButton button;
+    private StepLocationLink view;
+    private StepLocationLinkController controller;
+    private Runnable onClick;
 
     @BeforeEach
     void setUp() {
-        // The button is a GWT widget, which can only be made in a browser
+        // The link and the dialog's content are GWT widgets, which can only be made in a browser
         GWTMockUtilities.disarm();
         eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
 
-        button = Mockito.mock(LinkButton.class);
-        view = Mockito.mock(StepLocationLinkView.class);
-        Mockito.when(view.getButton()).thenReturn(button);
-
-        // The real presenter, as the popup is fired from it onto the event bus
-        final StepLocationPresenter stepLocationPresenter = new StepLocationPresenter(
+        view = Mockito.mock(StepLocationLink.class);
+        // The real dialog controller, as the popup is fired from it onto the event bus
+        controller = new StepLocationLinkController(view, () -> new StepLocationPickerController(
                 eventBus,
-                Mockito.mock(StepLocationView.class));
-        presenter = new StepLocationLinkPresenter(eventBus, view, stepLocationPresenter);
+                Mockito.mock(StepLocationPicker.class)));
 
-        final ArgumentCaptor<ClickHandler> clickHandlerCaptor = ArgumentCaptor.forClass(ClickHandler.class);
-        Mockito.verify(button).addClickHandler(clickHandlerCaptor.capture());
-        clickHandler = clickHandlerCaptor.getValue();
+        final ArgumentCaptor<Runnable> onClickCaptor = ArgumentCaptor.forClass(Runnable.class);
+        Mockito.verify(view).setOnClick(onClickCaptor.capture());
+        onClick = onClickCaptor.getValue();
     }
 
     @AfterEach
@@ -74,7 +65,7 @@ class TestStepLocationLinkPresenter {
 
     @Test
     void click_enabled() {
-        clickHandler.onClick(null);
+        onClick.run();
 
         assertThat(shown)
                 .extracting(ShowPopupEvent::getCaption)
@@ -85,9 +76,9 @@ class TestStepLocationLinkPresenter {
     void click_disabled() {
         // Regression test: Set Location could be used before a stream was chosen, sending a step
         // request with no criteria, which failed on the server.
-        presenter.setEnabled(false);
+        controller.setEnabled(false);
 
-        clickHandler.onClick(null);
+        onClick.run();
 
         assertThat(shown)
                 .isEmpty();
@@ -96,10 +87,10 @@ class TestStepLocationLinkPresenter {
 
     @Test
     void click_enabledAgain() {
-        presenter.setEnabled(false);
-        presenter.setEnabled(true);
+        controller.setEnabled(false);
+        controller.setEnabled(true);
 
-        clickHandler.onClick(null);
+        onClick.run();
 
         assertThat(shown)
                 .hasSize(1);
@@ -108,16 +99,14 @@ class TestStepLocationLinkPresenter {
 
     @Test
     void name_noLocation() {
-        // The text is a code, so the button is named for what it does as well as what it shows
-        Mockito.verify(button).setText("[??:??:??]");
-        Mockito.verify(button).setAriaLabel("Set Location ([??:??:??], none chosen)");
+        // The text is a code, so the link is named for what it does as well as what it shows
+        Mockito.verify(view).setLocation("[??:??:??]", "Set Location ([??:??:??], none chosen)");
     }
 
     @Test
     void name_location() {
-        presenter.setStepLocation(new StepLocation(123L, 0L, 3L));
+        controller.setStepLocation(new StepLocation(123L, 0L, 3L));
 
-        Mockito.verify(button).setText("[123:1:4]");
-        Mockito.verify(button).setAriaLabel("Set Location ([123:1:4], stream 123, part 1, record 4)");
+        Mockito.verify(view).setLocation("[123:1:4]", "Set Location ([123:1:4], stream 123, part 1, record 4)");
     }
 }
