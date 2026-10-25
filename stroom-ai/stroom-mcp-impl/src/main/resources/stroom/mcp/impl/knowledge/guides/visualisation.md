@@ -88,5 +88,5 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - A chart draws at most its Max Rows (5000 by default) of the table's rows, and a network graph at most its Max
   Nodes (300), the most connected first.
 - ECharts is installed by an administrator, as a Script doc holding `echarts.min.js` from an Apache ECharts
-  release, version 5 or later; an administrator upgrades it by putting a newer release's build in that Script doc.
+  release, version 6 or later; an administrator upgrades it by putting a newer release's build in that Script doc.
   Stroom adds its own adapter beside it the first time a chart is created.
