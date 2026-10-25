@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 47
+Built-in tools: 49
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (47 tool(s))
+### AGENT (49 tool(s))
 ask_user
 config_properties
 current_results
@@ -25,6 +25,7 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
+list_visualisations
 ls
 memory
 pipeline
@@ -35,6 +36,7 @@ propose_dashboard_change
 propose_documentation_change
 propose_query
 propose_query_change
+propose_visualisation
 read_document
 read_file
 read_turn
@@ -53,7 +55,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (43 tool(s))
+### ASK (45 tool(s))
 ask_user
 config_properties
 current_results
@@ -73,6 +75,7 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
+list_visualisations
 ls
 pipeline
 processor_tasks
@@ -82,6 +85,7 @@ propose_dashboard_change
 propose_documentation_change
 propose_query
 propose_query_change
+propose_visualisation
 read_document
 read_file
 read_turn
@@ -98,7 +102,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (43 tool(s))
+### PLAN (45 tool(s))
 ask_user
 config_properties
 current_results
@@ -118,6 +122,7 @@ get_utc_time_offset
 grep
 jq
 list_data_sources
+list_visualisations
 ls
 pipeline
 processor_tasks
@@ -127,6 +132,7 @@ propose_dashboard_change
 propose_documentation_change
 propose_query
 propose_query_change
+propose_visualisation
 read_document
 read_file
 read_turn
@@ -950,6 +956,28 @@ Lists the data sources the user can run StroomQL queries on (views, indexes, Ela
 }
 
 ================================================================================
+## list_visualisations
+
+isReadOnly: true
+readsUntrustedContent: false
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Lists the charting libraries installed in Stroom (ECharts and the visualisations content pack's D3 ones), the chart kinds that can be generated with each (bar, line, pie, scatter, network graph) with the table columns and style settings each takes, and the Visualisation docs already in Stroom. Call it before propose_visualisation, and ask the user which library to use when more than one is installed.
+
+### Parameters
+
+{
+  "properties" : { },
+  "required" : [ ],
+  "type" : "object"
+}
+
+================================================================================
 ## ls
 
 isReadOnly: true
@@ -1286,7 +1314,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-While the tab the user attached is a dashboard, proposes a change to one of its tables: group or ungroup, add_column, edit_column, move_column, hide_column, show_column, sort, or filter, applied in order; set_expression, which replaces the expression of the classic query that feeds the table (give its conditions in where, and show the user the expression, never StroomQL); add_table, which adds a table as a tab beside it, fed by the same query, that the changes after it set up by naming it as their table (e.g. a tab per event category: add_table, its columns, and a filter on the category column); add_text, which adds a Text widget below the table (or a table added before it, named as its table) showing the event of the selected row, that later set_setting changes can set up by naming it as their target; add_format_rule or remove_format_rule, for the table's conditional formatting (rows matching conditions on its columns coloured, bold, italic or hidden); rename, which renames any component and its tab; or set_setting, which changes a setting of any table, query or text component, as its Settings dialog has it. The user is shown the changes with an 'Apply to dashboard' button; nothing changes until they click it, and it is never saved. Columns and the table are named as the user sees them. Expressions are checked first; an invalid change is refused with the reason.
+While the tab the user attached is a dashboard, proposes a change to one of its tables: group or ungroup, add_column, edit_column, move_column, hide_column, show_column, sort, or filter, applied in order; set_expression, which replaces the expression of the classic query that feeds the table (give its conditions in where, and show the user the expression, never StroomQL); add_table, which adds a table as a tab beside it, fed by the same query, that the changes after it set up by naming it as their table (e.g. a tab per event category: add_table, its columns, and a filter on the category column); add_text, which adds a Text widget below the table (or a table added before it, named as its table) showing the event of the selected row, that later set_setting changes can set up by naming it as their target; add_vis, which adds a Visualisation component linked to the table (or a table added before it), below it or as a tab beside it, showing an existing Visualisation document by its UUID (e.g. one of the content pack's D3 visualisations) with settings for its controls; set_vis_settings, which changes the controls of a Visualisation component, or the Visualisation it shows; add_format_rule or remove_format_rule, for the table's conditional formatting (rows matching conditions on its columns coloured, bold, italic or hidden); rename, which renames any component and its tab; or set_setting, which changes a setting of any table, query or text component, as its Settings dialog has it. The user is shown the changes with an 'Apply to dashboard' button; nothing changes until they click it, and it is never saved. Columns and the table are named as the user sees them. Expressions are checked first; an invalid change is refused with the reason.
 
 ### Parameters
 
@@ -1372,12 +1400,17 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "string"
           },
           "name" : {
-            "description" : "For add_column: the new column's name. For edit_column: its new name. For add_table or add_text: the new component's name. For rename: the new name.",
+            "description" : "For add_column: the new column's name. For edit_column: its new name. For add_table, add_text or add_vis: the new component's name. For rename: the new name.",
             "type" : "string"
           },
           "op" : {
             "description" : "What to do.",
-            "enum" : [ "group", "ungroup", "add_column", "edit_column", "move_column", "hide_column", "show_column", "sort", "filter", "set_expression", "add_table", "add_text", "rename", "set_setting", "add_format_rule", "remove_format_rule" ],
+            "enum" : [ "group", "ungroup", "add_column", "edit_column", "move_column", "hide_column", "show_column", "sort", "filter", "set_expression", "add_table", "add_text", "add_vis", "set_vis_settings", "rename", "set_setting", "add_format_rule", "remove_format_rule" ],
+            "type" : "string"
+          },
+          "placement" : {
+            "description" : "For add_vis: below (the default) for a new pane below the table, or tab for a tab beside it.",
+            "enum" : [ "below", "tab" ],
             "type" : "string"
           },
           "position" : {
@@ -1392,21 +1425,31 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "description" : "For set_setting: the setting. Table: pageSize (rows per page); maxResults (the most rows at each group level, e.g. 1000,10 (the top level first)); showDetail (show the detail rows (events) under grouped rows, which a Text widget needs to show an event); extractValues (extract values with the extraction pipeline); extractionPipeline (the extraction pipeline (its UUID)); showValueFilters (show the row of column filters); query (the query that feeds it (a query component's name)); maxStringFieldLength (the longest text a cell shows). Query: dataSource (the data source (its name or UUID)); queryOnOpen (run the query when the dashboard opens); autoRefresh (run the query again on a timer); refreshInterval (how often to refresh, e.g. 30s, 10m or 1h). Text: table (the table whose selected row it shows (a table's name, or none for any)); pipeline (the pipeline it shows the data through (its UUID, or none for the raw data)); showAsHtml (show the data as HTML); showStepping (show the stepping button).",
             "type" : "string"
           },
+          "settings" : {
+            "description" : "For add_vis or set_vis_settings: the Visualisation's settings, as an object of its control ids and their values as text, e.g. {\"category\": \"UserId\", \"value\": \"Count\"}. A field control's value is a column of the linked table. For set_vis_settings, only the controls to change; an empty value puts a control back to its default.",
+            "properties" : { },
+            "required" : [ ],
+            "type" : "object"
+          },
           "style" : {
             "description" : "For add_format_rule: the colour to give matching rows.",
             "enum" : [ "Red", "Pink", "Purple", "Deep Purple", "Indigo", "Blue", "Light Blue", "Cyan", "Teal", "Green", "Light Green", "Lime", "Yellow", "Amber", "Orange", "Deep Orange", "Brown", "Grey", "Blue Grey" ],
             "type" : "string"
           },
           "table" : {
-            "description" : "The table the change is to, if not the component: only a table an earlier add_table in these changes adds. For add_text: the table it follows (default the component).",
+            "description" : "The table the change is to, if not the component: only a table an earlier add_table in these changes adds. For add_text: the table it follows (default the component). For add_vis: the table it is linked to (default the component).",
             "type" : "string"
           },
           "target" : {
-            "description" : "For rename or set_setting: the component (table, query or text), by its name as the user sees it; default the component.",
+            "description" : "For rename or set_setting: the component (table, query or text), by its name as the user sees it; default the component. For set_vis_settings: the Visualisation component.",
             "type" : "string"
           },
           "value" : {
             "description" : "For set_setting: its value (true or false, a number, a pipeline's UUID, a data source's name or UUID, a component's name, or none where allowed).",
+            "type" : "string"
+          },
+          "visualisation" : {
+            "description" : "For add_vis: the UUID of the Visualisation document to show. For set_vis_settings: the UUID of one to switch to, if any.",
             "type" : "string"
           },
           "where" : {
@@ -1548,6 +1591,194 @@ While the tab the user attached is a StroomQL Query, offers them an 'Apply to qu
     }
   },
   "required" : [ "query", "summary" ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_visualisation
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Plans a chart of a table on the dashboard, or of the StroomQL query, the user attached, checks the table's rows can make it, and offers it. With library echarts it offers a 'Create visualisation' button: the user names it and picks its folder (the dashboard's, by default) in Stroom's own dialog, and it is then added to the dashboard below the table (or to the query's show clause), unsaved, updating as the table does. With library d3 it gives the change that wires the content pack's existing D3 Visualisation to the table, for you to propose. Call list_visualisations first to see which libraries are installed and each kind's inputs, and ask the user which library to use (ask_user) when more than one is. If the data can't make the chart, nothing is offered: tell the user why and suggest the fix the result gives. When the table already has a chart Stroom AI generated (e.g. the user asks for it as another kind of chart), ask the user (ask_user) whether to replace it or add a new one, unless they have said, and give replace or addNew. You never write the chart's code or settings JSON: Stroom builds them.
+
+### Parameters
+
+{
+  "properties" : {
+    "addNew" : {
+      "description" : "Optional. True to add the chart as a new one when the table already has a chart Stroom AI generated, once the user has chosen that over replacing it.",
+      "type" : "boolean"
+    },
+    "columns" : {
+      "description" : "The table column for each of the chart kind's inputs, by input. list_visualisations gives each kind's inputs. Give the column names exactly as the table has them.",
+      "properties" : {
+        "category" : {
+          "description" : "The column for category.",
+          "type" : "string"
+        },
+        "name" : {
+          "description" : "The column for name.",
+          "type" : "string"
+        },
+        "series" : {
+          "description" : "The column for series.",
+          "type" : "string"
+        },
+        "size" : {
+          "description" : "The column for size.",
+          "type" : "string"
+        },
+        "source" : {
+          "description" : "The column for source.",
+          "type" : "string"
+        },
+        "sourceGroup" : {
+          "description" : "The column for sourceGroup.",
+          "type" : "string"
+        },
+        "target" : {
+          "description" : "The column for target.",
+          "type" : "string"
+        },
+        "targetGroup" : {
+          "description" : "The column for targetGroup.",
+          "type" : "string"
+        },
+        "value" : {
+          "description" : "The column for value.",
+          "type" : "string"
+        },
+        "weight" : {
+          "description" : "The column for weight.",
+          "type" : "string"
+        },
+        "x" : {
+          "description" : "The column for x.",
+          "type" : "string"
+        },
+        "y" : {
+          "description" : "The column for y.",
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    },
+    "componentName" : {
+      "description" : "Optional. The name of the chart's pane on the dashboard; the Visualisation's name by default.",
+      "type" : "string"
+    },
+    "kind" : {
+      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections).",
+      "enum" : [ "bar", "line", "pie", "scatter", "graph" ],
+      "type" : "string"
+    },
+    "library" : {
+      "description" : "The charting library to draw it with.",
+      "enum" : [ "echarts", "d3" ],
+      "type" : "string"
+    },
+    "name" : {
+      "description" : "Echarts only. The name to suggest for the new Visualisation, saying what it shows, e.g. 'Chat user connections'. The user confirms or changes it.",
+      "type" : "string"
+    },
+    "options" : {
+      "description" : "Optional, echarts only. ECharts option overrides as a JSON object, for what the style settings can't do, e.g. {\"color\": [\"#5470c6\", \"#91cc75\"]}. Only plain JSON: no functions, HTML or URLs.",
+      "type" : "string"
+    },
+    "placement" : {
+      "description" : "Optional. Where the chart goes on the dashboard: in a new pane below the table (the default), or as a tab beside it.",
+      "enum" : [ "below", "tab" ],
+      "type" : "string"
+    },
+    "replace" : {
+      "description" : "Optional, echarts on a dashboard only. The name of the Visualisation pane whose chart (one Stroom AI generated, of the same table) the new one replaces: its Visualisation is rewritten for the new chart and renamed to name, saved at once, and it stays in its pane. Give it, or addNew, once the user has chosen.",
+      "type" : "string"
+    },
+    "style" : {
+      "description" : "Optional style settings, by setting. list_visualisations gives each kind's settings and their values. Leave out settings to keep their defaults.",
+      "properties" : {
+        "area" : {
+          "description" : "The value for area, as text.",
+          "type" : "string"
+        },
+        "directed" : {
+          "description" : "The value for directed, as text.",
+          "type" : "string"
+        },
+        "doughnut" : {
+          "description" : "The value for doughnut, as text.",
+          "type" : "string"
+        },
+        "horizontal" : {
+          "description" : "The value for horizontal, as text.",
+          "type" : "string"
+        },
+        "legend" : {
+          "description" : "The value for legend, as text.",
+          "type" : "string"
+        },
+        "maxNodes" : {
+          "description" : "The value for maxNodes, as text.",
+          "type" : "string"
+        },
+        "maxSeries" : {
+          "description" : "The value for maxSeries, as text.",
+          "type" : "string"
+        },
+        "maxSlices" : {
+          "description" : "The value for maxSlices, as text.",
+          "type" : "string"
+        },
+        "maxValues" : {
+          "description" : "The value for maxValues, as text.",
+          "type" : "string"
+        },
+        "showLabels" : {
+          "description" : "The value for showLabels, as text.",
+          "type" : "string"
+        },
+        "smooth" : {
+          "description" : "The value for smooth, as text.",
+          "type" : "string"
+        },
+        "sort" : {
+          "description" : "The value for sort, as text.",
+          "type" : "string"
+        },
+        "stack" : {
+          "description" : "The value for stack, as text.",
+          "type" : "string"
+        },
+        "xAxisName" : {
+          "description" : "The value for xAxisName, as text.",
+          "type" : "string"
+        },
+        "yAxisName" : {
+          "description" : "The value for yAxisName, as text.",
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    },
+    "summary" : {
+      "description" : "A sentence saying what the chart shows, shown with the button.",
+      "type" : "string"
+    },
+    "table" : {
+      "description" : "Optional. The dashboard table to chart, by the name the user sees, when the dashboard has several.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "library", "kind", "columns", "summary" ],
   "type" : "object"
 }
 

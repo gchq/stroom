@@ -29,6 +29,7 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMemory;
@@ -63,6 +64,8 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
 import stroom.dashboard.client.table.TableChange;
+import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
+import stroom.dashboard.client.vis.VisRenderReportEvent;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.data.client.event.AskStroomAiBadgeEvent;
@@ -105,6 +108,7 @@ import stroom.util.client.ClipboardUtil;
 import stroom.util.client.CopiedFlash;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.diff.LineDiff;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -307,6 +311,8 @@ public class AskStroomAiPresenter
     // The suggestions offered above the input: the follow-ups to the latest answer (answerFollowUps, kept while that
     // answer is the latest thing in the chat), or suggestions for what was attached since.
     private List<String> followUps = List.of();
+    // Visualisations created from the chat whose first render report is awaited, by UUID.
+    private final Map<String, AwaitedReport> awaitedRenderReports = new HashMap<>();
     private List<String> answerFollowUps = List.of();
     // Searching the list of chats: what is in the box, the text the hits are for, the hits (null when not
     // searching), and a count so that a slow answer to an earlier search is ignored.
@@ -477,6 +483,7 @@ public class AskStroomAiPresenter
         statusTimer.schedule(0);
         registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
                 writeModel()));
+        registerHandler(getEventBus().addHandler(VisRenderReportEvent.getType(), this::onRenderReport));
 
         registerHandler(getView().getChatList().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
@@ -2991,6 +2998,19 @@ public class AskStroomAiPresenter
                 createDashboard(result.getCreateDashboardName(), result.getCreateDashboardConfig());
                 return;
             }
+            if (result.isDone() && result.getCreateVisualisation() != null
+                && result.getCreateVisualisation().getReplaced() != null) {
+                // Already rewritten: show it in place of the old chart. Using the button again writes it again.
+                button.removeAttribute("disabled");
+                showReplacement(messageId, actionId, result.getCreateVisualisation());
+                return;
+            }
+            if (result.isDone() && result.getCreateVisualisation() != null) {
+                // The button can be used again, as the user may cancel the dialog.
+                button.removeAttribute("disabled");
+                createVisualisation(messageId, actionId, result.getCreateVisualisation());
+                return;
+            }
             if (result.getOpenDocument() != null) {
                 OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
                 button.removeAttribute("disabled");
@@ -3046,6 +3066,178 @@ public class AskStroomAiPresenter
                             error -> showError(error, "Unable to set up " + docRef.getName(), null),
                             getView());
                 });
+    }
+
+    /// Opens Stroom's own New Visualisation dialog with the agent's suggested name, in the dashboard's (or query's)
+    /// folder. Once the user creates the Visualisation, it is given the chart Stroom built from the agent's plan,
+    /// then added to the open dashboard below (or beside) its table, or put in the query's show clause, unsaved.
+    /// Nothing is saved unless the user creates it.
+    private void createVisualisation(final int messageId,
+                                     final String actionId,
+                                     final AiCreateVisualisation create) {
+        ShowCreateDocumentDialogEvent.fire(
+                this,
+                "New Visualisation",
+                create.getFolder() != null
+                        ? create.getFolder()
+                        : selectedExplorerNode,
+                VisualisationDoc.TYPE,
+                NullSafe.string(create.getName()),
+                true,
+                newNode -> {
+                    final DocRef visualisation = newNode.getDocRef();
+                    askStroomAiClient.setVisualisation(visualisation, create,
+                            doc -> wireVisualisation(messageId, actionId, create, visualisation),
+                            error -> showError(error, "Unable to set up " + visualisation.getName(), null),
+                            getView());
+                });
+    }
+
+    /// Shows a Visualisation Stroom AI has just rewritten for a new chart in the vis component that showed the old
+    /// one, unsaved: its settings become the new chart's columns (and its name, if that changes). Each vis
+    /// component loads the Visualisation again, as its settings and controls have changed.
+    private void showReplacement(final int messageId,
+                                 final String actionId,
+                                 final AiCreateVisualisation create) {
+        final DocRef visualisation = create.getReplaced();
+        awaitedRenderReports.put(visualisation.getUuid(), new AwaitedReport(messageId, actionId,
+                visualisation.getName()));
+        ClearFunctionCacheEvent.fire(this, visualisation);
+        final List<TableChange> changes = new ArrayList<>();
+        changes.add(TableChange.builder(TableChange.SET_VIS_SETTINGS)
+                .targetId(create.getReplaceComponentId())
+                .doc(visualisation)
+                .value(create.getComponentSettings())
+                .build());
+        if (create.getComponentName() != null) {
+            changes.add(TableChange.builder(TableChange.RENAME)
+                    .targetId(create.getReplaceComponentId())
+                    .name(create.getComponentName())
+                    .build());
+        }
+        final String replaced = "Rewrote Visualisation '" + visualisation.getName() + "' for the new chart (saved)";
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                create.getTarget(),
+                create.getTableId(),
+                create.getTableName(),
+                changes,
+                create.getSnapshotHash(),
+                onResult -> onResult.accept(null),
+                () -> showUserActionStatus(messageId, actionId, "DONE",
+                        replaced + " and showed it in its pane, not saved. Save the dashboard to keep the pane's "
+                        + "new settings."),
+                message -> {
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, replaced + ", but its pane couldn't be updated: " + message
+                                                  + "\nOpen the pane's settings to pick its columns.", null);
+                    }
+                },
+                dashboardUndoKey(messageId, actionId));
+        if (!event.isHandled()) {
+            AlertEvent.fireInfo(this, replaced + ". Open the dashboard to see it.", null);
+        }
+    }
+
+    /// Adds a Visualisation the user has just created to the dashboard it was planned for, or puts it in the
+    /// query's show clause, unsaved; then waits for its render report to say how it drew.
+    private void wireVisualisation(final int messageId,
+                                   final String actionId,
+                                   final AiCreateVisualisation create,
+                                   final DocRef visualisation) {
+        awaitedRenderReports.put(visualisation.getUuid(), new AwaitedReport(messageId, actionId,
+                visualisation.getName()));
+        final String created = "Created Visualisation '" + visualisation.getName() + "'";
+        if (create.isForQuery()) {
+            // By UUID, which Stroom resolves before a name, so another Visualisation of the same name can't
+            // make the query ambiguous.
+            final String clause = "show " + UserActionsUi.quoteStroomQl(visualisation.getUuid()) + " ("
+                                  + create.getShowArguments() + ")";
+            final String base = NullSafe.string(create.getBaseQuery());
+            final QueryCodeChangeEvent event = QueryCodeChangeEvent.fireApply(this,
+                    create.getTarget(),
+                    base,
+                    UserActionsUi.withShowClause(base, clause),
+                    (andStep, rejected, onResult) -> onResult.accept(null),
+                    () -> showUserActionStatus(messageId, actionId, "DONE",
+                            created + " and put it in the query's show clause, not saved. Run the query to see "
+                            + "it; save the query to keep it."));
+            if (!event.isHandled()) {
+                OpenDocumentEvent.fire(this, create.getTarget(), true);
+                AlertEvent.fireInfo(this, created + ". To show it, open Query '"
+                                          + NullSafe.get(create.getTarget(), DocRef::getName)
+                                          + "' and add this clause at its end:\n" + clause, null);
+            } else if (event.getMessage() != null) {
+                AlertEvent.fireInfo(this, created + ". " + event.getMessage() + "\nAdd this clause at the "
+                                          + "query's end to show it:\n" + clause, null);
+            }
+            return;
+        }
+
+        final TableChange change = TableChange.builder(TableChange.ADD_VIS)
+                .name(create.getComponentName())
+                .doc(visualisation)
+                .value(create.getComponentSettings())
+                .placement(create.getPlacement())
+                .build();
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                create.getTarget(),
+                create.getTableId(),
+                create.getTableName(),
+                List.of(change),
+                create.getSnapshotHash(),
+                onResult -> onResult.accept(null),
+                () -> showUserActionStatus(messageId, actionId, "DONE",
+                        created + " and added it to the dashboard, not saved. Save the dashboard to keep it."),
+                message -> {
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, created + ", but it couldn't be added to the dashboard: "
+                                                  + message + "\nAdd it with a Visualisation pane linked to table '"
+                                                  + create.getTableName() + "'.", null);
+                    }
+                },
+                dashboardUndoKey(messageId, actionId));
+        if (!event.isHandled()) {
+            AlertEvent.fireWarn(this, created + ", but the dashboard can't be opened here to add it.", null);
+        }
+    }
+
+    /// Shows how a Visualisation the user created from the chat drew, on the button's card: what it drew, or
+    /// its error with a follow-up to ask the agent to fix it. Only the first report on the table's rows after it
+    /// is wired up is shown; later ones (each time the table updates) reach the agent through the dashboard's
+    /// description.
+    private void onRenderReport(final VisRenderReportEvent event) {
+        final DocRef visualisation = event.getVisualisation();
+        final AwaitedReport awaited = visualisation != null
+                ? awaitedRenderReports.get(visualisation.getUuid())
+                : null;
+        if (awaited == null) {
+            return;
+        }
+        final Map<String, Object> report = renderReport(event.getReportJson());
+        final String status = String.valueOf(report.get("status"));
+        final String summary = UserActionsUi.renderReportSummary(report);
+        showUserActionStatus(awaited.messageId(), awaited.actionId(), "DONE", summary);
+        if ("empty".equals(status)) {
+            // Drawn before the table's rows arrived: wait for the report on them.
+            return;
+        }
+        awaitedRenderReports.remove(visualisation.getUuid());
+        if (!"ok".equals(status) && !currentRunActive && !requestInFlight) {
+            followUps = List.of("Fix the visualisation '" + awaited.name() + "': " + summary);
+            refreshFollowUps();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> renderReport(final String json) {
+        try {
+            final Object report = AiToolMessages.toJava(JSONParser.parseStrict(json));
+            return report instanceof Map
+                    ? (Map<String, Object>) report
+                    : Map.of();
+        } catch (final RuntimeException e) {
+            return Map.of();
+        }
     }
 
     /// Opens a document the user has just created with a button in the chat, and attaches its tab to the chat once
@@ -5861,5 +6053,12 @@ public class AskStroomAiPresenter
         public int hashCode() {
             return Objects.hash(dockType, dockLocation);
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+
+    /// A Visualisation created from the chat whose first render report is awaited, and the button that made it.
+    private record AwaitedReport(int messageId, String actionId, String name) {
+
     }
 }

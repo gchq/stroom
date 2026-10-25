@@ -52,6 +52,7 @@ public class BundledKnowledge implements AgentKnowledge {
             "indexing",
             "json-input",
             "reference-data",
+            "visualisation",
             "xslt");
     /// The field convention profiles, by name: each is `conventions/<name>.yaml`.
     static final List<String> CONVENTIONS = List.of("ecs", "stroom-flat");

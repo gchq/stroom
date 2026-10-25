@@ -18,7 +18,9 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.vis.VisContextFactory;
 import stroom.dashboard.client.vis.VisFrame;
+import stroom.dashboard.client.vis.VisRenderReportEvent;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
@@ -95,14 +97,18 @@ public class QueryResultVisPresenter
     private VisSelectionModel visSelectionModel;
     private boolean pause;
 
-    private final JavaScriptObject context;
+    private final VisContextFactory visContextFactory;
+    private String lastRenderReport;
+    private DocRef currentVisualisation;
 
     @Inject
     public QueryResultVisPresenter(final EventBus eventBus,
                                    final QueryResultVisView view,
                                    final RestFactory restFactory,
-                                   final CurrentPreferences currentPreferences) {
+                                   final CurrentPreferences currentPreferences,
+                                   final VisContextFactory visContextFactory) {
         super(eventBus, view);
+        this.visContextFactory = visContextFactory;
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
@@ -111,11 +117,10 @@ public class QueryResultVisPresenter
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
 
+        visFrame.setReportHandler(this::onRenderReport);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
-
-        this.context = new JSONObject().getJavaScriptObject();
     }
 
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
@@ -180,8 +185,13 @@ public class QueryResultVisPresenter
         scriptCache.bind();
         visFrame.bind();
 
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
+        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
+            visFrame.setClassName(getClassName(event.getTheme()));
+            // Redraw so the visualisation picks up any change to the theme or time display.
+            if (currentData != null) {
+                refreshVisualisation();
+            }
+        }));
 
         registerHandler(getView().getRefreshButton().addClickHandler(e -> {
             setPause(!pause, true);
@@ -313,6 +323,7 @@ public class QueryResultVisPresenter
 
                 // Put a new function in the cache if there isn't one already.
                 final DocRef visualisation = visResult.getVisSettings().getVisualisation();
+                currentVisualisation = visualisation;
                 final VisFunction visFunction = visFunctionCache.get(visualisation);
                 if (visFunction == null) {
                     // Create a new function and put it into the cache.
@@ -592,7 +603,17 @@ public class QueryResultVisPresenter
 //    }
 //
     private void refreshVisualisation() {
-        visFrame.setData(context, currentSettings, currentData);
+        visFrame.setData(visContextFactory.create(), currentSettings, currentData);
+    }
+
+    private void onRenderReport(final String reportJson) {
+        lastRenderReport = reportJson;
+        VisRenderReportEvent.fire(this, currentVisualisation, null, null, reportJson);
+    }
+
+    /// @return The latest render report the visualisation sent, as JSON, or null if it hasn't sent one.
+    public String getLastRenderReport() {
+        return lastRenderReport;
     }
 
     @Override

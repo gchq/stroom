@@ -74,6 +74,8 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(FindInContentTool.class)
                 .addBinding(XsltLookupsTool.class)
                 .addBinding(ProposeDashboardChangeTool.class)
+                .addBinding(ListVisualisationsTool.class)
+                .addBinding(ProposeVisualisationTool.class)
                 .addBinding(ProposeDocumentationChangeTool.class)
                 .addBinding(ConfigPropertiesTool.class)
                 .addBinding(ElasticIndexTemplatesTool.class);

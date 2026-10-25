@@ -19,7 +19,9 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
 import stroom.dashboard.shared.DashboardConfig;
@@ -59,8 +61,9 @@ class TestUserActionService {
     private final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
+    private final VisualisationActions visualisationActions = Mockito.mock(VisualisationActions.class);
     private final UserActionService service = new UserActionService(aiService, aiDao, new UserActions(lookup),
-            lookup, processorFilterService, auditLog, dashboardBuilder);
+            lookup, processorFilterService, auditLog, dashboardBuilder, visualisationActions);
 
     @BeforeEach
     void setUp() {
@@ -632,6 +635,67 @@ class TestUserActionService {
         Mockito.doThrow(new AuthenticationException("Not your chat")).when(aiService).verifyOwnership(CHAT);
         assertThatThrownBy(() -> service.undoUserAction(CHAT, MESSAGE, "code-1"))
                 .isInstanceOf(AuthenticationException.class);
+    }
+
+    @Test
+    void createVisualisationGivesTheBrowserWhatToCreate() {
+        final DocRef dashboard = new DocRef("Dashboard", "d", "Chats");
+        Mockito.when(lookup.find(dashboard)).thenReturn(Optional.of(dashboard));
+        final AiCreateVisualisation create = new AiCreateVisualisation("Chat user connections", null,
+                "visualisations.EChartsGeneric", new DocRef("Script", "s", "ECharts Generic"), "{}", "Generated",
+                dashboard, "table-1", "Messages", "Chat user connections", "{}", "below", "abc", null, null, null,
+                null);
+        Mockito.when(visualisationActions.prepare(dashboard, "Chat user connections", "{\"kind\":\"graph\"}"))
+                .thenReturn(create);
+        storeResult(createVisualisation(dashboard));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "v1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getCreateVisualisation()).isSameAs(create);
+        // The button can be used again (e.g. after the dialog was cancelled), so the result isn't changed.
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(UserActions.CREATE_VISUALISATION), Mockito.anyString(),
+                Mockito.eq("Opened the New Visualisation dialog"), Mockito.eq(true));
+    }
+
+    @Test
+    void createVisualisationSaysWhyItCantBeMadeNow() {
+        final DocRef dashboard = new DocRef("Dashboard", "d", "Chats");
+        Mockito.when(lookup.find(dashboard)).thenReturn(Optional.of(dashboard));
+        Mockito.when(visualisationActions.prepare(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenThrow(new IllegalStateException("ECharts is no longer installed as a Script doc"));
+        storeResult(createVisualisation(dashboard));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "v1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("ECharts is no longer installed as a Script doc");
+        assertThat(result.getCreateVisualisation()).isNull();
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(UserActions.CREATE_VISUALISATION), Mockito.anyString(),
+                Mockito.contains("no longer installed"), Mockito.eq(false));
+    }
+
+    @Test
+    void createVisualisationIsRefusedOnceTheDashboardIsGone() {
+        final DocRef dashboard = new DocRef("Dashboard", "d", "Chats");
+        Mockito.when(lookup.find(dashboard)).thenReturn(Optional.empty());
+        storeResult(createVisualisation(dashboard));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "v1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("no longer exists");
+        Mockito.verifyNoInteractions(visualisationActions);
+    }
+
+    private static UserActionRecord createVisualisation(final DocRef dashboard) {
+        return new UserActionRecord("v1", UserActions.CREATE_VISUALISATION,
+                "Create visualisation 'Chat user connections'", null, null, null, dashboard,
+                "{\"kind\":\"graph\"}", List.of(), Long.MAX_VALUE, Status.PENDING, null, "Chat user connections");
     }
 
     private static UserActionRecord createDashboard(final String query) {

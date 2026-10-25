@@ -46,6 +46,8 @@ public class AiUserActionResult {
     private final String createDashboardName;
     @JsonProperty
     private final DashboardConfig createDashboardConfig;
+    @JsonProperty
+    private final AiCreateVisualisation createVisualisation;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
@@ -53,7 +55,7 @@ public class AiUserActionResult {
     public AiUserActionResult(final Boolean done,
                               final String message,
                               final DocRef openDocument) {
-        this(done, message, openDocument, null, null, null, null);
+        this(done, message, openDocument, null, null, null, null, null);
     }
 
     /// @param done            True if the action was done.
@@ -67,7 +69,7 @@ public class AiUserActionResult {
                               final DocRef openDocument,
                               final String createQueryName,
                               final String createQueryText) {
-        this(done, message, openDocument, createQueryName, createQueryText, null, null);
+        this(done, message, openDocument, createQueryName, createQueryText, null, null, null);
     }
 
     /// @param done            True if the action was done.
@@ -80,6 +82,8 @@ public class AiUserActionResult {
     ///                              dialog, or null.
     /// @param createDashboardConfig For a create_dashboard action, the settings to give the new dashboard once
     ///                              created, or null.
+    /// @param createVisualisation   For a create_visualisation action, what to create and where to wire it up,
+    ///                              or null.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
@@ -87,7 +91,8 @@ public class AiUserActionResult {
                               @JsonProperty("createQueryName") final String createQueryName,
                               @JsonProperty("createQueryText") final String createQueryText,
                               @JsonProperty("createDashboardName") final String createDashboardName,
-                              @JsonProperty("createDashboardConfig") final DashboardConfig createDashboardConfig) {
+                              @JsonProperty("createDashboardConfig") final DashboardConfig createDashboardConfig,
+                              @JsonProperty("createVisualisation") final AiCreateVisualisation createVisualisation) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
@@ -95,13 +100,20 @@ public class AiUserActionResult {
         this.createQueryText = createQueryText;
         this.createDashboardName = createDashboardName;
         this.createDashboardConfig = createDashboardConfig;
+        this.createVisualisation = createVisualisation;
     }
 
     /// @param name   The name to suggest in Stroom's New Dashboard dialog.
     /// @param config The settings to give the new dashboard once created.
     /// @return The result of a create_dashboard action that can be done.
     public static AiUserActionResult createDashboard(final String name, final DashboardConfig config) {
-        return new AiUserActionResult(true, null, null, null, null, name, config);
+        return new AiUserActionResult(true, null, null, null, null, name, config, null);
+    }
+
+    /// @param createVisualisation What to create and where to wire it up.
+    /// @return The result of a create_visualisation action that can be done.
+    public static AiUserActionResult createVisualisation(final AiCreateVisualisation createVisualisation) {
+        return new AiUserActionResult(true, null, null, null, null, null, null, createVisualisation);
     }
 
     /// @return True if the action was done.
@@ -137,5 +149,10 @@ public class AiUserActionResult {
     /// @return For a create_dashboard action, the settings to give the new dashboard once created, or null.
     public DashboardConfig getCreateDashboardConfig() {
         return createDashboardConfig;
+    }
+
+    /// @return For a create_visualisation action, what to create and where to wire it up, or null.
+    public AiCreateVisualisation getCreateVisualisation() {
+        return createVisualisation;
     }
 }

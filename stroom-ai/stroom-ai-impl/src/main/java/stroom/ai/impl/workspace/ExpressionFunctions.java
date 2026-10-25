@@ -21,6 +21,7 @@ import stroom.query.language.functions.FunctionCategory;
 import stroom.query.language.functions.FunctionDef;
 import stroom.query.language.functions.FunctionFactory;
 import stroom.query.language.functions.FunctionSignature;
+import stroom.query.language.functions.ValString;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +58,9 @@ public final class ExpressionFunctions {
     private static final String PICKING_ROWS_REASON = "picks out rows of a group, which aren't kept: use orderBy "
                                                       + "and limit instead.";
     private static final Pattern CALL = Pattern.compile("([A-Za-z][A-Za-z0-9]*)\\s*\\(");
+    // An expression that is one function call, e.g. formatDate(${EventTime}, 'yyyy').
+    private static final Pattern OUTER_CALL = Pattern.compile("\\s*([A-Za-z][A-Za-z0-9]*)\\s*\\((.*)\\)\\s*",
+            Pattern.DOTALL);
     private static final int MAX_SUGGESTIONS = 3;
     // Names other languages give functions, for the function Stroom has instead.
     private static final Map<String, String> SYNONYMS = Map.ofEntries(
@@ -133,6 +137,88 @@ public final class ExpressionFunctions {
             }
         }
         return Optional.empty();
+    }
+
+    /// Says which function an expression's value comes from, if it is one function call whose value is always
+    /// text, e.g. `formatDate(floorHour(${EventTime}), 'yyyy-MM-dd HH:mm')` or `concat(${User}, '@', ${Host})`.
+    /// Text is a number or a date only if it reads as one, so such a column formatted as a Number or Date Time
+    /// may give no value to a chart.
+    ///
+    /// @param expression A column's expression, or null.
+    /// @return The call, with its function's name as Stroom gives it and its arguments' text, or empty if the
+    /// expression isn't such a call.
+    public static Optional<TextCall> textCall(final String expression) {
+        if (expression == null) {
+            return Optional.empty();
+        }
+        final Matcher matcher = OUTER_CALL.matcher(expression);
+        if (!matcher.matches()) {
+            return Optional.empty();
+        }
+        final List<String> arguments = arguments(matcher.group(2)).orElse(null);
+        if (arguments == null) {
+            // The brackets don't close at the end, e.g. upperCase(a) + lowerCase(b).
+            return Optional.empty();
+        }
+        return find(matcher.group(1))
+                .filter(ExpressionFunctions::alwaysText)
+                .map(def -> new TextCall(def.name(), arguments));
+    }
+
+    // A function whose every signature gives text.
+    private static boolean alwaysText(final FunctionDef def) {
+        if (def.signatures().length == 0) {
+            return isText(def.commonReturnType());
+        }
+        return Arrays.stream(def.signatures()).allMatch(signature -> isText(signature.returnType().length > 0
+                ? signature.returnType()
+                : def.commonReturnType()));
+    }
+
+    private static boolean isText(final Class<?>[] types) {
+        return types.length > 0 && Arrays.stream(types).allMatch(ValString.class::equals);
+    }
+
+    // A call's arguments, split at the commas between them, or empty if its brackets close before the end (so
+    // the text isn't one call's arguments). Commas within brackets or quoted text are kept.
+    private static Optional<List<String>> arguments(final String text) {
+        final List<String> arguments = new ArrayList<>();
+        final StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if (quote != 0) {
+                current.append(c);
+                if (c == quote) {
+                    quote = 0;
+                }
+            } else if (c == '\'' || c == '"') {
+                quote = c;
+                current.append(c);
+            } else if (c == '(') {
+                depth++;
+                current.append(c);
+            } else if (c == ')') {
+                depth--;
+                if (depth < 0) {
+                    return Optional.empty();
+                }
+                current.append(c);
+            } else if (c == ',' && depth == 0) {
+                arguments.add(current.toString().strip());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        if (depth != 0 || quote != 0) {
+            return Optional.empty();
+        }
+        if (!current.isEmpty() || !arguments.isEmpty()) {
+            arguments.add(current.toString().strip());
+        }
+        return Optional.of(arguments);
     }
 
     /// @param name A name that isn't a function's, in lower case.
@@ -283,5 +369,15 @@ public final class ExpressionFunctions {
             previous = current;
         }
         return previous[b.length()];
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+
+    /// A call of a function whose value is always text.
+    ///
+    /// @param function  The function's name, as Stroom gives it, e.g. `formatDate`.
+    /// @param arguments Its arguments' text, in order.
+    public record TextCall(String function, List<String> arguments) {
+
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.workspace;
 
+import stroom.ai.impl.workspace.ExpressionFunctions.TextCall;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -75,5 +77,62 @@ class TestExpressionFunctions {
         assertThat(ExpressionFunctions.closestNames("avg")).containsExactly("average");
         assertThat(ExpressionFunctions.closestNames("len")).containsExactly("stringLength");
         assertThat(ExpressionFunctions.closestNames("qqq")).isEmpty();
+    }
+
+    @Test
+    void testTextCallFindsAFunctionThatAlwaysGivesText() {
+        assertThat(ExpressionFunctions.textCall("formatDate(floorHour(${EventTime}), 'yyyy-MM-dd HH:mm')"))
+                .contains(new TextCall("formatDate", List.of("floorHour(${EventTime})", "'yyyy-MM-dd HH:mm'")));
+        // Any case and spacing, as Stroom takes it.
+        assertThat(ExpressionFunctions.textCall("  FORMATDATE ( ${EventTime} ) "))
+                .contains(new TextCall("formatDate", List.of("${EventTime}")));
+        // Commas and brackets in quoted text or nested calls don't split the arguments.
+        assertThat(ExpressionFunctions.textCall("concat(${User}, ', (', max(${Host}, 'a,b'), ')')"))
+                .contains(new TextCall("concat", List.of("${User}", "', ('", "max(${Host}, 'a,b')", "')'")));
+        assertThat(ExpressionFunctions.textCall("replace(${Path}, \"\\\\\", '/')"))
+                .map(TextCall::function).contains("replace");
+    }
+
+    @Test
+    void testTextCallCoversTheStringFunctionsStroomHas() {
+        // From Stroom's own function definitions, so new text functions are covered without change here.
+        for (final String expression : List.of(
+                "upperCase(${User})",
+                "lowerCase(${User})",
+                "substring(${User}, 0, 3)",
+                "substringBefore(${User}, '@')",
+                "substringAfter(${User}, '@')",
+                "toString(${Count})",
+                "formatDuration(${Duration})",
+                "extractHostFromUri(${Url})",
+                "hash(${User})",
+                "decode(${Code}, '1', 'one', 'other')",
+                "joining(${User})")) {
+            assertThat(ExpressionFunctions.textCall(expression)).as(expression).isPresent();
+        }
+    }
+
+    @Test
+    void testTextCallIgnoresWhatMayNotBeText() {
+        for (final String expression : List.of(
+                // Functions giving numbers, dates or booleans.
+                "floorHour(${EventTime})",
+                "count()",
+                "parseDate(${When}, 'yyyy-MM-dd')",
+                "stringLength(${User})",
+                "toDouble(${Count})",
+                // Functions giving whatever their arguments are.
+                "if(${A} = 1, 'yes', 'no')",
+                "max(${Count})",
+                // Not one call.
+                "${EventTime}",
+                "upperCase(${A}) + lowerCase(${B})",
+                "'text'",
+                "noSuchFunction(${A})",
+                "formatDate(${EventTime}",
+                "")) {
+            assertThat(ExpressionFunctions.textCall(expression)).as(expression).isEmpty();
+        }
+        assertThat(ExpressionFunctions.textCall(null)).isEmpty();
     }
 }

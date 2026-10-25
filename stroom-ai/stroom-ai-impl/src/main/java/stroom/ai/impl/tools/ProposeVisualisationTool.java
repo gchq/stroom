@@ -1,0 +1,685 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools;
+
+import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.DashboardComponents;
+import stroom.ai.impl.DashboardComponents.Component;
+import stroom.ai.impl.TabSnapshots;
+import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
+import stroom.ai.impl.TabSnapshots.UnsavedPart;
+import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.vis.ChartCheck;
+import stroom.ai.impl.vis.ChartCheck.Sample;
+import stroom.ai.impl.vis.ChartCheck.TableColumn;
+import stroom.ai.impl.vis.ChartKind;
+import stroom.ai.impl.vis.ChartLibraries;
+import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
+import stroom.ai.impl.vis.ChartRole;
+import stroom.ai.impl.vis.D3Visualisation;
+import stroom.ai.impl.vis.StyleSetting;
+import stroom.ai.impl.vis.VisualisationActions;
+import stroom.ai.impl.vis.VisualisationPlan;
+import stroom.ai.impl.vis.VisualisationPlan.Replace;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.TableEngine;
+import stroom.ai.impl.workspace.TableEngine.Format;
+import stroom.ai.impl.workspace.TableEngine.Query;
+import stroom.ai.impl.workspace.WorkspaceException;
+import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AskStroomAiContext;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.docref.DocRef;
+import stroom.query.shared.QueryDoc;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+/// `propose_visualisation` - plans a chart of a table on the dashboard (or the StroomQL query) the user attached,
+/// checks the table's data can make it, and offers a way to put it there:
+///
+/// - With ECharts, a "Create visualisation" button: it opens Stroom's New Visualisation dialog with a suggested
+///   name in the dashboard's folder, and once the user creates it, the Visualisation is given the chart (built by
+///   Stroom from a fixed template, never code from the model) and added to the dashboard (or the query's `show`
+///   clause), unsaved.
+/// - With the visualisations content pack's D3 Visualisations, nothing is generated: the agent is given the
+///   add_vis change (or `show` clause) that wires the existing Visualisation to the table, to propose.
+///
+/// When the data can't make the chart (e.g. no numeric column for a bar's value), nothing is offered, and the
+/// result says why and what would fix it, for the agent to tell the user.
+///
+/// When the table already has a chart Stroom AI generated, nothing is offered until the agent says, having asked
+/// the user, whether to replace it (`replace`: its Visualisation is rewritten for the new chart and renamed, saved
+/// at once, and stays in its pane) or to add the new chart beside it (`addNew`).
+class ProposeVisualisationTool extends AbstractWorkspaceTool {
+
+    static final String NAME = "propose_visualisation";
+    static final String LIBRARY_ARG = "library";
+    static final String KIND_ARG = "kind";
+    static final String COLUMNS_ARG = "columns";
+    static final String TABLE_ARG = "table";
+    static final String STYLE_ARG = "style";
+    static final String OPTIONS_ARG = "options";
+    static final String NAME_ARG = "name";
+    static final String COMPONENT_NAME_ARG = "componentName";
+    static final String PLACEMENT_ARG = "placement";
+    static final String SUMMARY_ARG = "summary";
+    static final String REPLACE_ARG = "replace";
+    static final String ADD_NEW_ARG = "addNew";
+    static final String ECHARTS = "echarts";
+    static final String D3 = "d3";
+    static final int MAX_SAMPLE_ROWS = 5_000;
+    static final int MAX_NAME_CHARS = 100;
+    static final int MAX_SUMMARY_CHARS = 500;
+    static final String NOT_ATTACHED = "No dashboard or StroomQL Query tab is attached to the chat, so no chart can "
+                                       + "be proposed. Ask the user to attach the dashboard's (or query's) tab (+ by "
+                                       + "the chat's input) and ask again.";
+
+    private static final AtomicInteger SEQUENCE = new AtomicInteger();
+
+    private final TabSnapshots tabSnapshots;
+    private final DocumentAccess documentAccess;
+    private final CurrentResultsTool currentResultsTool;
+    private final ChartLibraries chartLibraries;
+    private final AiAuditLog auditLog;
+
+    @Inject
+    ProposeVisualisationTool(final ChatWorkspace workspace,
+                             final TabSnapshots tabSnapshots,
+                             final DocumentAccess documentAccess,
+                             final CurrentResultsTool currentResultsTool,
+                             final ChartLibraries chartLibraries,
+                             final AiAuditLog auditLog) {
+        super(workspace);
+        this.tabSnapshots = tabSnapshots;
+        this.documentAccess = documentAccess;
+        this.currentResultsTool = currentResultsTool;
+        this.chartLibraries = chartLibraries;
+        this.auditLog = auditLog;
+    }
+
+    @Override
+    public boolean isChatOnly() {
+        // It proposes a chart for the tab the user attached to the chat.
+        return true;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        final ObjectSchema.Builder columns = ObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("The table column for each of the chart kind's inputs, by input.")
+                        .chatOnly(" list_visualisations gives each kind's inputs.")
+                        .general(" Give the column names exactly as the table has them.")
+                        .build());
+        allRoleIds().forEach(roleId -> columns.addStringProperty(roleId, "The column for " + roleId + "."));
+        final ObjectSchema.Builder style = ObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Optional style settings, by setting.")
+                        .chatOnly(" list_visualisations gives each kind's settings and their values.")
+                        .general(" Leave out settings to keep their defaults.")
+                        .build());
+        allStyleIds().forEach(id -> style.addStringProperty(id, "The value for " + id + ", as text."));
+
+        return ToolDefinition.builder()
+                .name(NAME)
+                .description(ToolDescription.builder()
+                        .chatOnly("Plans a chart of a table on the dashboard, or of the StroomQL query, the user "
+                                  + "attached, checks the table's rows can make it, and offers it. With library "
+                                  + "echarts it offers a 'Create visualisation' button: the user names it and "
+                                  + "picks its folder (the dashboard's, by default) in Stroom's own dialog, and it "
+                                  + "is then added to the dashboard below the table (or to the query's show "
+                                  + "clause), unsaved, updating as the table does. With library d3 it gives the "
+                                  + "change that wires the content pack's existing D3 Visualisation to the table, "
+                                  + "for you to propose. Call list_visualisations first to see which libraries are "
+                                  + "installed and each kind's inputs, and ask the user which library to use "
+                                  + "(ask_user) when more than one is. If the data can't make the chart, nothing "
+                                  + "is offered: tell the user why and suggest the fix the result gives. When the "
+                                  + "table already has a chart Stroom AI generated (e.g. the user asks for it as "
+                                  + "another kind of chart), ask the user (ask_user) whether to replace it or add a "
+                                  + "new one, unless they have said, and give replace or addNew. You never "
+                                  + "write the chart's code or settings JSON: Stroom builds them.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addEnumProperty(LIBRARY_ARG, List.of(ECHARTS, D3), "The charting library to draw it with.")
+                        .addEnumProperty(KIND_ARG, Arrays.stream(ChartKind.values()).map(ChartKind::id).toList(),
+                                "The chart kind: " + Arrays.stream(ChartKind.values())
+                                        .map(kind -> kind.id() + " (" + kind.summary() + ")")
+                                        .collect(Collectors.joining("; ")) + ".")
+                        .addProperty(COLUMNS_ARG, columns.build())
+                        .addStringProperty(TABLE_ARG, "Optional. The dashboard table to chart, by the name the "
+                                                      + "user sees, when the dashboard has several.")
+                        .addProperty(STYLE_ARG, style.build())
+                        .addStringProperty(OPTIONS_ARG, "Optional, echarts only. ECharts option overrides as a "
+                                                        + "JSON object, for what the style settings can't do, "
+                                                        + "e.g. {\"color\": [\"#5470c6\", \"#91cc75\"]}. Only "
+                                                        + "plain JSON: no functions, HTML or URLs.")
+                        .addStringProperty(NAME_ARG, "Echarts only. The name to suggest for the new "
+                                                     + "Visualisation, saying what it shows, e.g. 'Chat user "
+                                                     + "connections'. The user confirms or changes it.")
+                        .addStringProperty(COMPONENT_NAME_ARG, "Optional. The name of the chart's pane on the "
+                                                               + "dashboard; the Visualisation's name by default.")
+                        .addEnumProperty(PLACEMENT_ARG, List.of(VisualisationPlan.BELOW, VisualisationPlan.TAB),
+                                "Optional. Where the chart goes on the dashboard: in a new pane below the table "
+                                + "(the default), or as a tab beside it.")
+                        .addStringProperty(SUMMARY_ARG, "A sentence saying what the chart shows, shown with the "
+                                                        + "button.")
+                        .addStringProperty(REPLACE_ARG, "Optional, echarts on a dashboard only. The name of the "
+                                                        + "Visualisation pane whose chart (one Stroom AI generated, "
+                                                        + "of the same table) the new one replaces: its "
+                                                        + "Visualisation is rewritten for the new chart and renamed "
+                                                        + "to name, saved at once, and it stays in its pane. Give "
+                                                        + "it, or addNew, once the user has chosen.")
+                        .addBooleanProperty(ADD_NEW_ARG, "Optional. True to add the chart as a new one when the "
+                                                         + "table already has a chart Stroom AI generated, once "
+                                                         + "the user has chosen that over replacing it.")
+                        .required(LIBRARY_ARG, KIND_ARG, COLUMNS_ARG, SUMMARY_ARG)
+                        .build())
+                .build();
+    }
+
+    @Override
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final String library = NullSafe.string(stringArg(request, LIBRARY_ARG)).toLowerCase(Locale.ROOT);
+        if (!ECHARTS.equals(library) && !D3.equals(library)) {
+            throw new WorkspaceException("Give library as " + ECHARTS + " or " + D3 + ".");
+        }
+        final ChartKind kind = ChartKind.find(stringArg(request, KIND_ARG))
+                .orElseThrow(() -> new WorkspaceException("Give kind as one of " + ChartKind.ids() + "."));
+        final Map<String, String> mappings = stringMap(argsMap(request).get(COLUMNS_ARG), COLUMNS_ARG);
+        final Map<String, String> style;
+        final String options;
+        try {
+            style = VisualisationPlan.normaliseStyle(kind, stringMap(argsMap(request).get(STYLE_ARG), STYLE_ARG));
+            options = VisualisationPlan.normaliseOptions(optionsText(argsMap(request).get(OPTIONS_ARG)));
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(e.getMessage());
+        }
+        final String name = stringArg(request, NAME_ARG);
+        final String summary = stringArg(request, SUMMARY_ARG);
+        final String placement = NullSafe.nonBlankStringElse(stringArg(request, PLACEMENT_ARG),
+                VisualisationPlan.BELOW);
+        if (!VisualisationPlan.BELOW.equals(placement) && !VisualisationPlan.TAB.equals(placement)) {
+            throw new WorkspaceException("Give placement as " + VisualisationPlan.BELOW + " or "
+                                         + VisualisationPlan.TAB + ".");
+        }
+        if (ECHARTS.equals(library) && (name == null || name.isBlank() || name.length() > MAX_NAME_CHARS)) {
+            throw new WorkspaceException("Give the new Visualisation a name of up to " + MAX_NAME_CHARS
+                                         + " characters, saying what it shows.");
+        }
+        if (summary != null && summary.length() > MAX_SUMMARY_CHARS) {
+            throw new WorkspaceException("The summary may be at most " + MAX_SUMMARY_CHARS + " characters.");
+        }
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a chart can only be offered while answering a question in a chat.");
+        }
+
+        // The tab the user attached to the chat.
+        final int chatId = context.session().requireChatId(NAME);
+        final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
+        final DocRef target = NullSafe.get(tab, StoredTabSnapshot::docRef);
+        final boolean query = target != null && QueryDoc.TYPE.equals(target.getType());
+        if (target == null || (!query && !DashboardDoc.TYPE.equals(target.getType()))) {
+            return ToolResult.text(NOT_ATTACHED);
+        }
+        if (!documentAccess.canView(target)) {
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
+        }
+        final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()),
+                stringArg(request, TABLE_ARG));
+        if (table == null) {
+            return ToolResult.text(NullSafe.isEmptyCollection(tab.searches())
+                    ? "The tab shows no table of results to chart. Run its query first."
+                    : "Say which table to chart: " + NullSafe.list(tab.searches()).stream()
+                            .map(search -> "'" + tableName(search) + "'")
+                            .collect(Collectors.joining(", ")) + ".");
+        }
+        final UnsavedPart part = tabSnapshots.part(chatId, tab, query
+                ? AiTabSnapshotPart.QUERY
+                : AiTabSnapshotPart.DASHBOARD).orElse(null);
+        if (part == null || part.cut()) {
+            return ToolResult.text("The tab's " + (query
+                    ? "query"
+                    : "settings") + " aren't in its snapshot in full (it may be too large, or still loading), so "
+                                   + "a chart can't be proposed for it.");
+        }
+
+        // Check the table's data can make the chart.
+        final String tableName = tableName(table);
+        final AskStroomAiContext results = table.getLive() != null
+                ? table.getLive()
+                : table.getResults();
+        final Map<String, String> formats = ResultsRequests.columnFormats(results);
+        final Map<String, String> expressions = ResultsRequests.columnExpressions(results);
+        final List<TableColumn> columns = NullSafe.list(table.getColumns()).stream()
+                .map(column -> new TableColumn(column, formats.get(column), expressions.get(column)))
+                .toList();
+        final SampleOutcome sample = sample(request, context, table);
+        final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
+        if (!check.ok()) {
+            return ToolResult.text("No chart was offered: the table '" + tableName + "' can't make this "
+                                   + kind.displayName().toLowerCase(Locale.ROOT) + ":\n- "
+                                   + String.join("\n- ", check.problems())
+                                   + "\nTell the user why, and suggest the way forward above (offer the change, "
+                                   + "e.g. with propose_dashboard_change, if they want it); or try another chart "
+                                   + "kind or columns.");
+        }
+        // A chart of a table that already has one Stroom AI generated replaces it, or is added beside it, as the
+        // user chooses.
+        final String replaceName = NullSafe.get(stringArg(request, REPLACE_ARG), String::strip);
+        final boolean addNew = booleanArg(request, ADD_NEW_ARG, false);
+        Replace replace = null;
+        if (NullSafe.isNonBlankString(replaceName)) {
+            if (addNew) {
+                throw new WorkspaceException("Give " + REPLACE_ARG + " or " + ADD_NEW_ARG + ", not both.");
+            }
+            replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library, query);
+        } else if (!query && !addNew) {
+            final List<Component> generated = generatedCharts(DashboardComponents.parse(part.text()), tableName);
+            if (!generated.isEmpty()) {
+                return ToolResult.text(askReplaceOrAdd(tableName, generated));
+            }
+        }
+
+        final StringBuilder notes = new StringBuilder();
+        if (sample.note() != null) {
+            notes.append("\nSample: ").append(sample.note());
+        }
+        if (!check.stats().isEmpty()) {
+            notes.append("\nFrom the sample: ").append(check.stats().entrySet().stream()
+                    .map(entry -> entry.getKey() + " " + entry.getValue())
+                    .collect(Collectors.joining(", "))).append('.');
+        }
+        if (!check.warnings().isEmpty()) {
+            notes.append("\nWarnings (tell the user the ones that matter):\n- ")
+                    .append(String.join("\n- ", check.warnings()));
+        }
+
+        if (D3.equals(library)) {
+            return d3(kind, mappings, target, query, tableName, placement, name, notes);
+        }
+        return echarts(kind, mappings, style, options, target, query, table, tableName, part, name, summary,
+                placement, replace, request, context, notes);
+    }
+
+    // The Visualisation panes linked to the table that show a chart Stroom AI generated.
+    private List<Component> generatedCharts(final List<Component> components, final String tableName) {
+        return components.stream()
+                .filter(component -> DashboardComponents.VISUALISATION.equals(component.type()))
+                .filter(component -> tableName.equalsIgnoreCase(component.table()))
+                .filter(component -> chartLibraries.isGenerated(component.visualisation()))
+                .toList();
+    }
+
+    static String askReplaceOrAdd(final String tableName, final List<Component> generated) {
+        final String charts = generated.stream()
+                .map(component -> "pane '" + component.name() + "' (Visualisation '"
+                                  + component.visualisation().getName() + "')")
+                .collect(Collectors.joining(", "));
+        return "No chart was offered yet: table '" + tableName + "' already has a chart Stroom AI generated: "
+               + charts + ". Unless the user has already said, ask them (ask_user) whether to replace it, which "
+               + "rewrites its Visualisation for the new chart and renames it (saved at once), keeping its place "
+               + "on the dashboard, or to add the new chart beside it. Then call " + NAME + " again with "
+               + REPLACE_ARG + " (the pane's name) or " + ADD_NEW_ARG + " true.";
+    }
+
+    // The chart a new one replaces, checked: a Visualisation pane of the same table, showing a chart Stroom AI
+    // generated that the user may edit.
+    private Replace replacement(final List<Component> components,
+                                final String paneName,
+                                final String tableName,
+                                final String library,
+                                final boolean query) {
+        if (query) {
+            throw new WorkspaceException("Only a chart on a dashboard replaces another with " + REPLACE_ARG
+                                         + ": a StroomQL query's chart is its show clause, which a new chart "
+                                         + "takes the place of.");
+        }
+        if (!ECHARTS.equals(library)) {
+            throw new WorkspaceException("Only an ECharts chart (library " + ECHARTS + ") can replace one Stroom "
+                                         + "AI generated, as its Visualisation is rewritten for it. Give "
+                                         + ADD_NEW_ARG + " true to add the D3 chart beside it instead.");
+        }
+        final List<Component> panes = components.stream()
+                .filter(component -> DashboardComponents.VISUALISATION.equals(component.type()))
+                .toList();
+        final Component pane = DashboardComponents.find(panes, paneName)
+                .orElseThrow(() -> new WorkspaceException("The dashboard has no Visualisation pane '" + paneName
+                                                          + "'. " + (panes.isEmpty()
+                        ? "It has none."
+                        : "Its Visualisation panes are: " + panes.stream()
+                                .map(component -> "'" + component.name() + "'")
+                                .collect(Collectors.joining(", ")) + ".")));
+        if (!tableName.equalsIgnoreCase(pane.table())) {
+            throw new WorkspaceException("Pane '" + pane.name() + "' draws table '" + pane.table() + "', not '"
+                                         + tableName + "'. Chart table '" + pane.table() + "' to replace it, or "
+                                         + "give " + ADD_NEW_ARG + " true.");
+        }
+        final DocRef visualisation = pane.visualisation();
+        if (!chartLibraries.isGenerated(visualisation)) {
+            throw new WorkspaceException("Pane '" + pane.name() + "' shows Visualisation '"
+                                         + NullSafe.get(visualisation, DocRef::getName) + "', which Stroom AI "
+                                         + "didn't generate, so it isn't rewritten. Give " + ADD_NEW_ARG + " true "
+                                         + "to add the new chart beside it.");
+        }
+        if (!documentAccess.canEdit(visualisation)) {
+            throw new WorkspaceException("The user doesn't have Edit permission on Visualisation '"
+                                         + visualisation.getName() + "', so it can't be replaced. Give "
+                                         + ADD_NEW_ARG + " true to add the new chart beside it instead.");
+        }
+        return new Replace(pane.id(), pane.name(), visualisation);
+    }
+
+    private ToolResult echarts(final ChartKind kind,
+                               final Map<String, String> mappings,
+                               final Map<String, String> style,
+                               final String options,
+                               final DocRef target,
+                               final boolean query,
+                               final AiTabSearch table,
+                               final String tableName,
+                               final UnsavedPart part,
+                               final String name,
+                               final String summary,
+                               final String placement,
+                               final Replace replace,
+                               final ToolCall request,
+                               final ToolCallContext context,
+                               final StringBuilder notes) {
+        final EChartsInstall echarts = chartLibraries.findECharts().orElse(null);
+        if (echarts == null) {
+            final boolean d3 = !chartLibraries.findD3().isEmpty();
+            final String unrecognised = unrecognisedNote(chartLibraries.findUnrecognisedECharts());
+            return ToolResult.text("No chart was offered: ECharts isn't installed in Stroom. " + unrecognised
+                                   + "An administrator installs it by creating a Script doc (e.g. "
+                                   + "Visualisations/ECharts/ECharts) holding echarts.min.js from an Apache "
+                                   + "ECharts release, version " + ChartLibraries.MIN_ECHARTS_MAJOR + " or later. "
+                                   + (d3
+                    ? "The content pack's D3 Visualisations are installed: offer the user a D3 chart instead "
+                      + "(library d3)."
+                    : "No other charting library is installed either.")
+                                   + " Tell the user.");
+        }
+        if (!chartLibraries.currentUserCanUse(echarts.script())) {
+            return ToolResult.text("No chart was offered: the user doesn't have Use permission on Script '"
+                                   + echarts.script().getName() + "' (ECharts), so the chart wouldn't load for "
+                                   + "them. Tell them to ask an administrator for it.");
+        }
+        // A replaced chart keeps its pane's name unless given another.
+        final String componentName = NullSafe.nonBlankStringElse(stringArg(request, COMPONENT_NAME_ARG),
+                replace != null
+                        ? replace.componentName()
+                        : name);
+        final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, style, options,
+                query
+                        ? null
+                        : tableName,
+                query
+                        ? null
+                        : table.getComponentId(),
+                query
+                        ? null
+                        : componentName,
+                query
+                        ? null
+                        : placement,
+                query
+                        ? AiTabSnapshotPart.hashText(part.text())
+                        : AiTabSnapshotPart.hashText(DashboardComponents.withoutRenderReports(part.text())),
+                query
+                        ? Boolean.TRUE
+                        : null,
+                query
+                        ? part.text()
+                        : null,
+                replace);
+        try {
+            plan.validate();
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(e.getMessage());
+        }
+
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("doc", Map.of("type", target.getType(), "uuid", target.getUuid()));
+        arguments.put("name", name.strip());
+        arguments.put("plan", plan.toJson());
+        NullSafe.consume(summary, text -> arguments.put("summary", text));
+        final ToolUserAction action = new ToolUserAction("create-visualisation-" + SEQUENCE.incrementAndGet(),
+                UserActions.CREATE_VISUALISATION, arguments);
+        auditLog.documentViewed(context.session(), target, "Proposed a " + kind.displayName().toLowerCase(Locale.ROOT)
+                                                           + " of table '" + tableName + "' with the " + NAME
+                                                           + " tool");
+
+        if (replace != null) {
+            return ToolResult.text(
+                    "The user has been shown a 'Replace visualisation' button for a "
+                    + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("
+                    + describeMappings(mappings) + "), drawn with ECharts " + echarts.version() + ". When they "
+                    + "click it, Visualisation '" + replace.visualisation().getName() + "' is rewritten for it and "
+                    + "renamed '" + name.strip() + "', saved at once (they need Edit permission on it), and pane '"
+                    + replace.componentName() + "' shows it" + (componentName.equals(replace.componentName())
+                            ? ""
+                            : ", renamed '" + componentName + "'")
+                    + ", unsaved on the dashboard. Nothing changes until they click it. Tell them about the button, "
+                    + "and that the old chart is replaced, rather than saying it was done. Once it draws, its render "
+                    + "report shows in the chat and in the dashboard's description: if it reports an error or drew "
+                    + "nothing, explain why and offer a fix." + notes)
+                    .withUserAction(action);
+        }
+        final String where = query
+                ? "put in the query's show clause, naming it by its UUID (show \"<its uuid>\" ("
+                  + showArguments(kind, mappings) + ")), unsaved"
+                : "added to dashboard '" + target.getName() + "' " + ("tab".equals(placement)
+                        ? "as a tab beside"
+                        : "below") + " table '" + tableName + "', unsaved";
+        return ToolResult.text(
+                "The user has been shown a 'Create visualisation' button for a "
+                + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("
+                + describeMappings(mappings) + "), drawn with ECharts " + echarts.version() + ". When they click "
+                + "it, Stroom's New Visualisation dialog opens with the name '" + name.strip() + "' in the "
+                + (query
+                        ? "query's"
+                        : "dashboard's") + " folder, which they can change; once they create it, it is " + where
+                + ", and redraws as the table updates. Nothing changes until they click it. Tell them about the "
+                + "button rather than saying the chart was made. Once it draws, its render report (what it drew, "
+                + "and any rows it left out or error) shows in the chat and in the dashboard's description: if "
+                + "it reports an error or drew nothing, explain why and offer a fix." + notes)
+                .withUserAction(action);
+    }
+
+    private ToolResult d3(final ChartKind kind,
+                          final Map<String, String> mappings,
+                          final DocRef target,
+                          final boolean query,
+                          final String tableName,
+                          final String placement,
+                          final String name,
+                          final StringBuilder notes) {
+        final DocRef visualisation = chartLibraries.findD3().get(kind);
+        if (visualisation == null) {
+            return ToolResult.text("No chart was offered: the visualisations content pack's D3 "
+                                   + kind.displayName().toLowerCase(Locale.ROOT) + " isn't installed. "
+                                   + (chartLibraries.findECharts().isPresent()
+                    ? "ECharts is: offer an ECharts chart instead (library echarts)."
+                    : "Tell the user it would need the content pack installed."));
+        }
+        final D3Visualisation d3 = D3Visualisation.forKind(kind);
+        final Map<String, String> settings = new LinkedHashMap<>();
+        final List<String> unsupported = new ArrayList<>();
+        for (final Entry<String, String> entry : mappings.entrySet()) {
+            d3.control(entry.getKey()).ifPresentOrElse(
+                    control -> settings.put(control, entry.getValue()),
+                    () -> unsupported.add(entry.getKey()));
+        }
+        final String unsupportedNote = unsupported.isEmpty()
+                ? ""
+                : "\nThe D3 " + kind.displayName().toLowerCase(Locale.ROOT) + " has no input for "
+                  + String.join(", ", unsupported) + ", so it is left out: tell the user, or use ECharts.";
+        if (query) {
+            final String clause = "show " + VisualisationActions.quote(visualisation.getUuid()) + " ("
+                                  + settings.entrySet().stream()
+                                          .map(entry -> entry.getKey() + " = "
+                                                        + VisualisationActions.quote(entry.getValue()))
+                                          .collect(Collectors.joining(", ")) + ")";
+            return ToolResult.text("The data can make the chart. Nothing has been offered yet: propose the query "
+                                   + "with this show clause in place of any it has, as its last clause, with "
+                                   + "propose_query_change (it names '" + visualisation.getName() + "' by its "
+                                   + "UUID, so a name shared with another Visualisation can't make it "
+                                   + "ambiguous):\n" + clause + unsupportedNote + notes);
+        }
+        final Map<String, Object> change = new LinkedHashMap<>();
+        change.put("op", "add_vis");
+        change.put("table", tableName);
+        change.put("name", NullSafe.nonBlankStringElse(name, visualisation.getName()));
+        change.put("visualisation", visualisation.getUuid());
+        change.put("settings", settings);
+        change.put("placement", placement);
+        return ToolResult.text("The data can make the chart with the content pack's D3 Visualisation '"
+                               + visualisation.getName() + "' (" + visualisation.getUuid() + "). Nothing has been "
+                               + "offered yet: propose this change with propose_dashboard_change (component '"
+                               + tableName + "'):\n" + JsonUtil.writeValueAsString(change, false)
+                               + unsupportedNote + notes);
+    }
+
+    // A sample of the table's rows, from its current_results snapshot (taken if there isn't one, never re-run).
+    private SampleOutcome sample(final ToolCall request, final ToolCallContext context, final AiTabSearch table) {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        NullSafe.consume(table.getName(), tableName -> args.put(CurrentResultsTool.TABLE_ARG, tableName));
+        final CurrentResultsTool.Outcome outcome;
+        try {
+            outcome = currentResultsTool.outcome(new ToolCall(request.id(), CurrentResultsTool.NAME,
+                    JsonUtil.writeValueAsString(args, false)), context);
+        } catch (final RuntimeException e) {
+            return new SampleOutcome(null, "the table's rows couldn't be read (" + e.getMessage() + ")");
+        }
+        if (outcome.path() == null) {
+            return new SampleOutcome(null, outcome.text().lines().findFirst().orElse("none"));
+        }
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final WorkspacePath path = WorkspacePath.parse(outcome.path());
+        final TableEngine.Result result = TableEngine.run(workspace.localFile(path),
+                Format.forPath(path),
+                new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), MAX_SAMPLE_ROWS));
+        return new SampleOutcome(new Sample(result.columns(), result.rows()),
+                result.rows().size() + " rows from snapshot " + outcome.path());
+    }
+
+    /// Says which Script docs are named like ECharts but don't hold an ECharts build Stroom can use, if any.
+    ///
+    /// @param scripts Those Script docs.
+    /// @return A sentence naming them, or empty text.
+    static String unrecognisedNote(final List<DocRef> scripts) {
+        return scripts.isEmpty()
+                ? ""
+                : "Script " + scripts.stream()
+                          .map(ref -> "'" + ref.getName() + "'")
+                          .collect(Collectors.joining(", "))
+                  + " doesn't hold an ECharts " + ChartLibraries.MIN_ECHARTS_MAJOR + " or later build (it may be "
+                  + "an older release, or not ECharts), so it isn't used. ";
+    }
+
+    /// The options argument as JSON text: models give it as a JSON string, as asked, or as the object itself.
+    ///
+    /// @param value The argument's value.
+    /// @return Its JSON text, or null if not given.
+    static String optionsText(final Object value) {
+        if (value == null) {
+            return null;
+        }
+        return value instanceof Map || value instanceof List
+                ? JsonUtil.writeValueAsString(value, false)
+                : String.valueOf(value);
+    }
+
+    private static Map<String, String> stringMap(final Object value, final String argument) {
+        if (value == null) {
+            return Map.of();
+        }
+        if (!(value instanceof final Map<?, ?> map)) {
+            throw new WorkspaceException("Give " + argument + " as an object of names to text values.");
+        }
+        final Map<String, String> strings = new LinkedHashMap<>();
+        map.forEach((key, entry) -> {
+            if (entry != null && !String.valueOf(entry).isBlank()) {
+                // Stripped here, once, so the chart is given the names the check found.
+                strings.put(String.valueOf(key).strip(), String.valueOf(entry).strip());
+            }
+        });
+        return strings;
+    }
+
+    private static String tableName(final AiTabSearch search) {
+        return NullSafe.nonBlankStringElse(search.getName(), search.getComponentId());
+    }
+
+    private static String describeMappings(final Map<String, String> mappings) {
+        return mappings.entrySet().stream()
+                .map(entry -> entry.getKey() + " = '" + entry.getValue() + "'")
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String showArguments(final ChartKind kind, final Map<String, String> mappings) {
+        return kind.roles().stream()
+                .filter(role -> mappings.containsKey(role.id()))
+                .map(role -> role.id() + " = " + VisualisationActions.quote(mappings.get(role.id())))
+                .collect(Collectors.joining(", "));
+    }
+
+    private static Set<String> allRoleIds() {
+        final Set<String> ids = new LinkedHashSet<>();
+        for (final ChartKind kind : ChartKind.values()) {
+            kind.roles().stream().map(ChartRole::id).forEach(ids::add);
+        }
+        return ids;
+    }
+
+    private static Set<String> allStyleIds() {
+        final Set<String> ids = new LinkedHashSet<>();
+        for (final StyleSetting setting : StyleSetting.values()) {
+            ids.add(setting.id());
+        }
+        return ids;
+    }
+
+    // A sample of rows and a note on where it came from, or null and why there is none.
+    private record SampleOutcome(Sample sample, String note) {
+
+    }
+}

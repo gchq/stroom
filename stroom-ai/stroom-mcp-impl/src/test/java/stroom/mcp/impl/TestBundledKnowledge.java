@@ -68,7 +68,7 @@ class TestBundledKnowledge {
             "max_records", "ignore_warnings", "index_plan", "drop_when", "for_each", "mark_rules",
             "reuse_existing_docs", "accept_parser_mismatch", "build_status", "index_dropped",
             // Named in Stroom's own tools' descriptions: an argument, a state and kinds of dashboard change.
-            "test_feed", "index_template", "set_expression", "set_setting");
+            "test_feed", "index_template", "set_expression", "set_setting", "set_vis_settings");
     // Tools that came from the Stroom MCP server and were merged into Stroom's built-in tools.
     private static final List<String> MERGED = List.of("find_documents", "describe_document", "find_streams",
             "describe_stream", "read_stream", "find_events", "describe_pipeline", "survey_index");

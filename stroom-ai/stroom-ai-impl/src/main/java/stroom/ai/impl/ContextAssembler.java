@@ -244,6 +244,11 @@ public class ContextAssembler {
             doesn't have: on a grouped table, turn on its detail rows (showDetail) so an event can be selected.
             - For tables by category (e.g. a tab per event type), find the categories from the rows, then \
             propose add_table for each, with columns that suit it and a filter on the category column.
+            - To chart a table, propose add_vis (a Visualisation linked to the table, below it or as a tab, by \
+            the Visualisation document's UUID, with settings for its controls, each field control naming a \
+            column of the table); an existing one, such as the content pack's D3 visualisations, can be added \
+            directly, and propose_visualisation generates a new one. Change a Visualisation component's controls \
+            with set_vis_settings; its render report in the dashboard file says how it last rendered.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
             filter a column), the expression of the classic query that feeds it (set_expression, conditions \
             in where), its conditional formatting (add_format_rule, remove_format_rule), a Text widget for \

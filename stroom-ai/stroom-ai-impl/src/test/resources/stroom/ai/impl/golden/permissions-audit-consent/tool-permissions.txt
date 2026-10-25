@@ -219,9 +219,11 @@ Needs: View (document)
 - get_utc_time_offset: same
 - grep: same
 - jq: same
+- list_visualisations: same
 - ls: same
 - memory: same
 - pipeline: same
+- propose_visualisation: same
 - read_file: same
 - read_turn: same
 - run_stroomql: same (its data source is checked by QueryService when the search runs, mocked here)
