@@ -17,7 +17,6 @@
 package stroom.pipeline.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
@@ -89,7 +88,6 @@ import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
 import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 
-import com.google.inject.Singleton;
 
 public class PipelineModule extends PluginModule {
 
@@ -154,6 +152,5 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,
                 ProcessorTaskViewImpl.class);
 
-        bind(EditorMenuPresenter.class).in(Singleton.class);
     }
 }

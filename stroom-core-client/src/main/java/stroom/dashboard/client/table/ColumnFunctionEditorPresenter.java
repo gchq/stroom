@@ -24,8 +24,8 @@ import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctio
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.query.shared.CompletionsRequest.TextType;
@@ -203,7 +203,7 @@ public class ColumnFunctionEditorPresenter
 
     public interface ColumnFunctionEditorView extends View {
 
-        void setEditor(final EditorView editor);
+        void setEditor(final CodeEditor editor);
 
         void setQueryHelp(View view);
     }

@@ -2,7 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:e="urn:import:stroom.editor.client.view">
+    <!-- A single line code editor (editor.css): one line of text, in Ace -->
     <g:FlowPanel styleName="code-editor max dock-container">
-        <g:SimplePanel ui:field="content" styleName="code-editor__text dock-max"/>
+        <g:SimplePanel ui:field="content" styleName="code-editor__text dock-max">
+            <e:Editor ui:field="editor" styleName="code-editor__ace code-editor__ace--single-line" maxLines="1"/>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

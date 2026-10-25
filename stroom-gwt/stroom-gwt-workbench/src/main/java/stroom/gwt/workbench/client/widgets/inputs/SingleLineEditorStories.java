@@ -16,10 +16,11 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.editor.client.component.AceEditorController;
+import stroom.editor.client.component.SingleLineCodeEditor;
+import stroom.editor.client.component.SingleLineCodeEditorController;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.editor.client.presenter.SingleLineEditorPresenter;
-import stroom.editor.client.view.SingleLineEditorViewImpl;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -28,14 +29,13 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.util.client.GlobalKeyHandler;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for [SingleLineEditorPresenter].
+/// Stories for [SingleLineCodeEditor], with its [SingleLineCodeEditorController].
 ///
-/// The real presenter and view are used: a one-line Ace editor.
+/// The real component and controller are used: a one-line Ace editor.
 public final class SingleLineEditorStories {
 
     // Shared by every rendering: it is a singleton in Stroom, and creating one adds a completion
@@ -55,30 +55,32 @@ public final class SingleLineEditorStories {
                 // A single-line, code-styled editor input
                 .story("Basic", context -> {
                     // The Ace based editor has no placeholder.
-                    final SingleLineEditorPresenter presenter = singleLineEditor(context, "${feed}");
-                    return presenter.getWidget();
+                    final SingleLineCodeEditorController controller = singleLineEditor(context, "${feed}");
+                    return controller.asWidget();
                 })
                 // Read-only - value cannot be edited
                 .story("ReadOnly", context -> {
-                    final SingleLineEditorPresenter presenter = singleLineEditor(context, "read-only value");
-                    presenter.setReadOnly(true);
-                    return presenter.getWidget();
+                    final SingleLineCodeEditorController controller = singleLineEditor(context, "read-only value");
+                    controller.setReadOnly(true);
+                    return controller.asWidget();
                 });
     }
 
-    private static SingleLineEditorPresenter singleLineEditor(final StoryContext context, final String text) {
-        final SingleLineEditorViewImpl view = new SingleLineEditorViewImpl(
-                GWT.create(SingleLineEditorViewImpl.Binder.class));
-        final SingleLineEditorPresenter presenter = new SingleLineEditorPresenter(
-                new SimpleEventBus(),
-                view,
-                getDelegatingAceCompleter(),
-                currentPreferences(),
-                new NoOpGlobalKeyHandler());
-        presenter.setText(text);
+    private static SingleLineCodeEditorController singleLineEditor(final StoryContext context,
+                                                                   final String text) {
+        final SimpleEventBus eventBus = new SimpleEventBus();
+        final SingleLineCodeEditorController controller = new SingleLineCodeEditorController(
+                eventBus,
+                new SingleLineCodeEditor(),
+                new AceEditorController(
+                        eventBus,
+                        getDelegatingAceCompleter(),
+                        currentPreferences(),
+                        new NoOpGlobalKeyHandler()));
+        controller.setText(text);
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
-        presenter.addValueChangeHandler(event -> onChange.call(event.getValue()));
-        return presenter;
+        controller.addValueChangeHandler(event -> onChange.call(event.getValue()));
+        return controller;
     }
 
     private static DelegatingAceCompleter getDelegatingAceCompleter() {

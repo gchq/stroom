@@ -281,7 +281,7 @@ public final class CodeDocumentEditorStories {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(".ace_content")).toBeInTheDocument());
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    // The menu opens on contextmenu (EditorViewImpl), its edit items above Format
+                    // The menu opens on contextmenu (CodeEditor), its edit items above Format
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();

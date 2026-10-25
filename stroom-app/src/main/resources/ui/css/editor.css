@@ -285,8 +285,10 @@
 	user-select: none;
 }
 
+/* Placed by the line it marks (--code-editor__marker-top, set by RightBar) */
 .code-editor__marker {
 	position: absolute;
+	top: var(--code-editor__marker-top);
 	margin-left: 0px;
 	margin-right: 0px;
 	width: 12px;

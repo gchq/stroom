@@ -18,11 +18,12 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.view.TextViewImpl;
+import stroom.editor.client.component.AceEditorController;
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.view.EditorMenuPresenter;
-import stroom.editor.client.view.EditorViewImpl;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.util.client.GlobalKeyHandler;
@@ -48,18 +49,21 @@ public final class EditorWidgets {
         // Static utility
     }
 
-    /// Creates Stroom's real Ace editor presenter and view, as GIN would.
+    /// Creates Stroom's real Ace editor presenter, with its controller and component, as GIN would.
     ///
     /// @param eventBus The event bus, on which the editor's context menu is shown.
     /// @return The presenter.
     public static EditorPresenter editorPresenter(final EventBus eventBus) {
         return new EditorPresenter(
                 eventBus,
-                new EditorViewImpl(GWT.create(EditorViewImpl.Binder.class)),
-                new EditorMenuPresenter(),
-                getDelegatingAceCompleter(),
-                currentPreferences(),
-                new NoOpGlobalKeyHandler());
+                new CodeEditorController(
+                        eventBus,
+                        new CodeEditor(),
+                        new AceEditorController(
+                                eventBus,
+                                getDelegatingAceCompleter(),
+                                currentPreferences(),
+                                new NoOpGlobalKeyHandler())));
     }
 
     /// Creates Stroom's data [TextPresenter] (the editor used to show stream data), as GIN would.

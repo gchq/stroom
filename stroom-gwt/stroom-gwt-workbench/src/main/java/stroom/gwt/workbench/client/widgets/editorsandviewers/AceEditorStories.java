@@ -42,7 +42,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
-/// Stories for Stroom's Ace based editor ([EditorPresenter] with `EditorViewImpl`).
+/// Stories for Stroom's Ace based editor ([EditorPresenter] with its `CodeEditorController` and `CodeEditor`).
 ///
 /// The stories set the presenter's options: `setMode`, `setReadOnly`, the line numbers and line
 /// wrap options, the format action and `setIndicators`.

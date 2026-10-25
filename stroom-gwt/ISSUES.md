@@ -1587,6 +1587,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   fixed heading ("Service & Operation") and its region's role and name are in that HTML, not its
   template (found 25 October 2026, in wave 6). They can move to the template if the list's frame is
   split from its rows.
+* The code editor's own `IndicatorPopup` (static in `CodeEditor`, before that `EditorViewImpl`) is
+  never shown: the overview bar (`RightBar`) shows one of its own, which hides itself on a click
+  (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,
+  does nothing. Unused code, kept until removals are allowed.
+* `Widgets/Editors & Viewers/AceEditorFeatures` `Snippet` failed its first attempt in a 70 story
+  run (found 25 October 2026, in wave 6's editor unit): `apply ` hadn't become
+  `xsl:apply-templates`. It passed its second, and 4 runs of 4 alone; Ace's completion timing under
+  load, a guess. Not yet known whether it is older than wave 6.
 * Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals

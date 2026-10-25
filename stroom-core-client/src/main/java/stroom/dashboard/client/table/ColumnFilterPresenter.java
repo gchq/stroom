@@ -17,8 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
+import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -90,6 +90,6 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
 
     public interface ColumnFilterView extends View {
 
-        void setEditor(final EditorView editor);
+        void setEditor(final CodeEditor editor);
     }
 }

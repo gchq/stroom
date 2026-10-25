@@ -28,7 +28,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [XmlFormatter], what the Ace editor's Format action runs on XML (GWT
-/// `EditorViewImpl.formatAsIfXml` calls `new XmlFormatter().format(text)`).
+/// `CodeEditorController.setText(text, true)` calls `new XmlFormatter().format(text)`).
 ///
 /// Each story shows its cases (the name, the input, faded, and the formatted output), and its
 /// play checks the formatter's results.
@@ -107,7 +107,7 @@ public final class FormatStories {
                         .toBe(format(IDEMPOTENT_SOURCE)));
     }
 
-    /// GWT `EditorViewImpl.formatAsIfXml(text)`.
+    /// GWT `CodeEditorController.setText(text, true)`.
     private static String format(final String input) {
         return new XmlFormatter().format(input);
     }

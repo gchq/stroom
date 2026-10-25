@@ -23,7 +23,8 @@ public class FormatEvent extends GwtEvent<FormatEvent.FormatHandler> {
 
     public static final GwtEvent.Type<FormatHandler> TYPE = new GwtEvent.Type<>();
 
-    protected FormatEvent() {
+    /// Makes the event, e.g. for a code editor's controller to tell its listeners of.
+    public FormatEvent() {
     }
 
     public static <I> void fire(final HasFormatHandlers source) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,176 +16,231 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.editor.client.component.CodeEditor;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.event.HasFormatHandlers;
-import stroom.editor.client.model.XmlFormatter;
-import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
+import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.TextRange;
-import stroom.widget.util.client.GlobalKeyHandler;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 import java.util.function.Function;
 
+/// A code editor as a presenter, for the screens that still take presenters: a
+/// [CodeEditorController], which it owns, showing its [CodeEditor]. A screen split into a component
+/// and a controller makes a [CodeEditorController] itself.
 public class EditorPresenter
-        extends AbstractEditorPresenter<EditorView> implements HasFormatHandlers {
+        extends MyPresenterWidget<CodeEditor>
+        implements HasText, HasValueChangeHandlers<String>, HasFormatHandlers {
 
-    protected static final String VIM_KEY_BINDS_NAME = "VIM";
-    private final EditorMenuPresenter contextMenu;
+    private final CodeEditorController controller;
 
     @Inject
     public EditorPresenter(final EventBus eventBus,
-                           final EditorView view,
-                           final EditorMenuPresenter contextMenu,
-                           final DelegatingAceCompleter delegatingAceCompleter,
-                           final CurrentPreferences currentPreferences,
-                           final GlobalKeyHandler globalKeyHandler) {
-        super(eventBus, view, delegatingAceCompleter, currentPreferences, globalKeyHandler);
-        this.contextMenu = contextMenu;
-
-        own(view.addContextMenuHandler(event ->
-                contextMenu.show(
-                        EditorPresenter.this,
-                        event.getPopupPosition(),
-                        event.getEditTarget())));
+                           final CodeEditorController controller) {
+        super(eventBus, controller.getCodeEditor());
+        this.controller = own(controller);
     }
 
-    /**
-     * Replaces the editor with some html showing the errorText and its title
-     */
-    public void setErrorText(final String title, final String errorText) {
-        getView().setErrorText(title, errorText);
+    /// @return The controller this presents.
+    public CodeEditorController getController() {
+        return controller;
     }
 
+    /// @see CodeEditorController#getEditorId()
+    public String getEditorId() {
+        return controller.getEditorId();
+    }
+
+    /// @see CodeEditorController#focus()
+    public void focus() {
+        controller.focus();
+    }
+
+    @Override
+    public String getText() {
+        return controller.getText();
+    }
+
+    /// Sets the text for this control. If XML is supplied it will be turned into HTML for styling.
+    @Override
+    public void setText(final String text) {
+        controller.setText(text);
+    }
+
+    /// @see CodeEditorController#setText(String, boolean)
     public void setText(final String text, final boolean format) {
-        if (text == null) {
-            getView().setText("");
-        } else {
-            if (format) {
-                final String formatted = new XmlFormatter().format(text);
-                getView().setText(formatted, true);
-            } else {
-                getView().setText(text);
-            }
-        }
+        controller.setText(text, format);
     }
 
+    /// Replaces the editor with some html showing the errorText and its title
+    public void setErrorText(final String title, final String errorText) {
+        controller.setErrorText(title, errorText);
+    }
+
+    /// @see CodeEditorController#isClean()
+    public boolean isClean() {
+        return controller.isClean();
+    }
+
+    /// @see CodeEditorController#markClean()
+    public void markClean() {
+        controller.markClean();
+    }
+
+    /// @see CodeEditorController#insertTextAtCursor(String)
+    public void insertTextAtCursor(final String text) {
+        controller.insertTextAtCursor(text);
+    }
+
+    /// @see CodeEditorController#replaceSelectedText(String)
+    public void replaceSelectedText(final String text) {
+        controller.replaceSelectedText(text);
+    }
+
+    /// @see CodeEditorController#insertSnippet(String)
+    public void insertSnippet(final String snippet) {
+        controller.insertSnippet(snippet);
+    }
+
+    /// @see CodeEditorController#setMode(AceEditorMode)
+    public void setMode(final AceEditorMode mode) {
+        controller.setMode(mode);
+    }
+
+    /// @see CodeEditorController#setTheme(AceEditorTheme)
+    public void setTheme(final AceEditorTheme theme) {
+        controller.setTheme(theme);
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        return controller.addValueChangeHandler(handler);
+    }
+
+    /// @see CodeEditorController#registerCompletionProviders(AceEditorMode, AceCompletionProvider...)
+    public void registerCompletionProviders(final AceEditorMode aceEditorMode,
+                                            final AceCompletionProvider... completionProviders) {
+        controller.registerCompletionProviders(aceEditorMode, completionProviders);
+    }
+
+    /// @see CodeEditorController#registerCompletionProviders(AceCompletionProvider...)
+    public void registerCompletionProviders(final AceCompletionProvider... completionProviders) {
+        controller.registerCompletionProviders(completionProviders);
+    }
+
+    /// @see CodeEditorController#deRegisterCompletionProviders()
+    public void deRegisterCompletionProviders() {
+        controller.deRegisterCompletionProviders();
+    }
+
+    /// @see CodeEditorController#getFormatAction()
     public Action getFormatAction() {
-        return getView().getFormatAction();
+        return controller.getFormatAction();
     }
 
     public Option getStylesOption() {
-        return getView().getStylesOption();
+        return controller.getOptions().getStylesOption();
     }
 
     public Option getLineNumbersOption() {
-        return getView().getLineNumbersOption();
+        return controller.getOptions().getLineNumbersOption();
     }
 
     public Option getIndicatorsOption() {
-        return getView().getIndicatorsOption();
+        return controller.getOptions().getIndicatorsOption();
     }
 
     public Option getLineWrapOption() {
-        return getView().getLineWrapOption();
+        return controller.getOptions().getLineWrapOption();
     }
 
     public Option getShowIndentGuides() {
-        return getView().getShowIndentGuides();
+        return controller.getOptions().getShowIndentGuides();
     }
 
     public Option getShowInvisiblesOption() {
-        return getView().getShowInvisiblesOption();
+        return controller.getOptions().getShowInvisiblesOption();
     }
 
     public Option getUseVimBindingsOption() {
-        return getView().getUseVimBindingsOption();
+        return controller.getOptions().getUseVimBindingsOption();
     }
 
     public Option getBasicAutoCompletionOption() {
-        return getView().getBasicAutoCompletionOption();
+        return controller.getOptions().getBasicAutoCompletionOption();
     }
 
     public Option getSnippetsOption() {
-        return getView().getSnippetsOption();
+        return controller.getOptions().getSnippetsOption();
     }
 
     public Option getLiveAutoCompletionOption() {
-        return getView().getLiveAutoCompletionOption();
+        return controller.getOptions().getLiveAutoCompletionOption();
     }
 
     public Option getHighlightActiveLineOption() {
-        return getView().getHighlightActiveLineOption();
+        return controller.getOptions().getHighlightActiveLineOption();
     }
 
     public Option getViewAsHexOption() {
-        return getView().getViewAsHexOption();
+        return controller.getOptions().getViewAsHexOption();
     }
 
+    /// @see CodeEditorController#setFirstLineNumber(int)
     public void setFirstLineNumber(final int firstLineNumber) {
-        getView().setFirstLineNumber(firstLineNumber);
+        controller.setFirstLineNumber(firstLineNumber);
     }
 
+    /// @see CodeEditorController#setIndicators(IndicatorLines)
     public void setIndicators(final IndicatorLines indicators) {
-        getView().setIndicators(indicators);
+        controller.setIndicators(indicators);
     }
 
+    /// @see CodeEditorController#setMarkers(List)
     public void setMarkers(final List<Marker> markers) {
-        getView().setMarkers(markers);
+        controller.setMarkers(markers);
     }
 
+    /// @see CodeEditorController#setHighlights(List)
     public void setHighlights(final List<TextRange> highlights) {
-        getView().setHighlights(highlights);
+        controller.setHighlights(highlights);
     }
 
+    /// @see CodeEditorController#setFormattedHighlights(Function)
     public void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction) {
-        getView().setFormattedHighlights(highlightsFunction);
+        controller.setFormattedHighlights(highlightsFunction);
     }
 
+    /// @see CodeEditorController#setControlsVisible(boolean)
     public void setControlsVisible(final boolean visible) {
-        getView().setControlsVisible(visible);
+        controller.setControlsVisible(visible);
     }
 
+    /// @see CodeEditorController#setOptionsToDefaultAvailability()
     public void setOptionsToDefaultAvailability() {
-        getView().setOptionsToDefaultAvailability();
-    }
-
-    public EditorMenuPresenter getContextMenu() {
-        return contextMenu;
+        controller.setOptionsToDefaultAvailability();
     }
 
     @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
-        return getView().addFormatHandler(handler);
+        return controller.addFormatListener(handler::onFormat);
     }
 
-    @Override
+    /// @see CodeEditorController#setReadOnly(boolean)
     public void setReadOnly(final boolean readOnly) {
-        if (readOnly) {
-            getFormatAction().setUnavailable();
-            getBasicAutoCompletionOption().setOff();
-            getBasicAutoCompletionOption().setUnavailable();
-            getSnippetsOption().setOff();
-            getSnippetsOption().setUnavailable();
-            getLiveAutoCompletionOption().setOff();
-            getLiveAutoCompletionOption().setUnavailable();
-            getHighlightActiveLineOption().setOff();
-        } else {
-            getFormatAction().setToDefaultAvailability();
-            getBasicAutoCompletionOption().setToDefaultState();
-            getBasicAutoCompletionOption().setToDefaultAvailability();
-            getSnippetsOption().setToDefaultState();
-            getSnippetsOption().setToDefaultAvailability();
-            getLiveAutoCompletionOption().setToDefaultState();
-            getLiveAutoCompletionOption().setToDefaultAvailability();
-            getHighlightActiveLineOption().setToDefaultState();
-        }
-
-        getView().setReadOnly(readOnly);
+        controller.setReadOnly(readOnly);
     }
 }

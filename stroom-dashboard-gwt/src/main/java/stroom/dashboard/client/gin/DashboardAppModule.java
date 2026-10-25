@@ -47,9 +47,6 @@ import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.EditorView;
-import stroom.editor.client.view.EditorViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
@@ -101,10 +98,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 EntityTreePresenter.class,
                 EntityTreePresenter.EntityTreeView.class,
                 EntityTreeViewImpl.class);
-        bindPresenterWidget(
-                EditorPresenter.class,
-                EditorView.class,
-                EditorViewImpl.class);
         bindPresenterWidget(
                 ExpressionPresenter.class,
                 ExpressionView.class,

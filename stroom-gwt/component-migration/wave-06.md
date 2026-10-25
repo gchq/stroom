@@ -6,6 +6,69 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Turn the Ace EditorPresenter into a dumb CodeEditor with a settings model in place of its 13 option getters. Split MenuPresenter into a component. Configure DraggableTreePanel and PipelineTreePanel with callbacks instead of subclassing. Split AbstractExplorerTree into a tree widget and an ExplorerTreeModel controller. Give FlexLayout and TabLayout no-arg construction. Finish the UserRef and DocumentAsset box splits so DropDownViewImpl can go.
 
+## Done (25 October 2026)
+
+All 16 units, in 11 commits. `FlexLayout` and `TabLayout`, named in the paragraph above, are not
+units of this wave: they are wave 8's, with the dashboard. Each commit ran its stories with the
+leak check and the screenshot diff. The `DropDownView` commit ran all 1,617, and so did the last,
+the editor's (1,618 passed; the 39 screenshots that differed are the known noise in ISSUES.md), and the app and the standalone dashboard GWT compile. What was decided on the way, where it differs from the plans below:
+
+- **The trees.**
+  - `DraggableTreePanel` is concrete and configured with callbacks (`setIsValidTarget`,
+    `setOnSelect`, `setOnDragStart`, `setOnDragEnd`, `setOnDragCancel`), and so is its
+    `TreeKeyboard`.
+  - `PipelineTreePanel` and `PipelineElementBox` have templates; the boxes are placed by
+    `--pipeline-element__*`.
+  - `AbstractExplorerTree` and `ExplorerTickBoxTree` are one `ExplorerTree` (`setTickBoxes`,
+    `setOnChoose`, `setOnInitialSelect`), fed by an `ExplorerTreeController` (was
+    `ExplorerTreeModel`).
+  - `DocumentAssetTree` has a template, `setAccessibleName` and `setOnSelect`.
+- **The pickers.**
+  - `DocumentAssetChooser` is shown once by `DocumentAssetChooserController.choose(...)`, with the
+    new `ControllerDialog.setActionEnabled` (OK only while a file is chosen) and `pressAction`
+    (Enter or a double click on a file).
+  - The floor map's two dialogs declare a `DropDownBox` and attach a
+    `DocumentAssetSelectionController`. Their forms stories now show the box, as the dialogs do
+    (4 new baselines).
+  - `UserRefSelectionController` has the user picker's logic, and `UserRefSelectionBoxPresenter`
+    stays a thin wrapper for its 11 callers.
+  - `DropDownBox` is a `View`, so both wrappers are `MyPresenterWidget<DropDownBox>`;
+    `DropDownView`, `DropDownViewImpl`, `DropDownUiHandlers` and their 3 bindings are deleted.
+- **The choosers are one-use popups.** `Chooser<T>` (`chooser.css`) is shown by a
+  `ChooserController` or `MultiChooserController` made each time one opens, with
+  `show(opener, element, caption, onChoose)`. A controller can't be shown again once its popup is
+  hidden (disposal is final), and the schedule and time range pickers already work this way. Its
+  generic template can't use `@UiHandler`, so the filter's handler is added in Java.
+- **The menu is `MenuController`**, beside `Menu`, as this plan says (the order's notes said
+  `MenuPopup` and `MenuPopupController`; corrected there). It merges `MenuPresenter` and
+  `MenuViewImpl`; `Menu` has a template and no inline styles (`--menu__width`,
+  `menu__viewport--fixed-width`). Sub menus and `MenuManager`'s menus are shown with
+  `ControllerDialog.showOnce`, and closed with the new `ControllerDialog.hide`.
+- **`TraceOverviewWidget`** has a no-arg constructor and a template for its frame. Its drawing is
+  placed by custom properties, its copy menu is a `MenuRequest` (`CopyTextUtil.onClick(e)`), and
+  its Span Info could be scrolled only with a mouse (a new story, `SpanInfo`, found it; a changelog
+  entry).
+- **The editor.**
+  - `EditorViewImpl` and `AbstractEditorViewImpl` are `CodeEditor`, a component whose template
+    declares the `Editor`, the error panel and the `RightBar`.
+  - `CodeEditorOptions` holds the options and the mode.
+  - `CodeEditorController` has the text, Format and the menu (was `EditorMenuPresenter`).
+  - `AceEditorController` (was `AbstractEditorPresenter`) has the user's preferences, the global
+    keys and the completer, and destroys the editor when disposed.
+  - `SingleLineCodeEditor` with `SingleLineCodeEditorController` replaces
+    `SingleLineEditorPresenter`.
+  - `EditorPresenter` is a thin `MyPresenterWidget<CodeEditor>` for its 31 callers, with the same
+    API; nothing called its `getContextMenu()`, so that is gone.
+  - `EditorView`, `BaseEditorView`, `SingleLineEditorView` and their bindings are deleted.
+  - `FormatEvent`'s constructor is public, for the controller's listeners.
+  - The overview bar's markers are placed by `--code-editor__marker-top`.
+
+Found on the way and recorded in ISSUES.md:
+- the editor's own `IndicatorPopup`, never shown;
+- the trace overview's fixed text, which stays in its drawn HTML;
+- the unused `chooserViewImpl-*` CSS;
+- the top bar's and the editor snippet's flaky stories.
+
 ## CSS and template notes for the wave
 
 - Reuse: max (stroom-app/src/main/resources/ui/css/stroom.css:793) for every setWidth("100%")/setHeight("100%") pair (AbstractExplorerTree.java:162-163, DocumentAssetTree.java:114-115). Also form-control-border form-control-background (already in DocumentAssetChooserViewImpl.ui.xml:22) for the bordered asset tree, sr-only for the live regions (AbstractExplorerTree, TreeKeyboard), and w-100 from stroom.css:843 (not Bootstrap's) for the Chooser's grid.

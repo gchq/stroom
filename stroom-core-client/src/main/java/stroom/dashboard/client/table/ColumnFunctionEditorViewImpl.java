@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
-import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.component.CodeEditor;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -51,7 +51,7 @@ public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunc
     }
 
     @Override
-    public void setEditor(final EditorView editor) {
+    public void setEditor(final CodeEditor editor) {
         this.editorContainer.setWidget(editor.asWidget());
     }
 

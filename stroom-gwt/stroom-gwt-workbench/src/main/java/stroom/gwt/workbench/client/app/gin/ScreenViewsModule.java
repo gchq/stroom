@@ -22,12 +22,6 @@ import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.EditorView;
-import stroom.editor.client.presenter.SingleLineEditorPresenter;
-import stroom.editor.client.presenter.SingleLineEditorView;
-import stroom.editor.client.view.EditorViewImpl;
-import stroom.editor.client.view.SingleLineEditorViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.query.client.ExpressionTreePresenter;
@@ -81,9 +75,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
 
         // StreamStoreModule: editors, expressions and the explorer drop downs
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
-        bindPresenterWidget(SingleLineEditorPresenter.class, SingleLineEditorView.class,
-                SingleLineEditorViewImpl.class);
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 

@@ -17,13 +17,12 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
-import stroom.editor.client.presenter.EditorView;
+import stroom.editor.client.component.CodeEditor;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -45,7 +44,7 @@ public class ColumnFilterViewImpl extends ViewImpl implements ColumnFilterView {
     }
 
     @Override
-    public void setEditor(final EditorView editor) {
+    public void setEditor(final CodeEditor editor) {
         this.editorContainer.setWidget(editor.asWidget());
     }
 

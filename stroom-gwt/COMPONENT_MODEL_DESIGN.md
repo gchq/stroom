@@ -692,7 +692,7 @@ Not yet done: it hasn't been tried with a screen reader; a key or click sent wit
 
 ## Code editor
 
-Stroom's code editor (`Editor`, in `EditorViewImpl` and `SingleLineEditorViewImpl`) is Ace, retrofitted rather than replaced: Ace's sources (`edu/ycp/cs/dh/acegwt`) change only with approval, so the editor uses what Ace 1.44 offers.
+Stroom's code editor (`Editor`, in `CodeEditor` and `SingleLineCodeEditor`) is Ace, retrofitted rather than replaced: Ace's sources (`edu/ycp/cs/dh/acegwt`) change only with approval, so the editor uses what Ace 1.44 offers.
 
 - **Keyboard.** Ace's keyboard accessibility mode is on for every editor (`AceEditor.setKeyboardAccessibility`). An editor is one tab stop, its content (`role="group"`, `aria-roledescription` "editor"); Ace's text input isn't one. Enter on the content starts editing (the caret where it was, scrolled into view); while editing, Tab indents, as a code editor's should. Escape stops editing, back to the content, and Tab then moves on. A click goes straight into the text, as before. A read-only editor works the same way, Enter putting the caret in its text to move through it and select.
 - **The gutter.** The mode also makes the gutter a tab stop, with the arrow keys through its fold widgets and annotations; `Editor` puts it back as Ace makes it (no `tabindex`, `aria-hidden`), as agreed, so an editor is one tab stop and a thin splitter beside one keeps the room WCAG 2.5.8 asks for. Its errors and folds have Ace's keys while editing instead: Alt+E and Alt+Shift+E (F4 and Shift+F4 on a Mac) go to the next and previous annotation and show its message under its line; F2 folds or unfolds the line's element, Alt+L and Alt+Shift+L fold and unfold at the cursor.

@@ -20,7 +20,6 @@ import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
-import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.TextRange;
@@ -160,10 +159,6 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
 
     public void setOptionsToDefaultAvailability() {
         editorPresenter.setOptionsToDefaultAvailability();
-    }
-
-    public EditorMenuPresenter getContextMenu() {
-        return editorPresenter.getContextMenu();
     }
 
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
