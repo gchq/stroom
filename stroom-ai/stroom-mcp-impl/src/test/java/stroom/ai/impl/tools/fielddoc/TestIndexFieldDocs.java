@@ -62,7 +62,8 @@ class TestIndexFieldDocs {
         population.put("EventSource/User/Id", 66.7);
         final String text = section(plan, population, null, null);
         assertThat(text).contains("- `EventDetail/TypeId = 'hb'`",
-                "| `StreamId` | The id of the Events stream the event came from. | id | `@StreamId` | always |",
+                // Common, so without the In sample column: every event has it.
+                "| `StreamId` | The id of the Events stream the event came from. | id | `@StreamId` |",
                 // No schema, no sample.
                 "| `UserId` |  | keyword | `EventSource/User/Id` | 66.7% of events |");
         assertThat(section(plan, null, null, null)).doesNotContain("| In sample |");
@@ -307,6 +308,120 @@ class TestIndexFieldDocs {
     }
 
     @Test
+    void theCommonFieldsAreOnlyThoseEveryEventHas() {
+        // Asked for by the user: seen, source.ip (EventSource/Client/IPAddress, in 40% of the events) among them.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme-v1", "@timestamp", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"),
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("host.name", "keyword", "EventSource/Device/HostName"),
+                PlannedField.of("source.ip", "ip", "EventSource/Client/IPAddress"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("event.code", "keyword", "EventDetail/TypeId"),
+                PlannedField.of("message", "text", "EventDetail/Description"),
+                PlannedField.of("event.outcome", "keyword", "EventDetail/*/Outcome/Success")));
+        final Map<String, Double> population = new LinkedHashMap<>();
+        population.put("EventTime/TimeCreated", 100.0);
+        population.put("EventSource/Device/HostName", 100.0);
+        population.put("EventSource/Client/IPAddress", 40.0);
+        population.put("EventSource/User/Id", 99.5);
+        population.put("EventDetail/TypeId", 100.0);
+        population.put("EventDetail/Authenticate/Outcome/Success", 55.0);
+        // The same by the action element of the events: 60% are logons, 40% views.
+        final Map<String, Map<String, Double>> byAction = new LinkedHashMap<>();
+        byAction.put("Authenticate", Map.of("EventTime/TimeCreated", 60.0, "EventSource/Device/HostName", 60.0,
+                "EventSource/Client/IPAddress", 30.0, "EventSource/User/Id", 59.5, "EventDetail/TypeId", 60.0,
+                "EventDetail/Authenticate/Outcome/Success", 55.0));
+        byAction.put("View", Map.of("EventTime/TimeCreated", 40.0, "EventSource/Device/HostName", 40.0,
+                "EventSource/Client/IPAddress", 10.0, "EventSource/User/Id", 40.0, "EventDetail/TypeId", 40.0));
+
+        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, byAction, null, null,
+                FieldDocs.BY_EVENT_TYPE, null);
+
+        assertThat(commonFields(text)).containsExactly("StreamId", "@timestamp", "host.name", "event.code");
+        // Each one's source in every event, or the server's own id.
+        final Map<String, String> sources = new LinkedHashMap<>();
+        plan.fields().forEach(field -> sources.put(field.name(), field.source()));
+        assertThat(commonFields(text)).allSatisfy(name -> assertThat(sources.get(name).startsWith("@")
+                                                                     || Double.valueOf(100.0).equals(
+                population.get(sources.get(name)))).as(name).isTrue());
+        // Each of the rest under each event type whose events have it, with that share; none in a section of
+        // fields of no event type.
+        assertThat(text).doesNotContain("Fields of any event type");
+        final String logons = text.split("#### Authenticate")[1].split("####")[0];
+        assertThat(logons).contains("`source.ip`", "30% of events", "`user.name`", "59.5% of events",
+                "`event.outcome`", "55% of events");
+        final String views = text.split("#### View")[1].split("###")[0];
+        assertThat(views).contains("`source.ip`", "10% of events", "`user.name`", "40% of events")
+                .doesNotContain("event.outcome");
+        // What no event has, saying so.
+        assertThat(text.split("### Not in the sample")[1]).contains("No event of the sample has these",
+                "`message`");
+        // Without the shares by action element (the draft's preview), only some events' fields stay common, with
+        // their share shown.
+        final String preview = section(plan, population, null, null);
+        assertThat(commonFields(preview)).contains("source.ip", "user.name");
+        assertThat(preview).contains("| In sample |", "40% of events");
+        // Without a sample, nothing can be told: what any kind of event can have is common.
+        assertThat(commonFields(section(plan, null, null, null))).containsExactly("StreamId", "@timestamp",
+                "host.name", "source.ip", "user.name", "event.code", "message");
+    }
+
+    @Test
+    void fieldsFromAnyActionAreUnderTheActionsTheSampleHasThemIn() {
+        // Seen: SecretServer's user.target.*, object and folder fields (EventDetail/*/...) among the common fields,
+        // and its Data fields (EventDetail//Data[@Name='...']/@Value) under a heading of no name.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme-v1", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("event.code", "keyword", "EventDetail/TypeId"),
+                PlannedField.of("source.ip", "ip", "EventSource/Client/IPAddress"),
+                PlannedField.of("user.target.id", "keyword", "EventDetail/*/User/Id"),
+                PlannedField.of("user.target.name", "keyword", "EventDetail/*/User/Name"),
+                PlannedField.of("secret.id", "keyword", "EventDetail//Data[@Name='secret_id']/@Value"),
+                PlannedField.of("copy.to", "keyword", "EventDetail/Copy/Destination/Object/Name")));
+        final Map<String, Double> population = new LinkedHashMap<>();
+        population.put("EventTime/TimeCreated", 100.0);
+        population.put("EventDetail/TypeId", 100.0);
+        population.put("EventSource/Client/IPAddress", 40.0);
+        population.put("EventDetail/Authenticate/User/Id", 18.0);
+        population.put("EventDetail/Authorise/User/Id", 4.0);
+        population.put("EventDetail/Copy/Destination/Object/Name", 3.0);
+        // Each named Data entry's share, as the documentation's population gives it.
+        population.put("EventDetail/View/Data[@Name='secret_id']/@Value", 40.0);
+        population.put("EventDetail/Copy/Data[@Name='secret_id']/@Value", 3.0);
+        final Map<String, Map<String, Double>> byAction = new LinkedHashMap<>();
+        byAction.put("Authenticate", Map.of("EventDetail/Authenticate/User/Id", 18.0,
+                "EventSource/Client/IPAddress", 18.0));
+        byAction.put("Authorise", Map.of("EventDetail/Authorise/User/Id", 4.0, "EventSource/Client/IPAddress", 4.0));
+        byAction.put("Copy", Map.of("EventDetail/Copy/Destination/Object/Name", 3.0,
+                "EventDetail/Copy/Data[@Name='secret_id']/@Value", 3.0, "EventSource/Client/IPAddress", 3.0));
+        byAction.put("View", Map.of("EventDetail/View/Data[@Name='secret_id']/@Value", 40.0,
+                "EventSource/Client/IPAddress", 15.0));
+
+        final String text = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, byAction, null, null,
+                FieldDocs.BY_EVENT_TYPE, null);
+
+        assertThat(text.lines().filter(line -> line.strip().equals("####"))).isEmpty();
+        // Only what every event has is common.
+        final String common = text.split("### Common fields")[1].split("###")[0];
+        assertThat(common).contains("`@timestamp`", "`event.code`")
+                .doesNotContain("user.target", "secret.id", "source.ip")
+                // Each in every event: no In sample column.
+                .doesNotContain("In sample", "100% of events");
+        // What no event of the sample has: its own section, saying so.
+        assertThat(text.split("### Not in the sample")[1]).contains("`user.target.name`")
+                .doesNotContain("`user.target.id`", "`secret.id`", "`source.ip`");
+        // What only some events have, though not an action element's (seen: source.ip, in 40%), under each.
+        assertThat(text.split("#### View")[1]).contains("`source.ip`", "15% of events");
+        // The rest under each action the sample has it in, with that action's share; once in a section of
+        // several.
+        final String types = text.split("### Event types")[1];
+        assertThat(types).contains("`user.target.id`", "22% of events", "`secret.id`", "40% of events");
+        final String copy = types.substring(types.indexOf("Copy"));
+        assertThat(copy).contains("`copy.to`", "`secret.id`");
+        assertThat(types.split("`user.target.id`", -1)).hasSize(2);
+    }
+
+    @Test
     void eachFieldIsDescribedFromItsMeaningNotTheSchemasGenericWords() {
         // Asked for by the user: 'The subject value recorded in a Data element of Send' says nothing a reader can't
         // see. The agent writes what each field means, from its name, where it comes from and its sample values.
@@ -377,8 +492,9 @@ class TestIndexFieldDocs {
                 XsltStyle.DEFAULT);
         assertThat(plan.writtenBy("guid").template()).isEqualTo("guid");
         assertThat(section(plan, Map.of("EventSource/User/Id", 100.0), null, null)).contains(
+                // Common, so without the In sample column: every event has it.
                 "| `guid` | Written by the shared template `guid`. | keyword | shared template `guid` of "
-                + "`Common-Elastic-V1` | always |");
+                + "`Common-Elastic-V1` |");
     }
 
     @Test
@@ -402,7 +518,7 @@ class TestIndexFieldDocs {
         rawPopulation.forEach((k, v) -> population.put(k, ((Number) v).doubleValue()));
         final List<Map<String, List<String>>> documents = documents(sample.get("documents"));
         assertThat(IndexFieldDocs.indexFieldMappingMarkdown(plan, population, documents, SCHEMA,
-                FieldDocs.BY_EVENT_TYPE, null)).isEqualTo(goldenText("plan.md"));
+                FieldDocs.BY_EVENT_TYPE, null)).isEqualTo(inPortLayout(goldenText("plan.md"), population));
         assertThat(IndexFieldDocs.indexFieldMappingMarkdown(plan, population, documents, SCHEMA, FieldDocs.COMPACT,
                 null)).isEqualTo(goldenText("plan-compact.md"));
         assertThat(section(plan, null, null, null)).isEqualTo(goldenText("plan-bare.md"));
@@ -526,6 +642,54 @@ class TestIndexFieldDocs {
 
     private static <T> T golden(final String name) {
         return json(goldenText(name));
+    }
+
+    // Python's text with its rows laid out as the port lays them out (not in the Stroom MCP server: only what every
+    // event has is common, without the In sample column; what only some events have, and what is read from
+    // whichever action element, elsewhere): the text before the tables, and each row, as Python wrote them.
+    private static String inPortLayout(final String python, final Map<String, Double> population) {
+        final List<String> lines = python.lines().toList();
+        final int start = lines.indexOf("### Common fields");
+        List<String> head = null;
+        final List<String> seen = new ArrayList<>();
+        final List<IndexFieldDocs.IndexRow> rows = new ArrayList<>();
+        for (final String line : lines.subList(start, lines.size())) {
+            if (!line.startsWith("| ") || line.startsWith("| ---")) {
+                continue;
+            }
+            final List<String> cells = cells(line);
+            if (head == null) {
+                head = cells;
+            } else if (!cells.equals(head) && !seen.contains(line)) {
+                seen.add(line);
+                final String from = cells.get(3);
+                rows.add(new IndexFieldDocs.IndexRow(from.startsWith("`")
+                        ? from.substring(1, from.length() - 1)
+                        : "", cells));
+            }
+        }
+        final List<String> out = new ArrayList<>(lines.subList(0, start));
+        out.addAll(IndexFieldDocs.indexTables(rows, head, FieldDocs.BY_EVENT_TYPE, population));
+        return String.join("\n", out) + "\n";
+    }
+
+    // The index fields of the Common fields table, in order.
+    private static List<String> commonFields(final String text) {
+        final String table = text.split("### Common fields")[1].split("\n### ", 2)[0];
+        return table.lines()
+                .filter(line -> line.startsWith("| `"))
+                .map(line -> line.substring(3, line.indexOf('`', 3)))
+                .toList();
+    }
+
+    // A table row's cells, as FieldDocs.row wrote them.
+    private static List<String> cells(final String line) {
+        final String inner = line.substring(2, line.length() - 2);
+        final List<String> out = new ArrayList<>();
+        for (final String cell : inner.split("(?<!\\\\) \\| ", -1)) {
+            out.add(cell.replace("\\|", "|").replace("<br>", "\n"));
+        }
+        return out;
     }
 
     private static String goldenText(final String name) {

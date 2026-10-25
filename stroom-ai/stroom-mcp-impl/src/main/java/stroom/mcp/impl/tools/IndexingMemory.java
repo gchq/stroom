@@ -63,6 +63,7 @@ class IndexingMemory {
     private final Map<String, Timed<Map<String, Object>>> components = bounded();
     private final Map<String, Timed<String>> shown = bounded();
     private final Map<String, Map<String, Object>> plans = bounded();
+    private final Map<String, Map<String, Double>> planPopulations = bounded();
     private final Map<String, Timed<Map<String, Map<String, Object>>>> passed = bounded();
 
     /// @param securityContext Says who the user is.
@@ -167,6 +168,26 @@ class IndexingMemory {
     /// @param plan The plan.
     void keepPlan(final FieldPlan plan) {
         plans.put(user() + "\n" + plan.indexName(), plan.toJson());
+    }
+
+    /// Keeps how often the Events a plan was drafted from populate each path, so an amendment that gives no
+    /// streams is checked against them without reading them again (not in the Stroom MCP server; seen: a field
+    /// added by changes= from a path no event has, unchecked).
+    ///
+    /// @param indexName  The plan's index name.
+    /// @param population The % of events each path (and each named Data entry) is populated in; null keeps
+    ///                   nothing.
+    void keepPlanPopulation(final String indexName, final Map<String, Double> population) {
+        if (population != null) {
+            planPopulations.put(user() + "\n" + indexName, Map.copyOf(population));
+        }
+    }
+
+    /// @param indexName A plan's index name.
+    /// @return How often the Events this user's plan for it was last checked against populate each path, or
+    /// null.
+    Map<String, Double> planPopulation(final String indexName) {
+        return planPopulations.get(user() + "\n" + indexName);
     }
 
     /// @return The plans this user drafted or amended, by index name, as kept (JSON).

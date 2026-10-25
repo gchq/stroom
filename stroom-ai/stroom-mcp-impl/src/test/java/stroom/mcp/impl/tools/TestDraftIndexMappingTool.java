@@ -198,7 +198,11 @@ class TestDraftIndexMappingTool {
                 "field 'firewall.configuration' replaced", "field 'acme.ticket' added"));
         // No streams given: not read.
         Mockito.verify(world.summaries, Mockito.never()).summariseEvents(anyList(), anyInt());
-        assertThat(amended).doesNotContainKey("populated_paths_not_mapped");
+        // Not in the Stroom MCP server, which said nothing of the sample here: checked against what the plan was
+        // drafted from, kept for the session (seen: a field added by changes= from a path no event has).
+        assertThat(amended).containsKey("populated_paths_not_mapped");
+        assertThat((List<String>) amended.get("fields_not_in_sample"))
+                .contains("acme.ticket <- EventDetail/Alert/Data[@Name='Ticket']/@Value");
         final List<String> names = fieldNames(amended);
         assertThat(names).doesNotContain("firewall.alert.type").contains("firewall.configuration");
         assertThat(names.getLast()).isEqualTo("acme.ticket");
