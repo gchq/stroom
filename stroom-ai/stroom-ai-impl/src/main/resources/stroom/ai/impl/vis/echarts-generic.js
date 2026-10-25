@@ -435,6 +435,55 @@ if (!window.visualisations) {
             var index = this.index(id);
             return index >= 0 ? row[index] : null;
         };
+
+        // The values behind the labels drawn, by column id and label, for what a click selects.
+        var raws = {};
+
+        // A cell as a label, as labelOf gives it, remembering the value it came from.
+        this.label = function (row, id, prefs) {
+            var value = this.value(row, id);
+            var label = labelOf(value, this.type(id), prefs);
+            var forId = raws[id] || (raws[id] = {});
+            if (!Object.prototype.hasOwnProperty.call(forId, label)) {
+                forId[label] = value;
+            }
+            return label;
+        };
+
+        // The value a label was drawn from, or the label itself if it wasn't drawn from one.
+        this.rawOf = function (id, label) {
+            var forId = raws[id];
+            return forId && Object.prototype.hasOwnProperty.call(forId, label) ? forId[label] : label;
+        };
+
+        // What a click selects, for Stroom: each column id given (e.g. category) with its value, and the same
+        // value under the name of the table column it is mapped to, so a filter can name either. Dates are given
+        // as ISO 8601 text, which Stroom's filters read as dates.
+        this.selection = function (pairs) {
+            var selection = {};
+            var fields = this;
+            pairs.forEach(function (pair) {
+                var value = selectionValue(pair[1], pair[0] === "node" ? fields.type("source") : fields.type(pair[0]));
+                selection[pair[0]] = value;
+            });
+            pairs.forEach(function (pair) {
+                var column = fields.column(pair[0]);
+                if (column && selection[column] === undefined) {
+                    selection[column] = selection[pair[0]];
+                }
+            });
+            return selection;
+        };
+    }
+
+    function selectionValue(value, type) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (type === "DATE_TIME" && typeof value === "number" && isFinite(value)) {
+            return new Date(value).toISOString();
+        }
+        return String(value);
     }
 
     // The data rows. With no nesting Stroom sends the rows as the top level values.
@@ -527,8 +576,8 @@ if (!window.visualisations) {
                 nonNumeric++;
                 return;
             }
-            var category = labelOf(fields.value(row, categoryId), categoryType, prefs);
-            var series = fields.has("series") ? labelOf(fields.value(row, "series"), fields.type("series"), prefs)
+            var category = fields.label(row, categoryId, prefs);
+            var series = fields.has("series") ? fields.label(row, "series", prefs)
                 : (fields.column(valueId) || "Value");
 
             if (categoryIndex[category] === undefined) {
@@ -673,6 +722,22 @@ if (!window.visualisations) {
         return merge({type: "category", name: name || "", nameGap: 28, data: categories}, axisStyle(style));
     }
 
+    // What a click on a category chart's bar or point selects: its category, and its series if one is mapped.
+    function matrixSelectAt(fields, matrix, categoryId) {
+        return function (seriesIndex, dataIndex) {
+            var category = matrix.categories[dataIndex];
+            var series = matrix.series[seriesIndex];
+            if (category === undefined || !series || series.data[dataIndex] === null) {
+                return null;
+            }
+            var pairs = [[categoryId, fields.rawOf(categoryId, category)]];
+            if (fields.has("series")) {
+                pairs.push(["series", fields.rawOf("series", series.name)]);
+            }
+            return fields.selection(pairs);
+        };
+    }
+
     function barModel(rows, fields, settings, prefs, style, report) {
         requireFields(fields, ["category", "value"]);
         var matrix = categoryMatrix(rows, fields, settings, prefs, report, "category", "value");
@@ -698,6 +763,7 @@ if (!window.visualisations) {
             tooltip: {trigger: "axis", axisPointer: {type: "shadow"}},
             xAxis: horizontal ? valAxis : catAxis,
             yAxis: horizontal ? catAxis : valAxis,
+            selectAt: matrixSelectAt(fields, matrix, "category"),
             series: matrix.series.map(function (series) {
                 return {
                     type: "bar",
@@ -749,6 +815,7 @@ if (!window.visualisations) {
                 tooltip: {trigger: "axis"},
                 xAxis: merge(categoryAxis(xName, matrix.categories, style), {boundaryGap: false}),
                 yAxis: valueAxis(yName, style, "value", prefs),
+                selectAt: matrixSelectAt(fields, matrix, "x"),
                 series: matrix.series.map(function (series) {
                     return lineSeries(series.name, series.data);
                 })
@@ -772,7 +839,7 @@ if (!window.visualisations) {
                 badY++;
                 return;
             }
-            var series = fields.has("series") ? labelOf(fields.value(row, "series"), fields.type("series"), prefs)
+            var series = fields.has("series") ? fields.label(row, "series", prefs)
                 : (yName || "Value");
             if (!bySeries[series]) {
                 bySeries[series] = [];
@@ -822,13 +889,24 @@ if (!window.visualisations) {
             },
             xAxis: valueAxis(xName, style, xType, prefs),
             yAxis: valueAxis(yName, style, "value", prefs),
+            selectAt: function (seriesIndex, dataIndex) {
+                var line = series[seriesIndex];
+                var point = line && line.data[dataIndex];
+                if (!point) {
+                    return null;
+                }
+                var pairs = [["x", point[0]]];
+                if (fields.has("series")) {
+                    pairs.push(["series", fields.rawOf("series", line.name)]);
+                }
+                return fields.selection(pairs);
+            },
             series: series
         };
     }
 
     function pieModel(rows, fields, settings, prefs, style, report) {
         requireFields(fields, ["name", "value"]);
-        var nameType = fields.type("name");
         var sums = {};
         var names = [];
         var nonNumeric = 0;
@@ -844,7 +922,7 @@ if (!window.visualisations) {
                 negative++;
                 return;
             }
-            var name = labelOf(fields.value(row, "name"), nameType, prefs);
+            var name = fields.label(row, "name", prefs);
             if (sums[name] === undefined) {
                 sums[name] = 0;
                 names.push(name);
@@ -865,7 +943,7 @@ if (!window.visualisations) {
             var other = names.slice(maxSlices).reduce(function (total, name) {
                 return total + sums[name];
             }, 0);
-            data.push({name: sums.Other !== undefined ? "Other (combined)" : "Other", value: other});
+            data.push({name: sums.Other !== undefined ? "Other (combined)" : "Other", value: other, combined: true});
             report.warnings.push((names.length - maxSlices) + " smaller slices were combined as 'Other'");
         }
 
@@ -878,6 +956,11 @@ if (!window.visualisations) {
         return {
             legend: legendOption(settings, legendShown, style),
             tooltip: {trigger: "item"},
+            // A slice selects its name; the slices combined as Other select nothing.
+            selectAt: function (seriesIndex, dataIndex) {
+                var slice = data[dataIndex];
+                return !slice || slice.combined ? null : fields.selection([["name", fields.rawOf("name", slice.name)]]);
+            },
             series: [{
                 type: "pie",
                 name: fields.column("value"),
@@ -921,7 +1004,7 @@ if (!window.visualisations) {
                 maxSize = Math.max(maxSize, size);
                 point.push(size);
             }
-            var series = fields.has("series") ? labelOf(fields.value(row, "series"), fields.type("series"), prefs)
+            var series = fields.has("series") ? fields.label(row, "series", prefs)
                 : (fields.column("y") || "Value");
             if (!bySeries[series]) {
                 bySeries[series] = [];
@@ -970,6 +1053,18 @@ if (!window.visualisations) {
             },
             xAxis: valueAxis(textSetting(settings, "xAxisName") || fields.column("x"), style, xType, prefs),
             yAxis: valueAxis(textSetting(settings, "yAxisName") || fields.column("y"), style, yType, prefs),
+            selectAt: function (seriesIndex, dataIndex) {
+                var name = seriesNames[seriesIndex];
+                var point = name !== undefined && bySeries[name][dataIndex];
+                if (!point) {
+                    return null;
+                }
+                var pairs = [["x", point[0]], ["y", point[1]]];
+                if (fields.has("series")) {
+                    pairs.push(["series", fields.rawOf("series", name)]);
+                }
+                return fields.selection(pairs);
+            },
             series: seriesNames.map(function (name) {
                 report.points += bySeries[name].length;
                 return {
@@ -1027,8 +1122,8 @@ if (!window.visualisations) {
                 missing++;
                 return;
             }
-            var source = labelOf(sourceValue, fields.type("source"), prefs);
-            var target = labelOf(targetValue, fields.type("target"), prefs);
+            var source = fields.label(row, "source", prefs);
+            var target = fields.label(row, "target", prefs);
             if (source === target) {
                 selfLinks++;
                 return;
@@ -1161,6 +1256,20 @@ if (!window.visualisations) {
         return {
             // Each node's own colour needs no legend: its label names it.
             legend: legendOption(settings, groups.length > 1 && !colourEachNode, style),
+            // A node selects itself (node); a link its two ends (source and target).
+            selectAt: function (seriesIndex, dataIndex, dataType) {
+                if (dataType === "edge") {
+                    var link = links[linkKeys[dataIndex]];
+                    return link ? fields.selection([["source", fields.rawOf("source", link.source)],
+                        ["target", fields.rawOf("target", link.target)]]) : null;
+                }
+                var name = nodeNames[dataIndex];
+                if (name === undefined) {
+                    return null;
+                }
+                var raw = fields.rawOf("source", name);
+                return fields.selection([["node", raw === name ? fields.rawOf("target", name) : raw]]);
+            },
             color: colourEachNode ? distinctColours(groups.length, style) : undefined,
             tooltip: {
                 trigger: "item",
@@ -1328,6 +1437,19 @@ if (!window.visualisations) {
         var fields = new Fields(settings, data);
 
         var option = MODELS[kind](rows, fields, settings, prefs, style, report);
+        // What a click selects, kept off the option ECharts is given.
+        var selectAt = option.selectAt || function () {
+            return null;
+        };
+        delete option.selectAt;
+        // A clicked item is shown selected: one at a time.
+        (option.series || []).forEach(function (series) {
+            series.selectedMode = "single";
+            series.select = merge(series.select || {}, {
+                itemStyle: {borderColor: style.text, borderWidth: 2},
+                lineStyle: {width: 4}
+            });
+        });
 
         // Visualisations generated before titles were dropped may still have a Title setting: it isn't drawn.
         option.title = {show: false};
@@ -1360,7 +1482,7 @@ if (!window.visualisations) {
         } else if (report.points === 0) {
             report.status = "nothing-drawn";
         }
-        return {option: option, report: report};
+        return {option: option, report: report, selectAt: selectAt};
     }
 
     // ------------------------------------------------------------------------------------------
@@ -1419,6 +1541,86 @@ if (!window.visualisations) {
             messageElement.textContent = "";
         }
 
+        // The chart last drawn (its option, and what a click on it selects), and the item selected on it.
+        var built = null;
+        var selected = null;
+
+        // Tells Stroom what is selected, for the dashboard's filters that use this chart's selection.
+        function sendSelection(selection) {
+            if (window.stroom && typeof window.stroom.select === "function") {
+                window.stroom.select(selection);
+            }
+        }
+
+        function selectionKey(selection) {
+            return JSON.stringify(Object.keys(selection).sort().map(function (key) {
+                return [key, selection[key]];
+            }));
+        }
+
+        function showSelected(type) {
+            if (chart && selected) {
+                var action = {type: type, seriesIndex: selected.seriesIndex, dataIndex: selected.dataIndex};
+                if (selected.dataType) {
+                    action.dataType = selected.dataType;
+                }
+                chart.dispatchAction(action);
+            }
+        }
+
+        function clearSelection() {
+            showSelected("unselect");
+            selected = null;
+            sendSelection([]);
+        }
+
+        // A click on an item selects it, or clears the selection if it was selected already.
+        function onItemClick(params) {
+            if (!built || params.componentType !== "series") {
+                return;
+            }
+            var dataType = params.dataType === "edge" ? "edge" : undefined;
+            var selection = built.selectAt(params.seriesIndex, params.dataIndex, dataType);
+            if (!selection) {
+                return;
+            }
+            var key = selectionKey(selection);
+            if (selected && selected.key === key) {
+                clearSelection();
+                return;
+            }
+            showSelected("unselect");
+            selected = {key: key, seriesIndex: params.seriesIndex, dataIndex: params.dataIndex, dataType: dataType};
+            showSelected("select");
+            sendSelection(selection);
+        }
+
+        // After a redraw, shows the selected item selected again, wherever it now is.
+        function reselect() {
+            if (!selected || !built) {
+                return;
+            }
+            var series = built.option.series || [];
+            for (var s = 0; s < series.length; s++) {
+                var lists = [[series[s].data || [], undefined]];
+                if (series[s].links) {
+                    lists.push([series[s].links, "edge"]);
+                }
+                for (var l = 0; l < lists.length; l++) {
+                    for (var i = 0; i < lists[l][0].length; i++) {
+                        var selection = built.selectAt(s, i, lists[l][1]);
+                        if (selection && selectionKey(selection) === selected.key) {
+                            selected.seriesIndex = s;
+                            selected.dataIndex = i;
+                            selected.dataType = lists[l][1];
+                            showSelected("select");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         function ensureChart(theme) {
             if (chart && chartTheme === theme) {
                 return chart;
@@ -1428,6 +1630,13 @@ if (!window.visualisations) {
             }
             chart = window.echarts.init(chartElement, null, {renderer: "canvas"});
             chartTheme = theme;
+            chart.on("click", onItemClick);
+            chart.getZr().on("click", function (event) {
+                // A click on no item clears the selection.
+                if (!event.target && selected) {
+                    clearSelection();
+                }
+            });
             return chart;
         }
 
@@ -1446,10 +1655,11 @@ if (!window.visualisations) {
                     throw new Error("The ECharts library hasn't loaded. Check that the ECharts Script doc is " +
                         "installed and is a dependency of this visualisation's script.");
                 }
-                var built = buildOption(context, settings, lastArgs.data, prefs, style);
+                built = buildOption(context, settings, lastArgs.data, prefs, style);
                 report = built.report;
                 var instance = ensureChart(prefs.theme);
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
+                reselect();
                 report.width = instance.getWidth();
                 report.height = instance.getHeight();
 
@@ -1462,6 +1672,7 @@ if (!window.visualisations) {
                     hideMessage();
                 }
             } catch (e) {
+                built = null;
                 if (chart) {
                     chart.clear();
                 }

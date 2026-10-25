@@ -141,6 +141,11 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
                     .collect(Collectors.joining("; "))).append("\n");
             NullSafe.consume(TUNING.get(kind), tuning -> sb.append(tuning).append("\n"));
         }
+        sb.append("\nClicks (echarts): clicking a slice, bar, point, cell, link or node selects it (clicking it "
+                  + "again, or empty space, clears it). The selection holds each column id it maps (e.g. category "
+                  + "and series) and the same value under the table column's name, dates as ISO 8601 text; a network "
+                  + "graph's node gives node, and its link source and target. A query or table is filtered by it "
+                  + "with an add_selection_filter change (propose_dashboard_change).\n");
         sb.append("\nOptions (echarts): for what the style settings can't do, ECharts option overrides as a JSON "
                   + "object, with top-level keys ").append(String.join(", ", VisualisationPlan.OPTION_KEYS.stream()
                         .sorted()

@@ -22,6 +22,7 @@ import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardChanges;
 import stroom.ai.impl.DashboardChanges.Change;
+import stroom.ai.impl.DashboardComponents.Component;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -434,6 +435,86 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void aTableFilterFiltersRowsByTheChartsSelection() {
+        chartTab();
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart",
+                "mode", "table", "terms", List.of(Map.of("field", "UserId", "selection", "category"))))))
+                .contains("- Filter the rows of 'Events' by what is selected in chart 'Chart': UserId = its "
+                          + "category");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> change = asMap(((List<?>) action.get("changes")).getFirst());
+            assertThat(change).containsEntry("op", "add_selection_filter")
+                    .containsEntry("target_id", "table-1")
+                    .containsEntry("ref", "vis-1")
+                    .containsEntry("value", "table");
+            assertThat(asMap(asMap(change.get("query")).get("children") instanceof final List<?> children
+                    ? children.getFirst()
+                    : null))
+                    .containsEntry("field", "UserId")
+                    .containsEntry("value", "${component.vis-1.selection.category}");
+        });
+    }
+
+    @Test
+    void aQueryFilterNeedsTheQuerysFields() {
+        chartTab();
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Query", "chart", "Chart",
+                "mode", "query", "terms", List.of(Map.of("field", "EventType", "selection", "UserId"))))))
+                .contains("- Filter the search of 'Query' by what is selected in chart 'Chart': EventType = its "
+                          + "UserId");
+        assertThat(takeUserActions()).hasSize(1);
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Query", "chart", "Chart",
+                "mode", "query", "terms", List.of(Map.of("field", "Usr", "selection", "category"))))))
+                .contains("'Query' has no field 'Usr'. Its fields are: UserId, EventType.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aSelectionFilterIsCheckedAgainstWhatItFiltersAndTheChart() {
+        chartTab();
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart",
+                "mode", "query", "terms", List.of(Map.of("field", "UserId", "selection", "category"))))))
+                .contains("'Events' is a Table: a query filter filters a Query's or Embedded Query's search. Use "
+                          + "mode table");
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Query", "chart", "Chart",
+                "mode", "table", "terms", List.of(Map.of("field", "UserId", "selection", "category"))))))
+                .contains("'Query' is a Query: a table filter filters a Table's (or an Embedded Query's) rows.");
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart",
+                "mode", "table", "terms", List.of(Map.of("field", "UserId", "selection", "colour"))))))
+                .contains("chart 'Chart' doesn't select 'colour'. A click on it selects: category, UserId.");
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chart",
+                "mode", "table", "terms", List.of(Map.of("field", "Nope", "selection", "category"))))))
+                .contains("'Events' has no column 'Nope'. Its columns are: UserId, EventType.");
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Preview",
+                "mode", "table", "terms", List.of(Map.of("field", "UserId", "selection", "category"))))))
+                .contains("the dashboard has no Visualisation component 'Preview'.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aGraphsSelectionKeysIncludeItsNodes() {
+        assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation",
+                "Net", "vis-1", null, null, "Events", Map.of("source", "Sender", "target", "Recipient",
+                "directed", "true"))))
+                .containsExactlyInAnyOrder("source", "Sender", "target", "Recipient", "node");
+        // A content pack chart's keys aren't known, so aren't checked.
+        assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation",
+                "D3", "vis-2", null, null, "Events", Map.of("gridSeries", "X")))).isEmpty();
+    }
+
+    // The dashboard with a bar chart 'Chart' of table 'Events', its category UserId.
+    private void chartTab() {
+        dashboardTab(false, SETTINGS + "## Visualisation 'Chart' (id vis-1)\n"
+                            + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
+                            + "Linked table: 'Events'\n"
+                            + "Vis settings: {\"category\":\"UserId\",\"value\":\"Count\"}\n");
+    }
+
+    @Test
     void aChartsPaneNameIsTakenForItsLinkedTable() {
         final String withVis = SETTINGS + "## Visualisation 'Chart' (id vis-1)\n"
                                + "Visualisation: 'Bar chart' (uuid vis-uuid)\n"
@@ -485,9 +566,9 @@ class TestProposeDashboardChangeTool {
 
         assertThat(run("Pairs", List.of(Map.of("op", "add_column", "name", "Count", "expression", "count()"))))
                 .isEqualTo("No change was proposed: 'Pairs' is an embedded query, whose StroomQL makes its "
-                           + "results, so it takes only set_setting (e.g. queryOnOpen) and rename changes, not "
-                           + "add_column. Its StroomQL is in the dashboard's description: tell the user the StroomQL "
-                           + "to use instead.");
+                           + "results, so it takes only set_setting (e.g. queryOnOpen), rename and "
+                           + "add_selection_filter changes, not add_column. Its StroomQL is in the dashboard's "
+                           + "description: tell the user the StroomQL to use instead.");
         assertThat(takeUserActions()).isEmpty();
     }
 
