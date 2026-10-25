@@ -87,6 +87,42 @@ class TestDashboardChanges {
     }
 
     @Test
+    void eachOperationReadsBackFromTheFormTheBrowserIsGiven() {
+        // A proposal's action is checked again from its changes as the browser is given them, so each must read
+        // back as it was. Seen in testing: a selection filter didn't, so its Apply button was never shown.
+        final List<Change> changes = new ArrayList<>(DashboardChanges.parse(List.of(
+                Map.of("op", "group", "column", "EventType", "level", 1),
+                Map.of("op", "ungroup", "column", "UserId"),
+                Map.of("op", "add_column", "name", "Count", "expression", "count()", "position", 2),
+                Map.of("op", "edit_column", "column", "UserId", "name", "User", "expression", "upperCase(${UserId})"),
+                Map.of("op", "hide_column", "column", "EventTime"),
+                Map.of("op", "sort", "column", "Count", "direction", "descending", "priority", 1),
+                Map.of("op", "filter", "column", "EventType", "filter", "Logon"),
+                Map.of("op", "rename", "target", "Events", "target_id", "table-1", "name", "Logons"),
+                Map.of("op", "remove_selection_filter", "target", "Events", "target_id", "table-1",
+                        "filter", "ab12c"))));
+        changes.add(DashboardChanges.parse(List.of(Map.of("op", "add_selection_filter",
+                        "target", "Query", "chart", "Network", "mode", "query", "match", "any",
+                        "terms", List.of(Map.of("field", "user.full_name", "selection", "node"),
+                                Map.of("field", "user.target.name", "selection", "node")))))
+                .getFirst()
+                .toBuilder()
+                .targetId("query-1")
+                .ref("vis-1")
+                .query(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(ExpressionTerm.builder().field("user.full_name").condition(Condition.EQUALS)
+                                .value("${component.vis-1.selection.node}").build())
+                        .addTerm(ExpressionTerm.builder().field("user.target.name").condition(Condition.EQUALS)
+                                .value("${component.vis-1.selection.node}").build())
+                        .build())
+                .build());
+
+        assertThat(DashboardChanges.parse(changes.stream().map(Change::toMap).toList()))
+                .containsExactlyElementsOf(changes);
+    }
+
+    @Test
     void aSelectionFilterNeedsItsTargetChartModeAndTerms() {
         final Map<String, Object> filter = Map.of("op", "add_selection_filter", "target", "Events", "chart", "Codes",
                 "mode", "query", "terms", List.of(Map.of("field", "event.code", "selection", "category")));
@@ -100,8 +136,16 @@ class TestDashboardChanges {
         assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "terms", List.of()))))
                 .hasMessageContaining("needs terms");
         assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "terms",
-                List.of(Map.of("field", "a", "selection", "x"), Map.of("field", "a", "selection", "y"))))))
-                .hasMessageContaining("'a' is in two terms");
+                List.of(Map.of("field", "a", "selection", "x"), Map.of("field", "a", "selection", "x"))))))
+                .hasMessageContaining("'a' = x is in two terms");
+        // A field may be compared with more than one part of the selection, e.g. a node and a link's source.
+        final Change both = DashboardChanges.parse(List.of(with(filter, "terms",
+                List.of(Map.of("field", "a", "selection", "node"), Map.of("field", "a", "selection", "source")))))
+                .getFirst();
+        assertThat(both.settings()).containsExactly(Map.entry("a", "node,source"));
+        assertThat(DashboardChanges.describe(List.of(both))).singleElement().asString()
+                .endsWith("a = its node and a = its source");
+        assertThat(DashboardChanges.parse(List.of(both.toMap()))).containsExactly(both);
         assertThatThrownBy(() -> DashboardChanges.parse(List.of(with(filter, "match", "most"))))
                 .hasMessageContaining("match must be all or any");
     }

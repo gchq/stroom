@@ -25,6 +25,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
@@ -39,6 +40,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
@@ -58,6 +60,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private final DocSelectionBoxPresenter visualisationPresenter;
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
+    private final Provider<EditorPresenter> editorPresenterProvider;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
@@ -69,11 +72,13 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                                      final BasicVisSettingsView view,
                                      final DocSelectionBoxPresenter visualisationPresenter,
                                      final RestFactory restFactory,
-                                     final UserPreferencesManager userPreferencesManager) {
+                                     final UserPreferencesManager userPreferencesManager,
+                                     final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         this.visualisationPresenter = visualisationPresenter;
         this.restFactory = restFactory;
         this.userPreferencesManager = userPreferencesManager;
+        this.editorPresenterProvider = editorPresenterProvider;
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.TYPE);
@@ -162,7 +167,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             final String name = JSONUtil.getString(tab.get("name"));
             final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
             if (controls != null) {
-                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane(userPreferencesManager.isUtc());
+                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane(userPreferencesManager.isUtc(),
+                        editorPresenterProvider::get);
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 

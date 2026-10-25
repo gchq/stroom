@@ -48,6 +48,9 @@ public final class VisRenderReports {
             "height", "svgCount", "canvasCount", "elementCount");
     private static final List<String> TEXTS = List.of("source", "adapter", "adapterVersion", "library",
             "libraryVersion", "kind");
+    // Whether something is selected on the chart (never what is: that would be a data value), and whether its rows
+    // reached its row limit, so the rest were left out.
+    private static final List<String> BOOLEANS = List.of("selected", "truncated");
     // The reasons the ECharts adapter gives for rows it leaves out.
     private static final Set<String> DROPPED_REASONS = Set.of("value not a number", "value negative",
             "x not a number or date", "y not a number", "x or y not a number or date", "source or target empty",
@@ -92,6 +95,11 @@ public final class VisRenderReports {
         for (final String name : NUMBERS) {
             if (report.get(name) instanceof final Number number) {
                 clean.put(name, Math.round(number.doubleValue()));
+            }
+        }
+        for (final String name : BOOLEANS) {
+            if (report.get(name) instanceof final Boolean value) {
+                clean.put(name, value);
             }
         }
         if (report.get("droppedRows") instanceof final Map<?, ?> dropped) {

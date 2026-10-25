@@ -43,6 +43,9 @@ if (!window.visualisations) {
     var STROOM_BUTTON_SPACE = 36;
     // The size of the reset zoom button.
     var TOOLBOX_ITEM_SIZE = 14;
+    // A scatter plot with more points than this is drawn in ECharts' large mode, a batch at a time.
+    var LARGE_THRESHOLD = 2000;
+    var PROGRESSIVE_CHUNK = 5000;
 
     // Keys removed from option overrides anywhere they appear: they can carry HTML, code or URLs.
     var FORBIDDEN_OPTION_KEYS = {
@@ -474,6 +477,38 @@ if (!window.visualisations) {
             });
             return selection;
         };
+    }
+
+    // The ids of the columns a click picks out, in the order the selection bar names them.
+    var SELECTION_ROLES = ["category", "name", "series", "x", "y", "date"];
+
+    // What a click selected, for the selection bar: a node, a link's two ends, or the values it picks out.
+    function selectionLabel(selection) {
+        if (selection.node !== undefined) {
+            return String(selection.node);
+        }
+        if (selection.source !== undefined && selection.target !== undefined) {
+            return selection.source + " → " + selection.target;
+        }
+        var values = [];
+        SELECTION_ROLES.forEach(function (role) {
+            if (selection[role] !== undefined && selection[role] !== "") {
+                values.push(String(selection[role]));
+            }
+        });
+        return values.length ? values.join(", ") : "an item";
+    }
+
+    // A link's selection the other way round: its source and target (and the columns mapped to them) swapped.
+    function reversed(selection) {
+        var swapped = {};
+        Object.keys(selection).forEach(function (key) {
+            var value = selection[key];
+            swapped[key] = value === selection.source
+                ? selection.target
+                : value === selection.target ? selection.source : value;
+        });
+        return swapped;
     }
 
     function selectionValue(value, type) {
@@ -2199,6 +2234,32 @@ if (!window.visualisations) {
             iconStyle: {borderColor: style.subtleText},
             emphasis: {iconStyle: {borderColor: style.text, textFill: style.text}}
         };
+        addRangeSelect(kind, option, style);
+    }
+
+    // A tool to select a time range on a chart whose x axis is time (a line chart's, or a scatter plot's), by
+    // dragging across it. The range is the chart's selection (from and to), for the dashboard's filters.
+    function addRangeSelect(kind, option, style) {
+        if ((kind !== "line" && kind !== "scatter") || !option.toolbox || !option.xAxis
+            || option.xAxis.type !== "time") {
+            return;
+        }
+        option.brush = {
+            xAxisIndex: 0,
+            brushType: "lineX",
+            brushMode: "single",
+            transformable: true,
+            // Kept until cleared with the tool or the selection bar, so what is drawn stays the selection.
+            removeOnClick: false,
+            throttleType: "debounce",
+            throttleDelay: 300,
+            brushStyle: {borderWidth: 1, color: "rgba(120, 140, 180, 0.15)", borderColor: style.subtleText},
+            outOfBrush: {colorAlpha: 0.35}
+        };
+        option.toolbox.feature.brush = {
+            type: ["lineX", "clear"],
+            title: {lineX: "Select a time range", clear: "Clear the time range"}
+        };
     }
 
     function buildOption(context, settings, data, prefs, style) {
@@ -2213,6 +2274,13 @@ if (!window.visualisations) {
         var report = newReport(kind);
         var rows = dataRows(data);
         report.rows = rows.length;
+        // Stroom sends at most Max Rows rows: at the limit, the rest of the table was left out, not summarised.
+        var maxRows = Number(settings.maxValues);
+        if (isFinite(maxRows) && maxRows > 0 && rows.length >= maxRows) {
+            report.truncated = true;
+            report.warnings.push("Showing the first " + maxRows + " rows: the table has more, which were left "
+                + "out. Group the table (e.g. by a rounded time, such as floorDay()) or raise Max Rows.");
+        }
         var fields = new Fields(settings, data);
 
         var option = MODELS[kind](rows, fields, settings, prefs, style, report);
@@ -2226,9 +2294,18 @@ if (!window.visualisations) {
                 delete option[key];
             }
         });
-        // A clicked item is shown selected: one at a time.
+        // A clicked item is shown selected; Ctrl-click (or Shift-click) selects more than one. Many points are
+        // drawn quickly: a line keeps its shape with fewer points (largest-triangle sampling), and a large scatter
+        // plot is drawn in batches.
         (option.series || []).forEach(function (series) {
-            series.selectedMode = "single";
+            if (series.type === "line") {
+                series.sampling = "lttb";
+            } else if (series.type === "scatter") {
+                series.large = true;
+                series.largeThreshold = LARGE_THRESHOLD;
+                series.progressive = PROGRESSIVE_CHUNK;
+            }
+            series.selectedMode = "multiple";
             series.select = merge(series.select || {}, {
                 itemStyle: {borderColor: style.text, borderWidth: 2},
                 lineStyle: {width: 4}
@@ -2297,6 +2374,50 @@ if (!window.visualisations) {
         messageElement.style.display = "none";
         element.appendChild(messageElement);
 
+        // Says the chart shows only the first rows, when Stroom sent as many as the row limit allows.
+        var truncationNote = window.document.createElement("div");
+        truncationNote.style.position = "absolute";
+        truncationNote.style.right = "8px";
+        truncationNote.style.bottom = "8px";
+        truncationNote.style.fontSize = "11px";
+        truncationNote.style.zIndex = "2";
+        truncationNote.style.display = "none";
+        element.appendChild(truncationNote);
+
+        // What is selected, with a button to clear it, shown whenever something is: a filter that uses the
+        // selection may leave the chart with nothing to click to clear it.
+        var selectionBar = window.document.createElement("div");
+        selectionBar.style.position = "absolute";
+        selectionBar.style.left = "8px";
+        selectionBar.style.bottom = "8px";
+        selectionBar.style.maxWidth = "calc(100% - 16px)";
+        selectionBar.style.boxSizing = "border-box";
+        selectionBar.style.padding = "2px 4px 2px 8px";
+        selectionBar.style.borderRadius = "4px";
+        selectionBar.style.fontSize = "12px";
+        selectionBar.style.alignItems = "center";
+        selectionBar.style.zIndex = "2";
+        selectionBar.style.display = "none";
+        var selectionText = window.document.createElement("span");
+        selectionText.style.overflow = "hidden";
+        selectionText.style.textOverflow = "ellipsis";
+        selectionText.style.whiteSpace = "nowrap";
+        selectionBar.appendChild(selectionText);
+        var clearButton = window.document.createElement("button");
+        clearButton.type = "button";
+        clearButton.textContent = "\u2715";
+        clearButton.title = "Clear the selection";
+        clearButton.setAttribute("aria-label", "Clear the selection");
+        clearButton.style.marginLeft = "6px";
+        clearButton.style.border = "none";
+        clearButton.style.background = "none";
+        clearButton.style.cursor = "pointer";
+        clearButton.style.font = "inherit";
+        clearButton.style.color = "inherit";
+        clearButton.style.padding = "0 4px";
+        selectionBar.appendChild(clearButton);
+        element.appendChild(selectionBar);
+
         var chart = null;
         var chartTheme = null;
         var lastArgs = null;
@@ -2326,14 +2447,69 @@ if (!window.visualisations) {
             messageElement.textContent = "";
         }
 
-        // The chart last drawn (its option, and what a click on it selects), and the item selected on it.
+        // The chart last drawn (its option, and what a click on it selects), and what is selected on it: a time
+        // range ({range, label, selection}), or the items clicked ({items}, each with what it selects and where it
+        // is drawn).
         var built = null;
         var selected = null;
+        var lastStyle = null;
+        var lastPrefs = null;
+        var lastReport = null;
 
-        // Tells Stroom what is selected, for the dashboard's filters that use this chart's selection.
-        function sendSelection(selection) {
+        // Tells Stroom whether something is selected on the chart (never what), with the chart's report, so the
+        // agent can tell a selection is what filters the dashboard.
+        function reportSelection() {
+            if (lastReport) {
+                lastReport.selected = !!selected;
+                sendReport(lastReport);
+            }
+        }
+
+        clearButton.addEventListener("click", function () {
+            clearSelection();
+        });
+
+        function selectedLabel() {
+            if (!selected) {
+                return "";
+            }
+            if (selected.range) {
+                return selected.label;
+            }
+            var items = selected.items;
+            return items.length === 1
+                ? items[0].label
+                : items[0].label + " and " + (items.length - 1) + " more";
+        }
+
+        // Shows what is selected, if anything, in the selection bar.
+        function showSelectionBar() {
+            if (!selected) {
+                selectionBar.style.display = "none";
+                selectionText.textContent = "";
+                return;
+            }
+            var label = selectedLabel();
+            selectionText.textContent = "Selected: " + label;
+            selectionBar.title = "Selected: " + (selected.items
+                ? selected.items.map(function (item) {
+                    return item.label;
+                }).join("; ")
+                : label);
+            if (lastStyle) {
+                selectionBar.style.color = lastStyle.text;
+                selectionBar.style.background = lastStyle.tooltipBackground;
+                selectionBar.style.border = "1px solid " + lastStyle.border;
+                selectionBar.style.fontFamily = lastStyle.fontFamily;
+            }
+            selectionBar.style.display = "flex";
+        }
+
+        // Tells Stroom what is selected, for the dashboard's filters that use this chart's selection: a list of
+        // selections, which Stroom's filters match any of.
+        function sendSelection(selections) {
             if (window.stroom && typeof window.stroom.select === "function") {
-                window.stroom.select(selection);
+                window.stroom.select(selections);
             }
         }
 
@@ -2343,23 +2519,86 @@ if (!window.visualisations) {
             }));
         }
 
-        function showSelected(type) {
-            if (chart && selected) {
-                var action = {type: type, seriesIndex: selected.seriesIndex, dataIndex: selected.dataIndex};
-                if (selected.dataType) {
-                    action.dataType = selected.dataType;
+        // True if a link between two things is the same either way round: a chord diagram's, or an undirected
+        // network graph's (not a Sankey diagram's flows, nor a directed graph's).
+        function linksBothWays() {
+            var settings = lastArgs ? lastArgs.settings || {} : {};
+            var kind = String(settings.kind || "").toLowerCase();
+            return kind === "chord" || (kind === "graph" && String(settings.directed) !== "true");
+        }
+
+        // What is selected, as Stroom is told it: a clicked link that is the same either way round is sent both
+        // ways, so a filter on its source and target matches it in either direction.
+        function selections() {
+            if (!selected) {
+                return [];
+            }
+            if (selected.range) {
+                return [selected.selection];
+            }
+            var list = [];
+            selected.items.forEach(function (item) {
+                list.push(item.selection);
+                var link = item.selection.source !== undefined && item.selection.target !== undefined
+                    && item.selection.node === undefined;
+                if (link && linksBothWays()) {
+                    list.push(reversed(item.selection));
+                }
+            });
+            return list;
+        }
+
+        function send() {
+            sendSelection(selections());
+            showSelectionBar();
+            reportSelection();
+        }
+
+        function showItem(item, type) {
+            if (chart && item.seriesIndex !== undefined) {
+                var action = {type: type, seriesIndex: item.seriesIndex, dataIndex: item.dataIndex};
+                if (item.dataType) {
+                    action.dataType = item.dataType;
                 }
                 chart.dispatchAction(action);
+            }
+        }
+
+        function showSelected(type) {
+            if (!chart || !selected) {
+                return;
+            }
+            if (selected.range) {
+                // A time range is shown as the range tool's area.
+                if (built && built.option.brush) {
+                    chart.dispatchAction({type: "brush", areas: type === "select"
+                        ? [{brushType: "lineX", xAxisIndex: 0, coordRange: selected.range}]
+                        : []});
+                }
+            } else {
+                selected.items.forEach(function (item) {
+                    showItem(item, type);
+                });
             }
         }
 
         function clearSelection() {
             showSelected("unselect");
             selected = null;
-            sendSelection([]);
+            send();
         }
 
-        // A click on an item selects it, or clears the selection if it was selected already.
+        function indexOfKey(items, key) {
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].key === key) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        // A click on an item selects it (or clears the selection, if it was all that was selected). Ctrl-click,
+        // Cmd-click or Shift-click adds it to what is selected, or takes it away.
         function onItemClick(params) {
             if (!built || params.componentType !== "series") {
                 return;
@@ -2369,41 +2608,96 @@ if (!window.visualisations) {
             if (!selection) {
                 return;
             }
-            var key = selectionKey(selection);
-            if (selected && selected.key === key) {
+            var item = {key: selectionKey(selection), label: selectionLabel(selection), selection: selection,
+                seriesIndex: params.seriesIndex, dataIndex: params.dataIndex, dataType: dataType};
+            var event = params.event && params.event.event;
+            var adding = !!(event && (event.ctrlKey || event.metaKey || event.shiftKey));
+            var items = selected && selected.items ? selected.items : [];
+            var index = indexOfKey(items, item.key);
+            if (adding && !(selected && selected.range)) {
+                if (index >= 0) {
+                    showItem(items[index], "unselect");
+                    items = items.slice(0, index).concat(items.slice(index + 1));
+                } else {
+                    items = items.concat([item]);
+                    showItem(item, "select");
+                }
+            } else if (index >= 0 && items.length === 1) {
                 clearSelection();
                 return;
+            } else {
+                showSelected("unselect");
+                items = [item];
+                showItem(item, "select");
             }
-            showSelected("unselect");
-            selected = {key: key, seriesIndex: params.seriesIndex, dataIndex: params.dataIndex, dataType: dataType};
-            showSelected("select");
-            sendSelection(selection);
+            selected = items.length ? {items: items} : null;
+            send();
         }
 
-        // After a redraw, shows the selected item selected again, wherever it now is.
+        // A range selected with the range tool, or the range tool cleared.
+        function onBrushEnd(params) {
+            var area = params && params.areas && params.areas[0];
+            var from = area && area.coordRange ? Number(area.coordRange[0]) : NaN;
+            var to = area && area.coordRange ? Number(area.coordRange[1]) : NaN;
+            if (!isFinite(from) || !isFinite(to)) {
+                if (selected && selected.range) {
+                    clearSelection();
+                }
+                return;
+            }
+            var start = Math.min(from, to);
+            var end = Math.max(from, to);
+            if (selected && selected.items) {
+                showSelected("unselect");
+            }
+            var pattern = lastPrefs ? lastPrefs.compactTimePattern : undefined;
+            var timeZone = lastPrefs ? lastPrefs.timeZone : undefined;
+            selected = {range: [start, end],
+                selection: {from: new Date(start).toISOString(), to: new Date(end).toISOString()},
+                label: formatTime(start, pattern, timeZone) + " → " + formatTime(end, pattern, timeZone)};
+            send();
+        }
+
+        function onBrush(params) {
+            // The range tool's clear button clears the range.
+            if (params && params.areas && params.areas.length === 0 && selected && selected.range
+                && params.command === "clear") {
+                clearSelection();
+            }
+        }
+
+        // After a redraw, shows what is selected selected again, wherever it now is. An item no longer drawn
+        // (e.g. filtered out) stays selected, so it can still be cleared.
         function reselect() {
             if (!selected || !built) {
                 return;
             }
+            if (selected.range) {
+                showSelected("select");
+                return;
+            }
             var series = built.option.series || [];
-            for (var s = 0; s < series.length; s++) {
-                var lists = [[series[s].data || [], undefined]];
-                if (series[s].links) {
-                    lists.push([series[s].links, "edge"]);
-                }
-                for (var l = 0; l < lists.length; l++) {
-                    for (var i = 0; i < lists[l][0].length; i++) {
-                        var selection = built.selectAt(s, i, lists[l][1]);
-                        if (selection && selectionKey(selection) === selected.key) {
-                            selected.seriesIndex = s;
-                            selected.dataIndex = i;
-                            selected.dataType = lists[l][1];
-                            showSelected("select");
-                            return;
+            selected.items.forEach(function (item) {
+                item.seriesIndex = undefined;
+                for (var s = 0; s < series.length && item.seriesIndex === undefined; s++) {
+                    var lists = [[series[s].data || [], undefined]];
+                    if (series[s].links) {
+                        lists.push([series[s].links, "edge"]);
+                    }
+                    for (var l = 0; l < lists.length && item.seriesIndex === undefined; l++) {
+                        for (var i = 0; i < lists[l][0].length; i++) {
+                            var selection = built.selectAt(s, i, lists[l][1]);
+                            if (selection && selectionKey(selection) === item.key) {
+                                item.seriesIndex = s;
+                                item.dataIndex = i;
+                                item.dataType = lists[l][1];
+                                break;
+                            }
                         }
                     }
                 }
-            }
+                showItem(item, "select");
+            });
         }
 
         function ensureChart(theme) {
@@ -2416,9 +2710,12 @@ if (!window.visualisations) {
             chart = window.echarts.init(chartElement, null, {renderer: "canvas"});
             chartTheme = theme;
             chart.on("click", onItemClick);
+            chart.on("brushEnd", onBrushEnd);
+            chart.on("brush", onBrush);
             chart.getZr().on("click", function (event) {
-                // A click on no item clears the selection.
-                if (!event.target && selected) {
+                // A click on no item clears the selection; a time range is cleared with the range tool or the
+                // selection bar, as dragging one ends with a click.
+                if (!event.target && selected && !selected.range) {
                     clearSelection();
                 }
             });
@@ -2434,6 +2731,8 @@ if (!window.visualisations) {
             var prefs = readPreferences(context, element);
             var style = readThemeStyle(element, prefs.theme);
             var report;
+            lastStyle = style;
+            lastPrefs = prefs;
 
             try {
                 if (!window.echarts) {
@@ -2456,6 +2755,17 @@ if (!window.visualisations) {
                 } else {
                     hideMessage();
                 }
+                // Kept while what was selected isn't drawn (e.g. filtered out), so it can still be cleared.
+                showSelectionBar();
+                if (report.truncated) {
+                    truncationNote.textContent = "First " + report.rows + " rows";
+                    truncationNote.title = "The table has more rows than this chart's Max Rows, which were left "
+                        + "out. Group the table (e.g. by a rounded time) or raise Max Rows.";
+                    truncationNote.style.color = style.subtleText;
+                    truncationNote.style.display = "block";
+                } else {
+                    truncationNote.style.display = "none";
+                }
             } catch (e) {
                 built = null;
                 if (chart) {
@@ -2466,6 +2776,8 @@ if (!window.visualisations) {
                 report.error = e && e.message ? e.message : String(e);
                 showMessage(report.error, style);
             }
+            report.selected = !!selected;
+            lastReport = report;
             sendReport(report);
         }
 
@@ -2506,6 +2818,8 @@ if (!window.visualisations) {
         formatTime: formatTime,
         sanitiseOptions: sanitiseOptions,
         readPreferences: readPreferences,
+        selectionLabel: selectionLabel,
+        reversed: reversed,
         version: ADAPTER_VERSION
     };
 })();

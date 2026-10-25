@@ -229,6 +229,10 @@ public class UserActions {
                 if (map.get("after") instanceof final List<?> after) {
                     afters.put(id, after);
                 }
+            } else if (builtIn.contains(map)) {
+                // Stroom's own tools check what they offer, and have told the model it is shown, so this is a fault.
+                LOGGER.warn("Dropping user action '{}' ({}) offered by one of Stroom's own tools, as it cannot be "
+                            + "offered", id, action);
             } else {
                 LOGGER.debug(() -> "Dropping user action '" + id + "' (" + action + "), as it cannot be offered");
             }

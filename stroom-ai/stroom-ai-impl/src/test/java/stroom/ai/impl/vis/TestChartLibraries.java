@@ -256,6 +256,59 @@ class TestChartLibraries {
     }
 
     @Test
+    void updatesTheAdaptersOfChartsAlreadyGeneratedAsStroomStarts() {
+        // Seen in testing: a chart generated before click selection was added still drew with the adapter it was
+        // generated with, as the adapter was only updated when a chart was next generated, so a click did nothing.
+        final DocRef echarts = script("ECharts", "1");
+        final DocRef older = script(ChartLibraries.ADAPTER_NAME, "a1");
+        final DocRef current = script(ChartLibraries.ADAPTER_NAME, "a2");
+        final DocRef other = script("Common", "c1");
+        Mockito.when(scriptStore.list()).thenReturn(List.of(echarts, older, current, other));
+        Mockito.when(scriptStore.readDocument(echarts)).thenReturn(doc(echarts, ECHARTS_6, List.of()));
+        Mockito.when(scriptStore.readDocument(older)).thenReturn(doc(older,
+                "// " + ChartLibraries.ADAPTER_MARKER + " 1\n// no click selection", List.of(echarts)));
+        Mockito.when(scriptStore.readDocument(current)).thenReturn(doc(current, chartLibraries.adapterSource(),
+                List.of(echarts)));
+        Mockito.when(scriptStore.readDocument(other)).thenReturn(doc(other, "var common = {};", List.of()));
+
+        assertThat(chartLibraries.updateAdapters()).containsExactly(older);
+
+        final ArgumentCaptor<ScriptDoc> written = ArgumentCaptor.forClass(ScriptDoc.class);
+        Mockito.verify(scriptStore).writeDocument(written.capture());
+        assertThat(written.getValue().getData()).isEqualTo(chartLibraries.adapterSource());
+        // Its dependencies are kept.
+        assertThat(written.getValue().getDependencies()).containsExactly(echarts);
+        Mockito.verifyNoInteractions(explorerService);
+    }
+
+    @Test
+    void givesTheChartsAlreadyGeneratedTheCurrentOptionsControl() {
+        final DocRef generated = new DocRef(VisualisationDoc.TYPE, "g1", "Logons by user");
+        final DocRef current = new DocRef(VisualisationDoc.TYPE, "g2", "Events by type");
+        final DocRef other = new DocRef(VisualisationDoc.TYPE, "o1", "Bar chart");
+        final String settings = EChartsTemplate.settingsJson(ChartKind.BAR, Map.of(), Map.of(), null);
+        final String earlier = settings.replace("\"json\"", "\"text\"");
+        Mockito.when(visualisationStore.list()).thenReturn(List.of(generated, current, other));
+        Mockito.when(visualisationStore.readDocument(generated)).thenReturn(VisualisationDoc.builder()
+                .uuid("g1").name("Logons by user").functionName(EChartsTemplate.FUNCTION_NAME).settings(earlier)
+                .build());
+        Mockito.when(visualisationStore.readDocument(current)).thenReturn(VisualisationDoc.builder()
+                .uuid("g2").name("Events by type").functionName(EChartsTemplate.FUNCTION_NAME).settings(settings)
+                .build());
+        Mockito.when(visualisationStore.readDocument(other)).thenReturn(VisualisationDoc.builder()
+                .uuid("o1").name("Bar chart").functionName("visualisations.BarChart").settings(earlier).build());
+
+        assertThat(chartLibraries.updateGeneratedVisualisations()).containsExactly(generated);
+
+        final ArgumentCaptor<VisualisationDoc> written = ArgumentCaptor.forClass(VisualisationDoc.class);
+        Mockito.verify(visualisationStore).writeDocument(written.capture());
+        // Now as the template has it, so left alone from here on.
+        final String settingsWritten = written.getValue().getSettings();
+        assertThat(settingsWritten).isNotEqualTo(earlier);
+        assertThat(EChartsTemplate.withCurrentOptionsControl(settingsWritten)).isSameAs(settingsWritten);
+    }
+
+    @Test
     void findsTheContentPackD3VisualisationsByUuid() {
         final DocRef force = new DocRef(VisualisationDoc.TYPE, D3Visualisation.GRAPH.uuid(), "Force");
         final DocRef bar = new DocRef(VisualisationDoc.TYPE, "copy", "My bar chart");
