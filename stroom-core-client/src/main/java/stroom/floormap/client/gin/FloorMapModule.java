@@ -34,8 +34,6 @@ import stroom.floormap.client.presenter.FloorMapEventStoreSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapEventStoreSettingsPresenter.FloorMapEventStoreSettingsView;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactListView;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
 import stroom.floormap.client.presenter.FloorMapGroupsPresenter;
 import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsView;
 import stroom.floormap.client.presenter.FloorMapInitPresenter;
@@ -66,7 +64,6 @@ import stroom.floormap.client.view.FloorMapEditorViewImpl;
 import stroom.floormap.client.view.FloorMapEventStoreDataViewImpl;
 import stroom.floormap.client.view.FloorMapEventStoreSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapFactListViewImpl;
-import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
 import stroom.floormap.client.view.FloorMapGroupsViewImpl;
 import stroom.floormap.client.view.FloorMapInitViewImpl;
 import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
@@ -159,9 +156,5 @@ public class FloorMapModule extends PluginModule {
         bindPresenterWidget(FloorMapGroupsPresenter.class,
                 FloorMapGroupsView.class,
                 FloorMapGroupsViewImpl.class);
-
-        bindPresenterWidget(FloorMapGroupEditPresenter.class,
-                FloorMapGroupEditView.class,
-                FloorMapGroupEditViewImpl.class);
     }
 }

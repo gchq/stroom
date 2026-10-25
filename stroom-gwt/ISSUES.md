@@ -1722,6 +1722,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 These were found by the review and fixed in the same change:
 
+* **A press on a row in the floor map's lists selected nothing** (2026-10-25, wave 7): the Groups,
+  Tracking, cluster and fact time lists give `DataGrid` one of GWT's `SingleSelectionModel`s with
+  the one-argument `setSelectionModel`, which, unlike GWT's own grids, adds nothing that turns a
+  press into a selection, so a group could never be selected to edit or delete. They now pass a
+  `SingleSelectionEventManager` (press, Space or Enter selects; the selection follows the focus).
+  Master has it too. Story `FloorMapMap.EditGroup`. A grid given a selection model with one
+  argument still selects nothing on a press; a caller that wants that passes a manager.
+
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
   * Required fields (#5410, batch 6 of `A11Y.md`): a required field's label ends with an asterisk
     that screen readers skip (they hear `aria-required`); every field a form refuses to save empty is

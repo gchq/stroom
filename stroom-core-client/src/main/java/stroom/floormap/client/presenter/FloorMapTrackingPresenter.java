@@ -28,6 +28,7 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.SingleSelectionEventManager;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.Separator;
@@ -158,7 +159,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
 
         dataGrid = new DataGrid<>();
         dataGrid.setTableName("Tracking");
-        dataGrid.setSelectionModel(selectionModel);
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
         // The grid is the map's text equivalent — a navigable row per entity with
         // its type and containing area — so it needs a stable id for the canvas to
         // point aria-describedby at. See getGridElementId().

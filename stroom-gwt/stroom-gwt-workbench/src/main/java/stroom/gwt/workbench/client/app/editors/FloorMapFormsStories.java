@@ -16,10 +16,10 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
+import stroom.floormap.client.component.FloorMapGroupEdit;
 import stroom.floormap.client.component.FloorMapSetScale;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
+import stroom.floormap.client.component.MemberCandidate;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView.GraphicMode;
-import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
 import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.shared.FloorMapIcon;
@@ -129,7 +129,7 @@ public final class FloorMapFormsStories {
                 })
                 // A group's members: a tick box for each one seen on the map, named by its name
                 .story("GroupMembers", context -> {
-                    final FloorMapGroupEditViewImpl view = new FloorMapGroupEditViewImpl();
+                    final FloorMapGroupEdit view = new FloorMapGroupEdit();
                     view.setName("Meeting rooms");
                     view.setCandidates(Arrays.asList(
                                     new MemberCandidate("room-1", "Room 1", "room", true),

@@ -201,6 +201,50 @@ public final class FloorMapMapStories {
                     play.expect(visitors).not().toHaveTextContent("Meeting Room");
                     DocEditors.expectNoProblems(play);
                 })
+                // Pressing a group selects it (a press once selected nothing, so it could never be
+                // edited), and editing it opens its dialog, its members ticked among everyone seen on
+                // the map; Cancel closes it
+                .story("EditGroup", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    eventsShown(play);
+                    play.click(play.getByText("Groups", TAB_LABEL));
+                    play.click(play.findByText("Engineers"));
+                    play.waitFor(() -> play.expect(play.getByText("Engineers").closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    final Query edit = play.getByRole("button", "Edit Group (name, colour and members)");
+                    play.waitFor(() -> play.expect(edit).toBeEnabled());
+                    play.click(edit);
+                    final Query title = screen.findByText("Group — Engineers", StroomDom.DIALOG_TITLE);
+                    final Play dialog = screen.within(title.closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByRole("textbox", "Name")).toHaveValue("Engineers");
+                    play.expect(dialog.getByRole("checkbox", "alice")).toBeChecked();
+                    play.expect(dialog.getByRole("checkbox", "bob")).toBeChecked();
+                    play.expect(dialog.getByRole("checkbox", "carol")).not().toBeChecked();
+                    play.expect(dialog.getByText(TextMatch.startingWith("2 members selected of")))
+                            .toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Group — Engineers")).toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
+                // A new group is named 'Group' until renamed; OK adds it to the panel
+                .story("NewGroup", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    eventsShown(play);
+                    play.click(play.getByText("Groups", TAB_LABEL));
+                    play.findByText("Engineers");
+                    play.click(play.getByRole("button", "New Group"));
+                    final Query title = screen.findByText("New Group", StroomDom.DIALOG_TITLE);
+                    final Play dialog = screen.within(title.closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByRole("textbox", "Name")).toHaveValue("Group");
+                    play.expect(dialog.getByText("0 members selected of 6 entities")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Group", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.getByText("Group").closest(ROW)).toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
+                })
                 // Clicking a cluster on the map lists its members in a dialog, with each one's
                 // type and groups
                 .story("Cluster", FloorMapMapStories::render)

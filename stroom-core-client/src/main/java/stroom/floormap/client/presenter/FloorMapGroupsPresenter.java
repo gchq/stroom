@@ -21,6 +21,7 @@ import stroom.cell.info.client.IconCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
+import stroom.floormap.client.component.FloorMapGroupEditController;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;
 import stroom.floormap.client.overlay.FloorMapGroupSnapshot;
@@ -32,6 +33,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.SingleSelectionEventManager;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -100,7 +102,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     /// Size of the colour swatch on each row, in pixels.
     private static final int SWATCH_SIZE_PX = 12;
 
-    private final Provider<FloorMapGroupEditPresenter> groupEditPresenterProvider;
+    private final Provider<FloorMapGroupEditController> groupEditProvider;
 
     private final DataGrid<FloorMapGroup> dataGrid;
     private final ListDataProvider<FloorMapGroup> dataProvider = new ListDataProvider<>();
@@ -138,15 +140,15 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     @Inject
     public FloorMapGroupsPresenter(final EventBus eventBus,
                                    final FloorMapGroupsView view,
-                                   final Provider<FloorMapGroupEditPresenter> groupEditPresenterProvider) {
+                                   final Provider<FloorMapGroupEditController> groupEditProvider) {
         super(eventBus, view);
-        this.groupEditPresenterProvider = groupEditPresenterProvider;
+        this.groupEditProvider = groupEditProvider;
 
         dataGrid = new DataGrid<>();
         dataGrid.setTableName("Groups");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapGroup::getId);
-        dataGrid.setSelectionModel(selectionModel);
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
         view.setGridView(dataGrid);
         initGridColumns();
         dataProvider.addDataDisplay(dataGrid);
@@ -339,7 +341,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     /// Opens the edit dialog on a not-yet-added group, adding and selecting it only
     /// if the user confirms — so cancelling leaves no empty group behind.
     private void editNewGroup(final FloorMapGroup created) {
-        makeDialog(groupEditPresenterProvider).show(created, roster, nameResolver, true, saved -> {
+        groupEditProvider.get().show(this, created, roster, nameResolver, true, saved -> {
             applyEdit(FloorMapGroup.replace(groups, saved));
             selectionModel.setSelected(saved, true);
         });
@@ -350,7 +352,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         if (selected == null) {
             return;
         }
-        makeDialog(groupEditPresenterProvider).show(selected, roster, nameResolver, false, saved ->
+        groupEditProvider.get().show(this, selected, roster, nameResolver, false, saved ->
                 applyEdit(FloorMapGroup.replace(groups, saved)));
     }
 

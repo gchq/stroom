@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
 import stroom.widget.colour.client.ColourBox;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
-import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// View implementation for the group edit dialog.
+/// The group edit dialog's content, which its [FloorMapGroupEditController] shows.
 ///
 /// ```
 /// Name      [ Maintenance        ]
@@ -55,20 +54,33 @@ import java.util.Map;
 /// The filter box hides non-matching rows; it deliberately does **not**
 /// clear their ticks, so filtering can never silently drop a member the user cannot
 /// see. Selection is read from the checkbox state of every row, hidden or not.
-public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroupEditView {
+public class FloorMapGroupEdit extends Component {
 
-    private static final int ROW_NAME = 0;
-    private static final int ROW_COLOUR = 1;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// Shown against a member the roster has not seen this session.
     private static final String NOT_ON_MAP = "(not on the map)";
 
-    private final FlowPanel root;
-    private final TextBox nameBox = new TextBox();
-    private final ColourBox colourBox = new ColourBox();
-    private final TextBox filterBox = new TextBox();
-    private final FlowPanel memberList = new FlowPanel();
-    private final Label summary = new Label();
+    @UiField
+    TableCellElement nameLabel;
+    @UiField
+    TextBox nameBox;
+    @UiField
+    TableCellElement colourLabel;
+    @UiField
+    ColourBox colourBox;
+    @UiField
+    Label membersLabel;
+    @UiField
+    TextBox filterBox;
+    @UiField
+    ScrollPanel memberScroll;
+    @UiField
+    FlowPanel memberList;
+    @UiField
+    Label empty;
+    @UiField
+    Label summary;
 
     /// Checkbox per candidate id, in display order, so selection can be read back.
     private final Map<String, TickBox> checkBoxesById = new LinkedHashMap<>();
@@ -79,80 +91,62 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
     /// Lower-cased searchable text per candidate id, prepared once per show.
     private final Map<String, String> searchTextById = new LinkedHashMap<>();
 
-    @Inject
-    public FloorMapGroupEditViewImpl() {
-        root = new FlowPanel();
-        root.addStyleName("floormap-group-edit");
+    /// Makes the dialog's content.
+    public FloorMapGroupEdit() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        final Grid grid = new Grid(2, 2);
-        grid.addStyleName("floormap-group-edit-fields");
-        FloorMapAria.layoutTable(grid);
-        grid.setText(ROW_NAME, 0, "Name");
-        grid.setWidget(ROW_NAME, 1, nameBox);
-        grid.setText(ROW_COLOUR, 0, "Colour");
-        grid.setWidget(ROW_COLOUR, 1, colourBox);
-        root.add(grid);
+        // The Name and Colour labels are <td> text, which names nothing on its own
+        nameLabel.setId(FloorMapAria.uniqueId("floormap-label"));
+        FloorMapAria.labelledBy(nameBox, nameLabel.getId());
+        colourLabel.setId(FloorMapAria.uniqueId("floormap-label"));
+        FloorMapAria.labelledBy(colourBox, colourLabel.getId());
 
-        // The Name and Colour labels are <td> text, which names nothing — see
-        // FloorMapAria.labelledByCell.
-        FloorMapAria.labelledByCell(grid, ROW_NAME, 0, nameBox);
-        FloorMapAria.labelledByCell(grid, ROW_COLOUR, 0, colourBox);
-
-        final Label membersLabel = new Label("Members");
-        membersLabel.addStyleName("floormap-group-edit-label");
-        root.add(membersLabel);
-
-        filterBox.addStyleName("floormap-group-edit-filter");
+        // GWT's TextBox has no placeholder setter for its template. A placeholder is not an
+        // accessible name: it is not exposed by every screen reader and it disappears as soon as
+        // anything is typed
         filterBox.getElement().setPropertyString("placeholder", "Filter by name, type or id");
-        filterBox.addKeyUpHandler(this::onFilterChanged);
-        // A placeholder is not an accessible name: it is not exposed by every
-        // screen reader and it disappears as soon as anything is typed.
         FloorMapAria.label(filterBox, "Filter members by name, type or id");
-        root.add(filterBox);
+        //noinspection unused e
+        filterBox.addKeyUpHandler(e -> onFilterChanged());
 
-        memberList.addStyleName("floormap-group-edit-members");
-        final ScrollPanel scrollPanel = new ScrollPanel(memberList);
-        scrollPanel.addStyleName("floormap-group-edit-scroll");
-        // Ties the scrolling tick-list to the "Members" heading above it, so
-        // arriving in the list says what the list is.
+        // Ties the scrolling tick-list to the "Members" heading above it, so arriving in the list
+        // says what the list is
         final String membersLabelId = FloorMapAria.uniqueId("floormap-members");
         membersLabel.getElement().setId(membersLabelId);
-        FloorMapAria.labelledBy(scrollPanel, membersLabelId);
-        root.add(scrollPanel);
-
-        summary.addStyleName("floormap-group-edit-summary");
-        root.add(summary);
+        FloorMapAria.labelledBy(memberScroll, membersLabelId);
     }
 
-    @Override
-    public Widget asWidget() {
-        return root;
-    }
-
-    @Override
+    /// @param name The group's name.
     public void setName(final String name) {
-        nameBox.setValue(name != null ? name : "");
+        nameBox.setValue(name != null
+                ? name
+                : "");
     }
 
-    @Override
+    /// @return The group's name, as typed.
     public String getName() {
         return nameBox.getValue();
     }
 
-    @Override
+    /// @param colour The group's highlight colour.
     public void setColour(final String colour) {
         colourBox.setValue(colour);
     }
 
-    @Override
+    /// @return The group's highlight colour.
     public String getColour() {
         return colourBox.getValue();
     }
 
-    @Override
+    /// Fills the member picker, clearing the filter.
+    ///
+    /// @param candidates      Every selectable entity, in display order.
+    /// @param selectedMembers The ids currently in the group.
     public void setCandidates(final List<MemberCandidate> candidates,
                               final List<String> selectedMembers) {
-        memberList.clear();
+        for (final Widget row : rowsById.values()) {
+            row.removeFromParent();
+        }
         checkBoxesById.clear();
         rowsById.clear();
         searchTextById.clear();
@@ -165,13 +159,27 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
             }
         }
 
-        if (checkBoxesById.isEmpty()) {
-            final Label empty = new Label(
-                    "No entities have been seen on this map yet — run the map's queries first.");
-            empty.addStyleName("floormap-group-edit-empty");
-            memberList.add(empty);
-        }
+        empty.setVisible(checkBoxesById.isEmpty());
         updateSummary();
+    }
+
+    /// @return The ticked member ids, in the picker's display order.
+    public List<String> getSelectedMemberIds() {
+        // Every row is consulted, including any the filter is currently hiding —
+        // an out-of-view tick is still a member.
+        final List<String> selected = new ArrayList<>();
+        for (final Map.Entry<String, TickBox> entry : checkBoxesById.entrySet()) {
+            if (Boolean.TRUE.equals(entry.getValue().getValue())) {
+                selected.add(entry.getKey());
+            }
+        }
+        return selected;
+    }
+
+    /// Puts the focus in the name field, with its text selected.
+    public void focus() {
+        nameBox.setFocus(true);
+        nameBox.selectAll();
     }
 
     private void addCandidateRow(final MemberCandidate candidate, final boolean selected) {
@@ -210,27 +218,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
                         .toLowerCase());
     }
 
-    @Override
-    public List<String> getSelectedMemberIds() {
-        // Every row is consulted, including any the filter is currently hiding —
-        // an out-of-view tick is still a member.
-        final List<String> selected = new ArrayList<>();
-        for (final Map.Entry<String, TickBox> entry : checkBoxesById.entrySet()) {
-            if (Boolean.TRUE.equals(entry.getValue().getValue())) {
-                selected.add(entry.getKey());
-            }
-        }
-        return selected;
-    }
-
-    @Override
-    public void focus() {
-        nameBox.setFocus(true);
-        nameBox.selectAll();
-    }
-
-    //noinspection unused event
-    private void onFilterChanged(final KeyUpEvent event) {
+    private void onFilterChanged() {
         final String filter = filterBox.getValue() != null
                 ? filterBox.getValue().trim().toLowerCase()
                 : "";
@@ -250,5 +238,13 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         summary.setText(selected == 1
                 ? "1 member selected of " + total + " entities"
                 : selected + " members selected of " + total + " entities");
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FloorMapGroupEdit> {
+
     }
 }

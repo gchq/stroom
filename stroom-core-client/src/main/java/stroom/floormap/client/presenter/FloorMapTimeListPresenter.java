@@ -28,6 +28,7 @@ import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.SingleSelectionEventManager;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -86,7 +87,7 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         dataGrid.setTableName("Fact Times");
         // The list holds one fact's entries, one per time
         dataGrid.setKeyProvider(TemporalEntry::getEffectiveTimeMs);
-        dataGrid.setSelectionModel(selectionModel);
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
         view.setGridView(dataGrid);
         initGridColumns();
         dataProvider.addDataDisplay(dataGrid);

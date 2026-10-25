@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:colour="urn:import:stroom.widget.colour.client">
+    <!--
+      The group edit dialog's content (stroom-floormap.css): the group's name and colour, and a
+      filterable tick list of its members. The table only lays the labels beside their controls, so
+      it is presentation to assistive technology
+    -->
+    <g:HTMLPanel styleName="floormap-group-edit">
+        <table class="floormap-group-edit-fields" role="presentation">
+            <tbody>
+                <tr>
+                    <td ui:field="nameLabel">Name</td>
+                    <td><g:TextBox ui:field="nameBox"/></td>
+                </tr>
+                <tr>
+                    <td ui:field="colourLabel">Colour</td>
+                    <td><colour:ColourBox ui:field="colourBox"/></td>
+                </tr>
+            </tbody>
+        </table>
+        <g:Label ui:field="membersLabel" addStyleNames="floormap-group-edit-label" text="Members"/>
+        <g:TextBox ui:field="filterBox" addStyleNames="floormap-group-edit-filter"/>
+        <g:ScrollPanel ui:field="memberScroll" addStyleNames="floormap-group-edit-scroll">
+            <g:FlowPanel ui:field="memberList" addStyleNames="floormap-group-edit-members">
+                <g:Label ui:field="empty"
+                         addStyleNames="floormap-group-edit-empty"
+                         text="No entities have been seen on this map yet — run the map's queries first."
+                         visible="false"/>
+            </g:FlowPanel>
+        </g:ScrollPanel>
+        <g:Label ui:field="summary" addStyleNames="floormap-group-edit-summary"/>
+    </g:HTMLPanel>
+</ui:UiBinder>

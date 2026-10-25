@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
-import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
 import stroom.floormap.shared.FloorMapGroup;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,8 +34,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/// Modal dialog for editing one [FloorMapGroup] — its name, its highlight
-/// colour, and which entities belong to it.
+/// Modal dialog for editing one [FloorMapGroup] ([FloorMapGroupEdit]) — its name, its highlight
+/// colour, and which entities belong to it — shown for one use.
 ///
 /// Membership is edited here rather than inline in the Groups panel because the
 /// dock is narrow: a checkbox list with a filter needs the room a popup has. Opened
@@ -47,16 +46,25 @@ import java.util.function.Function;
 /// group is configuration: an id whose owner has had a quiet afternoon must survive
 /// an edit of the group it is in. Those members are listed with an explicit note
 /// rather than silently disappearing from the picker.
-public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupEditView> {
+public class FloorMapGroupEditController extends Controller {
 
+    private final FloorMapGroupEdit view;
+
+    /// Made by GIN for one use, with the dialog's content.
+    ///
+    /// @param eventBus The application's event bus, which the dialog is shown on.
+    /// @param view     The dialog's content.
     @Inject
-    public FloorMapGroupEditPresenter(final EventBus eventBus,
-                                      final FloorMapGroupEditView view) {
-        super(eventBus, view);
+    public FloorMapGroupEditController(final EventBus eventBus,
+                                       final FloorMapGroupEdit view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
     }
 
-    /// Shows the dialog for the given group.
+    /// Shows the dialog for the given group, owned by `opener` until it is closed.
     ///
+    /// @param opener       What shows it.
     /// @param group        the group to edit; its id is carried through to the
     ///         replacement, so a rename keeps its identity
     /// @param roster       every entity seen on the map, offered as candidate members
@@ -64,38 +72,38 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
     ///         display name; may be `null`
     /// @param isNew        `true` when creating, which only changes the caption
     /// @param onOk         called with the replacement group when the user confirms
-    public void show(final FloorMapGroup group,
+    public void show(final HasControllerNode opener,
+                     final FloorMapGroup group,
                      final List<EntityEntry> roster,
                      final Function<String, String> nameResolver,
                      final boolean isNew,
                      final Consumer<FloorMapGroup> onOk) {
 
-        getView().setName(group.getName());
-        getView().setColour(group.findColourOrDefault());
-        getView().setCandidates(candidates(group, roster, nameResolver), group.getMemberIds());
+        view.setName(group.getName());
+        view.setColour(group.findColourOrDefault());
+        view.setCandidates(candidates(group, roster, nameResolver), group.getMemberIds());
 
         //noinspection unused e
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption(isNew
                         ? "New Group"
                         : "Group — " + group.getName())
-                .onShow(e -> getView().focus())
+                .onShow(e -> view.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final String name = getView().getName();
+                        final String name = view.getName();
                         if (name == null || name.trim().isEmpty()) {
                             // A nameless row in the panel would be unusable —
                             // there is no other column identifying the group.
-                            AlertEvent.fireWarn(FloorMapGroupEditPresenter.this,
-                                    "Give the group a name.", e::reset);
+                            AlertEvent.fireWarn(this, "Give the group a name.", e::reset);
                             return;
                         }
                         onOk.accept(new FloorMapGroup(
                                 group.getId(),
                                 name.trim(),
-                                getView().getColour(),
-                                getView().getSelectedMemberIds()));
+                                view.getColour(),
+                                view.getSelectedMemberIds()));
                     }
                     e.hide();
                 })
@@ -104,9 +112,15 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
 
     /// The candidate list the picker shows: every roster entity, plus any current
     /// member the roster does not hold (so it cannot be lost by editing).
-    private static List<MemberCandidate> candidates(final FloorMapGroup group,
-                                                    final List<EntityEntry> roster,
-                                                    final Function<String, String> nameResolver) {
+    ///
+    /// @param group        The group being edited.
+    /// @param roster       Every entity seen on the map; may be `null`.
+    /// @param nameResolver Resolves a member id the roster does not hold to a display name; may be
+    ///                     `null`.
+    /// @return The candidates, roster entities first, in order, each id once.
+    static List<MemberCandidate> candidates(final FloorMapGroup group,
+                                            final List<EntityEntry> roster,
+                                            final Function<String, String> nameResolver) {
         final List<MemberCandidate> candidates = new ArrayList<>();
         final Set<String> seen = new LinkedHashSet<>();
 
@@ -134,75 +148,5 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
             }
         }
         return candidates;
-    }
-
-    /// One row of the member picker.
-    ///
-    /// A plain class rather than a record: nothing else in the GWT-compiled
-    /// source uses records, so this is not the place to find out whether the
-    /// compiler in use emulates them.
-    public static final class MemberCandidate {
-
-        private final String id;
-        private final String name;
-        private final String type;
-        private final boolean onTheMap;
-
-        /// @param id       the entity id — what actually gets stored
-        /// @param name     the display name
-        /// @param type     the entity type, shown so a gate and a person are
-        ///         distinguishable at a glance; may be empty
-        /// @param onTheMap `false` for a member the roster has not seen this
-        ///         session, which the picker flags rather than hiding
-        public MemberCandidate(final String id,
-                               final String name,
-                               final String type,
-                               final boolean onTheMap) {
-            this.id = id;
-            this.name = name;
-            this.type = type;
-            this.onTheMap = onTheMap;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public boolean isOnTheMap() {
-            return onTheMap;
-        }
-    }
-
-    /// View contract: a name field, a colour chooser and a filterable member
-    /// picker.
-    public interface FloorMapGroupEditView extends View {
-
-        void setName(String name);
-
-        String getName();
-
-        void setColour(String colour);
-
-        String getColour();
-
-        /// Populates the member picker.
-        ///
-        /// @param candidates      every selectable entity, in display order
-        /// @param selectedMembers the ids currently in the group
-        void setCandidates(List<MemberCandidate> candidates, List<String> selectedMembers);
-
-        /// The ticked member ids, in the picker's display order.
-        List<String> getSelectedMemberIds();
-
-        /// Puts keyboard focus in the name field.
-        void focus();
     }
 }

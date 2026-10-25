@@ -27,6 +27,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.datagrid.client.SingleSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -120,7 +121,7 @@ public class FloorMapClusterPresenter
         dataGrid.setTableName("Cluster Members");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapClusterMember::getId);
-        dataGrid.setSelectionModel(selectionModel);
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
         // Says which of the two empty states this is: a filter that matched
         // nothing looks exactly like a broken dialog otherwise.
         dataGrid.setEmptyText("No members match the search and filters");
