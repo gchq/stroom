@@ -46,6 +46,8 @@ public final class AiSuggestions {
             "StroomStatsStore", "View", "ScyllaDB");
     static final String FEED_TYPE = "Feed";
     static final String DOCUMENTATION_TYPE = "Documentation";
+    static final String ONBOARD_THIS_FEED = "Onboard this feed (translate and index its data)";
+    static final String ONBOARD_INTO_FOLDER = "Onboard a new data source into this folder";
 
     private AiSuggestions() {
         // Static methods only.
@@ -95,9 +97,15 @@ public final class AiSuggestions {
         } else if (DictionaryDoc.TYPE.equals(type)) {
             suggestions.add("Explain what this dictionary is for");
             suggestions.add("What uses this dictionary?");
+        } else if (FEED_TYPE.equals(type)) {
+            // Onboarding first: a feed is what the agent's onboarding works from (asked for by the user).
+            suggestions.add(ONBOARD_THIS_FEED);
+            suggestions.add("What data has this feed received recently?");
+            suggestions.add("Are there processing errors for this feed?");
         } else if (ExplorerConstants.FOLDER_TYPE.equals(type)) {
             suggestions.add("What's in this folder?");
             suggestions.add("Summarise what this folder is for");
+            suggestions.add(ONBOARD_INTO_FOLDER);
         } else {
             final String what = NullSafe.nonBlankStringElse(type, "document");
             suggestions.add("Explain this " + what);
@@ -153,8 +161,9 @@ public final class AiSuggestions {
         final String type = NullSafe.string(docRef.getType());
         final String name = "'" + shorten(NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid())) + "'";
         if (FEED_TYPE.equals(type)) {
+            // Onboarding first: a feed is what the agent's onboarding works from (asked for by the user).
+            suggestions.add("Onboard " + name + " (translate and index its data)");
             suggestions.add("What data has " + name + " received recently?");
-            suggestions.add("Which pipelines process " + name + "?");
             suggestions.add("Are there processing errors for " + name + "?");
         } else if (DATA_SOURCE_TYPES.contains(type)) {
             suggestions.add("What fields does " + name + " have?");
@@ -163,6 +172,7 @@ public final class AiSuggestions {
         } else if (ExplorerConstants.FOLDER_TYPE.equals(type)) {
             suggestions.add("What's in the " + name + " folder?");
             suggestions.add("Summarise what the " + name + " folder is for");
+            suggestions.add("Onboard a new data source into the " + name + " folder");
         } else if (PipelineDoc.TYPE.equals(type)) {
             suggestions.add("Explain how " + name + " processes its data");
             suggestions.add("Which feeds does " + name + " process?");
@@ -308,15 +318,16 @@ public final class AiSuggestions {
         } else if (DictionaryDoc.TYPE.equals(type)) {
             return "explain it, with its imports, and find what uses it";
         } else if (FEED_TYPE.equals(type)) {
-            return "find the streams it has received and their status, any processing errors, and the pipelines "
-                   + "that process it";
+            return "onboard it (build and test a translation of its data to events, document it, and index the "
+                   + "events), find the streams it has received and their status, any processing errors, and the "
+                   + "pipelines that process it";
         } else if (DATA_SOURCE_TYPES.contains(type)) {
             return "describe its fields and documentation, query it with StroomQL, and find the pipelines that "
                    + "write to it";
         } else if (DOCUMENTATION_TYPE.equals(type)) {
             return "read it and answer from it";
         } else if (ExplorerConstants.FOLDER_TYPE.equals(type)) {
-            return "list and explain what it contains";
+            return "list and explain what it contains, and onboard a new data source into it from sample data";
         }
         return "read and explain it, and find what uses it";
     }
