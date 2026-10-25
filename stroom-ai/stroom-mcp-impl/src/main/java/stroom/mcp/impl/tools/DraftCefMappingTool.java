@@ -427,9 +427,13 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         if (!done.isEmpty()) {
             result.put("applied", done);
         }
-        result.put("plan", drafted.toJson(DumpMode.COMPACT));
+        // Not in the Stroom MCP server: the not-sent list once, by reason (seen: 125 entries, each saying the same
+        // why, given in the plan and again beside it, which the agent then read back from a result over 100 KB).
+        final Map<String, Object> shown = drafted.toJson(DumpMode.COMPACT);
+        shown.remove("not_sent");
+        result.put("plan", shown);
         result.put("problems", problems);
-        result.put("not_sent", drafted.notSent());
+        result.put("not_sent", groupedNotSent(drafted.notSent()));
         result.put("documentation", "## Field mapping\n\n" + drafted.markdown(examples, sampled, null, null));
         fromStandingInstructions(said).ifPresent(from -> result.put("from_standing_instructions", from));
         if (!standing.instructions().isEmpty()) {
@@ -439,7 +443,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         if ((request.build() != null && request.name() != null) || request.uuid() != null) {
             return save(call, context, request, drafted, done, problems, reviewedKept, result);
         }
-        result.put("hint", "Show the user the plan's tables (documentation) and the not-sent list; with their "
+        result.put("hint", "Show the user the plan's tables (documentation; its 'Fields not included' tables are "
+                           + "the not-sent list); with their "
                            + "changes as overrides, call again with build and name to save the XSLT. "
                            + next(drafted, null, result));
         return result;
@@ -1016,6 +1021,30 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         return NullSafe.isNonBlankString(first)
                 ? first
                 : second;
+    }
+
+    /// The fields a plan doesn't send, by why, then by kind of event: each path as the plan has it.
+    ///
+    /// @param notSent The plan's not-sent list (`path`, `event_type`, `why`).
+    /// @return For each why, in the order first given: `why`, `count`, and `paths` by event type (`common` for
+    /// every event's).
+    static List<Map<String, Object>> groupedNotSent(final List<Map<String, String>> notSent) {
+        final Map<String, Map<String, List<String>>> byWhy = new LinkedHashMap<>();
+        for (final Map<String, String> entry : notSent) {
+            byWhy.computeIfAbsent(NullSafe.string(entry.get("why")), why -> new LinkedHashMap<>())
+                    .computeIfAbsent(NullSafe.nonBlankStringElse(entry.get("event_type"), "common"),
+                            kind -> new ArrayList<>())
+                    .add(entry.get("path"));
+        }
+        final List<Map<String, Object>> out = new ArrayList<>();
+        byWhy.forEach((why, paths) -> {
+            final Map<String, Object> group = new LinkedHashMap<>();
+            group.put("why", why);
+            group.put("count", paths.values().stream().mapToInt(List::size).sum());
+            group.put("paths", paths);
+            out.add(group);
+        });
+        return out;
     }
 
     private static String head(final String text, final int n) {
