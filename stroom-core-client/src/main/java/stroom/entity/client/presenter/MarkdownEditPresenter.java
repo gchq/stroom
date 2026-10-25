@@ -63,6 +63,8 @@ public class MarkdownEditPresenter
     private final UiConfigCache uiConfigCache;
     private final InlineSvgToggleButton editModeButton;
     private final ButtonView helpButton;
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
@@ -100,6 +102,8 @@ public class MarkdownEditPresenter
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
         helpButton = SvgButton.create(SvgPresets.HELP.title("Documentation help"));
+        expandAllButton = SvgButton.create(SvgPresets.EXPAND_ALL.title("Expand all headings"));
+        collapseAllButton = SvgButton.create(SvgPresets.COLLAPSE_ALL.title("Collapse all headings"));
 
         registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
@@ -107,19 +111,21 @@ public class MarkdownEditPresenter
 
     @Override
     public List<Widget> getToolbars() {
-        if (readOnly) {
-            return Collections.emptyList();
-        }
         return Collections.singletonList(createToolbar());
     }
 
+    // Expanding and collapsing the headings changes nothing, so they are there for a reader too.
     private ButtonPanel createToolbar() {
         final ButtonPanel toolbar = new ButtonPanel();
-        if (insertedButtons != null) {
+        if (!readOnly && insertedButtons != null) {
             toolbar.addButtons(insertedButtons);
         }
-        toolbar.addButton(editModeButton);
-        toolbar.addButton(helpButton);
+        toolbar.addButton(expandAllButton);
+        toolbar.addButton(collapseAllButton);
+        if (!readOnly) {
+            toolbar.addButton(editModeButton);
+            toolbar.addButton(helpButton);
+        }
         return toolbar;
     }
 
@@ -141,7 +147,24 @@ public class MarkdownEditPresenter
                 showHelp();
             }
         }));
+        registerHandler(expandAllButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                setAllSectionsOpen(true);
+            }
+        }));
+        registerHandler(collapseAllButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                setAllSectionsOpen(false);
+            }
+        }));
         setEditMode(false);
+    }
+
+    // Every heading of the document shown: its preview while it is being edited.
+    private void setAllSectionsOpen(final boolean open) {
+        MarkdownSections.setAllOpen(editMode
+                ? markdownPreviewPresenter.getPreviewElement()
+                : iFramePresenter.getView().asWidget().getElement(), open);
     }
 
     private void toggleEditMode() {
