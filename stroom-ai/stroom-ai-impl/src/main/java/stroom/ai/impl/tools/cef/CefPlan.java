@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingValidationException;
+import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.validation.XsltSafety;
 
@@ -30,6 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// CEF (ArcSight Common Event Format) output from Events: which Event value goes to which CEF key: the header
@@ -81,6 +84,10 @@ public record CefPlan(String output,
     /// The severity unless one is given.
     public static final CefValue DEFAULT_SEVERITY = CefValue.constant("3");
 
+    // A namespace prefix on a step (d:Event), not an axis (child::) nor a function's (concat()).
+    private static final Pattern KEY_PREFIX = Pattern.compile("(?<![\\w:.-])([A-Za-z_][\\w.-]*):(?![:/])");
+    // The prefixes the CEF XSLT declares, that a key may use (its functions, and XML Schema's types).
+    private static final Set<String> KEY_PREFIXES = Set.of("xs", "cef", "fn", "stroom", "map", "array", "math");
     private static final String NOT_A_SEVERITY = "is not a CEF severity (0 to 10, or Low, Medium, High, Very-High)";
     private static final Pattern KEY = Pattern.compile("[A-Za-z][A-Za-z0-9]*");
 
@@ -231,6 +238,13 @@ public record CefPlan(String output,
                 common, events, notSent, imports, style);
     }
 
+    /// @param notSent The values the sample holds that no key carries (`path`, `event_type`, `why`).
+    /// @return The plan with those.
+    public CefPlan withNotSent(final List<Map<String, String>> notSent) {
+        return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
+                common, events, notSent, imports, style);
+    }
+
     /// @param imports The shared XSLTs imported.
     /// @return The plan with those.
     public CefPlan withImports(final List<String> imports) {
@@ -290,6 +304,7 @@ public record CefPlan(String output,
             out.add("output kafka needs topic: the Kafka topic ArcSight reads (ask the user, or the standing "
                     + "instructions may name it)");
         }
+        out.addAll(kafkaKeyProblems(kafkaKey));
         for (final CefKeys.HeaderField field : CefKeys.HEADER) {
             final CefValue value = header(field.name());
             if (value.value() != null && value.value().startsWith("TODO")) {
@@ -312,6 +327,30 @@ public record CefPlan(String output,
         kinds.put("common", common);
         kinds.putAll(events);
         kinds.forEach((kind, fields) -> out.addAll(fieldProblems(kind, fields)));
+        return out;
+    }
+
+    /// The record key's problems: it is read on each Event, with event-logging as the default namespace, so a
+    /// path names no prefix and doesn't start at the document (not in the Stroom MCP server; seen:
+    /// `//d:EventSource/d:SessionId`, its prefix declared nowhere, which failed to compile only once Stroom ran it).
+    ///
+    /// @param key A `kafka_key`, or null.
+    /// @return Its problems; none for no key.
+    static List<String> kafkaKeyProblems(final String key) {
+        final List<String> out = new ArrayList<>();
+        if (!JsonValues.truthy(key)) {
+            return out;
+        }
+        final Matcher prefix = KEY_PREFIX.matcher(key);
+        if (prefix.find() && !KEY_PREFIXES.contains(prefix.group(1))) {
+            out.add("kafka_key '" + key + "': no namespace prefix ('" + prefix.group(1) + ":'): it is read on each "
+                    + "Event with event-logging as the default namespace, so write the path plain, e.g. "
+                    + "EventSource/SessionId");
+        }
+        if (key.strip().startsWith("/")) {
+            out.add("kafka_key '" + key + "': a path from the Event, not from the document ('/' or '//', which "
+                    + "would read every Event's), e.g. EventSource/SessionId");
+        }
         return out;
     }
 
@@ -363,9 +402,24 @@ public record CefPlan(String output,
     /// @return The section's text.
     public String markdown(final Map<CefDocs.KindKey, String> examples, final String layout,
                            final Descriptions described) {
+        return markdown(examples, null, layout, described);
+    }
+
+    /// The Field mapping section, with what the sample Events show ([CefDocs#planMarkdown(CefPlan, Map, List,
+    /// String, Descriptions)]).
+    ///
+    /// @param examples  Example values by (kind or `common` or `header`, key), from sampled lines, or null.
+    /// @param events    The sample Events the lines came from, or null.
+    /// @param layout    [FieldDocs#BY_EVENT_TYPE] (null) or [FieldDocs#COMPACT].
+    /// @param described The field descriptions, or null.
+    /// @return The section's text.
+    public String markdown(final Map<CefDocs.KindKey, String> examples,
+                           final List<XmlElement> events,
+                           final String layout,
+                           final Descriptions described) {
         return CefDocs.planMarkdown(this, examples == null
                 ? Map.of()
-                : examples, layout == null
+                : examples, events, layout == null
                 ? FieldDocs.BY_EVENT_TYPE
                 : layout, described);
     }
