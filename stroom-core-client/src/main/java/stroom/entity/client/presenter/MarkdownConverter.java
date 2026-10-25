@@ -35,9 +35,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class MarkdownConverter {
 
-    // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-light-theme
-    // selectivity added into to stop it conflicting with the dark theme.
-    private static final String PRISM_LIGHT_THEME_CLASS_NAME = "stroom-light-theme";
     // The level untrusted markdown's top headings (an AI answer's) are shown at, the rest below them.
     private static final int UNTRUSTED_TOP_HEADING = 3;
 
@@ -336,22 +333,10 @@ public class MarkdownConverter {
 
     /**
      * @return The space separated list of css classes to set on the container div that holds
-     * the markdown html.
+     * the markdown html. Its code's colours follow the page's theme (see prismjs-light.css, its rules under
+     * .stroom-theme-light), so a theme changed while it is shown is followed.
      */
     private String getMarkdownContainerClasses() {
-        final String prismThemeClassName = getPrismThemeClassName();
-        return "markdown " + prismThemeClassName;
-    }
-
-    private String getPrismThemeClassName() {
-        final ThemeType themeType = userPreferencesManager.geCurrentThemeType();
-        switch (themeType) {
-            case DARK:
-                return "";
-            case LIGHT:
-                return PRISM_LIGHT_THEME_CLASS_NAME;
-            default:
-                throw new RuntimeException("Unexpected theme type " + themeType);
-        }
+        return "markdown";
     }
 }
