@@ -21,6 +21,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.datagrid.client.PagerPanel;
@@ -93,7 +94,7 @@ public final class SelectorWidgets {
     }
 
     /// Creates a user selection box: Stroom's [UserRefSelectionBoxPresenter] with its
-    /// `DropDownViewImpl` and user popup.
+    /// `DropDownViewImpl` and a [UserRefSelectionController] with its user popup.
     ///
     /// @param harness The story's harness.
     /// @return The presenter.
@@ -106,7 +107,7 @@ public final class SelectorWidgets {
                 quickFilterContextHandlerFactory(harness));
         return new UserRefSelectionBoxPresenter(harness.getEventBus(),
                 new DropDownViewImpl(),
-                popup);
+                new UserRefSelectionController(popup));
     }
 
     /// @param harness The story's harness.

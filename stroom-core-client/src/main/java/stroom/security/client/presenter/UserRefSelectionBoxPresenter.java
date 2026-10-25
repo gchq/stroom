@@ -16,10 +16,9 @@
 
 package stroom.security.client.presenter;
 
+import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
-import stroom.widget.component.client.Listeners;
-import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
@@ -28,88 +27,56 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
-public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, Focus {
+/// A user or group picker as a presenter, for the screens that still take presenters: a
+/// [UserRefSelectionController] attached to the view's picker, which it owns. A screen split into a
+/// component and a controller declares the picker (`DropDownBox`) in its template and attaches a
+/// [UserRefSelectionController] itself.
+public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView> implements Focus {
 
-    private final UserRefPopupPresenter userRefPopupPresenter;
-    private boolean enabled = true;
-    private boolean readOnly;
-
-    private final Listeners<UserRef> selectionListeners = new Listeners<>();
+    private final UserRefSelectionController controller;
 
     @Inject
     public UserRefSelectionBoxPresenter(final EventBus eventBus,
                                         final DropDownView view,
-                                        final UserRefPopupPresenter userRefPopupPresenter) {
+                                        final UserRefSelectionController controller) {
         super(eventBus, view);
-        own(userRefPopupPresenter);
-        view.setUiHandlers(this);
-        this.userRefPopupPresenter = userRefPopupPresenter;
-        userRefPopupPresenter.setSelectionChangeConsumer(this::changeSelection);
-        changeSelection(null);
+        this.controller = own(controller).attach(view.getBox());
     }
 
     @Override
     public void focus() {
-        getView().focus();
+        controller.focus();
     }
 
+    /// @see UserRefSelectionController#getSelected()
     public UserRef getSelected() {
-        return userRefPopupPresenter.getSelected();
+        return controller.getSelected();
     }
 
+    /// @see UserRefSelectionController#setSelected(UserRef)
     public void setSelected(final UserRef userRef) {
-        userRefPopupPresenter.setSelected(userRef);
-        changeSelection(userRef);
+        controller.setSelected(userRef);
     }
 
-    @Override
-    public void showPopup() {
-        if (enabled && !readOnly) {
-            final UserRef initialSelection = userRefPopupPresenter.getSelected();
-            userRefPopupPresenter.show(userRef -> {
-                final UserRef currentSelection = userRefPopupPresenter.getSelected();
-                if (!Objects.equals(initialSelection, currentSelection)) {
-                    selectionListeners.fire(userRef);
-                }
-            });
-        }
-    }
-
-    /// Listens for the user choosing a user or group, until the registration is removed.
-    ///
-    /// @param listener Told what is selected.
-    /// @return The registration, for the listener's owner to own.
+    /// @see UserRefSelectionController#addSelectionListener(Consumer)
     public HandlerRegistration addSelectionListener(final Consumer<UserRef> listener) {
-        return selectionListeners.add(listener);
+        return controller.addSelectionListener(listener);
     }
 
-    private void changeSelection(final UserRef selection) {
-        if (selection == null) {
-            getView().setText("None");
-        } else {
-            getView().setText(selection.toDisplayString());
-        }
-    }
-
-    /// Makes the selection read only: it can be read and stays in the tab order, but the
-    /// picker doesn't open. It looks like the normal field with its value greyed.
-    ///
-    /// @param readOnly Whether the selection is read only.
+    /// @see UserRefSelectionController#setReadOnly(boolean)
     public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        getView().setReadOnly(readOnly);
+        controller.setReadOnly(readOnly);
     }
 
+    /// @see UserRefSelectionController#setEnabled(boolean)
     public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-        getView().setEnabled(enabled);
+        controller.setEnabled(enabled);
     }
 
+    /// @see UserRefSelectionController#setContext(FindUserContext)
     public void setContext(final FindUserContext context) {
-        userRefPopupPresenter.setContext(context);
+        controller.setContext(context);
     }
 }
