@@ -21,7 +21,7 @@ import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -42,7 +42,7 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHan
     @UiField
     FormGroup nameGroup;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 

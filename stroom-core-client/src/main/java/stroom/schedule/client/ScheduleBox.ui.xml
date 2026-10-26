@@ -7,7 +7,7 @@
              xmlns:svg="urn:import:stroom.svg.client">
     <svg:IconBox ui:field="iconBox" addStyleNames="schedule-box" icon="HISTORY" opensDialog="true">
         <svg:field>
-            <form:TextInput ui:field="textBox" styleName="schedule-box__input stroom-control allow-focus"/>
+            <form:TextBox ui:field="textBox" styleName="schedule-box__input stroom-control allow-focus"/>
         </svg:field>
     </svg:IconBox>
 </ui:UiBinder>

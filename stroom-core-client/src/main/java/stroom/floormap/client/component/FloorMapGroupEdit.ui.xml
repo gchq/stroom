@@ -13,7 +13,7 @@
             <tbody>
                 <tr>
                     <td ui:field="nameLabel">Name</td>
-                    <td><form:TextInput ui:field="nameBox"/></td>
+                    <td><form:TextBox ui:field="nameBox"/></td>
                 </tr>
                 <tr>
                     <td ui:field="colourLabel">Colour</td>
@@ -24,7 +24,7 @@
         <g:Label ui:field="membersLabel" addStyleNames="floormap-group-edit-label" text="Members"/>
         <!-- A placeholder is not an accessible name: it is not exposed by every screen reader
              and it disappears as soon as anything is typed -->
-        <form:TextInput ui:field="filterBox" addStyleNames="floormap-group-edit-filter"
+        <form:TextBox ui:field="filterBox" addStyleNames="floormap-group-edit-filter"
                         placeholder="Filter by name, type or id"
                         ariaLabel="Filter members by name, type or id"/>
         <g:ScrollPanel ui:field="memberScroll" addStyleNames="floormap-group-edit-scroll">

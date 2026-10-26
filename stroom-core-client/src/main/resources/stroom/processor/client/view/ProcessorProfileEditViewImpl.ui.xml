@@ -7,7 +7,7 @@
         <form:FormGroup identity="profileName" label="Profile Name" required="true"
                         helpText="A unique name for this processing profile. Processor filters refer to the profile by this name."
                         screenReaderText="Must be unique.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="nodeGroup" label="Node Group"
                         helpText="The node group whose nodes may run tasks for filters using this profile. If the group is disabled, no tasks run."

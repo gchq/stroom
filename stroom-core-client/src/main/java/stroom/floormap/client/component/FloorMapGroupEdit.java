@@ -19,7 +19,7 @@ package stroom.floormap.client.component;
 import stroom.floormap.client.FloorMapAria;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -64,7 +64,7 @@ public class FloorMapGroupEdit extends Component {
     @UiField
     TableCellElement nameLabel;
     @UiField
-    TextInput nameBox;
+    TextBox nameBox;
     @UiField
     TableCellElement colourLabel;
     @UiField
@@ -72,7 +72,7 @@ public class FloorMapGroupEdit extends Component {
     @UiField
     Label membersLabel;
     @UiField
-    TextInput filterBox;
+    TextBox filterBox;
     @UiField
     ScrollPanel memberScroll;
     @UiField

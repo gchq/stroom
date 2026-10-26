@@ -9,12 +9,12 @@
                            addStyleNames="max dashboard-panel"/>
             <split:SplitPane thin="true" sizes="600px, *"
                              names="Info, Details" addStyleNames="max">
-                <g:MaxScrollPanel addStyleNames="max dashboard-panel">
+                <split:ScrollPane addStyleNames="max dashboard-panel">
                     <g:SimplePanel ui:field="info"/>
-                </g:MaxScrollPanel>
-                <g:MaxScrollPanel addStyleNames="max dashboard-panel">
+                </split:ScrollPane>
+                <split:ScrollPane addStyleNames="max dashboard-panel">
                     <g:SimplePanel ui:field="details"/>
-                </g:MaxScrollPanel>
+                </split:ScrollPane>
             </split:SplitPane>
         </split:SplitPane>
     </g:SimplePanel>

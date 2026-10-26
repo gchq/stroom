@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasEnabled;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -62,7 +61,7 @@ public class PasswordBox extends Composite
     private static final String TYPE = "type";
 
     @UiField
-    PasswordTextBox input;
+    com.google.gwt.user.client.ui.PasswordTextBox input;
     @UiField
     FlowPanel end;
     @UiField
@@ -98,7 +97,7 @@ public class PasswordBox extends Composite
     }
 
     /// @return The input, e.g. to mark it invalid or focus it with [FieldValidity].
-    public PasswordTextBox getInput() {
+    public com.google.gwt.user.client.ui.PasswordTextBox getInput() {
         return input;
     }
 

@@ -21,7 +21,7 @@ import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -52,7 +52,7 @@ public class ScheduleBox
     @UiField
     IconBox iconBox;
     @UiField
-    TextInput textBox;
+    TextBox textBox;
 
     private Schedule value = Schedule
             .builder()

@@ -19,7 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.query.api.TextAttributes;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -40,15 +40,15 @@ public class CustomRowStyleEditor extends Component {
     private static final String TEXT_COLOUR = "--cf-swatch__color";
 
     @UiField
-    TextInput lightBackgroundColour;
+    TextBox lightBackgroundColour;
     @UiField
-    TextInput lightTextColour;
+    TextBox lightTextColour;
     @UiField
     DivElement lightSwatch;
     @UiField
-    TextInput darkBackgroundColour;
+    TextBox darkBackgroundColour;
     @UiField
-    TextInput darkTextColour;
+    TextBox darkTextColour;
     @UiField
     DivElement darkSwatch;
 

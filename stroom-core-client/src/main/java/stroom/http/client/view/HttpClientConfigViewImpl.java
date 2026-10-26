@@ -22,7 +22,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -61,7 +61,7 @@ public class HttpClientConfigViewImpl
     @UiField
     ValueSpinner retries;
     @UiField
-    TextInput userAgent;
+    TextBox userAgent;
     @UiField
     DurationPicker validateAfterInactivityPeriod;
     @UiField

@@ -40,7 +40,7 @@
         <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format"
                         helpText="Your own date and time pattern, e.g. dd/MM/yyyy HH:mm. Used only when Custom is ticked."
                         screenReaderText="Pattern, e.g. dd/MM/yyyy HH:mm. Used when Custom is ticked.">
-            <form:TextInput ui:field="text" addStyleNames="w-100"/>
+            <form:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone"
                         helpText="Time zone used to show dates when Use Preferences is not ticked: Local (your browser's time zone), UTC, Id (a named zone) or Offset (a fixed offset from UTC). Default is UTC."

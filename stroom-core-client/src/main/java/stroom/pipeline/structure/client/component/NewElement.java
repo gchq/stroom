@@ -17,8 +17,8 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -32,9 +32,9 @@ public class NewElement extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
-    TextAreaInput description;
+    TextArea description;
 
     private Runnable onEnter = () -> {
     };

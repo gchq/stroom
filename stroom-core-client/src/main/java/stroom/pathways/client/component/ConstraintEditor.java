@@ -19,7 +19,7 @@ package stroom.pathways.client.component;
 import stroom.item.client.SelectionBox;
 import stroom.pathways.shared.pathway.ConstraintValueType;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -34,11 +34,11 @@ public class ConstraintEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<ConstraintValueType> type;
     @UiField
-    TextInput value;
+    TextBox value;
     @UiField
     TickBox optional;
 

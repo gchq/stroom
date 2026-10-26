@@ -19,7 +19,7 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -45,7 +45,7 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     TickBox referenceExistingQuery;
     @UiField
@@ -59,7 +59,7 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     TickBox autoRefresh;
     @UiField
-    TextInput refreshInterval;
+    TextBox refreshInterval;
     @UiField
     ValueSpinner pageSize;
 

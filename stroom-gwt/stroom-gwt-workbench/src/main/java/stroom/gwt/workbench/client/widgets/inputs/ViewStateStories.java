@@ -59,8 +59,8 @@ import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.form.client.RadioGroup;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -69,8 +69,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
@@ -415,7 +413,7 @@ public final class ViewStateStories {
     }
 
     private static TextBox textBox(final String value) {
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         textBox.setValue(value);
         return textBox;
     }
@@ -427,7 +425,7 @@ public final class ViewStateStories {
     }
 
     private static Widget textArea() {
-        final TextAreaInput textArea = new TextAreaInput();
+        final TextArea textArea = new TextArea();
         textArea.setVisibleLines(2);
         textArea.setValue("Summarise the report's data.");
         return textArea;

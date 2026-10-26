@@ -20,7 +20,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -36,7 +36,7 @@ public class VisualisationSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput functionName;
+    TextBox functionName;
     @UiField
     DropDownBox script;
     @UiField

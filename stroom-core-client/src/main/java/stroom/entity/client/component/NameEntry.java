@@ -18,7 +18,7 @@ package stroom.entity.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -35,7 +35,7 @@ public class NameEntry extends Component {
     @UiField
     FormGroup nameGroup;
     @UiField
-    TextInput name;
+    TextBox name;
 
     private Runnable onEnter = () -> {
     };

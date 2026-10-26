@@ -21,7 +21,7 @@ import stroom.node.shared.NodeGroup;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeZoneBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -38,7 +38,7 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
     private final TimeZoneBox timeZoneBox;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<NodeGroup> nodeGroup;
     @UiField

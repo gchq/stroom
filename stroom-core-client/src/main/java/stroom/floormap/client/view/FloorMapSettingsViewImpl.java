@@ -19,7 +19,7 @@ package stroom.floormap.client.view;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -57,10 +57,10 @@ public class FloorMapSettingsViewImpl
     SimplePanel schemaToolbarContainer;
 
     @UiField
-    TextAreaInput histogramQuery;
+    TextArea histogramQuery;
 
     @UiField
-    TextAreaInput extentQuery;
+    TextArea extentQuery;
 
     @UiField
     SimplePanel schemaGridContainer;

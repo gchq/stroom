@@ -30,12 +30,11 @@ import stroom.widget.button.client.Button;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -136,7 +135,7 @@ public final class TextContextMenuStories {
                 })
                 // An empty text area: nothing to select
                 .story("Empty", context -> {
-                    final TextAreaInput textArea = new TextAreaInput();
+                    final TextArea textArea = new TextArea();
                     AccessibleName.set(textArea, "Description");
                     return withMenus(context, textArea);
                 })
@@ -241,7 +240,7 @@ public final class TextContextMenuStories {
     }
 
     private static TextBox textBox(final String value, final boolean readOnly) {
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         textBox.setValue(value);
         textBox.setReadOnly(readOnly);
         AccessibleName.set(textBox, NAME);

@@ -19,18 +19,19 @@ package stroom.widget.form.client;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.TextBox;
 
 /// A text box whose type, placeholder, ARIA role and states a template can set, which UiBinder
 /// can't write on a widget's element itself:
 ///
 /// ```
-/// <f:TextInput ui:field="filter" type="search" placeholder="Quick Filter"/>
-/// <f:TextInput ui:field="value" role="combobox" ariaHasPopup="listbox" ariaExpanded="false"/>
+/// <f:TextBox ui:field="filter" type="search" placeholder="Quick Filter"/>
+/// <f:TextBox ui:field="value" role="combobox" ariaHasPopup="listbox" ariaExpanded="false"/>
 /// ```
 ///
 /// A blank or null value removes the attribute.
-public class TextInput extends TextBox {
+// Stroom's copy of GWT's TextBox (stroom-core-client-widget's com.google.gwt.user.client.ui), which
+// gives every text field its text-field.css look
+public class TextBox extends com.google.gwt.user.client.ui.TextBox {
 
     /// @param type The input's type, e.g. `search`.
     public void setType(final String type) {

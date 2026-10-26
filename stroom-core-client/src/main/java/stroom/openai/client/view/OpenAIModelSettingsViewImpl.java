@@ -22,7 +22,7 @@ import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSe
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -41,15 +41,15 @@ public class OpenAIModelSettingsViewImpl
     private final Widget widget;
 
     @UiField
-    TextInput baseUrl;
+    TextBox baseUrl;
     @UiField
     SelectionBox<Credential> apiKey;
     @UiField
-    TextInput modelId;
+    TextBox modelId;
     @UiField
     ValueSpinner maxContextWindowTokens;
     @UiField
-    TextInput reasoningEffort;
+    TextBox reasoningEffort;
     @UiField
     Button testModel;
     @UiField

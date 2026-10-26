@@ -19,7 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.svg.client.IconBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -60,7 +60,7 @@ public class DateTimeBox
     @UiField
     IconBox iconBox;
     @UiField
-    TextInput textBox;
+    TextBox textBox;
 
     private Runnable onOpenPicker;
     private Runnable onChange;

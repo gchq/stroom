@@ -17,7 +17,7 @@
 package stroom.document.asset.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +30,7 @@ public class DocumentAssetEditAssetDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput txtAssetName;
+    TextBox txtAssetName;
 
     /// Makes empty content.
     public DocumentAssetEditAssetDialog() {

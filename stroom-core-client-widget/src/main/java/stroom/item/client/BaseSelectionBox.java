@@ -19,7 +19,7 @@ package stroom.item.client;
 import stroom.svg.client.IconBox;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.form.client.AccessibleName;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.util.client.SelectionType;
 import stroom.widget.util.client.TypedKey;
 
@@ -68,7 +68,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     @UiField
     AriaPanel renderBox;
     @UiField
-    TextInput textBox;
+    TextBox textBox;
     @UiField
     IconBox iconBox;
     private SelectionListModel<T, I> model;

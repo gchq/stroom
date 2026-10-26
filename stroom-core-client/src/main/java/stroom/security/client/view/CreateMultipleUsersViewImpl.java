@@ -18,7 +18,7 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.Scheduler;
@@ -38,7 +38,7 @@ public class CreateMultipleUsersViewImpl
     @UiField
     FormGroup userBatchGroup;
     @UiField
-    TextAreaInput userBatch;
+    TextArea userBatch;
 
     @Inject
     public CreateMultipleUsersViewImpl(final Binder binder) {

@@ -26,7 +26,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.QuickSettings;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -50,7 +50,7 @@ public class SchedulePicker extends Component {
     @UiField
     FormGroup quickSettingsFormGroup;
     @UiField
-    TextInput expression;
+    TextBox expression;
     @UiField
     FormGroup expressionFormGroup;
     @UiField

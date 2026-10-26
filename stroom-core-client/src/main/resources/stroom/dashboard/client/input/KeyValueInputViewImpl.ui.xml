@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:SimplePanel styleName="max dock-container-horizontal">
         <g:SimplePanel styleName="KeyValueInputView dock-max">
-            <form:TextInput ui:field="params" addStyleNames="w-100 allow-focus"/>
+            <form:TextBox ui:field="params" addStyleNames="w-100 allow-focus"/>
         </g:SimplePanel>
     </g:SimplePanel>
 </ui:UiBinder>

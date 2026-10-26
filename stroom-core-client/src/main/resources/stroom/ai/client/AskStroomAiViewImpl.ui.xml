@@ -25,7 +25,7 @@
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"
                              visible="false"/>
-                    <form:TextAreaInput ui:field="message" addStyleNames="dock-max w-100"/>
+                    <form:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>

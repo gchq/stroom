@@ -31,7 +31,7 @@ import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -216,7 +216,7 @@ public final class SelectionBoxStories {
                 // box; Shift+Tab closes it and goes back to the box
                 .story("TabClosesTheList", context -> {
                     final FlowPanel panel = named(selectionBox(context, NAMES));
-                    final TextInput after = new TextInput();
+                    final TextBox after = new TextBox();
                     AccessibleName.set(after, "After");
                     panel.add(after);
                     return panel;

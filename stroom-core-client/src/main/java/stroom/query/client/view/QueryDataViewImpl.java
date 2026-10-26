@@ -5,7 +5,7 @@ import stroom.query.client.presenter.QueryDataView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -28,7 +28,7 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
     private final Widget widget;
 
     @UiField
-    TextInput query;
+    TextBox query;
     @UiField
     ScrollPanel errorContainer;
     @UiField

@@ -23,7 +23,7 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -42,7 +42,7 @@ public final class KeyStoreFileSecretForm extends Component implements SecretFor
     @UiField
     SelectionBox<KeyStoreType> type;
     @UiField
-    TextInput path;
+    TextBox path;
     @UiField
     PasswordBox password;
 

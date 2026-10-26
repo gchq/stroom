@@ -22,7 +22,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -52,7 +52,7 @@ public class PathwaysSettings extends Component {
     @UiField
     TickBox allowConstraintMutation;
     @UiField
-    TextInput processingNode;
+    TextBox processingNode;
 
     private Runnable onChange = () -> {
     };

@@ -20,7 +20,7 @@ import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -41,11 +41,11 @@ public class AiConfigTableAnalysis extends Component {
     @UiField
     ValueSpinner maxParallelBatches;
     @UiField
-    TextAreaInput tableQuerySystemPrompt;
+    TextArea tableQuerySystemPrompt;
     @UiField
-    TextAreaInput tableQueryUserPrompt;
+    TextArea tableQueryUserPrompt;
     @UiField
-    TextAreaInput multiSummaryMergePrompt;
+    TextArea multiSummaryMergePrompt;
     @UiField
     ValueSpinner attachmentDownloadTimeoutMs;
 

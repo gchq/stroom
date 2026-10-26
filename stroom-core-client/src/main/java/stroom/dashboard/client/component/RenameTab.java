@@ -17,7 +17,7 @@
 package stroom.dashboard.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -31,7 +31,7 @@ public class RenameTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput name;
+    TextBox name;
 
     private Runnable onEnter = () -> {
     };

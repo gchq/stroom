@@ -20,7 +20,7 @@ import stroom.editor.client.component.CodeEditor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,11 +34,11 @@ public class AnalyticEmailDestination extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput to;
+    TextBox to;
     @UiField
-    TextInput cc;
+    TextBox cc;
     @UiField
-    TextInput bcc;
+    TextBox bcc;
     @UiField
     CodeEditor subjectTemplate;
     @UiField

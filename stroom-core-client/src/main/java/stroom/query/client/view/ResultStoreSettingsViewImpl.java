@@ -17,7 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -31,18 +31,18 @@ public class ResultStoreSettingsViewImpl extends ViewImpl implements ResultStore
     private final Widget widget;
 
     @UiField
-    TextInput searchProcessTimeToIdle;
+    TextBox searchProcessTimeToIdle;
     @UiField
-    TextInput searchProcessTimeToLive;
+    TextBox searchProcessTimeToLive;
     @UiField
     TickBox searchProcessDestroyOnTabClose;
     @UiField
     TickBox searchProcessDestroyOnWindowClose;
 
     @UiField
-    TextInput storeTimeToIdle;
+    TextBox storeTimeToIdle;
     @UiField
-    TextInput storeTimeToLive;
+    TextBox storeTimeToLive;
     @UiField
     TickBox storeDestroyOnTabClose;
     @UiField

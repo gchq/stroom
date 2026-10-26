@@ -20,7 +20,7 @@ import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -36,15 +36,15 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
     @UiField
     FormGroup displayNameFormGroup;
     @UiField
-    TextInput displayName;
+    TextBox displayName;
     @UiField
     FormGroup subjectIdFormGroup;
     @UiField
-    TextInput subjectId;
+    TextBox subjectId;
     @UiField
     FormGroup fullNameFormGroup;
     @UiField
-    TextInput fullName;
+    TextBox fullName;
     @UiField
     TickBox isEnabledTickBox;
     @UiField

@@ -21,7 +21,7 @@ import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -63,7 +63,7 @@ public class NewProperty extends Component {
     @UiField
     ValueSpinner numberValue;
     @UiField
-    TextInput textValue;
+    TextBox textValue;
     @UiField
     SelectionBox<String> streamTypeValue;
     @UiField

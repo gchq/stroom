@@ -10,7 +10,7 @@
                         label="Base URL (optional)"
                         helpText="The base URL of an OpenAI-compatible API, e.g. https://api.openai.com/v1 or a self-hosted service. Leave blank to use OpenAI (https://api.openai.com/v1)."
                         screenReaderText="Leave blank to use https://api.openai.com/v1.">
-            <form:TextInput ui:field="baseUrl" width="400px"
+            <form:TextBox ui:field="baseUrl" width="400px"
                        title="Override the URL of the OpenAI-compatible API. Example: https://model-server.example.com/v1"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIModelApiKey"
@@ -23,7 +23,7 @@
                         label="Model ID"
                         helpText="The model name as known by the service, e.g. gpt-4o for a chat model, or the name of an embedding or rerank model."
                         screenReaderText="Name the service uses for the model, e.g. gpt-4o.">
-            <form:TextInput ui:field="modelId" width="400px"
+            <form:TextBox ui:field="modelId" width="400px"
                        title="ID of the model. Examples: gpt-4o, intfloat/e5-mistral-7b-instruct"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIMaxContextWindowTokens"
@@ -37,7 +37,7 @@
                         label="Reasoning Effort (optional)"
                         helpText="How much reasoning the model does, for models that support it (e.g. OpenAI o-series): low, medium or high. Leave blank to use the model's default."
                         screenReaderText="Low, medium or high. Leave blank for the model's default.">
-            <form:TextInput ui:field="reasoningEffort" width="400px"
+            <form:TextBox ui:field="reasoningEffort" width="400px"
                        title="Reasoning effort level: low, medium, or high. Leave blank if the model does not support reasoning."/>
         </form:FormGroup>
         <form:FormGroup identity="embeddingModelDimensions"

@@ -9,7 +9,7 @@
                         label="Protocol"
                         helpText="The TLS protocol used to create the secure connection, e.g. TLSv1.2. Default is TLSv1.3."
                         screenReaderText="TLS protocol name. Default is TLSv1.3.">
-            <form:TextInput ui:field="protocol"
+            <form:TextBox ui:field="protocol"
                        width="400px"
                        title="Protocol"/>
         </form:FormGroup>
@@ -17,7 +17,7 @@
                         label="Provider"
                         helpText="The name of the Java security provider to use for TLS, e.g. SunJSSE. Leave blank to use the Java default."
                         screenReaderText="Leave blank for the Java default.">
-            <form:TextInput ui:field="provider"
+            <form:TextBox ui:field="provider"
                        width="400px"
                        title="Provider"/>
         </form:FormGroup>
@@ -47,7 +47,7 @@
                         label="Supported Protocols"
                         helpText="The TLS protocol versions that may be used, one per line, e.g. TLSv1.2. Leave blank to allow the Java defaults."
                         screenReaderText="One per line, e.g. TLSv1.2. Blank allows Java defaults.">
-            <form:TextAreaInput ui:field="supportedProtocols"
+            <form:TextArea ui:field="supportedProtocols"
                         width="400px"
                         title="Supported Protocols"/>
         </form:FormGroup>
@@ -55,7 +55,7 @@
                         label="Supported Ciphers"
                         helpText="The cipher suites that may be used, one per line, e.g. TLS_AES_256_GCM_SHA384. Leave blank to allow the Java defaults."
                         screenReaderText="One per line. Blank allows Java defaults.">
-            <form:TextAreaInput ui:field="supportedCiphers"
+            <form:TextArea ui:field="supportedCiphers"
                         width="400px"
                         title="Supported Ciphers"/>
         </form:FormGroup>
@@ -63,7 +63,7 @@
                         label="Certificate Alias"
                         helpText="The alias of the client certificate to use when the key store holds more than one. Leave blank to choose automatically."
                         screenReaderText="Needed only if the key store has several certificates.">
-            <form:TextInput ui:field="certAlias"
+            <form:TextBox ui:field="certAlias"
                        width="400px"
                        title="Certificate Alias"/>
         </form:FormGroup>

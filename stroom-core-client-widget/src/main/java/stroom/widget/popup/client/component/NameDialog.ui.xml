@@ -9,7 +9,7 @@
                         screenReaderText="The name to save this under."
                         required="true">
             <g:FlowPanel>
-                <form:TextInput ui:field="textBox"/>
+                <form:TextBox ui:field="textBox"/>
                 <g:Label ui:field="feedback" styleName="feedback"/>
             </g:FlowPanel>
         </form:FormGroup>

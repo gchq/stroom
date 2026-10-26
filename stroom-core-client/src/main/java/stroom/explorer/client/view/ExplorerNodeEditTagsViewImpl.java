@@ -25,7 +25,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -38,7 +38,6 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -78,7 +77,7 @@ public class ExplorerNodeEditTagsViewImpl
     private final Set<String> allTags = new HashSet<>();
 
     @UiField
-    TextInput textBox;
+    TextBox textBox;
     @UiField
     Toolbar clearButtonPanel;
     @UiField

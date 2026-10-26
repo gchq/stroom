@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -31,9 +31,9 @@ public class IncludeExcludeFilterViewImpl extends ViewImpl implements IncludeExc
 
     private final Widget widget;
     @UiField
-    TextAreaInput includeText;
+    TextArea includeText;
     @UiField
-    TextAreaInput excludeText;
+    TextArea excludeText;
     @UiField
     SimplePanel includeDictionaryPanel;
     @UiField

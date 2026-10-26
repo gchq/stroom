@@ -54,7 +54,7 @@
                 </ul>
             </form:HelpHTML>
 
-            <form:TextAreaInput ui:field="userBatch" addStyleNames="dock-max w-100 createMultipleUsersViewImpl-userBatch"/>
+            <form:TextArea ui:field="userBatch" addStyleNames="dock-max w-100 createMultipleUsersViewImpl-userBatch"/>
 
         </form:FormGroup>
     </g:FlowPanel>

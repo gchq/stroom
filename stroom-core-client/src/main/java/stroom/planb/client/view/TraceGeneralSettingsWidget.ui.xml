@@ -6,7 +6,7 @@
         <form:FormGroup label="Max Spans Per Trace"
                         helpText="The most spans stored for a single trace, e.g. 100k. Extra spans are dropped and the trace is marked as truncated. Enter 0 for no limit. Default is 100,000."
                         screenReaderText="Number, e.g. 100k. 0 means no limit. Default is 100,000.">
-            <form:TextInput ui:field="maxSpansPerTrace" addStyleNames="allow-focus"/>
+            <form:TextBox ui:field="maxSpansPerTrace" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

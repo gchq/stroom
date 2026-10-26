@@ -19,7 +19,7 @@
         <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format"
                         helpText="A Java DateTimeFormatter pattern, e.g. dd/MM/yyyy HH:mm:ss. Only editable when Custom is ticked."
                         screenReaderText="Java date pattern, e.g. dd/MM/yyyy HH:mm:ss. Editable when Custom is ticked.">
-            <form:TextInput ui:field="text" addStyleNames="w-100"/>
+            <form:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone"
                         helpText="The time zone used to show dates and times: Local (your browser's time zone), UTC, Id (a named zone) or Offset (hours from UTC). Default is UTC unless an administrator has changed the defaults."

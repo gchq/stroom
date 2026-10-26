@@ -25,12 +25,12 @@
         <form:FormGroup identity="chatSystemPrompt" label="Chat System Prompt"
                         helpText="Instructions sent to the AI model at the start of every chat, setting how the assistant should behave. A default prompt is provided. Currently only the value saved with Set As Default is used."
                         screenReaderText="Sent to the model at the start of every chat.">
-            <form:TextAreaInput ui:field="chatSystemPrompt" addStyleNames="w-100" visibleLines="5"/>
+            <form:TextArea ui:field="chatSystemPrompt" addStyleNames="w-100" visibleLines="5"/>
         </form:FormGroup>
         <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt"
                         helpText="Instructions used to summarise older messages when the conversation is too long for the model's context window. A default prompt is provided."
                         screenReaderText="Used to summarise older messages when the chat is too long.">
-            <form:TextAreaInput ui:field="historySummaryPrompt" addStyleNames="w-100" visibleLines="3"/>
+            <form:TextArea ui:field="historySummaryPrompt" addStyleNames="w-100" visibleLines="3"/>
         </form:FormGroup>
         <form:FormGroup identity="maxHistorySafetyCapMessages" label="Maximum History Messages"
                         helpText="Maximum number of earlier chat messages loaded as history for each question. Older messages are trimmed further if the model's context window is too small. Currently only the value saved with Set As Default is used. 1 to 500. Default is 200."

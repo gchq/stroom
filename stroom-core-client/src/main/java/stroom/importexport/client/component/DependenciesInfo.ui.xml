@@ -2,5 +2,5 @@
 <!-- A document's type, UUID and name, to read and copy -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:f="urn:import:stroom.widget.form.client">
-    <f:TextAreaInput ui:field="info" styleName="info-layout" readOnly="true" ariaLabel="Dependency Information"/>
+    <f:TextArea ui:field="info" styleName="info-layout" readOnly="true" ariaLabel="Dependency Information"/>
 </ui:UiBinder>

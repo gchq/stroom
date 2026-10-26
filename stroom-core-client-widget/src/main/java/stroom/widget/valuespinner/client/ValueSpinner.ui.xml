@@ -10,7 +10,7 @@
              xmlns:f="urn:import:stroom.widget.form.client">
     <g:HTMLPanel styleName="value-spinner">
         <div class="value-spinner__field">
-            <f:TextInput ui:field="valueBox" addStyleNames="allow-focus value-spinner__input" role="spinbutton"/>
+            <f:TextBox ui:field="valueBox" addStyleNames="allow-focus value-spinner__input" role="spinbutton"/>
             <div class="value-spinner__steps">
                 <div ui:field="decrease" class="value-spinner__step" title="Decrease value" aria-hidden="true"></div>
                 <div ui:field="increase" class="value-spinner__step" title="Increase value" aria-hidden="true"></div>

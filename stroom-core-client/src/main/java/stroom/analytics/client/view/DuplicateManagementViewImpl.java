@@ -18,7 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -44,7 +44,7 @@ public class DuplicateManagementViewImpl
     @UiField
     TickBox chooseColumns;
     @UiField
-    TextInput columns;
+    TextBox columns;
     @UiField
     SimplePanel list;
 

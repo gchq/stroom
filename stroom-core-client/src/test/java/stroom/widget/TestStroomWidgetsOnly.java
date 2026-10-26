@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// Checks that no UiBinder template declares one of GWT's widgets that Stroom has its own version
 /// of (AGENTS.md, "Stroom's widgets only"). Java's imports and constructions are checked by
-/// checkstyle (`GwtWidgetWithStroomVersion`, `GwtTextBoxWithStroomVersion`); templates aren't Java,
+/// checkstyle (`GwtWidgetWithStroomVersion`); templates aren't Java,
 /// so they are checked here.
 class TestStroomWidgetsOnly {
 
@@ -44,7 +44,8 @@ class TestStroomWidgetsOnly {
             "stroom-core-client-widget",
             "stroom-dashboard-gwt",
             "stroom-app-gwt",
-            "stroom-gwt/stroom-gwt-workbench");
+            "stroom-gwt/stroom-gwt-workbench",
+            "stroom-statistics/stroom-statistics-client");
 
     // GWT's widget -> Stroom's version of it
     private static final Map<String, String> STROOM_VERSIONS = Map.ofEntries(
@@ -57,8 +58,8 @@ class TestStroomWidgetsOnly {
             Map.entry("SimpleCheckBox", "TickBox (stroom.widget.tickbox.client.view)"),
             Map.entry("RadioButton", "RadioGroup (stroom.widget.form.client)"),
             Map.entry("ListBox", "SelectionBox (stroom.item.client)"),
-            Map.entry("TextBox", "TextInput (stroom.widget.form.client)"),
-            Map.entry("TextArea", "TextAreaInput (stroom.widget.form.client)"),
+            Map.entry("TextBox", "TextBox (stroom.widget.form.client)"),
+            Map.entry("TextArea", "TextArea (stroom.widget.form.client)"),
             Map.entry("PasswordTextBox", "PasswordBox (stroom.widget.form.client)"),
             Map.entry("DialogBox", "Stroom's dialogs"),
             Map.entry("TabPanel", "Stroom's tabs"),

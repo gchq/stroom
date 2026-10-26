@@ -26,7 +26,7 @@ import stroom.widget.colour.client.ColourBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -36,7 +36,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -65,32 +64,32 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     @UiField
     DateTimeBox effectiveTimeBox;
     @UiField
-    TextInput nameBox;
+    TextBox nameBox;
     @UiField
-    TextInput typeBox;
+    TextBox typeBox;
     @UiField
     SimplePanel chooseImgContainer;
     @UiField
     DropDownBox assetBox;
 
     @UiField
-    TextInput posX;
+    TextBox posX;
     @UiField
-    TextInput posY;
+    TextBox posY;
     @UiField
     FormGroup sizeGroup;
     @UiField
-    TextInput sizeW;
+    TextBox sizeW;
     @UiField
-    TextInput sizeH;
+    TextBox sizeH;
     @UiField
     FormGroup scaleGroup;
     @UiField
-    TextInput w2mSx;
+    TextBox w2mSx;
     @UiField
-    TextInput w2mSy;
+    TextBox w2mSy;
     @UiField
-    TextInput w2mRot;
+    TextBox w2mRot;
 
     // Area-only fields (hidden for non-area objects).
     @UiField
@@ -102,7 +101,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     @UiField
     FormGroup opacityGroup;
     @UiField
-    TextInput opacityBox;
+    TextBox opacityBox;
     @UiField
     FormGroup verticesGroup;
     @UiField

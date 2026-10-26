@@ -21,7 +21,7 @@ import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettings
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ColumnRef;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -52,7 +52,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<HasDisplayValue> table;
     @UiField

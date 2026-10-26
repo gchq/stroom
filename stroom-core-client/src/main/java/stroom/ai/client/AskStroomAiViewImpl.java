@@ -20,7 +20,7 @@ import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.spinner.client.SpinnerSmall;
@@ -66,7 +66,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     SimplePanel markdownPreview;
     @UiField
-    TextAreaInput message;
+    TextArea message;
     @UiField
     ToolbarButton run;
     @UiField

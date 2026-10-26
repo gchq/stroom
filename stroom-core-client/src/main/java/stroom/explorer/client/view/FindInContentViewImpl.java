@@ -21,7 +21,7 @@ import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.spinner.client.SpinnerLarge;
@@ -55,7 +55,7 @@ public class FindInContentViewImpl
     private final Widget widget;
 
     @UiField
-    TextAreaInput pattern;
+    TextArea pattern;
     @UiField
     Label patternFeedback;
     @UiField

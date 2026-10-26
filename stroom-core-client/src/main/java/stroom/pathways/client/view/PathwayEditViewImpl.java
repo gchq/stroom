@@ -17,7 +17,7 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -33,7 +33,7 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     private final Widget widget;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SimplePanel tree;
     @UiField

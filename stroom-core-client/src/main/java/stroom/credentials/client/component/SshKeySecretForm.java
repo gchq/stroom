@@ -20,7 +20,7 @@ import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.SshKeySecret;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -37,11 +37,11 @@ public final class SshKeySecretForm extends Component implements SecretForm {
     @UiField
     PasswordBox passPhrase;
     @UiField
-    TextAreaInput privateKey;
+    TextArea privateKey;
     @UiField
     TickBox verifyHosts;
     @UiField
-    TextAreaInput knownHosts;
+    TextArea knownHosts;
 
     /// Makes an empty form, verifying hosts.
     public SshKeySecretForm() {

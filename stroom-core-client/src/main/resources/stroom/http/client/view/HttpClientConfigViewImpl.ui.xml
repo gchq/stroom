@@ -74,7 +74,7 @@
                         label="User Agent"
                         helpText="The value sent as the User-Agent header of each request. Leave blank to use the HTTP client's default."
                         screenReaderText="Sent as the User-Agent header. Blank uses the HTTP client's default.">
-            <form:TextInput ui:field="userAgent"
+            <form:TextBox ui:field="userAgent"
                        width="400px"
                        title="User Agent"/>
         </form:FormGroup>

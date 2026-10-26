@@ -8,7 +8,7 @@
         <form:FormGroup identity="visualisationSettingsFunctionName" label="Function Name"
                         helpText="The name of the JavaScript constructor that creates the visualisation, for example visualisations.BarChart. It must be defined by the selected script."
                         screenReaderText="JavaScript constructor name, e.g. visualisations.BarChart.">
-            <form:TextInput ui:field="functionName"/>
+            <form:TextBox ui:field="functionName"/>
         </form:FormGroup>
         <form:FormGroup identity="visualisationSettingsScript" label="Script"
                         helpText="The script document that defines the visualisation's function. Scripts it depends on are loaded first.">

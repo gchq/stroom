@@ -19,7 +19,7 @@ package stroom.widget.dropdowntree.client.view;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.help.client.HelpPopup;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -76,7 +76,7 @@ public class QuickFilter extends Composite
             .toSafeHtml();
 
     @UiField
-    TextInput textBox;
+    TextBox textBox;
     @UiField
     Toolbar toolbar;
     // A plain cross, so that Clear and the drop-down, which both act on the text, look alike, and

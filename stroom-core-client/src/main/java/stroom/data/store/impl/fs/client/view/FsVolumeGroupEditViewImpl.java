@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.client.view;
 
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -32,7 +32,7 @@ public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroup
     private final Widget widget;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SimplePanel list;
 

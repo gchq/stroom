@@ -19,7 +19,7 @@ package stroom.security.identity.client.view;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.EmailValidator;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -40,7 +40,7 @@ public class EmailResetPasswordViewImpl
 
     private final Widget widget;
     @UiField
-    TextInput email;
+    TextBox email;
     @UiField
     Label emailFeedback;
 

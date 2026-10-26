@@ -24,7 +24,7 @@ import stroom.visualisation.shared.VisInput;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -39,7 +39,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -274,7 +273,7 @@ public class DynamicSettingsPane extends Component implements Layer, HasReadAndW
     }
 
     private TextBox createTextBox(final String id) {
-        final TextInput ctrl = new TextInput();
+        final TextBox ctrl = new TextBox();
         ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {

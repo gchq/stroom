@@ -15,7 +15,7 @@
             <g:FlowPanel styleName="selection-box__control">
                 <c:AriaPanel ui:field="renderBox" styleName="selection-box__value stroom-control allow-focus"
                              ariaHidden="true"/>
-                <f:TextInput ui:field="textBox" addStyleNames="selection-box__input stroom-control allow-focus"
+                <f:TextBox ui:field="textBox" addStyleNames="selection-box__input stroom-control allow-focus"
                              readOnly="true" role="combobox" ariaHasPopup="listbox" ariaExpanded="false"/>
             </g:FlowPanel>
         </svg:dropDown>

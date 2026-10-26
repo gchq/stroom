@@ -21,7 +21,7 @@ import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -91,7 +91,7 @@ public class ColumnFormat extends Component {
     @UiField
     TickBox custom;
     @UiField
-    TextInput text;
+    TextBox text;
     @UiField
     SelectionBox<Use> timeZoneUse;
     @UiField

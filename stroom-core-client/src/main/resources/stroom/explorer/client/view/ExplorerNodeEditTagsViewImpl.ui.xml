@@ -22,7 +22,7 @@
             </form:HelpHTML>
             <g:FlowPanel styleName="editNodeTagsAddTagsInputContainer flex-row dock-min form">
                 <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
-                    <form:TextInput ui:field="textBox"
+                    <form:TextBox ui:field="textBox"
                                addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
                     <b:Toolbar ui:field="clearButtonPanel"
                                name="Clear tags"

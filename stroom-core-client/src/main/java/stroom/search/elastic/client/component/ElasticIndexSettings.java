@@ -20,7 +20,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -37,7 +37,7 @@ public class ElasticIndexSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput indexName;
+    TextBox indexName;
     @UiField
     ValueSpinner searchSlices;
     @UiField
@@ -47,17 +47,17 @@ public class ElasticIndexSettings extends Component {
     @UiField
     Button testConnection;
     @UiField
-    TextInput timeField;
+    TextBox timeField;
     @UiField
     DropDownBox vectorGenerationModel;
     @UiField
     DropDownBox rerankModel;
     @UiField
-    TextInput rerankTextFieldSuffix;
+    TextBox rerankTextFieldSuffix;
     @UiField
-    TextInput rerankScoreFieldSuffix;
+    TextBox rerankScoreFieldSuffix;
     @UiField
-    TextInput rerankScoreMinimum;
+    TextBox rerankScoreMinimum;
     @UiField
     DropDownBox defaultExtractionPipeline;
 

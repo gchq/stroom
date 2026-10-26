@@ -17,7 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter.BasicKeyValueInputSettingsView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +33,7 @@ public class BasicKeyValueInputSettingsViewImpl extends ViewImpl implements Basi
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
 
     @Inject
     public BasicKeyValueInputSettingsViewImpl(final Binder binder) {

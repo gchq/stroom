@@ -17,8 +17,8 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -41,11 +41,11 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
-    TextInput key;
+    TextBox key;
     @UiField
-    TextAreaInput values;
+    TextArea values;
     @UiField
     TickBox useDictionary;
     @UiField

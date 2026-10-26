@@ -15,7 +15,7 @@
         <form:FormGroup ui:field="nameGroup" identity="createDocumentName" label="Name" addStyleNames="dock-min" required="true"
                         helpText="The name of the new item. Folder names may only contain letters, numbers, spaces and _ - . ( )."
                         screenReaderText="Folder names: letters, numbers, spaces, underscores, hyphens, full stops, brackets only.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="createDocumentPermissions" label="Permissions" addStyleNames="dock-min"
                         helpText="Sets the permissions of the new item. None: no permissions are added. Destination: the parent folder's permissions are copied. You always become an owner. Default is Destination."

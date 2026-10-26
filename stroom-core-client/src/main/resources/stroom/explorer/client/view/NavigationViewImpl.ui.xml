@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:b="urn:import:stroom.widget.button.client">
@@ -19,7 +20,7 @@
             <b:Toolbar ui:field="toolbar" name="Explorer" addStyleNames="toolbar--navigation"/>
             <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
         </b:ToolbarRow>
-        <g:MaxScrollPanel addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
+        <layout:ScrollPane addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -23,7 +23,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -47,7 +47,7 @@ public class ReportSettingsTab extends Component {
     @UiField
     DropDownBox aiSummaryModel;
     @UiField
-    TextAreaInput aiSummaryPrompt;
+    TextArea aiSummaryPrompt;
     @UiField
     DropDownBox errorFeed;
     @UiField

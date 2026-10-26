@@ -31,7 +31,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -84,7 +84,7 @@ final class PopupHarnesses {
         formGroup.setIdentity("contract");
         formGroup.setLabel("A field");
         formGroup.overrideHelpText(SafeHtmlUtils.fromSafeConstant("<p>Field help</p>"));
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         formGroup.add(textBox);
         return formGroup;
     }

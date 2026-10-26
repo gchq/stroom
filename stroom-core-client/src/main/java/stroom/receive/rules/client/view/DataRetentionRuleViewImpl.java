@@ -20,7 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -42,7 +42,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     @UiField
     SimplePanel expression;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     TickBox forever;
     @UiField

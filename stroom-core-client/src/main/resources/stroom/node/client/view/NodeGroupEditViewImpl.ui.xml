@@ -8,7 +8,7 @@
         <form:FormGroup identity="nodeGroupName" label="Node Group Name"
                         helpText="The name of this node group. It cannot be changed here."
                         screenReaderText="Read only.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="nodeGroupEnabled"
                         helpText="Untick to stop all processing for processor profiles that use this node group."

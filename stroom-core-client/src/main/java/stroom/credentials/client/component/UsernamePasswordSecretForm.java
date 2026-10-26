@@ -20,7 +20,7 @@ import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +33,7 @@ public final class UsernamePasswordSecretForm extends Component implements Secre
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput username;
+    TextBox username;
     @UiField
     PasswordBox password;
 

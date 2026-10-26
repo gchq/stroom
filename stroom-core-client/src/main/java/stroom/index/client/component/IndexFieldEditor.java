@@ -21,7 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +42,7 @@ public class IndexFieldEditor extends Component {
     @UiField
     SelectionBox<FieldType> type;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     TickBox stored;
     @UiField

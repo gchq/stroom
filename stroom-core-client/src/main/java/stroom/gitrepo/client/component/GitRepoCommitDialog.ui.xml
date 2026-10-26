@@ -8,7 +8,7 @@
                         helpText="Message recorded with the Git commit that this push creates. Required."
                         screenReaderText="Recorded with the Git commit this push creates."
                         required="true">
-            <form:TextAreaInput ui:field="txtCommitMessage" addStyleNames="git-repo-commit-dialog__message"/>
+            <form:TextArea ui:field="txtCommitMessage" addStyleNames="git-repo-commit-dialog__message"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

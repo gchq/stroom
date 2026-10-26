@@ -22,7 +22,7 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -59,15 +59,15 @@ public class GitRepoSettingsViewImpl
     @UiField
     Label lblContentPack;
     @UiField
-    TextInput txtGitUrl;
+    TextBox txtGitUrl;
     @UiField
-    TextInput txtGitBranch;
+    TextBox txtGitBranch;
     @UiField
-    TextInput txtGitPath;
+    TextBox txtGitPath;
     @UiField
     SelectionBox<Credential> credentialSelectionBox;
     @UiField
-    TextInput txtGitCommitToPull;
+    TextBox txtGitCommitToPull;
     @UiField
     FormGroup fgGitAutoPush;
     @UiField

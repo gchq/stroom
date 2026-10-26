@@ -7,7 +7,7 @@
                         required="true"
                         helpText="The new name. Folder names may only contain letters, numbers, spaces and _ - . ( )."
                         screenReaderText="Folder names: letters, numbers, spaces, underscores, hyphens, full stops, brackets only.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

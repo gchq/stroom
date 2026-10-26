@@ -25,7 +25,7 @@ import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -48,7 +48,7 @@ public class ScheduledProcessEditViewImpl
     private final Widget widget;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     TickBox enabled;
     @UiField

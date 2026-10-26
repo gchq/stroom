@@ -21,7 +21,7 @@ import stroom.floormap.shared.FloorMapMeasurementUnits.Family;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
@@ -53,7 +53,7 @@ public class FloorMapSetScale extends Component {
     @UiField
     TableCellElement distanceLabel;
     @UiField
-    TextInput distanceBox;
+    TextBox distanceBox;
     @UiField
     SelectionBox<Unit> unitListBox;
 

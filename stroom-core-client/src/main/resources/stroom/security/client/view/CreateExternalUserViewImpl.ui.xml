@@ -19,7 +19,7 @@
         <p>Stroom's property <code>stroom.security.authentication.openId.uniqueIdentityClaim</code>
         determines which Open ID Connect claim is used for the unique identity.</p>
       </form:HelpHTML>
-      <form:TextInput ui:field="subjectId" addStyleNames="w-100" />
+      <form:TextBox ui:field="subjectId" addStyleNames="w-100" />
     </form:FormGroup>
 
     <form:FormGroup identity="displayName"
@@ -37,7 +37,7 @@
         <p>The Display Name will be obtained from the identity provider when the user signs in, but
           you can optionally enter it to make it easier to identify the user in Stroom.</p>
       </form:HelpHTML>
-      <form:TextInput ui:field="displayName" addStyleNames="w-100" />
+      <form:TextBox ui:field="displayName" addStyleNames="w-100" />
     </form:FormGroup>
 
     <form:FormGroup identity="fullName"
@@ -52,7 +52,7 @@
         <p>The Full Name will be obtained from the identity provider when the user signs in, but
           you can optionally enter it to make it easier to identify the user in Stroom.</p>
       </form:HelpHTML>
-      <form:TextInput ui:field="fullName" addStyleNames="w-100" />
+      <form:TextBox ui:field="fullName" addStyleNames="w-100" />
     </form:FormGroup>
 
   </g:FlowPanel>

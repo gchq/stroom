@@ -20,7 +20,7 @@ import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -39,11 +39,11 @@ public class SolrIndexFieldEditor extends Component {
     @UiField
     SelectionBox<FieldType> type;
     @UiField
-    TextInput fieldName;
+    TextBox fieldName;
     @UiField
     SelectionBox<String> fieldType;
     @UiField
-    TextInput defaultValue;
+    TextBox defaultValue;
     @UiField
     TickBox stored;
     @UiField

@@ -17,7 +17,7 @@
 package stroom.data.pager.client;
 
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -32,7 +32,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
@@ -59,11 +58,11 @@ public class Pager extends AbstractPager {
     @UiField
     Label lblFrom;
     @UiField
-    TextInput txtFrom;
+    TextBox txtFrom;
     @UiField
     Label lblTo;
     @UiField
-    TextInput txtTo;
+    TextBox txtTo;
     @UiField
     Label lblOf;
     @UiField

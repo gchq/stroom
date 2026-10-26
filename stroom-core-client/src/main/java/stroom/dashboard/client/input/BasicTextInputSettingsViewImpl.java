@@ -17,7 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,9 +33,9 @@ public class BasicTextInputSettingsViewImpl extends ViewImpl implements BasicTex
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
-    TextInput key;
+    TextBox key;
 
     @Inject
     public BasicTextInputSettingsViewImpl(final Binder binder) {

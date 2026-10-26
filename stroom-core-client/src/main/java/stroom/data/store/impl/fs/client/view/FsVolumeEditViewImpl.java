@@ -20,7 +20,7 @@ import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolume
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.item.client.SelectionBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -38,11 +38,11 @@ public class FsVolumeEditViewImpl extends ViewImpl implements FsVolumeEditView {
     @UiField
     SelectionBox<FsVolumeType> volumeType;
     @UiField
-    TextInput path;
+    TextBox path;
     @UiField
     SelectionBox<VolumeUseStatus> status;
     @UiField
-    TextInput byteLimit;
+    TextBox byteLimit;
     @UiField
     SimplePanel configEditorContainer;
 

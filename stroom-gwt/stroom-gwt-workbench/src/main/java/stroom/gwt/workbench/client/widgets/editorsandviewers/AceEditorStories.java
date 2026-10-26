@@ -31,12 +31,11 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -273,7 +272,7 @@ public final class AceEditorStories {
     }
 
     private static TextBox namedTextBox(final String name) {
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         textBox.getElement().setAttribute("aria-label", name);
         return textBox;
     }

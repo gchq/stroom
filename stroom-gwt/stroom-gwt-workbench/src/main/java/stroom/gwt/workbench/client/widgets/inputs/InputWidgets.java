@@ -18,10 +18,9 @@ package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Widgets shared by the `Widgets/Inputs/*` stories.
@@ -41,7 +40,7 @@ final class InputWidgets {
     /// @param placeholder The placeholder, or null for none.
     /// @return The text box.
     static TextBox textBox(final StoryContext context, final String value, final String placeholder) {
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         textBox.setValue(value);
         if (placeholder != null) {
             // As Stroom's views set it, e.g. QuickFilter

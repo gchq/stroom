@@ -20,7 +20,7 @@ import stroom.svg.client.IconBox;
 import stroom.util.shared.time.Time;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -42,7 +42,7 @@ public class TimeBox extends Component implements Focus, HasValueChangeHandlers<
     @UiField
     IconBox iconBox;
     @UiField
-    TextInput textBox;
+    TextBox textBox;
 
     private Runnable onOpenPicker;
     private Runnable onChange;

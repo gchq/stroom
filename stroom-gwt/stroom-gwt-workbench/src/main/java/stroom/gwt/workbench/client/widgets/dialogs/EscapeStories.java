@@ -26,7 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -102,7 +102,7 @@ public final class EscapeStories {
                     }, KeyDownEvent.getType());
                     popups.addCleanUp(registration::removeHandler);
                     return DialogWidgets.button(OPEN, DialogWidgets.PRIMARY, event -> {
-                        final TextInput textBox = new TextInput();
+                        final TextBox textBox = new TextBox();
                         textBox.getElement().setAttribute("aria-label", NAME);
                         show(spies, popups, textBox, () -> textBox.setFocus(true));
                     });

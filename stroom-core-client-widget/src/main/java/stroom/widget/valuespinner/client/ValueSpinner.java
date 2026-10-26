@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -63,7 +63,7 @@ public class ValueSpinner
 
     private final Spinner spinner;
     @UiField
-    TextInput valueBox;
+    TextBox valueBox;
     @UiField
     DivElement decrease;
     @UiField

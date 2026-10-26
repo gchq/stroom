@@ -104,7 +104,7 @@
                     zoom, so leave that alone. Add a <code>where</code> clause to count only some
                     events.</p>
             </form:HelpHTML>
-            <form:TextAreaInput ui:field="histogramQuery" addStyleNames="allow-focus w-100"
+            <form:TextArea ui:field="histogramQuery" addStyleNames="allow-focus w-100"
                         visibleLines="5"/>
         </form:FormGroup>
         <form:FormGroup label="Show All Query">
@@ -116,7 +116,7 @@
                     <code>where</code> clause narrows the extent, so Show All would fit to the
                     filtered subset rather than to the store.</p>
             </form:HelpHTML>
-            <form:TextAreaInput ui:field="extentQuery" addStyleNames="allow-focus w-100"
+            <form:TextArea ui:field="extentQuery" addStyleNames="allow-focus w-100"
                         visibleLines="3"/>
         </form:FormGroup>
     </g:FlowPanel>

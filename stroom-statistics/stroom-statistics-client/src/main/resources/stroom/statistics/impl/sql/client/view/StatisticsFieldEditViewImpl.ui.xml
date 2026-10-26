@@ -6,7 +6,7 @@
         <form:FormGroup identity="statisticsFieldName" label="Name"
                         helpText="The name of the statistic field (tag). Must be unique in this store. By default it may contain letters, numbers, spaces, underscores, hyphens, full stops and brackets."
                         screenReaderText="Unique. By default letters, numbers, spaces, underscores, hyphens, full stops, brackets.">
-            <g:TextBox ui:field="name"/>
+            <form:TextBox ui:field="name"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

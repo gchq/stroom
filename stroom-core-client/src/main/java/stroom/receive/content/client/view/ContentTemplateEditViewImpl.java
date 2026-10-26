@@ -21,8 +21,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.TemplateType;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -46,9 +46,9 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     private final Widget widget;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
-    TextAreaInput description;
+    TextArea description;
     @UiField
     SelectionBox<TemplateType> templateTypeSelectionBox;
     @UiField

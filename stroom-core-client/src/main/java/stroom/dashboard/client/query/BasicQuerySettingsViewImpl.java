@@ -17,7 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -37,7 +37,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SimplePanel dataSource;
     @UiField
@@ -45,7 +45,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     TickBox autoRefresh;
     @UiField
-    TextInput refreshInterval;
+    TextBox refreshInterval;
 
     @Inject
     public BasicQuerySettingsViewImpl(final Binder binder) {

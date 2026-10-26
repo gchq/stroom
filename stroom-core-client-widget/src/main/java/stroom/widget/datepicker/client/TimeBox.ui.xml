@@ -8,7 +8,7 @@
     <svg:IconBox ui:field="iconBox" addStyleNames="date-time-box date-time-box--time" icon="HISTORY"
                  opensDialog="true">
         <svg:field>
-            <form:TextInput ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
+            <form:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
         </svg:field>
     </svg:IconBox>
 </ui:UiBinder>

@@ -24,7 +24,7 @@
                         </v:Toolbar>
                     </g:FlowPanel>
                 </g:FlowPanel>
-                <g:MaxScrollPanel ui:field="treeContainer"
+                <split:ScrollPane ui:field="treeContainer"
                                   addStyleNames="dock-max pipelineStructureViewImpl-treeContainer"/>
 
             </g:FlowPanel>

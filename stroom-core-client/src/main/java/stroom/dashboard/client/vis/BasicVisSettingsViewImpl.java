@@ -19,7 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
 import stroom.item.client.SelectionBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -42,7 +42,7 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<Component> table;
     @UiField

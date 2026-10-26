@@ -18,7 +18,7 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -41,11 +41,11 @@ public class CreateExternalUserViewImpl
     @UiField
     FormGroup subjectIdGroup;
     @UiField
-    TextInput subjectId;
+    TextBox subjectId;
     @UiField
-    TextInput displayName;
+    TextBox displayName;
     @UiField
-    TextInput fullName;
+    TextBox fullName;
 
     @Inject
     public CreateExternalUserViewImpl(final Binder binder) {

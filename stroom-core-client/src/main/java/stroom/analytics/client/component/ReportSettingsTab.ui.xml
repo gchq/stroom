@@ -29,7 +29,7 @@
         <form:FormGroup identity="aiSummaryPrompt" label="AI Summary Prompt"
                         helpText="What to ask the model about the report&apos;s data. Leave this empty to use the default, which asks for a short summary of what the data shows and anything worth attention."
                         screenReaderText="Leave blank to use the default summary prompt.">
-            <form:TextAreaInput ui:field="aiSummaryPrompt" addStyleNames="w-100" visibleLines="4"/>
+            <form:TextArea ui:field="aiSummaryPrompt" addStyleNames="w-100" visibleLines="4"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingErrorFeed"
                         label="Feed For Errors"

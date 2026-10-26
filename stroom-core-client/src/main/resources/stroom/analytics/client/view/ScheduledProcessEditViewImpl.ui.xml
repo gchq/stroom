@@ -10,7 +10,7 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="name" label="Name"
                         helpText="Name of this schedule, shown in the list of schedules.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup
                         helpText="Whether this schedule runs. It can only be enabled when its processing node exists and an error feed is set on the rule or report, or as the default."

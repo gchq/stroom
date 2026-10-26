@@ -17,7 +17,7 @@
 package stroom.gitrepo.client.component;
 
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +30,7 @@ public class GitRepoCommitDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextAreaInput txtCommitMessage;
+    TextArea txtCommitMessage;
 
     /// Makes the content with no message.
     public GitRepoCommitDialog() {

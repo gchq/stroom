@@ -18,7 +18,7 @@ package stroom.xmlschema.client.component;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -34,11 +34,11 @@ public class XMLSchemaSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput namespaceURI;
+    TextBox namespaceURI;
     @UiField
-    TextInput systemId;
+    TextBox systemId;
     @UiField
-    TextInput schemaGroup;
+    TextBox schemaGroup;
     @UiField
     TickBox deprecated;
 

@@ -7,7 +7,7 @@
              xmlns:svg="urn:import:stroom.svg.client">
     <svg:IconBox ui:field="iconBox" addStyleNames="date-time-box" icon="CALENDAR" opensDialog="true">
         <svg:field>
-            <form:TextInput ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
+            <form:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/>
         </svg:field>
     </svg:IconBox>
 </ui:UiBinder>

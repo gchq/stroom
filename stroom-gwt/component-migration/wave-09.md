@@ -73,6 +73,14 @@ and `TestStroomWidgetsOnly` their tags in templates (AGENTS.md, "Stroom's widget
 has too, fixed on the way (changelog, `TestActivitySummary`): the Current Activity summary showed an
 activity's property names and values as HTML; `ActivitySummary` escapes them.
 
+Then (26 October 2026) `TextInput` and `TextAreaInput` were renamed `TextBox` and `TextArea` (still in
+`stroom.widget.form.client`), to match `PasswordBox`, `SelectionBox` and the other boxes; they extend
+Stroom's copies of GWT's `TextBox` and `TextArea`, which only they (and `PasswordBox`, its copy of
+`PasswordTextBox`) name, in full, as checkstyle now refuses importing GWT's. The rest of this file
+keeps the names of the time. `MaxScrollPanel` (in GWT's package, sized with inline styles) became
+`ScrollPane` (`stroom.widget.layout.client`, `scroll-pane.css`), and `FocusFlowPanel` the curved tab
+layout's own `CurveTabLayoutPanel`.
+
 ## Done (26 October 2026)
 
 All 42 units, in 17 commits, the audit's and the Stroom widgets' (below): the last full run passed all 1,709 stories with the leak check; of its 46 screenshots that differed, 40 are the force graphs and 4 other recorded noise (the Markdown preview's font, the Tree visualisation's `ShowAndHide`, the data grid's spinner column, the line chart's `PageKeys`), and the 2 changed on purpose are the view states table (no native list; a radio group) and the form group's several controls (a selection box). The app and the standalone dashboard GWT compile, checkstyle is clean and the client modules' 1,908 JUnit tests pass. Each commit ran its stories with the leak check

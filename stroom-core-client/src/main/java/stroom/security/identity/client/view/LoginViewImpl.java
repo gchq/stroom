@@ -24,7 +24,7 @@ import stroom.widget.button.client.LinkButton;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -50,7 +50,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     SimplePanel userImage;
     @UiField
-    TextInput userName;
+    TextBox userName;
     @UiField
     Label userNameFeedback;
     @UiField

@@ -10,7 +10,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicVisSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicVisSettingsTable" label="Table"
                         helpText="Table that supplies the data for this visualisation.">

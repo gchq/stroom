@@ -29,7 +29,7 @@
             <form:FormGroup identity="columns"
                             label="Columns"
                             screenReaderText="Comma-separated, case-sensitive. Enabled when Choose Columns is ticked.">
-                <form:TextInput ui:field="columns" width="100%"/>
+                <form:TextBox ui:field="columns" width="100%"/>
                 <form:HelpHTML>
                     <p>A comma delimited list of column names (case-sensitive) that should be used to
                         de-duplicate notifications. Only editable when Choose Columns is ticked.</p>

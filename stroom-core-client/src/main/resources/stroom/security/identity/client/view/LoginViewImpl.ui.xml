@@ -20,7 +20,7 @@
                     <g:FlowPanel>
                         <!-- Add user name text box -->
                         <g:FlowPanel addStyleNames="userNameTextBoxOuter">
-                            <form:TextInput ui:field="userName" addStyleNames="userNameTextBox"/>
+                            <form:TextBox ui:field="userName" addStyleNames="userNameTextBox"/>
                         </g:FlowPanel>
 
                         <!-- Add feedback -->

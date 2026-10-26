@@ -22,7 +22,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.El
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -43,7 +43,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     private final Widget widget;
 
     @UiField
-    TextAreaInput connectionUrls;
+    TextArea connectionUrls;
     @UiField
     SelectionBox<Credential> apiKey;
     @UiField

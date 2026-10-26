@@ -16,12 +16,12 @@
         <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern"
                         helpText="Name of the Elasticsearch index to search, or a pattern matching several indices or a data stream, e.g. events-*"
                         screenReaderText="Wildcards allowed, e.g. events-*.">
-            <form:TextInput ui:field="indexName" addStyleNames="text-field--wide"/>
+            <form:TextBox ui:field="indexName" addStyleNames="text-field--wide"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field"
                         helpText="Name of the date field used to apply the query time range. Usually @timestamp, especially for data streams. If left blank, @timestamp is used."
                         screenReaderText="Default is @timestamp.">
-            <form:TextInput ui:field="timeField"
+            <form:TextBox ui:field="timeField"
                        title="Usually @timestamp, especially for data streams"/>
         </form:FormGroup>
         <g:HTML>
@@ -60,14 +60,14 @@
         <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix"
                         helpText="Suffix of the text field that holds the original text for each dense_vector field. The vector field suffix is replaced with this, e.g. Content.vector becomes Content.text. Default is .text."
                         screenReaderText="E.g. Content.vector uses Content.text. Default is .text.">
-            <form:TextInput ui:field="rerankTextFieldSuffix"
+            <form:TextBox ui:field="rerankTextFieldSuffix"
                        title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`).&#10;
 The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)."/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix"
                         helpText="Suffix used to name the field that receives the rerank score. The vector field suffix is replaced with this, e.g. Content.vector gives Content.score, which can be used in dashboard expressions. Default is .score."
                         screenReaderText="E.g. Content.vector gives Content.score. Default is .score.">
-            <form:TextInput ui:field="rerankScoreFieldSuffix"
+            <form:TextBox ui:field="rerankScoreFieldSuffix"
                        title="Suffix used to name the destination rerank score field, after removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix.&#10;
 This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
 This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
@@ -75,7 +75,7 @@ This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}
         <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score"
                         helpText="Only results with a rerank score greater than or equal to this value are included. A number from 0.0 to 1.0. Default is 0.8. If above 0, the score field must be included in the query's fields."
                         screenReaderText="0.0 to 1.0. Default is 0.8.">
-            <form:TextInput ui:field="rerankScoreMinimum" addStyleNames="text-field--narrow"
+            <form:TextBox ui:field="rerankScoreMinimum" addStyleNames="text-field--narrow"
                        title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
         </form:FormGroup>
 

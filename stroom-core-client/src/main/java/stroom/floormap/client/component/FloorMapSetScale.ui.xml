@@ -19,7 +19,7 @@
                     <td ui:field="distanceLabel">It is really</td>
                     <td>
                         <g:FlowPanel styleName="floormap-set-scale-row">
-                            <form:TextInput ui:field="distanceBox" addStyleNames="stroom-control floormap-set-scale-distance"
+                            <form:TextBox ui:field="distanceBox" addStyleNames="stroom-control floormap-set-scale-distance"
                                             placeholder="e.g. 2.4"/>
                             <i:SelectionBox ui:field="unitListBox"/>
                         </g:FlowPanel>

@@ -11,7 +11,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:f="urn:import:stroom.widget.form.client">
     <g:HTMLPanel styleName="quick-filter">
-        <f:TextInput ui:field="textBox" addStyleNames="quick-filter__input allow-focus"
+        <f:TextBox ui:field="textBox" addStyleNames="quick-filter__input allow-focus"
                      type="search" placeholder="Quick Filter"/>
         <b:Toolbar ui:field="toolbar" name="Quick filter" addStyleNames="quick-filter__toolbar">
             <b:ToolbarButton ui:field="clearButton" svg="TAB_CLOSE" title="Clear Filter"/>

@@ -20,8 +20,8 @@ import stroom.credentials.shared.Credential;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -41,9 +41,9 @@ public class HttpTlsConfigViewImpl
     private final Widget widget;
 
     @UiField
-    TextInput protocol;
+    TextBox protocol;
     @UiField
-    TextInput provider;
+    TextBox provider;
     @UiField
     SelectionBox<Credential> keyStore;
     @UiField
@@ -53,11 +53,11 @@ public class HttpTlsConfigViewImpl
     @UiField
     TickBox verifyHostname;
     @UiField
-    TextAreaInput supportedProtocols;
+    TextArea supportedProtocols;
     @UiField
-    TextAreaInput supportedCiphers;
+    TextArea supportedCiphers;
     @UiField
-    TextInput certAlias;
+    TextBox certAlias;
 
     @Inject
     public HttpTlsConfigViewImpl(final Binder binder) {

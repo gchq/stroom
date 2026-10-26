@@ -7,9 +7,9 @@
                          names="Result stores, Info" addStyleNames="max">
             <g:SimplePanel ui:field="tableContainer"
                            styleName="max dashboard-panel overflow-hidden"/>
-            <g:MaxScrollPanel ui:field="infoScroll" addStyleNames="max dashboard-panel scroll-region">
+            <split:ScrollPane ui:field="infoScroll" addStyleNames="max dashboard-panel scroll-region">
                 <g:SimplePanel ui:field="infoPanel"/>
-            </g:MaxScrollPanel>
+            </split:ScrollPane>
         </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>

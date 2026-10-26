@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.AccessibleName;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -47,7 +47,7 @@ public class BasicTableSettingsViewImpl
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<Component> query;
     @UiField
@@ -57,7 +57,7 @@ public class BasicTableSettingsViewImpl
     @UiField
     SimplePanel pipeline;
     @UiField
-    TextInput maxResults;
+    TextBox maxResults;
     @UiField
     ValueSpinner pageSize;
     @UiField

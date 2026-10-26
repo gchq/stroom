@@ -24,9 +24,8 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.RadioGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
-import com.google.gwt.user.client.ui.TextBox;
 
 /// Stories for [RadioGroup], a choice of one of a few options, all shown (`radio-group`): a
 /// WAI-ARIA radio group of native radio buttons, one tab stop, with the arrow keys between them.
@@ -119,7 +118,7 @@ public final class RadioGroupStories {
 
     // A text box before or after the group, to tab from and to
     private static TextBox namedTextBox(final String name) {
-        final TextInput textBox = new TextInput();
+        final TextBox textBox = new TextBox();
         textBox.getElement().setAttribute("aria-label", name);
         return textBox;
     }

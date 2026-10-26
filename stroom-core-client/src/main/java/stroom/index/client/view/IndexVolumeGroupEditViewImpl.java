@@ -17,7 +17,7 @@
 package stroom.index.client.view;
 
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -32,7 +32,7 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     private final Widget widget;
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SimplePanel list;
 

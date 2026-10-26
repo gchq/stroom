@@ -12,7 +12,7 @@
         <form:FormGroup identity="fieldEditName" label="Name"
                         helpText="The name of the attribute this field represents in rule expressions. Names must be unique and are not case sensitive."
                         screenReaderText="Must be unique; not case sensitive.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

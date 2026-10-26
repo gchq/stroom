@@ -21,7 +21,7 @@ import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.SimpleEventBus;
@@ -111,7 +111,7 @@ final class SplitPaneContent {
         form.getElement().getStyle().setProperty("padding", "8px");
         for (final String name : List.of("Name", "Description")) {
             form.add(new Label(name));
-            final TextInput field = new TextInput();
+            final TextBox field = new TextBox();
             field.getElement().setAttribute("aria-label", name);
             form.add(field);
         }

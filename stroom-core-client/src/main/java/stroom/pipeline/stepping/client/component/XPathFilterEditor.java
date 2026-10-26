@@ -21,7 +21,7 @@ import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +42,7 @@ public class XPathFilterEditor extends Component {
     @UiField
     FormGroup ignoreCaseContainer;
     @UiField
-    TextInput xPath;
+    TextBox xPath;
     @UiField
     FormGroup xPathContainer;
     @UiField
@@ -50,7 +50,7 @@ public class XPathFilterEditor extends Component {
     @UiField
     SelectionBox<SearchType> searchType;
     @UiField
-    TextInput value;
+    TextBox value;
     @UiField
     TickBox ignoreCase;
 

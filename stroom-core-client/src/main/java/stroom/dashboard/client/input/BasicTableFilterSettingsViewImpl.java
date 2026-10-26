@@ -19,7 +19,7 @@ package stroom.dashboard.client.input;
 import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter.BasicTableFilterSettingsView;
 import stroom.dashboard.client.main.Component;
 import stroom.item.client.SelectionBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -43,7 +43,7 @@ public class BasicTableFilterSettingsViewImpl
     @UiField
     Label id;
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<Component> table;
     @UiField

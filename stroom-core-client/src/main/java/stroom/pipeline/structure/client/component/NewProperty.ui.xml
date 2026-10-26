@@ -62,7 +62,7 @@
                 <i:SelectionBox ui:field="booleanValue" ariaLabel="Value" addStyleNames="w-100"/>
                 <v:ValueSpinner ui:field="numberValue" minValue="0" maxValue="10000000" ariaLabel="Value"
                                 addStyleNames="w-100"/>
-                <form:TextInput ui:field="textValue" ariaLabel="Value" addStyleNames="w-100"/>
+                <form:TextBox ui:field="textValue" ariaLabel="Value" addStyleNames="w-100"/>
                 <i:SelectionBox ui:field="streamTypeValue" ariaLabel="Value" addStyleNames="w-100"/>
                 <i:SelectionBox ui:field="volumeGroupValue" ariaLabel="Value" addStyleNames="w-100"/>
                 <dd:DropDownBox ui:field="documentValue" addStyleNames="w-100"/>

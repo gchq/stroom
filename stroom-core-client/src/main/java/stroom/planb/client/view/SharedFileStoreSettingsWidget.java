@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -47,7 +47,7 @@ public class SharedFileStoreSettingsWidget extends Component {
     };
 
     @UiField
-    TextInput sharedPath;
+    TextBox sharedPath;
     @UiField
     ValueSpinner shardCount;
 

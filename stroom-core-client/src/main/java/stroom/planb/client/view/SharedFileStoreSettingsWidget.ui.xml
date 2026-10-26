@@ -8,7 +8,7 @@
                         helpText="The directory, on storage that every node can reach, where this store's files are kept. Required. It cannot be changed once data has been written."
                         screenReaderText="Must be reachable by every node. Cannot be changed after data is written."
                         required="true">
-            <form:TextInput ui:field="sharedPath" addStyleNames="allow-focus shared-file-store-settings__path"/>
+            <form:TextBox ui:field="sharedPath" addStyleNames="allow-focus shared-file-store-settings__path"/>
         </form:FormGroup>
         <form:FormGroup label="Shard Count"
                         helpText="The number of shards to spread the data across, from 1 to 999. Use 1 for no sharding. It cannot be changed once data has been written. Default is 1."

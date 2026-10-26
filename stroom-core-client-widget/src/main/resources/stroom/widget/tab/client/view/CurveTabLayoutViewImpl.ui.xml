@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FocusFlowPanel ui:field="layout" styleName="curveTabLayoutViewImpl-layout">
+    <tab:CurveTabLayoutPanel ui:field="layout" styleName="curveTabLayoutViewImpl-layout">
         <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">
             <b:Toolbar name="Sidebar" addStyleNames="toolbar--quiet">
                 <b:ToolbarButton ui:field="menu" svg="HIDE_MENU" title="Hide Sidebar"/>
@@ -17,5 +17,5 @@
                        styleName="curveTabLayoutViewImpl-layerContainerOuter">
             <tab:LayerContainerImpl ui:field="layerContainer" styleName="stroom-main-content-container"/>
         </g:SimplePanel>
-    </g:FocusFlowPanel>
+    </tab:CurveTabLayoutPanel>
 </ui:UiBinder> 

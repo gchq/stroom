@@ -18,7 +18,7 @@ package stroom.widget.popup.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +33,7 @@ public class NameDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput textBox;
+    TextBox textBox;
     @UiField
     Label feedback;
 

@@ -7,7 +7,7 @@
                         helpText="Name for this favourite query. A name is required."
                         screenReaderText="Name for this favourite query."
                         required="true">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

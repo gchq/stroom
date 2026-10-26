@@ -19,7 +19,7 @@ package stroom.index.client.view;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.item.client.SelectionBox;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -37,11 +37,11 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     @UiField
     SelectionBox<String> nodeName;
     @UiField
-    TextInput path;
+    TextBox path;
     @UiField
     SelectionBox<VolumeUseState> state;
     @UiField
-    TextInput bytesLimit;
+    TextBox bytesLimit;
 
     @Inject
     public IndexVolumeEditViewImpl(final Binder binder) {

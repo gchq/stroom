@@ -8,7 +8,7 @@
         <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max"
                         helpText="Extra meta data to attach to the uploaded data, one 'Key:Value' entry per line. Example: System:Example."
                         screenReaderText="One Key:Value entry per line.">
-            <form:TextAreaInput ui:field="metaData" addStyleNames="max"/>
+            <form:TextArea ui:field="metaData" addStyleNames="max"/>
         </form:FormGroup>
         <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min"
                         helpText="The stream type to give the uploaded data, for example Raw Events or Raw Reference. Defaults to the feed's stream type."

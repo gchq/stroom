@@ -25,8 +25,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextAreaInput;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -56,9 +56,9 @@ public class EditApiKeyViewImpl
     @UiField
     SimplePanel ownerPanel;
     @UiField
-    TextInput nameTextBox;
+    TextBox nameTextBox;
     @UiField
-    TextAreaInput commentsTextArea;
+    TextArea commentsTextArea;
     @UiField
     DateTimeBox expiresOnDateBox;
     @UiField
@@ -69,12 +69,12 @@ public class EditApiKeyViewImpl
     @UiField
     FormGroup prefixFormGroup;
     @UiField
-    TextInput prefixTextBox;
+    TextBox prefixTextBox;
 
     @UiField
     FormGroup apiKeyFormGroup;
     @UiField
-    TextAreaInput apiKeyTextArea;
+    TextArea apiKeyTextArea;
 
     @UiField
     Toolbar apiKeyButtonPanel;

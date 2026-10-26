@@ -24,7 +24,7 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -48,9 +48,9 @@ public class AiConfigGeneral extends Component {
     @UiField
     SelectionBox<DockLocation> dockLocation;
     @UiField
-    TextAreaInput chatSystemPrompt;
+    TextArea chatSystemPrompt;
     @UiField
-    TextAreaInput historySummaryPrompt;
+    TextArea historySummaryPrompt;
     @UiField
     ValueSpinner maxHistorySafetyCapMessages;
     @UiField

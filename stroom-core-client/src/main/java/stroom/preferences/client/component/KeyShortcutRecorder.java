@@ -20,7 +20,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyStroke;
 
@@ -42,7 +42,7 @@ public class KeyShortcutRecorder extends Component {
     @UiField
     FormGroup keysFormGroup;
     @UiField
-    TextInput keys;
+    TextBox keys;
     @UiField
     AriaPanel message;
 

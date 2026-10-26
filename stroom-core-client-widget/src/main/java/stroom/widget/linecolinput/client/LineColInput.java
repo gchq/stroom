@@ -20,7 +20,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -31,7 +31,6 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Optional;
@@ -49,7 +48,7 @@ public class LineColInput extends Composite {
     private static final RegExp LINE_COL = RegExp.compile("^[0-9]+(:[0-9]+)?$");
 
     @UiField
-    TextInput valueBox;
+    TextBox valueBox;
     private HandlerRegistration onChangeRegistration;
 
     public LineColInput() {

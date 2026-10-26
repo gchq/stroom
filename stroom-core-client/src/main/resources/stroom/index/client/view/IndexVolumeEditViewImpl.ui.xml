@@ -14,7 +14,7 @@
                         helpText="The directory where index shards are stored on the node. A relative path is resolved against the Stroom home directory. Example: /stroom/volumes/index1."
                         screenReaderText="Relative paths are resolved against Stroom home."
                         required="true">
-            <form:TextInput ui:field="path" addStyleNames="w-100"/>
+            <form:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="indexVolumeEditState" label="State"
                         helpText="Controls how the volume is used. Active: read and written. Inactive: read only, no new shards. Closed: data removed, not used."
@@ -24,7 +24,7 @@
         <form:FormGroup identity="indexVolumeEditLimit" label="Limit"
                         helpText="The maximum amount of data to store on this volume, with an optional unit such as 500G or 2T (B, K, M, G, T, P; powers of 1024). Leave blank to fill the disk up to 99% or to 10 GiB free, whichever allows more."
                         screenReaderText="Size with unit, e.g. 500G. Blank fills most of the disk.">
-            <form:TextInput ui:field="bytesLimit" addStyleNames="w-100"/>
+            <form:TextBox ui:field="bytesLimit" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

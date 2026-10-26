@@ -14,7 +14,7 @@
                         helpText="The name of the field. Values in the indexing XML are matched to this name, and it is the name used in queries."
                         screenReaderText="Must match the field name in the indexing XML."
                         required="true">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Whether the field's value is kept in the index. A stored value can be shown in search results straight from the index; a field that isn't stored has to be extracted from the original data, which is slower."
                         screenReaderText="Stored values can be shown without extracting them from the data.">

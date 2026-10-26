@@ -7,11 +7,11 @@
         <form:FormGroup identity="newElementId" label="Name"
                         helpText="The name shown for this element in the pipeline structure. A unique name is suggested; the element ID is set automatically."
                         screenReaderText="Shown in the pipeline structure. The element ID is set automatically.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="newElementDesc" label="Description (optional)"
                         helpText="Optional notes about what this element does.">
-            <form:TextAreaInput ui:field="description" addStyleNames="w-100"/>
+            <form:TextArea ui:field="description" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

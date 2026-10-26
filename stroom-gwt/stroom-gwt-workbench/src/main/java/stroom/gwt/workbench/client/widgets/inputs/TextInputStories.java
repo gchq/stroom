@@ -22,12 +22,11 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
-import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's `TextBox` and `TextArea` (its copies of GWT's: a text box reports a change
@@ -62,7 +61,7 @@ public final class TextInputStories {
                 })
                 // A text area: the same field over several lines
                 .story("MultiLine", context -> {
-                    final TextAreaInput textArea = new TextAreaInput();
+                    final TextArea textArea = new TextArea();
                     AccessibleName.set(textArea, "Description");
                     textArea.setText("A first line\nand a second");
                     return minWidth(StoryPanels.column(8, textArea));

@@ -11,7 +11,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsTable" label="Table"
                         helpText="Table or embedded query whose selected row decides which data is shown. Choose Any to follow a selection in any of them."

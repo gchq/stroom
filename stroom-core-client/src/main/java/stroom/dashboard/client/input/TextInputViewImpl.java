@@ -18,7 +18,7 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.widget.form.client.AccessibleName;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -33,7 +33,7 @@ public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> i
     private final Widget widget;
 
     @UiField
-    TextInput value;
+    TextBox value;
 
     @Inject
     public TextInputViewImpl(final Binder binder) {

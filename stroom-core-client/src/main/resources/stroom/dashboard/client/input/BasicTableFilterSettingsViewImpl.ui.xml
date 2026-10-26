@@ -10,7 +10,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicTableFilterSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <form:TextInput ui:field="name" addStyleNames="w-100"/>
+            <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableFilterSettingsTable" label="Table"
                         helpText="Table or embedded query whose columns this filter acts on.">

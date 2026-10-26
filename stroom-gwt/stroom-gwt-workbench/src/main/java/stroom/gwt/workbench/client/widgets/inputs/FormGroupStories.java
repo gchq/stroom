@@ -25,12 +25,12 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public final class FormGroupStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/FormGroup", FormGroupStories.class)
                 .layout(StoryLayout.CENTERED)
-                // Basic labelled field wrapping a TextInput
+                // Basic labelled field wrapping a TextBox
                 .story("Basic", context -> {
                     final FormGroup formGroup = formGroup("fg-name", "Display Name");
                     formGroup.add(InputWidgets.textBox(context, "", "Enter display name…"));

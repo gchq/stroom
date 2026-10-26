@@ -19,7 +19,7 @@ package stroom.planb.client.view;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -40,7 +40,7 @@ public class TraceGeneralSettingsWidget extends Component {
     };
 
     @UiField
-    TextInput maxSpansPerTrace;
+    TextBox maxSpansPerTrace;
 
     /// Makes the settings, at their defaults.
     public TraceGeneralSettingsWidget() {

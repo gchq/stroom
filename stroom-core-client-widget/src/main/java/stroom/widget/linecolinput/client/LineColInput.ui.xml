@@ -4,6 +4,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="line-col-input">
-        <form:TextInput ui:field="valueBox" addStyleNames="line-col-input__field allow-focus"/>
+        <form:TextBox ui:field="valueBox" addStyleNames="line-col-input__field allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>

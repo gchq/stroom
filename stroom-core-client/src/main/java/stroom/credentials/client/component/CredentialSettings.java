@@ -22,7 +22,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -44,7 +44,7 @@ public class CredentialSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput name;
+    TextBox name;
     @UiField
     SelectionBox<CredentialType> credentialType;
     @UiField

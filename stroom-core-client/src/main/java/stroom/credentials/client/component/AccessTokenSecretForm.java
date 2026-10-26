@@ -19,7 +19,7 @@ package stroom.credentials.client.component;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Secret;
 import stroom.widget.component.client.Component;
-import stroom.widget.form.client.TextInput;
+import stroom.widget.form.client.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +33,7 @@ public final class AccessTokenSecretForm extends Component implements SecretForm
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextInput accessToken;
+    TextBox accessToken;
 
     /// Makes an empty form.
     public AccessTokenSecretForm() {

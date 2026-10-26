@@ -9,7 +9,7 @@
         <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)"
                         helpText="An optional name to help you tell rules apart. It does not affect which data the rule matches."
                         screenReaderText="For your reference only.">
-                <form:TextInput ui:field="name" />
+                <form:TextBox ui:field="name" />
         </form:FormGroup>
         <form:FormGroup helpText="Keep data matching this rule for ever. When ticked, Retain For is ignored. Default is ticked for a new rule.">
             <tickbox:TickBox ui:field="forever" identity="dataRetentionRuleKeepForever" label="Keep Forever"/>

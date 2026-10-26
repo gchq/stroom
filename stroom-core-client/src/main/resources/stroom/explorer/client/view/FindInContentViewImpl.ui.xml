@@ -7,7 +7,7 @@
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
         <g:FlowPanel styleName="FindViewImpl-top dock-container-horizontal dock-min">
-            <form:TextAreaInput ui:field="pattern" addStyleNames="dock-max allow-focus"/>
+            <form:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <p:Toolbar ui:field="buttonContainer" name="Search options"
                        addStyleNames="dock-min find-buttons toolbar--control">
                 <p:ToolbarToggleButton ui:field="toggleMatchCase" svg="CASE_SENSITIVE" title="Match case"/>

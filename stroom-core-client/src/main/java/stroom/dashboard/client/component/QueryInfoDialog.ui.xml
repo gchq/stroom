@@ -2,5 +2,5 @@
 <!-- Why the query is being run; the dialog's title (which a site can change) asks for it -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:f="urn:import:stroom.widget.form.client">
-    <f:TextAreaInput ui:field="queryInfo" addStyleNames="allow-focus max" ariaLabel="Query Info"/>
+    <f:TextArea ui:field="queryInfo" addStyleNames="allow-focus max" ariaLabel="Query Info"/>
 </ui:UiBinder>

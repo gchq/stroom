@@ -19,16 +19,16 @@ package stroom.widget.form.client;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.TextArea;
 
-/// A text area whose name and placeholder a template can set, as [TextInput] does for a text box:
+/// A text area whose name and placeholder a template can set, as [TextBox] does for a text box:
 ///
 /// ```
-/// <f:TextAreaInput ui:field="info" ariaLabel="Dependency Information" readOnly="true"/>
+/// <f:TextArea ui:field="info" ariaLabel="Dependency Information" readOnly="true"/>
 /// ```
 ///
 /// A blank or null value removes the attribute.
-public class TextAreaInput extends TextArea {
+// Stroom's copy of GWT's TextArea, which gives every text area its text-field.css look
+public class TextArea extends com.google.gwt.user.client.ui.TextArea {
 
     /// @param placeholder The hint shown in the area while it is empty.
     public void setPlaceholder(final String placeholder) {

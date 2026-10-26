@@ -13,7 +13,7 @@
                         addStyleNames="dock-min"
                         helpText="The name of the new file or folder. It must not contain '/' or ':'."
                         screenReaderText="Must not contain a slash or a colon.">
-            <form:TextInput ui:field="txtName" addStyleNames="stroom-control" name="name"/>
+            <form:TextBox ui:field="txtName" addStyleNames="stroom-control" name="name"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
