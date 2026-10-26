@@ -3270,11 +3270,18 @@ public class AskStroomAiPresenter
         awaitedRenderReports.put(visualisation.getUuid(), new AwaitedReport(messageId, actionId,
                 visualisation.getName()));
         ClearFunctionCacheEvent.fire(this, visualisation);
-        final List<TableChange> changes = new ArrayList<>();
+        // Its table's changes first (a table added for it, or its own changed, e.g. regrouped), then the pane's
+        // settings: on the new table, if one is added.
+        final List<TableChange> tableChanges = operations(create.getTableChanges());
+        final boolean newTable = addsTable(tableChanges);
+        final List<TableChange> changes = new ArrayList<>(tableChanges);
         changes.add(TableChange.builder(TableChange.SET_VIS_SETTINGS)
                 .targetId(create.getReplaceComponentId())
                 .doc(visualisation)
                 .value(create.getComponentSettings())
+                .table(newTable
+                        ? create.getTableName()
+                        : null)
                 .build());
         if (create.getComponentName() != null) {
             changes.add(TableChange.builder(TableChange.RENAME)
@@ -3284,11 +3291,19 @@ public class AskStroomAiPresenter
         }
         // The filters its clicks drive follow it, where it selects the same column under another key.
         changes.addAll(operations(create.getFilterChanges()));
-        final String replaced = "Rewrote Visualisation '" + visualisation.getName() + "' for the new chart (saved)";
+        final String replaced = "Rewrote Visualisation '" + visualisation.getName() + "' for the new chart (saved)"
+                                + (newTable
+                ? ", added table '" + create.getTableName() + "' for it"
+                : tableChanges.isEmpty()
+                        ? ""
+                        : ", changed table '" + create.getTableName() + "' for it");
         final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
                 create.getTarget(),
                 create.getTableId(),
-                create.getTableName(),
+                // A new table is found by its name among those the changes add, not as the table with tableId.
+                newTable
+                        ? null
+                        : create.getTableName(),
                 changes,
                 onResult -> onResult.accept(null),
                 () -> showUserActionStatus(messageId, actionId, "DONE",
@@ -3350,7 +3365,8 @@ public class AskStroomAiPresenter
         // dashboard.
         final List<TableChange> tableChanges = operations(create.getTableChanges());
         final List<TableChange> filterChanges = operations(create.getFilterChanges());
-        final boolean newTable = !tableChanges.isEmpty();
+        // Changes to its table that add one for it, rather than changing the table with tableId.
+        final boolean newTable = addsTable(tableChanges);
         final List<TableChange> changes = new ArrayList<>(tableChanges);
         changes.add(TableChange.builder(TableChange.ADD_VIS)
                 .name(create.getComponentName())
@@ -3388,6 +3404,11 @@ public class AskStroomAiPresenter
         if (!event.isHandled()) {
             AlertEvent.fireWarn(this, created + ", but the dashboard can't be opened here to add it.", null);
         }
+    }
+
+    // True if the changes add a table (for a chart of its own), rather than only changing the table they are for.
+    private static boolean addsTable(final List<TableChange> changes) {
+        return changes.stream().anyMatch(change -> TableChange.ADD_TABLE.equals(change.getOp()));
     }
 
     /// @param json Dashboard changes as the server gives them: a JSON array of operations, or null.

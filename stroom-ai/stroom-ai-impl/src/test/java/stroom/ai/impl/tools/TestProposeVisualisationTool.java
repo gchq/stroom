@@ -1059,7 +1059,7 @@ class TestProposeVisualisationTool {
         args.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
         Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
         Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
-        assertThat(call(args)).startsWith("Error: A chart that replaces another keeps its table and filters");
+        assertThat(call(args)).startsWith("Error: A chart that replaces another keeps the filters its clicks drive");
 
         // A selection the chart doesn't give.
         args.remove(ProposeVisualisationTool.REPLACE_ARG);
@@ -1069,6 +1069,85 @@ class TestProposeVisualisationTool {
         assertThat(call(args)).startsWith("No chart was offered: its filter isn't valid")
                 .contains("doesn't select 'colour'");
         assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aNewTablesGroupingIsCheckedAtTheLevelsGiven() {
+        // Seen in testing: a column grouped at level 2 was said to be at level 3, and to be regrouped at level 2.
+        final List<Map<String, Object>> nested = newTableChanges();
+        nested.set(5, mapOf("op", "group", "table", "Daily", "column", "From", "level", 2));
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "line",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Day", "y", "Messages", "series", "From"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by day",
+                ProposeVisualisationTool.NEW_TABLE_ARG, nested);
+
+        assertThat(call(args)).contains("'From' can't be series: it is grouped at level 2, but a line chart gets "
+                                        + "only the table's top-level rows (one per 'Day', grouped at level 1)")
+                .contains("Group 'From' at level 1 too");
+    }
+
+    @Test
+    void aChartsTableIsChangedWithIt() {
+        // Seen in testing: a network's table was grouped by sender and recipient with one button, and the network
+        // drawn of it with another.
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.TABLE_CHANGES_ARG, List.of(
+                mapOf("op", "group", "column", "From", "level", 1),
+                mapOf("op", "group", "column", "To", "level", 1)));
+
+        assertThat(call(args))
+                .contains("'Create visualisation' button for a network graph of table 'Links'")
+                .contains("table 'Links' as changed hasn't run, so only its columns were checked");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.table()).isEqualTo("Links");
+            assertThat(plan.componentId()).isEqualTo("table-1");
+            assertThat(plan.tableChanges()).extracting(change -> change.get("op")).containsExactly("group", "group");
+        });
+
+        // Grouped one below the other: the network's targets would be blank.
+        args.put(ProposeVisualisationTool.TABLE_CHANGES_ARG, List.of(
+                mapOf("op", "group", "column", "From", "level", 1),
+                mapOf("op", "group", "column", "To", "level", 2)));
+        assertThat(call(args)).startsWith("No chart was offered: the table 'Links' can't make this network graph")
+                .contains("'To' can't be target: it is grouped at level 2");
+
+        // Only the table's own changes.
+        args.put(ProposeVisualisationTool.TABLE_CHANGES_ARG, List.of(mapOf("op", "add_table", "name", "Pairs")));
+        assertThat(call(args)).startsWith("Error: tableChanges changes only the table charted ('Links')");
+        args.put(ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges());
+        assertThat(call(args)).startsWith("Error: Give newTable or tableChanges, not both");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aReplacedChartIsMovedToATableAddedForItWithOneButton() {
+        // Seen in testing: a network was replaced by one weighted by a count of messages per pair, which needed a
+        // table of its own: the table took one button, and the network another.
+        Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
+        Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "line",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Day", "y", "Messages", "series", "From"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by day",
+                ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges(),
+                ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+
+        assertThat(call(args)).contains("'Update visualisation' button for a line chart of table 'Daily'");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.isReplacement()).isTrue();
+            assertThat(plan.table()).isEqualTo("Daily");
+            assertThat(plan.tableChanges()).extracting(change -> change.get("op")).startsWith("add_table");
+        });
+
+        // Its filters follow it: a new one is added with propose_dashboard_change.
+        args.put(ProposeVisualisationTool.FILTER_ARG, mapOf("mode", "table", "target", "Links",
+                "terms", List.of(mapOf("field", "From", "selection", "series"))));
+        assertThat(call(args)).startsWith("Error: A chart that replaces another keeps the filters its clicks drive");
     }
 
     @Test
