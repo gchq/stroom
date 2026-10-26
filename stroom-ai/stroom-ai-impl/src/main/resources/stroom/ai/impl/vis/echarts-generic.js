@@ -42,7 +42,7 @@ if (!window.visualisations) {
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
     // The space kept clear at the chart's right edge. Stroom's refresh button and the chart's controls are in the
-    // toolbar under the chart, so this is only a margin.
+    // toolbar above the chart, so this is only a margin.
     var STROOM_BUTTON_SPACE = 16;
     // A scatter plot with more points than this is drawn in ECharts' large mode, a batch at a time.
     var LARGE_THRESHOLD = 2000;
@@ -2894,7 +2894,7 @@ if (!window.visualisations) {
         });
     }
 
-    // Zooming, put back with the toolbar under the chart: a network graph zooms and pans itself (roam).
+    // Zooming, put back with the toolbar above the chart: a network graph zooms and pans itself (roam).
     function addZoom(kind, option, style, settings, rangeAt) {
         if (kind !== "graph" && option.grid && option.xAxis && option.yAxis) {
             if (kind === "scatter") {
@@ -2966,8 +2966,11 @@ if (!window.visualisations) {
             brushStyle: {borderWidth: 1, color: "rgba(120, 140, 180, 0.15)", borderColor: style.subtleText},
             outOfBrush: {colorAlpha: 0.35}
         };
+        // No buttons of ECharts' own in the chart: for a brush, ECharts adds its toolbox (Box Select, Polygon
+        // Select, Keep and Clear) unless there is one, so one is given, hidden. The range tool is turned on and off
+        // from Stroom's toolbar above the chart instead.
+        option.toolbox = {show: false};
         option.brush[down ? "yAxisIndex" : "xAxisIndex"] = 0;
-        // Turned on and off with the toolbar under the chart (see setRangeMode), not ECharts' toolbox in it.
     }
 
     // The range tool's area for a selected time range: along the time axis, or across the bars it covers (by
@@ -3207,7 +3210,7 @@ if (!window.visualisations) {
         // Auto Interval groups the rows again as the zoom changes, once it has settled.
         var intervalTimer = null;
 
-        // Tells Stroom which of the chart's controls apply, for the toolbar it shows under the chart (reset zoom,
+        // Tells Stroom which of the chart's controls apply, for the toolbar it shows above the chart (reset zoom,
         // select a time range, clear the selection), with what is selected and whether rows were left out.
         function sendControls() {
             if (!window.stroom || typeof window.stroom.controls !== "function") {
@@ -3683,7 +3686,7 @@ if (!window.visualisations) {
             }
         };
 
-        // A control in Stroom's toolbar under the chart was used: resetZoom, rangeMode (turns the range tool on
+        // A control in Stroom's toolbar above the chart was used: resetZoom, rangeMode (turns the range tool on
         // or off) or clearSelection.
         this.command = function (name) {
             if (name === "resetZoom") {
