@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardComponents;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredPart;
@@ -44,6 +45,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.TableSettings;
+import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.json.JsonUtil;
 
@@ -98,6 +100,9 @@ class TestProposeVisualisationTool {
     private final CurrentResultsTool currentResultsTool = Mockito.mock(CurrentResultsTool.class);
     private final ChartLibraries chartLibraries = Mockito.mock(ChartLibraries.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
+    private final QueryService queryService = Mockito.mock(QueryService.class);
+    private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeVisualisationTool tool;
@@ -128,7 +133,8 @@ class TestProposeVisualisationTool {
         Mockito.when(chartLibraries.findUnrecognisedECharts()).thenReturn(List.of());
 
         tool = new ProposeVisualisationTool(workspace, tabSnapshots, documentAccess, currentResultsTool,
-                chartLibraries, auditLog);
+                chartLibraries, auditLog, new ProposeDashboardChangeTool(workspace, tabSnapshots, documentAccess,
+                dataSourceAccess, () -> queryService, auditLog, dashboardBuilder));
         dashboardTab(List.of(linksTable()), false);
     }
 
@@ -684,7 +690,8 @@ class TestProposeVisualisationTool {
                 .contains("a click on it selects category (column 'User')")
                 .contains("the search of the query feeding 'Events' by field(s) UserId (by category)")
                 .contains("or a table's rows by column(s) User")
-                .contains("propose it only once they've created the chart");
+                .contains("It was offered without a filter (next time, ask first and give filter, to add it with "
+                          + "the chart)");
 
         // Columns made by an expression can only filter a table's rows.
         assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.GRAPH,
@@ -883,6 +890,127 @@ class TestProposeVisualisationTool {
     }
 
     // The arguments for an ECharts network graph of who messages whom, to change per test.
+    @Test
+    void aChartOfANewTableAddsTheTableWithIt() {
+        // Seen in testing: a table, then a reload, then the chart took three steps; the chart's button now adds a
+        // table of its own with it.
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "line",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Day", "y", "Messages", "series", "From"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by day",
+                ProposeVisualisationTool.SUMMARY_ARG, "Messages each day, by sender.",
+                ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges());
+
+        assertThat(call(args))
+                .contains("'Create visualisation' button for a line chart of table 'Daily'")
+                .contains("the new table 'Daily' hasn't run, so only its columns were checked");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.table()).isEqualTo("Daily");
+            // Added beside table 'Links', whose component the browser applies the changes to.
+            assertThat(plan.componentId()).isEqualTo("table-1");
+            assertThat(plan.tableChanges()).extracting(change -> change.get("op"))
+                    .containsExactly("add_table", "add_column", "add_column", "add_column", "group", "group");
+            assertThat(plan.filterChanges()).isNull();
+        });
+
+        // A column the new table doesn't have.
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Hour", "y", "Messages"));
+        assertThat(call(args)).startsWith("No chart was offered: the table 'Daily' can't make this line chart");
+
+        // The table's changes must start by adding it.
+        args.put(ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges().subList(1, 3));
+        assertThat(call(args)).startsWith("Error: newTable must start with add_table");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aFilterIsAddedWithTheChartItsClicksDrive() {
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.ADD_NEW_ARG, true);
+        args.put(ProposeVisualisationTool.FILTER_ARG, mapOf("mode", "table", "target", "Links", "match", "any",
+                "terms", List.of(mapOf("field", "From", "selection", "node"), mapOf("field", "To", "selection",
+                        "node"), mapOf("field", "From", "selection", "source"), mapOf("field", "To", "selection",
+                        "target"))));
+
+        assertThat(call(args)).contains("Its clicks filter the dashboard (added with it): Filter the rows of "
+                                        + "'Links' by what is selected in chart 'Message links'");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final List<Map<String, Object>> filter = VisualisationPlan.fromJson((String) action.get("plan"))
+                    .filterChanges();
+            assertThat(filter).singleElement().satisfies(change -> {
+                assertThat(change).containsEntry("op", "add_selection_filter")
+                        .containsEntry("name", "Message links")
+                        .containsEntry("ref", ProposeVisualisationTool.NEW_CHART_ID)
+                        .containsEntry("target_id", "table-1");
+                assertThat(JsonUtil.writeValueAsString(change.get("query"), false))
+                        .contains("${component.new-chart.selection.node}")
+                        .contains("${component.new-chart.selection.source}");
+            });
+        });
+
+        // A chart that replaces another keeps its filters.
+        args.remove(ProposeVisualisationTool.ADD_NEW_ARG);
+        args.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+        Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
+        Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
+        assertThat(call(args)).startsWith("Error: A chart that replaces another keeps its table and filters");
+
+        // A selection the chart doesn't give.
+        args.remove(ProposeVisualisationTool.REPLACE_ARG);
+        args.put(ProposeVisualisationTool.ADD_NEW_ARG, true);
+        args.put(ProposeVisualisationTool.FILTER_ARG, mapOf("mode", "table", "target", "Links",
+                "terms", List.of(mapOf("field", "From", "selection", "colour"))));
+        assertThat(call(args)).startsWith("No chart was offered: its filter isn't valid")
+                .contains("doesn't select 'colour'");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aNewTablesDayFiltersByItsTime() {
+        // A day the new chart selects filters the new table's day column by time, as an existing table's would.
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "line",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Day", "y", "Messages"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by day",
+                ProposeVisualisationTool.SUMMARY_ARG, "Messages each day.",
+                ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges(),
+                ProposeVisualisationTool.FILTER_ARG, mapOf("mode", "table", "target", "Daily",
+                        "terms", List.of(mapOf("field", "Day", "selection", "x"))));
+
+        assertThat(call(args)).contains("Day within its selected time");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> change = VisualisationPlan.fromJson((String) action.get("plan"))
+                    .filterChanges().getFirst();
+            // The new table is found by its name once added: it has no id yet.
+            assertThat(change).containsEntry("target", "Daily");
+            assertThat(JsonUtil.writeValueAsString(change.get("query"), false))
+                    .contains("${component.new-chart.selection.from}")
+                    .contains("${component.new-chart.selection.to}");
+        });
+
+        // A column the new table doesn't have.
+        args.put(ProposeVisualisationTool.FILTER_ARG, mapOf("mode", "table", "target", "Daily",
+                "terms", List.of(mapOf("field", "Hour", "selection", "x"))));
+        assertThat(call(args)).startsWith("No chart was offered: its filter isn't valid: the new table has no "
+                                          + "column Hour");
+    }
+
+    // A table of messages a day by sender, added beside 'Links'.
+    private static List<Map<String, Object>> newTableChanges() {
+        return new ArrayList<>(List.of(
+                mapOf("op", "add_table", "name", "Daily"),
+                mapOf("op", "add_column", "table", "Daily", "name", "Day", "expression", "floorDay(${EventTime})",
+                        "format", "Date Time"),
+                mapOf("op", "add_column", "table", "Daily", "name", "From", "expression", "${From}"),
+                mapOf("op", "add_column", "table", "Daily", "name", "Messages", "expression", "count()",
+                        "format", "Number"),
+                mapOf("op", "group", "table", "Daily", "column", "Day", "level", 1),
+                mapOf("op", "group", "table", "Daily", "column", "From", "level", 1)));
+    }
+
     private static Map<String, Object> graphArgs() {
         return mapOf(
                 ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,

@@ -71,6 +71,10 @@ public class AiCreateVisualisation {
     private final DocRef replaced;
     @JsonProperty
     private final String replaceComponentId;
+    @JsonProperty
+    private final String tableChanges;
+    @JsonProperty
+    private final String filterChanges;
 
     /// @param name              The name to suggest for the new Visualisation.
     /// @param folder            The folder to suggest for it: the dashboard's or query's folder.
@@ -84,8 +88,7 @@ public class AiCreateVisualisation {
     /// @param componentName     For a dashboard, the name of the new vis component, else null.
     /// @param componentSettings For a dashboard, the new vis component's settings JSON, else null.
     /// @param placement         For a dashboard, `below` the table or a `tab` beside it, else null.
-    /// @param snapshotHash      For a dashboard, the hash of its description when the chart was planned, so it
-    ///                          isn't added to a dashboard that has changed since; else null.
+    /// @param snapshotHash      For a dashboard, the hash of its description when the chart was planned; else null.
     /// @param showArguments     For a StroomQL query, the arguments of its `show` clause, e.g.
     ///                          `source = "Sender", target = "Recipient"`, else null.
     /// @param baseQuery         For a StroomQL query, its text when the chart was planned, so the `show` clause
@@ -93,6 +96,11 @@ public class AiCreateVisualisation {
     /// @param replaced          For a chart replacing one Stroom AI generated, the Visualisation rewritten for it,
     ///                          with its new name; else null.
     /// @param replaceComponentId For a chart replacing another, the id of the vis component showing it; else null.
+    /// @param tableChanges      For a chart of a table it adds, the changes that add the table (beside the one with
+    ///                          tableId), as a JSON array of the dashboard changes the browser applies; else null.
+    /// @param filterChanges     For a chart whose clicks filter the dashboard, the selection filter's change, as a
+    ///                          JSON array of the dashboard changes the browser applies, naming the chart by
+    ///                          componentName; else null.
     @JsonCreator
     public AiCreateVisualisation(@JsonProperty("name") final String name,
                                  @JsonProperty("folder") final ExplorerNode folder,
@@ -110,7 +118,9 @@ public class AiCreateVisualisation {
                                  @JsonProperty("showArguments") final String showArguments,
                                  @JsonProperty("baseQuery") final String baseQuery,
                                  @JsonProperty("replaced") final DocRef replaced,
-                                 @JsonProperty("replaceComponentId") final String replaceComponentId) {
+                                 @JsonProperty("replaceComponentId") final String replaceComponentId,
+                                 @JsonProperty("tableChanges") final String tableChanges,
+                                 @JsonProperty("filterChanges") final String filterChanges) {
         this.name = name;
         this.folder = folder;
         this.functionName = functionName;
@@ -128,6 +138,8 @@ public class AiCreateVisualisation {
         this.baseQuery = baseQuery;
         this.replaced = replaced;
         this.replaceComponentId = replaceComponentId;
+        this.tableChanges = tableChanges;
+        this.filterChanges = filterChanges;
     }
 
     /// @return The name to suggest for the new Visualisation.
@@ -219,5 +231,16 @@ public class AiCreateVisualisation {
     /// @return For a chart replacing another, the id of the vis component showing it; else null.
     public String getReplaceComponentId() {
         return replaceComponentId;
+    }
+
+    /// @return For a chart of a table it adds, the changes that add the table, as a JSON array; else null.
+    public String getTableChanges() {
+        return tableChanges;
+    }
+
+    /// @return For a chart whose clicks filter the dashboard, its selection filter's change, as a JSON array; else
+    /// null.
+    public String getFilterChanges() {
+        return filterChanges;
     }
 }

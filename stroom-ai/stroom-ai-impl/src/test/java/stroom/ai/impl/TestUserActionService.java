@@ -644,7 +644,7 @@ class TestUserActionService {
         final AiCreateVisualisation create = new AiCreateVisualisation("Chat user connections", null,
                 "visualisations.EChartsGeneric", new DocRef("Script", "s", "ECharts Generic"), "{}", "Generated",
                 dashboard, "table-1", "Messages", "Chat user connections", "{}", "below", "abc", null, null, null,
-                null);
+                null, null, null);
         Mockito.when(visualisationActions.prepare(dashboard, "Chat user connections", "{\"kind\":\"graph\"}"))
                 .thenReturn(create);
         storeResult(createVisualisation(dashboard));
