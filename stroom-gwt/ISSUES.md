@@ -265,10 +265,11 @@ basic use:
   `PathwayTree.read` (was `PathwayTreePresenter.read`) calls `addNode(pathway.getRoot())` for a new pathway, whose root is
   `null`. Fix: only add and draw nodes when `pathway.getRoot() != null`. The workbench has no
   New Pathway story until this is fixed (`PathwaysEditorStories`).
-* A node with no constraints can never get one: `ConstraintListPresenter` starts with
-  `readOnly = true`, and `setData` (line 283) updates it but never calls `enableButtons()`, so New,
-  Edit and Remove stay disabled ("New constraint disabled as read only") until a constraint is
-  selected, which only then enables them (the selection handler, lines 121-123).
+* A node with no constraints can never get one: `ConstraintListController` (was
+  `ConstraintListPresenter`) starts with `readOnly = true`, and `setData` updates it but never
+  brings the buttons up to date (`ConstraintList.updateActions`), so New, Edit and Remove stay
+  disabled ("New constraint disabled as read only") until a constraint is selected, which only then
+  enables them (the selection handler). Wave 10 keeps this as it is.
 * The paths' New Path, Edit Selected Path and Delete Selected Path buttons do nothing: they have no
   command (they were made with `null`, and `PathwayTree` keeps them so in wave 7). Like the
   constraints' buttons they also show the document's read-only state only once a node is chosen:
@@ -281,8 +282,8 @@ basic use:
 
 * `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTree.java`
   (`read`, and `enableButtons`)
-* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ConstraintListPresenter.java`
-  (line 283)
+* `stroom-core-client/src/main/java/stroom/pathways/client/component/ConstraintListController.java`
+  (`setData`)
 * `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwaysSettings.java`
   (`onReadOnlyChange`)
 

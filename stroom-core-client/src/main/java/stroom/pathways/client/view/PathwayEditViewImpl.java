@@ -18,7 +18,6 @@ package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -70,7 +69,7 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     }
 
     @Override
-    public void setConstraints(final View view) {
+    public void setConstraints(final IsWidget view) {
         constraints.setWidget(view.asWidget());
     }
 

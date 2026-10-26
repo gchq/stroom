@@ -16,6 +16,7 @@
 
 package stroom.pathways.client.presenter;
 
+import stroom.pathways.client.component.ConstraintListController;
 import stroom.pathways.client.component.PathwayTreeController;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 import stroom.pathways.shared.PathwaysDoc;
@@ -41,21 +42,21 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
     private Pathway pathway;
     private final PathwayTreeController pathwayTree;
-    private final ConstraintListPresenter constraintListPresenter;
+    private final ConstraintListController constraintListPresenter;
     private boolean readOnly = true;
 
     @Inject
     public PathwayEditPresenter(final EventBus eventBus,
                                 final PathwayEditView view,
                                 final PathwayTreeController pathwayTree,
-                                final ConstraintListPresenter constraintListPresenter) {
+                                final ConstraintListController constraintListPresenter) {
         super(eventBus, view);
         own(pathwayTree);
         own(constraintListPresenter);
         this.pathwayTree = pathwayTree;
         this.constraintListPresenter = constraintListPresenter;
         view.setTree(pathwayTree);
-        view.setConstraints(constraintListPresenter.getView());
+        view.setConstraints(constraintListPresenter);
 
         own(pathwayTree.getSelectionModel().addSelectionChangeHandler(e -> {
             final PathNode selected = pathwayTree.getSelectionModel().getSelectedObject();
@@ -306,6 +307,6 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
         void setTree(IsWidget view);
 
-        void setConstraints(View view);
+        void setConstraints(IsWidget view);
     }
 }

@@ -123,7 +123,7 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Auth"))
                             .toHaveClass("pathway-tree__node-name--selected"));
                     // The main graph has no node detail panel; a node's constraints are shown, as a
-                    // grid (ConstraintListPresenter), in the Edit Pathway dialog (opened by Edit
+                    // grid (ConstraintList), in the Edit Pathway dialog (opened by Edit
                     // Selected Pathway), so the play opens it and selects the node there
                     play.click(play.getByRole("button", "Edit Selected Pathway"));
                     final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
@@ -164,7 +164,7 @@ public final class PathwaysEditorStories {
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
                     // The constraint list's buttons stay disabled, titled 'New Constraint (read
-                    // only)' (a Stroom bug, see ISSUES.md: ConstraintListPresenter.setData
+                    // only)' (a Stroom bug, see ISSUES.md: ConstraintListController.setData
                     // sets readOnly but never calls enableButtons(), so the buttons keep their
                     // initial read only state), so the New Constraint dialog and its validation
                     // can't be reached
