@@ -46,9 +46,9 @@ if (!window.visualisations) {
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
 
-    // Stroom puts its own refresh button over the top-right corner of a dashboard's visualisation, so nothing
-    // that can be clicked or read is put within this many pixels of the right edge at the top.
-    var STROOM_BUTTON_SPACE = 36;
+    // The space kept clear at the chart's right edge. Stroom's refresh button and the chart's controls are in the
+    // toolbar under the chart, so this is only a margin.
+    var STROOM_BUTTON_SPACE = 16;
 
     // A selected item's border, and the solid line drawn either side of a selected link (half as thick).
     var SELECTED_BORDER = 3;
@@ -4330,79 +4330,6 @@ if (!window.visualisations) {
         tooltip.style.display = "none";
         element.appendChild(tooltip);
 
-        // Buttons over the chart's top right, left of where Stroom puts its own: reset zoom, and the time range tool.
-        var toolbar = window.document.createElement("div");
-        toolbar.style.position = "absolute";
-        toolbar.style.top = "4px";
-        toolbar.style.right = (STROOM_BUTTON_SPACE + 4) + "px";
-        toolbar.style.zIndex = "2";
-        element.appendChild(toolbar);
-
-        function toolButton(text, title) {
-            var button = window.document.createElement("button");
-            button.type = "button";
-            button.textContent = text;
-            button.title = title;
-            button.setAttribute("aria-label", title);
-            button.style.marginLeft = "4px";
-            button.style.border = "none";
-            button.style.background = "none";
-            button.style.cursor = "pointer";
-            button.style.font = "inherit";
-            button.style.fontSize = "14px";
-            button.style.padding = "0 4px";
-            button.style.display = "none";
-            toolbar.appendChild(button);
-            return button;
-        }
-
-        var rangeButton = toolButton("⇔", "Select a time range");
-        var resetButton = toolButton("⟲", "Reset zoom");
-
-        // Says the chart shows only the first rows, when Stroom sent as many as the row limit allows.
-        var truncationNote = window.document.createElement("div");
-        truncationNote.style.position = "absolute";
-        truncationNote.style.right = "8px";
-        truncationNote.style.bottom = "8px";
-        truncationNote.style.fontSize = "11px";
-        truncationNote.style.zIndex = "2";
-        truncationNote.style.display = "none";
-        element.appendChild(truncationNote);
-
-        // What is selected, with a button to clear it, shown whenever something is: a filter that uses the selection
-        // may leave the chart with nothing to click to clear it.
-        var selectionBar = window.document.createElement("div");
-        selectionBar.style.position = "absolute";
-        selectionBar.style.left = "8px";
-        selectionBar.style.bottom = "8px";
-        selectionBar.style.maxWidth = "calc(100% - 16px)";
-        selectionBar.style.boxSizing = "border-box";
-        selectionBar.style.padding = "2px 4px 2px 8px";
-        selectionBar.style.borderRadius = "4px";
-        selectionBar.style.fontSize = "12px";
-        selectionBar.style.alignItems = "center";
-        selectionBar.style.zIndex = "2";
-        selectionBar.style.display = "none";
-        var selectionText = window.document.createElement("span");
-        selectionText.style.overflow = "hidden";
-        selectionText.style.textOverflow = "ellipsis";
-        selectionText.style.whiteSpace = "nowrap";
-        selectionBar.appendChild(selectionText);
-        var clearButton = window.document.createElement("button");
-        clearButton.type = "button";
-        clearButton.textContent = "✕";
-        clearButton.title = "Clear the selection";
-        clearButton.setAttribute("aria-label", "Clear the selection");
-        clearButton.style.marginLeft = "6px";
-        clearButton.style.border = "none";
-        clearButton.style.background = "none";
-        clearButton.style.cursor = "pointer";
-        clearButton.style.font = "inherit";
-        clearButton.style.color = "inherit";
-        clearButton.style.padding = "0 4px";
-        selectionBar.appendChild(clearButton);
-        element.appendChild(selectionBar);
-
         var lastArgs = null;
         var lastReportJson = null;
         var lastReport = null;
@@ -4465,24 +4392,23 @@ if (!window.visualisations) {
             return items.length === 1 ? items[0].label : items[0].label + " and " + (items.length - 1) + " more";
         }
 
-        function showSelectionBar() {
-            if (!selected) {
-                selectionBar.style.display = "none";
-                selectionText.textContent = "";
+        // Tells Stroom which of the chart's controls apply, for the toolbar it shows under the chart (reset zoom,
+        // select a time range, clear the selection), with what is selected and whether rows were left out, as the
+        // ECharts adapter does.
+        function sendControls() {
+            if (!window.stroom || typeof window.stroom.controls !== "function") {
                 return;
             }
-            var label = selectedLabel();
-            selectionText.textContent = "Selected: " + label;
-            selectionBar.title = "Selected: " + (selected.items ? selected.items.map(function (item) {
-                return item.label;
-            }).join("; ") : label);
-            if (lastStyle) {
-                selectionBar.style.color = lastStyle.text;
-                selectionBar.style.background = lastStyle.tooltipBackground;
-                selectionBar.style.border = "1px solid " + lastStyle.border;
-                selectionBar.style.fontFamily = lastStyle.fontFamily;
-            }
-            selectionBar.style.display = "flex";
+            var report = lastReport || {};
+            window.stroom.controls({
+                zoom: !!(drawn && drawn.zoomKind),
+                zoomed: !!(state.zoom || state.geoZoom),
+                range: !!(drawn && drawn.timeAxis),
+                rangeMode: rangeMode && !!(drawn && drawn.timeAxis),
+                selectable: !!drawn,
+                selected: selected ? selectedLabel() : null,
+                note: report.truncated ? "First " + report.rows + " rows (the table has more than Max Rows)" : null
+            });
         }
 
         // True if a link between two things is the same either way round: a chord diagram's, or an undirected
@@ -4533,21 +4459,22 @@ if (!window.visualisations) {
             send();
         }
 
-        clearButton.addEventListener("click", function () {
-            clearSelection();
-        });
-
-        resetButton.addEventListener("click", function () {
-            state.zoom = null;
-            state.geoZoom = null;
-            render();
-        });
-
-        rangeButton.addEventListener("click", function () {
-            rangeMode = !rangeMode;
-            rangeButton.style.fontWeight = rangeMode ? "bold" : "normal";
-            rangeButton.title = rangeMode ? "Stop selecting a time range" : "Select a time range";
-        });
+        // A control in Stroom's toolbar under the chart was used: resetZoom, rangeMode (turns the range tool on
+        // or off) or clearSelection.
+        this.command = function (name) {
+            if (name === "resetZoom") {
+                state.zoom = null;
+                state.geoZoom = null;
+                render();
+            } else if (name === "rangeMode") {
+                rangeMode = !rangeMode;
+                sendControls();
+            } else if (name === "clearSelection") {
+                if (selected) {
+                    clearSelection();
+                }
+            }
+        };
 
         // A click on a mark selects it (or clears the selection, if it was all that was selected). Ctrl-click,
         // Cmd-click or Shift-click adds it to what is selected, or takes it away.
@@ -4933,9 +4860,6 @@ if (!window.visualisations) {
             tooltip.style.color = style.text;
             tooltip.style.border = "1px solid " + style.border;
             tooltip.style.fontFamily = style.fontFamily;
-            toolbar.style.color = style.subtleText;
-            rangeButton.style.color = style.subtleText;
-            resetButton.style.color = style.subtleText;
             try {
                 if (!window.d3) {
                     throw new Error("The D3 library hasn't loaded. Check that the D3 Script doc is installed and is " +
@@ -4944,8 +4868,6 @@ if (!window.visualisations) {
                 drawn = drawChart(window.d3, chartElement, settings, lastArgs.data, prefs, style, state);
                 report = drawn.report;
                 showRange();
-                resetButton.style.display = drawn.zoomKind ? "inline" : "none";
-                rangeButton.style.display = drawn.timeAxis ? "inline" : "none";
                 if (report.status === "empty") {
                     showMessage("No data", style);
                 } else if (report.status === "nothing-drawn") {
@@ -4953,16 +4875,6 @@ if (!window.visualisations) {
                         style);
                 } else {
                     hideMessage();
-                }
-                showSelectionBar();
-                if (report.truncated) {
-                    truncationNote.textContent = "First " + report.rows + " rows";
-                    truncationNote.title = "The table has more rows than this chart's Max Rows, which were left " +
-                        "out. Group the table (e.g. by a rounded time) or raise Max Rows.";
-                    truncationNote.style.color = style.subtleText;
-                    truncationNote.style.display = "block";
-                } else {
-                    truncationNote.style.display = "none";
                 }
             } catch (e) {
                 drawn = null;
@@ -4977,6 +4889,8 @@ if (!window.visualisations) {
             report.selected = !!selected;
             lastReport = report;
             sendReport(report);
+            // What is selected is kept while it isn't drawn (e.g. filtered out), so it can still be cleared.
+            sendControls();
         }
 
         this.setData = function (context, settings, data) {

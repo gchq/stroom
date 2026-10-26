@@ -219,8 +219,10 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - Dates must be in a column formatted as Date Time to go on a time axis; dates held as text are drawn as
   categories, or can't be placed at all on a scatter plot.
 - Bar, line and scatter charts zoom with the mouse wheel and pan by dragging (a scatter plot on both axes), and a
-  network graph zooms and pans the same way; a reset zoom button at the top right of the chart puts it back. Charts
-  have no title of their own: the dashboard shows the Visualisation pane's name above it, so name the pane well.
+  network graph zooms and pans the same way. The toolbar under the chart has its controls: Reset zoom, Select a
+  time range (a time axis, or bars of dates; then drag across the chart), Clear the selection, what is selected,
+  and the refresh button. Charts have no title of their own: the dashboard shows the Visualisation pane's name
+  above it, so name the pane well.
 - Bar, line and scatter charts take `units` (count, bytes, percent, ms, seconds) for how values read, `logScale`,
   a `threshold` line (with `thresholdLabel`), `breakOutliers` to cut the axis when a few values dwarf the rest, and
   `zoomSlider`; bar and line charts an `averageLine`, a scatter plot `jitter`. Pie, heatmap, calendar and histogram

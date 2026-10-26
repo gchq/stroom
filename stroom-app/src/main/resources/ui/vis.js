@@ -61,6 +61,27 @@ var postReport = function(report) {
     }
 }
 
+// Send Stroom the controls a visualisation has for its toolbar (null for none), unless the same as the last.
+var lastControlsJson = null;
+var postControls = function(controls) {
+    var json = JSON.stringify(controls);
+    if (json === lastControlsJson) {
+        return;
+    }
+    lastControlsJson = json;
+
+    if (stroomParent && stroomFrameId && stroomOrigin) {
+        var obj = {
+          frameId : stroomFrameId,
+          functionName : 'controls',
+          controls : controls,
+        };
+
+        var message = JSON.stringify(obj);
+        stroomParent.postMessage(message, stroomOrigin);
+    }
+}
+
 !function() {
     var stroom = {};
 
@@ -113,6 +134,19 @@ var postReport = function(report) {
     stroom.report = function(report) {
         visReportsItself = true;
         postReport(report);
+    };
+
+    // Send Stroom the controls the visualisation has, for the toolbar Stroom shows under it; a button in the
+    // toolbar calls the visualisation's command(name) function. Each is optional:
+    //   zoom: it can zoom (shows Reset zoom, enabled while zoomed: true)
+    //   range: it has a range tool (shows Select a time range, on while rangeMode: true)
+    //   selectable: a click selects an item (shows Clear the selection, enabled while selected names it)
+    //   note: a short note, e.g. that rows were left out
+    // e.g. `stroom.controls({zoom: true, zoomed: false, range: true, rangeMode: false, selectable: true,
+    //     selected: '2026-10-24', note: null})`
+    // The commands are resetZoom, rangeMode (turns the range tool on or off) and clearSelection.
+    stroom.controls = function(controls) {
+        postControls(controls || null);
     };
 
     stroom.dashboard = function(uuid, params, queryOnOpen) {
@@ -357,6 +391,8 @@ function VisualisationManager() {
   this.setVisType = function(type, className, callback) {
     visReportsItself = false;
     lastReportJson = null;
+    // A new visualisation has no controls until it sends them.
+    postControls(null);
     try {
       vis = eval("new " + type + "()");
       callback.onSuccess(null);
@@ -394,6 +430,17 @@ function VisualisationManager() {
   this.resize = function(callback) {
     if (vis) {
       vis.resize();
+    }
+  };
+
+  // A button in Stroom's toolbar under the visualisation was used (see stroom.controls).
+  this.command = function(name, callback) {
+    if (vis && typeof vis.command === "function") {
+      try {
+        vis.command(String(name));
+      } catch (ex) {
+        console.error(ex);
+      }
     }
   };
 }
