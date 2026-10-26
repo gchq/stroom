@@ -27,6 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.client.component.ExpressionTreeController;
+import stroom.receive.content.client.component.ContentTemplateListController;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplateResource;
@@ -74,7 +75,7 @@ public class ContentTemplateTabPresenter
     protected static final CellIcon MOVE_TEMPLATE_UP_ICON = CellIcon.of(SvgImage.UP, "Move template up", false);
     protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
-    private final ContentTemplateListPresenter listPresenter;
+    private final ContentTemplateListController listPresenter;
     private final ExpressionTreeController expressionTree;
     private final Provider<ContentTemplateEditPresenter> editPresenterProvider;
     private final RestFactory restFactory;
@@ -100,7 +101,7 @@ public class ContentTemplateTabPresenter
     @Inject
     public ContentTemplateTabPresenter(final EventBus eventBus,
                                        final ContentTemplateTabView view,
-                                       final ContentTemplateListPresenter listPresenter,
+                                       final ContentTemplateListController listPresenter,
                                        final ExpressionTreeController expressionTree,
                                        final Provider<ContentTemplateEditPresenter> editPresenterProvider,
                                        final RestFactory restFactory) {
@@ -112,7 +113,7 @@ public class ContentTemplateTabPresenter
         this.editPresenterProvider = editPresenterProvider;
         this.restFactory = restFactory;
 
-        getView().setTableView(listPresenter.getView());
+        getView().setTableView(listPresenter);
 //        getView().setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
@@ -140,7 +141,7 @@ public class ContentTemplateTabPresenter
         moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-        listPresenter.getView()
+        listPresenter
                 .asWidget()
                 .getElement()
                 .getStyle()
@@ -758,7 +759,7 @@ public class ContentTemplateTabPresenter
 
     public interface ContentTemplateTabView extends View {
 
-        void setTableView(View view);
+        void setTableView(IsWidget view);
 
         void setDescription(final String description);
 

@@ -19,7 +19,6 @@ package stroom.receive.content.client.view;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -60,7 +59,7 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
     }
 
     @Override
-    public void setTableView(final View view) {
+    public void setTableView(final IsWidget view) {
         this.table.setWidget(view.asWidget());
     }
 
