@@ -53,6 +53,7 @@ public class MessageSupport
 
     private SelectionUiHandlers uiHandlers;
     private Consumer<String> reportHandler;
+    private Consumer<VisControls> controlsHandler;
 
     public MessageSupport(final EventBus eventBus,
                           final Element frame) {
@@ -72,6 +73,13 @@ public class MessageSupport
     /// @param reportHandler Receives each report as JSON.
     public void setReportHandler(final Consumer<String> reportHandler) {
         this.reportHandler = reportHandler;
+    }
+
+    /// Sets what receives the controls a visualisation sends with `stroom.controls`, for its toolbar.
+    ///
+    /// @param controlsHandler Receives each set of controls ([VisControls#NONE] for none).
+    public void setControlsHandler(final Consumer<VisControls> controlsHandler) {
+        this.controlsHandler = controlsHandler;
     }
 
     public void bind() {
@@ -124,6 +132,15 @@ public class MessageSupport
                 if (clean != null) {
                     reportHandler.accept(clean);
                 }
+            }
+
+        } else if ("controls".equals(functionName)) {
+            final JSONValue controls = message.get("controls");
+            if (controlsHandler != null) {
+                // Only the controls Stroom expects: any script in the frame can send them.
+                controlsHandler.accept(VisControls.of(controls == null
+                        ? null
+                        : controls.isObject()));
             }
 
         } else {
