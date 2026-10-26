@@ -18,6 +18,8 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.analytics.client.component.ScheduledProcessHistoryListController;
+import stroom.analytics.client.component.ScheduledProcessListController;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -34,6 +36,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -44,8 +47,8 @@ public class ScheduledProcessingPresenter
             GWT.create(ExecutionScheduleResource.class);
 
     private final RestFactory restFactory;
-    private final ScheduledProcessListPresenter scheduledProcessListPresenter;
-    private final ScheduledProcessHistoryListPresenter scheduledProcessHistoryListPresenter;
+    private final ScheduledProcessListController scheduleList;
+    private final ScheduledProcessHistoryListController historyList;
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
     private DocPresenter<?, ?> documentEditPresenter;
     private DocRef ownerDocRef;
@@ -55,22 +58,26 @@ public class ScheduledProcessingPresenter
     public ScheduledProcessingPresenter(final EventBus eventBus,
                                         final ScheduledProcessingView view,
                                         final RestFactory restFactory,
-                                        final ScheduledProcessListPresenter scheduledProcessListPresenter,
-                                        final ScheduledProcessHistoryListPresenter scheduledProcessHistoryListPresenter,
+                                        final ScheduledProcessListController scheduleList,
+                                        final ScheduledProcessHistoryListController historyList,
                                         final ScheduledProcessEditPresenter scheduledProcessEditPresenter) {
         super(eventBus, view);
-        own(scheduledProcessListPresenter);
-        own(scheduledProcessHistoryListPresenter);
+        own(scheduleList);
+        own(historyList);
         own(scheduledProcessEditPresenter);
         this.restFactory = restFactory;
-        this.scheduledProcessListPresenter = scheduledProcessListPresenter;
-        this.scheduledProcessHistoryListPresenter = scheduledProcessHistoryListPresenter;
+        this.scheduleList = scheduleList;
+        this.historyList = historyList;
         this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
-        view.setScheduleList(scheduledProcessListPresenter.getView());
-        view.setHistoryList(scheduledProcessHistoryListPresenter.getView());
+        view.setScheduleList(scheduleList);
+        view.setHistoryList(historyList);
+        scheduleList.setOnAdd(this::add);
+        scheduleList.setOnEdit(this::edit);
+        scheduleList.setOnDelete(this::remove);
+        historyList.setOnReplay(this::replay);
 
-        own(scheduledProcessListPresenter.addSelectionHandler(e -> {
-            scheduledProcessHistoryListPresenter.setExecutionSchedule(scheduledProcessListPresenter.getSelected());
+        own(scheduleList.addSelectionHandler(e -> {
+            historyList.setExecutionSchedule(scheduleList.getSelected());
         }));
     }
 
@@ -82,15 +89,11 @@ public class ScheduledProcessingPresenter
         final boolean readOnly = context(Contexts.READ_ONLY);
         this.ownerDocRef = ownerDocRef;
         this.readOnly = readOnly;
-        scheduledProcessListPresenter.setReadOnly(readOnly);
-        scheduledProcessHistoryListPresenter.setReadOnly(readOnly);
-        scheduledProcessListPresenter.read(ownerDocRef);
+        scheduleList.read(ownerDocRef);
     }
 
     public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         this.documentEditPresenter = documentEditPresenter;
-        scheduledProcessListPresenter.setScheduledProcessingPresenter(this);
-        scheduledProcessHistoryListPresenter.setScheduledProcessingPresenter(this);
     }
 
     public void add() {
@@ -146,8 +149,8 @@ public class ScheduledProcessingPresenter
                             .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.createExecutionSchedule(executionSchedule))
                             .onSuccess(created -> {
-                                scheduledProcessListPresenter.refresh();
-                                scheduledProcessListPresenter.setSelected(created);
+                                scheduleList.refresh();
+                                scheduleList.setSelected(created);
                             })
                             .taskMonitorFactory(this)
                             .exec();
@@ -157,7 +160,7 @@ public class ScheduledProcessingPresenter
     }
 
     public void edit() {
-        final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
+        final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
@@ -165,8 +168,8 @@ public class ScheduledProcessingPresenter
                             .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.updateExecutionSchedule(executionSchedule))
                             .onSuccess(updated -> {
-                                scheduledProcessListPresenter.refresh();
-                                scheduledProcessListPresenter.setSelected(updated);
+                                scheduleList.refresh();
+                                scheduleList.setSelected(updated);
                             })
                             .taskMonitorFactory(this)
                             .exec();
@@ -176,7 +179,7 @@ public class ScheduledProcessingPresenter
     }
 
     public void remove() {
-        final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
+        final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
             // Deleting a schedule can't be undone, so ask first
             ConfirmEvent.fire(this,
@@ -186,7 +189,7 @@ public class ScheduledProcessingPresenter
                             restFactory
                                     .create(EXECUTION_SCHEDULE_RESOURCE)
                                     .method(res -> res.deleteExecutionSchedule(selected))
-                                    .onSuccess(success -> scheduledProcessListPresenter.refresh())
+                                    .onSuccess(success -> scheduleList.refresh())
                                     .taskMonitorFactory(this)
                                     .exec();
                         }
@@ -200,8 +203,8 @@ public class ScheduledProcessingPresenter
 
     public interface ScheduledProcessingView extends View {
 
-        void setScheduleList(View view);
+        void setScheduleList(IsWidget view);
 
-        void setHistoryList(View view);
+        void setHistoryList(IsWidget view);
     }
 }

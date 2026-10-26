@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A document's execution schedules, with their actions and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Schedule actions">
+        <b:ToolbarButton ui:field="addButton" svg="ADD" title="New Execution Schedule"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Execution Schedule" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Execution Schedule"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Scheduled Processes"/>
+    </dg:PagerPanel>
+</ui:UiBinder>

@@ -342,7 +342,7 @@ public final class ExecutionSchedulesScreenStories {
                 .withPlay(play -> {
                     play.findByText("Daily report");
                     // The Execution Schedule Manager's node column is plain text
-                    // (only an analytic rule's own schedule list, ScheduledProcessListPresenter, marks
+                    // (only an analytic rule's own schedule list, ScheduledProcessListController, marks
                     // a node that no longer exists), so no row is marked
                     play.expect(play.getByText("node2")).toBeInTheDocument();
                     play.expect(play.querySelectorAll(".svg-image__alert-simple")).toHaveLength(0);
