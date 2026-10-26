@@ -16,10 +16,7 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter;
-import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
-import stroom.search.elastic.client.view.ElasticIndexFieldListViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ElasticIndexModule`
@@ -33,9 +30,6 @@ public class ElasticIndexScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ElasticIndexPresenter.class);
-        bindPresenterWidget(ElasticIndexFieldListPresenter.class,
-                ElasticIndexFieldListView.class,
-                ElasticIndexFieldListViewImpl.class);
     }
 }
 

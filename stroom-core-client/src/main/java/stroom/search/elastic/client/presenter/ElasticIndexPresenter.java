@@ -20,9 +20,9 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.search.elastic.client.component.ElasticIndexFieldListController;
 import stroom.search.elastic.client.component.ElasticIndexSettingsController;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -46,7 +46,7 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<ElasticIndexSettingsController> indexSettingsProvider,
-            final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenterProvider,
+            final Provider<ElasticIndexFieldListController> indexFieldListProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<ElasticIndexDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -54,7 +54,8 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
                 ElasticIndexSettingsController::read,
                 ElasticIndexSettingsController::write));
-        addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(FIELDS, new ControllerTabProvider<>(eventBus, indexFieldListProvider::get,
+                ElasticIndexFieldListController::read));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
