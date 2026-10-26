@@ -25,6 +25,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
 import stroom.util.shared.NullSafe;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -205,6 +206,11 @@ public final class AiSuggestions {
             suggestions.add("Explain what " + name + " does");
             suggestions.add("Check " + name + " for mistakes");
             suggestions.add("Which pipelines use " + name + "?");
+        } else if (VisualisationDoc.TYPE.equals(type)) {
+            // A chart, attached from its pane's toolbar: about what it shows, and what the user sees on it.
+            suggestions.add("What stands out in the chart " + name + "?");
+            suggestions.add("Explain what I've selected or zoomed into on " + name);
+            suggestions.add("Is " + name + " the best chart for its data?");
         } else if (DashboardDoc.TYPE.equals(type)) {
             suggestions.add("Explain what " + name + " shows and where its data comes from");
             suggestions.add("Which data sources does " + name + " use?");
@@ -267,6 +273,12 @@ public final class AiSuggestions {
             return "";
         }
         final String type = NullSafe.nonBlankStringElse(docRef.getType(), "document");
+        if (VisualisationDoc.TYPE.equals(type)) {
+            // From the chart's pane, on the dashboard the user is looking at.
+            return "The user has attached a chart, Visualisation '" + shorten(docRef.getName()) + "', from its "
+                   + "pane on the dashboard they are looking at.\nWith it, the assistant can "
+                   + capabilities(type, false) + ".";
+        }
         return "The user has attached " + type + " '" + shorten(docRef.getName()) + "' from the Explorer.\n"
                + "With it, the assistant can " + capabilities(type, false) + ".";
     }
@@ -330,6 +342,10 @@ public final class AiSuggestions {
         } else if (QueryDoc.TYPE.equals(type)) {
             return "explain or refine the query and offer it with an 'Apply to query' button, analyse the results "
                    + "shown, and look into the events behind them";
+        } else if (VisualisationDoc.TYPE.equals(type)) {
+            return "explain what the chart shows and what stands out in it, explain what the user has selected or "
+                   + "zoomed into on it, analyse the rows it draws, and suggest a better chart for its data or "
+                   + "change this one";
         } else if (DashboardDoc.TYPE.equals(type)) {
             return "analyse a table's rows, propose changes to its tables (group, columns, sort, filter, "
                    + "formatting) with an 'Apply to dashboard' button, suggest and create a chart that suits a "

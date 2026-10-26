@@ -155,6 +155,8 @@ class TestFollowUpSuggester {
                 .startsWith("Nothing has been asked yet.\n\nAttached:\n" + AiSuggestions.documentHint(pipeline)
                             + "\n" + AiSuggestions.documentHint(feed));
         assertThat(FollowUpSuggester.ATTACHED_SYSTEM_PROMPT).contains("uses them together");
+        // Seen in testing: offered "Apply these chart changes to the dashboard", which its button does.
+        assertThat(FollowUpSuggester.ATTACHED_SYSTEM_PROMPT).contains("Never suggest applying, accepting or undoing");
     }
 
     private static AiChatAttachment attachment(final int id,
