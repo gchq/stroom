@@ -86,7 +86,9 @@ public class FollowUpSuggester {
             user's own voice, each under 15 words. Strongly prefer requests that act on what was just attached, \
             using what the assistant can do with it, and that fit what the user has been working on. Where several \
             things are attached, include a request that uses them together (e.g. whether an attached pipeline \
-            processes an attached feed). Reply with the suggestions alone: no numbering, quotes or other text.""";
+            processes an attached feed). Never suggest applying, accepting or undoing a change already offered: \
+            the user does that with its button. Reply with the suggestions alone: no numbering, quotes or other \
+            text.""";
 
     private final AiService aiService;
     private final Provider<AiConfig> aiConfigProvider;

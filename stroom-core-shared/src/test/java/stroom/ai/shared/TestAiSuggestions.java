@@ -205,6 +205,23 @@ class TestAiSuggestions {
     }
 
     @Test
+    void aChartAttachedFromItsPaneIsAskedAboutAsAChart() {
+        // Seen in testing: a chart attached with its toolbar's Ask Stroom AI was offered "Explain" and "What uses",
+        // then the model's suggestions about the conversation (e.g. to apply changes already offered).
+        final DocRef chart = new DocRef("Visualisation", "vis-uuid", "Chat flows");
+
+        assertThat(AiSuggestions.forDocument(chart)).containsExactly(
+                "What stands out in the chart 'Chat flows'?",
+                "Explain what I've selected or zoomed into on 'Chat flows'",
+                "Is 'Chat flows' the best chart for its data?");
+        assertThat(AiSuggestions.documentHint(chart))
+                .startsWith("The user has attached a chart, Visualisation 'Chat flows', from its pane on the "
+                            + "dashboard they are looking at.\nWith it, the assistant can explain what the chart "
+                            + "shows")
+                .doesNotContain("Explorer");
+    }
+
+    @Test
     void aFeedOrFolderTabOffersOnboarding() {
         assertThat(AiSuggestions.forTab(new DocRef("Feed", "f1", "ACME"), false, List.of(), null))
                 .first().isEqualTo("Onboard this feed (translate and index its data)");
