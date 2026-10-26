@@ -1950,7 +1950,11 @@ if (!window.visualisations) {
         }
 
         // Each node its own colour, or coloured by its group (one colour if there are none).
-        var colourEachNode = String(textSetting(settings, "nodeColours") || "group").toLowerCase() === "node";
+        // Each node its own colour (nodeColours node), or by its group: without a sourceGroup or targetGroup
+        // column there are no groups, so each node its own then too. Seen in testing: a network without groups
+        // was drawn in one colour, its links (in their source's colour) too.
+        var colourEachNode = String(textSetting(settings, "nodeColours") || "group").toLowerCase() === "node"
+            || !(fields.has("sourceGroup") || fields.has("targetGroup"));
         var groups = [];
         var groupIndex = {};
         nodeNames.forEach(function (name) {

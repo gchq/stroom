@@ -57,17 +57,22 @@ two nodes, so no flow loops); a network graph's and chord diagram's nodes are sh
 levels selects those two levels' values (e.g. target and level3): give a filter a term for each level's column
 with its own selection, as for source and target.
 
-A network graph sizes each node by its number of connections (its degree) and draws each link as wide as its
-weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a
-`count()` as the weight; links between the same pair are added up, and links from a node to itself are left out.
+A network graph sizes each node by its number of connections (its degree), or with `nodeSize` total by its links'
+total, and draws each link as wide as its weight, or (without a weight column) as the rows it comes from. So a
+table of one row per message needs no change: links between the same pair are added up, and links from a node to
+itself are left out. Without sourceGroup or targetGroup columns, each node has its own colour (and each link its
+source's).
 
 ## Suggesting a chart
 
 Asked to suggest a chart for a dashboard, start with a table no chart is linked to. Look at its columns (the types
 of their values in a snapshot, their formats, grouping, sorting and filters) and at the charts already on the
-dashboard (their kinds and tables), so as not to repeat one. Pick the kind from the table above that suits the
-data, say why in a sentence or two with the columns it maps, and offer it. Suggest one chart, with at most one
-alternative.
+dashboard (their kinds and tables), so as not to repeat one. Then ask the user which chart to make (`ask_user`),
+unless they named one: offer the two to four kinds from the table above that suit the data, each with the columns
+it would map and what it would show (e.g. "Network graph: who messages whom, sender to recipient"), recommending
+one. Ask it in the same questions as the library and how the chart's clicks should filter, so the user answers
+once. Never pick the kind for them: seen in testing, a network graph was offered when the user wanted to choose.
+Then propose the chart they chose.
 
 Asked for a chart described in words, map the description to a kind and its settings, and say which variant you
 chose and which you didn't. For example, "a calendar-like heatmap of user activity" is either a calendar of counts
