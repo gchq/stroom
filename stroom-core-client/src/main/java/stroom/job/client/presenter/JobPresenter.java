@@ -18,7 +18,8 @@ package stroom.job.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
-import stroom.job.client.presenter.JobListPresenter.JobWrapper;
+import stroom.job.client.component.JobListController;
+import stroom.job.client.component.JobWrapper;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
@@ -27,33 +28,34 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> implements Refreshable {
 
     public static final String TAB_TYPE = "Jobs";
-    private final JobListPresenter jobListPresenter;
+    private final JobListController jobList;
     private final JobNodeListPresenter jobNodeListPresenter;
 
     @Inject
     public JobPresenter(final EventBus eventBus,
                         final JobView view,
-                        final JobListPresenter jobListPresenter,
+                        final JobListController jobList,
                         final JobNodeListPresenter jobNodeListPresenter) {
         super(eventBus, view);
-        own(jobListPresenter);
+        own(jobList);
         own(jobNodeListPresenter);
-        this.jobListPresenter = jobListPresenter;
+        this.jobList = jobList;
         this.jobNodeListPresenter = jobNodeListPresenter;
 
-        getView().setJobListView(jobListPresenter.getView());
+        getView().setJobListView(jobList);
         getView().setJobNodeListView(jobNodeListPresenter.getView());
 
-        own(jobListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(jobList.getSelectionModel().addSelectionHandler(event -> {
             final Job row = NullSafe.get(
-                    jobListPresenter,
-                    JobListPresenter::getSelectionModel,
+                    jobList,
+                    JobListController::getSelectionModel,
                     MultiSelectionModel::getSelected,
                     JobWrapper::getJob);
             jobNodeListPresenter.read(row);
@@ -81,12 +83,12 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
     }
 
     public void setSelected(final Job job) {
-        jobListPresenter.setSelected(job);
+        jobList.setSelected(job);
         jobNodeListPresenter.setSelected(null);
     }
 
     public void setSelected(final JobNode jobNode) {
-        jobListPresenter.setSelected(NullSafe.get(jobNode, JobNode::getJob));
+        jobList.setSelected(NullSafe.get(jobNode, JobNode::getJob));
         jobNodeListPresenter.setSelected(jobNode);
     }
 
@@ -104,7 +106,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
         /// Shows the list of jobs.
         ///
         /// @param view Its view.
-        void setJobListView(View view);
+        void setJobListView(IsWidget view);
 
         /// Shows the selected job on each node.
         ///

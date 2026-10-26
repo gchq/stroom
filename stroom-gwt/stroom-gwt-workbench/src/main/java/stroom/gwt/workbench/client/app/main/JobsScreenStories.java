@@ -189,7 +189,7 @@ public final class JobsScreenStories {
                             RequestMatcher.post("/jobNode/v1/11/execute").toSpyMatcher()));
                     expectNoProblems(play);
                 })
-                // GWT's JobListPresenter.changeData inserts an empty row before the first advanced job
+                // JobListController.changeData inserts an empty row before the first advanced job
                 .story("AdvancedGap", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Query firstAdvanced = play.findByText("Property Cache Reload").closest(StroomDom.GRID_ROW);

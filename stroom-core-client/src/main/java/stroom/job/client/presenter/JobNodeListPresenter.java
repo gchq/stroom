@@ -134,7 +134,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
                     refreshNodeStates();
                 });
 
-        // JobListPresenter may change a job
+        // JobListController may change a job
         listen(
                 JobChangeEvent.getType(), event -> {
 //                    GWT.log("Handling JobChangeEvent " + event);
@@ -145,7 +145,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
                     }
                 });
 
-        // NodeJobListPresenter may change a jobNode
+        // NodeJobListController may change a jobNode
         listen(
                 JobNodeChangeEvent.getType(), event -> {
 //                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()

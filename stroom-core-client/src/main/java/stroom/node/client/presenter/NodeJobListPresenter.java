@@ -121,7 +121,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
                     refreshNodeStates();
                 });
 
-        // JobListPresenter may change a job
+        // JobListController may change a job
         listen(
                 JobChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
