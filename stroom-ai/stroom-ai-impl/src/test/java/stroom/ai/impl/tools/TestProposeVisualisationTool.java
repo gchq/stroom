@@ -26,7 +26,9 @@ import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
 import stroom.ai.impl.vis.ChartKind;
 import stroom.ai.impl.vis.ChartLibraries;
+import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
+import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.D3Visualisation;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.ai.impl.vis.VisualisationPlan.Replace;
@@ -65,8 +67,8 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// propose_visualisation: plans a chart of a table on the dashboard (or the StroomQL query) the user attached,
-/// checks the table's sampled rows can make it, and offers a 'Create visualisation' button (ECharts) or the change
-/// that wires the content pack's D3 Visualisation to the table (D3).
+/// checks the table's sampled rows can make it, and offers a 'Create visualisation' button (ECharts or D3) or the
+/// change that wires the content pack's D3 Visualisation to the table (content-pack).
 class TestProposeVisualisationTool {
 
     private static final int CHAT = 3;
@@ -74,6 +76,7 @@ class TestProposeVisualisationTool {
             "Messages");
     private static final DocRef QUERY = new DocRef("Query", "2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f6a", "Tweets");
     private static final DocRef ECHARTS_SCRIPT = new DocRef("Script", "echarts-uuid", "ECharts");
+    private static final DocRef D3_SCRIPT = new DocRef("Script", "d3-uuid", "D3");
     private static final DocRef FORCE = new DocRef("Visualisation", D3Visualisation.GRAPH.uuid(), "Force");
     private static final DocRef SCATTER = new DocRef("Visualisation", D3Visualisation.SCATTER.uuid(), "Scatter");
     // The Visualisation the dashboard's 'Old chart' pane shows.
@@ -120,7 +123,8 @@ class TestProposeVisualisationTool {
         Mockito.when(chartLibraries.findECharts()).thenReturn(Optional.of(new EChartsInstall(ECHARTS_SCRIPT,
                 "6.1.0")));
         Mockito.when(chartLibraries.currentUserCanUse(ECHARTS_SCRIPT)).thenReturn(true);
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of());
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of());
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.empty());
         Mockito.when(chartLibraries.findUnrecognisedECharts()).thenReturn(List.of());
 
         tool = new ProposeVisualisationTool(workspace, tabSnapshots, documentAccess, currentResultsTool,
@@ -253,10 +257,11 @@ class TestProposeVisualisationTool {
         both.put(ProposeVisualisationTool.ADD_NEW_ARG, true);
         assertThat(call(both)).isEqualTo("Error: Give replace or addNew, not both.");
 
-        final Map<String, Object> d3 = graphArgs();
-        d3.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
-        d3.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
-        assertThat(call(d3)).startsWith("Error: Only an ECharts chart (library echarts) can replace one");
+        final Map<String, Object> contentPack = graphArgs();
+        contentPack.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
+        contentPack.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+        assertThat(call(contentPack))
+                .startsWith("Error: Only a generated chart (library echarts or d3) can replace one");
 
         Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(false);
         Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
@@ -457,13 +462,18 @@ class TestProposeVisualisationTool {
                 .contains("No other charting library is installed either.")
                 .doesNotContain("library d3");
 
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
         Mockito.when(chartLibraries.findUnrecognisedECharts()).thenReturn(List.of(new DocRef("Script",
                 "dev-uuid", "echarts-dev")));
 
         assertThat(call(graphArgs()))
                 .contains("Script 'echarts-dev' doesn't hold an ECharts 6 or later build")
-                .contains("offer the user a D3 chart instead (library d3)");
+                .contains("The content pack's D3 Visualisations are installed: offer one instead (library "
+                          + "content-pack).");
+
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.of(new D3Install(D3_SCRIPT, "7.9.0")));
+
+        assertThat(call(graphArgs())).contains("D3 is installed: offer a D3 chart instead (library d3).");
         assertThat(takeUserActions()).isEmpty();
     }
 
@@ -478,10 +488,64 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void theD3RouteOnADashboardGivesTheAddVisChangeToPropose() {
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+    void aD3ChartIsOfferedAsACreateVisualisationButtonDrawnWithD3() {
+        d3Installed();
         final Map<String, Object> args = graphArgs();
-        args.put(ProposeVisualisationTool.LIBRARY_ARG, "D3");
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("directed", "true"));
+        args.put(ProposeVisualisationTool.OPTIONS_ARG, "{\"color\": [\"#5470c6\"]}");
+
+        assertThat(call(args)).contains("shown a 'Create visualisation' button for a network graph of table 'Links' "
+                                        + "(source = 'From', target = 'To', weight = 'Count'), drawn with D3 7.9.0");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.chartLibrary()).isEqualTo(ChartLibrary.D3);
+            assertThat(plan.style()).containsExactlyEntriesOf(mapOf("directed", "true"));
+            assertThat(plan.options()).isEqualTo("{\"color\":[\"#5470c6\"]}");
+        });
+    }
+
+    @Test
+    void anEChartsOnlySettingOrOptionIsRefusedForD3() {
+        d3Installed();
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.KIND_ARG, "line");
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Count", "y", "Count"));
+        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("zoomSlider", "true"));
+
+        assertThat(call(args)).startsWith("Error: ").contains("drawn only with ECharts, not D3");
+
+        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf());
+        args.put(ProposeVisualisationTool.OPTIONS_ARG, "{\"grid\": {\"left\": 10}}");
+
+        assertThat(call(args)).startsWith("Error: ").contains("color");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void d3NotInstalledIsSaidWithTheWayToInstallIt() {
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+
+        assertThat(call(args))
+                .startsWith("No chart was offered: D3 isn't installed in Stroom.")
+                .contains("version 3 or later")
+                .contains("ECharts is installed: offer an ECharts chart instead (library echarts).");
+
+        d3Installed();
+        Mockito.when(chartLibraries.currentUserCanUse(D3_SCRIPT)).thenReturn(false);
+
+        assertThat(call(args))
+                .startsWith("No chart was offered: the user doesn't have Use permission on Script 'D3' (D3)");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void theContentPackRouteOnADashboardGivesTheAddVisChangeToPropose() {
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+        final Map<String, Object> args = graphArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, "Content-Pack");
         args.remove(ProposeVisualisationTool.NAME_ARG);
 
         final String result = call(args);
@@ -504,10 +568,10 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void aRoleTheD3VisualisationLacksIsReportedAsLeftOut() {
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
+    void aRoleTheContentPackVisualisationLacksIsReportedAsLeftOut() {
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
         final Map<String, Object> args = graphArgs();
-        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
         args.put(ProposeVisualisationTool.KIND_ARG, "scatter");
         args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Count", "y", "Count", "size", "Count"));
 
@@ -521,11 +585,11 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void theD3RouteOnAQueryGivesAShowClauseByUuidWithTheD3ControlIds() {
+    void theContentPackRouteOnAQueryGivesAShowClauseByUuidWithTheD3ControlIds() {
         queryTab();
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
         final Map<String, Object> args = graphArgs();
-        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
 
         assertThat(call(args))
                 .contains("with propose_query_change (it names 'Force' by its UUID")
@@ -535,37 +599,42 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void aKindTheD3PackDoesntHaveIsDrawnWithECharts() {
+    void aKindTheContentPackDoesntHaveIsGeneratedInstead() {
         final Map<String, Object> args = graphArgs();
-        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
         args.put(ProposeVisualisationTool.KIND_ARG, "sankey");
         args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("source", "From", "target", "To", "value", "Count"));
 
         assertThat(call(args)).isEqualTo("No chart was offered: the visualisations content pack has no D3 sankey "
-                                         + "diagram. Draw it with ECharts (library echarts).");
+                                         + "diagram. Generate it instead (library echarts).");
+
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.of(new D3Install(D3_SCRIPT, "7.9.0")));
+
+        assertThat(call(args)).endsWith("Generate it instead (library echarts or d3).");
         assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
-    void aD3KindThatIsntInstalledIsSaid() {
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
+    void aContentPackKindThatIsntInstalledIsSaid() {
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
         final Map<String, Object> args = graphArgs();
-        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
 
         assertThat(call(args))
                 .isEqualTo("No chart was offered: the visualisations content pack's D3 network graph isn't "
-                           + "installed. ECharts is: offer an ECharts chart instead (library echarts).");
+                           + "installed. Generate it instead (library echarts).");
 
         Mockito.when(chartLibraries.findECharts()).thenReturn(Optional.empty());
 
-        assertThat(call(args)).endsWith("Tell the user it would need the content pack installed.");
+        assertThat(call(args)).endsWith("Neither ECharts nor D3 is installed to generate one instead: tell the "
+                                        + "user an administrator would need to install one.");
         assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
     void badArgumentsAreErrorsSayingWhatToGive() {
         assertThat(callWith(ProposeVisualisationTool.LIBRARY_ARG, "plotly"))
-                .isEqualTo("Error: Give library as echarts or d3.");
+                .isEqualTo("Error: Give library as echarts, d3 or content-pack.");
         assertThat(callWith(ProposeVisualisationTool.KIND_ARG, "radar"))
                 .isEqualTo("Error: Give kind as one of " + ChartKind.ids() + ".");
         assertThat(callWith(ProposeVisualisationTool.COLUMNS_ARG, "From, To"))
@@ -682,13 +751,28 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void severalChartsAreGeneratedWithEChartsOnly() {
+    void severalChartsAreGeneratedNotTakenFromTheContentPack() {
+        final Map<String, Object> args = chartsArgs();
+        args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK);
+
+        assertThat(call(args)).startsWith("No charts were offered: several charts at once are generated (library "
+                                          + "echarts or d3)");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void severalChartsCanBeDrawnWithD3() {
+        d3Installed();
         final Map<String, Object> args = chartsArgs();
         args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
+        args.put(ProposeVisualisationTool.LAYOUT_ARG, ProposeVisualisationTool.ROW);
 
-        assertThat(call(args)).startsWith("No charts were offered: several charts at once are generated with "
-                                          + "ECharts");
-        assertThat(takeUserActions()).isEmpty();
+        assertThat(call(args)).contains("shown a 'Create visualisations' button for 2 chart(s), drawn with D3 7.9.0");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final List<?> charts = (List<?>) action.get(ProposeVisualisationTool.CHARTS_ARG);
+            assertThat(charts).allSatisfy(chart -> assertThat(VisualisationPlan.fromJson(
+                    (String) ((Map<?, ?>) chart).get("plan")).chartLibrary()).isEqualTo(ChartLibrary.D3));
+        });
     }
 
     @Test
@@ -703,6 +787,12 @@ class TestProposeVisualisationTool {
                 VisualisationPlan.UNDER);
         assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.TABS, 1)).isEqualTo(
                 VisualisationPlan.WITH);
+    }
+
+    // D3 7.9.0 installed, which the user may use.
+    private void d3Installed() {
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.of(new D3Install(D3_SCRIPT, "7.9.0")));
+        Mockito.when(chartLibraries.currentUserCanUse(D3_SCRIPT)).thenReturn(true);
     }
 
     // Three charts of table 'Links': two it can make and one naming a column it doesn't have.
@@ -871,13 +961,13 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void anEmbeddedQueryIsChartedWithEChartsOnly() {
+    void anEmbeddedQueryIsChartedWithAGeneratedChartOnly() {
         embeddedQueryTab("Query: embedded in the dashboard");
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
 
-        assertThat(callWith(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3))
+        assertThat(callWith(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.CONTENT_PACK))
                 .startsWith("No chart was offered: an embedded query is charted by a show clause")
-                .endsWith("Use library echarts.");
+                .endsWith("(library echarts or d3). Use one of those.");
         assertThat(callWith(ProposeVisualisationTool.REPLACE_ARG, "Old chart"))
                 .startsWith("Error: Only a chart on a dashboard replaces another with replace");
         assertThat(takeUserActions()).isEmpty();

@@ -256,7 +256,8 @@ public class ContextAssembler {
             - To chart a table, propose add_vis (a Visualisation linked to the table, below it or as a tab, by \
             the Visualisation document's UUID, with settings for its controls, each field control naming a \
             column of the table); an existing one, such as the content pack's D3 visualisations, can be added \
-            directly, and propose_visualisation generates a new one. Change a Visualisation component's controls \
+            directly, and propose_visualisation generates a new one (with ECharts or D3: if both are \
+            installed and the user hasn't said, ask which). Change a Visualisation component's controls \
             with set_vis_settings; its render report in the dashboard file says how it last rendered.
             - Asked to suggest a chart, choose it from the dashboard: a table no chart is linked to first; its \
             columns (their values' types in a snapshot, formats, grouping, sorting and filters) and the charts \

@@ -58,6 +58,16 @@ class TestVisRenderReports {
     }
 
     @Test
+    void keepsTheCalendarAndSankeyReasonsForDroppedRows() {
+        final Map<String, Object> report = Map.of(
+                "status", "ok",
+                "droppedRows", Map.of("date not a date", 2.0, "flow would close a loop", 1.0));
+
+        assertThat(VisRenderReports.sanitise(report))
+                .containsEntry("droppedRows", Map.of("date not a date", 2L, "flow would close a loop", 1L));
+    }
+
+    @Test
     void dropsFieldsStroomDoesntExpect() {
         final Map<String, Object> report = new HashMap<>();
         report.put("status", "ok");
