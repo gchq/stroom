@@ -105,9 +105,11 @@ class TestChartConversions {
         assertThat(conversion.renamed()).containsExactlyEntriesOf(Map.of("x", "category"));
         assertThat(conversion.notes()).containsExactly(
                 "Selection filter [id f1] on 'Query' follows the new chart: x is now category.");
+        // Its bars of days still take a time range dragged across them.
         assertThat(conversion.warnings()).containsExactly(
-                "The line chart's time axis goes, with its zoom and the time range dragged across it: a bar chart "
-                + "draws each time as a bar of its own.");
+                "The line chart's time axis goes: a bar chart draws each time as a bar of its own. A time range is "
+                + "still dragged across the bars (its range tool), while they are in time order rather than sorted "
+                + "by value.");
     }
 
     @Test
@@ -131,7 +133,8 @@ class TestChartConversions {
                           + "(propose_dashboard_change, remove_selection_filter), and to add one on what the new "
                           + "chart selects.");
         assertThat(conversion.warnings().get(1)).isEqualTo("'Day' (the line chart's x) isn't in the pie chart.");
-        assertThat(conversion.warnings().get(2)).startsWith("The line chart's time axis goes");
+        assertThat(conversion.warnings().get(2)).isEqualTo("The line chart's time axis goes, with its zoom and the "
+                                                           + "time range dragged across it.");
     }
 
     @Test

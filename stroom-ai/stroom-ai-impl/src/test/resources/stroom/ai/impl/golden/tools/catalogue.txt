@@ -1454,7 +1454,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "string"
           },
           "terms" : {
-            "description" : "For add_selection_filter: each field and the selection it must equal. A term drops out while nothing is selected. A date field or column given a date the chart selects (a time axis's x, a calendar's date, or any column the table formats as Date Time), or selection range, keeps it within the selected time: the range dragged along a time axis, or the time a clicked point stands for (e.g. its day, for floorDay() values).",
+            "description" : "For add_selection_filter: each field and the selection it must equal. A term drops out while nothing is selected. A date field or column given a date the chart selects (a time axis's x, a calendar's date, or any column the table formats as Date Time), or selection range, keeps it within the selected time: the range dragged along a time axis (or across bars of dates), or the time a clicked point stands for (e.g. its day, for floorDay() values).",
             "items" : {
               "properties" : {
                 "field" : {
