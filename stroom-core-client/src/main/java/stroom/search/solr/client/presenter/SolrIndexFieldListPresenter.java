@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.search.solr.client.component.SolrIndexFieldEditorController;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -39,6 +40,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     private final PagerPanel pagerView;
     private final DataGrid<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
-    private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
+    private final Provider<SolrIndexFieldEditorController> indexFieldEditorProvider;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final ButtonView newButton;
@@ -72,13 +74,12 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     public SolrIndexFieldListPresenter(final EventBus eventBus,
                                        final SolrIndexFieldListView view,
                                        final PagerPanel pagerView,
-                                       final SolrIndexFieldEditPresenter indexFieldEditPresenter,
+                                       final Provider<SolrIndexFieldEditorController> indexFieldEditorProvider,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(indexFieldEditPresenter);
         this.pagerView = pagerView;
-        this.indexFieldEditPresenter = indexFieldEditPresenter;
+        this.indexFieldEditorProvider = indexFieldEditorProvider;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -205,26 +206,15 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         final Set<String> otherNames = fields.stream().map(SolrIndexField::getFldName).collect(Collectors.toSet());
 
         fetchFieldTypes(fieldTypes -> {
-            indexFieldEditPresenter.read(SolrIndexField.builder().build(), otherNames, fieldTypes);
-            indexFieldEditPresenter.show("New Field", e -> {
-                if (e.isOk()) {
-                    final SolrIndexField indexField = indexFieldEditPresenter.write();
-                    if (indexField != null) {
+            indexFieldEditorProvider.get().edit(this, "New Field", SolrIndexField.builder().build(), otherNames,
+                    fieldTypes, indexField -> {
                         fields.add(indexField);
                         fields.sort(Comparator.comparing(SolrIndexField::getFldName,
                                 String.CASE_INSENSITIVE_ORDER));
                         selectionModel.setSelected(indexField);
                         refresh();
-
-                        e.hide();
                         onChange();
-                    } else {
-                        e.reset();
-                    }
-                } else {
-                    e.hide();
-                }
-            });
+                    });
         });
     }
 
@@ -237,11 +227,8 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             otherNames.remove(existingField.getFldName());
 
             fetchFieldTypes(fieldTypes -> {
-                indexFieldEditPresenter.read(existingField, otherNames, fieldTypes);
-                indexFieldEditPresenter.show("Edit Field", e -> {
-                    if (e.isOk()) {
-                        final SolrIndexField indexField = indexFieldEditPresenter.write();
-                        if (indexField != null) {
+                indexFieldEditorProvider.get().edit(this, "Edit Field", existingField, otherNames, fieldTypes,
+                        indexField -> {
                             if (!indexField.equals(existingField)) {
                                 fields.remove(existingField);
                                 fields.add(indexField);
@@ -249,19 +236,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                                         String.CASE_INSENSITIVE_ORDER));
                                 selectionModel.setSelected(indexField);
                                 refresh();
-
-                                e.hide();
                                 onChange();
-                            } else {
-                                e.hide();
                             }
-                        } else {
-                            e.reset();
-                        }
-                    } else {
-                        e.hide();
-                    }
-                });
+                        });
             });
         }
     }

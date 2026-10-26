@@ -86,6 +86,5 @@
             <tickbox:TickBox ui:field="sortMissingLast" identity="solrIndexSortMissingLast" label="Sort Missing Last"/>
         </form:FormGroup>
 
-        <g:HTML ui:field="synchState" styleName="dock-min"></g:HTML>
     </g:FlowPanel>
 </ui:UiBinder>

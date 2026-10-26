@@ -16,14 +16,11 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter;
-import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-import stroom.search.solr.client.view.SolrIndexFieldEditViewImpl;
 import stroom.search.solr.client.view.SolrIndexFieldListViewImpl;
 import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -45,9 +42,6 @@ public class SolrIndexScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SolrIndexFieldListPresenter.class,
                 SolrIndexFieldListView.class,
                 SolrIndexFieldListViewImpl.class);
-        bindPresenterWidget(SolrIndexFieldEditPresenter.class,
-                SolrIndexFieldEditView.class,
-                SolrIndexFieldEditViewImpl.class);
     }
 }
 

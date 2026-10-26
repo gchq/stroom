@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.search.solr.client.view;
+package stroom.search.solr.client.component;
 
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.FieldType;
-import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.List;
 
-public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFieldEditView {
+/// The New and Edit Field dialog's content, for a Solr index: the field's type, name, Solr
+/// field type and default value, and how Solr stores and indexes it.
+public class SolrIndexFieldEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SelectionBox<FieldType> type;
@@ -74,220 +75,220 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     @UiField
     TickBox sortMissingLast;
 
-    @Inject
-    public SolrIndexFieldEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public SolrIndexFieldEditor() {
+        initWidget(BINDER.createAndBindUi(this));
 
         type.addItems(LuceneFieldTypes.FIELD_TYPES);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    @Override
+    /// Puts the focus on the type.
     public void focus() {
         type.focus();
     }
 
-    @Override
+    /// @return The field's type.
     public FieldType getType() {
         return type.getValue();
     }
 
-    @Override
+    /// @param type The field's type.
     public void setType(final FieldType type) {
         this.type.setValue(type);
     }
 
-    @Override
+    /// @return The name entered.
     public String getFieldName() {
         return fieldName.getText();
     }
 
-    @Override
+    /// @param fieldName The field's name.
     public void setFieldName(final String fieldName) {
         this.fieldName.setText(fieldName);
     }
 
-    @Override
+    /// @return The Solr field type.
     public String getFieldType() {
         return fieldType.getValue();
     }
 
-    @Override
+    /// @param fieldType The Solr field type.
     public void setFieldType(final String fieldType) {
         this.fieldType.setValue(fieldType);
     }
 
-    @Override
+    /// @return The default value entered.
     public String getDefaultValue() {
         return defaultValue.getText();
     }
 
-    @Override
+    /// @param defaultValue The field's default value.
     public void setDefaultValue(final String defaultValue) {
         this.defaultValue.setText(defaultValue);
     }
 
-    @Override
+    /// @return Whether stored is ticked.
     public boolean isStored() {
         return stored.getValue();
     }
 
-    @Override
+    /// @param stored Whether stored is ticked.
     public void setStored(final boolean stored) {
         this.stored.setValue(stored);
     }
 
-    @Override
+    /// @return Whether indexed is ticked.
     public boolean isIndexed() {
         return indexed.getValue();
     }
 
-    @Override
+    /// @param indexed Whether indexed is ticked.
     public void setIndexed(final boolean indexed) {
         this.indexed.setValue(indexed);
     }
 
-    @Override
+    /// @return Whether uninvertible is ticked.
     public boolean isUninvertible() {
         return uninvertible.getValue();
     }
 
-    @Override
+    /// @param uninvertible Whether uninvertible is ticked.
     public void setUninvertible(final boolean uninvertible) {
         this.uninvertible.setValue(uninvertible);
     }
 
-    @Override
+    /// @return Whether doc values is ticked.
     public boolean isDocValues() {
         return docValues.getValue();
     }
 
-    @Override
+    /// @param docValues Whether doc values is ticked.
     public void setDocValues(final boolean docValues) {
         this.docValues.setValue(docValues);
     }
 
-    @Override
+    /// @return Whether multi valued is ticked.
     public boolean isMultiValued() {
         return multiValued.getValue();
     }
 
-    @Override
+    /// @param multiValued Whether multi valued is ticked.
     public void setMultiValued(final boolean multiValued) {
         this.multiValued.setValue(multiValued);
     }
 
-    @Override
+    /// @return Whether required is ticked.
     public boolean isRequired() {
         return required.getValue();
     }
 
-    @Override
+    /// @param required Whether required is ticked.
     public void setRequired(final boolean required) {
         this.required.setValue(required);
     }
 
-    @Override
+    /// @return Whether omit norms is ticked.
     public boolean isOmitNorms() {
         return omitNorms.getValue();
     }
 
-    @Override
+    /// @param omitNorms Whether omit norms is ticked.
     public void setOmitNorms(final boolean omitNorms) {
         this.omitNorms.setValue(omitNorms);
     }
 
-    @Override
+    /// @return Whether omit term freq and positions is ticked.
     public boolean isOmitTermFreqAndPositions() {
         return omitTermFreqAndPositions.getValue();
     }
 
-    @Override
+    /// @param omitTermFreqAndPositions Whether omit term freq and positions is ticked.
     public void setOmitTermFreqAndPositions(final boolean omitTermFreqAndPositions) {
         this.omitTermFreqAndPositions.setValue(omitTermFreqAndPositions);
     }
 
-    @Override
+    /// @return Whether omit positions is ticked.
     public boolean isOmitPositions() {
         return omitPositions.getValue();
     }
 
-    @Override
+    /// @param omitPositions Whether omit positions is ticked.
     public void setOmitPositions(final boolean omitPositions) {
         this.omitPositions.setValue(omitPositions);
     }
 
-    @Override
+    /// @return Whether term vectors is ticked.
     public boolean isTermVectors() {
         return termVectors.getValue();
     }
 
-    @Override
+    /// @param termVectors Whether term vectors is ticked.
     public void setTermVectors(final boolean termVectors) {
         this.termVectors.setValue(termVectors);
     }
 
-    @Override
+    /// @return Whether term positions is ticked.
     public boolean isTermPositions() {
         return termPositions.getValue();
     }
 
-    @Override
+    /// @param termPositions Whether term positions is ticked.
     public void setTermPositions(final boolean termPositions) {
         this.termPositions.setValue(termPositions);
     }
 
-    @Override
+    /// @return Whether term offsets is ticked.
     public boolean isTermOffsets() {
         return termOffsets.getValue();
     }
 
-    @Override
+    /// @param termOffsets Whether term offsets is ticked.
     public void setTermOffsets(final boolean termOffsets) {
         this.termOffsets.setValue(termOffsets);
     }
 
-    @Override
+    /// @return Whether term payloads is ticked.
     public boolean isTermPayloads() {
         return termPayloads.getValue();
     }
 
-    @Override
+    /// @param termPayloads Whether term payloads is ticked.
     public void setTermPayloads(final boolean termPayloads) {
         this.termPayloads.setValue(termPayloads);
     }
 
-    @Override
+    /// @return Whether sort missing first is ticked.
     public boolean isSortMissingFirst() {
         return sortMissingFirst.getValue();
     }
 
-    @Override
+    /// @param sortMissingFirst Whether sort missing first is ticked.
     public void setSortMissingFirst(final boolean sortMissingFirst) {
         this.sortMissingFirst.setValue(sortMissingFirst);
     }
 
-    @Override
+    /// @return Whether sort missing last is ticked.
     public boolean isSortMissingLast() {
         return sortMissingLast.getValue();
     }
 
-    @Override
+    /// @param sortMissingLast Whether sort missing last is ticked.
     public void setSortMissingLast(final boolean sortMissingLast) {
         this.sortMissingLast.setValue(sortMissingLast);
     }
 
-    @Override
+    /// @param fieldTypes The field types Solr offers.
     public void setFieldTypes(final List<String> fieldTypes) {
         this.fieldType.clear();
         this.fieldType.addItems(fieldTypes);
     }
 
-    public interface Binder extends UiBinder<Widget, SolrIndexFieldEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SolrIndexFieldEditor> {
 
     }
 }
