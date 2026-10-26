@@ -130,7 +130,7 @@ public class EntityCheckTreeController extends Controller {
 
     /// @param filterErrorConsumer Told why the server rejected the filter, or null when it was
     ///                            applied.
-    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+    public void setOnFilterError(final Consumer<String> filterErrorConsumer) {
         treeController.setOnFilterError(filterErrorConsumer);
     }
 }

@@ -155,7 +155,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 XMLSchemaSettingsController::read,
                 XMLSchemaSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

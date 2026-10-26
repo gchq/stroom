@@ -113,12 +113,12 @@ public class FloorMapTimelineController extends Controller {
             new FloorMapQueryThrottle(PLAYBACK_QUERY_INTERVAL_MS);
 
     /// Optional callback fired whenever the timeline transitions between playing and paused.
-    private java.util.function.Consumer<Boolean> playStateChangeHandler;
+    private Consumer<Boolean> playStateChangeHandler;
 
     /// Optional callback fired whenever the current time jumps non-continuously (scrub, step, loop).
     private Runnable clearAnimationStateHandler;
 
-    /// Optional callback fired at the *discrete* jumps only. See [#setDiscontinuityHandler].
+    /// Optional callback fired at the *discrete* jumps only. See [#setOnDiscontinuity].
     private Runnable discontinuityHandler;
 
     /// Optional callback fired when the user changes the visible time range via the settings popup.
@@ -428,7 +428,7 @@ public class FloorMapTimelineController extends Controller {
     /// when it stops for any reason.
     ///
     /// @param handler Called with `true` on play, `false` on pause/stop.
-    public void setPlayStateChangeHandler(final java.util.function.Consumer<Boolean> handler) {
+    public void setOnPlayStateChange(final Consumer<Boolean> handler) {
         this.playStateChangeHandler = handler;
     }
 
@@ -453,14 +453,14 @@ public class FloorMapTimelineController extends Controller {
     /// discard any in-flight movement animations and trail data.
     ///
     /// @param handler Called on every discontinuous time jump.
-    public void setClearAnimationStateHandler(final Runnable handler) {
+    public void setOnClearAnimationState(final Runnable handler) {
         this.clearAnimationStateHandler = handler;
     }
 
     /// Sets a callback for the **discrete** time jumps: a committed scrub, a step (button or
     /// keyboard), and stopping at the end of the range.
     ///
-    /// Distinct from [#setClearAnimationStateHandler] on purpose, and the difference is the
+    /// Distinct from [#setOnClearAnimationState] on purpose, and the difference is the
     /// loop wrap. That fires **per frame** while looping — which is fine for discarding animation
     /// state, and ruinous for anything that starts a query, as the throttle comment on the wrap
     /// explains. So a consumer that must re-read on a jump needs a signal the wrap does not raise.
@@ -476,7 +476,7 @@ public class FloorMapTimelineController extends Controller {
     /// time change is told in either case, so there is no read to classify.
     ///
     /// @param handler the callback, or `null` to remove it
-    public void setDiscontinuityHandler(final Runnable handler) {
+    public void setOnDiscontinuity(final Runnable handler) {
         this.discontinuityHandler = handler;
     }
 
@@ -491,7 +491,7 @@ public class FloorMapTimelineController extends Controller {
     /// query over the new range.
     ///
     /// @param handler Called whenever start or end time changes.
-    public void setTimeRangeChangeHandler(final Runnable handler) {
+    public void setOnTimeRangeChange(final Runnable handler) {
         this.timeRangeChangeHandler = handler;
     }
 

@@ -219,6 +219,13 @@ public final class PathwaysEditorStories {
                     // PathwaysSettings.onReadOnlyChange only disables the ordering tolerance), but
                     // an edit can't make the read only document dirty, so Save stays disabled
                     play.expect(processingNode).not().toBeDisabled();
+                    // The trace store's and info feed's pickers can't be opened (they could be
+                    // before wave 8's audit)
+                    for (final String label : new String[]{"Trace Store", "Info Feed"}) {
+                        play.expect(play.within(play.getByText(label, "label").closest(".form-group"))
+                                        .querySelector("[aria-haspopup]:not(.form-group__help)"))
+                                .toHaveAttribute("aria-disabled", "true");
+                    }
                     play.type(processingNode, "-x");
                     play.tab();
                     play.sleep(300);

@@ -447,7 +447,6 @@ public final class AnalyticRuleEditorStories {
         expectNoProblems(play);
     }
 
-    // A read-only document's tab says so
     // The Execution tab of a table builder rule: its node, its tick and its progress, and Refresh
     private static void showTableBuilder(final Play play, final boolean readOnly) {
         final Play screen = play.screen();
@@ -468,6 +467,7 @@ public final class AnalyticRuleEditorStories {
         expectNoProblems(play);
     }
 
+    // A read-only document's tab says so
     private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
         if (readOnly) {
             play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
@@ -491,6 +491,8 @@ public final class AnalyticRuleEditorStories {
                                  final RestFixtures fixtures,
                                  final String uiConfig,
                                  final DocumentPermission permission) {
+        // Each story's table builder progress starts again at its first reply
+        trackerRequests = 0;
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)

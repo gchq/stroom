@@ -93,7 +93,7 @@ public class ExportConfigPresenter
         filter = getView().getToolbar().toggle(SvgImage.FILTER, "Filter Document Types", null);
         filter.setPressed(hasActiveFilter);
 
-        tree.setFilterErrorConsumer(view::setFilterError);
+        tree.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);

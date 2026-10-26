@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -96,11 +97,26 @@ public final class ElasticIndexEditorStories {
                     waitForSettings(play);
                     DocEditors.expectNoProblems(play);
                 })
+                // Changing the rerank score field suffix makes the index changed (it didn't, so
+                // the change was saved only with another)
+                .story("RerankScoreSuffixChange", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.type(play.getByLabelText("Rerank score field suffix"), ".rerank");
+                    // The text box reports its change when it loses the focus
+                    play.tab();
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab (the default) when the user may only view the index
                 .story("SettingsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     waitForSettings(play);
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.getByLabelText("Index name or pattern")).toHaveAttribute("readonly");
+                    play.expect(play.getByLabelText("Rerank score field suffix")).toHaveAttribute("readonly");
                     DocEditors.expectNoProblems(play);
                 })
                 // The Fields tab as an editable partner for FieldsReadOnly (the fields come from the

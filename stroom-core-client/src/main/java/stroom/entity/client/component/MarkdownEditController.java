@@ -98,8 +98,11 @@ public class MarkdownEditController extends Controller implements HasToolbar {
         preview.setId(MARKDOWN_FRAME_ID);
         preview.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 
-        listen(ChangeCurrentPreferencesEvent.getType(), event ->
-                updatePreview());
+        // A new theme renders the same Markdown differently, so render it again
+        listen(ChangeCurrentPreferencesEvent.getType(), event -> {
+            lastRawMarkdown = null;
+            updatePreview();
+        });
 
         setEditMode(false);
     }
@@ -152,9 +155,9 @@ public class MarkdownEditController extends Controller implements HasToolbar {
         updatePreview();
     }
 
-    /// Sets whether the documentation may be changed. A document's opener sets it before reading
-    /// the document; it isn't followed from [Contexts#READ_ONLY], which is true where nothing gives
-    /// it, unless asked ([#followReadOnly()]).
+    /// Sets whether the documentation may be changed, before or after it is read; read only, it
+    /// leaves editing for the preview. Its owner calls it, as it isn't followed from
+    /// [Contexts#READ_ONLY] (true where nothing gives it) unless asked ([#followReadOnly()]).
     ///
     /// @param readOnly True if it may not be changed.
     public void setReadOnly(final boolean readOnly) {

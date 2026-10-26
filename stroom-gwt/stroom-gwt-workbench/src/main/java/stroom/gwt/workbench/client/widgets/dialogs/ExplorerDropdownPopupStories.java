@@ -70,7 +70,7 @@ public final class ExplorerDropdownPopupStories {
         if (includedTypes.length > 0) {
             popup.setIncludedTypes(includedTypes);
         }
-        // The chooser is the story's only dialog
+        // Any popup closing is counted: the chooser, and also e.g. the quick filter's help or menu
         harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> onClose.call()));
         harness.add(DialogWidgets.button(buttonText, DialogWidgets.PRIMARY, event -> show(popup)));
         // The popup is shown from the start

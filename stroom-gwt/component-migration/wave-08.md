@@ -10,16 +10,89 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert the settings forms, editor panes and explorer pickers that embed DocSelectionBox, UserRef, EditorPresenter, Markdown or the explorer tree. Replace embedded DocSelectionBoxPresenter with a DropDownBox in the template plus DocSelectionController. Views stop exposing their widgets, and onReadOnly becomes setReadOnly.
 
+## Audited (26 October 2026)
+
+Seven reviewers read the wave against this plan, "Done means" and AGENTS.md (the explorer chooser
+and its trees, the settings tabs, the forms and dialogs, the query panes, the editors and Markdown,
+the XSD browser, content pack details and floor map timeline, and the records). Fixed:
+
+- **A regression on this branch.** An XSD's occurrences (`0..*` over a sequence) lost their class
+  in the stylesheet's rename: `XSDDisplay` still wrote `occuranceLabel` in its HTML, so they showed
+  as plain text below their images. Now `xsd-browser__occurrence-label` (story
+  `XsdBrowser.Occurrences`).
+- **Three bugs master has too**, each with a changelog entry and a story that failed before:
+  - An Elastic index's Rerank Score Field Suffix now makes the index changed
+    (`ElasticIndexEditor.RerankScoreSuffixChange`; found in wave 8 and left, now fixed).
+  - A read-only pathways document's Trace Store and Info Feed pickers no longer open
+    (`PathwaysEditor.ReadOnly`).
+  - The Markdown preview (read and edited) renders again in the new theme when the theme changes:
+    the preferences' change re-rendered it only if its text had changed, and the edited preview
+    didn't listen at all (`MarkdownEditor.ThemeChange`).
+- **Names (rule 4).** Callbacks are `setOnX`: `ExplorerPopup.setOnFilterDown`,
+  `EntityCheckTreeController.setOnFilterError`, `ExplorerPopupController.setOnSelectionChange`,
+  the timeline's `setOnPlayStateChange`, `setOnClearAnimationState`, `setOnDiscontinuity` and
+  `setOnTimeRangeChange`; `QueryHelp.setButtonsEnabled`. `QueryTextPane` follows its HTML's links
+  itself and tells its controller with `setOnLink` (the controller handled the DOM click).
+  `MarkdownTabProvider` takes a `Supplier`, as `ControllerTabProvider` does.
+- **Templates and styles.** The index's "No partition" is in its template (`nonSelectString`); the
+  floor map event store's condense warning has its own sheet,
+  `floor-map-event-store-settings.css` (`floor-map-event-store-settings__condense-warning`); the
+  XSD browser's box title lost a modifier with no rule (`--no-content`); `LinkButton`'s javadoc
+  example is the XSD browser's own.
+- **Owned work.** The chooser's quick filter help, the table builder's node list failure and the
+  XSD browser's Home, Back and Forward (before a schema is set) do nothing once there is nothing to
+  do it for; the error feed's config lookup and Set Default use the task monitor given, else a
+  spinner of their own (`getProvidedTaskMonitor()` could be null). Firing an alert from a
+  controller after it is disposed still reaches the app's bus, so the chooser's Create path is
+  left as it is.
+- **Smaller things.** Five components and controllers had each other's copyright year
+  (`QueryToolbar`, `ColumnFilterEditor`, `AiConfigGeneral`, `CommentEdit`, `DataGenSettings`; a
+  sweep of the wave found no others); a final local in `ErrorFeedController`;
+  `MarkdownEditController.setReadOnly`'s javadoc; `java.util.function.Consumer` written out in the
+  timeline; the table builder story's counter reset for each story, and two story comments.
+- **Stories.** Typing in the Documentation tab and a data generator's template enable Save; Cancel
+  in a column filter leaves the query unchanged; the Elastic index's read-only fields; the content
+  pack details' links are underlined.
+- **The records.** Done's counts (the wrapper's callers, the templates that declare a picker, the
+  force graphs among the changed screenshots), its list of the screens the plans gave no
+  controller, the CSS kept and the two `TextPresenter` sections; the order's rows;
+  `COMPONENT_MODEL_DESIGN.md` (the Documentation tab tells its document with `markChanged()`, and
+  `MarkdownTabProvider` takes the bus again), `COMPONENTS.md` (`DocSelectionPopup`), AGENTS.md
+  (`AriaPanel`'s value setters), the later plans' note on `MarkdownTabProvider`, and five of
+  ISSUES.md's references to deleted files.
+
+Left: pre-existing bugs, in ISSUES.md (the dashboard filter dialog's focus, the column filter's
+dead condition, the time preferences' unreported edits, a rule switched to Table Builder not read,
+the email recipients reported only on a key up, the source pane's unused stepping button, debug
+logging carried over, and the stepping chooser left unowned if its lookups fail); GWT's `TextBox`
+in templates, as in the worked examples (rule 2 asks for `TextInput` where ARIA is needed); the
+query toolbar's `getQueryButtons`, the timeline's help button made in Java and its classes not BEM
+yet, the query help's rule in `quick-filter.css`, and the content pack's late reply dropped once
+closed (as `.owner` means). Stories not added: the one-use chooser's Cancel, double click and an
+invalid folder; the stepping button's plays; the model pickers and Ask Stroom AI's dock type;
+the rule set's and dictionary's Documentation tabs; the email's validation and Send Test Email;
+moving the timeline's slider and its chevrons; the content pack's credentials dialog; the error
+feed's Set Default; Test Connection; edit enables Save for the text converter, Lucene index and
+analytic rule. History: `ce28951a50` left the client tests not compiling until `4b41c1a3ad`, and
+`734bf3d636` the dashboard until `787c1eeede`.
+
+All 1,668 stories passed with the leak check after the fixes, the 38 screenshots that differed
+being the noise named in Done, below, and `PathwaysEditor.ReadOnly` (its pickers now look read
+only); the 4 stories added after that run pass with the leak check, their screenshots unchanged
+elsewhere, and the 6 new stories have baselines. The app and the standalone dashboard GWT compile.
+
 ## Done (26 October 2026)
 
-All units but `DocSelectionBoxPresenter`, in 25 commits: 26 callers in later waves still use that
-wrapper, so it stays, as its plan below allows. Each commit ran its stories with the leak check and
-the screenshot diff; the last ran all of them (1,666 passed, one flaky force graph passing on its second try; the 43 screenshots that differed are the force graphs (39), the tree's `Keyboard`, the data grid's spinner column and AppShell's `OpensDocument`, all recorded as noise in ISSUES.md), and the app and the standalone dashboard GWT
+All units but `DocSelectionBoxPresenter`, in 25 commits: 20 classes in later waves (24 pickers)
+still use that wrapper, so it stays, as its plan below allows; 9 templates here declare a
+`DropDownBox` and attach a `DocSelectionController`, and 12 classes stopped using the wrapper. Each commit ran its stories with the leak check and
+the screenshot diff; the last ran all of them (1,666 passed, one flaky force graph passing on its second try; the 43 screenshots that differed are the force graphs (40), the Tree visualisation's `Keyboard`, the data grid's spinner column and AppShell's `OpensDocument`, all recorded as noise in ISSUES.md; the 4 baselines missing were the old `TextPresenter` stories' names), and the app and the standalone dashboard GWT
 compile. Three bugs fixed on the way, each with a changelog entry and a story (master has each; see
 "Fixed" in ISSUES.md): the floor map event store's Event Expiry fields had no accessible names; an XML
 schema's Home, Back and Forward threw when nothing had been shown; and the content pack details'
 links were told apart from the text beside them by colour alone. One bug found and left (ISSUES.md):
-an Elastic index's Rerank Score Field Suffix doesn't make the document changed. What was decided on
+an Elastic index's Rerank Score Field Suffix doesn't make the document changed (fixed in the audit,
+above). What was decided on
 the way, where it differs from the plans below:
 
 - **Hosting controllers in documents not yet converted.** `ControllerTabProvider` (in
@@ -28,11 +101,12 @@ the way, where it differs from the plans below:
   with `markChanged()`; it takes a `Supplier` (the hosts use both GIN's and javax's providers), and
   `isPresenter(content)` tells whether a shown presenter is the tab's without making it.
   `MarkdownTabProvider` does the same for the Documentation tab, passing on its toolbar buttons, and
-  now takes the event bus (`getEventBus()` at its 30 call sites). Both go with wave 14, once the
+  now takes the event bus (`getEventBus()` at its 30 call sites) and, since the audit, a `Supplier`
+  too (`markdownEditProvider::get`). Both go with wave 14, once the
   hosts are `DocumentEditor`s.
-- **Every screen is a pair.** The plans gave no controller to the XML schema and text converter
-  settings, the time preferences, the table analysis tab, the XSD browser and Edit Comment; each has
-  one, as a document tab or dialog needs one (read-only, `markChanged`, a dialog's owner), and
+- **Every screen is a pair.** The plans gave no controller to the XML schema, text converter and
+  floor map event store settings, the time preferences, the table analysis tab and the XSD browser,
+  and suggested Edit Comment's could go; each has one, as a document tab or dialog needs one (read-only, `markChanged`, a dialog's owner), and
   AGENTS.md asks for a pair.
 - **Read-only.** `Contexts.READ_ONLY` is true where nothing gives it, so a controller hosted where it
   isn't given (the Documentation tab's other hosts, the rule set screen, the annotation) is told with
@@ -77,13 +151,20 @@ the way, where it differs from the plans below:
   `quick-filter.css`'s grouped rule. The floor map timeline's progress is
   `--stroom-floormap-timeline__progress` (BEM, rather than the plan's `--timeline-progress`); its
   classes aren't BEM yet. Class names with no rules (`CommentEditViewImpl`, `TextView`,
-  `QueryHelpViewImpl-details` and `-buttons`, the XSD browser's `bar`) went.
+  `QueryHelpViewImpl-details` and `-buttons`, the XSD browser's `bar`) went, with rules or with
+  an empty one. Kept, as other screens share them or until their dialogs convert (rule 6): the
+  content pack details' `contentstore-details*` and the credentials' `credentials-details-dialog`
+  and `wide-control` in `components.css`, `durationSetting` (Plan B's settings too), and
+  `queryHelpDetail` (the code editor's tooltip too).
 - **Stories.** 17 new, for what no story showed or pressed: Set As Default in the Ask Stroom AI
-  settings, a dense vector field's save, a saved table builder rule (editable and read only), a
+  settings, a dense vector field's save, a table builder rule's Execution tab (editable and read only: its node, progress, Enabled and Refresh), a
   search's warnings, the source pane's Close, Insert into Query, an email template's Test Template,
   Upgrade in the content store, the XML schema's Graphical tab, the timeline's speed and help, the
   floor map event store settings (4) and the date and time preferences; the data text pane's 4 are
-  its old `TextPresenter` stories, renamed. Two fixtures were wrong in a
+  its old `TextPresenter` stories, renamed. Of the two `TextPresenter` sections below, the first
+  (the data viewer's, 307 lines) has no plan of its own, and the second has the query pane's
+  figures (880 lines) but the data viewer's plan: the data viewer's became `DataTextPane`, the
+  query's `QueryTextPane`; the order's rows have the same mix-up in their "Becomes" column. Two fixtures were wrong in a
   way that hid what they were for (the query editor's source reply's type, the content store's
   upgrade reply's message); the stories that build editors by hand are owned by a harness.
 

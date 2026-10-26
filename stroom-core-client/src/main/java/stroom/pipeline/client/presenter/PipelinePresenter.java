@@ -201,7 +201,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             defaultTab = STRUCTURE;
         }
 
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

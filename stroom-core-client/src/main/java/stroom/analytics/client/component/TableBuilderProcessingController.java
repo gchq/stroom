@@ -95,11 +95,11 @@ public class TableBuilderProcessingController extends Controller {
                         view.setNodes(list);
                     }
                 },
-                throwable -> AlertEvent
-                        .fireError(this,
-                                "Error",
-                                throwable.getMessage(),
-                                null),
+                throwable -> {
+                    if (!isDisposed()) {
+                        AlertEvent.fireError(this, "Error", throwable.getMessage(), null);
+                    }
+                },
                 taskMonitor());
 
         this.ruleDocRef = ruleDocRef;

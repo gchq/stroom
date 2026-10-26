@@ -174,7 +174,7 @@ public class QueryHelpController extends Controller {
 
     private void updateDetails() {
         view.setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        view.enableButtons(false);
+        view.setButtonsEnabled(false);
         final QueryHelpRow row = getSelectedItem();
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
@@ -182,7 +182,7 @@ public class QueryHelpController extends Controller {
                     final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
                             detail.getDocumentation());
                     view.setDetails(markDownSafeHtml);
-                    view.enableButtons(detail.getInsertType().isInsertable());
+                    view.setButtonsEnabled(detail.getInsertType().isInsertable());
                 }
             });
         }

@@ -92,7 +92,7 @@ public class ExplorerPopup extends Component {
     }
 
     /// @param moveDown What Down in the quick filter does, e.g. move to the chosen document.
-    public void setFilterMoveDown(final Runnable moveDown) {
+    public void setOnFilterDown(final Runnable moveDown) {
         nameFilter.setMoveDown(moveDown);
     }
 

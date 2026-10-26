@@ -501,7 +501,7 @@ public class FloorMapMapPresenter
 
 
         // Re-run the histogram whenever the user changes the visible date range via the settings popup.
-        floorMapTimeline.setTimeRangeChangeHandler(() ->
+        floorMapTimeline.setOnTimeRangeChange(() ->
                 runHistogramQuery(floorMapTimeline.getStartTime(),
                         floorMapTimeline.getEndTime()));
 
@@ -556,19 +556,19 @@ public class FloorMapMapPresenter
 
         // Keep the canvas informed of play/pause transitions so it can switch
         // between animate-on-move and teleport behaviour.
-        floorMapTimeline.setPlayStateChangeHandler(
+        floorMapTimeline.setOnPlayStateChange(
                 canvas::setPlaying);
 
         // Discard stale animation state whenever the timeline jumps non-continuously
         // (scrub, step-back/forward, loop-around, stop-at-end).
-        floorMapTimeline.setClearAnimationStateHandler(
+        floorMapTimeline.setOnClearAnimationState(
                 canvas::clearAnimationState);
 
         // The discrete jumps. Every read is now a snapshot at the selected time, so a jump needs
         // no different query — but it does need the read in flight abandoned rather than waited
         // for, and the canvas told to teleport rather than animate across it. Deliberately not
         // wired to the handler above, which fires per frame while looping.
-        floorMapTimeline.setDiscontinuityHandler(() -> {
+        floorMapTimeline.setOnDiscontinuity(() -> {
             pendingDiscontinuity = true;
             // A jump is new evidence, and the emptiness of the instant we left says nothing about
             // the one we arrived at. Without this, scrubbing through a sparse stretch would

@@ -32,8 +32,6 @@ import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -97,16 +95,12 @@ public class QueryTextPaneController extends Controller {
         editor.getOptions().getLineNumbersOption().setOn(false);
         editor.getOptions().getLineWrapOption().setOn(true);
 
-        own(view.getHtmlPane().addDomHandler(event -> {
-            final Element target = event.getNativeEvent().getEventTarget().cast();
-            final String link = target.getAttribute("link");
-            if (link != null) {
-                final Hyperlink hyperlink = Hyperlink.create(link);
-                if (hyperlink != null) {
-                    HyperlinkEvent.fire(this, hyperlink, view);
-                }
+        view.setOnLink(link -> {
+            final Hyperlink hyperlink = Hyperlink.create(link);
+            if (hyperlink != null) {
+                HyperlinkEvent.fire(this, hyperlink, view);
             }
-        }, ClickEvent.getType()));
+        });
 
         view.setOnClose(this::close);
     }

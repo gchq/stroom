@@ -23,6 +23,8 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.widget.component.client.Controller;
@@ -97,19 +99,15 @@ public class ErrorFeedController extends Controller {
                 configTarget = isReport
                         ? ConfigTarget.REPORT_UI_DEFAULT
                         : ConfigTarget.ANALYTIC_UI_DEFAULT;
-                DocRef selectedDocRef = errorFeed;
-                if (selectedDocRef == null) {
-                    if (isReport) {
-                        selectedDocRef = extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed();
-                    } else {
-                        selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
-                    }
-                }
+                final DocRef defaultErrorFeed = isReport
+                        ? extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed()
+                        : extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
+                final DocRef selectedDocRef = errorFeed != null ? errorFeed : defaultErrorFeed;
                 if (selectedDocRef != null) {
                     feed.setSelectedEntityReference(selectedDocRef, true);
                 }
             }
-        });
+        }, taskMonitor());
     }
 
     /// @return The error feed chosen, or null.
@@ -138,6 +136,14 @@ public class ErrorFeedController extends Controller {
                 AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED,
                 feed.getSelectedEntityReference(),
                 "error feed",
-                getProvidedTaskMonitor());
+                taskMonitor());
+    }
+
+    // The task monitor of whatever shows this, or a spinner of its own
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null
+                ? provided
+                : new DefaultTaskMonitorFactory(this);
     }
 }

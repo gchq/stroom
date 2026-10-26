@@ -102,7 +102,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 FeedSettingsController::read,
                 FeedSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

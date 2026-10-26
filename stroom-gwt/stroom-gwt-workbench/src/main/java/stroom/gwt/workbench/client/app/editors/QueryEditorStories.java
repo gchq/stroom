@@ -603,6 +603,27 @@ public final class QueryEditorStories {
                                            + "{}, {}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Cancel closes the column filter without changing the column, so the query isn't
+                // changed (each opening is a dialog of its own, made for it)
+                .story("ColumnFilterCancel", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Filter 'Count'");
+                    final Query input = dialog.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    // As ColumnFilterMenu: the query's editor takes the focus half a second after
+                    // it opens, so wait for that to pass
+                    play.sleep(600);
+                    play.keyboard("foo");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
+                            .toMatch(TextMatch.containing("foo")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeNull());
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query's column filter has no Include/Exclude tab (unlike a dashboard's)
                 .story("QuerySideFilterHasNoIncludeExcludeTab", context -> render(context, FIXTURES))
                 .withPlay(play -> {

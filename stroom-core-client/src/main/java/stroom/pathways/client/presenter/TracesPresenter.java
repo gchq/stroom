@@ -57,7 +57,7 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
 
         addTab(TRACES, new DocTabProvider<>(() -> tracesListTabPresenter));
         addTab(SETTINGS, new DocTabProvider<>(tracesSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<TracesDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TracesDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

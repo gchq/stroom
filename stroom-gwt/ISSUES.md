@@ -37,15 +37,6 @@ have no effect unless an administrator saves them as the default.
 * `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.java` and the server's
   use of the default config provider
 
-### An Elastic index's rerank score field suffix doesn't make it changed
-
-**Found in wave 8** (26 October 2026; master has it too). The Settings tab's Rerank Score Field
-Suffix has no change handler, unlike every other field there, so editing it alone never makes the
-document dirty: Save stays disabled, and closing the tab doesn't ask. It is saved with any other
-change. Left as found.
-
-* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
-
 ### A node group can't be renamed
 
 **Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the
@@ -79,11 +70,13 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 * Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
   would throw a `NullPointerException` on save. They are now value spinners, which can't be blank
   (`App/Editors/ElasticClusterEditor` `TimeoutSpinners`).
-* The index's Minimum rerank score is read with `Float.parseFloat` on the raw text, so a blank or
-  non-numeric value throws on save; there is no check that it is between 0 and 1.
+* The index's Minimum rerank score is read with `Float.parseFloat` on the raw text
+  (`ElasticIndexSettings.write`), so a blank or non-numeric value throws as soon as the field is
+  left (the tab is written on every change), not only on save; there is no check that it is between
+  0 and 1.
 
 * `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticClusterSettingsViewImpl.ui.xml`
-* `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticIndexSettingsViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
 
 ### A rejected column rename may still change conditional formatting
 
@@ -95,10 +88,10 @@ already have changed those rules.
 
 ### Layout Density can be set to an option that doesn't exist
 
-**Reported.** `ThemePreferencesViewImpl.setDensity(null)` selects "Default", which isn't one of the
-options (Comfortable, Compact).
+**Reported.** `ThemePreferences.read` sets the density to "Default" when none is saved, which
+isn't one of the options (Comfortable, Compact).
 
-* `stroom-core-client/src/main/java/stroom/preferences/client/ThemePreferencesViewImpl.java`
+* `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferences.java`
 
 ### Some HTTP client durations can't be set to 0
 
@@ -162,7 +155,7 @@ day, so the part after midnight never matches.
 ### Index "No partition" is saved as Month
 
 **Reported.** Choosing No partition for a Lucene index saves nothing, and `LuceneIndexDoc` turns
-that into Month, so the choice can never be kept (`IndexSettingsViewImpl`).
+that into Month, so the choice can never be kept (`IndexSettings`).
 
 ### Duration fields can't be left blank
 
@@ -284,7 +277,8 @@ basic use:
 * A read-only pathways document can still be edited: `PathwaysSettings.onReadOnlyChange` (was
   `PathwaysSettingsViewImpl.onReadOnly`) only
   disables the ordering tolerance, leaving Processing Node and the Allow tick boxes enabled (edits
-  can't make the document dirty, so they are silently lost).
+  can't make the document dirty, so they are silently lost). Its Trace Store and Info Feed pickers
+  opened too: fixed in wave 8's audit (see "Fixed").
 
 * `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTree.java`
   (`read`, and `enableButtons`)
@@ -657,6 +651,16 @@ list, and the list's one choice handler is kept in a field. Story `TableAddColum
 (`DashboardComponentStories`); a changelog entry.
 
 ## Memory
+
+### The stepping chooser can be left unowned
+
+**Found in wave 8's audit** (26 October 2026). `PipelinePlugin.onBeginStepping` makes the "Choose
+Pipeline To Step With" chooser before it looks up the pipeline to choose first (a REST call, then the
+chooser's own lookup of it), and `AppRoot` owns it only once it is shown. If either lookup fails the
+chooser is never shown, never owned and never disposed; development builds count it as unowned.
+Fix: look up the pipeline first, and make the chooser only to show it.
+
+* `stroom-core-client/src/main/java/stroom/pipeline/client/PipelinePlugin.java`
 
 ### Presenters nothing owned (found and fixed 22 October 2026)
 
@@ -1736,7 +1740,28 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `BucketGranularity` has no display names.
 * The Elastic index's rerank score suffix tooltip escapes its braces with backslashes
   (`$\{BaseField.score\}`), not UiBinder's `{{`, so it may show the backslashes
-  (`ElasticIndexSettingsViewImpl.ui.xml`).
+  (`ElasticIndexSettings.ui.xml`).
+* Found in wave 8's audit (26 October 2026; master has each):
+  * A dashboard table's filter dialog doesn't focus the Filter tab's editor when it opens:
+    `TableFilterPresenter.focus()` focuses the selected tab's layer, which isn't a `Focus`.
+  * `ColumnFilterEditorController` decides whether the filter changed with `filter == null &&
+    column.getFilter() != null`, which can't be true (`getColumnFilter` never gives null) and
+    compares the wrong filter (the include/exclude one); it works only because the other branch
+    covers it.
+  * The time preferences don't make the dialog changed when the time zone Id, the offset or the
+    Custom Format text is edited (`TimePreferences`, lines 101-112).
+  * Switching an analytic rule to Table Builder doesn't read the new type's settings, so its nodes
+    aren't listed and its progress isn't fetched until the rule is opened again
+    (`AbstractProcessingPresenter`, lines 119-131).
+  * An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
+    paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).
+  * The query result's source pane declares a stepping button that nothing shows
+    (`QueryTextPane.ui.xml`, `steppingButton`); it was never shown before either. To go with the
+    other removals.
+  * Debug logging and commented-out code carried into the new controllers:
+    `MarkdownEditController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
+    `iFramePresenter`), `AnalyticEmailDestinationController` (the old `EditorPresenter` code). To go
+    with the other removals.
 * `XPathFilterViewImpl` sets Equals as the default condition, but new filters use Exists; harmless, as
   the presenter overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
@@ -1761,6 +1786,20 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 8's audit** (2026-10-26):
+  * An Elastic index's Rerank Score Field Suffix didn't make the index changed (no change handler,
+    unlike every other field): Save stayed disabled and closing the tab didn't ask. Master has it
+    too; changelog entry. Story `ElasticIndexEditor.RerankScoreSuffixChange`, which failed before.
+  * A read-only pathways document's Trace Store and Info Feed pickers still opened, so a read-only
+    document's pickers could be changed (the change was then lost). Master has it too; changelog
+    entry. Story `PathwaysEditor.ReadOnly`, which failed before.
+  * An XSD's occurrences (e.g. `0..*` over a sequence) lost their class in wave 8's rename, so they
+    were shown as plain text below their images, not small over them. Story
+    `XsdBrowser.Occurrences`, which failed before.
+  * The Markdown preview didn't follow a change of theme: the preferences' change re-rendered it
+    only if its text had changed. Master has it too; changelog entry. Story
+    `MarkdownEditor.ThemeChange`, which failed before.
 
 * **Wave 8's fixes** (2026-10-26; master has each, with a changelog entry):
   * The floor map event store's Event Expiry: its amount and unit had no accessible names (a

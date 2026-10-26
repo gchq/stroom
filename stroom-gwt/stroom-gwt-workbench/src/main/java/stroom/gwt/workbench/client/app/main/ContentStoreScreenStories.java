@@ -114,6 +114,8 @@ public final class ContentStoreScreenStories {
                     play.expect(licence).toHaveAttribute("target", "_blank");
                     play.expect(licence).toHaveAttribute("rel", "noopener noreferrer");
                     play.expect(play.getByText("https://apache.org/licenses/LICENSE-2.0")).toBeVisible();
+                    // Underlined, so not told apart from the text beside them by colour alone
+                    play.expect(licence).toHaveStyle("text-decoration-line", "underline");
                     final Query git = play.getByRole("link", "View Git repository (opens in new tab)");
                     play.expect(git).toHaveAttribute("href", "https://github.com/example/core.git");
                     play.expect(git).toHaveAttribute("target", "_blank");

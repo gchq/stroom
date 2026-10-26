@@ -78,7 +78,6 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
             scrollPanel.addStyleName("xsd-browser__box-content");
             scrollPanel.add(content);
             box.add(scrollPanel);
-            title.addStyleName("xsd-browser__box-title--no-content");
         }
 
         setSelected(false);

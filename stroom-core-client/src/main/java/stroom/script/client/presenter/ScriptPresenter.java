@@ -91,7 +91,7 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             }
         });
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

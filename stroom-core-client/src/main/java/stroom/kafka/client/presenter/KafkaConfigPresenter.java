@@ -97,7 +97,7 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

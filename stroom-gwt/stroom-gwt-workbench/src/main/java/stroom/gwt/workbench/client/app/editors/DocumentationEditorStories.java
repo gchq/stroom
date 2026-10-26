@@ -103,6 +103,19 @@ public final class DocumentationEditorStories {
                     play.expect(edit).toHaveAttribute("aria-pressed", "true");
                     DocEditors.expectNoProblems(play);
                 })
+                // Typing in the Markdown makes the document changed, so Save is enabled
+                .story("TypingEnablesSave", context -> render(context, false))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.findByRole("button", "Edit Documentation"));
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_text-input")).toHaveFocus());
+                    play.keyboard("More");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Read only (no EDIT permission): the preview shows, the markdown toolbar is hidden
                 // (getDocumentButtons() is empty) and Save is retitled
                 .story("ReadOnly", context -> render(context, true))

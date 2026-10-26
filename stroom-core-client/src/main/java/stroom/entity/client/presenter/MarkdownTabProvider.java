@@ -26,7 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Provider;
+import java.util.function.Supplier;
 
 /// A document's Documentation tab ([MarkdownEditController]), for a document still shown by a
 /// [DocTabPresenter]: it shows the controller through a small [DocPresenter] that owns it, as
@@ -39,13 +39,13 @@ import javax.inject.Provider;
 public abstract class MarkdownTabProvider<E> implements TabProvider<E> {
 
     private final EventBus eventBus;
-    private final Provider<MarkdownEditController> markdownEditProvider;
+    private final Supplier<MarkdownEditController> markdownEditProvider;
     private Host host;
 
     /// @param eventBus             The application's event bus.
     /// @param markdownEditProvider Makes the tab's controller.
     public MarkdownTabProvider(final EventBus eventBus,
-                               final Provider<MarkdownEditController> markdownEditProvider) {
+                               final Supplier<MarkdownEditController> markdownEditProvider) {
         this.eventBus = Objects.requireNonNull(eventBus, "eventBus");
         this.markdownEditProvider = Objects.requireNonNull(markdownEditProvider, "markdownEditProvider");
     }

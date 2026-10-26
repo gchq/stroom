@@ -97,7 +97,7 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

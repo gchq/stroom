@@ -72,6 +72,7 @@ public class ElasticIndexSettings extends Component {
         searchScrollSize.addValueChangeHandler(e -> onChange.run());
         timeField.addValueChangeHandler(e -> onChange.run());
         rerankTextFieldSuffix.addValueChangeHandler(e -> onChange.run());
+        rerankScoreFieldSuffix.addValueChangeHandler(e -> onChange.run());
         rerankScoreMinimum.addValueChangeHandler(e -> onChange.run());
     }
 

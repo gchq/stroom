@@ -17,6 +17,7 @@
 package stroom.entity.client.component;
 
 import stroom.editor.client.component.CodeEditorController;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.iframe.client.component.IFrame;
 import stroom.iframe.client.component.IFrame.SandboxOption;
@@ -94,6 +95,11 @@ public class MarkdownPreviewController extends Controller {
         preview = view.getPreview();
         preview.setId(MARKDOWN_PREVIEW_FRAME_ID);
         preview.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
+        // A new theme renders the same Markdown differently, so render it again
+        listen(ChangeCurrentPreferencesEvent.getType(), event -> {
+            lastRawMarkdown = null;
+            updatePreview();
+        });
         return this;
     }
 

@@ -115,7 +115,7 @@ public class ExplorerPopupController extends Controller {
         // back to the filter, and typing in the tree goes to the filter; moving chooses
         explorerTree.setSelectionFollowsFocus(true);
         explorerTree.setFilterKeys(view::focus, view::typeInFilter);
-        view.setFilterMoveDown(explorerTree::focusSelected);
+        view.setOnFilterDown(explorerTree::focusSelected);
         view.setOnFilterChange(treeController::changeNameFilter);
         treeController.setOnFilterError(view::setFilterError);
         view.setFilterContextHandler(quickFilterContextHandlerFactory.create(
@@ -123,7 +123,8 @@ public class ExplorerPopupController extends Controller {
         setIncludeNullSelection(true);
 
         uiConfigCache.get(uiConfig -> {
-            if (uiConfig != null) {
+            // Closed (e.g. a one-use chooser) before the config came
+            if (uiConfig != null && !isDisposed()) {
                 view.setFilterHelp(() -> QuickFilterTooltipUtil.createTooltip(
                         "Choose Item Quick Filter",
                         ExplorerTreeFilter.FIELD_DEFINITIONS,
@@ -134,7 +135,7 @@ public class ExplorerPopupController extends Controller {
 
     /// @param selectionChangeConsumer Told the document chosen, when it is set and when the user
     ///                                chooses it.
-    public void setSelectionChangeConsumer(final Consumer<ExplorerNode> selectionChangeConsumer) {
+    public void setOnSelectionChange(final Consumer<ExplorerNode> selectionChangeConsumer) {
         this.selectionChangeConsumer = selectionChangeConsumer;
     }
 

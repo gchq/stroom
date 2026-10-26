@@ -51,7 +51,7 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
 
         addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
         addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

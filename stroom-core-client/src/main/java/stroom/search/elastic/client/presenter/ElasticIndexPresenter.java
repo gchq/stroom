@@ -55,7 +55,7 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
                 ElasticIndexSettingsController::read,
                 ElasticIndexSettingsController::write));
         addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

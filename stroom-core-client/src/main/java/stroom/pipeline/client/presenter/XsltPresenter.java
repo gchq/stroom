@@ -77,7 +77,7 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

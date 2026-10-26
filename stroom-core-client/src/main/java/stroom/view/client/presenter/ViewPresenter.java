@@ -48,7 +48,7 @@ public class ViewPresenter extends DocTabPresenter<LinkTabPanelView, ViewDoc> {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

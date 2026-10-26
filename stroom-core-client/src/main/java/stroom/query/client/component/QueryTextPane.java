@@ -26,9 +26,13 @@ import stroom.widget.component.client.Component;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.function.Consumer;
 
 /// The source of a query result's row, beside the results: the stream's text in a code editor,
 /// or its HTML, with its classification, and a button that closes the pane. It shows a spinner
@@ -48,19 +52,23 @@ public class QueryTextPane extends Component implements TaskMonitorFactory {
     @UiField
     SpinnerLarge spinner;
 
+    private Consumer<String> onLink;
+
     /// Makes an empty pane.
     public QueryTextPane() {
         initWidget(BINDER.createAndBindUi(this));
+        html.addDomHandler(event -> {
+            final Element target = event.getNativeEvent().getEventTarget().cast();
+            final String link = target.getAttribute("link");
+            if (onLink != null && link != null && !link.isEmpty()) {
+                onLink.accept(link);
+            }
+        }, ClickEvent.getType());
     }
 
     /// @return The code editor, for its controller to attach to.
     public CodeEditor getEditor() {
         return editor;
-    }
-
-    /// @return The HTML pane, e.g. for its controller to follow its links.
-    public HtmlPane getHtmlPane() {
-        return html;
     }
 
     /// @return The classification label, for its controller to attach to.
@@ -86,6 +94,12 @@ public class QueryTextPane extends Component implements TaskMonitorFactory {
     /// @param classification The classification of what is shown.
     public void setClassification(final String classification) {
         this.classification.setClassification(classification);
+    }
+
+    /// @param onLink Told the `link` attribute of what the user clicks in the HTML, e.g. a
+    ///               hyperlink to open.
+    public void setOnLink(final Consumer<String> onLink) {
+        this.onLink = onLink;
     }
 
     /// @param onClose What to run when the user presses Close.

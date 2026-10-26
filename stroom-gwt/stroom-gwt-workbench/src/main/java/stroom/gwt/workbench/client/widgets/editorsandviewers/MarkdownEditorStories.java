@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.entity.client.component.MarkdownEdit;
 import stroom.entity.client.component.MarkdownEditController;
@@ -32,6 +33,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.ui.config.shared.Theme;
+import stroom.ui.config.shared.UserPreferences.Toggle;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -131,6 +134,26 @@ public final class MarkdownEditorStories {
                             .toBe("link to the docs (opens in new tab) | noopener noreferrer");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
+                // A change of theme renders the preview again in the new theme's colours (the
+                // preview kept the old theme's until its text changed)
+                .story("ThemeChange", context -> {
+                    final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
+                    return markdownEditor(harness, SAMPLE_MARKDOWN, true);
+                })
+                .withPlay(play -> {
+                    final Query frame = play.querySelector("iframe#markdown-frame");
+                    final boolean light = !StroomThemeDecorator.isDark();
+                    play.waitFor(() -> play.expect(FrameDocuments.count(frame, LIGHT_FRAME))
+                            .toBe(light ? 1 : 0));
+                    play.run("change the theme", () -> changeTheme(light ? Theme.DARK : Theme.LIGHT));
+                    play.waitFor(() -> play.expect(FrameDocuments.count(frame, LIGHT_FRAME))
+                            .toBe(light ? 0 : 1));
+                    // Back to the page's theme, for the screenshot
+                    play.run("change the theme back", () -> changeTheme(light ? Theme.LIGHT : Theme.DARK));
+                    play.waitFor(() -> play.expect(FrameDocuments.count(frame, LIGHT_FRAME))
+                            .toBe(light ? 1 : 0));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
                 // With no help URL configured, "Help with Documentation" shows "Help is not configured!"
                 .story("HelpNotConfigured", context -> {
                     final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
@@ -140,6 +163,14 @@ public final class MarkdownEditorStories {
                     return markdownEditor(harness, SAMPLE_MARKDOWN, false);
                 });
     }
+
+    // The preview's frame document in Stroom's light theme (its <html> has the theme's classes)
+    private static final String LIGHT_FRAME = "html." + Theme.LIGHT.getCssClass();
+
+    // The preferences and bus of the editor shown, for the ThemeChange story's play, which can't
+    // reach its render's locals
+    private static CurrentPreferences shownPreferences;
+    private static EventBus shownEventBus;
 
     private static Widget markdownEditor(final ScreenHarness harness,
                                          final String text,
@@ -151,6 +182,8 @@ public final class MarkdownEditorStories {
         // preview's frame), so the story's manager reports the workbench page's theme
         final CurrentPreferences currentPreferences = harness.getInjector().getCurrentPreferences();
         currentPreferences.setTheme(StroomThemeDecorator.getStroomThemeName());
+        shownPreferences = currentPreferences;
+        shownEventBus = eventBus;
         final UserPreferencesManager userPreferencesManager = new PageThemeUserPreferencesManager(
                 harness.getRestFactory(), currentPreferences);
         final MarkdownConverter markdownConverter = new MarkdownConverter(userPreferencesManager);
@@ -190,6 +223,17 @@ public final class MarkdownEditorStories {
         return harness.asWidget();
     }
 
+    // The ThemeChange story's: sets the theme the converter reads and tells the app, as the
+    // preferences dialog does once the user picks one
+    private static void changeTheme(final Theme theme) {
+        shownPreferences.setTheme(theme.getThemeName());
+        // The code editors read this too, which the harness's preferences leave unset
+        if (shownPreferences.getEditorLiveAutoCompletion() == null) {
+            shownPreferences.setEditorLiveAutoCompletion(Toggle.OFF);
+        }
+        ChangeCurrentPreferencesEvent.fire(shownEventBus::fireEvent, shownPreferences);
+    }
+
     /// Clicks the toolbar's Edit Documentation button (`editModeButton`) when the story renders.
     private static void clickEditButton(final Widget widget) {
         final NodeList<Element> buttons = widget.getElement().getElementsByTagName("button");
@@ -209,17 +253,31 @@ public final class MarkdownEditorStories {
 
 
     /// Reports the theme classes of the workbench's page (`iframe.html`'s `<html>` element) as the
-    /// current user's, as Stroom's would be once the user has logged in.
+    /// current user's, as Stroom's would be once the user has logged in, but with the theme the
+    /// preferences now hold (a story may change it, as the user may).
     private static class PageThemeUserPreferencesManager extends UserPreferencesManager {
+
+        private final CurrentPreferences currentPreferences;
 
         private PageThemeUserPreferencesManager(final RestFactory restFactory,
                                                 final CurrentPreferences currentPreferences) {
             super(restFactory, currentPreferences);
+            this.currentPreferences = currentPreferences;
         }
 
         @Override
         public String getCurrentPreferenceClasses() {
-            return Document.get().getDocumentElement().getClassName();
+            final String pageClasses = Document.get().getDocumentElement().getClassName();
+            for (final Theme theme : Theme.values()) {
+                if (theme.getThemeName().equals(currentPreferences.getTheme())) {
+                    String classes = pageClasses;
+                    for (final Theme other : Theme.values()) {
+                        classes = classes.replace(other.getCssClass(), "");
+                    }
+                    return classes.trim() + " " + theme.getCssClass();
+                }
+            }
+            return pageClasses;
         }
     }
 }

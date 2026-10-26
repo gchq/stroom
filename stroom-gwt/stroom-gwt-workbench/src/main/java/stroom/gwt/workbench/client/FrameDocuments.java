@@ -79,6 +79,26 @@ public final class FrameDocuments {
         });
     }
 
+    /// The number of elements in the document in a frame that match a CSS selector, so a play can
+    /// check what the document holds, e.g. its theme's classes.
+    ///
+    /// The frame's document is read as [#language(Query)] reads it.
+    ///
+    /// @param frame    The `<iframe>`, which must have a `srcdoc` or show a document of the page's
+    ///                 origin.
+    /// @param selector The CSS selector.
+    /// @return The number of matches, or null if the frame has no document yet.
+    public static Value<Integer> count(final Query frame, final String selector) {
+        final Value<Element> element = frame.element();
+        return Value.of(frame.describe() + " document's " + selector, () -> {
+            final Element documentElement = documentElement(IFrameElement.as(element.get()));
+            if (documentElement == null) {
+                return null;
+            }
+            return countMatches(documentElement, selector);
+        });
+    }
+
     // The frame's document's <html> element: its srcdoc parsed, as a sandboxed frame hides its
     // document from the page, or else its loaded document's, or null if it has none yet
     private static Element documentElement(final IFrameElement iFrameElement) {
@@ -98,6 +118,10 @@ public final class FrameDocuments {
             descriptions.push(links[i].textContent + " | " + links[i].getAttribute("rel"));
         }
         return descriptions.join("\n");
+    }-*/;
+
+    private static native int countMatches(Element documentElement, String selector) /*-{
+        return documentElement.ownerDocument.querySelectorAll(selector).length;
     }-*/;
 
     /// Parses HTML as a frame would, without running its scripts.

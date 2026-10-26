@@ -62,7 +62,7 @@ public class PathwaysSettingsController extends Controller {
         view.setOnChange(this::markChanged);
         own(traceStore.addSelectionListener(e -> markChanged()));
         own(infoFeed.addSelectionListener(e -> markChanged()));
-        watch(Contexts.READ_ONLY, view::setReadOnly);
+        watch(Contexts.READ_ONLY, this::setReadOnly);
     }
 
     /// Shows a pathways document's settings.
@@ -84,5 +84,12 @@ public class PathwaysSettingsController extends Controller {
                 .tracesDocRef(traceStore.getSelectedEntityReference())
                 .infoFeed(infoFeed.getSelectedEntityReference())
                 .build();
+    }
+
+    // The pickers too: they could change a read-only document's trace store and info feed
+    private void setReadOnly(final boolean readOnly) {
+        view.setReadOnly(readOnly);
+        traceStore.setReadOnly(readOnly);
+        infoFeed.setReadOnly(readOnly);
     }
 }

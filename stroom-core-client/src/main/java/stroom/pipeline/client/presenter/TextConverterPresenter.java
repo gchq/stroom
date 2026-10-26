@@ -95,7 +95,7 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 TextConverterSettingsController::read,
                 TextConverterSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

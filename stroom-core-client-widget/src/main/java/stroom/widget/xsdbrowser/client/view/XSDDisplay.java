@@ -452,7 +452,7 @@ public class XSDDisplay extends Composite {
 
             if (occurrence != null) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div class=\"occuranceLabel\">");
+                builder.appendHtmlConstant("<div class=\"xsd-browser__occurrence-label\">");
                 builder.appendEscaped(occurrence);
                 builder.appendHtmlConstant("</div>");
 

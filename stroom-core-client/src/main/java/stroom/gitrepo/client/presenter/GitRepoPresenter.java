@@ -47,7 +47,7 @@ public class GitRepoPresenter extends DocTabPresenter<LinkTabPanelView, GitRepoD
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<GitRepoDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<GitRepoDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

@@ -65,7 +65,7 @@ public class QueryHelp extends Component {
     }
 
     /// @param enable Whether Insert and Copy can be pressed.
-    public void enableButtons(final boolean enable) {
+    public void setButtonsEnabled(final boolean enable) {
         copyButton.setEnabled(enable);
         insertButton.setEnabled(enable);
     }

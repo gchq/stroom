@@ -56,7 +56,7 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, pathwaysSettingsProvider::get,
                 PathwaysSettingsController::read,
                 PathwaysSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

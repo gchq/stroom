@@ -69,7 +69,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                 IndexSettingsController::read,
                 IndexSettingsController::write));
         addTab(DATA, new DocTabProvider<LuceneIndexDoc>(indexDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

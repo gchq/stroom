@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -100,6 +101,18 @@ public final class DataGenEditorStories {
                     }
                     waitForSettings(play);
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocEditors.expectNoProblems(play);
+                })
+                // Typing in the template makes the document changed, so Save is enabled
+                .story("EditEnablesSave", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveFocus());
+                    play.keyboard("x");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only: the partner of Default

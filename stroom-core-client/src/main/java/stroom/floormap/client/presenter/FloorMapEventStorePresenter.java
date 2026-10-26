@@ -60,7 +60,7 @@ public class FloorMapEventStorePresenter
                 FloorMapEventStoreSettingsController::write));
         addTab(DATA, new DocTabProvider<>(dataPresenterProvider::get));
         addTab(DOCUMENTATION,
-                new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
+                new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
                     @Override
                     public void onRead(final MarkdownEditController markdownEdit,
                                        final DocRef docRef,

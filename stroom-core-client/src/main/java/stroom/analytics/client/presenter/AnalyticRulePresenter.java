@@ -86,7 +86,7 @@ public class AnalyticRulePresenter
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

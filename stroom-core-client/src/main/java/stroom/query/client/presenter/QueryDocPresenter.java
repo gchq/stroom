@@ -61,7 +61,7 @@ public class QueryDocPresenter
         queryDocDocumentEditTabProvider = new DocTabProvider<>(() -> queryDocEditPresenter);
 
         addTab(QUERY, queryDocDocumentEditTabProvider);
-        addTab(DOCUMENTATION, new MarkdownTabProvider<QueryDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<QueryDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

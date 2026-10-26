@@ -54,7 +54,7 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, sqlStoreSettingsProvider::get,
                 SqlTemporalStoreSettingsController::read));
         addTab(DATA, new DocTabProvider<>(sqlTemporalStoreDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

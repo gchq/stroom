@@ -136,6 +136,23 @@ public final class XsdBrowserStories {
     private static final String SCHEMA_DOCUMENTATION = "A small sample library schema for the XSD browser.";
     private static final String BOOK_DOCUMENTATION = "A single book entry with a title, author and genre.";
 
+    // A sequence and a choice with their occurrences given, shown over their images
+    private static final String OCCURRENCES_XSD = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="shelf">
+                <xs:complexType>
+                  <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="label" type="xs:string"/>
+                    <xs:choice minOccurs="1" maxOccurs="3">
+                      <xs:element name="book" type="xs:string"/>
+                      <xs:element name="magazine" type="xs:string"/>
+                    </xs:choice>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>""";
+
     // Malformed: the <xs:element> start tag is never closed
     private static final String MALFORMED_XSD = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -193,6 +210,17 @@ public final class XsdBrowserStories {
                     play.tab(true);
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(documentation).toHaveTextContent(SCHEMA_DOCUMENTATION));
+                })
+                // A sequence's and a choice's occurrences are small labels over their images
+                // (they lost their class in wave 8 and were shown as plain text below them)
+                .story("Occurrences", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(XSD_TEXT, OCCURRENCES_XSD, OPEN, "shelf"))
+                .withPlay(play -> {
+                    final Query sequence = play.getByText("0..*");
+                    play.waitFor(() -> play.expect(sequence).toBeVisible());
+                    play.expect(sequence).toHaveClass("xsd-browser__occurrence-label");
+                    play.expect(sequence).toHaveStyle("position", "absolute");
+                    play.expect(play.getByText("1..3")).toHaveClass("xsd-browser__occurrence-label");
                 })
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
                 // XML parser recovers, and GWT's XSDModel once showed what it recovered)

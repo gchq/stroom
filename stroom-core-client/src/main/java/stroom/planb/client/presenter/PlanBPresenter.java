@@ -54,7 +54,7 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
 
         addTab(SETTINGS, new DocTabProvider<>(planBSettingsPresenterProvider::get));
         addTab(DATA, new DocTabProvider<>(planBDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,

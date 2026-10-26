@@ -22,6 +22,8 @@ import stroom.widget.xsdbrowser.client.view.XSDModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
+
 /// A schema's browser ([XSDBrowser]): moves around the schema's model, and shows the node selected
 /// in it.
 public class XSDBrowserController extends Controller {
@@ -38,9 +40,9 @@ public class XSDBrowserController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        view.setOnHome(() -> model.home());
-        view.setOnBack(() -> model.back());
-        view.setOnForward(() -> model.forward());
+        view.setOnHome(() -> withModel(XSDModel::home));
+        view.setOnBack(() -> withModel(XSDModel::back));
+        view.setOnForward(() -> withModel(XSDModel::forward));
     }
 
     /// Shows a schema, following the node selected in it.
@@ -51,5 +53,12 @@ public class XSDBrowserController extends Controller {
         own(model.addDataSelectionHandler(event ->
                 view.setSelectedNode(event.getSelectedItem(), event.isDoubleSelect())));
         view.setModel(model);
+    }
+
+    // Home, Back and Forward do nothing until there is a schema to move around
+    private void withModel(final Consumer<XSDModel> action) {
+        if (model != null) {
+            action.accept(model);
+        }
     }
 }

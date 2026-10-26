@@ -28,7 +28,7 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// font); the look of the text comes from the style names the caller adds, as a label's would:
 ///
 /// ```
-/// <b:LinkButton ui:field="home" addStyleNames="link" text="Home" ariaLabel="Schema Home"/>
+/// <btn:LinkButton ui:field="homeLink" addStyleNames="xsd-browser__link" text="Home" ariaLabel="Schema Home"/>
 /// ```
 ///
 /// A standalone action with an icon belongs in a [Toolbar] as a [ToolbarButton] instead.

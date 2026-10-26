@@ -76,7 +76,7 @@ public class ReportPresenter
                 ReportSettingsTabController::write));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(getEventBus(), markdownEditProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
