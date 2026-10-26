@@ -296,7 +296,7 @@ public class ContextAssembler {
             (direction, slope, r2: below about 0.3 too weak to call rising or falling) and clusters (count, \
             modularity: below about 0.3 weak; the largest, with the group most of each is in; and bridges), \
             never figures worked out from the picture. A chart generated before a setting or choice was added \
-            can't take it: regenerate it with propose_visualisation replace (the same kind) first.
+            takes it too: applying the change gives it the settings added since.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
             filter a column), the expression of the classic query that feeds it (set_expression, conditions \
             in where), its conditional formatting (add_format_rule, remove_format_rule), a Text widget for \

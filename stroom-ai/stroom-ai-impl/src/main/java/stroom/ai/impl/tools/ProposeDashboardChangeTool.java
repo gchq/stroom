@@ -35,7 +35,6 @@ import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.EChartsTemplate;
-import stroom.ai.impl.vis.StyleSetting;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.TableExpression;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -66,7 +65,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -453,6 +451,11 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         arguments.put("component", tableName);
         arguments.put("component_id", table.getComponentId());
         arguments.put("changes", built.stream().map(Change::toMap).toList());
+        if (!result.outdatedCharts().isEmpty()) {
+            arguments.put(UserActions.UPDATE_CHARTS, result.outdatedCharts().stream()
+                    .map(chart -> Map.of("uuid", chart.getUuid(), "name", NullSafe.string(chart.getName())))
+                    .toList());
+        }
         // Not of the Visualisations' render reports, which change as they render.
         arguments.put("snapshot_hash", AiTabSnapshotPart.hashText(
                 DashboardComponents.withoutRenderReports(settings.text())));
@@ -494,10 +497,13 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
         final List<Change> withExpressions = withQueryExpressions(checked.changes(), table, dashboardText, problems);
-        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withExpressions,
-                dashboardText, tableName, problems), checked, dashboardText, searches, tableName, problems), checked,
-                dashboardText, searches, problems);
-        return new Built(built, checked, List.copyOf(problems));
+        final Set<DocRef> outdatedCharts = new LinkedHashSet<>();
+        final List<Change> withComponents = withComponents(withExpressions, dashboardText, tableName, problems);
+        final List<Change> withVisualisations = withVisualisations(withComponents, checked, dashboardText, searches,
+                tableName, outdatedCharts, problems);
+        final List<Change> built = withSelectionFilters(withVisualisations, checked, dashboardText, searches,
+                problems);
+        return new Built(built, checked, List.copyOf(problems), List.copyOf(outdatedCharts));
     }
 
     // Resolves the component each rename and set_setting changes, by name (or a table these changes add), and checks
@@ -589,6 +595,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                             final String dashboardText,
                                             final List<AiTabSearch> searches,
                                             final String tableName,
+                                            final Set<DocRef> outdatedCharts,
                                             final List<String> problems) {
         final List<Component> components = DashboardComponents.parse(dashboardText);
         // The Visualisations read, by UUID; and the Visualisation components these changes add, by name (lower
@@ -600,7 +607,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
             if (DashboardChanges.ADD_VIS.equals(change.op())) {
-                final VisualisationDoc visualisation = visualisation(change.doc(), visualisations);
+                final VisualisationDoc visualisation = visualisation(change.doc(), visualisations, outdatedCharts);
                 if (visualisation == null) {
                     problems.add(prefix + "no Visualisation you can view has the UUID '"
                                  + NullSafe.get(change.doc(), DocRef::getUuid) + "'. Give a Visualisation's UUID.");
@@ -642,7 +649,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             final DocRef wanted = change.doc() != null
                     ? change.doc()
                     : current;
-            final VisualisationDoc visualisation = visualisation(wanted, visualisations);
+            final VisualisationDoc visualisation = visualisation(wanted, visualisations, outdatedCharts);
             if (visualisation == null) {
                 problems.add(prefix + (wanted == null
                         ? "the component shows no Visualisation yet. Give the UUID of one to show (visualisation)."
@@ -665,14 +672,38 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         return resolved;
     }
 
-    // Reads a Visualisation the user can view, once per UUID, or gives null if there is no such one.
-    private VisualisationDoc visualisation(final DocRef docRef, final Map<String, VisualisationDoc> visualisations) {
+    // Reads a Visualisation the user can view, once per UUID, or gives null if there is no such one. A chart Stroom
+    // AI generated is read with its settings as the template now has them: its adapter is this release's, which
+    // draws every current setting. One whose settings that changes (generated before a setting was added) is noted
+    // in the outdated charts, to be given them as the user applies the change.
+    private VisualisationDoc visualisation(final DocRef docRef,
+                                           final Map<String, VisualisationDoc> visualisations,
+                                           final Set<DocRef> outdatedCharts) {
         if (docRef == null || NullSafe.isBlankString(docRef.getUuid())) {
             return null;
         }
         return visualisations.computeIfAbsent(docRef.getUuid().strip(), uuid -> documentAccess
                 .read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class)
+                .map(held -> {
+                    final VisualisationDoc current = withCurrentSettings(held);
+                    if (current != held) {
+                        outdatedCharts.add(docRef(current));
+                    }
+                    return current;
+                })
                 .orElse(null));
+    }
+
+    // A chart Stroom AI generated, with its settings as the template now has them, if that changes them; any other
+    // (or one already up to date) as it is.
+    static VisualisationDoc withCurrentSettings(final VisualisationDoc visualisation) {
+        if (ChartLibrary.forFunctionName(visualisation.getFunctionName()).isEmpty()) {
+            return visualisation;
+        }
+        return EChartsTemplate.rebuilt(visualisation.getSettings())
+                .filter(settings -> !settings.equals(visualisation.getSettings()))
+                .map(settings -> visualisation.copy().settings(settings).build())
+                .orElse(visualisation);
     }
 
     private static DocRef docRef(final VisualisationDoc visualisation) {
@@ -694,9 +725,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         newChoiceProblems(settings, visualisation).forEach(problem -> problems.add(prefix + problem));
     }
 
-    // A chart Stroom AI generated draws with the adapter it was generated with, which has only the choices its
-    // settings offer: one added since (e.g. a nodeColours of cluster) would do nothing, so it is regenerated first.
-    // A value no version offers (e.g. a typo) is said to be one, as regenerating wouldn't help.
+    // A value a chart Stroom AI generated doesn't offer for a setting (e.g. a typo) is said to be one, with the
+    // choices it does offer. Its settings are read as the template now has them, so a choice added since it was
+    // generated (e.g. a nodeColours of cluster) is offered, and given to it as the change is applied.
     static List<String> newChoiceProblems(final Map<String, String> settings,
                                           final VisualisationDoc visualisation) {
         if (ChartLibrary.forFunctionName(visualisation.getFunctionName()).isEmpty()) {
@@ -709,23 +740,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             if (offered == null || NullSafe.isBlankString(value) || offersChoice(offered, value)) {
                 return;
             }
-            final List<String> current = Arrays.stream(StyleSetting.values())
-                    .filter(setting -> setting.id().equals(id))
-                    .flatMap(setting -> setting.choices().stream())
-                    .distinct()
-                    .toList();
-            if (offersChoice(current, value)) {
-                problems.add("this chart's " + id + " offers " + choiceList(offered) + ", not '" + value.strip()
-                             + "': it was generated before that was added, and draws with the version of Stroom's "
-                             + "adapter it was made with. Regenerate it first with propose_visualisation, replace "
-                             + "(its pane's name), the same kind and columns, which gives it every current "
-                             + "setting; then set it.");
-            } else {
-                problems.add("'" + value.strip() + "' isn't a choice of " + id + ": "
-                             + choiceList(current.isEmpty()
-                        ? offered
-                        : current) + ".");
-            }
+            problems.add("'" + value.strip() + "' isn't a choice of " + id + ": " + choiceList(offered) + ".");
         });
         return problems;
     }
@@ -1292,8 +1307,10 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     ///
     /// @param changes  The changes as the browser applies them.
     /// @param checked  What checking them found, e.g. the columns of a table they add.
-    /// @param problems Why any of them can't be made; none if all can.
-    record Built(List<Change> changes, Checked checked, List<String> problems) {
+    /// @param problems       Why any of them can't be made; none if all can.
+    /// @param outdatedCharts The charts Stroom AI generated whose Visualisations they read with settings added to
+    ///                       Stroom since: given them as the changes are applied.
+    record Built(List<Change> changes, Checked checked, List<String> problems, List<DocRef> outdatedCharts) {
 
     }
 }
