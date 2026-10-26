@@ -1044,8 +1044,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 final String componentName = NullSafe.nonBlankStringElse(
                         NullSafe.get(spec.get(COMPONENT_NAME_ARG), value -> String.valueOf(value).strip()), name);
                 final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, chartStyle, options,
-                        tableName, table.getComponentId(), componentName, placement(layout, onTable, asked), snapshotHash,
-                        null, null, null, chartLibrary.id());
+                        tableName, table.getComponentId(), componentName, placement(layout, onTable, asked),
+                        snapshotHash, null, null, null, chartLibrary.id());
                 try {
                     plan.validate();
                 } catch (final IllegalArgumentException e) {
