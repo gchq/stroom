@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.preferences.client.component.EditorPreferencesController;
+import stroom.preferences.client.component.KeyBindingPreferencesController;
 import stroom.preferences.client.component.ThemePreferencesController;
 import stroom.preferences.client.component.TimePreferencesController;
 import stroom.security.client.api.ClientSecurityContext;
@@ -127,7 +128,7 @@ class TestUserPreferencesPresenter {
                 Mockito.mock(ThemePreferencesController.class),
                 Mockito.mock(EditorPreferencesController.class),
                 Mockito.mock(TimePreferencesController.class),
-                Mockito.mock(KeyBindingPreferencesPresenter.class),
+                Mockito.mock(KeyBindingPreferencesController.class),
                 Mockito.mock(ClientSecurityContext.class));
         // The dialog's size is worked out from the browser window's
         try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {

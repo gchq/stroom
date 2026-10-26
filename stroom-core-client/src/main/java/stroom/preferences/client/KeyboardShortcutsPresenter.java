@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 /// A dialog listing the keyboard shortcuts as the user has them, for reference
 /// ([Action#SHOW_KEY_BINDS], `?` by default): each action with its shortcuts and its group. The
-/// shortcuts are changed in the user preferences ([KeyBindingPreferencesPresenter]), not here.
+/// shortcuts are changed in the user preferences (`KeyBindingPreferencesController`), not here.
 public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortcutsView> {
 
     /// The group of actions whose shortcuts are built in, which the user can't change.

@@ -24,9 +24,6 @@ import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
-import stroom.preferences.client.KeyBindingPreferencesPresenter;
-import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPreferencesView;
-import stroom.preferences.client.KeyBindingPreferencesViewImpl;
 import stroom.preferences.client.KeyboardShortcutsPresenter;
 import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
 import stroom.preferences.client.KeyboardShortcutsViewImpl;
@@ -67,9 +64,6 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(UserPreferencesPresenter.class,
                 UserPreferencesView.class,
                 UserPreferencesViewImpl.class);
-        bindPresenterWidget(KeyBindingPreferencesPresenter.class,
-                KeyBindingPreferencesView.class,
-                KeyBindingPreferencesViewImpl.class);
         bindPresenterWidget(KeyboardShortcutsPresenter.class,
                 KeyboardShortcutsView.class,
                 KeyboardShortcutsViewImpl.class);

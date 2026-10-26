@@ -22,6 +22,7 @@ import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.preferences.client.component.EditorPreferencesController;
+import stroom.preferences.client.component.KeyBindingPreferencesController;
 import stroom.preferences.client.component.ThemePreferencesController;
 import stroom.preferences.client.component.TimePreferencesController;
 import stroom.security.client.api.ClientSecurityContext;
@@ -64,7 +65,8 @@ public final class UserPreferencesPresenter
     private final ControllerLayer editorPreferencesLayer;
     private final TimePreferencesController timePreferences;
     private final ControllerLayer timePreferencesLayer;
-    private final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter;
+    private final KeyBindingPreferencesController keyBindingPreferences;
+    private final ControllerLayer keyBindingPreferencesLayer;
     private UserPreferences fetchedUserPreferences;
 
     @Inject
@@ -75,13 +77,13 @@ public final class UserPreferencesPresenter
             final ThemePreferencesController themePreferences,
             final EditorPreferencesController editorPreferences,
             final TimePreferencesController timePreferences,
-            final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter,
+            final KeyBindingPreferencesController keyBindingPreferences,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         own(themePreferences);
         own(editorPreferences);
         own(timePreferences);
-        own(keyBindingPreferencesPresenter);
+        own(keyBindingPreferences);
         this.userPreferencesManager = userPreferencesManager;
         this.themePreferences = themePreferences;
         themePreferencesLayer = new ControllerLayer(themePreferences);
@@ -89,7 +91,8 @@ public final class UserPreferencesPresenter
         editorPreferencesLayer = new ControllerLayer(editorPreferences);
         this.timePreferences = timePreferences;
         timePreferencesLayer = new ControllerLayer(timePreferences);
-        this.keyBindingPreferencesPresenter = keyBindingPreferencesPresenter;
+        this.keyBindingPreferences = keyBindingPreferences;
+        keyBindingPreferencesLayer = new ControllerLayer(keyBindingPreferences);
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext
                 .hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
@@ -106,7 +109,7 @@ public final class UserPreferencesPresenter
         themePreferences.setOnChange(this::onChange);
         editorPreferences.setOnChange(this::onChange);
         timePreferences.setOnChange(this::onChange);
-        keyBindingPreferencesPresenter.setOnChange(this::onChange);
+        keyBindingPreferences.setOnChange(this::onChange);
     }
 
     private void addTab(final TabData tabData) {
@@ -122,7 +125,7 @@ public final class UserPreferencesPresenter
         } else if (Objects.equals(DATE_AND_TIME, tabData)) {
             setLayer(timePreferencesLayer);
         } else if (Objects.equals(KEYBOARD_SHORTCUTS, tabData)) {
-            setLayer(keyBindingPreferencesPresenter);
+            setLayer(keyBindingPreferencesLayer);
         }
     }
 
@@ -225,7 +228,7 @@ public final class UserPreferencesPresenter
         themePreferences.read(userPreferences);
         editorPreferences.read(userPreferences);
         timePreferences.read(userPreferences);
-        keyBindingPreferencesPresenter.read(userPreferences);
+        keyBindingPreferences.read(userPreferences);
     }
 
     private UserPreferences write(final UserPreferences userPreferences) {
@@ -233,7 +236,7 @@ public final class UserPreferencesPresenter
         themePreferences.write(builder);
         editorPreferences.write(builder);
         timePreferences.write(builder);
-        keyBindingPreferencesPresenter.write(builder);
+        keyBindingPreferences.write(builder);
         return builder.build();
     }
 

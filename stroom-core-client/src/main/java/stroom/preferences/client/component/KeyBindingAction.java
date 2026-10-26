@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.preferences.client;
+package stroom.preferences.client.component;
 
-import stroom.document.client.event.ChangeUiHandlers;
-
-/// Handles the changes the user makes in a
-/// [KeyBindingPreferencesPresenter.KeyBindingPreferencesView].
-public interface KeyBindingPreferencesUiHandlers extends ChangeUiHandlers {
-
-    /// Called when the user changes the text that filters the list of shortcuts.
-    ///
-    /// @param filter The filter text.
-    void onFilterChange(String filter);
+/// What can be done to the shortcuts in the Keyboard Shortcuts tab ([KeyBindingPreferences]), a
+/// toolbar button each.
+public enum KeyBindingAction {
+    /// Adds a shortcut to the selected action.
+    ADD,
+    /// Changes the selected shortcut.
+    CHANGE,
+    /// Removes the selected shortcut.
+    REMOVE,
+    /// Resets the selected action to its default shortcuts.
+    RESET,
+    /// Resets every action to its default shortcuts.
+    RESET_ALL
 }
