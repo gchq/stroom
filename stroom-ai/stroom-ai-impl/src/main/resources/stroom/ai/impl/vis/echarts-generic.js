@@ -3335,10 +3335,10 @@ if (!window.visualisations) {
         return {slope: slope, intercept: meanY - slope * meanX, r2: syy === 0 ? 1 : (sxy * sxy) / (sxx * syy)};
     }
 
-    // How many points a moving average takes: Trend Window, else about a tenth of them; odd (so it is centred), at
-    // least 3, and no more than there are.
+    // How many points a moving average takes: Trend Window, else about a tenth of them (at most 500); odd (so it is
+    // centred), at least 3, and no more than there are.
     function trendWindow(settings, count) {
-        var window = intSetting(settings, "trendWindow", 0, 0, 500) || Math.round(count / 10);
+        var window = intSetting(settings, "trendWindow", 0, 0, 500) || Math.min(500, Math.round(count / 10));
         window = Math.max(3, window);
         if (window % 2 === 0) {
             window++;
@@ -3350,12 +3350,18 @@ if (!window.visualisations) {
     // line smooths the points without lagging behind them.
     function movingAverage(points, window) {
         var half = Math.floor(window / 2);
+        // A running sum of the window: the point coming into it added, the one leaving taken away.
+        var sum = 0;
+        var from = 0;
+        var to = -1;
         return points.map(function (point, i) {
-            var from = Math.max(0, i - half);
-            var to = Math.min(points.length - 1, i + half);
-            var sum = 0;
-            for (var j = from; j <= to; j++) {
-                sum += points[j][1];
+            while (to < Math.min(points.length - 1, i + half)) {
+                to++;
+                sum += points[to][1];
+            }
+            while (from < i - half) {
+                sum -= points[from][1];
+                from++;
             }
             return [point[0], sum / (to - from + 1)];
         });
@@ -3520,8 +3526,10 @@ if (!window.visualisations) {
     }
 
     // Draws trends as dashed lines in their series' colours (a total's in the subtle text colour), fainter when weak,
-    // each labelled at its end. They are silent, so a click goes to the chart's own marks; on a log axis, a trend's
-    // values of 0 or less are left out.
+    // each labelled at its end. Each has its series' name, so hiding a series in the legend hides its trend too; a
+    // total's is named Total. They are silent and out of the tooltip, so a click and the tooltip go to the chart's
+    // own marks; on a log axis, a trend's values of 0 or less are left out. Added after the options apply, so they
+    // take the options' colours but not their series defaults.
     function addTrendSeries(option, found, style, log) {
         if (!found) {
             return;
@@ -3555,9 +3563,10 @@ if (!window.visualisations) {
             });
             option.series.push({
                 type: "line",
-                name: trend.name + " trend",
+                name: trend.name,
                 data: data,
                 silent: true,
+                tooltip: {show: false},
                 symbol: "none",
                 showSymbol: false,
                 connectNulls: true,
@@ -3904,7 +3913,6 @@ if (!window.visualisations) {
         // Trends are of the values as the model made them, drawn after the value settings (e.g. a log axis) apply.
         var trends = trendsFor(kind, option, settings, fields, prefs, report);
         applyValueSettings(kind, option, settings, style, prefs, report);
-        addTrendSeries(option, trends, style, boolSetting(settings, "logScale", false));
         addZoom(kind, option, style, settings, rangeAt);
         // The zoom kept from before (e.g. across a refresh of the table, or a new interval).
         (option.dataZoom || []).forEach(function (zoom, index) {
@@ -3940,6 +3948,7 @@ if (!window.visualisations) {
             report.warnings.push("selectedMode is the chart's own (a click selects an item, Ctrl-click or "
                 + "Shift-click selects more), so the override was left out.");
         }
+        addTrendSeries(option, trends, style, boolSetting(settings, "logScale", false));
 
         if (rows.length === 0) {
             report.status = "empty";
