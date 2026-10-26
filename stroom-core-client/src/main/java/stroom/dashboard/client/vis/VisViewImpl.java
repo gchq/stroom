@@ -105,6 +105,11 @@ public class VisViewImpl extends ViewImpl implements VisView {
         return refreshButton;
     }
 
+    public VisToolbar getToolbar() {
+        return toolbar;
+    }
+
+    @Override
     public void setVisFrame(final VisFrame visFrame) {
         this.visFrame = visFrame;
         toolbar.setVisFrame(visFrame);
