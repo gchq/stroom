@@ -294,8 +294,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final Map<String, String> style;
         final String options;
         try {
-            style = VisualisationPlan.normaliseStyle(kind, stringMap(argsMap(request).get(STYLE_ARG), STYLE_ARG),
-                    chartLibrary);
+            style = VisualisationPlan.normaliseStyle(kind, stringMap(argsMap(request).get(STYLE_ARG), STYLE_ARG));
             options = VisualisationPlan.normaliseOptions(optionsText(argsMap(request).get(OPTIONS_ARG)),
                     chartLibrary);
         } catch (final IllegalArgumentException e) {
@@ -504,8 +503,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 final Map<String, String> style;
                 final String options;
                 try {
-                    style = VisualisationPlan.normaliseStyle(kind, stringMap(spec.get(STYLE_ARG), STYLE_ARG),
-                            chartLibrary);
+                    style = VisualisationPlan.normaliseStyle(kind, stringMap(spec.get(STYLE_ARG), STYLE_ARG));
                     options = VisualisationPlan.normaliseOptions(optionsText(spec.get(OPTIONS_ARG)),
                             chartLibrary);
                 } catch (final IllegalArgumentException e) {

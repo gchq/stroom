@@ -919,6 +919,31 @@ if (!window.visualisations) {
         }
     }
 
+    // Where to cut the value axis, if a few values dwarf the rest: between the largest jump (at least four times)
+    // with no more than a fifth of the values above it.
+    function outlierBreak(values) {
+        var sorted = values.filter(function (value) {
+            return value > 0;
+        }).sort(function (a, b) {
+            return a - b;
+        });
+        var best = null;
+        for (var i = 0; i < sorted.length - 1; i++) {
+            var ratio = sorted[i + 1] / sorted[i];
+            var above = sorted.length - i - 1;
+            if (ratio >= 4 && above <= Math.max(1, Math.floor(sorted.length / 5)) && (!best || ratio > best.ratio)) {
+                best = {ratio: ratio, start: sorted[i] * 1.15, end: sorted[i + 1] * 0.9};
+            }
+        }
+        return best && best.end > best.start ? {start: best.start, end: best.end, gap: "3%"} : null;
+    }
+
+    // A fraction from -0.5 to 0.5 that is the same for the same index, to spread overlapping points (Jitter).
+    function jitterOf(index) {
+        var value = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
+        return value - Math.floor(value) - 0.5;
+    }
+
     // ------------------------------------------------------------------------------------------
     // D3 across its versions
     // ------------------------------------------------------------------------------------------
@@ -1037,8 +1062,16 @@ if (!window.visualisations) {
     // Drawing helpers
     // ------------------------------------------------------------------------------------------
 
+    // ECharts' sizes, so the two draw alike: text, legend items and the gaps between them.
     var FONT_SIZE = 12;
-    var SMALL_FONT_SIZE = 11;
+    var SMALL_FONT_SIZE = 12;
+    var LEGEND_ICON_WIDTH = 25;
+    var LEGEND_ICON_HEIGHT = 14;
+    var LEGEND_ITEM_GAP = 10;
+    var LEGEND_ROW = 28;
+    var LEGEND_RIGHT_WIDTH = 140;
+    // ECharts' threshold line colour.
+    var THRESHOLD_COLOUR = "#e5484d";
 
     function svgText(parent, text, x, y, style, options) {
         options = options || {};
@@ -1060,18 +1093,74 @@ if (!window.visualisations) {
         return node;
     }
 
-    // A value axis along the bottom (horizontal) or left (vertical) of the plot area, with grid lines across it.
-    // Along the bottom, as many ticks as their labels have room for, and no label that would overlap the last.
-    function drawValueAxis(g, scale, horizontal, plot, format, style, name) {
-        var count = horizontal ? Math.max(2, Math.floor(plot.width / 90)) : Math.max(2, Math.floor(plot.height / 45));
+    // A round interval for an axis's ticks, as ECharts picks one: 1, 2, 3 or 5 times a power of ten.
+    function niceInterval(raw) {
+        if (!(raw > 0) || !isFinite(raw)) {
+            return 1;
+        }
+        var power = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+        var fraction = raw / power;
+        var nice = fraction < 1.5 ? 1 : fraction < 2.5 ? 2 : fraction < 4 ? 3 : fraction < 7 ? 5 : 10;
+        return nice * power;
+    }
+
+    // A linear scale over values, rounded out to whole intervals with about five of them, as ECharts' value axis
+    // is; its ticks are those intervals.
+    function niceLinear(C, min, max, range) {
+        var interval = niceInterval((max - min) / 5);
+        var from = Math.floor(min / interval + 1e-9) * interval;
+        var to = Math.ceil(max / interval - 1e-9) * interval;
+        if (!(to > from)) {
+            to = from + interval;
+        }
+        var scale = C.linear().domain([from, to]).range(range);
+        var ticks = [];
+        for (var tick = from; tick <= to + interval / 2; tick += interval) {
+            ticks.push(Math.round(tick / interval) * interval);
+        }
+        scale.niceTicks = ticks;
+        return scale;
+    }
+
+    // The ticks of a value axis: about five, as ECharts splits one; on a log axis, its powers of ten.
+    function axisTicks(scale, count) {
+        // Fewer, if there isn't room for them all: every other one, or every third, ...
+        if (scale.niceTicks) {
+            var every = Math.max(1, Math.ceil((scale.niceTicks.length - 1) / Math.max(1, count)));
+            return scale.niceTicks.filter(function (tick, i) {
+                return i % every === 0;
+            });
+        }
+        // An axis cut for outliers is ticked either side of the cut.
+        if (scale.cutTicks) {
+            return scale.cutTicks;
+        }
         var ticks = scale.ticks(count);
+        if (scale.isLog) {
+            var powers = ticks.filter(function (tick) {
+                var power = Math.log(tick) / Math.LN10;
+                return Math.abs(power - Math.round(power)) < 1e-9;
+            });
+            if (powers.length >= 2) {
+                return powers;
+            }
+        }
+        return ticks;
+    }
+
+    // A value (or time) axis along the bottom (horizontal) or left (vertical) of the plot area, drawn as ECharts
+    // draws one: a value axis with grid lines across the plot and no axis line, a time axis with an axis line and
+    // no grid lines. Along the bottom, as many ticks as their labels have room for, and no label that would overlap
+    // the last.
+    function drawValueAxis(g, scale, horizontal, plot, format, style, name, time) {
+        var ticks = axisTicks(scale, 5);
         if (horizontal) {
             var widest = ticks.reduce(function (most, tick) {
                 return Math.max(most, textWidth(format(tick), SMALL_FONT_SIZE));
             }, 0);
             var fits = Math.max(2, Math.floor(plot.width / (widest + 16)));
             if (fits < ticks.length) {
-                ticks = scale.ticks(fits);
+                ticks = axisTicks(scale, fits);
             }
         }
         var axis = g.append("g").attr("class", "axis");
@@ -1082,8 +1171,9 @@ if (!window.visualisations) {
                 return;
             }
             if (horizontal) {
-                axis.append("line").attr("x1", at).attr("x2", at).attr("y1", 0).attr("y2", plot.height)
-                    .attr("stroke", style.border).attr("stroke-dasharray", "2,3");
+                if (!time) {
+                    gridLine(g.gridLayer || axis, at, 0, at, plot.height, style);
+                }
                 var label = format(tick);
                 var half = textWidth(label, SMALL_FONT_SIZE) / 2;
                 // Kept within the chart: an end label is moved in rather than cut off.
@@ -1094,62 +1184,107 @@ if (!window.visualisations) {
                     labelEnd = centre + half;
                 }
             } else {
-                axis.append("line").attr("x1", 0).attr("x2", plot.width).attr("y1", at).attr("y2", at)
-                    .attr("stroke", style.border).attr("stroke-dasharray", "2,3");
-                svgText(axis, format(tick), -6, at, style,
-                    {anchor: "end", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
+                gridLine(g.gridLayer || axis, 0, at, plot.width, at, style);
+                // No label too close to the last (as either side of an axis cut can be).
+                if (Math.abs(at - labelEnd) >= 14 || labelEnd === -Infinity) {
+                    svgText(axis, format(tick), -8, at, style,
+                        {anchor: "end", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
+                    labelEnd = at;
+                }
             }
         });
+        if (time) {
+            axisLine(axis, horizontal, plot, style);
+        }
+        if (scale.cut) {
+            drawAxisBreak(axis, scale.cut, horizontal, plot, style);
+        }
+        axisName(axis, name, horizontal, plot, style);
+    }
+
+    // Where an axis is cut for outliers, a zigzag band across the plot, as ECharts draws its axis breaks.
+    function drawAxisBreak(axis, cut, horizontal, plot, style) {
+        var a = Math.min(cut.at[0], cut.at[1]);
+        var b = Math.max(cut.at[0], cut.at[1]);
+        var across = horizontal ? plot.height : plot.width;
+        var edge = function (at, flip) {
+            var points = [];
+            for (var i = 0; i <= Math.ceil(across / 5); i++) {
+                var offset = (i % 2 === 0 ? -2 : 2) * (flip ? -1 : 1);
+                var along = Math.min(across, i * 5);
+                points.push(horizontal ? [at + offset, along] : [along, at + offset]);
+            }
+            return points;
+        };
+        var points = edge(a, false).concat(edge(b, true).reverse());
+        axis.append("path").attr("d", "M" + points.join("L") + "Z").attr("fill", style.subtleText)
+            .attr("fill-opacity", 0.5).attr("stroke", style.subtleText).attr("stroke-width", 1)
+            .attr("pointer-events", "none");
+    }
+
+    function gridLine(axis, x1, y1, x2, y2, style) {
+        axis.append("line").attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2)
+            .attr("stroke", style.border).attr("stroke-opacity", 0.6);
+    }
+
+    // The line of a category or time axis, along the bottom or left of the plot area.
+    function axisLine(axis, horizontal, plot, style) {
         axis.append("line")
             .attr("x1", 0).attr("y1", horizontal ? plot.height : 0)
             .attr("x2", horizontal ? plot.width : 0).attr("y2", plot.height)
-            .attr("stroke", style.subtleText);
-        if (name) {
-            if (horizontal) {
-                svgText(axis, name, plot.width / 2, plot.height + 32, style,
-                    {anchor: "middle", colour: style.subtleText});
-            } else {
-                svgText(axis, name, -plot.left + 12, plot.height / 2, style,
-                    {anchor: "middle", colour: style.subtleText, rotate: -90});
-            }
+            .attr("stroke", style.border);
+    }
+
+    // An axis's name, centred along it, beyond its labels.
+    function axisName(axis, name, horizontal, plot, style) {
+        if (!name) {
+            return;
+        }
+        if (horizontal) {
+            svgText(axis, name, plot.width / 2, plot.height + 34, style,
+                {anchor: "middle", colour: style.subtleText});
+        } else {
+            svgText(axis, name, -plot.left + 12, plot.height / 2, style,
+                {anchor: "middle", colour: style.subtleText, rotate: -90});
         }
     }
 
-    // A category axis: a label under (or beside) each band, thinned out when they would overlap.
+    // A category axis: its line, a tick between bands and a label under (or beside) each band, thinned out when
+    // they would overlap.
     function drawCategoryAxis(g, categories, band, horizontal, plot, style, name) {
         var axis = g.append("g").attr("class", "axis");
         var step = band.step;
         var widest = categories.reduce(function (most, category) {
-            return Math.max(most, textWidth(category, SMALL_FONT_SIZE));
+            return Math.max(most, textWidth(shorten(category, 20), SMALL_FONT_SIZE));
         }, 0);
         var every = horizontal ? Math.max(1, Math.ceil((Math.min(widest, 120) + 8) / Math.max(1, step))) :
             Math.max(1, Math.ceil(16 / Math.max(1, step)));
+        var length = horizontal ? plot.width : plot.height;
         categories.forEach(function (category, i) {
-            if (i % every !== 0) {
+            var at = band.centre ? band.centre(i) : band.position(i) + band.width / 2;
+            var edge = band.edge ? band.edge(i) : at - step / 2;
+            if (edge >= -0.5 && edge <= length + 0.5) {
+                if (horizontal) {
+                    axis.append("line").attr("x1", edge).attr("x2", edge).attr("y1", plot.height)
+                        .attr("y2", plot.height + 5).attr("stroke", style.border);
+                } else {
+                    axis.append("line").attr("y1", edge).attr("y2", edge).attr("x1", -5).attr("x2", 0)
+                        .attr("stroke", style.border);
+                }
+            }
+            if (i % every !== 0 || at < -1 || at > length + 1) {
                 return;
             }
-            var at = band.position(i) + band.width / 2;
             if (horizontal) {
                 svgText(axis, shorten(category, 20), at, plot.height + 16, style,
                     {anchor: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
             } else {
-                svgText(axis, shorten(category, 20), -6, at, style,
+                svgText(axis, shorten(category, 20), -8, at, style,
                     {anchor: "end", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
             }
         });
-        axis.append("line")
-            .attr("x1", 0).attr("y1", horizontal ? plot.height : 0)
-            .attr("x2", horizontal ? plot.width : 0).attr("y2", plot.height)
-            .attr("stroke", style.subtleText);
-        if (name) {
-            if (horizontal) {
-                svgText(axis, name, plot.width / 2, plot.height + 32, style,
-                    {anchor: "middle", colour: style.subtleText});
-            } else {
-                svgText(axis, name, -plot.left + 12, plot.height / 2, style,
-                    {anchor: "middle", colour: style.subtleText, rotate: -90});
-            }
-        }
+        axisLine(axis, horizontal, plot, style);
+        axisName(axis, name, horizontal, plot, style);
     }
 
     // Bands along an axis of a given length for a number of categories, and the part of them zoomed in on.
@@ -1172,51 +1307,162 @@ if (!window.visualisations) {
         };
     }
 
+    // Points along an axis for a number of categories, the first at its start and the last at its end (as ECharts
+    // places a line chart's), and the part of them zoomed in on.
+    function pointPositions(count, length, zoom) {
+        var start = zoom ? zoom.start : 0;
+        var end = zoom ? zoom.end : 1;
+        var span = Math.max(1e-6, end - start);
+        var step = count > 1 ? length / (count - 1) / span : length;
+        var offset = count > 1 ? -start * (count - 1) * step : length / 2;
+        return {
+            step: step,
+            width: 0,
+            centre: function (i) {
+                return offset + i * step;
+            },
+            position: function (i) {
+                return offset + i * step;
+            },
+            edge: function (i) {
+                return offset + i * step;
+            },
+            visible: function (i) {
+                var at = offset + i * step;
+                return at >= -1 && at <= length + 1;
+            }
+        };
+    }
+
     // The ticks of a value axis's labels, as the Units setting shows them, and how wide the widest is.
     function labelWidth(scale, format) {
-        return scale.ticks(5).reduce(function (most, tick) {
+        return axisTicks(scale, 5).reduce(function (most, tick) {
             return Math.max(most, textWidth(format(tick), SMALL_FONT_SIZE));
         }, 0);
     }
 
-    // A legend of series (or categories) and their colours: along the top, bottom or right. Clicking an entry
-    // hides or shows it.
-    function drawLegend(svg, names, colours, position, size, style, hidden, onToggle) {
+    // A legend item's icon, as ECharts draws it for the kind of series: a rounded bar, a line through a hollow
+    // point, or a point.
+    function legendIcon(item, icon, colour, off, style) {
+        var fill = off ? style.border : colour;
+        if (icon === "line") {
+            item.append("line").attr("x1", 0).attr("x2", LEGEND_ICON_WIDTH).attr("y1", 0).attr("y2", 0)
+                .attr("stroke", fill).attr("stroke-width", 2);
+            item.append("circle").attr("cx", LEGEND_ICON_WIDTH / 2).attr("cy", 0).attr("r", 4)
+                .attr("fill", style.dark ? "#ffffff" : "#ffffff").attr("stroke", fill).attr("stroke-width", 2);
+        } else if (icon === "circle") {
+            item.append("circle").attr("cx", LEGEND_ICON_HEIGHT / 2).attr("cy", 0).attr("r", LEGEND_ICON_HEIGHT / 2)
+                .attr("fill", fill);
+            return LEGEND_ICON_HEIGHT;
+        } else {
+            item.append("rect").attr("x", 0).attr("y", -LEGEND_ICON_HEIGHT / 2).attr("width", LEGEND_ICON_WIDTH)
+                .attr("height", LEGEND_ICON_HEIGHT).attr("rx", 4).attr("fill", fill);
+        }
+        return LEGEND_ICON_WIDTH;
+    }
+
+    // A legend of series (or categories) and their colours, as ECharts lays one out: along the top (from the
+    // left), along the bottom (centred) or down the right (centred). Clicking an entry hides or shows it. When
+    // the entries don't fit, they are shown a page at a time, with arrows to page through them.
+    function drawLegend(ctx, names, colours, position, icon) {
+        var svg = ctx.svg;
+        var size = ctx.size;
+        var style = ctx.style;
+        var hidden = ctx.hidden;
         if (position === "none" || names.length < 2) {
             return 0;
         }
-        var legend = svg.append("g").attr("class", "legend");
-        var x = 8;
-        var y = position === "bottom" ? size.height - 14 : 12;
-        var rightX = size.width - 8 - STROOM_BUTTON_SPACE;
-        names.forEach(function (name, i) {
+        var vertical = position === "right";
+        var items = names.map(function (name, i) {
             var label = shorten(name, 24);
-            var width = 14 + textWidth(label, SMALL_FONT_SIZE) + 12;
-            if (position === "right") {
-                x = rightX - 130;
-                y = 30 + i * 18;
-            } else if (x + width > size.width - 8 - STROOM_BUTTON_SPACE && x > 8) {
-                x = 8;
-                y += position === "bottom" ? -18 : 18;
+            var iconWidth = icon === "circle" ? LEGEND_ICON_HEIGHT : LEGEND_ICON_WIDTH;
+            return {name: name, label: label, colour: colours[i % colours.length],
+                width: iconWidth + 5 + textWidth(label, SMALL_FONT_SIZE)};
+        });
+        var pagerWidth = 70;
+        var available = vertical ? size.height - 16 : size.width - 16 - STROOM_BUTTON_SPACE;
+        // Pages of entries, each as many as fit (with the pager, if there is more than one).
+        var pages = [[]];
+        var used = 0;
+        var total = items.reduce(function (sum, item) {
+            return sum + (vertical ? 20 : item.width + LEGEND_ITEM_GAP);
+        }, 0);
+        var room = total > available ? available - (vertical ? 24 : pagerWidth) : available;
+        items.forEach(function (item) {
+            var length = vertical ? 20 : item.width + LEGEND_ITEM_GAP;
+            if (used + length > room && pages[pages.length - 1].length > 0) {
+                pages.push([]);
+                used = 0;
             }
-            var item = legend.append("g").attr("class", "legend-item").attr("transform", "translate(" + x + "," + y +
-                ")").style("cursor", "pointer");
-            var off = hidden && hidden[name];
-            item.append("rect").attr("x", 0).attr("y", -9).attr("width", 10).attr("height", 10).attr("rx", 2)
-                .attr("fill", off ? style.border : colours[i % colours.length]);
-            svgText(item, label, 14, 0, style, {colour: off ? style.subtleText : style.text, size: SMALL_FONT_SIZE});
+            pages[pages.length - 1].push(item);
+            used += length;
+        });
+        var page = Math.max(0, Math.min(pages.length - 1, ctx.legendPage || 0));
+        var shown = pages[page];
+        var legend = svg.append("g").attr("class", "legend");
+        var widest = shown.reduce(function (most, item) {
+            return Math.max(most, item.width);
+        }, 0);
+        var length = shown.reduce(function (sum, item) {
+            return sum + (vertical ? 20 : item.width + LEGEND_ITEM_GAP);
+        }, 0) - (vertical ? 0 : LEGEND_ITEM_GAP);
+        var x;
+        var y;
+        if (vertical) {
+            x = size.width - 8 - Math.min(LEGEND_RIGHT_WIDTH - 16, widest);
+            y = Math.max(10, (size.height - length - (pages.length > 1 ? 24 : 0)) / 2 + 10);
+        } else {
+            x = position === "bottom" ? Math.max(8, (size.width - length - (pages.length > 1 ? pagerWidth : 0)) / 2) :
+                8;
+            // Along the bottom, above a zoom slider there.
+            y = position === "bottom" ? size.height - 12 - (hasZoomSlider(ctx) && !ctx.categoriesDown ? 28 : 0) : 12;
+        }
+        shown.forEach(function (entry) {
+            var item = legend.append("g").attr("class", "legend-item")
+                .attr("transform", "translate(" + x + "," + y + ")").style("cursor", "pointer");
+            var off = hidden && hidden[entry.name];
+            var iconWidth = legendIcon(item, icon, entry.colour, off, style);
+            svgText(item, entry.label, iconWidth + 5, 0, style, {colour: off ? style.subtleText : style.text,
+                size: SMALL_FONT_SIZE, baseline: "middle"});
             item.node().addEventListener("click", function (event) {
                 event.stopPropagation();
-                onToggle(name);
+                ctx.toggleSeries(entry.name);
             });
-            if (position !== "right") {
-                x += width;
+            if (vertical) {
+                y += 20;
+            } else {
+                x += entry.width + LEGEND_ITEM_GAP;
             }
         });
-        if (position === "right") {
-            return 140;
+        if (pages.length > 1) {
+            drawPager(ctx, legend, page, pages.length, vertical ? x : x + 4, vertical ? y + 4 : y);
         }
-        return position === "bottom" ? size.height - y + 8 : y + 10;
+        if (vertical) {
+            return LEGEND_RIGHT_WIDTH;
+        }
+        return LEGEND_ROW;
+    }
+
+    // Arrows to page through a legend's entries, with the page shown, e.g. ◀ 2/3 ▶.
+    function drawPager(ctx, legend, page, pageCount, x, y) {
+        var style = ctx.style;
+        var pager = legend.append("g").attr("class", "legend-pager")
+            .attr("transform", "translate(" + x + "," + y + ")");
+        [[-1, "\u25c0", 0], [1, "\u25b6", 48]].forEach(function (arrow) {
+            var next = page + arrow[0];
+            var enabled = next >= 0 && next < pageCount;
+            var button = svgText(pager, arrow[1], arrow[2], 0, style, {colour: enabled ? style.text : style.border,
+                size: SMALL_FONT_SIZE, baseline: "middle"});
+            if (enabled) {
+                button.style("cursor", "pointer");
+                button.node().addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    ctx.setLegendPage(next);
+                });
+            }
+        });
+        svgText(pager, (page + 1) + "/" + pageCount, 30, 0, style, {anchor: "middle", colour: style.subtleText,
+            size: SMALL_FONT_SIZE, baseline: "middle"});
     }
 
     // A horizontal gradient bar showing a colour scale's range, along the bottom.
@@ -1235,22 +1481,28 @@ if (!window.visualisations) {
         return 30;
     }
 
-    // A line across the plot at a value (a threshold or an average), with its label.
-    function drawValueLine(g, scale, horizontalValues, plot, value, label, colour, style, dashed) {
+    // A line across the plot at a value, as ECharts marks one: a threshold dashed in red, labelled above its end;
+    // an average dotted, labelled below its end. Along a horizontal value axis the line is upright, labelled along
+    // it at the top.
+    function drawValueLine(g, scale, horizontalValues, plot, value, label, style, average) {
         var at = scale(value);
         if (!isFinite(at) || at < -1 || at > (horizontalValues ? plot.width : plot.height) + 1) {
             return;
         }
-        var line = g.append("line").attr("stroke", colour).attr("stroke-width", 1.5);
-        if (dashed) {
-            line.attr("stroke-dasharray", "6,4");
-        }
+        var colour = average ? style.subtleText : THRESHOLD_COLOUR;
+        var line = g.append("line").attr("stroke", colour).attr("stroke-width", 1.5)
+            .attr("stroke-dasharray", average ? "2,3" : "6,4");
+        var labelColour = average ? style.subtleText : style.text;
         if (horizontalValues) {
+            // Labelled at the bottom, as ECharts labels it, its categories reading down from the top.
             line.attr("x1", at).attr("x2", at).attr("y1", 0).attr("y2", plot.height);
-            svgText(g, label, at + 4, 12, style, {colour: colour, size: SMALL_FONT_SIZE});
+            var bottom = plot.height - 4 - textWidth(label, SMALL_FONT_SIZE);
+            svgText(g, label, average ? at - 4 : at + 4, bottom, style, {colour: labelColour, size: SMALL_FONT_SIZE,
+                rotate: 90, baseline: average ? "auto" : "hanging"});
         } else {
             line.attr("x1", 0).attr("x2", plot.width).attr("y1", at).attr("y2", at);
-            svgText(g, label, plot.width - 4, at - 4, style, {colour: colour, anchor: "end", size: SMALL_FONT_SIZE});
+            svgText(g, label, plot.width - 4, average ? at + 4 : at - 5, style, {colour: labelColour, anchor: "end",
+                size: SMALL_FONT_SIZE, baseline: average ? "hanging" : "auto"});
         }
     }
 
@@ -1258,11 +1510,20 @@ if (!window.visualisations) {
     // Charts on axes: bar, line, scatter, histogram
     // ------------------------------------------------------------------------------------------
 
-    // The plot area: the space left for the chart once the legend and the axes' labels have theirs.
+    // The plot area: the space left for the chart once the legend and the axes' labels have theirs, as ECharts
+    // leaves it (room on the right for Stroom's buttons).
     function plotArea(ctx, legend, left, bottomExtra) {
-        var top = Math.max(16, 10 + (legend.position === "top" ? legend.space : 0));
+        var top = 16 + (legend.position === "top" ? legend.space : 0);
         var bottom = 26 + (bottomExtra || 0) + (legend.position === "bottom" ? legend.space : 0);
-        var right = 16 + (legend.position === "right" ? legend.space : 0);
+        var right = legend.position === "right" ? legend.space : STROOM_BUTTON_SPACE;
+        // Room for the zoom slider: along the bottom, or down the right of a horizontal bar chart.
+        if (hasZoomSlider(ctx)) {
+            if (ctx.categoriesDown) {
+                right += 28;
+            } else {
+                bottom += 28;
+            }
+        }
         return {
             left: left,
             top: top,
@@ -1271,16 +1532,24 @@ if (!window.visualisations) {
         };
     }
 
-    // The legend's position and the space it takes, once drawn.
-    function legendOf(ctx, names, colours) {
+    // True if the chart has a zoom slider: a chart on axes, with the Zoom Slider setting on.
+    function hasZoomSlider(ctx) {
+        var kind = String(ctx.settings.kind || "").toLowerCase();
+        return boolSetting(ctx.settings, "zoomSlider", false) && ["bar", "line", "scatter", "histogram"]
+            .indexOf(kind) >= 0;
+    }
+
+    // The legend's position and the space it takes, once drawn, with an icon for the kind of series (see
+    // legendIcon).
+    function legendOf(ctx, names, colours, icon) {
         var position = textSetting(ctx.settings, "legend") || "top";
-        var space = drawLegend(ctx.svg, names, colours, position, ctx.size, ctx.style, ctx.hidden, ctx.toggleSeries);
+        var space = drawLegend(ctx, names, colours, position, icon);
         return {position: space > 0 ? position : "none", space: space};
     }
 
     // A value scale for values (linear, or log when the Log Scale setting is on and the values allow), its domain
-    // padded and including zero where the chart's bars or areas start from it.
-    function valueScaleOf(ctx, values, range, fromZero) {
+    // padded and, as ECharts' is, including zero.
+    function valueScaleOf(ctx, values, range) {
         var log = boolSetting(ctx.settings, "logScale", false);
         var finite = values.filter(function (value) {
             return isFinite(value) && (!log || value > 0);
@@ -1297,33 +1566,59 @@ if (!window.visualisations) {
             max = Math.max(max, threshold);
         }
         var scale;
+        var cut = !log && boolSetting(ctx.settings, "breakOutliers", false) ? outlierBreak(finite) : null;
         if (log) {
             scale = ctx.C.log().domain([min > 0 ? min : 1, max > min ? max : min * 10 || 10]).range(range).nice();
+        } else if (cut && Math.min(0, min) < cut.start && cut.end < max) {
+            scale = brokenScale(ctx, Math.min(0, min), max, cut, range);
         } else {
-            if (fromZero) {
-                min = Math.min(0, min);
-                max = Math.max(0, max);
-            }
+            min = Math.min(0, min);
+            max = Math.max(0, max);
             if (!(max > min)) {
                 max = min + 1;
             }
-            scale = ctx.C.linear().domain([min, max]).range(range).nice();
+            scale = niceLinear(ctx.C, min, max, range);
         }
         scale.isLog = log;
         return scale;
     }
 
-    // The threshold and average lines a chart's settings ask for, across the plot.
+    // A value scale cut where a few values dwarf the rest (see outlierBreak), as ECharts cuts an axis: the cut
+    // shrunk to a sliver (3% of the axis), each side as long as the values it spans.
+    function brokenScale(ctx, min, max, cut, range) {
+        var below = ctx.C.linear().domain([min, cut.start]).nice(3);
+        var above = ctx.C.linear().domain([cut.end, max]).nice(3);
+        var low = below.domain();
+        var high = above.domain();
+        var lowEnd = Math.min(low[1], cut.start * 1.2);
+        var highStart = Math.max(high[0], lowEnd * 1.0001);
+        var spans = (lowEnd - low[0]) + (high[1] - highStart);
+        var length = range[1] - range[0];
+        var first = range[0] + length * 0.97 * (lowEnd - low[0]) / spans;
+        var second = first + length * 0.03;
+        var scale = ctx.C.linear().domain([low[0], lowEnd, highStart, high[1]])
+            .range([range[0], first, second, range[1]]);
+        scale.cut = {start: lowEnd, end: highStart, at: [first, second]};
+        scale.cutTicks = below.ticks(3).filter(function (tick) {
+            return tick <= lowEnd;
+        }).concat(above.ticks(3).filter(function (tick) {
+            return tick >= highStart;
+        }));
+        return scale;
+    }
+
+    // The threshold and average lines a chart's settings ask for, across the plot: an average for each series
+    // (named, if there are several).
     function drawValueLines(ctx, g, scale, valuesHorizontal, plot, averages) {
         var threshold = decimalSetting(ctx.settings, "threshold", NaN);
         if (isFinite(threshold)) {
             drawValueLine(g, scale, valuesHorizontal, plot, threshold,
-                textSetting(ctx.settings, "thresholdLabel") || ctx.format(threshold), "#ee6666", ctx.style, false);
+                textSetting(ctx.settings, "thresholdLabel") || ctx.format(threshold), ctx.style, false);
         }
         (averages || []).forEach(function (average) {
             if (isFinite(average.value)) {
-                drawValueLine(g, scale, valuesHorizontal, plot, average.value, "avg " + ctx.format(average.value),
-                    average.colour, ctx.style, true);
+                drawValueLine(g, scale, valuesHorizontal, plot, average.value, ((averages.length > 1 ?
+                    average.name + " average " : "Average ") + ctx.format(average.value)), ctx.style, true);
             }
         });
     }
@@ -1341,8 +1636,11 @@ if (!window.visualisations) {
         ctx.svg.append("defs").append("clipPath").attr("id", clipId).append("rect")
             .attr("x", 0).attr("y", -2).attr("width", plot.width).attr("height", plot.height + 4);
         var g = ctx.svg.append("g").attr("transform", "translate(" + plot.left + "," + plot.top + ")");
+        // Grid lines behind the marks, and labels in front of them, not cut off at the plot's edge.
+        g.gridLayer = g.append("g").attr("class", "grid");
         var marks = g.append("g").attr("clip-path", "url(#" + clipId + ")");
-        return {axes: g, marks: marks};
+        var labels = g.append("g").attr("class", "labels");
+        return {axes: g, marks: marks, labels: labels};
     }
 
     function drawBar(ctx) {
@@ -1351,6 +1649,7 @@ if (!window.visualisations) {
         requireFields(fields, ["category", "value"]);
         var matrix = categoryMatrix(ctx.rows, fields, settings, ctx.prefs, ctx.report, "category", "value");
         var horizontal = boolSetting(settings, "horizontal", false);
+        ctx.categoriesDown = horizontal;
         var stack = boolSetting(settings, "stack", false);
         var showLabels = boolSetting(settings, "showLabels", false);
         var colours = paletteOf(ctx.options, matrix.series.length, ctx.style);
@@ -1359,7 +1658,7 @@ if (!window.visualisations) {
         });
         var legend = legendOf(ctx, matrix.series.map(function (series) {
             return series.name;
-        }), colours);
+        }), colours, "rect");
 
         // The values the axis must reach: each bar's, or each stack's top and bottom.
         var values = [];
@@ -1385,15 +1684,17 @@ if (!window.visualisations) {
                 values.push(up, down);
             }
         });
-        var probe = valueScaleOf(ctx, values, [0, 1], true);
+        var probe = valueScaleOf(ctx, values, [0, 1]);
         var left = horizontal ? Math.min(140, matrix.categories.reduce(function (most, category) {
             return Math.max(most, textWidth(shorten(category, 20), SMALL_FONT_SIZE));
         }, 0) + 14) : labelWidth(probe, ctx.format) + 14;
-        var plot = plotArea(ctx, legend, Math.max(36, left + (horizontal || textSetting(settings, "yAxisName") ?
-            16 : 0)), !horizontal || textSetting(settings, "xAxisName") ? 16 : 0);
-        var scale = valueScaleOf(ctx, values, horizontal ? [0, plot.width] : [plot.height, 0], true);
+        // Room for each axis's name, which is its column's if not given.
+        var plot = plotArea(ctx, legend, Math.max(36, left + 16), 16);
+        var scale = valueScaleOf(ctx, values, horizontal ? [0, plot.width] : [plot.height, 0]);
         var groups = plotGroup(ctx, plot);
-        var band = bands(matrix.categories.length, horizontal ? plot.height : plot.width, 0.25, ctx.zoom);
+        // ECharts' gaps: a fifth of each category's space between categories, and a fifth of a bar's width
+        // between a category's bars.
+        var band = bands(matrix.categories.length, horizontal ? plot.height : plot.width, 0.2, ctx.zoom);
         var base = scale.isLog ? scale.domain()[0] : 0;
 
         var points = 0;
@@ -1423,8 +1724,8 @@ if (!window.visualisations) {
                     from = base;
                     to = value;
                 }
-                var width = stack ? band.width : band.width / shown.length;
-                var at = band.position(i) + (stack ? 0 : s * width);
+                var width = stack ? band.width : band.width / (shown.length + (shown.length - 1) * 0.2);
+                var at = band.position(i) + (stack ? 0 : s * width * 1.2);
                 var a = scale(from);
                 var b = scale(to);
                 var colour = colours[matrix.series.indexOf(series) % colours.length];
@@ -1444,12 +1745,17 @@ if (!window.visualisations) {
                 outline(rect, ctx, ctx.isSelected(selection));
                 ctx.mark(rect, selection, category + (fields.has("series") ? " · " + series.name : "") + ": " +
                     ctx.format(value));
-                if (showLabels) {
+                // As ECharts places them: inside a stack's parts, else beyond the bar's end.
+                if (showLabels && stack) {
+                    svgText(groups.labels, ctx.format(value), horizontal ? (a + b) / 2 : at + width / 2,
+                        horizontal ? at + width / 2 : (a + b) / 2, ctx.style,
+                        {anchor: "middle", baseline: "middle", size: SMALL_FONT_SIZE});
+                } else if (showLabels) {
                     if (horizontal) {
-                        svgText(groups.marks, ctx.format(value), Math.max(a, b) + 4, at + width / 2, ctx.style,
+                        svgText(groups.labels, ctx.format(value), Math.max(a, b) + 5, at + width / 2, ctx.style,
                             {baseline: "middle", size: SMALL_FONT_SIZE});
                     } else {
-                        svgText(groups.marks, ctx.format(value), at + width / 2, Math.min(a, b) - 4, ctx.style,
+                        svgText(groups.labels, ctx.format(value), at + width / 2, Math.min(a, b) - 5, ctx.style,
                             {anchor: "middle", size: SMALL_FONT_SIZE});
                     }
                 }
@@ -1459,15 +1765,58 @@ if (!window.visualisations) {
             horizontal ? textSetting(settings, "yAxisName") || fields.column("category") :
                 textSetting(settings, "xAxisName") || fields.column("category"));
         drawValueAxis(groups.axes, scale, horizontal, plot, ctx.format, ctx.style,
-            horizontal ? textSetting(settings, "xAxisName") : textSetting(settings, "yAxisName"));
+            (horizontal ? textSetting(settings, "xAxisName") : textSetting(settings, "yAxisName")) ||
+            fields.column("value"));
         drawValueLines(ctx, groups.axes, scale, horizontal, plot, boolSetting(settings, "averageLine", false) ?
             shown.map(function (series) {
-                return {value: mean(series.data), colour: colours[matrix.series.indexOf(series) % colours.length]};
+                return {value: mean(series.data), name: series.name};
             }) : []);
         ctx.report.series = shown.length;
         ctx.report.points = points;
         ctx.zoomKind = "axis";
         ctx.plot = plot;
+        ctx.sliderShadow = matrix.categories.map(function (category, i) {
+            return [matrix.categories.length > 1 ? i / (matrix.categories.length - 1) : 0.5,
+                shown.reduce(function (sum, series) {
+                    return sum + Math.abs(series.data[i] || 0);
+                }, 0)];
+        });
+        // ECharts' axis tooltip: every series' value in the category under the pointer, which is shaded.
+        ctx.axisTooltip = function (px, py) {
+            var along = horizontal ? py : px;
+            var i = Math.floor((along - band.position(0) + band.step * 0.1) / band.step);
+            if (i < 0 || i >= matrix.categories.length) {
+                return null;
+            }
+            return {
+                title: matrix.categories[i],
+                rows: shown.filter(function (series) {
+                    return series.data[i] !== null;
+                }).map(function (series) {
+                    return {colour: colours[matrix.series.indexOf(series) % colours.length], name: series.name,
+                        value: ctx.format(series.data[i])};
+                }),
+                shadow: {at: band.position(i) - band.step * 0.1, width: band.step, down: horizontal}
+            };
+        };
+    }
+
+    // The nearest of some sorted numbers to a value, by binary search, or null if there are none.
+    function nearest(sorted, value) {
+        if (!sorted.length) {
+            return null;
+        }
+        var low = 0;
+        var high = sorted.length - 1;
+        while (high - low > 1) {
+            var middle = Math.floor((low + high) / 2);
+            if (sorted[middle] < value) {
+                low = middle;
+            } else {
+                high = middle;
+            }
+        }
+        return Math.abs(sorted[low] - value) <= Math.abs(sorted[high] - value) ? sorted[low] : sorted[high];
     }
 
     function mean(values) {
@@ -1597,7 +1946,7 @@ if (!window.visualisations) {
         var shown = data.names.filter(function (name) {
             return !ctx.hidden[name];
         });
-        var legend = legendOf(ctx, data.names, colours);
+        var legend = legendOf(ctx, data.names, colours, "line");
         var stack = boolSetting(settings, "stack", false);
         var area = boolSetting(settings, "area", false);
         var smooth = boolSetting(settings, "smooth", false);
@@ -1627,12 +1976,11 @@ if (!window.visualisations) {
                 }
             });
         });
-        var probe = valueScaleOf(ctx, ys, [0, 1], area || stack);
-        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 14 +
-            (textSetting(settings, "yAxisName") ? 16 : 0)), 16);
+        var probe = valueScaleOf(ctx, ys, [0, 1]);
+        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 30), 16);
         var extent = xs.length ? [Math.min.apply(null, xs), Math.max.apply(null, xs)] : [0, 1];
         var x = xScaleOf(ctx, extent, time, plot);
-        var y = valueScaleOf(ctx, ys, [plot.height, 0], area || stack);
+        var y = valueScaleOf(ctx, ys, [plot.height, 0]);
         var groups = plotGroup(ctx, plot);
         var showLabels = boolSetting(settings, "showLabels", false);
         var points = 0;
@@ -1670,8 +2018,10 @@ if (!window.visualisations) {
                 });
             groups.marks.append("path").attr("d", linePath(sampled)).attr("fill", "none").attr("stroke", colour)
                 .attr("stroke-width", 2);
-            // Points to click, when there are few enough to tell apart.
+            // Points to click, when there are few enough to tell apart: drawn, as ECharts draws them, while there
+            // are no more than 200.
             if (sampled.length <= 400) {
+                var showPoints = sampled.length <= 200;
                 sampled.forEach(function (point) {
                     var pairs = [["x", point[3]]];
                     if (ctx.fields.has("series")) {
@@ -1679,26 +2029,26 @@ if (!window.visualisations) {
                     }
                     var selection = fields.selection(pairs);
                     var selected = ctx.isSelected(selection);
-                    var dot = groups.marks.append("circle").attr("cx", xOf(point[0])).attr("cy", y(point[1]))
-                        .attr("r", selected ? 5 : 3).attr("fill", colour);
+                    var dot = linePoint(groups.marks, xOf(point[0]), y(point[1]), colour, selected, showPoints);
                     outline(dot, ctx, selected);
                     ctx.mark(dot, selection, (time ? timeFormat(ctx)(point[0]) : ctx.format(point[0])) +
                         (ctx.fields.has("series") ? " · " + line.name : "") + ": " + ctx.format(point[4]));
-                    if (showLabels) {
-                        svgText(groups.marks, ctx.format(point[4]), xOf(point[0]), y(point[1]) - 6, ctx.style,
+                    if (showLabels && xOf(point[0]) >= -1 && xOf(point[0]) <= plot.width + 1) {
+                        svgText(groups.labels, ctx.format(point[4]), xOf(point[0]), y(point[1]) - 8, ctx.style,
                             {anchor: "middle", size: SMALL_FONT_SIZE});
                     }
                 });
             }
         });
         drawValueAxis(groups.axes, x, true, plot, time ? timeFormat(ctx) : ctx.format, ctx.style,
-            textSetting(settings, "xAxisName") || fields.column("x"));
-        drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style, textSetting(settings, "yAxisName"));
+            textSetting(settings, "xAxisName") || fields.column("x"), time);
+        drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style, textSetting(settings, "yAxisName") ||
+            fields.column("y"));
         drawValueLines(ctx, groups.axes, y, false, plot, boolSetting(settings, "averageLine", false) ?
             lines.map(function (line) {
                 return {value: mean(line.points.map(function (point) {
                     return point[4];
-                })), colour: colours[data.names.indexOf(line.name) % colours.length]};
+                })), name: line.name};
             }) : []);
         ctx.report.series = lines.length;
         ctx.report.points = points;
@@ -1707,6 +2057,44 @@ if (!window.visualisations) {
         if (time) {
             ctx.timeAxis = {scale: x, plot: plot, group: groups.axes};
         }
+        var span = extent[1] - extent[0] || 1;
+        ctx.sliderShadow = lines.length ? lines[0].points.map(function (point) {
+            return [(point[0] - extent[0]) / span, point[4]];
+        }) : [];
+        // ECharts' axis tooltip: every line's value at the x nearest the pointer, marked with a line.
+        var byX = lines.map(function (line) {
+            var at = {};
+            line.points.forEach(function (point) {
+                at[point[0]] = point;
+            });
+            return at;
+        });
+        var allX = [];
+        lines.forEach(function (line) {
+            line.points.forEach(function (point) {
+                allX.push(point[0]);
+            });
+        });
+        allX.sort(function (a, b) {
+            return a - b;
+        });
+        ctx.axisTooltip = function (px) {
+            var wanted = x.invert(px);
+            var value = nearest(allX, wanted instanceof Date ? wanted.getTime() : wanted);
+            if (value === null) {
+                return null;
+            }
+            return {
+                title: time ? formatTime(value, ctx.prefs.timePattern, ctx.prefs.timeZone) : ctx.format(value),
+                rows: lines.filter(function (line, l) {
+                    return byX[l][value] !== undefined;
+                }).map(function (line) {
+                    return {colour: colours[data.names.indexOf(line.name) % colours.length], name: line.name,
+                        value: ctx.format(byX[lines.indexOf(line)][value][4])};
+                }),
+                line: {at: xOf(value)}
+            };
+        };
     }
 
     // A line chart whose x is a category (text): one point per category and series, summed.
@@ -1720,10 +2108,11 @@ if (!window.visualisations) {
         });
         var legend = legendOf(ctx, matrix.series.map(function (series) {
             return series.name;
-        }), colours);
+        }), colours, "line");
         var stack = boolSetting(settings, "stack", false);
         var area = boolSetting(settings, "area", false);
         var smooth = boolSetting(settings, "smooth", false);
+        var showLabels = boolSetting(settings, "showLabels", false);
         var tops = matrix.categories.map(function () {
             return 0;
         });
@@ -1750,15 +2139,12 @@ if (!window.visualisations) {
                 }
             });
         });
-        var probe = valueScaleOf(ctx, ys, [0, 1], area || stack);
-        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 14 +
-            (textSetting(settings, "yAxisName") ? 16 : 0)), 16);
-        var y = valueScaleOf(ctx, ys, [plot.height, 0], area || stack);
+        var probe = valueScaleOf(ctx, ys, [0, 1]);
+        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 30), 16);
+        var y = valueScaleOf(ctx, ys, [plot.height, 0]);
         var groups = plotGroup(ctx, plot);
-        var band = bands(matrix.categories.length, plot.width, 0, ctx.zoom);
-        var xOf = function (i) {
-            return band.position(i) + band.width / 2;
-        };
+        var band = pointPositions(matrix.categories.length, plot.width, ctx.zoom);
+        var xOf = band.centre;
         var points = 0;
         lines.forEach(function (line) {
             var colour = colours[matrix.series.indexOf(line.series) % colours.length];
@@ -1793,31 +2179,59 @@ if (!window.visualisations) {
                 }
                 var selection = fields.selection(pairs);
                 var selected = ctx.isSelected(selection);
-                var dot = groups.marks.append("circle").attr("cx", xOf(point[0])).attr("cy", y(point[1]))
-                    .attr("r", selected ? 5 : 3).attr("fill", colour);
+                var dot = linePoint(groups.marks, xOf(point[0]), y(point[1]), colour, selected,
+                    drawn.length <= 200);
                 outline(dot, ctx, selected);
                 ctx.mark(dot, selection, category + (fields.has("series") ? " · " + line.series.name : "") +
                     ": " + ctx.format(point[3]));
+                if (showLabels && band.visible(point[0])) {
+                    svgText(groups.labels, ctx.format(point[3]), xOf(point[0]), y(point[1]) - 8, ctx.style,
+                        {anchor: "middle", size: SMALL_FONT_SIZE});
+                }
             });
         });
         drawCategoryAxis(groups.axes, matrix.categories, band, true, plot, ctx.style,
             textSetting(settings, "xAxisName") || fields.column("x"));
-        drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style, textSetting(settings, "yAxisName"));
+        drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style, textSetting(settings, "yAxisName") ||
+            fields.column("y"));
         drawValueLines(ctx, groups.axes, y, false, plot, boolSetting(settings, "averageLine", false) ?
             lines.map(function (line) {
-                return {value: mean(line.series.data), colour: colours[matrix.series.indexOf(line.series) %
-                    colours.length]};
+                return {value: mean(line.series.data), name: line.series.name};
             }) : []);
         ctx.report.series = lines.length;
         ctx.report.points = points;
         ctx.zoomKind = "axis";
         ctx.plot = plot;
+        ctx.sliderShadow = lines.length ? lines[0].points.filter(Boolean).map(function (point) {
+            return [matrix.categories.length > 1 ? point[0] / (matrix.categories.length - 1) : 0.5, point[3]];
+        }) : [];
+        ctx.axisTooltip = function (px) {
+            var i = Math.round((px - band.centre(0)) / band.step);
+            if (i < 0 || i >= matrix.categories.length) {
+                return null;
+            }
+            return {
+                title: matrix.categories[i],
+                rows: lines.filter(function (line) {
+                    return line.points[i];
+                }).map(function (line) {
+                    return {colour: colours[matrix.series.indexOf(line.series) % colours.length],
+                        name: line.series.name, value: ctx.format(line.points[i][3])};
+                }),
+                line: {at: band.centre(i)}
+            };
+        };
     }
 
-    // A fraction from 0 to 1 that is the same for the same index, to spread overlapping points (Jitter).
-    function jitterOf(index) {
-        var value = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
-        return value - Math.floor(value) - 0.5;
+    // A line's point, as ECharts draws one: hollow (filled white), or, where there are too many to draw, there only
+    // to be clicked.
+    function linePoint(parent, x, y, colour, selected, shown) {
+        var dot = parent.append("circle").attr("cx", x).attr("cy", y).attr("r", selected ? 5 : 3)
+            .attr("fill", "#ffffff").attr("stroke", colour).attr("stroke-width", 1.5);
+        if (!shown && !selected) {
+            dot.attr("fill-opacity", 0).attr("stroke-opacity", 0);
+        }
+        return dot;
     }
 
     function drawScatter(ctx) {
@@ -1832,7 +2246,7 @@ if (!window.visualisations) {
         } : null);
         addDropped(ctx.report, "x or y not a number or date", data.bad);
         var colours = paletteOf(ctx.options, data.names.length, ctx.style);
-        var legend = legendOf(ctx, data.names, colours);
+        var legend = legendOf(ctx, data.names, colours, "circle");
         var shown = data.names.filter(function (name) {
             return !ctx.hidden[name];
         });
@@ -1848,11 +2262,15 @@ if (!window.visualisations) {
                 }
             });
         });
-        var probe = valueScaleOf(ctx, ys, [0, 1], false);
+        var probe = valueScaleOf(ctx, ys, [0, 1]);
         var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 30), 16);
         var extent = xs.length ? [Math.min.apply(null, xs), Math.max.apply(null, xs)] : [0, 1];
+        // A value x axis includes zero, as ECharts' does.
+        if (!time) {
+            extent = [Math.min(0, extent[0]), Math.max(0, extent[1])];
+        }
         var x = xScaleOf(ctx, extent, time, plot);
-        var y = valueScaleOf(ctx, ys, [plot.height, 0], false);
+        var y = valueScaleOf(ctx, ys, [plot.height, 0]);
         var groups = plotGroup(ctx, plot);
         var jitter = boolSetting(settings, "jitter", false);
         var minSize = sizes.length ? Math.min.apply(null, sizes) : 0;
@@ -1869,21 +2287,21 @@ if (!window.visualisations) {
                 points++;
                 var cx = x(time ? new Date(point[0]) : point[0]) + (jitter ? jitterOf(index) * plot.width * 0.02 : 0);
                 var cy = y(point[1]) + (jitter ? jitterOf(index + 7919) * plot.height * 0.02 : 0);
-                var radius = hasSize ? scaleSqrt(point[4], minSize, maxSize, 3, 18) : 4;
+                var radius = hasSize ? scaleSqrt(point[4], minSize, maxSize, 3, 18) : 5;
                 var pairs = [["x", point[2]], ["y", point[3]]];
                 if (fields.has("series")) {
                     pairs.push(["series", fields.rawOf("series", name)]);
                 }
                 var selection = fields.selection(pairs);
                 var dot = groups.marks.append("circle").attr("cx", cx).attr("cy", cy).attr("r", radius)
-                    .attr("fill", colour).attr("fill-opacity", 0.75);
+                    .attr("fill", colour).attr("fill-opacity", 0.8);
                 outline(dot, ctx, ctx.isSelected(selection));
                 ctx.mark(dot, selection, (fields.has("series") ? name + ": " : "") +
                     (time ? timeFormat(ctx)(point[0]) : ctx.format(point[0])) + ", " + ctx.format(point[1]));
             });
         });
         drawValueAxis(groups.axes, x, true, plot, time ? timeFormat(ctx) : ctx.format, ctx.style,
-            textSetting(settings, "xAxisName") || fields.column("x"));
+            textSetting(settings, "xAxisName") || fields.column("x"), time);
         drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style,
             textSetting(settings, "yAxisName") || fields.column("y"));
         drawValueLines(ctx, groups.axes, y, false, plot, []);
@@ -1891,6 +2309,10 @@ if (!window.visualisations) {
         ctx.report.points = points;
         ctx.zoomKind = "axis";
         ctx.plot = plot;
+        var xSpan = extent[1] - extent[0] || 1;
+        ctx.sliderShadow = shown.length ? data.bySeries[shown[0]].map(function (point) {
+            return [(point[0] - extent[0]) / xSpan, point[1]];
+        }) : [];
         if (time) {
             ctx.timeAxis = {scale: x, plot: plot, group: groups.axes};
         }
@@ -1953,7 +2375,7 @@ if (!window.visualisations) {
             });
         }
         var colours = paletteOf(ctx.options, names.length, ctx.style);
-        var legend = legendOf(ctx, names, colours);
+        var legend = legendOf(ctx, names, colours, "rect");
         var shown = names.filter(function (name) {
             return !ctx.hidden[name];
         });
@@ -1963,9 +2385,9 @@ if (!window.visualisations) {
                 return stack ? sum + counts[name][b] : Math.max(sum, counts[name][b]);
             }, 0);
         });
-        var probe = ctx.C.linear().domain([0, Math.max(1, Math.max.apply(null, heights.concat([1])))]).nice();
+        var probe = niceLinear(ctx.C, 0, Math.max(1, Math.max.apply(null, heights.concat([1]))), [0, 1]);
         var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, formatNumber) + 30), 16);
-        var y = ctx.C.linear().domain(probe.domain()).range([plot.height, 0]).nice();
+        var y = niceLinear(ctx.C, 0, Math.max(1, Math.max.apply(null, heights.concat([1]))), [plot.height, 0]);
         var groups = plotGroup(ctx, plot);
         var band = bands(bins, plot.width, 0.04, ctx.zoom);
         var showLabels = boolSetting(settings, "showLabels", false);
@@ -1989,7 +2411,7 @@ if (!window.visualisations) {
                 // A bar is a range of values, so a click on it selects nothing.
                 ctx.mark(rect, null, label + (shown.length > 1 ? " · " + name : "") + ": " + count + " rows");
                 if (showLabels) {
-                    svgText(groups.marks, String(count), at + barWidth / 2, y(from + count) - 4, ctx.style,
+                    svgText(groups.labels, String(count), at + barWidth / 2, y(from + count) - 4, ctx.style,
                         {anchor: "middle", size: SMALL_FONT_SIZE});
                 }
             });
@@ -2002,6 +2424,23 @@ if (!window.visualisations) {
         ctx.report.points = values.length;
         ctx.zoomKind = "axis";
         ctx.plot = plot;
+        ctx.sliderShadow = heights.map(function (height, b) {
+            return [bins > 1 ? b / (bins - 1) : 0.5, height];
+        });
+        ctx.axisTooltip = function (px) {
+            var b = Math.floor((px - band.position(0) + band.step * 0.02) / band.step);
+            if (b < 0 || b >= bins) {
+                return null;
+            }
+            return {
+                title: labels[b],
+                rows: shown.map(function (name) {
+                    return {colour: colours[names.indexOf(name) % colours.length], name: name,
+                        value: formatNumber(counts[name][b])};
+                }),
+                shadow: {at: band.position(b) - band.step * 0.02, width: band.step, down: false}
+            };
+        };
     }
 
     // ------------------------------------------------------------------------------------------
@@ -2050,24 +2489,29 @@ if (!window.visualisations) {
             ctx.report.warnings.push((names.length - maxSlices) + " smaller slices were combined as 'Other'");
         }
         var colours = paletteOf(ctx.options, slices.length, ctx.style);
-        var legend = legendOf(ctx, slices.map(function (slice) {
+        legendOf(ctx, slices.map(function (slice) {
             return slice.name;
-        }), colours);
-        var plot = plotArea(ctx, legend, 8, -18);
+        }), colours, "rect");
         var shown = slices.filter(function (slice) {
             return !ctx.hidden[slice.name];
         });
         var total = shown.reduce(function (sum, slice) {
             return sum + slice.value;
         }, 0);
-        var radius = Math.max(10, Math.min(plot.width, plot.height) / 2 * 0.72);
+        // Where ECharts draws one: centred, 70% of the way to the nearer edge (a doughnut from 40%).
+        var radius = Math.max(10, Math.min(ctx.size.width, ctx.size.height) / 2 * 0.7);
         var doughnut = boolSetting(settings, "doughnut", false);
         var showLabels = boolSetting(settings, "showLabels", true);
-        var g = ctx.svg.append("g").attr("transform", "translate(" + (plot.left + plot.width / 2) + "," +
-            (plot.top + plot.height / 2) + ")");
+        var centreX = ctx.size.width / 2;
+        var centreY = ctx.size.height * 0.52;
+        var centre = [centreX, centreY];
+        var g = ctx.svg.append("g").attr("transform", "translate(" + centre[0] + "," + centre[1] + ")");
         ctx.geo = g;
-        ctx.geoOrigin = [plot.left + plot.width / 2, plot.top + plot.height / 2];
-        var arc = ctx.C.arc().innerRadius(doughnut ? radius * 0.55 : 0).outerRadius(radius);
+        ctx.geoOrigin = centre;
+        var arc = ctx.C.arc().innerRadius(doughnut ? radius * 4 / 7 : 0).outerRadius(radius);
+        // A slice under the pointer stands out, as ECharts' does: 10 pixels larger.
+        var hoverArc = ctx.C.arc().innerRadius(doughnut ? radius * 4 / 7 : 0).outerRadius(radius + 10);
+        var labels = [];
         var angle = 0;
         shown.forEach(function (slice) {
             var sweep = total > 0 ? slice.value / total * Math.PI * 2 : 0;
@@ -2078,18 +2522,51 @@ if (!window.visualisations) {
                 .attr("fill", colours[slices.indexOf(slice) % colours.length])
                 .attr("stroke", ctx.style.dark ? "#1b1e24" : "#fff").attr("stroke-width", 1);
             outline(path, ctx, selection && ctx.isSelected(selection));
+            path.node().addEventListener("mouseenter", function () {
+                path.attr("d", hoverArc(part));
+            });
+            path.node().addEventListener("mouseleave", function () {
+                path.attr("d", arc(part));
+            });
             ctx.mark(path, selection, slice.name + ": " + ctx.format(slice.value) + " (" +
                 (total > 0 ? Math.round(slice.value / total * 1000) / 10 : 0) + "%)");
-            if (showLabels && sweep > 0.12) {
+            if (showLabels && sweep > 0) {
                 var middle = (part.startAngle + part.endAngle) / 2;
-                var at = radius + 14;
-                svgText(g, shorten(slice.name, 18), Math.sin(middle) * at, -Math.cos(middle) * at, ctx.style,
-                    {anchor: Math.sin(middle) >= 0 ? "start" : "end", baseline: "middle", size: SMALL_FONT_SIZE});
+                labels.push({name: shorten(slice.name, 18), angle: middle, right: Math.sin(middle) >= 0,
+                    y: -Math.cos(middle) * (radius + 15), colour: colours[slices.indexOf(slice) % colours.length]});
             }
         });
+        drawPieLabels(g, labels, radius, ctx.style);
         ctx.report.series = 1;
         ctx.report.points = shown.length;
         ctx.zoomKind = "geo";
+    }
+
+    // Each slice's name outside the pie, on a line from the slice as ECharts draws it, those on each side moved
+    // apart so none overlap.
+    function drawPieLabels(g, labels, radius, style) {
+        [true, false].forEach(function (right) {
+            var side = labels.filter(function (label) {
+                return label.right === right;
+            }).sort(function (a, b) {
+                return a.y - b.y;
+            });
+            var last = -Infinity;
+            side.forEach(function (label) {
+                label.at = Math.max(label.y, last + 14);
+                last = label.at;
+            });
+            side.forEach(function (label) {
+                var sx = Math.sin(label.angle) * radius;
+                var sy = -Math.cos(label.angle) * radius;
+                var bendX = Math.sin(label.angle) * (radius + 15);
+                var endX = bendX + (right ? 20 : -20);
+                g.append("path").attr("d", "M" + sx + "," + sy + "L" + bendX + "," + label.at + "L" + endX + "," +
+                    label.at).attr("fill", "none").attr("stroke", label.colour).attr("stroke-width", 1);
+                svgText(g, label.name, endX + (right ? 4 : -4), label.at, style,
+                    {anchor: right ? "start" : "end", baseline: "middle", size: SMALL_FONT_SIZE});
+            });
+        });
     }
 
     function drawGauge(ctx) {
@@ -2136,23 +2613,25 @@ if (!window.visualisations) {
             max = min + niceCeil(largest - min);
         }
         var bandStops = gaugeBands(textSetting(settings, "bands"), min, max);
+        // Laid out as ECharts lays them out: a grid of dials, each centred in its cell a little below the middle.
         var columns = Math.ceil(Math.sqrt(names.length || 1));
         var gridRows = Math.ceil((names.length || 1) / columns);
         var cellWidth = ctx.size.width / columns;
-        var cellHeight = (ctx.size.height - 10) / gridRows;
-        var radius = Math.max(16, Math.min(cellWidth, cellHeight * 1.3) * 0.38);
+        var cellHeight = ctx.size.height / gridRows;
+        var radius = Math.max(16, Math.min(ctx.size.width, ctx.size.height) / 2 * Math.min(1 / columns,
+            1 / gridRows) * 0.84);
         var start = -Math.PI * 0.75;
         var sweep = Math.PI * 1.5;
         var angleOf = function (value) {
             return start + sweep * Math.max(0, Math.min(1, (value - min) / (max - min)));
         };
-        var arc = ctx.C.arc().innerRadius(radius * 0.86).outerRadius(radius);
+        var arc = ctx.C.arc().innerRadius(radius - 10).outerRadius(radius);
         var g = ctx.svg.append("g");
         ctx.geo = g;
         ctx.geoOrigin = [0, 0];
         names.forEach(function (name, i) {
             var cx = (i % columns + 0.5) * cellWidth;
-            var cy = 10 + (Math.floor(i / columns) + 0.55) * cellHeight;
+            var cy = (Math.floor(i / columns) + 0.55) * cellHeight;
             var dial = g.append("g").attr("transform", "translate(" + cx + "," + cy + ")");
             var from = 0;
             bandStops.forEach(function (stop) {
@@ -2160,24 +2639,20 @@ if (!window.visualisations) {
                     .attr("fill", stop[1]);
                 from = stop[0];
             });
-            [min, max].forEach(function (value, end) {
-                var at = start + sweep * end;
-                svgText(dial, ctx.format(value), Math.sin(at) * (radius + 4), -Math.cos(at) * (radius + 4) + 12,
-                    ctx.style, {anchor: end ? "start" : "end", colour: ctx.style.subtleText, size: SMALL_FONT_SIZE});
-            });
+            drawGaugeScale(dial, ctx, radius, start, sweep, min, max);
             var angle = angleOf(sums[name]);
             var selection = named ? fields.selection([["name", fields.rawOf("name", name)]]) : null;
             var selected = selection && ctx.isSelected(selection);
-            var needle = dial.append("line").attr("x1", 0).attr("y1", 0)
-                .attr("x2", Math.sin(angle) * radius * 0.8).attr("y2", -Math.cos(angle) * radius * 0.8)
-                .attr("stroke", ctx.style.text).attr("stroke-width", selected ? 5 : 3)
-                .attr("stroke-linecap", "round");
-            var hub = dial.append("circle").attr("r", radius * 0.08).attr("fill", ctx.style.text);
-            outline(hub, ctx, selected);
-            svgText(dial, ctx.format(sums[name]), 0, radius * 0.45, ctx.style,
-                {anchor: "middle", size: 16, weight: "bold"});
-            svgText(dial, shorten(name, 24), 0, radius * 0.45 + 20, ctx.style,
-                {anchor: "middle", colour: ctx.style.subtleText});
+            // A pointer tapering from the centre to 60% of the way to the dial.
+            var tip = radius * 0.6;
+            var base = selected ? 5 : 3;
+            var needle = dial.append("path").attr("d", "M" + (-base) + ",0L0," + (-tip) + "L" + base + ",0Z")
+                .attr("transform", "rotate(" + (angle * 180 / Math.PI) + ")").attr("fill", ctx.style.text);
+            outline(needle, ctx, selected);
+            svgText(dial, ctx.format(sums[name]), 0, radius * 0.4, ctx.style,
+                {anchor: "middle", baseline: "middle", size: 16, weight: "bold"});
+            svgText(dial, shorten(name, 24), 0, radius * 0.7, ctx.style,
+                {anchor: "middle", baseline: "middle", size: 14});
             // The whole dial can be clicked.
             var target = dial.append("circle").attr("r", radius).attr("fill", "transparent");
             ctx.mark(target, selection, name + ": " + ctx.format(sums[name]));
@@ -2186,6 +2661,28 @@ if (!window.visualisations) {
         ctx.report.series = names.length;
         ctx.report.points = names.length;
         ctx.zoomKind = null;
+    }
+
+    // A gauge's scale, as ECharts draws one inside the dial: ten splits, each with four ticks between, and a label at
+    // each split.
+    function drawGaugeScale(dial, ctx, radius, start, sweep, min, max) {
+        var style = ctx.style;
+        var inner = radius - 10 - 10;
+        for (var i = 0; i <= 50; i++) {
+            var at = start + sweep * i / 50;
+            var split = i % 5 === 0;
+            var length = split ? 10 : 6;
+            var sin = Math.sin(at);
+            var cos = -Math.cos(at);
+            dial.append("line").attr("x1", sin * inner).attr("y1", cos * inner)
+                .attr("x2", sin * (inner - length)).attr("y2", cos * (inner - length))
+                .attr("stroke", style.subtleText).attr("stroke-width", split ? 2 : 1);
+            if (split) {
+                var labelAt = inner - 10 - 15;
+                svgText(dial, ctx.format(min + (max - min) * i / 50), sin * labelAt, cos * labelAt, style,
+                    {anchor: "middle", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
+            }
+        }
     }
 
     // ------------------------------------------------------------------------------------------
@@ -2226,13 +2723,19 @@ if (!window.visualisations) {
         var min = values.length ? Math.min.apply(null, values) : 0;
         var max = values.length ? Math.max.apply(null, values) : 1;
         var colours = scaleColours(settings, ctx.style);
-        var left = Math.min(140, ys.reduce(function (most, y) {
+        // A table, as ECharts draws a heatmap: a header row of the x values over the cells, and a header column of
+        // the y values beside them, all bordered.
+        var headerWidth = Math.min(140, ys.reduce(function (most, y) {
             return Math.max(most, textWidth(shorten(y, 20), SMALL_FONT_SIZE));
-        }, 0) + 14);
-        var plot = plotArea(ctx, {position: "none", space: 0}, Math.max(36, left), 30);
+        }, 0) + 16);
+        var table = {left: 16, top: 16, width: Math.max(10, ctx.size.width - 16 - STROOM_BUTTON_SPACE),
+            height: Math.max(10, ctx.size.height - 16 - 44)};
+        var headerHeight = Math.max(20, table.height / (ys.length + 1));
+        var plot = {left: table.left + headerWidth, top: table.top + headerHeight,
+            width: Math.max(10, table.width - headerWidth), height: Math.max(10, table.height - headerHeight)};
         var groups = plotGroup(ctx, plot);
-        var xBand = bands(xs.length, plot.width, 0.06, null);
-        var yBand = bands(ys.length, plot.height, 0.06, null);
+        var xBand = bands(xs.length, plot.width, 0, null);
+        var yBand = bands(ys.length, plot.height, 0, null);
         var showLabels = boolSetting(settings, "showLabels", false);
         var cells = 0;
         xs.forEach(function (x, i) {
@@ -2248,21 +2751,50 @@ if (!window.visualisations) {
                     .attr("fill", colourAt(colours, max > min ? (value - min) / (max - min) : 0.5));
                 outline(rect, ctx, ctx.isSelected(selection));
                 ctx.mark(rect, selection, x + " · " + y + ": " + ctx.format(value));
-                if (showLabels && xBand.width > 24 && yBand.width > 12) {
-                    svgText(groups.marks, ctx.format(value), xBand.position(i) + xBand.width / 2,
+                if (showLabels && xBand.width > 16 && yBand.width > 12) {
+                    svgText(groups.labels, ctx.format(value), xBand.position(i) + xBand.width / 2,
                         yBand.position(j) + yBand.width / 2, ctx.style,
                         {anchor: "middle", baseline: "middle", size: SMALL_FONT_SIZE});
                 }
             });
         });
-        drawCategoryAxis(groups.axes, xs, xBand, true, plot, ctx.style, null);
-        drawCategoryAxis(groups.axes, ys, yBand, false, plot, ctx.style, null);
+        drawMatrixHeaders(groups.axes, xs, ys, xBand, yBand, plot, headerWidth, headerHeight, ctx.style);
         drawScaleBar(ctx.svg, colours, min, max, ctx.format, ctx.size, ctx.style);
         ctx.geo = groups.marks;
         ctx.geoOrigin = [0, 0];
         ctx.report.series = 1;
         ctx.report.points = cells;
         ctx.zoomKind = "geo";
+    }
+
+    // A heatmap's header row and column, and the borders of every cell, as ECharts draws its matrix.
+    function drawMatrixHeaders(g, xs, ys, xBand, yBand, plot, headerWidth, headerHeight, style) {
+        var lines = g.append("g").attr("class", "matrix");
+        var border = function (x1, y1, x2, y2) {
+            lines.append("line").attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2)
+                .attr("stroke", style.border);
+        };
+        xs.forEach(function (x, i) {
+            var at = xBand.position(i);
+            border(at, -headerHeight, at, plot.height);
+            if (xBand.width >= 8) {
+                svgText(lines, shorten(x, Math.max(2, Math.floor(xBand.width / 7))), at + xBand.width / 2,
+                    -headerHeight / 2, style, {anchor: "middle", baseline: "middle", colour: style.subtleText,
+                        size: SMALL_FONT_SIZE});
+            }
+        });
+        ys.forEach(function (y, j) {
+            var at = yBand.position(j);
+            border(-headerWidth, at, plot.width, at);
+            if (yBand.width >= 10) {
+                svgText(lines, shorten(y, 20), -headerWidth / 2, at + yBand.width / 2, style,
+                    {anchor: "middle", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
+            }
+        });
+        border(-headerWidth, -headerHeight, plot.width, -headerHeight);
+        border(-headerWidth, plot.height, plot.width, plot.height);
+        border(-headerWidth, -headerHeight, -headerWidth, plot.height);
+        border(plot.width, -headerHeight, plot.width, plot.height);
     }
 
     function drawCalendar(ctx) {
@@ -2312,7 +2844,9 @@ if (!window.visualisations) {
         var min = values.length ? Math.min.apply(null, values) : 0;
         var max = values.length ? Math.max.apply(null, values) : 1;
         var colours = scaleColours(settings, ctx.style);
-        // A single year's data shows only the weeks it covers; several years show each whole year.
+        // As ECharts lays a calendar out: a week to a column, as wide as fits, its days (from Sunday) 14 pixels
+        // high, the months above and outlined, the year to the left. A single year's data shows only the weeks it
+        // covers; several years show each whole year, one under another.
         var whole = years.length > 1;
         var dayMs = 86400000;
         var utc = function (day) {
@@ -2322,47 +2856,47 @@ if (!window.visualisations) {
         var blocks = years.map(function (year) {
             var first = whole || !days.length ? utc(year + "-01-01") : utc(days[0]);
             var last = whole || !days.length ? utc(year + "-12-31") : utc(days[days.length - 1]);
-            // Weeks start on Monday.
-            var firstMonday = first - ((new Date(first).getUTCDay() + 6) % 7) * dayMs;
-            return {year: year, first: first, last: last, firstMonday: firstMonday,
-                weeks: Math.floor((last - firstMonday) / dayMs / 7) + 1};
+            var firstSunday = first - new Date(first).getUTCDay() * dayMs;
+            return {year: year, first: first, last: last, firstSunday: firstSunday,
+                weeks: Math.floor((last - firstSunday) / dayMs / 7) + 1};
         });
         var maxWeeks = blocks.reduce(function (most, block) {
             return Math.max(most, block.weeks);
         }, 1);
         var left = 40;
-        var available = ctx.size.width - left - 16;
-        var cell = Math.max(4, Math.min(22, available / maxWeeks, (ctx.size.height - 50) /
-            Math.max(1, blocks.length) / 9));
-        var g = ctx.svg.append("g").attr("transform", "translate(" + left + ",22)");
+        var cellWidth = Math.max(3, (ctx.size.width - left - STROOM_BUTTON_SPACE) / maxWeeks);
+        var cellHeight = 14;
+        var g = ctx.svg.append("g").attr("transform", "translate(" + left + ",24)");
         var selectedDays = 0;
         blocks.forEach(function (block, b) {
-            var top = b * cell * 9;
-            var calendar = g.append("g").attr("transform", "translate(0," + top + ")");
-            svgText(calendar, block.year, -6, cell * 3.5, ctx.style, {anchor: "end", colour: ctx.style.subtleText,
-                size: SMALL_FONT_SIZE, rotate: -90});
-            ["Mon", "Wed", "Fri"].forEach(function (label, i) {
-                if (cell >= 9) {
-                    svgText(calendar, label, -16, (i * 2 + 0.5) * cell + 4, ctx.style,
-                        {anchor: "end", colour: ctx.style.subtleText, size: 9});
-                }
+            var calendar = g.append("g").attr("transform", "translate(0," + b * 150 + ")");
+            svgText(calendar, block.year, -30, cellHeight * 3.5, ctx.style, {anchor: "middle",
+                colour: ctx.style.subtleText, size: SMALL_FONT_SIZE, rotate: -90});
+            DAYS.forEach(function (name, i) {
+                svgText(calendar, name.charAt(0), -6, (i + 0.5) * cellHeight, ctx.style,
+                    {anchor: "end", baseline: "middle", colour: ctx.style.subtleText, size: SMALL_FONT_SIZE});
             });
+            var cellOf = function (t) {
+                return {week: Math.floor((t - block.firstSunday) / dayMs / 7), weekday: new Date(t).getUTCDay()};
+            };
+            var monthStarts = [];
             var lastMonth = -1;
             for (var t = block.first; t <= block.last; t += dayMs) {
                 var date = new Date(t);
-                var week = Math.floor((t - block.firstMonday) / dayMs / 7);
-                var weekday = (date.getUTCDay() + 6) % 7;
+                var at = cellOf(t);
                 var key = date.toISOString().substring(0, 10);
                 if (date.getUTCMonth() !== lastMonth) {
                     lastMonth = date.getUTCMonth();
-                    svgText(calendar, MONTHS[lastMonth].substring(0, 3), week * cell, -4, ctx.style,
-                        {colour: ctx.style.subtleText, size: 9});
+                    monthStarts.push(t);
+                    svgText(calendar, MONTHS[lastMonth].substring(0, 3), (at.week + 0.5) * cellWidth, -8, ctx.style,
+                        {colour: ctx.style.subtleText, size: SMALL_FONT_SIZE});
                 }
                 var value = sums[key];
-                var rect = calendar.append("rect").attr("x", week * cell).attr("y", weekday * cell)
-                    .attr("width", cell - 1).attr("height", cell - 1).attr("rx", 1)
-                    .attr("fill", value === undefined ? ctx.style.border :
-                        colourAt(colours, max > min ? (value - min) / (max - min) : 0.5));
+                var rect = calendar.append("rect").attr("x", at.week * cellWidth).attr("y", at.weekday * cellHeight)
+                    .attr("width", cellWidth).attr("height", cellHeight)
+                    .attr("fill", value === undefined ? "transparent" :
+                        colourAt(colours, max > min ? (value - min) / (max - min) : 0.5))
+                    .attr("stroke", ctx.style.border).attr("stroke-width", 1);
                 if (value !== undefined) {
                     selectedDays++;
                     var selection = fields.selection([["date", raws[key]]]);
@@ -2370,10 +2904,21 @@ if (!window.visualisations) {
                     ctx.mark(rect, selection, key + ": " + ctx.format(value));
                 }
             }
+            // Each month outlined: the line between it and the month before, round the weeks' columns.
+            monthStarts.forEach(function (first) {
+                var at = cellOf(first);
+                var x = at.week * cellWidth;
+                var y = at.weekday * cellHeight;
+                var path = at.weekday === 0 ? "M" + x + ",0L" + x + "," + 7 * cellHeight :
+                    "M" + (x + cellWidth) + ",0L" + (x + cellWidth) + "," + y + "L" + x + "," + y + "L" + x + "," +
+                    7 * cellHeight;
+                calendar.append("path").attr("d", path).attr("fill", "none").attr("stroke", ctx.style.subtleText)
+                    .attr("stroke-width", 1);
+            });
         });
         drawScaleBar(ctx.svg, colours, min, max, ctx.format, ctx.size, ctx.style);
         ctx.geo = g;
-        ctx.geoOrigin = [left, 22];
+        ctx.geoOrigin = [left, 24];
         ctx.report.series = 1;
         ctx.report.points = selectedDays;
         ctx.zoomKind = "geo";
@@ -2559,6 +3104,46 @@ if (!window.visualisations) {
             ["target", fields.rawOf("target", link.target)]]);
     }
 
+    // ECharts' adjacency focus: while the pointer is over a node (or a link), everything not joined to it fades, and
+    // its links widen. Each item is {element, names: the nodes it is or joins, width: a link's width or null}.
+    function focusAdjacency(items) {
+        items.forEach(function (item) {
+            item.element.addEventListener("mouseenter", function () {
+                var near = {};
+                item.names.forEach(function (name) {
+                    near[name] = true;
+                });
+                // A node's neighbours are near too.
+                if (item.width === null) {
+                    items.forEach(function (other) {
+                        if (other.width !== null && other.names.indexOf(item.names[0]) >= 0) {
+                            other.names.forEach(function (name) {
+                                near[name] = true;
+                            });
+                        }
+                    });
+                }
+                items.forEach(function (other) {
+                    var joined = other.width !== null
+                        ? (item.width === null ? other.names.indexOf(item.names[0]) >= 0 : other === item)
+                        : near[other.names[0]] === true;
+                    other.element.style.opacity = joined ? "" : "0.1";
+                    if (other.width !== null && joined && other.widen) {
+                        other.element.setAttribute("stroke-width", String(Math.max(other.width, 4)));
+                    }
+                });
+            });
+            item.element.addEventListener("mouseleave", function () {
+                items.forEach(function (other) {
+                    other.element.style.opacity = "";
+                    if (other.width !== null && other.widen) {
+                        other.element.setAttribute("stroke-width", String(other.width));
+                    }
+                });
+            });
+        });
+    }
+
     function drawGraph(ctx) {
         var fields = ctx.fields;
         var settings = ctx.settings;
@@ -2575,7 +3160,7 @@ if (!window.visualisations) {
         var hasGroups = fields.has("sourceGroup") || fields.has("targetGroup");
         var colours = paletteOf(ctx.options, byGroup ? Math.max(1, groups.length) : network.nodes.length,
             ctx.style);
-        var legend = legendOf(ctx, byGroup && hasGroups ? groups : [], colours);
+        var legend = legendOf(ctx, byGroup && hasGroups ? groups : [], colours, "rect");
         var shownNodes = network.nodes.filter(function (node) {
             return !ctx.hidden[node.group === null ? "(none)" : node.group];
         });
@@ -2613,52 +3198,70 @@ if (!window.visualisations) {
         });
         var minValue = values.length ? Math.min.apply(null, values) : 0;
         var maxValue = values.length ? Math.max.apply(null, values) : 1;
+        // ECharts' node sizes: from 8 to 48 pixels across, by how many others each links to.
         var radiusOf = function (node) {
-            return scaleSqrt(node.degree, minDegree, maxDegree, 5, 18);
+            return scaleSqrt(node.degree, minDegree, maxDegree, 4, 24);
+        };
+        var colourOf = function (node, i) {
+            return byGroup ? colours[groups.indexOf(node.group === null ? "(none)" : node.group) % colours.length] :
+                colours[i % colours.length];
         };
         var g = ctx.svg.append("g").attr("transform", "translate(" + plot.left + "," + plot.top + ")");
         var content = g.append("g");
         ctx.geo = content;
-        ctx.geoOrigin = [plot.left, plot.top];
-        var markerId = "stroom-d3-arrow-" + ctx.id;
-        if (network.directed) {
-            ctx.svg.append("defs").append("marker").attr("id", markerId).attr("viewBox", "0 0 10 10")
-                .attr("refX", 10).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6)
-                .attr("orient", "auto").append("path").attr("d", "M0,0L10,5L0,10Z")
-                .attr("fill", ctx.style.subtleText);
-        }
+        // Zoomed within the group already placed at the plot.
+        ctx.geoOrigin = [0, 0];
         var nodeByName = {};
-        shownNodes.forEach(function (node) {
+        var colourByName = {};
+        shownNodes.forEach(function (node, i) {
             nodeByName[node.name] = node;
+            colourByName[node.name] = colourOf(node, i);
         });
-        shownLinks.forEach(function (link) {
+        var focusItems = [];
+        var defs = ctx.svg.append("defs");
+        // As ECharts draws a graph's links: each in its source node's colour, half see-through, as wide as its
+        // weight; a directed graph's curved a little, with an arrow at the target.
+        shownLinks.forEach(function (link, l) {
             var from = at[link.source];
             var to = at[link.target];
             var width = scaleSqrt(link.value, minValue, maxValue, 1, 6);
-            var end = to;
+            var colour = colourByName[link.source];
+            var d;
             if (network.directed) {
-                // Stop at the target node's edge, so the arrow shows.
+                // Curved, and stopping at the target node's edge, so the arrow shows.
                 var dx = to[0] - from[0];
                 var dy = to[1] - from[1];
                 var distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
-                var back = radiusOf(nodeByName[link.target]) + 2;
-                end = [to[0] - dx / distance * back, to[1] - dy / distance * back];
+                var control = [(from[0] + to[0]) / 2 - dy * 0.1, (from[1] + to[1]) / 2 + dx * 0.1];
+                var cdx = to[0] - control[0];
+                var cdy = to[1] - control[1];
+                var cDistance = Math.max(1, Math.sqrt(cdx * cdx + cdy * cdy));
+                var back = radiusOf(nodeByName[link.target]) + 1;
+                var end = [to[0] - cdx / cDistance * back, to[1] - cdy / cDistance * back];
+                d = "M" + from + "Q" + control + " " + end;
+                var markerId = "stroom-d3-arrow-" + ctx.id + "-" + l;
+                defs.append("marker").attr("id", markerId).attr("viewBox", "0 0 10 10")
+                    .attr("refX", 10).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6)
+                    .attr("markerUnits", "userSpaceOnUse").attr("orient", "auto").append("path")
+                    .attr("d", "M0,0L10,5L0,10Z").attr("fill", colour);
+            } else {
+                d = "M" + from + "L" + to;
             }
             var selection = linkSelection(fields, link);
             if (ctx.isSelected(selection)) {
                 // A solid line either side of a selected link.
-                content.append("line").attr("x1", from[0]).attr("y1", from[1]).attr("x2", end[0]).attr("y2", end[1])
+                content.append("path").attr("d", d).attr("fill", "none")
                     .attr("stroke", selectionColour(ctx.style)).attr("stroke-width", width + 2 * LINK_OUTLINE)
                     .attr("stroke-linecap", "round");
             }
-            var line = content.append("line").attr("x1", from[0]).attr("y1", from[1]).attr("x2", end[0])
-                .attr("y2", end[1]).attr("stroke", ctx.style.subtleText).attr("stroke-opacity", 0.6)
-                .attr("stroke-width", width);
+            var line = content.append("path").attr("d", d).attr("fill", "none").attr("stroke", colour)
+                .attr("stroke-opacity", 0.5).attr("stroke-width", width);
             if (network.directed) {
-                line.attr("marker-end", "url(#" + markerId + ")");
+                line.attr("marker-end", "url(#stroom-d3-arrow-" + ctx.id + "-" + l + ")");
             }
             ctx.mark(line, selection, link.source + (network.directed ? " → " : " – ") + link.target +
                 ": " + ctx.format(link.value));
+            focusItems.push({element: line.node(), names: [link.source, link.target], width: width, widen: true});
         });
         var showLabels = String(textSetting(settings, "showLabels") || "auto").toLowerCase();
         var labelled = {};
@@ -2673,27 +3276,38 @@ if (!window.visualisations) {
                 labelled[node.name] = true;
             });
         }
-        shownNodes.forEach(function (node, i) {
+        shownNodes.forEach(function (node) {
             var position = at[node.name];
-            var colour = byGroup ? colours[groups.indexOf(node.group === null ? "(none)" : node.group) %
-                colours.length] : colours[i % colours.length];
             var selection = nodeSelection(fields, node.name);
-            var circle = content.append("circle").attr("cx", position[0]).attr("cy", position[1])
-                .attr("r", radiusOf(node)).attr("fill", colour)
-                .attr("stroke", ctx.style.dark ? "#1b1e24" : "#fff").attr("stroke-width", 1);
+            var nodeGroup = content.append("g");
+            var circle = nodeGroup.append("circle").attr("cx", position[0]).attr("cy", position[1])
+                .attr("r", radiusOf(node)).attr("fill", colourByName[node.name]);
             outline(circle, ctx, ctx.isSelected(selection));
             ctx.mark(circle, selection, node.name + (node.group !== null ? " (" + node.group + ")" : "") + ": " +
                 node.degree + " connections");
             if (labelled[node.name]) {
-                svgText(content, shorten(node.name, 24), position[0] + radiusOf(node) + 3, position[1], ctx.style,
+                svgText(nodeGroup, shorten(node.name, 24), position[0] + radiusOf(node) + 5, position[1], ctx.style,
                     {baseline: "middle", size: SMALL_FONT_SIZE});
             }
+            focusItems.push({element: nodeGroup.node(), names: [node.name], width: null});
         });
+        focusAdjacency(focusItems);
         ctx.report.series = 1;
         ctx.report.nodes = shownNodes.length;
         ctx.report.links = shownLinks.length;
         ctx.report.points = shownNodes.length;
         ctx.zoomKind = "geo";
+        ctx.plot = plot;
+        if (boolSetting(settings, "thumbnail", false)) {
+            ctx.thumbnail = {
+                nodes: shownNodes.map(function (node) {
+                    return {at: at[node.name], r: radiusOf(node), colour: colourByName[node.name]};
+                }),
+                links: shownLinks.map(function (link) {
+                    return {from: at[link.source], to: at[link.target], colour: colourByName[link.source]};
+                })
+            };
+        }
     }
 
     // Leaves out the weakest flows that would close a loop (a to b, b to a, ...), which a Sankey diagram can't
@@ -2728,6 +3342,49 @@ if (!window.visualisations) {
         return links.filter(function (link) {
             return kept.indexOf(link) >= 0;
         });
+    }
+
+    // Orders each column's nodes to cross fewer flows, as ECharts' layout does: a few sweeps right then left, each
+    // node placed by the middle of the nodes it flows from (or to) in the column before (or after).
+    function orderColumns(columns, links, valueOf) {
+        var position = {};
+        var number = function () {
+            columns.forEach(function (column) {
+                var across = 0;
+                column.forEach(function (name) {
+                    position[name] = across + valueOf(name) / 2;
+                    across += valueOf(name);
+                });
+            });
+        };
+        var centreOf = function (name, ends) {
+            var total = 0;
+            var weighted = 0;
+            links.forEach(function (link) {
+                var other = ends === "sources" ? (link.target === name ? link.source : null) :
+                    (link.source === name ? link.target : null);
+                if (other !== null && position[other] !== undefined) {
+                    total += link.value;
+                    weighted += position[other] * link.value;
+                }
+            });
+            return total > 0 ? weighted / total : position[name];
+        };
+        number();
+        for (var sweep = 0; sweep < 6; sweep++) {
+            var forward = sweep % 2 === 0;
+            for (var c = forward ? 1 : columns.length - 2; forward ? c < columns.length : c >= 0;
+                c += forward ? 1 : -1) {
+                var centres = {};
+                columns[c].forEach(function (name) {
+                    centres[name] = centreOf(name, forward ? "sources" : "targets");
+                });
+                columns[c].sort(function (a, b) {
+                    return centres[a] - centres[b];
+                });
+                number();
+            }
+        }
     }
 
     function drawSankey(ctx) {
@@ -2771,11 +3428,16 @@ if (!window.visualisations) {
         var valueOf = function (name) {
             return Math.max(inflow[name] || 0, outflow[name] || 0);
         };
+        // Laid out as ECharts lays one out: nodes 20 pixels wide and 8 apart, room on the right (or below) for
+        // the labels.
         var vertical = String(textSetting(ctx.settings, "orient") || "horizontal").toLowerCase() === "vertical";
-        var length = vertical ? ctx.size.height - 40 : ctx.size.width - 32;
-        var breadth = vertical ? ctx.size.width - 40 : ctx.size.height - 30;
-        var nodeWidth = 12;
+        var box = vertical ? {left: 16, top: 40, right: STROOM_BUTTON_SPACE, bottom: 40} :
+            {left: 16, top: 16, right: 120, bottom: 16};
+        var length = vertical ? ctx.size.height - box.top - box.bottom : ctx.size.width - box.left - box.right;
+        var breadth = vertical ? ctx.size.width - box.left - box.right : ctx.size.height - box.top - box.bottom;
+        var nodeWidth = 20;
         var gap = 8;
+        orderColumns(columns, links, valueOf);
         // One scale for all columns: the fullest column fills the breadth.
         var scale = columns.reduce(function (least, column) {
             var total = column.reduce(function (sum, name) {
@@ -2797,9 +3459,14 @@ if (!window.visualisations) {
             });
         });
         var colours = paletteOf(ctx.options, names.length, ctx.style);
-        var g = ctx.svg.append("g").attr("transform", vertical ? "translate(20,20)" : "translate(16,12)");
+        var colourOf = function (name) {
+            return colours[names.indexOf(name) % colours.length];
+        };
+        var g = ctx.svg.append("g").attr("transform", "translate(" + box.left + "," + box.top + ")");
         ctx.geo = g;
-        ctx.geoOrigin = vertical ? [20, 20] : [16, 12];
+        ctx.geoOrigin = [box.left, box.top];
+        var defs = ctx.svg.append("defs");
+        var focusItems = [];
         var point = function (along, across) {
             return vertical ? [across, along] : [along, across];
         };
@@ -2822,29 +3489,40 @@ if (!window.visualisations) {
                 g.append("path").attr("d", d).attr("fill", "none").attr("stroke", selectionColour(ctx.style))
                     .attr("stroke-width", width + 2 * LINK_OUTLINE);
             }
+            // Shaded from the source's colour to the target's, as ECharts shades a flow.
+            var gradientId = "stroom-d3-flow-" + ctx.id + "-" + focusItems.length;
+            var gradient = defs.append("linearGradient").attr("id", gradientId).attr("gradientUnits", "userSpaceOnUse")
+                .attr("x1", start[0] + box.left).attr("y1", start[1] + box.top)
+                .attr("x2", end[0] + box.left).attr("y2", end[1] + box.top);
+            gradient.append("stop").attr("offset", "0%").attr("stop-color", colourOf(link.source));
+            gradient.append("stop").attr("offset", "100%").attr("stop-color", colourOf(link.target));
             var path = g.append("path").attr("d", d).attr("fill", "none")
-                .attr("stroke", colours[names.indexOf(link.source) % colours.length]).attr("stroke-opacity", 0.4)
+                .attr("stroke", "url(#" + gradientId + ")").attr("stroke-opacity", 0.35)
                 .attr("stroke-width", width);
             ctx.mark(path, selection, link.source + " → " + link.target + ": " + ctx.format(link.value));
+            focusItems.push({element: path.node(), names: [link.source, link.target], width: width});
         });
         var showLabels = boolSetting(ctx.settings, "showLabels", true);
-        names.forEach(function (name, i) {
+        names.forEach(function (name) {
             var node = place[name];
             var corner = point(node.along, node.across);
-            var rect = g.append("rect").attr("x", corner[0]).attr("y", corner[1])
+            var nodeGroup = g.append("g");
+            var rect = nodeGroup.append("rect").attr("x", corner[0]).attr("y", corner[1])
                 .attr("width", vertical ? node.size : nodeWidth).attr("height", vertical ? nodeWidth : node.size)
-                .attr("fill", colours[i % colours.length]);
+                .attr("fill", colourOf(name));
             var selection = nodeSelection(fields, name);
             outline(rect, ctx, ctx.isSelected(selection));
             ctx.mark(rect, selection, name + ": " + ctx.format(valueOf(name)));
+            // Beside each node (below, when vertical), as ECharts places them.
             if (showLabels) {
-                var last = depth[name] === columns.length - 1 && columns.length > 1;
-                var label = point(last ? node.along - 4 : node.along + nodeWidth + 4, node.across + node.size / 2);
-                svgText(g, shorten(name, 24), label[0], label[1], ctx.style, vertical ?
-                    {anchor: "middle", size: SMALL_FONT_SIZE} :
-                    {anchor: last ? "end" : "start", baseline: "middle", size: SMALL_FONT_SIZE});
+                var label = point(node.along + nodeWidth + 5, node.across + node.size / 2);
+                svgText(nodeGroup, shorten(name, 24), label[0], label[1], ctx.style, vertical ?
+                    {anchor: "middle", baseline: "hanging", size: SMALL_FONT_SIZE} :
+                    {anchor: "start", baseline: "middle", size: SMALL_FONT_SIZE});
             }
+            focusItems.push({element: nodeGroup.node(), names: [name], width: null});
         });
+        focusAdjacency(focusItems);
         ctx.report.series = 1;
         ctx.report.nodes = names.length;
         ctx.report.links = links.length;
@@ -2869,8 +3547,12 @@ if (!window.visualisations) {
         var total = names.reduce(function (sum, name) {
             return sum + totals[name];
         }, 0);
-        var radius = Math.max(20, Math.min(ctx.size.width, ctx.size.height) / 2 - 60);
-        var padding = Math.min(0.04, Math.PI / Math.max(1, names.length));
+        // ECharts' proportions: the ring from 70% to 80% of the way to the nearer edge of the space left for it, the
+        // ribbons inside it.
+        var box = {left: 24, top: 24, width: ctx.size.width - 24 - STROOM_BUTTON_SPACE, height: ctx.size.height - 48};
+        var outer = Math.max(24, Math.min(box.width, box.height) / 2 * 0.8);
+        var radius = outer * 7 / 8;
+        var padding = Math.min(0.05, Math.PI / Math.max(1, names.length));
         var available = Math.PI * 2 - padding * names.length;
         var arcs = {};
         var angle = 0;
@@ -2880,10 +3562,11 @@ if (!window.visualisations) {
             angle += sweep + padding;
         });
         var colours = paletteOf(ctx.options, names.length, ctx.style);
-        var g = ctx.svg.append("g").attr("transform", "translate(" + ctx.size.width / 2 + "," +
-            ctx.size.height / 2 + ")");
+        var centre = [box.left + box.width / 2, box.top + box.height / 2];
+        var g = ctx.svg.append("g").attr("transform", "translate(" + centre[0] + "," + centre[1] + ")");
         ctx.geo = g;
-        ctx.geoOrigin = [ctx.size.width / 2, ctx.size.height / 2];
+        ctx.geoOrigin = centre;
+        var focusItems = [];
         var at = function (a) {
             return [Math.sin(a) * radius, -Math.cos(a) * radius];
         };
@@ -2906,27 +3589,35 @@ if (!window.visualisations) {
                 at(t0) + "A" + radius + "," + radius + " 0 " + big(t0, t1) + ",1 " + at(t1) + "Q0,0 " + at(s0) + "Z";
             var selection = linkSelection(fields, link);
             var ribbon = g.append("path").attr("d", d)
-                .attr("fill", colours[names.indexOf(link.source) % colours.length]).attr("fill-opacity", 0.55)
+                .attr("fill", colours[names.indexOf(link.source) % colours.length]).attr("fill-opacity", 0.5)
                 .attr("stroke", "none");
             outline(ribbon, ctx, ctx.isSelected(selection));
             ctx.mark(ribbon, selection, link.source + " – " + link.target + ": " + ctx.format(link.value));
+            focusItems.push({element: ribbon.node(), names: [link.source, link.target], width: 0});
         });
-        var arc = ctx.C.arc().innerRadius(radius + 2).outerRadius(radius + 12);
+        // Rounded at the corners as ECharts' are (D3 3's arcs can't be).
+        var arc = ctx.C.arc().innerRadius(radius).outerRadius(outer);
+        if (typeof arc.cornerRadius === "function") {
+            arc.cornerRadius(3);
+        }
         var showLabels = boolSetting(ctx.settings, "showLabels", true);
         names.forEach(function (name, i) {
             var part = arcs[name];
             var selection = nodeSelection(fields, name);
-            var path = g.append("path").attr("d", arc({startAngle: part.start, endAngle: part.end}))
+            var nodeGroup = g.append("g");
+            var path = nodeGroup.append("path").attr("d", arc({startAngle: part.start, endAngle: part.end}))
                 .attr("fill", colours[i % colours.length]);
             outline(path, ctx, ctx.isSelected(selection));
             ctx.mark(path, selection, name + ": " + ctx.format(totals[name]));
             if (showLabels && part.end - part.start > 0.05) {
                 var middle = (part.start + part.end) / 2;
-                svgText(g, shorten(name, 18), Math.sin(middle) * (radius + 18), -Math.cos(middle) * (radius + 18),
+                svgText(nodeGroup, shorten(name, 18), Math.sin(middle) * (outer + 5), -Math.cos(middle) * (outer + 5),
                     ctx.style, {anchor: Math.sin(middle) >= 0 ? "start" : "end", baseline: "middle",
                         size: SMALL_FONT_SIZE});
             }
+            focusItems.push({element: nodeGroup.node(), names: [name], width: null});
         });
+        focusAdjacency(focusItems);
         ctx.report.series = 1;
         ctx.report.nodes = names.length;
         ctx.report.links = links.length;
@@ -3058,6 +3749,10 @@ if (!window.visualisations) {
             id: state.id || "chart",
             toggleSeries: state.toggleSeries || function () {
             },
+            // The legend's page shown, when its entries don't all fit, and how to show another.
+            legendPage: state.legendPage || 0,
+            setLegendPage: state.setLegendPage || function () {
+            },
             isSelected: function (selection) {
                 return !!selection && !!(state.selectedKeys && state.selectedKeys[selectionKey(selection)]);
             },
@@ -3076,6 +3771,12 @@ if (!window.visualisations) {
             ctx.geo.attr("transform", "translate(" + (origin[0] + state.geoZoom.x) + "," + (origin[1] +
                 state.geoZoom.y) + ") scale(" + state.geoZoom.k + ")");
         }
+        var slider = ctx.zoomKind === "axis" && ctx.plot && hasZoomSlider(ctx) ? drawZoomSlider(ctx) : null;
+        var thumbnail = ctx.thumbnail && ctx.plot ? drawThumbnail(ctx, state.geoZoom) : null;
+        // Where the class draws the axis tooltip's pointer: over the plot, ignoring the mouse.
+        var pointerLayer = ctx.axisTooltip && ctx.plot ? svg.append("g").attr("class", "pointer")
+            .attr("transform", "translate(" + ctx.plot.left + "," + ctx.plot.top + ")")
+            .attr("pointer-events", "none") : null;
         report.width = size.width;
         report.height = size.height;
         if (rows.length === 0) {
@@ -3084,7 +3785,99 @@ if (!window.visualisations) {
             report.status = "nothing-drawn";
         }
         return {report: report, marks: marks, svg: svg, zoomKind: ctx.zoomKind || null, plot: ctx.plot || null,
-            timeAxis: ctx.timeAxis || null, size: size};
+            timeAxis: ctx.timeAxis || null, size: size, slider: slider, thumbnail: thumbnail,
+            axisTooltip: ctx.axisTooltip || null, pointerLayer: pointerLayer,
+            categoriesDown: !!ctx.categoriesDown};
+    }
+
+    // A zoom slider along the plot, as ECharts draws one: the data's shape in a track, and the part zoomed in on
+    // as a window with a handle at each end, to drag. Along the bottom, or down the right of a horizontal bar chart.
+    function drawZoomSlider(ctx) {
+        var plot = ctx.plot;
+        var style = ctx.style;
+        var down = !!ctx.categoriesDown;
+        var thickness = 16;
+        var x0 = down ? ctx.size.width - 8 - thickness : plot.left;
+        var y0 = down ? plot.top : ctx.size.height - 6 - thickness;
+        var length = down ? plot.height : plot.width;
+        var zoom = ctx.zoom || {start: 0, end: 1};
+        var g = ctx.svg.append("g").attr("class", "zoom-slider")
+            .attr("transform", "translate(" + x0 + "," + y0 + ")");
+        var track = g.append("rect").attr("width", down ? thickness : length).attr("height", down ? length : thickness)
+            .attr("fill", "transparent").attr("stroke", style.border);
+        track.node().__stroomSlider = {part: "track"};
+        var shadow = (ctx.sliderShadow || []).filter(function (point) {
+            return isFinite(point[0]) && isFinite(point[1]);
+        });
+        var most = shadow.reduce(function (max, point) {
+            return Math.max(max, Math.abs(point[1]));
+        }, 0);
+        if (shadow.length > 1 && most > 0) {
+            var path = shadow.map(function (point) {
+                var along = point[0] * length;
+                var height = Math.abs(point[1]) / most * (thickness - 2);
+                return down ? [thickness - height, along] : [along, thickness - height];
+            });
+            var closed = down ? [[thickness, length]].concat(path, [[thickness, 0]]) :
+                [[0, thickness]].concat(path, [[length, thickness]]);
+            g.append("path").attr("d", "M" + closed.join("L") + "Z").attr("fill", style.subtleText)
+                .attr("fill-opacity", 0.3).attr("pointer-events", "none");
+        }
+        var from = zoom.start * length;
+        var to = zoom.end * length;
+        var shown = g.append("rect").attr("x", down ? 0 : from).attr("y", down ? from : 0)
+            .attr("width", down ? thickness : Math.max(2, to - from)).attr("height", down ? Math.max(2, to - from) :
+                thickness).attr("fill", style.subtleText).attr("fill-opacity", 0.2).style("cursor", "move");
+        shown.node().__stroomSlider = {part: "window"};
+        [["start", from], ["end", to]].forEach(function (end) {
+            var handle = g.append("rect").attr("x", down ? -2 : end[1] - 3).attr("y", down ? end[1] - 3 : -2)
+                .attr("width", down ? thickness + 4 : 6).attr("height", down ? 6 : thickness + 4).attr("rx", 2)
+                .attr("fill", style.subtleText).style("cursor", down ? "ns-resize" : "ew-resize");
+            handle.node().__stroomSlider = {part: end[0]};
+        });
+        return {x: x0, y: y0, length: length, down: down};
+    }
+
+    // An overview of a whole network graph in the bottom-right corner, as ECharts' thumbnail shows one, with the
+    // part zoomed to marked. Clicking or dragging in it moves the view there.
+    function drawThumbnail(ctx, geoZoom) {
+        var plot = ctx.plot;
+        var style = ctx.style;
+        var width = ctx.size.width * 0.22;
+        var height = ctx.size.height * 0.22;
+        var x = ctx.size.width - 8 - width;
+        var y = ctx.size.height - 8 - height;
+        var scale = Math.min(width / Math.max(1, plot.width), height / Math.max(1, plot.height));
+        var dx = (width - plot.width * scale) / 2;
+        var dy = (height - plot.height * scale) / 2;
+        var g = ctx.svg.append("g").attr("class", "thumbnail").attr("transform", "translate(" + x + "," + y + ")");
+        var back = g.append("rect").attr("width", width).attr("height", height).attr("fill", style.tooltipBackground)
+            .attr("stroke", style.border).style("cursor", "pointer");
+        var content = g.append("g").attr("transform", "translate(" + dx + "," + dy + ") scale(" + scale + ")")
+            .attr("pointer-events", "none");
+        ctx.thumbnail.links.forEach(function (link) {
+            content.append("line").attr("x1", link.from[0]).attr("y1", link.from[1]).attr("x2", link.to[0])
+                .attr("y2", link.to[1]).attr("stroke", link.colour).attr("stroke-opacity", 0.5)
+                .attr("stroke-width", 1 / scale);
+        });
+        ctx.thumbnail.nodes.forEach(function (node) {
+            content.append("circle").attr("cx", node.at[0]).attr("cy", node.at[1]).attr("r", node.r)
+                .attr("fill", node.colour);
+        });
+        // The part of the graph in view.
+        var zoom = geoZoom || {k: 1, x: 0, y: 0};
+        var left = Math.max(0, dx + (-zoom.x / zoom.k) * scale);
+        var top = Math.max(0, dy + (-zoom.y / zoom.k) * scale);
+        var right = Math.min(width, dx + ((plot.width - zoom.x) / zoom.k) * scale);
+        var bottom = Math.min(height, dy + ((plot.height - zoom.y) / zoom.k) * scale);
+        if (right > left && bottom > top) {
+            g.append("rect").attr("x", left).attr("y", top).attr("width", right - left).attr("height", bottom - top)
+                .attr("fill", style.subtleText).attr("fill-opacity", 0.15).attr("stroke", style.subtleText)
+                .attr("pointer-events", "none");
+        }
+        var info = {x: x + dx, y: y + dy, scale: scale, plot: plot};
+        back.node().__stroomThumbnail = info;
+        return info;
     }
 
     // ------------------------------------------------------------------------------------------
@@ -3386,6 +4179,97 @@ if (!window.visualisations) {
             return null;
         }
 
+        function sliderOf(target) {
+            var node = target;
+            while (node && node !== element) {
+                if (node.__stroomSlider) {
+                    return node.__stroomSlider;
+                }
+                if (node.__stroomThumbnail) {
+                    return {thumbnail: node.__stroomThumbnail};
+                }
+                node = node.parentNode;
+            }
+            return null;
+        }
+
+        // The tooltip as ECharts shows an axis tooltip: a title, then each series' colour, name and value.
+        function showRows(title, rows, at) {
+            tooltip.textContent = "";
+            var heading = window.document.createElement("div");
+            heading.textContent = title;
+            tooltip.appendChild(heading);
+            rows.forEach(function (row) {
+                var line = window.document.createElement("div");
+                var dot = window.document.createElement("span");
+                dot.style.display = "inline-block";
+                dot.style.width = "10px";
+                dot.style.height = "10px";
+                dot.style.borderRadius = "5px";
+                dot.style.marginRight = "6px";
+                dot.style.background = SAFE_COLOUR.test(row.colour) ? row.colour : "";
+                line.appendChild(dot);
+                line.appendChild(window.document.createTextNode(row.name));
+                var value = window.document.createElement("span");
+                value.style.marginLeft = "16px";
+                value.style.float = "right";
+                value.style.fontWeight = "bold";
+                value.textContent = row.value;
+                line.appendChild(value);
+                tooltip.appendChild(line);
+            });
+            tooltip.style.left = Math.min(at[0] + 12, Math.max(0, element.clientWidth - 220)) + "px";
+            tooltip.style.top = (at[1] + 12) + "px";
+            tooltip.style.display = "block";
+        }
+
+        // The axis tooltip's pointer: the category under the pointer shaded, or a line at the x nearest it.
+        function showPointer(found) {
+            var layer = drawn.pointerLayer;
+            layer.selectAll("*").remove();
+            if (!found) {
+                return;
+            }
+            var plot = drawn.plot;
+            if (found.shadow) {
+                layer.append("rect").attr("x", found.shadow.down ? 0 : found.shadow.at)
+                    .attr("y", found.shadow.down ? found.shadow.at : 0)
+                    .attr("width", found.shadow.down ? plot.width : found.shadow.width)
+                    .attr("height", found.shadow.down ? found.shadow.width : plot.height)
+                    .attr("fill", lastStyle ? lastStyle.subtleText : "#999").attr("fill-opacity", 0.15);
+            } else if (found.line) {
+                layer.append("line").attr("x1", found.line.at).attr("x2", found.line.at).attr("y1", 0)
+                    .attr("y2", plot.height).attr("stroke", lastStyle ? lastStyle.subtleText : "#999")
+                    .attr("stroke-dasharray", "4,3");
+            }
+        }
+
+        // Moves the network graph's view so a point clicked in its thumbnail is in the middle.
+        function centreOn(info, at) {
+            var zoom = state.geoZoom || {k: 1, x: 0, y: 0};
+            var x = (at[0] - info.x) / info.scale;
+            var y = (at[1] - info.y) / info.scale;
+            state.geoZoom = {k: zoom.k, x: info.plot.width / 2 - x * zoom.k, y: info.plot.height / 2 - y * zoom.k};
+            render();
+        }
+
+        // Moves the zoom slider's window (or an end of it) as dragged, by the fraction of the slider moved.
+        function slide(part, from, moved) {
+            var start = from.start;
+            var end = from.end;
+            if (part === "start") {
+                start = Math.max(0, Math.min(end - 0.01, start + moved));
+            } else if (part === "end") {
+                end = Math.min(1, Math.max(start + 0.01, end + moved));
+            } else {
+                var shift = Math.max(-start, Math.min(1 - end, moved));
+                start += shift;
+                end += shift;
+            }
+            state.zoom = start <= 0 && end >= 1 ? null : {start: start, end: end};
+            render();
+        }
+
         function pointerIn(event) {
             var box = element.getBoundingClientRect ? element.getBoundingClientRect() : {left: 0, top: 0};
             return [event.clientX - box.left, event.clientY - box.top];
@@ -3400,15 +4284,46 @@ if (!window.visualisations) {
             }
             var at = pointerIn(event);
             drag = {start: at, last: at, moved: false};
-            if (rangeMode && drawn.timeAxis) {
+            var control = sliderOf(event.target);
+            if (control && control.thumbnail) {
+                drag.thumbnail = control.thumbnail;
+                drag.moved = true;
+                centreOn(control.thumbnail, at);
+            } else if (control && drawn.slider) {
+                var from = state.zoom || {start: 0, end: 1};
+                drag.moved = true;
+                if (control.part === "track") {
+                    // A click on the track moves the window there.
+                    var span = from.end - from.start;
+                    var fraction = ((drawn.slider.down ? at[1] - drawn.slider.y : at[0] - drawn.slider.x) /
+                        drawn.slider.length);
+                    var start = Math.max(0, Math.min(1 - span, fraction - span / 2));
+                    state.zoom = span >= 1 ? null : {start: start, end: start + span};
+                    from = state.zoom || {start: 0, end: 1};
+                    render();
+                }
+                drag.slider = {part: control.part === "track" ? "window" : control.part, from: from};
+            } else if (rangeMode && drawn.timeAxis) {
                 drag.range = true;
             }
         }
 
         function onMouseMove(event) {
             var mark = markOf(event.target);
-            if (mark && mark.tooltip && !drag) {
-                var at = pointerIn(event);
+            var at = pointerIn(event);
+            var plot = drawn && drawn.plot;
+            var inPlot = plot && at[0] >= plot.left && at[0] <= plot.left + plot.width && at[1] >= plot.top &&
+                at[1] <= plot.top + plot.height;
+            if (drawn && drawn.axisTooltip && !drag) {
+                // A chart on axes shows every series at the pointer, as ECharts' axis tooltip does.
+                var found = inPlot ? drawn.axisTooltip(at[0] - plot.left, at[1] - plot.top) : null;
+                showPointer(found);
+                if (found && found.rows.length) {
+                    showRows(found.title, found.rows, at);
+                } else {
+                    tooltip.style.display = "none";
+                }
+            } else if (mark && mark.tooltip && !drag) {
                 tooltip.textContent = mark.tooltip;
                 tooltip.style.left = Math.min(at[0] + 12, Math.max(0, element.clientWidth - 200)) + "px";
                 tooltip.style.top = (at[1] + 12) + "px";
@@ -3419,7 +4334,17 @@ if (!window.visualisations) {
             if (!drag) {
                 return;
             }
-            var now = pointerIn(event);
+            var now = at;
+            if (drag.thumbnail) {
+                centreOn(drag.thumbnail, now);
+                return;
+            }
+            if (drag.slider) {
+                var moved = ((drawn.slider.down ? now[1] - drag.start[1] : now[0] - drag.start[0]) /
+                    drawn.slider.length);
+                slide(drag.slider.part, drag.slider.from, moved);
+                return;
+            }
             var dx = now[0] - drag.last[0];
             var dy = now[1] - drag.last[1];
             if (Math.abs(now[0] - drag.start[0]) + Math.abs(now[1] - drag.start[1]) > 3) {
@@ -3436,12 +4361,16 @@ if (!window.visualisations) {
                 render();
             } else if (drawn.zoomKind === "axis" && state.zoom && drawn.plot) {
                 var span = state.zoom.end - state.zoom.start;
-                var shift = -dx / drawn.plot.width * span;
+                // A horizontal bar chart's categories run down it.
+                var shift = drawn.categoriesDown ? -dy / drawn.plot.height * span : -dx / drawn.plot.width * span;
                 shift = Math.max(-state.zoom.start, Math.min(1 - state.zoom.end, shift));
                 state.zoom = {start: state.zoom.start + shift, end: state.zoom.end + shift};
                 render();
             }
         }
+
+        // Set when a drag ends, so the click that follows it isn't taken as a click on what is under the pointer.
+        var dragged = false;
 
         function onMouseUp(event) {
             if (!drag) {
@@ -3449,13 +4378,15 @@ if (!window.visualisations) {
             }
             var ended = drag;
             drag = null;
+            dragged = ended.moved;
             if (ended.range && ended.moved && drawn && drawn.timeAxis) {
                 selectRange(ended.start[0], pointerIn(event)[0]);
             }
         }
 
         function onClick(event) {
-            if (drag && drag.moved) {
+            if ((drag && drag.moved) || dragged) {
+                dragged = false;
                 return;
             }
             var mark = markOf(event.target);
@@ -3480,10 +4411,13 @@ if (!window.visualisations) {
                 // Keep the point under the pointer where it is.
                 state.geoZoom = {k: k, x: at[0] - (at[0] - zoom.x) * k / zoom.k, y: at[1] - (at[1] - zoom.y) * k / zoom.k};
             } else if (drawn.plot) {
-                var window = state.zoom || {start: 0, end: 1};
-                var span = window.end - window.start;
-                var fraction = Math.max(0, Math.min(1, (at[0] - drawn.plot.left) / drawn.plot.width));
-                var centre = window.start + span * fraction;
+                var current = state.zoom || {start: 0, end: 1};
+                var span = current.end - current.start;
+                // Along the categories: down a horizontal bar chart.
+                var fraction = drawn.categoriesDown ?
+                    Math.max(0, Math.min(1, (at[1] - drawn.plot.top) / drawn.plot.height)) :
+                    Math.max(0, Math.min(1, (at[0] - drawn.plot.left) / drawn.plot.width));
+                var centre = current.start + span * fraction;
                 var next = Math.max(0.01, Math.min(1, span / factor));
                 var start = Math.max(0, Math.min(1 - next, centre - next * fraction));
                 state.zoom = next >= 1 ? null : {start: start, end: start + next};
@@ -3540,10 +4474,18 @@ if (!window.visualisations) {
         element.addEventListener("mouseup", onMouseUp);
         element.addEventListener("mouseleave", function () {
             tooltip.style.display = "none";
+            if (drawn && drawn.pointerLayer) {
+                drawn.pointerLayer.selectAll("*").remove();
+            }
             drag = null;
         });
         element.addEventListener("click", onClick);
         element.addEventListener("wheel", onWheel, {passive: false});
+
+        state.setLegendPage = function (page) {
+            state.legendPage = page;
+            render();
+        };
 
         state.toggleSeries = function (name) {
             if (state.hidden[name]) {
