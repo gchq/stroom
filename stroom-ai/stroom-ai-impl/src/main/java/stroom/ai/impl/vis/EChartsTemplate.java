@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /// Builds the settings JSON of a Visualisation drawn by the ECharts Generic adapter, from a chart kind, the
@@ -159,6 +160,25 @@ public final class EChartsTemplate {
             }
         });
         return defaults;
+    }
+
+    /// Builds a generated Visualisation's settings again with the template as it is now (e.g. with controls added
+    /// since it was generated), keeping what was chosen: its chart kind, the column mapped to each role, each style
+    /// setting and its options.
+    ///
+    /// @param settingsJson A generated Visualisation's settings JSON.
+    /// @return The settings JSON, or empty if its chart kind can't be read from them.
+    public static Optional<String> rebuilt(final String settingsJson) {
+        final Map<String, String> defaults = defaults(settingsJson);
+        return ChartKind.find(defaults.get(KIND_CONTROL)).map(kind -> {
+            final Map<String, String> mappings = new LinkedHashMap<>();
+            kind.roles().forEach(role -> NullSafe.consume(defaults.get(role.id()),
+                    column -> mappings.put(role.id(), column)));
+            final Map<String, String> style = new LinkedHashMap<>();
+            kind.styleSettings().forEach(setting -> NullSafe.consume(defaults.get(setting.id()),
+                    value -> style.put(setting.id(), value)));
+            return settingsJson(kind, mappings, style, defaults.get(OPTIONS_CONTROL));
+        });
     }
 
     /// Reads the choices each selection control of a generated Visualisation's settings offers, as they were when

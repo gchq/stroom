@@ -30,6 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
@@ -83,6 +84,9 @@ public class UserActions {
     /// A change to a dashboard table that the agent proposed (only from Stroom's own propose_dashboard_change tool),
     /// which the button applies to the open dashboard, unsaved.
     public static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
+    /// In an apply_dashboard_change, the charts Stroom AI generated whose Visualisations are given the settings
+    /// added to Stroom since they were generated, as the change is applied, by UUID: a list of objects with `uuid`.
+    public static final String UPDATE_CHARTS = "update_charts";
     /// Opens a review of a change to a document's Documentation tab that the agent proposed (only from Stroom's own
     /// propose_documentation_change tool), which the user can apply to the tab's editor (unsaved) and undo.
     public static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
@@ -97,6 +101,8 @@ public class UserActions {
     public static final String CREATE_VISUALISATIONS = "create_visualisations";
     /// The most Visualisations one create_visualisations button creates.
     static final int MAX_VISUALISATIONS = 12;
+    // The most charts a dashboard change gives their current settings: as many as it can add or change.
+    static final int MAX_CHARTS_TO_UPDATE = 50;
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -648,6 +654,14 @@ public class UserActions {
         if (dashboard == null) {
             return Optional.empty();
         }
+        final List<DocRef> charts = chartsToUpdate(map.get(UPDATE_CHARTS));
+        if (charts == null) {
+            LOGGER.debug("Dropping a dashboard change whose charts to update can't be read");
+            return Optional.empty();
+        }
+        final List<String> described = new ArrayList<>(DashboardChanges.describe(changes));
+        charts.forEach(chart -> described.add("Give Visualisation '" + chart.getName() + "' the settings added to "
+                                              + "Stroom since it was generated (what it shows is kept)"));
         final String summary = NullSafe.get(string(map.get("summary")), String::strip);
         final String label = "Change to table '" + component + "' on dashboard '" + dashboard.getName() + "': "
                              + changes.size() + " change(s)";
@@ -659,7 +673,34 @@ public class UserActions {
                 new UserActionRecord.DashboardChange(component, componentId, snapshotHash.toLowerCase(Locale.ROOT),
                         lookup.canEdit(dashboard),
                         changes.stream().map(DashboardChanges.Change::toMap).toList(),
-                        DashboardChanges.describe(changes))));
+                        described, charts)));
+    }
+
+    // The charts whose Visualisations a dashboard change gives their current settings, as Stroom finds them (the
+    // user may view them), by UUID; none if none are given, or null if they can't be read.
+    private List<DocRef> chartsToUpdate(final Object value) {
+        if (value == null) {
+            return List.of();
+        }
+        if (!(value instanceof final List<?> list) || list.size() > MAX_CHARTS_TO_UPDATE) {
+            return null;
+        }
+        final List<DocRef> charts = new ArrayList<>();
+        for (final Object item : list) {
+            final String uuid = item instanceof final Map<?, ?> map
+                    ? string(map.get("uuid"))
+                    : null;
+            if (uuid == null || !UUID_PATTERN.matcher(uuid).matches()) {
+                return null;
+            }
+            final DocRef chart = lookup.find(new DocRef(VisualisationDoc.TYPE, uuid.toLowerCase(Locale.ROOT)))
+                    .orElse(null);
+            if (chart == null) {
+                return null;
+            }
+            charts.add(chart);
+        }
+        return charts;
     }
 
     private static Integer count(final Object value) {
