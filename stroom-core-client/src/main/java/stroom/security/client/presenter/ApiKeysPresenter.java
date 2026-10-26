@@ -22,6 +22,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.client.component.ApiKeysListController;
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
@@ -35,6 +36,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,7 +53,7 @@ public class ApiKeysPresenter
 
     public static final String TAB_TYPE = "ApiKeys";
 
-    private final ApiKeysListPresenter listPresenter;
+    private final ApiKeysListController listPresenter;
     private final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider;
     private final RestFactory restFactory;
     private final ButtonView addButton;
@@ -62,7 +64,7 @@ public class ApiKeysPresenter
     @Inject
     public ApiKeysPresenter(final EventBus eventBus,
                             final ApiKeysView view,
-                            final ApiKeysListPresenter listPresenter,
+                            final ApiKeysListController listPresenter,
                             final RestFactory restFactory,
                             final UiConfigCache uiConfigCache,
                             final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider) {
@@ -73,7 +75,7 @@ public class ApiKeysPresenter
         this.editApiKeyPresenterProvider = editApiKeyPresenterProvider;
 
 //        view.setUiHandlers(this);
-        view.setList(listPresenter.getView());
+        view.setList(listPresenter);
 
         listPresenter.getToolbar().setName("API key actions");
         addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);
@@ -271,6 +273,6 @@ public class ApiKeysPresenter
 
         void focus();
 
-        void setList(View view);
+        void setList(IsWidget view);
     }
 }

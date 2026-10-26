@@ -17,11 +17,11 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -52,7 +52,7 @@ public class ApiKeysViewImpl extends ViewImpl implements ApiKeysView {
     }
 
     @Override
-    public void setList(final View view) {
+    public void setList(final IsWidget view) {
         listContainer.setWidget(view.asWidget());
     }
 
