@@ -89,7 +89,13 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             final Widget widget = createWidget(control);
 
             final FormGroup formGroup = new FormGroup();
-            formGroup.setLabel(label);
+            if (widget instanceof final CustomCheckBox checkBox) {
+                // A tick box's label goes beside it, where clicking it ticks the box, not on a line of its own
+                // above; any help button follows it on the same line.
+                checkBox.setLabel(label);
+            } else {
+                formGroup.setLabel(label);
+            }
             formGroup.add(widget);
 
             outer.add(formGroup);
