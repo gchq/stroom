@@ -56,8 +56,10 @@ import java.util.regex.Pattern;
 /// @param replace      For a chart replacing one Stroom AI generated earlier on the dashboard, which one; else null
 ///                     for a new chart. [#componentName()] is then the vis component's name once replaced.
 /// @param library      The id of the library it is drawn with (see [ChartLibrary]); null for ECharts.
-/// @param tableChanges For a chart of a table it adds, the dashboard changes that add the table (beside the one with
-///                     componentId), as the browser applies them; else null. [#table()] is the new table's name.
+/// @param tableChanges For a chart whose table is changed with it, the dashboard changes, as the browser applies them
+///                     (to the table with componentId): those that add a table for it beside that one (then
+///                     [#table()] is the new table's name, and a chart replaced is moved to it), or that change that
+///                     table (e.g. its grouping); else null.
 /// @param filterChanges For a chart whose clicks filter the dashboard, its selection filter's change, as the browser
 ///                     applies it, naming the chart by componentName; else null.
 @JsonInclude(Include.NON_NULL)
@@ -273,9 +275,11 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
             throw new IllegalArgumentException("A chart's table or filter may take at most " + MAX_CHANGES
                                                + " changes.");
         }
-        if ((!NullSafe.isEmptyCollection(tableChanges) || !NullSafe.isEmptyCollection(filterChanges))
-            && (isQuery() || replace != null)) {
-            throw new IllegalArgumentException("Only a new chart on a dashboard comes with a table or a filter.");
+        if (!NullSafe.isEmptyCollection(tableChanges) && isQuery()) {
+            throw new IllegalArgumentException("Only a chart on a dashboard comes with changes to its table.");
+        }
+        if (!NullSafe.isEmptyCollection(filterChanges) && (isQuery() || replace != null)) {
+            throw new IllegalArgumentException("Only a new chart on a dashboard comes with a filter.");
         }
         if (replace != null) {
             if (isQuery()) {
