@@ -1,0 +1,232 @@
+{
+  "chartId" : "vis-1",
+  "rows" : [ {
+    "EventTime" : "2026-10-14T09:00:00.000Z",
+    "recipient" : "phall",
+    "sender" : "devans"
+  }, {
+    "EventTime" : "2026-10-14T15:00:00.000Z",
+    "recipient" : "devans",
+    "sender" : "phall"
+  }, {
+    "EventTime" : "2026-10-15T10:00:00.000Z",
+    "recipient" : "cdavis",
+    "sender" : "mchen"
+  }, {
+    "EventTime" : "2026-10-16T11:00:00.000Z",
+    "recipient" : "mchen",
+    "sender" : "cdavis"
+  }, {
+    "EventTime" : "2026-10-16T12:00:00.000Z",
+    "recipient" : "swhite",
+    "sender" : "jlee"
+  }, {
+    "EventTime" : "2026-10-17T08:00:00.000Z",
+    "recipient" : "jlee",
+    "sender" : "mchen"
+  } ],
+  "scenarios" : [ {
+    "cases" : [ {
+      "keeps" : [ 0, 1, 2, 3, 4, 5 ],
+      "name" : "nothing selected",
+      "selections" : [ ]
+    }, {
+      "keeps" : [ 2, 3, 5 ],
+      "name" : "node mchen",
+      "selections" : [ {
+        "node" : "mchen"
+      } ]
+    }, {
+      "keeps" : [ 0 ],
+      "name" : "link devans to phall (directed)",
+      "selections" : [ {
+        "recipient" : "phall",
+        "sender" : "devans",
+        "source" : "devans",
+        "target" : "phall"
+      } ]
+    }, {
+      "keeps" : [ 0, 1 ],
+      "name" : "link devans to phall (undirected, sent both ways)",
+      "selections" : [ {
+        "recipient" : "phall",
+        "sender" : "devans",
+        "source" : "devans",
+        "target" : "phall"
+      }, {
+        "recipient" : "devans",
+        "sender" : "phall",
+        "source" : "phall",
+        "target" : "devans"
+      } ]
+    }, {
+      "keeps" : [ 0, 1, 4, 5 ],
+      "name" : "nodes jlee and phall (Ctrl-click)",
+      "selections" : [ {
+        "node" : "jlee"
+      }, {
+        "node" : "phall"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "children" : [ {
+          "condition" : "EQUALS",
+          "field" : "sender",
+          "type" : "term",
+          "value" : "${component.vis-1.selection.node}"
+        } ],
+        "type" : "operator"
+      }, {
+        "children" : [ {
+          "condition" : "EQUALS",
+          "field" : "recipient",
+          "type" : "term",
+          "value" : "${component.vis-1.selection.node}"
+        } ],
+        "type" : "operator"
+      }, {
+        "children" : [ {
+          "condition" : "EQUALS",
+          "field" : "sender",
+          "type" : "term",
+          "value" : "${component.vis-1.selection.source}"
+        }, {
+          "condition" : "EQUALS",
+          "field" : "recipient",
+          "type" : "term",
+          "value" : "${component.vis-1.selection.target}"
+        } ],
+        "type" : "operator"
+      } ],
+      "op" : "OR",
+      "type" : "operator"
+    },
+    "name" : "network, either end (match any): a node at either end, or a link's pair"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 2 ],
+      "name" : "link mchen to cdavis",
+      "selections" : [ {
+        "recipient" : "cdavis",
+        "sender" : "mchen",
+        "source" : "mchen",
+        "target" : "cdavis"
+      } ]
+    }, {
+      "keeps" : [ 0, 1, 2, 3, 4, 5 ],
+      "name" : "node mchen",
+      "selections" : [ {
+        "node" : "mchen"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "EQUALS",
+        "field" : "sender",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.source}"
+      }, {
+        "condition" : "EQUALS",
+        "field" : "recipient",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.target}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "network, exact pair (match all): a link's pair; a node filters nothing"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 2, 5 ],
+      "name" : "bar mchen",
+      "selections" : [ {
+        "category" : "mchen",
+        "sender" : "mchen"
+      } ]
+    }, {
+      "keeps" : [ 1, 4 ],
+      "name" : "bars jlee and phall (Ctrl-click)",
+      "selections" : [ {
+        "category" : "jlee",
+        "sender" : "jlee"
+      }, {
+        "category" : "phall",
+        "sender" : "phall"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "EQUALS",
+        "field" : "sender",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.category}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "bar chart of senders: the clicked bar's sender"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 0, 1, 2 ],
+      "name" : "range dragged over 14 and 15 October",
+      "selections" : [ {
+        "from" : "2026-10-14T00:00:00.000Z",
+        "to" : "2026-10-15T23:59:59.999Z"
+      } ]
+    }, {
+      "keeps" : [ 3, 4 ],
+      "name" : "day 16 October clicked",
+      "selections" : [ {
+        "Day" : "2026-10-16T00:00:00.000Z",
+        "from" : "2026-10-16T00:00:00.000Z",
+        "to" : "2026-10-16T23:59:59.999Z",
+        "x" : "2026-10-16T00:00:00.000Z"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.from}"
+      }, {
+        "condition" : "LESS_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.to}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "time series of days: within the time selected"
+  }, {
+    "cases" : [ {
+      "keeps" : [ 2 ],
+      "name" : "mchen on 15 October",
+      "selections" : [ {
+        "from" : "2026-10-15T00:00:00.000Z",
+        "series" : "mchen",
+        "to" : "2026-10-15T23:59:59.999Z",
+        "x" : "2026-10-15T00:00:00.000Z"
+      } ]
+    } ],
+    "expression" : {
+      "children" : [ {
+        "condition" : "GREATER_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.from}"
+      }, {
+        "condition" : "LESS_THAN_OR_EQUAL_TO",
+        "field" : "EventTime",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.to}"
+      }, {
+        "condition" : "EQUALS",
+        "field" : "sender",
+        "type" : "term",
+        "value" : "${component.vis-1.selection.series}"
+      } ],
+      "type" : "operator"
+    },
+    "name" : "line per sender over days: the clicked point's day and sender"
+  } ]
+}

@@ -323,7 +323,29 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 ExpressionOperator.builder().build());
     }
 
-    private Optional<ExpressionOperator> replaceComponentSelection(final List<ComponentState> componentStates,
+    /// Puts a chart's selections into a selection filter's expression, as a dashboard does as the chart's selection
+    /// changes: for testing the filters Stroom AI builds against what charts select.
+    ///
+    /// @param expression A selection filter's expression, its terms naming the chart's selection, e.g.
+    ///                   `${component.vis-1.selection.node}`.
+    /// @param chartId    The chart's id.
+    /// @param selections What is selected on it: each item's keys and values, as the chart gives them.
+    /// @return The filter, or empty if nothing selected is named by its terms (so it filters nothing).
+    static Optional<ExpressionOperator> withSelections(final ExpressionOperator expression,
+                                                       final String chartId,
+                                                       final List<Map<String, String>> selections) {
+        final List<List<Param>> selectionList = new ArrayList<>();
+        for (final Map<String, String> selection : selections) {
+            final List<Param> params = new ArrayList<>();
+            selection.forEach((key, value) -> params.add(new Param("component." + chartId + ".selection." + key,
+                    value)));
+            selectionList.add(params);
+        }
+        return replaceComponentSelection(List.of(new ComponentState(chartId, chartId, List.of(), selectionList,
+                List.of())), expression, false);
+    }
+
+    private static Optional<ExpressionOperator> replaceComponentSelection(final List<ComponentState> componentStates,
                                                                    final ExpressionOperator operator,
                                                                    final boolean keepUnmatched) {
         if (!operator.enabled() || operator.getChildren() == null || operator.getChildren().isEmpty()) {
@@ -417,7 +439,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 .build());
     }
 
-    private Optional<ExpressionItem> expandSelectionTerms(final String prefix,
+    private static Optional<ExpressionItem> expandSelectionTerms(final String prefix,
                                                           final List<ExpressionTerm> terms,
                                                           final List<ComponentState> componentStates) {
         final List<ExpressionItem> outerItems = new ArrayList<>();
@@ -468,7 +490,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return ParamUtil.replaceTermValueParameters(value, params::get, false);
     }
 
-    private Optional<ExpressionItem> expandFilterTerm(final ExpressionTerm term,
+    private static Optional<ExpressionItem> expandFilterTerm(final ExpressionTerm term,
                                                       final String key,
                                                       final List<ComponentState> componentStates) {
         // Find filter.
@@ -511,7 +533,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return getParamValue(key, getComponentStates());
     }
 
-    private String getParamValue(final String key, final List<ComponentState> componentStates) {
+    private static String getParamValue(final String key, final List<ComponentState> componentStates) {
         for (final ComponentState componentState : componentStates) {
             final Map<String, String> paramMap = ParamUtil.createParamMap(componentState.params);
             final String value = paramMap.get(key);
