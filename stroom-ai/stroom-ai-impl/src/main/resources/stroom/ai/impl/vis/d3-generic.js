@@ -402,6 +402,147 @@ if (!window.visualisations) {
         return end - (timeFields(end, timeZone).offset - t.offset) * MINUTE;
     }
 
+    // The intervals Auto Interval chooses from, finest first: a fixed length, or a week, month or year.
+    var AUTO_INTERVALS = [
+        {ms: SECOND, label: "1 second"}, {ms: 5 * SECOND, label: "5 seconds"}, {ms: 10 * SECOND, label: "10 seconds"},
+        {ms: 30 * SECOND, label: "30 seconds"}, {ms: MINUTE, label: "1 minute"}, {ms: 5 * MINUTE, label: "5 minutes"},
+        {ms: 10 * MINUTE, label: "10 minutes"}, {ms: 15 * MINUTE, label: "15 minutes"},
+        {ms: 30 * MINUTE, label: "30 minutes"}, {ms: HOUR, label: "1 hour"}, {ms: 3 * HOUR, label: "3 hours"},
+        {ms: 6 * HOUR, label: "6 hours"}, {ms: 12 * HOUR, label: "12 hours"}, {ms: DAY, label: "1 day"},
+        {ms: 7 * DAY, week: true, label: "1 week"}, {unit: "month", label: "1 month"},
+        {unit: "year", label: "1 year"}
+    ];
+
+    // About how many intervals Auto Interval shows across the time shown: fewer bars than points on a line.
+    var AUTO_INTERVAL_TARGETS = {bar: 60, line: 240};
+
+    // About how long an interval (or a time bucket, as timeBucket gives it) is.
+    function intervalLength(interval) {
+        if (!interval) {
+            return 0;
+        }
+        if (interval.unit === "year") {
+            return 365 * DAY;
+        }
+        if (interval.unit === "month") {
+            return 30 * DAY;
+        }
+        return interval.ms || 0;
+    }
+
+    // The start of the interval an instant is in, in the time zone: shorter than a day from the day's start (so
+    // hours line up with midnight), a week from its Monday, a month or year from its first day.
+    function intervalStart(ms, interval, timeZone) {
+        if (interval.unit) {
+            var t = timeFields(ms, timeZone);
+            var first = Date.UTC(t.year, interval.unit === "year" ? 0 : t.month, 1) - t.offset * MINUTE;
+            return first - (timeFields(first, timeZone).offset - t.offset) * MINUTE;
+        }
+        var day = startOfDay(ms, timeZone);
+        if (interval.week) {
+            var sinceMonday = (timeFields(day, timeZone).weekday + 6) % 7;
+            // From the middle of the day, so a change of clocks between doesn't move it to another day.
+            return startOfDay(day - sinceMonday * DAY + 12 * HOUR, timeZone);
+        }
+        if (interval.ms >= DAY) {
+            return day;
+        }
+        return day + Math.floor((ms - day) / interval.ms) * interval.ms;
+    }
+
+    // The interval that suits a span of time: the finest giving at most about the target number across it, and
+    // never finer than the data's own (its time bucket), as rows can't be split. Null if that is the data's own.
+    function chooseInterval(span, target, finest) {
+        var floor = intervalLength(finest);
+        for (var i = 0; i < AUTO_INTERVALS.length; i++) {
+            var interval = AUTO_INTERVALS[i];
+            var length = intervalLength(interval);
+            if (length < floor) {
+                continue;
+            }
+            if (span / length <= target || i === AUTO_INTERVALS.length - 1) {
+                return length === floor ? null : interval;
+            }
+        }
+        return null;
+    }
+
+    // Auto Interval: a line chart's rows (or a bar chart's of dates) grouped into the interval that suits the time
+    // shown (the part zoomed in on, a fraction from start to end), their values combined as Interval Combine says
+    // (Sum, Average, Min or Max) for each time and series. Gives {data, interval}: the data as given, and the
+    // data's own bucket, if the setting is off, there is nothing to group, or the interval would be the data's own.
+    function autoInterval(kind, data, settings, prefs, zoom) {
+        var given = {data: data, interval: null};
+        if (!boolSetting(settings, "autoInterval", false) || (kind !== "line" && kind !== "bar")
+            || (kind === "bar" && !isBlank(settings.sort))) {
+            return given;
+        }
+        var timeZone = prefs ? prefs.timeZone : null;
+        var fields = new Fields(settings, data, prefs);
+        var timeId = kind === "line" ? "x" : "category";
+        var valueId = kind === "line" ? "y" : "value";
+        if (fields.type(timeId) !== "DATE_TIME" || !fields.has(valueId)) {
+            return given;
+        }
+        var timeIndex = fields.index(timeId);
+        var valueIndex = fields.index(valueId);
+        var seriesIndex = fields.index("series");
+        var rows = dataRows(data);
+        var min = Infinity;
+        var max = -Infinity;
+        rows.forEach(function (row) {
+            var time = row[timeIndex];
+            if (typeof time === "number" && isFinite(time)) {
+                min = Math.min(min, time);
+                max = Math.max(max, time);
+            }
+        });
+        var finest = fields.bucket(timeId);
+        if (!isFinite(min)) {
+            return given;
+        }
+        var shown = zoom ? Math.max(0.001, Math.min(1, zoom.end - zoom.start)) : 1;
+        var span = Math.max(1, (max - min + intervalLength(finest)) * shown);
+        var interval = chooseInterval(span, AUTO_INTERVAL_TARGETS[kind], finest);
+        if (!interval) {
+            return given;
+        }
+        var combine = textSetting(settings, "intervalCombine") || "Sum";
+        var groups = {};
+        var order = [];
+        var kept = [];
+        rows.forEach(function (row) {
+            var time = row[timeIndex];
+            var value = toNumber(row[valueIndex]);
+            if (typeof time !== "number" || !isFinite(time) || isNaN(value)) {
+                // Left as it is, for the chart to report.
+                kept.push(row);
+                return;
+            }
+            var start = intervalStart(time, interval, timeZone);
+            var key = start + "\u0000" + (seriesIndex >= 0 ? String(row[seriesIndex]) : "");
+            var group = groups[key];
+            if (!group) {
+                group = groups[key] = {row: row.slice(), sum: 0, count: 0, min: Infinity, max: -Infinity};
+                group.row[timeIndex] = start;
+                order.push(key);
+            }
+            group.sum += value;
+            group.count++;
+            group.min = Math.min(group.min, value);
+            group.max = Math.max(group.max, value);
+        });
+        var values = order.map(function (key) {
+            var group = groups[key];
+            group.row[valueIndex] = combine === "Average" ? group.sum / group.count
+                : combine === "Min" ? group.min
+                    : combine === "Max" ? group.max
+                        : group.sum;
+            return group.row;
+        }).concat(kept);
+        return {data: merge(merge({}, data), {values: values}), interval: interval.label};
+    }
+
     // Works out which value index each field control is at, from the 'fields' setting.
     function fieldIndexes(settings) {
         var indexes = {};
@@ -4120,6 +4261,8 @@ if (!window.visualisations) {
         var report = newReport(kind, d3);
         var rows = dataRows(data);
         report.rows = rows.length;
+        // Auto Interval: the rows grouped into an interval suiting the time shown (the part zoomed in on).
+        var grouped = autoInterval(kind, data, settings, prefs, state.zoom || null);
         // Stroom sends at most Max Rows rows: at the limit, the rest of the table was left out, not summarised.
         var maxRows = Number(settings.maxValues);
         if (isFinite(maxRows) && maxRows > 0 && rows.length >= maxRows) {
@@ -4127,6 +4270,8 @@ if (!window.visualisations) {
             report.warnings.push("Showing the first " + maxRows + " rows: the table has more, which were left " +
                 "out. Group the table (e.g. by a rounded time, such as floorDay()) or raise Max Rows.");
         }
+        data = grouped.data;
+        rows = dataRows(data);
         var size = {
             width: host.clientWidth > 0 ? host.clientWidth : 600,
             height: host.clientHeight > 0 ? host.clientHeight : 400
@@ -4196,7 +4341,7 @@ if (!window.visualisations) {
         return {report: report, marks: marks, svg: svg, zoomKind: ctx.zoomKind || null, plot: ctx.plot || null,
             timeAxis: ctx.timeAxis || null, size: size, slider: slider, thumbnail: thumbnail,
             axisTooltip: ctx.axisTooltip || null, pointerLayer: pointerLayer,
-            categoriesDown: !!ctx.categoriesDown};
+            categoriesDown: !!ctx.categoriesDown, interval: grouped.interval};
     }
 
     // A zoom slider along the plot, as ECharts draws one: the data's shape in a track, and the part zoomed in on
@@ -4400,6 +4545,13 @@ if (!window.visualisations) {
                 return;
             }
             var report = lastReport || {};
+            var notes = [];
+            if (drawn && drawn.interval) {
+                notes.push("Interval: " + drawn.interval);
+            }
+            if (report.truncated) {
+                notes.push("First " + report.rows + " rows (the table has more than Max Rows)");
+            }
             window.stroom.controls({
                 zoom: !!(drawn && drawn.zoomKind),
                 zoomed: !!(state.zoom || state.geoZoom),
@@ -4407,7 +4559,7 @@ if (!window.visualisations) {
                 rangeMode: rangeMode && !!(drawn && drawn.timeAxis),
                 selectable: !!drawn,
                 selected: selected ? selectedLabel() : null,
-                note: report.truncated ? "First " + report.rows + " rows (the table has more than Max Rows)" : null
+                note: notes.length ? notes.join(" · ") : null
             });
         }
 
