@@ -20,6 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
+import stroom.preferences.client.component.EditorPreferencesController;
+import stroom.preferences.client.component.ThemePreferencesController;
+import stroom.preferences.client.component.TimePreferencesController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
@@ -121,9 +124,9 @@ class TestUserPreferencesPresenter {
                 eventBus,
                 Mockito.mock(UserPreferencesView.class, Mockito.RETURNS_DEEP_STUBS),
                 userPreferencesManager,
-                Mockito.mock(ThemePreferencesPresenter.class),
-                Mockito.mock(EditorPreferencesPresenter.class),
-                Mockito.mock(TimePreferencesPresenter.class),
+                Mockito.mock(ThemePreferencesController.class),
+                Mockito.mock(EditorPreferencesController.class),
+                Mockito.mock(TimePreferencesController.class),
                 Mockito.mock(KeyBindingPreferencesPresenter.class),
                 Mockito.mock(ClientSecurityContext.class));
         // The dialog's size is worked out from the browser window's
