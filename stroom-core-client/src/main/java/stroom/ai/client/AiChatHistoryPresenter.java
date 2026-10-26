@@ -17,9 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
+import stroom.ai.client.component.AiChatHistoryResultListController;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -34,6 +34,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -41,10 +42,10 @@ import java.util.function.Consumer;
 
 public class AiChatHistoryPresenter
         extends MyPresenterWidget<AiChatHistoryView>
-        implements AiChatHistoryUiHandlers, FindDocResultListHandler<AiChat> {
+        implements AiChatHistoryUiHandlers {
 
 
-    private final AiChatHistoryResultListPresenter findResultListPresenter;
+    private final AiChatHistoryResultListController findResultListPresenter;
     private boolean showing;
     private Consumer<AiChat> selectionConsumer;
 
@@ -52,30 +53,28 @@ public class AiChatHistoryPresenter
     @Inject
     public AiChatHistoryPresenter(final EventBus eventBus,
                          final AiChatHistoryView view,
-                         final AiChatHistoryResultListPresenter findResultListPresenter,
+                         final AiChatHistoryResultListController findResultListPresenter,
                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
 
-        // Ensure list has a border in the popup view.
-        findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
-        view.setResultView(findResultListPresenter.getView());
-        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setResultView(findResultListPresenter);
+        findResultListPresenter.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindAiChatHistoryCriteria.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);
-        findResultListPresenter.setFindResultListHandler(this);
+        findResultListPresenter.setOnOpen(this::openDocument);
+        findResultListPresenter.setOnFocusFilter(this::focus);
     }
 
-    @Override
-    public void openDocument(final AiChat match) {
+    private void openDocument(final AiChat match) {
         if (match != null) {
             HidePopupRequestEvent.builder(this).action(DialogAction.OK).fire();
         }
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         getView().focus();
     }
@@ -207,7 +206,7 @@ public class AiChatHistoryPresenter
 //
 //        void setSelected(AiChat chat);
 
-        void setResultView(View view);
+        void setResultView(IsWidget view);
 
         /**
          * Show why the server rejected the filter, or clear it when passed null.
