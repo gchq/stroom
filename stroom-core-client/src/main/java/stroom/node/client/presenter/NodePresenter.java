@@ -19,6 +19,7 @@ package stroom.node.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.job.shared.JobNode;
+import stroom.node.client.component.NodeStatusListController;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.IconColour;
@@ -26,6 +27,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -35,25 +37,25 @@ public class NodePresenter
 
     public static final String TAB_TYPE = "Nodes";
 
-    private final NodeStatusListPresenter nodeStatusListPresenter;
+    private final NodeStatusListController nodeStatusList;
     private final NodeJobListPresenter nodeJobListPresenter;
 
     @Inject
     public NodePresenter(final EventBus eventBus,
                          final NodeView view,
-                         final NodeStatusListPresenter nodeStatusListPresenter,
+                         final NodeStatusListController nodeStatusList,
                          final NodeJobListPresenter nodeJobListPresenter) {
         super(eventBus, view);
-        own(nodeStatusListPresenter);
+        own(nodeStatusList);
         own(nodeJobListPresenter);
-        this.nodeStatusListPresenter = nodeStatusListPresenter;
+        this.nodeStatusList = nodeStatusList;
         this.nodeJobListPresenter = nodeJobListPresenter;
 
-        getView().setNodeListView(nodeStatusListPresenter.getView());
+        getView().setNodeListView(nodeStatusList);
         getView().setNodeJobListView(nodeJobListPresenter.getView());
 
-        own(nodeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final NodeStatusResult row = nodeStatusListPresenter.getSelectionModel().getSelected();
+        own(nodeStatusList.getSelectionModel().addSelectionHandler(event -> {
+            final NodeStatusResult row = nodeStatusList.getSelectionModel().getSelected();
             final String nodeName = NullSafe.get(row, NodeStatusResult::getNode, Node::getName);
             nodeJobListPresenter.read(nodeName);
         }));
@@ -61,7 +63,7 @@ public class NodePresenter
 
     @Override
     public void refresh() {
-        nodeStatusListPresenter.refresh();
+        nodeStatusList.refresh();
         nodeJobListPresenter.refresh();
     }
 
@@ -86,14 +88,14 @@ public class NodePresenter
     }
 
     public void setSelected(final String nodeName) {
-        nodeStatusListPresenter.setSelected(nodeName);
+        nodeStatusList.setSelected(nodeName);
         nodeJobListPresenter.read(nodeName);
     }
 
     public void setSelected(final JobNode jobNode) {
         final String nodeName = NullSafe.get(jobNode, JobNode::getNodeName);
         nodeJobListPresenter.read(nodeName);
-        nodeStatusListPresenter.setSelected(nodeName);
+        nodeStatusList.setSelected(nodeName);
         nodeJobListPresenter.setSelected(jobNode);
     }
 
@@ -106,7 +108,7 @@ public class NodePresenter
         /// Shows the list of nodes.
         ///
         /// @param view Its view.
-        void setNodeListView(View view);
+        void setNodeListView(IsWidget view);
 
         /// Shows the selected node's jobs.
         ///

@@ -1084,6 +1084,8 @@
 .nodePingBar-bar {
     color: white;
     height: 70%;
+    /* Set on each bar, as a node's ping is known only at runtime */
+    width: var(--node-ping-bar__width);
     /*padding-left: .25em;*/
 }
 

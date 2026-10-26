@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,64 +14,53 @@
  * limitations under the License.
  */
 
-package stroom.node.client.presenter;
+package stroom.node.client.component;
 
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.node.client.NodeClient;
-import stroom.node.client.event.NodeChangeEvent;
-import stroom.node.shared.ClusterNodeInfo;
-import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
-import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.shared.SvgImage;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.NodeMonitoringConfig;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
-import stroom.util.shared.BuildInfo;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.ColumnSortList;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> implements Refreshable {
+/// The cluster's nodes, a row each (its info, name, endpoint, version, a bar of its latest ping,
+/// when it started, whether it is the master, its priority and whether it is enabled); one can be
+/// selected. Auto refresh can be turned off.
+public class NodeStatusList extends Component {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
     private static final String PING_BAR_CLASS = CLASS_BASE + "-bar";
@@ -82,117 +71,94 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
     private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
     private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
 
-    private final DataGrid<NodeStatusResult> dataGrid;
-    private final NodeClient nodeClient;
-    private final TooltipPresenter tooltipPresenter;
-    private final DateTimeFormatter dateTimeFormatter;
-    private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    ToolbarToggleButton autoRefreshButton;
+    @UiField
+    DataGrid<NodeStatusResult> dataGrid;
 
-    private final Map<String, PingResult> latestPing = new HashMap<>();
-    private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
-    private final ToolbarToggleButton autoRefreshButton;
+    // Saves the grid being redrawn for every single row in the list
     private final DelayedUpdate redrawDelayedUpdate;
+    private Function<String, NodePing> pingLookup = nodeName -> null;
+    private Function<Long, String> dateFormat = String::valueOf;
+    private InfoHandler onShowInfo = (row, popupPosition, anchor) -> {
+    };
+    private BiConsumer<NodeStatusResult, Integer> onPriorityChange = (row, priority) -> {
+    };
+    private BiConsumer<NodeStatusResult, Boolean> onEnabledChange = (row, enabled) -> {
+    };
+    private Runnable onSortChange = () -> {
+    };
 
-    private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
-    private String selectedNodeName = null;
-    private boolean autoRefresh = true;
-
-    @Inject
-    public NodeStatusListPresenter(final EventBus eventBus,
-                                   final PagerPanel view,
-                                   final NodeClient nodeClient,
-                                   final TooltipPresenter tooltipPresenter,
-                                   final DateTimeFormatter dateTimeFormatter,
-                                   final UiConfigCache uiConfigCache) {
-        super(eventBus, view);
-        own(tooltipPresenter);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Nodes");
-        view.setDataWidget(dataGrid);
+    /// Makes an empty list.
+    public NodeStatusList() {
+        initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
+        addColumns();
+        dataGrid.addColumnSortHandler(event -> onSortChange.run());
+    }
 
-        this.nodeClient = nodeClient;
-        this.tooltipPresenter = tooltipPresenter;
-        this.dateTimeFormatter = dateTimeFormatter;
-        this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
-
-        getView().getToolbar().setName("Node actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
-                pressed -> onAutoRefreshToggled());
-        autoRefreshButton.setState(autoRefresh);
-
-        initTableColumns();
-        dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setSortList(findNodeStatusCriteria, dataGrid.getColumnSortList());
-                nodeClient.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
-                        NodeStatusListPresenter.this);
-            }
-
-            @Override
-            protected void changeData(final FetchNodeStatusResponse data) {
-                // Build a map to help us with selecting rows
-                final boolean isSelectionRequired = nodeNameToNodeStatusMap == null;
-                nodeNameToNodeStatusMap = data.stream()
-                        .filter(Objects::nonNull)
-                        .filter(nodeStatus -> nodeStatus.getNode() != null)
-                        .collect(Collectors.toMap(
-                                nodeStatus -> nodeStatus.getNode().getName(),
-                                Function.identity()));
-                // Do the requested selection now we can map node names to rows
-                if (isSelectionRequired) {
-                    setSelected(selectedNodeName);
-                }
-
-                uiConfigCache.get(uiConfig -> {
-                    if (uiConfig != null) {
-                        final NodeMonitoringConfig nodeMonitoringConfig = uiConfig.getNodeMonitoring();
-
-                        // Ping each node.
-                        data.getValues().forEach(row -> {
-                            final String nodeName = row.getNode().getName();
-                            nodeClient.ping(nodeName,
-                                    pingMs -> {
-                                        latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
-                                        scheduleDataGridRedraw();
-                                    },
-                                    throwable -> {
-                                        latestPing.put(nodeName, PingResult.error(
-                                                throwable.getMessage(), nodeMonitoringConfig));
-                                        scheduleDataGridRedraw();
-                                    },
-                                    NodeStatusListPresenter.this);
-                        });
-                    }
-                }, getView());
-
-                super.changeData(data);
-            }
-        };
+    /// @param dataProvider Gives the list its rows.
+    public void setDataProvider(final AbstractDataProvider<NodeStatusResult> dataProvider) {
         dataProvider.addDataDisplay(dataGrid);
-
-        own(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
-    private void onAutoRefreshToggled() {
-        autoRefresh = !autoRefresh;
-        if (autoRefresh) {
-            internalRefresh();
-        }
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
     }
 
-    private void scheduleDataGridRedraw() {
-        // Saves the grid being redrawn for every single row in the list
+    /// @return The selection, one node at most.
+    public MultiSelectionModelImpl<NodeStatusResult> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return How the rows are sorted, for the request for them.
+    public ColumnSortList getSortList() {
+        return dataGrid.getColumnSortList();
+    }
+
+    /// Draws the rows again soon, e.g. as each node's ping comes in, once for them all.
+    public void scheduleRedraw() {
         redrawDelayedUpdate.update();
     }
 
-    public MultiSelectionModel<NodeStatusResult> getSelectionModel() {
-        return selectionModel;
+    /// @param pingLookup Gives a node's latest ping, or `null` if it hasn't one yet.
+    public void setPingLookup(final Function<String, NodePing> pingLookup) {
+        this.pingLookup = pingLookup;
+    }
+
+    /// @param dateFormat Formats a time with how long ago it was, in the user's preferences.
+    public void setDateFormat(final Function<Long, String> dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    /// @param onAutoRefreshToggle Given whether auto refresh is now on, when its button is pressed.
+    public void setOnAutoRefreshToggle(final Consumer<Boolean> onAutoRefreshToggle) {
+        autoRefreshButton.setOnToggle(onAutoRefreshToggle);
+    }
+
+    /// @param onShowInfo Shows a node's info, by the info icon pressed.
+    public void setOnShowInfo(final InfoHandler onShowInfo) {
+        this.onShowInfo = onShowInfo;
+    }
+
+    /// @param onPriorityChange Given a node and its new priority.
+    public void setOnPriorityChange(final BiConsumer<NodeStatusResult, Integer> onPriorityChange) {
+        this.onPriorityChange = onPriorityChange;
+    }
+
+    /// @param onEnabledChange Given a node and whether it is now enabled, when its tick box is pressed.
+    public void setOnEnabledChange(final BiConsumer<NodeStatusResult, Boolean> onEnabledChange) {
+        this.onEnabledChange = onEnabledChange;
+    }
+
+    /// @param onSortChange Run when the user sorts by another column.
+    public void setOnSortChange(final Runnable onSortChange) {
+        this.onSortChange = onSortChange;
     }
 
     private static boolean isNodeEnabled(final NodeStatusResult nodeStatusResult) {
@@ -212,24 +178,17 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                 result,
                 NodeStatusResult::getNode,
                 Node::getLastBootMs,
-                dateTimeFormatter::formatWithDuration);
+                dateFormat);
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    private void addColumns() {
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
             protected void showInfo(final NodeStatusResult row,
                                     final PopupPosition popupPosition,
                                     final Element anchor) {
-                nodeClient.info(
-                        row.getNode().getName(),
-                        result -> showNodeInfoResult(row.getNode(), result, popupPosition, anchor),
-                        error -> showNodeInfoError(error.getException(), popupPosition, anchor),
-                        NodeStatusListPresenter.this);
+                onShowInfo.show(row, popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -237,7 +196,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(NodeStatusResult::getNode, Node::getName))
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
@@ -251,7 +210,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getUrl))
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_URL)
                         .build(),
                 DataGridUtil.headingBuilder("Cluster Base Endpoint")
@@ -265,7 +224,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getBuildVersion))
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION)
                         .build(),
                 DataGridUtil.headingBuilder("Build Version")
@@ -278,7 +237,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                 DataGridUtil.columnBuilder(
                                 this::getPingBarSafeHtml,
                                 SafeHtmlCell::new)
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Ping (ms)")
                         .withToolTip("The time in milliseconds to get a response back from the node.")
@@ -288,7 +247,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
         // Last Boot Time
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::extractLastBootTimeAsStr)
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS)
                         .build(),
                 DataGridUtil.headingBuilder("Up Date")
@@ -302,7 +261,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                                 (NodeStatusResult result) -> NullSafe.get(
                                         result,
                                         NodeStatusResult::isMaster)))
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Master")
@@ -313,17 +272,13 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
 
         // Priority.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder("Priority", NodeStatusListPresenter::extractNodePriority,
+                DataGridUtil.valueSpinnerColumnBuilder("Priority", NodeStatusList::extractNodePriority,
                                 1L,
                                 100L)
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_PRIORITY)
                         .withFieldUpdater((rowIndex, nodeStatusResult, value) ->
-                                nodeClient.setPriority(
-                                        nodeStatusResult.getNode().getName(),
-                                        value.intValue(),
-                                        result -> internalRefresh(),
-                                        this))
+                                onPriorityChange.accept(nodeStatusResult, value.intValue()))
                         .build(),
                 DataGridUtil.headingBuilder("Priority")
                         .withToolTip("Defines how important the node is when it comes to " +
@@ -339,19 +294,11 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
                                         result,
                                         NodeStatusResult::getNode,
                                         Node::isEnabled)))
-                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusList::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) -> {
                             if (row != null) {
-                                final String nodeName = row.getNode().getName();
-                                nodeClient.setEnabled(
-                                        nodeName,
-                                        value.toBoolean(),
-                                        result -> {
-                                            internalRefresh();
-                                            NodeChangeEvent.fire(NodeStatusListPresenter.this, nodeName);
-                                        },
-                                        this);
+                                onEnabledChange.accept(row, value.toBoolean());
                             }
                         })
                         .centerAligned()
@@ -369,7 +316,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
         }
 
         final Node node = row.getNode();
-        final PingResult pingResult = latestPing.get(node.getName());
+        final NodePing pingResult = pingLookup.apply(node.getName());
 
         if (pingResult != null) {
             Long ping = pingResult.getPing();
@@ -436,7 +383,8 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
             isErrorMsg = true;
         }
 
-        final Attribute barWidthAttr = Attribute.style("width:" + barWidthPct + "%");
+        // The bar's width is known only now, so set as a custom property that its class uses
+        final Attribute barWidthAttr = Attribute.style("--node-ping-bar__width:" + barWidthPct + "%");
         final Attribute textClass = Attribute.className(PING_TEXT_CLASS);
         final Attribute errorTextClass = Attribute.className(PING_ERROR_TEXT_CLASS);
         final Attribute barClass = Attribute.className(PING_BAR_CLASS + " " + severityClass);
@@ -466,126 +414,22 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerPanel> imple
         return htmlBuilder.toSafeHtml();
     }
 
-    private void showNodeInfoResult(final Node node,
-                                    final ClusterNodeInfo result,
-                                    final PopupPosition popupPosition,
-                                    final Element anchor) {
-        final TableBuilder tb1 = new TableBuilder();
-        final TableBuilder tb2 = new TableBuilder();
-
-        if (result != null) {
-            final BuildInfo buildInfo = result.getBuildInfo();
-            tb1
-                    .row(TableCell.header("Node Details", 2))
-                    .row("Node Name", result.getNodeName());
-            if (buildInfo != null) {
-                tb1
-                        .row("Build Version", buildInfo.getBuildVersion())
-                        .row("Build Date", dateTimeFormatter.format(buildInfo.getBuildTime()))
-                        .row("Up Date", dateTimeFormatter.format(buildInfo.getUpTime()));
-            }
-            tb1
-                    .row("Discover Time", dateTimeFormatter.format(result.getDiscoverTime()))
-                    .row("Node Endpoint URL", result.getEndpointUrl())
-                    .row("Ping", ModelStringUtil.formatDurationString(result.getPing()))
-                    .row("Error", result.getError());
-
-            tb2.row(TableCell.header("Node List"));
-            if (result.getItemList() != null) {
-                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                    String nodeValue = info.getNodeName();
-
-                    if (!info.isActive()) {
-                        nodeValue += " (Unknown)";
-                    }
-                    if (info.isMaster()) {
-                        nodeValue += " (Master)";
-                    }
-                    tb2.row(nodeValue);
-                }
-            }
-
-        } else {
-            tb1
-                    .row("Node Name", node.getName())
-                    .row("Cluster URL", node.getUrl());
-        }
-
-        final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
-        htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
-
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
-    }
-
-    private void showNodeInfoError(final Throwable caught,
-                                   final PopupPosition popupPosition,
-                                   final Element anchor) {
-        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition, anchor);
-    }
-
-    @Override
-    public void refresh() {
-        if (autoRefresh) {
-            internalRefresh();
-        }
-    }
-
-    private void internalRefresh() {
-        dataProvider.refresh();
-    }
-
-    public void setSelected(final String nodeName) {
-        selectedNodeName = nodeName;
-        selectionModel.clear();
-
-        if (nodeName != null && nodeNameToNodeStatusMap != null) {
-            final NodeStatusResult nodeStatusResult = nodeNameToNodeStatusMap.get(nodeName);
-            if (nodeStatusResult != null) {
-                selectionModel.setSelected(nodeStatusResult);
-            } else {
-                selectionModel.clear();
-            }
-        }
-    }
 
 
     // --------------------------------------------------------------------------------
 
 
-    @SuppressWarnings("ClassCanBeRecord")
-    private static final class PingResult {
+    interface Binder extends UiBinder<Widget, NodeStatusList> {
 
-        private final Long ping;
-        private final String error;
-        private final NodeMonitoringConfig nodeMonitoringConfig;
+    }
 
-        PingResult(final Long ping,
-                   final String error,
-                   final NodeMonitoringConfig nodeMonitoringConfig) {
-            this.ping = ping;
-            this.error = error;
-            this.nodeMonitoringConfig = nodeMonitoringConfig;
-        }
 
-        static PingResult success(final Long ping, final NodeMonitoringConfig nodeMonitoringConfig) {
-            return new PingResult(ping, null, nodeMonitoringConfig);
-        }
+    /// Shows a node's info.
+    public interface InfoHandler {
 
-        static PingResult error(final String error, final NodeMonitoringConfig nodeMonitoringConfig) {
-            return new PingResult(null, error, nodeMonitoringConfig);
-        }
-
-        Long getPing() {
-            return ping;
-        }
-
-        String getError() {
-            return error;
-        }
-
-        public NodeMonitoringConfig getNodeMonitoringConfig() {
-            return nodeMonitoringConfig;
-        }
+        /// @param row           The node's row.
+        /// @param popupPosition Where to show it.
+        /// @param anchor        The info icon pressed.
+        void show(NodeStatusResult row, PopupPosition popupPosition, Element anchor);
     }
 }
