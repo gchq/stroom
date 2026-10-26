@@ -124,11 +124,13 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
   or a chord diagram sends a link both ways round, so it matches in either direction; a Sankey diagram's flows,
   and a directed graph's links, match only their own direction.
 - Ctrl-click (or Shift-click) selects several items, and the filter matches any of them.
-- A line chart or scatter plot whose x is a Date Time column has a range tool: dragging along its time axis
-  selects a time range. A term with `"selection": "range"` keeps a date field (or column) within it, e.g.
-  `{"field": "EventTime", "selection": "range"}` to narrow the dashboard to a period. It becomes two terms
-  (on or after the start, on or before the end); `between` isn't used, as its value would be a bare comma while
-  nothing is selected.
+- Dates are filtered by time, never by equality. A term giving a date field (or a table's date column) a date
+  the chart selects (a time axis's x, a calendar's date, any Date Time column) keeps it within the selected
+  time: the range dragged along a line chart's or scatter plot's time axis (its range tool), or the time a
+  clicked point stands for (its whole day, for `floorDay()` values; its hour, for `floorHour()`). E.g.
+  `{"field": "EventTime", "selection": "x"}` (or `"range"`, the same) narrows the dashboard to a period. It
+  becomes two terms (on or after the start, on or before the end); `between` isn't used, as its value would be a
+  bare comma while nothing is selected. Say so as it is: the result reads "within its selected time".
 - With nothing selected, the filter's terms drop out and the target shows everything.
 - While something is selected, the chart shows a "Selected: …" bar with a button that clears the selection, even
   if the filter has left the chart with nothing to draw.
