@@ -10,24 +10,24 @@
 > inputs at the top of the build script and re-run. The companion `gwt-inventory.csv` is the
 > machine-readable source of truth.
 
-**Total files: 3985**  ·  client 2888 · shared 1012 · api 85
+**Total files: 3973**  ·  client 2876 · shared 1012 · api 85
 
 ## Category summary
 
 | Top-level category | Files |
 | --- | ---: |
-| [Widget](#widget) | 590 |
-| [Screen/Dialog](#screendialog) | 1850 |
-| [Shared Screen/Dialog](#shared-screendialog) | 208 |
+| [Widget](#widget) | 585 |
+| [Screen/Dialog](#screendialog) | 1844 |
+| [Shared Screen/Dialog](#shared-screendialog) | 206 |
 | [Model](#model) | 806 |
 | [REST API](#rest-api) | 97 |
 | [Utility](#utility) | 226 |
-| [Framework](#framework) | 208 |
-| **Total** | **3985** |
+| [Framework](#framework) | 209 |
+| **Total** | **3973** |
 
 ## Widget
 
-_590 files._
+_585 files._
 
 | Subcategory | Files |
 | --- | ---: |
@@ -35,9 +35,9 @@ _590 files._
 | Input / Form | 73 |
 | Popup / Overlay | 56 |
 | Data / Cells | 50 |
-| Editor / Viewer | 49 |
-| Tree | 48 |
+| Editor / Viewer | 48 |
 | Widget utilities | 46 |
+| Tree | 44 |
 | Tabs | 43 |
 | Menu | 31 |
 | Editor (ACE wrapper, vendored) | 26 |
@@ -390,13 +390,13 @@ _590 files._
 | `stroom-core-client-widget/src/main/java/stroom/editor/client/view/RightBar.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/editor/client/view/ScrollbarMetrics.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/editor/client/view/StroomAceThemes.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/presenter/XSDBrowserPresenter.java` | stroom-core-client-widget | Presenter |
-| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/presenter/XSDBrowserUiHandlers.java` | stroom-core-client-widget | UiHandlers |
+| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/component/XSDBrowser.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/component/XSDBrowser.ui.xml` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/component/XSDBrowserController.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/ClickPanel.java` | stroom-core-client-widget | Panel |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/SelectableItem.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/SelectionMap.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XMLUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDBrowserViewImpl.java` | stroom-core-client-widget | ViewImpl |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDConstraint.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDConstraintDisplay.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDDisplay.java` | stroom-core-client-widget | — |
@@ -407,60 +407,6 @@ _590 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDNodeGrid.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDNodeLabel.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/xsdbrowser/client/view/XSDTypeFilter.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/xsdbrowser/client/view/XSDBrowserViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
-
-### Widget — Tree
-
-| File | Module | Role |
-| --- | --- | --- |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/DropDownBox.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/DropDownBox.ui.xml` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/ExplorerPopupUiHandlers.java` | stroom-core-client-widget | UiHandlers |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/ExplorerPopupView.java` | stroom-core-client-widget | View |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/ExplorerPopupViewImpl.java` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilter.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilter.ui.xml` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterContextHandler.java` | stroom-core-client-widget | Handler |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterDialogView.java` | stroom-core-client-widget | View |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterDialogViewImpl.java` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterHistoryTracker.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterPageView.java` | stroom-core-client-widget | View |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterPageViewImpl.java` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterTooltipUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterUiHandlers.java` | stroom-core-client-widget | UiHandlers |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ArrowConnectorRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/BracketConnectorRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CanvasColours.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CellRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CellRenderer2.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ConnectorRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/LayeredCanvas.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/RoundedRectangle.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ShadowBox.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TextCellRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/AbegoTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Bounds.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/CenteredParentTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Configuration.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Dimension.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/Contract.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/IterableUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/IteratorUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/ListUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/MyTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/NodeExtentProvider.java` | stroom-core-client-widget | Provider |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Point.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/TreeForTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/TreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/AbstractTreeForTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/DefaultConfiguration.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/DefaultTreeForTreeLayout.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/FixedNodeExtentProvider.java` | stroom-core-client-widget | Provider |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TreeRenderer.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TreeRenderer2.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/ExplorerPopupViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterDialogViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterPageViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
 
 ### Widget — Widget utilities
 
@@ -512,6 +458,55 @@ _590 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/Templates.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/TypeAhead.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/util/client/TypedKey.java` | stroom-core-client-widget | — |
+
+### Widget — Tree
+
+| File | Module | Role |
+| --- | --- | --- |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/DropDownBox.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/DropDownBox.ui.xml` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilter.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilter.ui.xml` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterContextHandler.java` | stroom-core-client-widget | Handler |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterDialogView.java` | stroom-core-client-widget | View |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterDialogViewImpl.java` | stroom-core-client-widget | ViewImpl |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterHistoryTracker.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterPageView.java` | stroom-core-client-widget | View |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterPageViewImpl.java` | stroom-core-client-widget | ViewImpl |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterTooltipUtil.java` | stroom-core-client-widget | Util |
+| `stroom-core-client-widget/src/main/java/stroom/widget/dropdowntree/client/view/QuickFilterUiHandlers.java` | stroom-core-client-widget | UiHandlers |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ArrowConnectorRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/BracketConnectorRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CanvasColours.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CellRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/CellRenderer2.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ConnectorRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/LayeredCanvas.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/RoundedRectangle.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/ShadowBox.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TextCellRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/AbegoTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Bounds.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/CenteredParentTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Configuration.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Dimension.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/Contract.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/IterableUtil.java` | stroom-core-client-widget | Util |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/IteratorUtil.java` | stroom-core-client-widget | Util |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/internal/util/ListUtil.java` | stroom-core-client-widget | Util |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/MyTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/NodeExtentProvider.java` | stroom-core-client-widget | Provider |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/Point.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/TreeForTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/TreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/AbstractTreeForTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/DefaultConfiguration.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/DefaultTreeForTreeLayout.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/treelayout/util/FixedNodeExtentProvider.java` | stroom-core-client-widget | Provider |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TreeRenderer.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/htree/client/TreeRenderer2.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterDialogViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
+| `stroom-core-client-widget/src/main/resources/stroom/widget/dropdowntree/client/view/QuickFilterPageViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
 
 ### Widget — Tabs
 
@@ -720,28 +715,28 @@ _590 files._
 
 ## Screen/Dialog
 
-_1850 files._
+_1844 files._
 
 | Subcategory | Files |
 | --- | ---: |
-| Gwt | 412 |
+| Gwt | 413 |
 | Dashboard | 233 |
 | Security | 139 |
 | Floormap | 117 |
-| Query / search | 99 |
-| Data / streams | 85 |
+| Query / search | 96 |
+| Data / streams | 84 |
 | Pipeline | 82 |
-| Analytics | 71 |
+| Analytics | 70 |
 | Annotation | 63 |
 | State (Plan B) | 61 |
 | Processor | 38 |
-| Pathways | 37 |
+| Pathways | 36 |
 | Data receipt | 35 |
-| Credentials | 32 |
-| Index | 27 |
-| Search | 27 |
-| AI | 25 |
+| Credentials | 31 |
+| Index | 26 |
+| Search | 26 |
 | Import / Export | 25 |
+| AI | 24 |
 | Node / cluster | 21 |
 | Config / properties | 18 |
 | Tasks | 16 |
@@ -750,18 +745,18 @@ _1850 files._
 | Activity | 13 |
 | Statistics | 12 |
 | Feed | 11 |
+| Dictionary | 9 |
 | Git repository | 9 |
 | AWS / S3 | 8 |
+| Content store | 8 |
 | Data generation | 8 |
 | Script | 8 |
-| Sqlstore | 8 |
-| Dictionary | 7 |
 | HTTP | 7 |
 | Monitoring | 7 |
+| Sqlstore | 7 |
 | Visualisation | 7 |
 | AI (OpenAI) | 6 |
 | Cache | 6 |
-| Content store | 6 |
 | About | 5 |
 | View | 5 |
 | XML schema | 5 |
@@ -904,6 +899,7 @@ _1850 files._
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/DocumentationEditorStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/ElasticClusterEditorStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/FloorMapEditorStories.java` | stroom-gwt | — |
+| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/FloorMapEventStoreSettingsStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/FloorMapFormsStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/FloorMapInitStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/FloorMapMapStories.java` | stroom-gwt | — |
@@ -1118,12 +1114,12 @@ _1850 files._
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/AceEditorStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/AceEditorThemeStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/DataFixtures.java` | stroom-gwt | — |
+| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/DataTextPaneStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/EditorWidgets.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/ItemNavigatorStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/MarkdownEditorStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/SourcePresenterStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/SourceViewerStories.java` | stroom-gwt | — |
-| `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/TextPresenterStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/XsdBrowserStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/entitychecktree/EntityCheckTreeStories.java` | stroom-gwt | — |
 | `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/SourceProgressBarStories.java` | stroom-gwt | — |
@@ -1193,6 +1189,9 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/ColumnFilterEditor.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/ColumnFilterEditor.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dashboard/client/component/ColumnFilterEditorController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrame.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisFrameController.java` | stroom-core-client | — |
@@ -1318,8 +1317,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/cf/RulesViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/cf/RuleUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/cf/RuleViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnFilterPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnFilterViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnFunctionEditorPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnFunctionEditorViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/dashboard/client/table/ColumnsManager.java` | stroom-core-client | Manager |
@@ -1413,7 +1410,6 @@ _1850 files._
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/cf/CustomRowStyleViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/cf/RulesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/cf/RuleViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/dashboard/client/table/ColumnFilterViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/ColumnFunctionEditorViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/ColumnValuesFilterViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/dashboard/client/table/DownloadViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -1586,6 +1582,9 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapDock.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapDock.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapDockController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapEventStoreSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapEventStoreSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapEventStoreSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapGroupEdit.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapGroupEdit.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapGroupEditController.java` | stroom-core-client | — |
@@ -1598,6 +1597,9 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapSetScale.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapSetScale.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapSetScaleController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimeline.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimeline.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimelineController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimelineSettings.java` | stroom-core-client | Settings |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimelineSettings.ui.xml` | stroom-core-client | Settings |
 | `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapTimelineSettingsController.java` | stroom-core-client | — |
@@ -1643,7 +1645,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapEventStoreDataDefaults.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapEventStoreDataPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapEventStorePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapEventStoreSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapFactListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapFullReadQueryHelper.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapGroupsPresenter.java` | stroom-core-client | Presenter |
@@ -1654,7 +1655,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapQueryBuilder.java` | stroom-core-client | Builder |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapQueryPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapTimelinePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapTimeListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapTrackingPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/floormap/client/presenter/MapContextMenu.java` | stroom-core-client | — |
@@ -1670,7 +1670,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapClusterViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapEditorViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapEventStoreDataViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapEventStoreSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapFactListViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapGrid.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapGroupsViewImpl.java` | stroom-core-client | ViewImpl |
@@ -1681,17 +1680,14 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapObjectEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapQueryViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapSettingsViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapTimelineViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapTimeListViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapTrackingViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapClusterViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapEventStoreSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapInitViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapMapViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapObjectEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapQueryViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapTimelineViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Query / search
 
@@ -1704,6 +1700,15 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/query/client/component/ExpressionTree.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/component/ExpressionTree.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/component/ExpressionTreeController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryHelp.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryHelp.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryHelpController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryTextPane.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryTextPane.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryTextPaneController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryToolbar.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryToolbar.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/query/client/component/QueryToolbarController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/component/TermEditorController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/component/TimeRangePicker.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/component/TimeRangePicker.ui.xml` | stroom-core-client | — |
@@ -1734,17 +1739,13 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryDocEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryDocPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryEditPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryHelpPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryHelpSelectionItem.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryHelpUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryModel.java` | stroom-core-client | Model |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryResultTablePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryResultTableSplitPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryResultVisPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryTableColumnsManager.java` | stroom-core-client | Manager |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryTableColumnValuesDataSupplier.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryToolbarPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryToolbarUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/ResultComponent.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/ResultStoreListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/ResultStoreModel.java` | stroom-core-client | Model |
@@ -1755,8 +1756,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/SimpleFieldSelectionListModel.java` | stroom-core-client | Model |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/TableComponentSelection.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/TableRow.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/TextPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/query/client/presenter/TextUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/TimeZones.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/TokenErrorListener.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/presenter/Views.java` | stroom-core-client | — |
@@ -1771,16 +1770,13 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryButtons.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryDataViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/query/client/view/QueryHelpViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryResultTableSplitViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryResultTableViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryResultTabsView.java` | stroom-core-client | View |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryResultTabsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/QueryResultVisViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/query/client/view/QueryToolbarViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/ResultStoreSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/ResultStoreViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/query/client/view/TextViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeRangeSelector.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeRangeSelector.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeRangeSelectorController.java` | stroom-core-client | — |
@@ -1788,14 +1784,11 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeZoneBox.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryDataViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/query/client/view/QueryHelpViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryResultTableSplitViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryResultTableViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryResultTabsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/query/client/view/QueryToolbarViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/ResultStoreSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/ResultStoreViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/query/client/view/TextViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Data / streams
 
@@ -1810,6 +1803,9 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/data/client/component/CharacterRangeSelectionController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ClassificationWrapper.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ClassificationWrapper.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/data/client/component/DataTextPane.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/data/client/component/DataTextPane.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/data/client/component/DataTextPaneController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigator.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigator.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/component/ItemNavigatorController.java` | stroom-core-client | — |
@@ -1847,8 +1843,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/SourcePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/SourceTabPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/data/client/presenter/SteppingMetaListPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/data/client/presenter/TextPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/data/client/presenter/TextUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/data/client/SourceKey.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/data/client/SourceTabPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/data/client/view/ClassificationLabel.java` | stroom-core-client | — |
@@ -1864,7 +1858,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/data/client/view/SourceTabViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/data/client/view/SourceViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/data/client/view/StreamTaskViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/data/client/view/TextViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/data/store/impl/fs/client/ManageFsVolumesPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/data/store/impl/fs/client/presenter/FsVolumeEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/data/store/impl/fs/client/presenter/FsVolumeGroupEditPresenter.java` | stroom-core-client | Presenter |
@@ -1883,7 +1876,6 @@ _1850 files._
 | `stroom-core-client/src/main/resources/stroom/data/client/view/SourceTabViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/data/client/view/SourceViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/data/client/view/StreamTaskViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/data/client/view/TextViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/data/store/impl/fs/client/view/FsVolumeEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/data/store/impl/fs/client/view/FsVolumeGroupEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
@@ -1891,16 +1883,17 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/pipeline/client/component/TextConverterSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/pipeline/client/component/TextConverterSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/pipeline/client/component/TextConverterSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/event/CreateProcessorEvent.java` | stroom-core-client | Event |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/PipelinePlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/presenter/DocRefSelectionPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/presenter/PipelinePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/presenter/TextConverterPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/pipeline/client/presenter/TextConverterSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/presenter/XsltPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/TextConverterPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/view/DocRefSelectionViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/pipeline/client/view/TextConverterSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/pipeline/client/XsltPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/pipeline/stepping/client/component/PipelinePathBar.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pipeline/stepping/client/component/PipelinePathBar.ui.xml` | stroom-core-client | — |
@@ -1964,7 +1957,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/TreeKeyboard.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/TreePanel.java` | stroom-core-client | Panel |
 | `stroom-core-client/src/main/resources/stroom/pipeline/client/view/DocRefSelectionViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/pipeline/client/view/TextConverterSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pipeline/stepping/client/view/StepControlViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pipeline/stepping/client/view/SteppingFilterViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pipeline/stepping/client/view/SteppingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -1979,19 +1971,30 @@ _1850 files._
 | File | Module | Role |
 | --- | --- | --- |
 | `stroom-core-client/src/main/java/stroom/analytics/client/AnalyticsPlugin.java` | stroom-core-client | Plugin |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticEmailDestination.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticEmailDestination.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticEmailDestinationController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticStreamDestination.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticStreamDestination.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/analytics/client/component/AnalyticStreamDestinationController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/ErrorFeedController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/ReportSettingsTab.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/ReportSettingsTab.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/ReportSettingsTabController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/TableBuilderProcessing.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/TableBuilderProcessing.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/analytics/client/component/TableBuilderProcessingController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractDuplicateManagementPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractNotificationListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractNotificationPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractProcessingPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractQueryEditPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AbstractSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticDataShardListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticDataShardsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticDuplicateManagementPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticEmailDestinationPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticNotificationEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticNotificationListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticNotificationPresenter.java` | stroom-core-client | Presenter |
@@ -1999,7 +2002,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticProcessingUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticQueryEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticRulePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/AnalyticSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/BatchExecutionScheduleEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/DuplicateManagementListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ExecutionScheduleManager.java` | stroom-core-client | Manager |
@@ -2010,45 +2012,34 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ReportPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ReportProcessingPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ReportQueryEditPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ReportSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessEditUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessEditView.java` | stroom-core-client | View |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessHistoryListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessingPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/ScheduledProcessListPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/SettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/analytics/client/presenter/StreamingProcessingPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/analytics/client/presenter/TableBuilderProcessingPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/analytics/client/ReportPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticDataShardsViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticEmailDestinationViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticNotificationEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticNotificationViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticProcessingViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/analytics/client/view/AnalyticSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/BatchExecutionScheduleEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/DuplicateManagementViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/ExecutionScheduleRunNowViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/analytics/client/view/ReportSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/ScheduledProcessEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/ScheduledProcessingViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/analytics/client/view/StreamingProcessingViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/analytics/client/view/TableBuilderProcessingViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticDataShardsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticEmailDestinationViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticNotificationEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticNotificationViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticProcessingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/analytics/client/view/AnalyticSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/BatchExecutionScheduleEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/DuplicateManagementViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/ExecutionScheduleRunNowViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/analytics/client/view/ReportSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/ScheduledProcessEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/ScheduledProcessingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/analytics/client/view/StreamingProcessingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/analytics/client/view/TableBuilderProcessingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Annotation
 
@@ -2088,11 +2079,12 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/annotation/client/ChangeStatusPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/annotation/client/ChangeStatusUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/annotation/client/ChangeStatusViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/annotation/client/CommentEditPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/annotation/client/CommentEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/annotation/client/component/Chooser.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/annotation/client/component/Chooser.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/annotation/client/component/ChooserController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEdit.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEdit.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEditController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/annotation/client/component/MultiChooserController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/annotation/client/component/OpenChooser.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/annotation/client/CreateAnnotationEvent.java` | stroom-core-client | Event |
@@ -2114,7 +2106,6 @@ _1850 files._
 | `stroom-core-client/src/main/resources/stroom/annotation/client/AnnotationTagEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/annotation/client/ChangeAssignedToViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/annotation/client/ChangeStatusViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/annotation/client/CommentEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/annotation/client/DurationViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/annotation/client/LinkedEventViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
@@ -2231,6 +2222,9 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwaysSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwaysSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwaysSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTree.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTree.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTreeController.java` | stroom-core-client | — |
@@ -2242,8 +2236,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwayEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwayListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwaysPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwaysSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwaysSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwaysSplitPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ShowTracesEvent.java` | stroom-core-client | Event |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceHistogramChart.java` | stroom-core-client | — |
@@ -2257,13 +2249,11 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/pathways/client/TracesPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/pathways/client/view/ConstraintEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwayEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSplitViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/pathways/client/view/TracesSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/pathways/client/view/TracesViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pathways/client/view/ConstraintEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pathways/client/view/PathwayEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/pathways/client/view/PathwaysSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pathways/client/view/PathwaysSplitViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pathways/client/view/TracesSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/pathways/client/view/TracesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -2315,6 +2305,9 @@ _1850 files._
 | --- | --- | --- |
 | `stroom-core-client/src/main/java/stroom/credentials/client/component/AccessTokenSecretForm.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/credentials/client/component/AccessTokenSecretForm.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/credentials/client/component/CredentialSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/credentials/client/component/CredentialSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/credentials/client/component/CredentialSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/credentials/client/component/KeyStoreFileSecretForm.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/credentials/client/component/KeyStoreFileSecretForm.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/credentials/client/component/KeyStoreSecretForm.java` | stroom-core-client | — |
@@ -2330,18 +2323,14 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialClient.java` | stroom-core-client | Client |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialListModel.java` | stroom-core-client | Model |
-| `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialsListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialsManagerDialogPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialsManagerDialogUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/CredentialsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/credentials/client/presenter/ReplaceSecretPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/credentials/client/view/CredentialSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/credentials/client/view/CredentialsManagerViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/credentials/client/view/CredentialsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/credentials/client/view/ReplaceSecretViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/credentials/client/view/CredentialSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/credentials/client/view/CredentialsManagerViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/credentials/client/view/CredentialsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/credentials/client/view/ReplaceSecretViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -2350,15 +2339,18 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/index/client/component/DenseVectorField.java` | stroom-core-client | Field |
+| `stroom-core-client/src/main/java/stroom/index/client/component/DenseVectorField.ui.xml` | stroom-core-client | Field |
+| `stroom-core-client/src/main/java/stroom/index/client/component/DenseVectorFieldController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/index/client/component/IndexSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/index/client/component/IndexSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/index/client/component/IndexSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/index/client/IndexPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/index/client/ManageIndexVolumesPlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/java/stroom/index/client/presenter/DenseVectorFieldPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexDataPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexFieldEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexFieldListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexShardPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexVolumeEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexVolumeGroupEditPresenter.java` | stroom-core-client | Presenter |
@@ -2366,15 +2358,11 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexVolumeGroupPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexVolumeStatusListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/index/client/presenter/NewIndexVolumeGroupPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/index/client/view/DenseVectorFieldViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/index/client/view/IndexDataViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/index/client/view/IndexFieldEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/index/client/view/IndexSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/index/client/view/IndexVolumeEditViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/index/client/view/IndexVolumeGroupEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/index/client/view/DenseVectorFieldViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/index/client/view/IndexFieldEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/index/client/view/IndexSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/index/client/view/IndexVolumeEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/index/client/view/IndexVolumeGroupEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
@@ -2382,6 +2370,9 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/ElasticClusterPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/ElasticIndexPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticClusterPresenter.java` | stroom-core-client | Presenter |
@@ -2389,11 +2380,8 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticClusterSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticIndexFieldListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticIndexPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticIndexSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/search/elastic/client/presenter/ElasticIndexSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/view/ElasticClusterSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/search/elastic/client/view/ElasticIndexFieldListViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/search/elastic/client/view/ElasticIndexSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/search/solr/client/presenter/SolrIndexFieldEditPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/search/solr/client/presenter/SolrIndexFieldListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/search/solr/client/presenter/SolrIndexPresenter.java` | stroom-core-client | Presenter |
@@ -2405,40 +2393,9 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/search/solr/client/view/SolrIndexSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticClusterSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticIndexFieldListViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/search/elastic/client/view/ElasticIndexSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/search/solr/client/view/SolrIndexFieldEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/search/solr/client/view/SolrIndexFieldListViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/search/solr/client/view/SolrIndexSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-
-### Screen/Dialog — AI
-
-| File | Module | Role |
-| --- | --- | --- |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiAttachmentDataPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryResultListPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryUiHandlers.java` | stroom-core-client | UiHandlers |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiConfigGeneralPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiConfigGeneralUiHandlers.java` | stroom-core-client | UiHandlers |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiConfigGeneralViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiConfigTableAnalysisPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AiConfigTableAnalysisViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiClient.java` | stroom-core-client | Client |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiConfigPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiConfigViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiScreens.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiUiHandlers.java` | stroom-core-client | UiHandlers |
-| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/ai/client/DownloadChatPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/ai/client/DownloadChatViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/AiChatHistoryViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/AiConfigGeneralViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/AiConfigTableAnalysisViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/AskStroomAiConfigViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/AskStroomAiViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/ai/client/DownloadChatViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Import / Export
 
@@ -2469,6 +2426,35 @@ _1850 files._
 | `stroom-core-client/src/main/resources/stroom/importexport/client/view/ExportConfigViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/importexport/client/view/ImportConfigConfirmViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/importexport/client/view/ImportConfigViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+
+### Screen/Dialog — AI
+
+| File | Module | Role |
+| --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/ai/client/AiAttachmentDataPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryResultListPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryUiHandlers.java` | stroom-core-client | UiHandlers |
+| `stroom-core-client/src/main/java/stroom/ai/client/AiChatHistoryViewImpl.java` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiClient.java` | stroom-core-client | Client |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiConfigPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiConfigViewImpl.java` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiScreens.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiUiHandlers.java` | stroom-core-client | UiHandlers |
+| `stroom-core-client/src/main/java/stroom/ai/client/AskStroomAiViewImpl.java` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneralController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigTableAnalysis.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigTableAnalysis.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigTableAnalysisController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/ai/client/DownloadChatPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/ai/client/DownloadChatViewImpl.java` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/resources/stroom/ai/client/AiChatHistoryViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/resources/stroom/ai/client/AskStroomAiConfigViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/resources/stroom/ai/client/AskStroomAiViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/resources/stroom/ai/client/DownloadChatViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Node / cluster
 
@@ -2619,6 +2605,9 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/feed/client/component/FeedSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/feed/client/component/FeedSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/feed/client/component/FeedSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/feed/client/CopyFeedUrlEvent.java` | stroom-core-client | Event |
 | `stroom-core-client/src/main/java/stroom/feed/client/DataUploadService.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/feed/client/DataUploadServiceAsync.java` | stroom-core-client | — |
@@ -2626,10 +2615,21 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/feed/client/FeedPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/feed/client/OpenFeedEvent.java` | stroom-core-client | Event |
 | `stroom-core-client/src/main/java/stroom/feed/client/presenter/FeedPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/feed/client/presenter/FeedSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/feed/client/presenter/SupportedRetentionAge.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/feed/client/view/FeedSettingsViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/feed/client/view/FeedSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+
+### Screen/Dialog — Dictionary
+
+| File | Module | Role |
+| --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/DictionaryEditor.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/EffectiveWordsList.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/ImportsTab.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/ImportsTab.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/WordsTab.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/WordsTab.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/component/WordsTabController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/DictionaryPlugin.java` | stroom-core-client | Plugin |
+| `stroom-core-client/src/main/java/stroom/dictionary/client/presenter/DocRefListPresenter.java` | stroom-core-client | Presenter |
 
 ### Screen/Dialog — Git repository
 
@@ -2658,18 +2658,31 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/aws/s3/client/presenter/S3ConfigPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/aws/s3/client/S3ConfigPlugin.java` | stroom-core-client | Plugin |
 
+### Screen/Dialog — Content store
+
+| File | Module | Role |
+| --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/component/ContentStoreContentPackDetails.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/component/ContentStoreContentPackDetails.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/component/ContentStoreContentPackDetailsController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/ContentStorePlugin.java` | stroom-core-client | Plugin |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/presenter/ContentStoreContentPackListPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/presenter/ContentStorePresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/contentstore/client/view/ContentStoreViewImpl.java` | stroom-core-client | ViewImpl |
+| `stroom-core-client/src/main/resources/stroom/contentstore/client/view/ContentStoreViewImpl.ui.xml` | stroom-core-client | ViewImpl |
+
 ### Screen/Dialog — Data generation
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/datagen/client/component/DataGenSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/datagen/client/component/DataGenSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/datagen/client/component/DataGenSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/datagen/client/DataGenPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/datagen/client/presenter/DataGenPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/datagen/client/presenter/DataGenProcessingPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/datagen/client/presenter/DataGenSettingsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/datagen/client/view/DataGenProcessingViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/datagen/client/view/DataGenSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/datagen/client/view/DataGenProcessingViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/datagen/client/view/DataGenSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Script
 
@@ -2683,31 +2696,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/script/client/ScriptPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/script/client/view/ScriptSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/script/client/view/ScriptSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-
-### Screen/Dialog — Sqlstore
-
-| File | Module | Role |
-| --- | --- | --- |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStoreDataPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStorePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStoreSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStoreSettingsUiHandlers.java` | stroom-core-client | UiHandlers |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/SqlTemporalStorePlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/view/SqlTemporalStoreDataViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/sqlstore/client/view/SqlTemporalStoreSettingsViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/sqlstore/client/view/SqlTemporalStoreSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-
-### Screen/Dialog — Dictionary
-
-| File | Module | Role |
-| --- | --- | --- |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/component/DictionaryEditor.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/component/EffectiveWordsList.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/component/ImportsTab.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/component/ImportsTab.ui.xml` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/component/WordsTab.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/DictionaryPlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/java/stroom/dictionary/client/presenter/DocRefListPresenter.java` | stroom-core-client | Presenter |
 
 ### Screen/Dialog — HTTP
 
@@ -2733,17 +2721,29 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/monitoring/client/presenter/DatabaseTablesMonitoringPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/monitoring/client/ProcessorProfilePlugin.java` | stroom-core-client | Plugin |
 
+### Screen/Dialog — Sqlstore
+
+| File | Module | Role |
+| --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/component/SqlTemporalStoreSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/component/SqlTemporalStoreSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/component/SqlTemporalStoreSettingsController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStoreDataPresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStorePresenter.java` | stroom-core-client | Presenter |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/SqlTemporalStorePlugin.java` | stroom-core-client | Plugin |
+| `stroom-core-client/src/main/java/stroom/sqlstore/client/view/SqlTemporalStoreDataViewImpl.java` | stroom-core-client | ViewImpl |
+
 ### Screen/Dialog — Visualisation
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/visualisation/client/component/VisualisationSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/visualisation/client/component/VisualisationSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/visualisation/client/component/VisualisationSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/visualisation/client/presenter/VisFunction.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/visualisation/client/presenter/VisFunctionCache.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/visualisation/client/presenter/VisualisationPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/visualisation/client/presenter/VisualisationSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/visualisation/client/view/VisualisationSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/visualisation/client/VisualisationPlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/resources/stroom/visualisation/client/view/VisualisationSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — AI (OpenAI)
 
@@ -2766,17 +2766,6 @@ _1850 files._
 | `stroom-core-client/src/main/java/stroom/cache/client/presenter/CachePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/cache/client/view/CacheViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/cache/client/view/CacheViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-
-### Screen/Dialog — Content store
-
-| File | Module | Role |
-| --- | --- | --- |
-| `stroom-core-client/src/main/java/stroom/contentstore/client/ContentStorePlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/java/stroom/contentstore/client/presenter/ContentStoreContentPackDetailsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/contentstore/client/presenter/ContentStoreContentPackListPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/contentstore/client/presenter/ContentStorePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/contentstore/client/view/ContentStoreViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/contentstore/client/view/ContentStoreViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — About
 
@@ -2802,11 +2791,11 @@ _1850 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/xmlschema/client/component/XMLSchemaSettings.java` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/xmlschema/client/component/XMLSchemaSettings.ui.xml` | stroom-core-client | Settings |
+| `stroom-core-client/src/main/java/stroom/xmlschema/client/component/XMLSchemaSettingsController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/xmlschema/client/presenter/XMLSchemaPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/xmlschema/client/presenter/XMLSchemaSettingsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/xmlschema/client/view/XMLSchemaSettingsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/xmlschema/client/XMLSchemaPlugin.java` | stroom-core-client | Plugin |
-| `stroom-core-client/src/main/resources/stroom/xmlschema/client/view/XMLSchemaSettingsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Screen/Dialog — Folder
 
@@ -2859,11 +2848,11 @@ _1850 files._
 
 ## Shared Screen/Dialog
 
-_208 files._
+_206 files._
 
 | Subcategory | Files |
 | --- | ---: |
-| Explorer | 79 |
+| Explorer | 77 |
 | Document | 51 |
 | Entity | 40 |
 | Preferences | 28 |
@@ -2873,6 +2862,14 @@ _208 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/DocSelectionController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/EntityCheckTreeController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTree.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTree.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTreeController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopup.java` | stroom-core-client | Popup |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopup.ui.xml` | stroom-core-client | Popup |
+| `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopupController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTree.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTree.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTreeController.java` | stroom-core-client | — |
@@ -2907,18 +2904,12 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/explorer/client/NavigationPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/AbstractFindPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocSelectionBoxPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocSelectionController.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocSelectionPopup.java` | stroom-core-client | Popup |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocumentListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocumentPermissionsListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocumentTypeCache.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/DocumentTypeSelectionModel.java` | stroom-core-client | Model |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/EntityCheckTreePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/EntityTreePresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/EntityTreeUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/ExplorerNodeEditTagsPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/ExplorerNodeRemoveTagsPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/explorer/client/presenter/ExplorerPopupPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/ExplorerTreeUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/FindDocResultListHandler.java` | stroom-core-client | Handler |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/FindDocResultListPresenter.java` | stroom-core-client | Presenter |
@@ -2935,8 +2926,6 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/TickBoxSelectionModel.java` | stroom-core-client | Model |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/TypeFilterPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/explorer/client/presenter/TypeFilterViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/explorer/client/view/EntityCheckTreeViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/explorer/client/view/EntityTreeViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/ExplorerNodeEditTagsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/ExplorerNodeRemoveTagsViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/FindInContentViewImpl.java` | stroom-core-client | ViewImpl |
@@ -2944,8 +2933,6 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/NavigationViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/TabSessionChooserViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/explorer/client/view/TagListModel.java` | stroom-core-client | Model |
-| `stroom-core-client/src/main/resources/stroom/explorer/client/view/EntityCheckTreeViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/explorer/client/view/EntityTreeViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/explorer/client/view/ExplorerNodeEditTagsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/explorer/client/view/ExplorerNodeRemoveTagsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/explorer/client/view/FindInContentViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -3015,6 +3002,12 @@ _208 files._
 | --- | --- | --- |
 | `stroom-core-client/src/main/java/stroom/entity/client/component/DocumentEditor.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/entity/client/component/DocumentEditorHost.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEdit.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEdit.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEditController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreview.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreview.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreviewController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/entity/client/component/TabbedController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/entity/client/DocumentDialogScreens.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/ContentCallback.java` | stroom-core-client | — |
@@ -3032,8 +3025,6 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/LinkTabPanelPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/LinkTabPanelView.java` | stroom-core-client | View |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/MarkdownConverter.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/entity/client/presenter/MarkdownEditPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/entity/client/presenter/MarkdownPreviewPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/MoveDocumentPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/NameDocumentPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/NameDocumentView.java` | stroom-core-client | View |
@@ -3042,15 +3033,11 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/entity/client/view/CreateDocumentViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/entity/client/view/InfoDocumentViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/entity/client/view/LinkTabPanelViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/entity/client/view/MarkdownEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/entity/client/view/MarkdownPreviewViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/entity/client/view/MoveDocumentViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/entity/client/view/NameDocumentViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/entity/client/view/CopyDocumentViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/entity/client/view/CreateDocumentViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/entity/client/view/LinkTabPanelViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/entity/client/view/MarkdownEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/entity/client/view/MarkdownPreviewViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/entity/client/view/MoveDocumentViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/entity/client/view/NameDocumentViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
@@ -3058,9 +3045,16 @@ _208 files._
 
 | File | Module | Role |
 | --- | --- | --- |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/EditorPreferences.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/EditorPreferences.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/EditorPreferencesController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferences.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferences.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferencesController.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/TimePreferences.java` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/TimePreferences.ui.xml` | stroom-core-client | — |
+| `stroom-core-client/src/main/java/stroom/preferences/client/component/TimePreferencesController.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/preferences/client/DateTimeFormatter.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/preferences/client/EditorPreferencesPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/preferences/client/EditorPreferencesViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyBindingPreferencesPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyBindingPreferencesUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyBindingPreferencesViewImpl.java` | stroom-core-client | ViewImpl |
@@ -3069,22 +3063,15 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyShortcutRecorderPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyShortcutRecorderUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/preferences/client/KeyShortcutRecorderViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/preferences/client/ThemePreferencesPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/preferences/client/ThemePreferencesViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/preferences/client/TimePreferencesPresenter.java` | stroom-core-client | Presenter |
-| `stroom-core-client/src/main/java/stroom/preferences/client/TimePreferencesViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesHolder.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesManager.java` | stroom-core-client | Manager |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesUiHandlers.java` | stroom-core-client | UiHandlers |
 | `stroom-core-client/src/main/java/stroom/preferences/client/UserPreferencesViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/preferences/client/EditorPreferencesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/preferences/client/KeyBindingPreferencesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/preferences/client/KeyboardShortcutsViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/preferences/client/KeyShortcutRecorderViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/preferences/client/ThemePreferencesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/preferences/client/TimePreferencesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/preferences/client/UserPreferencesViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 
 ### Shared Screen/Dialog — Content
@@ -4908,11 +4895,11 @@ _226 files._
 
 ## Framework
 
-_208 files._
+_209 files._
 
 | Subcategory | Files |
 | --- | ---: |
-| Dependency injection (GIN wiring) | 169 |
+| Dependency injection (GIN wiring) | 170 |
 | Application shell | 29 |
 | Client events (event bus) | 6 |
 | Plugins (doc-type / menu registration) | 3 |
@@ -4958,6 +4945,7 @@ _208 files._
 | `stroom-core-client/src/main/java/stroom/entity/client/gin/EntityGinjector.java` | stroom-core-client | Ginjector |
 | `stroom-core-client/src/main/java/stroom/entity/client/gin/EntityModule.java` | stroom-core-client | Module |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/AbstractTabProvider.java` | stroom-core-client | Provider |
+| `stroom-core-client/src/main/java/stroom/entity/client/presenter/ControllerTabProvider.java` | stroom-core-client | Provider |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/DocTabProvider.java` | stroom-core-client | Provider |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/MarkdownTabProvider.java` | stroom-core-client | Provider |
 | `stroom-core-client/src/main/java/stroom/entity/client/presenter/TabContentProvider.java` | stroom-core-client | Provider |

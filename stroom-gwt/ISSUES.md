@@ -34,8 +34,17 @@ searches of a view ignore its Meta Filter; only analytic rule processing applies
 System Prompt, Max History Safety Cap, Enable Debug Detail and Attachment Download Timeout appear to
 have no effect unless an administrator saves them as the default.
 
-* `stroom-core-client/src/main/java/stroom/ai/client/AiConfigGeneralViewImpl.java` and the server's
+* `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.java` and the server's
   use of the default config provider
+
+### An Elastic index's rerank score field suffix doesn't make it changed
+
+**Found in wave 8** (26 October 2026; master has it too). The Settings tab's Rerank Score Field
+Suffix has no change handler, unlike every other field there, so editing it alone never makes the
+document dirty: Save stays disabled, and closing the tab doesn't ask. It is saved with any other
+change. Left as found.
+
+* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
 
 ### A node group can't be renamed
 
@@ -166,7 +175,7 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 **Reported.**
 
 * Report settings: Send Empty Reports shows unticked for a report with no settings, but
-  `ReportSettings` defaults it to true (`ReportSettingsPresenter`).
+  `ReportSettings` defaults it to true (`ReportSettingsTab`).
 * Batch execution schedule edit: the Run As User picker offers users you can't run as; the server
   only refuses when the change is applied (`BatchExecutionScheduleEditPresenter`).
 * Process data: Max Create Time is set to now whenever the Reprocess data tick box changes
@@ -1050,7 +1059,7 @@ Phase 4: `SvgButton` is deleted, with the unused `SubStreamNavigator` and `DataN
 Every button it made is now made in the `Toolbar` it sits in (a button is never made on its own):
 the XML schema's validation indicator in the document's toolbar, the data receipt rules' Save and
 Show Warnings in theirs (now a `Toolbar`), and the drop down's warning in a one-button `Toolbar` in
-its template. `MarkdownEditPresenter` makes its toolbar (Edit, Help) when it is first shown, and
+its template. `MarkdownEditController` makes its toolbar (Edit, Help) when it is first shown, and
 `setAddButtonsFirst(Consumer<Toolbar>)` replaces `setInsertedButtons`, so the annotation's Save is made
 in that toolbar, before Edit. A `Toolbar` nested in a document's toolbar sits as a nested
 `ButtonPanel` does (`.toolbar > .toolbar` beside the transitional `.toolbar > .button-container`).
@@ -1361,7 +1370,7 @@ Left as they are, on purpose:
   (`FloorMapLayersPresenter`): real buttons already, so only their styling differs. (The task's
   Terminate, `UserTaskViewImpl`'s, is a `ToolbarButton` in a `Toolbar` since wave 3's `UserTask`.)
 * GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`) and `Anchor` in the content pack
-  details (`ContentStoreContentPackDetailsPresenter`): real links already.
+  details (`ContentStoreContentPackDetails`): real links already.
 * "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
   press it, and it says when it is disabled).
 * The current selection's `<table>` (`TableBuilder`, from `DashboardContextImpl`): its components'
@@ -1738,7 +1747,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
   as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
   until both are entered again, even to change only the name. Nothing in the dialog says the
-  secret is write-only (`CredentialSettingsPresenter.read`, `UsernamePasswordSecretForm`).
+  secret is write-only (`CredentialSettingsController.read`, `UsernamePasswordSecretForm`).
   Found by the credentials write cycle.
 * Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
   pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
@@ -1752,6 +1761,21 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Wave 8's fixes** (2026-10-26; master has each, with a changelog entry):
+  * The floor map event store's Event Expiry: its amount and unit had no accessible names (a
+    `FormGroup` without an identity); now a group named Event Expiry holding "Amount" and "Unit". Stories
+    `FloorMapEventStoreSettings.*`.
+  * An XML schema's Graphical tab: Home, Back and Forward threw (an empty history) when nothing had
+    been shown, e.g. for an empty schema. Story `CodeDocumentEditor.XmlSchemaGraphical`, which
+    failed before.
+  * The content store's pack details: the licence and repository links were told from the URL
+    beside them by colour alone (axe's link-in-text-block, seen only once they are in view); they
+    are underlined. Story `ContentStoreScreen.Upgrade`, which failed its scan before.
+  * Two story fixtures that hid what they were for: the query editor's source reply had the wrong
+    type name (`FetchDataResult`, not `data`), so the source pane never opened; the content
+    store's upgrade reply lacked the message `ContentStoreResponse` requires, so an upgrade always
+    "failed".
 
 * **A press on a row in the floor map's lists selected nothing** (2026-10-25, wave 7): the Groups,
   Tracking, cluster and fact time lists give `DataGrid` one of GWT's `SingleSelectionModel`s with

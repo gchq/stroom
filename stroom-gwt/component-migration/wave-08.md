@@ -10,6 +10,83 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert the settings forms, editor panes and explorer pickers that embed DocSelectionBox, UserRef, EditorPresenter, Markdown or the explorer tree. Replace embedded DocSelectionBoxPresenter with a DropDownBox in the template plus DocSelectionController. Views stop exposing their widgets, and onReadOnly becomes setReadOnly.
 
+## Done (26 October 2026)
+
+All units but `DocSelectionBoxPresenter`, in 25 commits: 26 callers in later waves still use that
+wrapper, so it stays, as its plan below allows. Each commit ran its stories with the leak check and
+the screenshot diff; the last ran all of them (1,666 passed, one flaky force graph passing on its second try; the 43 screenshots that differed are the force graphs (39), the tree's `Keyboard`, the data grid's spinner column and AppShell's `OpensDocument`, all recorded as noise in ISSUES.md), and the app and the standalone dashboard GWT
+compile. Three bugs fixed on the way, each with a changelog entry and a story (master has each; see
+"Fixed" in ISSUES.md): the floor map event store's Event Expiry fields had no accessible names; an XML
+schema's Home, Back and Forward threw when nothing had been shown; and the content pack details'
+links were told apart from the text beside them by colour alone. One bug found and left (ISSUES.md):
+an Elastic index's Rerank Score Field Suffix doesn't make the document changed. What was decided on
+the way, where it differs from the plans below:
+
+- **Hosting controllers in documents not yet converted.** `ControllerTabProvider` (in
+  `stroom.entity.client.presenter`) shows a controller as a `DocTabPresenter`'s tab through a small
+  `DocPresenter` that owns it, so it sees the document's read-only state and tells it of changes
+  with `markChanged()`; it takes a `Supplier` (the hosts use both GIN's and javax's providers), and
+  `isPresenter(content)` tells whether a shown presenter is the tab's without making it.
+  `MarkdownTabProvider` does the same for the Documentation tab, passing on its toolbar buttons, and
+  now takes the event bus (`getEventBus()` at its 30 call sites). Both go with wave 14, once the
+  hosts are `DocumentEditor`s.
+- **Every screen is a pair.** The plans gave no controller to the XML schema and text converter
+  settings, the time preferences, the table analysis tab, the XSD browser and Edit Comment; each has
+  one, as a document tab or dialog needs one (read-only, `markChanged`, a dialog's owner), and
+  AGENTS.md asks for a pair.
+- **Read-only.** `Contexts.READ_ONLY` is true where nothing gives it, so a controller hosted where it
+  isn't given (the Documentation tab's other hosts, the rule set screen, the annotation) is told with
+  `setReadOnly`, as before; `MarkdownEditController.followReadOnly()` watches it instead, for a
+  `DocumentEditor`'s tab. Stories that show a converted tab give the story's root `READ_ONLY`.
+- **The explorer chooser.** `ExplorerPopupController.show(consumer)` reuses one (for
+  `DocSelectionController` and the screens that keep one); `showOnce(opener, ...)` makes one for one
+  use. `DocSelectionPopup` is gone; its one job, `setIncludeNullSelection(false)`, is public and its
+  callers call it. `PipelinePlugin` injects `AppRoot` to own its chooser while shown. The export
+  dialog's tick tree is an `ExplorerTree` it declares, with `EntityCheckTreeController` attached and
+  no component of its own.
+- **Pickers.** A `DropDownBox` beside a button in a `button-group` stays in a plain `SimplePanel`, as
+  the slot was: directly in the flex group it is stretched 1px to the button's height.
+- **Code editors.** Declared in the bordered `SimplePanel` their slot was, not given its classes, so
+  the pages don't change; their mode is set by their controller (`CodeEditor` has no mode setter).
+  The data viewer's text pane drops its option pass-throughs for `getOptions()`. The query result's
+  source pane declares its editor and HTML pane, one shown; the Markdown editor declares its editor
+  and its rendered page, one shown, so a hidden Ace editor is in the page (the Documentation story
+  checks it is hidden, not absent).
+- **Frames.** The Markdown preview and the rendered documentation are the wave-3 `IFrame` component
+  declared in their templates, not `IFramePresenter` (a presenter can't be declared, and its title
+  poll is for tabs showing a page's title). UiBinder reserves `id`, so their controllers set it.
+- **Dialogs made for each use** (`ControllerDialog.showOnce`): the column filter (its helper is given
+  GIN's provider and the table as opener), Edit Comment (OK can keep it open when the save fails) and
+  the content pack's credentials (`makeDialog`); they were made once and kept.
+- **Kept, not as planned.** The credential settings show the secret form in a slot, made by wave 7's
+  `SecretForms` (shared with Replace Secret, keeping what was typed for each type), rather than
+  declaring all five; the query help keeps `linkToEditor(EditorPresenter)` on its controller, as
+  both its owners still hold one (revisit when their editors are `CodeEditorController`s).
+- **Templates.** Spinner bounds, steps and names (`minValue`, `maxValue`, `delta`,
+  `accessibleName`), icons (`icon="REFRESH"`, `svg="ERROR"`), a selection list's
+  `keyboardSelectionPolicy` and fixed ARIA are in templates; a `ValueSpinner`'s first value stays in
+  Java (its `setValue` overloads are ambiguous to UiBinder). `AriaPanel` has `ariaValueMin`,
+  `ariaValueMax` and `ariaValueNow`, for the floor map timeline's slider. Width attributes became
+  `text-field--narrow`/`--wide` and `value-spinner--narrow`/`--wide` (or went, where the class was
+  already that wide), and `width="100%"` on a text area `w-100`.
+- **Stylesheets.** New: `query-toolbar.css` (the errors hidden by a modifier on their toolbar,
+  `query-toolbar__errors--hidden`) and `analytic-email-destination.css`, where the plans said
+  `dashboard.css` and `components.css`, as AGENTS.md asks for a component's own sheet;
+  `xsdbrowser.css` is `xsd-browser.css`, BEM with flat selectors (the box title's states modifiers
+  added in Java, no longer GWT dependent names); the query help's rule is `.query-help` in
+  `quick-filter.css`'s grouped rule. The floor map timeline's progress is
+  `--stroom-floormap-timeline__progress` (BEM, rather than the plan's `--timeline-progress`); its
+  classes aren't BEM yet. Class names with no rules (`CommentEditViewImpl`, `TextView`,
+  `QueryHelpViewImpl-details` and `-buttons`, the XSD browser's `bar`) went.
+- **Stories.** 17 new, for what no story showed or pressed: Set As Default in the Ask Stroom AI
+  settings, a dense vector field's save, a saved table builder rule (editable and read only), a
+  search's warnings, the source pane's Close, Insert into Query, an email template's Test Template,
+  Upgrade in the content store, the XML schema's Graphical tab, the timeline's speed and help, the
+  floor map event store settings (4) and the date and time preferences; the data text pane's 4 are
+  its old `TextPresenter` stories, renamed. Two fixtures were wrong in a
+  way that hid what they were for (the query editor's source reply's type, the content store's
+  upgrade reply's message); the stories that build editors by hand are owned by a harness.
+
 ## CSS and template notes for the wave
 
 - New size modifiers instead of width="..." in templates (none exist today): text-field--narrow (80px) and text-field--wide (400px) in text-field.css beside text-field--cell; value-spinner--narrow (80px) and value-spinner--wide (200px) in value-spinner.css beside value-spinner--cell. Used by ElasticIndexSettings, FeedSettings, XMLSchemaSettings, IndexSettings, DenseVectorField, AiConfigGeneral and AiConfigTableAnalysis.
