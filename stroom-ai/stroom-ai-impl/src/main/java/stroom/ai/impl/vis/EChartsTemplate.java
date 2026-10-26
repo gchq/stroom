@@ -143,48 +143,6 @@ public final class EChartsTemplate {
         return JsonUtil.writeValueAsString(settings, true);
     }
 
-    /// Gives a generated Visualisation's settings the options control as the template now has it (a code editor,
-    /// [#OPTIONS_LABEL]), for one generated before it was. Everything else, and the options set, are kept.
-    ///
-    /// @param settingsJson A generated Visualisation's settings JSON.
-    /// @return The settings with the options control brought up to date, or as given if it is already, or if they
-    /// can't be read.
-    public static String withCurrentOptionsControl(final String settingsJson) {
-        if (NullSafe.isBlankString(settingsJson)) {
-            return settingsJson;
-        }
-        final Map<?, ?> settings;
-        try {
-            settings = JsonUtil.readValue(settingsJson, Map.class);
-        } catch (final RuntimeException e) {
-            return settingsJson;
-        }
-        boolean changed = false;
-        for (final Object tab : settings.get("tabs") instanceof final List<?> tabs
-                ? tabs
-                : List.of()) {
-            final Object controls = tab instanceof final Map<?, ?> tabMap
-                    ? tabMap.get("controls")
-                    : null;
-            for (final Object item : controls instanceof final List<?> list
-                    ? list
-                    : List.of()) {
-                if (item instanceof final Map<?, ?> control
-                    && OPTIONS_CONTROL.equals(control.get("id"))
-                    && (!JSON_CONTROL_TYPE.equals(control.get("type"))
-                        || !OPTIONS_LABEL.equals(control.get("label")))) {
-                    @SuppressWarnings("unchecked") final Map<Object, Object> editable = (Map<Object, Object>) control;
-                    editable.put("type", JSON_CONTROL_TYPE);
-                    editable.put("label", OPTIONS_LABEL);
-                    changed = true;
-                }
-            }
-        }
-        return changed
-                ? JsonUtil.writeValueAsString(settings, true)
-                : settingsJson;
-    }
-
     /// Reads a generated Visualisation's settings back: each control's default value, by its id, e.g. its chart
     /// kind and the column mapped to each role.
     ///

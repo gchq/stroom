@@ -37,6 +37,8 @@ if (!window.visualisations) {
     "use strict";
 
     var ADAPTER_VERSION = "1";
+    // The oldest ECharts major version the adapter draws with.
+    var MIN_ECHARTS_MAJOR = 6;
     var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord",
         "gauge", "sunburst"];
     // A gauge's bands: below the first band's start, then the first band, then above the second.
@@ -328,6 +330,11 @@ if (!window.visualisations) {
     // The background a saved image is drawn on: the chart's own, as the theme gives it.
     function backgroundOf(style) {
         return style && style.background ? style.background : (style && !style.dark ? "#ffffff" : "#1e2128");
+    }
+
+    // A library's major version, from its version text (e.g. 6 from "6.1.0"); 0 if it has none.
+    function majorVersion(version) {
+        return parseInt(String(version || "0").split(".")[0], 10) || 0;
     }
 
     // A field of a CSV file: quoted if it holds a comma, quote or line break, its quotes doubled.
@@ -3893,6 +3900,10 @@ if (!window.visualisations) {
                     throw new Error("The ECharts library hasn't loaded. Check that the ECharts Script doc is " +
                         "installed and is a dependency of this visualisation's script.");
                 }
+                if (majorVersion(window.echarts.version) < MIN_ECHARTS_MAJOR) {
+                    throw new Error("This chart needs ECharts " + MIN_ECHARTS_MAJOR + " or later, but ECharts " +
+                        window.echarts.version + " has loaded. Install a newer ECharts build in its Script doc.");
+                }
                 built = buildOption(context, settings, lastArgs.data, prefs, style, {zoom: zoomWindows,
                     interval: chosenInterval});
                 report = built.report;
@@ -4012,6 +4023,7 @@ if (!window.visualisations) {
 
     // Exposed for testing in a browser.
     visualisations.EChartsGeneric.internals = {
+        majorVersion: majorVersion,
         buildOption: buildOption,
         formatTime: formatTime,
         sanitiseOptions: sanitiseOptions,
