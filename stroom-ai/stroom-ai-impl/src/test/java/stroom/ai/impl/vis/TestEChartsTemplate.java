@@ -83,6 +83,22 @@ class TestEChartsTemplate {
     }
 
     @Test
+    void settingsAreBuiltAgainWithTheTemplateAsItIsNowKeepingWhatWasChosen() {
+        final String current = EChartsTemplate.settingsJson(ChartKind.GRAPH,
+                Map.of("source", "Sender", "target", "Recipient"), Map.of("nodeColours", "cluster"),
+                "{\"color\":[\"#5470c6\"]}");
+        // Seen in testing: charts generated before a release added a control (e.g. Cluster Links) didn't offer it.
+        final String older = current.replace("\"clusterLinks\"", "\"retired\"");
+
+        assertThat(EChartsTemplate.rebuilt(older)).contains(current);
+        assertThat(EChartsTemplate.rebuilt(current)).contains(current);
+        // No kind it knows: nothing to build.
+        assertThat(EChartsTemplate.rebuilt("{}")).isEmpty();
+        assertThat(EChartsTemplate.rebuilt(current.replace("\"graph\"", "\"radar\""))).isEmpty();
+        assertThat(EChartsTemplate.rebuilt(null)).isEmpty();
+    }
+
+    @Test
     void noOptionsAreAnEmptyObject() {
         final Map<String, Object> settings = JsonUtil.readValue(EChartsTemplate.settingsJson(ChartKind.CALENDAR,
                 Map.of("date", "Day", "value", "Messages"), Map.of(), "  "), Map.class);

@@ -73,6 +73,36 @@ public class VisualisationActions {
         this.securityContext = securityContext;
     }
 
+    /// Gives a chart Stroom AI generated its settings as the template now has them, keeping what was chosen (its
+    /// kind, columns, style and options), so it offers the controls added since it was generated: as a change the
+    /// user applies with a button needs, when it sets one. The chart draws the same; its adapter is this release's
+    /// whatever its settings. Needs Edit on the Visualisation.
+    ///
+    /// @param visualisation A Visualisation.
+    /// @return Why its settings couldn't be given, or null if they were (or already were).
+    public String updateSettings(final DocRef visualisation) {
+        final String name = "Visualisation '" + NullSafe.nonBlankStringElse(NullSafe.get(visualisation,
+                DocRef::getName), NullSafe.get(visualisation, DocRef::getUuid)) + "'";
+        if (!chartLibraries.isGenerated(visualisation)) {
+            return name + " no longer exists, or isn't a chart Stroom AI generated, so the change can't be applied.";
+        }
+        if (!securityContext.hasDocumentPermission(visualisation, DocumentPermission.EDIT)) {
+            return "The change needs " + name + " to offer settings added to Stroom since it was generated, which "
+                   + "needs Edit permission on it. Ask someone who may edit it to apply the change.";
+        }
+        final VisualisationStore store = visualisationStoreProvider.get();
+        final VisualisationDoc doc = store.readDocument(visualisation);
+        final String settings = EChartsTemplate.rebuilt(doc.getSettings()).orElse(null);
+        if (settings == null) {
+            return name + "'s settings don't say which kind of chart it is, so the change can't be applied. "
+                   + "Generate the chart again.";
+        }
+        if (!settings.equals(doc.getSettings())) {
+            store.writeDocument(doc.copy().settings(settings).build());
+        }
+        return null;
+    }
+
     /// Prepares a planned Visualisation.
     ///
     /// @param target   The dashboard or query it is for.

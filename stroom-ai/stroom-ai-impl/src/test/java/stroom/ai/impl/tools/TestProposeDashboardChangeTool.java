@@ -523,10 +523,12 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
-    void aChoiceAddedSinceAChartWasGeneratedIsRegeneratedFirst() {
-        // A chart keeps the adapter it was generated with, so a choice added since (clusters) would do nothing.
+    void aChoiceAddedSinceAChartWasGeneratedIsGivenToItAsTheChangeIsApplied() {
+        // Its adapter is served from this release, so it draws clusters; its settings, from when it was generated,
+        // don't offer them until it is given this release's.
+        final String uuid = "6d1c2f0a-1b2c-4d3e-8f90-a1b2c3d4e5f6";
         final String withVis = SETTINGS + "## Visualisation 'People' (id vis-1)\n"
-                               + "Visualisation: 'Who messages whom' (uuid graph-uuid)\n"
+                               + "Visualisation: 'Who messages whom' (uuid " + uuid + ")\n"
                                + "Linked table: 'Events'\n"
                                + "Vis settings: {}\n";
         dashboardTab(false, withVis);
@@ -535,31 +537,49 @@ class TestProposeDashboardChangeTool {
         final String earlier = current.replace("\"group\", \"node\", \"cluster\"", "\"group\", \"node\"");
         assertThat(earlier).isNotEqualTo(current);
         final VisualisationDoc graph = VisualisationDoc.builder()
-                .uuid("graph-uuid")
+                .uuid(uuid)
                 .name("Who messages whom")
                 .functionName(EChartsTemplate.FUNCTION_NAME)
                 .settings(earlier)
                 .build();
-        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, "graph-uuid"), VisualisationDoc.class))
+        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class))
                 .thenReturn(Optional.of(graph));
 
         assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
                 "settings", Map.of("nodeColours", "cluster")))))
-                .contains("Change 1 (set_vis_settings): this chart's nodeColours offers group, node, not 'cluster': "
-                          + "it was generated before that was added")
-                .contains("Regenerate it first with propose_visualisation, replace (its pane's name)");
-        assertThat(takeUserActions()).isEmpty();
+                .contains("- Change visualisation 'People'");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(
+                action.get(UserActions.UPDATE_CHARTS)).isEqualTo(List.of(Map.of("uuid", uuid,
+                "name", "Who messages whom"))));
 
-        // A choice it offers, in any case, is fine.
+        // A value no version offers is said to be one.
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
+                "settings", Map.of("nodeColours", "clusters")))))
+                .contains("'clusters' isn't a choice of nodeColours: group, node, cluster.");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aChartWithEveryCurrentSettingIsntGivenThemAgain() {
+        final String uuid = "6d1c2f0a-1b2c-4d3e-8f90-a1b2c3d4e5f7";
+        dashboardTab(false, SETTINGS + "## Visualisation 'People' (id vis-1)\n"
+                            + "Visualisation: 'Who messages whom' (uuid " + uuid + ")\n"
+                            + "Linked table: 'Events'\n"
+                            + "Vis settings: {}\n");
+        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, uuid), VisualisationDoc.class))
+                .thenReturn(Optional.of(VisualisationDoc.builder()
+                        .uuid(uuid)
+                        .name("Who messages whom")
+                        .functionName(EChartsTemplate.FUNCTION_NAME)
+                        .settings(EChartsTemplate.settingsJson(ChartKind.GRAPH,
+                                Map.of("source", "UserId", "target", "EventType"), Map.of(), null))
+                        .build()));
+
         assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
                 "settings", Map.of("nodeColours", "Node")))))
                 .contains("- Change visualisation 'People'");
-        // A value no version offers isn't put down to the chart's age: regenerating wouldn't help.
-        assertThat(ProposeDashboardChangeTool.newChoiceProblems(Map.of("nodeColours", "clusters"), graph))
-                .containsExactly("'clusters' isn't a choice of nodeColours: group, node, cluster.");
-        // A chart generated now offers it.
-        assertThat(ProposeDashboardChangeTool.newChoiceProblems(Map.of("nodeColours", "cluster"),
-                graph.copy().settings(current).build())).isEmpty();
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
+                .doesNotContainKey(UserActions.UPDATE_CHARTS));
     }
 
     @Test

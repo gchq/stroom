@@ -361,6 +361,38 @@ class TestUserActions {
     }
 
     @Test
+    void aDashboardChangeGivesTheChartsItNamesTheirCurrentSettings() {
+        final String chartUuid = "6d1c2f0a-1b2c-4d3e-8f90-a1b2c3d4e5f6";
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        final DocRef chart = new DocRef("Visualisation", chartUuid, "Who messages whom");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        Mockito.when(lookup.find(new DocRef("Visualisation", chartUuid))).thenReturn(Optional.of(chart));
+        final Map<String, Object> change = dashboardChange("d1");
+        // The name is Stroom's own, not the one given.
+        change.put(UserActions.UPDATE_CHARTS, List.of(Map.of("uuid", chartUuid.toUpperCase(), "name", "Other")));
+
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.dashboardChange().charts()).containsExactly(chart);
+            // Said on the button, as it is saved as the change is applied.
+            assertThat(action.dashboardChange().changes()).last().isEqualTo(
+                    "Give Visualisation 'Who messages whom' the settings added to Stroom since it was generated "
+                    + "(what it shows is kept)");
+        });
+
+        // One that can't be found or read drops the change: applied without it, the setting would be lost.
+        change.put(UserActions.UPDATE_CHARTS, List.of(Map.of("uuid", "99999999-2222-3333-4444-555555555555")));
+        assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
+        change.put(UserActions.UPDATE_CHARTS, List.of(Map.of("uuid", "not-a-uuid")));
+        assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
+        change.put(UserActions.UPDATE_CHARTS, "all");
+        assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
+        // None given: none.
+        change.remove(UserActions.UPDATE_CHARTS);
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action ->
+                assertThat(action.dashboardChange().charts()).isEmpty());
+    }
+
+    @Test
     void aSelectionFilterChangeButtonIsOffered() {
         // Seen in testing: the tool said an Apply button was shown for a selection filter, but none was, as the
         // filter, as the browser is given it, couldn't be read again here.
