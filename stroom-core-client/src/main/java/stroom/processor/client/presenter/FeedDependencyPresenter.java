@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.processor.client.component.FeedDependencyListController;
 import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.FeedDependency;
 import stroom.util.shared.NullSafe;
@@ -26,6 +27,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -35,17 +37,17 @@ import java.util.function.Consumer;
 public class FeedDependencyPresenter
         extends MyPresenterWidget<FeedDependencyPresenter.FeedDependencyView> {
 
-    private final FeedDependencyListPresenter feedDependencyListPresenter;
+    private final FeedDependencyListController feedDependencyListPresenter;
 
 
     @Inject
     public FeedDependencyPresenter(final EventBus eventBus,
                                    final FeedDependencyView view,
-                                   final FeedDependencyListPresenter feedDependencyListPresenter) {
+                                   final FeedDependencyListController feedDependencyListPresenter) {
         super(eventBus, view);
         own(feedDependencyListPresenter);
         this.feedDependencyListPresenter = feedDependencyListPresenter;
-        view.setFeedDependencyList(feedDependencyListPresenter.getView());
+        view.setFeedDependencyList(feedDependencyListPresenter);
     }
 
     public void show(final FeedDependencies feedDependencies,
@@ -82,7 +84,7 @@ public class FeedDependencyPresenter
 
     public interface FeedDependencyView extends View {
 
-        void setFeedDependencyList(View view);
+        void setFeedDependencyList(IsWidget view);
 
         void setMinProcessingDelay(SimpleDuration minProcessingDelay);
 

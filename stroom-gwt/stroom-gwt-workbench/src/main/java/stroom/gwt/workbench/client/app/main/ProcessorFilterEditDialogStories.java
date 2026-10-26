@@ -244,7 +244,7 @@ public final class ProcessorFilterEditDialogStories {
                     play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
                     final Play deps = dialog(screen, "Set Feed Dependencies");
                     // GWT's two columns, and Edit and Remove disabled until a row is selected
-                    // (FeedDependencyListPresenter.enableButtons)
+                    // (FeedDependencyList.enableButtons)
                     play.expect(deps.getByRole("columnheader", "Feed")).toBeInTheDocument();
                     play.expect(deps.getByRole("columnheader", "Type")).toBeInTheDocument();
                     play.expect(deps.getByTitle("Edit Selected Feed Dependency"))
