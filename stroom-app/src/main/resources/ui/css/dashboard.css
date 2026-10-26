@@ -528,6 +528,10 @@
     gap: var(--control__gap--horizontal);
     overflow: hidden;
     white-space: nowrap;
+    box-sizing: border-box;
+    /* A line between it and the chart, so it reads as the pane's toolbar rather than part of the chart. */
+    border-top: 1px solid var(--border-color);
+    background-color: var(--dashboard-panel__background-color);
 }
 
 /* The chart's frame is placed over its container: above the toolbar. */
