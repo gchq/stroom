@@ -20,13 +20,13 @@ import stroom.item.client.SelectionBox;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -113,7 +113,7 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public void setXPathList(final View view) {
+    public void setXPathList(final IsWidget view) {
         xPathList.setWidget(view.asWidget());
     }
 

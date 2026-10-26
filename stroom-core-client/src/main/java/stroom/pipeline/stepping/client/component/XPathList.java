@@ -14,61 +14,57 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 
-public class XPathListPresenter extends MyPresenterWidget<PagerPanel>
-        implements Refreshable {
+/// The XPath filters a stepping element's output must match, a row each (its XPath, condition, value
+/// and whether it ignores case); several can be selected.
+public class XPathList extends Component {
 
-    private final DataGrid<XPathFilter> dataGrid;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<XPathFilter> dataGrid;
+
     private final MultiSelectionModelImpl<XPathFilter> selectionModel;
     private final ListDataProvider<XPathFilter> dataProvider;
 
-    @Inject
-    public XPathListPresenter(final EventBus eventBus,
-                              final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("XPath Matches");
+    /// Makes an empty list.
+    public XPathList() {
+        initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
-
+        addColumns();
         dataProvider = new ListDataProvider<>(new ArrayList<>());
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
+    /// @return The toolbar beside the pager, for the screen's own buttons.
     public Toolbar getToolbar() {
-        return getView().getToolbar();
+        return pager.getToolbar();
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    private void addColumns() {
         // XPath.
         final Column<XPathFilter, String> xPathColumn = new Column<XPathFilter, String>(new TextCell()) {
             @Override
@@ -108,16 +104,26 @@ public class XPathListPresenter extends MyPresenterWidget<PagerPanel>
         dataGrid.addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
     }
 
-    @Override
+    /// Shows the filters again, after its data provider's list has changed.
     public void refresh() {
         dataProvider.refresh();
     }
 
+    /// @return The data provider, whose list holds the filters shown.
     public ListDataProvider<XPathFilter> getDataProvider() {
         return dataProvider;
     }
 
+    /// @return The selection.
     public MultiSelectionModel<XPathFilter> getSelectionModel() {
         return selectionModel;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, XPathList> {
+
     }
 }

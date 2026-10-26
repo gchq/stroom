@@ -23,6 +23,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.component.XPathFilterEditorController;
+import stroom.pipeline.stepping.client.component.XPathList;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.svg.shared.SvgImage;
@@ -42,6 +43,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -60,7 +62,7 @@ public class SteppingFilterPresenter extends
 
     protected static final String BASE_CLASS = "pipelineElementChooser";
     private static final int ICON_COL_WIDTH = 22;
-    private final XPathListPresenter xPathListPresenter;
+    private final XPathList xPathListPresenter;
     private final Provider<XPathFilterEditorController> xPathFilterEditorProvider;
     private List<XPathFilter> xPathFilters;
 
@@ -78,11 +80,10 @@ public class SteppingFilterPresenter extends
     @Inject
     public SteppingFilterPresenter(final EventBus eventBus,
                                    final SteppingFilterView view,
-                                   final XPathListPresenter xPathListPresenter,
+                                   final XPathList xPathListPresenter,
                                    final Provider<XPathFilterEditorController> xPathFilterEditorProvider,
                                    final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
-        own(xPathListPresenter);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterEditorProvider = xPathFilterEditorProvider;
 
@@ -151,7 +152,7 @@ public class SteppingFilterPresenter extends
         });
 
         getView().setElementChooser(elementChooser);
-        getView().setXPathList(xPathListPresenter.getView());
+        getView().setXPathList(xPathListPresenter);
 
         own(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
@@ -320,6 +321,6 @@ public class SteppingFilterPresenter extends
 
         void setSkipToOutputChangeHandler(final Consumer<OutputState> skipToOutputValueConsumer);
 
-        void setXPathList(View view);
+        void setXPathList(IsWidget view);
     }
 }
