@@ -22,6 +22,7 @@ import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardChanges;
 import stroom.ai.impl.DashboardChanges.Change;
+import stroom.ai.impl.DashboardComponents;
 import stroom.ai.impl.DashboardComponents.Component;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
@@ -550,6 +551,59 @@ class TestProposeDashboardChangeTool {
         // A chart with an x axis can select a range of it.
         assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation", "Trend", "vis-1", null,
                 null, "Events", Map.of("x", "Time", "y", "Count")))).contains("range");
+    }
+
+    @Test
+    void aDateTheChartSelectsIsFilteredByTimeNotEquality() {
+        // Seen in testing: a line chart of days filtered the query by @timestamp = its x, which matched only the
+        // instant a clicked day starts at, and nothing for a range dragged along its time axis (which selects only
+        // from and to). The stub index's fields are UserId and EventType, so EventType stands in for a date field.
+        final String chartOfDays = "Time range: last hour\n"
+                                   + "## Query 'Query' (id query-1)\n"
+                                   + "Data source: Index 'Windows events' (uuid index-uuid)\n"
+                                   + "## Table 'Events' (id table-1)\n"
+                                   + "Query: query-1\n"
+                                   + "Columns:\n"
+                                   + "- Day: floorDay(${EventType}) (grouped, level 1; sorted Ascending, order 1; "
+                                   + "format Date Time)\n"
+                                   + "- UserId: ${UserId} (grouped, level 1; format Text)\n"
+                                   + "## Visualisation 'Trend' (id vis-1)\n"
+                                   + "Visualisation: 'Trend' (uuid vis-uuid)\n"
+                                   + "Linked table: 'Events'\n"
+                                   + "Vis settings: {\"x\":\"Day\",\"y\":\"Count\",\"series\":\"UserId\"}\n";
+        dashboardTab(false, chartOfDays);
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Query", "chart", "Trend",
+                "mode", "query", "terms", List.of(Map.of("field", "EventType", "selection", "x"),
+                        Map.of("field", "UserId", "selection", "series"))))))
+                .contains("by what is selected in chart 'Trend': EventType within its selected time (a range "
+                          + "dragged along its time axis, or the time a clicked point stands for) and UserId = "
+                          + "its series");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat((List<?>) query.get("children")).extracting(child -> asMap(child).get("condition"),
+                            child -> asMap(child).get("value"))
+                    .containsExactly(
+                            tuple("GREATER_THAN_OR_EQUAL_TO", "${component.vis-1.selection.from}"),
+                            tuple("LESS_THAN_OR_EQUAL_TO", "${component.vis-1.selection.to}"),
+                            tuple("EQUALS", "${component.vis-1.selection.series}"));
+        });
+
+        // By the column's name too; and range and x together are one range.
+        final Component trend = DashboardComponents.parse(chartOfDays).getLast();
+        assertThat(ProposeDashboardChangeTool.dateKeys(trend, chartOfDays)).containsExactlyInAnyOrder("x", "Day");
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Query", "chart", "Trend",
+                "mode", "query", "terms", List.of(Map.of("field", "EventType", "selection", "Day"),
+                        Map.of("field", "EventType", "selection", "range"))))))
+                .contains("chart 'Trend': EventType within its selected time");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat((List<?>) asMap(asMap(((List<?>) action.get("changes")).getFirst()).get("query"))
+                        .get("children")).hasSize(2));
+
+        // A chart whose columns aren't dates has no date keys.
+        assertThat(ProposeDashboardChangeTool.dateKeys(trend, chartOfDays.replace("format Date Time", "format Text")))
+                .isEmpty();
     }
 
     @Test

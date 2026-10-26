@@ -311,6 +311,97 @@ if (!window.visualisations) {
         return target;
     }
 
+    var SECOND = 1000;
+
+    var MINUTE = 60 * SECOND;
+
+    var HOUR = 60 * MINUTE;
+
+    var DAY = 24 * HOUR;
+
+    // How finely a time can be aligned, coarsest last, with the width of each fixed-width step.
+    var ALIGNMENTS = [
+        {name: "second", ms: SECOND},
+        {name: "minute", ms: MINUTE},
+        {name: "hour", ms: HOUR},
+        {name: "day", ms: DAY},
+        {name: "month"},
+        {name: "year"}
+    ];
+
+    // How many steps of ALIGNMENTS an instant is aligned to in the time zone: 0 for none (it has milliseconds),
+    // up to 6 for the start of a year.
+    function alignmentOf(ms, timeZone) {
+        var t = timeFields(ms, timeZone);
+        var checks = [t.milli === 0, t.second === 0, t.minute === 0, t.hour === 0, t.day === 1, t.month === 0];
+        var level = 0;
+        while (level < checks.length && checks[level]) {
+            level++;
+        }
+        return level;
+    }
+
+    // The time bucket a column of dates stands for, from how its values are aligned in the user's time zone and
+    // spaced: {unit: "month"} or {unit: "year"} for calendar months or years, {ms: width} for a fixed width (e.g.
+    // a day, or a week of days apart), or null if they aren't aligned (e.g. raw event times), so stand for an
+    // instant. A day is a fixed width, so a bucket over a daylight saving change is an hour out at its end.
+    function timeBucket(values, timeZone) {
+        var times = [];
+        values.forEach(function (value) {
+            if (typeof value === "number" && isFinite(value) && times.indexOf(value) < 0) {
+                times.push(value);
+            }
+        });
+        if (times.length === 0) {
+            return null;
+        }
+        times.sort(function (a, b) {
+            return a - b;
+        });
+        var level = ALIGNMENTS.length;
+        times.forEach(function (time) {
+            level = Math.min(level, alignmentOf(time, timeZone));
+        });
+        if (level === 0) {
+            return null;
+        }
+        var gap = Infinity;
+        for (var i = 1; i < times.length; i++) {
+            gap = Math.min(gap, times[i] - times[i - 1]);
+        }
+        var alignment = ALIGNMENTS[level - 1];
+        if (alignment.name === "year") {
+            return {unit: gap >= 365 * DAY ? "year" : "month"};
+        }
+        if (alignment.name === "month") {
+            return {unit: "month"};
+        }
+        return {ms: isFinite(gap) && gap > alignment.ms && gap % alignment.ms === 0 ? gap : alignment.ms};
+    }
+
+    // The start of the day an instant is in, in the time zone.
+    function startOfDay(ms, timeZone) {
+        var t = timeFields(ms, timeZone);
+        return ms - t.hour * HOUR - t.minute * MINUTE - t.second * SECOND - t.milli;
+    }
+
+    // The end of the bucket starting at an instant (the start of the next), or the instant itself if it isn't
+    // in a bucket.
+    function bucketEnd(start, bucket, timeZone) {
+        if (!bucket) {
+            return start;
+        }
+        if (bucket.ms) {
+            return start + bucket.ms;
+        }
+        var t = timeFields(start, timeZone);
+        var year = bucket.unit === "year" ? t.year + 1 : t.year + (t.month === 11 ? 1 : 0);
+        var month = bucket.unit === "year" ? 0 : (t.month + 1) % 12;
+        // The next month's start as if in UTC, moved by the zone's offset there.
+        var end = Date.UTC(year, month, 1) - t.offset * MINUTE;
+        return end - (timeFields(end, timeZone).offset - t.offset) * MINUTE;
+    }
+
     // Works out which value index each field control is at, from the 'fields' setting.
     function fieldIndexes(settings) {
         var indexes = {};
@@ -323,9 +414,10 @@ if (!window.visualisations) {
         return indexes;
     }
 
-    function Fields(settings, data) {
+    function Fields(settings, data, prefs) {
         var indexes = fieldIndexes(settings);
         var types = data && data.types ? data.types : [];
+        var timeZone = prefs ? prefs.timeZone : null;
 
         this.has = function (id) {
             return indexes[id] !== undefined && !isBlank(settings[id]);
@@ -365,15 +457,42 @@ if (!window.visualisations) {
             return forId && Object.prototype.hasOwnProperty.call(forId, label) ? forId[label] : label;
         };
 
+        // The time buckets of each date column, by column id, worked out when first needed.
+        var buckets = {};
+
+        // The time bucket a date column's values stand for (e.g. a day, for floorDay() values), or null if they
+        // aren't bucketed (e.g. raw event times).
+        this.bucket = function (id) {
+            if (!Object.prototype.hasOwnProperty.call(buckets, id)) {
+                var index = this.index(id);
+                var values = index < 0 ? [] : dataRows(data).map(function (row) {
+                    return row[index];
+                });
+                buckets[id] = timeBucket(values, timeZone);
+            }
+            return buckets[id];
+        };
+
         // What a click selects, for Stroom: each column id given (e.g. category) with its value, and the same
         // value under the name of the table column it is mapped to, so a filter can name either. Dates are given
-        // as ISO 8601 text, which Stroom's filters read as dates.
+        // as ISO 8601 text, which Stroom's filters read as dates. A clicked date also gives the time it stands for
+        // as from and to (e.g. the whole day, for a day's value), as a range dragged on a time axis does, so a
+        // filter keeping a date field within from and to matches what the clicked point counts.
         this.selection = function (pairs) {
             var selection = {};
             var fields = this;
             pairs.forEach(function (pair) {
-                var value = selectionValue(pair[1], pair[0] === "node" ? fields.type("source") : fields.type(pair[0]));
+                var type = pair[0] === "node" ? fields.type("source") : fields.type(pair[0]);
+                var value = selectionValue(pair[1], type);
                 selection[pair[0]] = value;
+                if (type === "DATE_TIME" && typeof pair[1] === "number" && isFinite(pair[1])
+                    && selection.from === undefined) {
+                    // A calendar's day is the whole day, whatever times the rows have in it.
+                    var start = pair[0] === "date" ? startOfDay(pair[1], timeZone) : pair[1];
+                    var end = bucketEnd(start, pair[0] === "date" ? {ms: DAY} : fields.bucket(pair[0]), timeZone);
+                    selection.from = new Date(start).toISOString();
+                    selection.to = new Date(end > start ? end - 1 : start).toISOString();
+                }
             });
             pairs.forEach(function (pair) {
                 var column = fields.column(pair[0]);
@@ -2929,7 +3048,7 @@ if (!window.visualisations) {
             prefs: prefs,
             settings: settings,
             options: optionsOf(settings.options, report),
-            fields: new Fields(settings, data),
+            fields: new Fields(settings, data, prefs),
             rows: rows,
             report: report,
             format: prefs.formatValue,
@@ -3528,6 +3647,7 @@ if (!window.visualisations) {
         forceLayout: forceLayout,
         selectionLabel: selectionLabel,
         reversed: reversed,
+        Fields: Fields,
         readPreferences: readPreferences,
         version: ADAPTER_VERSION
     };
