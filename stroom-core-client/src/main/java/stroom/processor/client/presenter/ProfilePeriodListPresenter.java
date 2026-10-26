@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.processor.client.component.ProfilePeriodEditorController;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -51,14 +52,14 @@ public class ProfilePeriodListPresenter
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private final List<ProfilePeriod> profilePeriods = new ArrayList<>();
-    private final Provider<ProfilePeriodEditPresenter> newConcurrencyTimeRangePresenter;
+    private final Provider<ProfilePeriodEditorController> profilePeriodEditorProvider;
 
     private boolean readOnly = false;
 
     @Inject
     public ProfilePeriodListPresenter(final EventBus eventBus,
                                       final PagerPanel view,
-                                      final Provider<ProfilePeriodEditPresenter> newConcurrencyTimeRangePresenter) {
+                                      final Provider<ProfilePeriodEditorController> profilePeriodEditorProvider) {
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
@@ -70,7 +71,7 @@ public class ProfilePeriodListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        this.newConcurrencyTimeRangePresenter = newConcurrencyTimeRangePresenter;
+        this.profilePeriodEditorProvider = profilePeriodEditorProvider;
 
         addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
         view.getToolbar().setName("Profile period actions");
@@ -187,8 +188,7 @@ public class ProfilePeriodListPresenter
 
     private void showEditor(final ProfilePeriod profilePeriod) {
         if (profilePeriod != null) {
-            final ProfilePeriodEditPresenter editor = makeDialog(newConcurrencyTimeRangePresenter);
-            editor.show(profilePeriod, updated -> {
+            profilePeriodEditorProvider.get().edit(this, profilePeriod, updated -> {
                 final int index = profilePeriods.indexOf(profilePeriod);
                 if (index == -1) {
                     profilePeriods.add(updated);

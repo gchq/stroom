@@ -31,9 +31,6 @@ import stroom.annotation.client.ChangeAssignedToViewImpl;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChangeStatusViewImpl;
-import stroom.annotation.client.DurationPresenter;
-import stroom.annotation.client.DurationPresenter.DurationView;
-import stroom.annotation.client.DurationViewImpl;
 import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
@@ -69,9 +66,6 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
-        bindPresenterWidget(DurationPresenter.class,
-                DurationView.class,
-                DurationViewImpl.class);
         bindSharedView(AbstractFindPresenter.FindView.class,
                 FindViewImpl.class);
         bind(FindAnnotationPresenter.class);

@@ -25,12 +25,12 @@ import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
+import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
-import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.GroupLevelButtons;
@@ -72,8 +72,6 @@ import stroom.widget.component.client.Listeners;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
@@ -128,7 +126,7 @@ public class QueryResultTablePresenter
     private final GroupLevelButtons groupLevelButtons;
 
     private final ButtonView downloadButton;
-    private final DownloadPresenter downloadPresenter;
+    private final DownloadSearchResultsController downloadOptions;
     private final AnnotationManager annotationManager;
     private final ToolbarToggleButton valueFilterButton;
     private final ButtonView resetButton;
@@ -168,7 +166,7 @@ public class QueryResultTablePresenter
                                      final LocationManager locationManager,
                                      final QueryResultTableView tableView,
                                      final PagerPanel pagerView,
-                                     final DownloadPresenter downloadPresenter,
+                                     final DownloadSearchResultsController downloadOptions,
                                      final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
@@ -177,13 +175,13 @@ public class QueryResultTablePresenter
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
-        own(downloadPresenter);
+        own(downloadOptions);
         own(formatPresenter);
         own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
-        this.downloadPresenter = downloadPresenter;
+        this.downloadOptions = downloadOptions;
         this.annotationManager = annotationManager;
         rowStyles = new TableRowStyles(userPreferencesManager);
         annotationManager.setTaskMonitorFactory(this);
@@ -851,33 +849,24 @@ public class QueryResultTablePresenter
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
 
-                downloadPresenter.setShowDownloadAll(false);
-                ShowPopupEvent.builder(downloadPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .caption("Download Options")
-                        .onShow(e -> downloadPresenter.getView().focus())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final DownloadQueryResultsRequest downloadSearchResultsRequest =
-                                        new DownloadQueryResultsRequest(
-                                                request,
-                                                downloadPresenter.getFileType(),
-                                                downloadPresenter.isSample(),
-                                                downloadPresenter.getPercent());
-                                restFactory
-                                        .create(QUERY_RESOURCE)
-                                        .method(res -> res.downloadSearchResults(
-                                                currentSearchModel.getCurrentNode(),
-                                                downloadSearchResultsRequest))
-                                        .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
-                                                this,
-                                                result))
-                                        .taskMonitorFactory(this)
-                                        .exec();
-                            }
-                            e.hide();
-                        })
-                        .fire();
+                downloadOptions.show(false, () -> {
+                    final DownloadQueryResultsRequest downloadSearchResultsRequest =
+                            new DownloadQueryResultsRequest(
+                                    request,
+                                    downloadOptions.getFileType(),
+                                    downloadOptions.isSample(),
+                                    downloadOptions.getPercent());
+                    restFactory
+                            .create(QUERY_RESOURCE)
+                            .method(res -> res.downloadSearchResults(
+                                    currentSearchModel.getCurrentNode(),
+                                    downloadSearchResultsRequest))
+                            .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                    this,
+                                    result))
+                            .taskMonitorFactory(this)
+                            .exec();
+                });
             }
         }
     }

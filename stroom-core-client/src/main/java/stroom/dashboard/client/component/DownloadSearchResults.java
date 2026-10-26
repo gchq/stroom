@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
 import stroom.analytics.shared.ReportSettings;
-import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.item.client.SelectionBox;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class DownloadViewImpl extends ViewImpl implements DownloadView {
+/// The Download Options dialog's content, for a table's results: the file type, whether all
+/// the dashboard's tables go in it, and whether only a sample does.
+public class DownloadSearchResults extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SelectionBox<DownloadSearchResultFileType> fileType;
@@ -47,14 +48,12 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @UiField
     ValueSpinner percent;
 
-    @Inject
-    public DownloadViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public DownloadSearchResults() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        percent.setMax(100);
-        percent.setMin(1);
+        // ValueSpinner's setValue is overloaded, which UiBinder can't choose between
         percent.setValue(100);
-        percent.setEnabled(false);
 
         fileType.addItems(DownloadSearchResultFileType.asSortedList());
         fileType.setValue(ReportSettings.DEFAULT_FILE_TYPE);
@@ -72,47 +71,47 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         return DownloadSearchResultFileType.EXCEL.equals(fileType.getValue());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    @Override
+    /// Puts the focus on the file type.
     public void focus() {
         fileType.focus();
     }
 
-    @Override
+    /// @return The file type chosen.
     public DownloadSearchResultFileType getFileType() {
         return fileType.getValue();
     }
 
-    @Override
+    /// @return Whether all the dashboard's tables go in the file.
     public boolean downloadAllTables() {
         return downloadAllTables.getValue();
     }
 
-    @Override
+    /// @param show Whether Download All Tables is offered.
     public void setShowDownloadAll(final boolean show) {
         downloadAll.setVisible(show);
     }
 
-    @Override
+    /// @return Whether only a sample goes in the file.
     public boolean isSample() {
         return sample.getValue();
     }
 
-    @Override
+    /// @return The percentage of the results in a sample.
     public int getPercent() {
         return percent.getIntValue();
     }
 
     @UiHandler("sample")
-    public void onChange(final ValueChangeEvent<Boolean> event) {
+    void onSampleChange(final ValueChangeEvent<Boolean> event) {
         percent.setEnabled(sample.getValue());
     }
 
-    public interface Binder extends UiBinder<Widget, DownloadViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DownloadSearchResults> {
 
     }
 }

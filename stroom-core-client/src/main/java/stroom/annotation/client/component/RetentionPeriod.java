@@ -14,37 +14,37 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
-import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class DurationViewImpl extends ViewImpl implements DurationView {
+/// The Set Retention Period dialog's content: how long an annotation is kept, or for ever.
+public class RetentionPeriod extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TickBox forever;
     @UiField
     DurationPicker durationPicker;
 
-    @Inject
-    DurationViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public RetentionPeriod() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// @param duration The period, or null to keep the annotation for ever (5 years is offered).
     public void setDuration(final SimpleDuration duration) {
         forever.setValue(duration == null);
         durationPicker.setEnabled(!forever.getValue());
@@ -53,7 +53,7 @@ public class DurationViewImpl extends ViewImpl implements DurationView {
                 : SimpleDuration.builder().time(5).timeUnit(TimeUnit.YEARS).build());
     }
 
-    @Override
+    /// @return The period chosen, or null for ever.
     public SimpleDuration getDuration() {
         if (forever.getValue()) {
             return null;
@@ -61,22 +61,21 @@ public class DurationViewImpl extends ViewImpl implements DurationView {
         return durationPicker.getValue();
     }
 
-    @Override
+    /// Puts the focus on Keep Forever.
     public void focus() {
         forever.focus();
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
     @UiHandler("forever")
-    public void onForever(final ValueChangeEvent<Boolean> event) {
+    void onForever(final ValueChangeEvent<Boolean> event) {
         durationPicker.setEnabled(!forever.getValue());
     }
 
-    public interface Binder extends UiBinder<Widget, DurationViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, RetentionPeriod> {
 
     }
 }

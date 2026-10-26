@@ -19,7 +19,7 @@
         <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)"
                         helpText="Approximate percentage of rows to include in a sample download, from 1 to 100. Used only when Sample Only is ticked."
                         screenReaderText="1 to 100 percent. Used only when Sample Only is ticked.">
-            <v:ValueSpinner ui:field="percent"/>
+            <v:ValueSpinner ui:field="percent" minValue="1" maxValue="100" enabled="false"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

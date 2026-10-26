@@ -25,9 +25,6 @@ import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
 import stroom.dashboard.client.table.ColumnValuesFilterViewImpl;
-import stroom.dashboard.client.table.DownloadPresenter;
-import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
-import stroom.dashboard.client.table.DownloadViewImpl;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.dashboard.client.table.FormatViewImpl;
@@ -67,7 +64,6 @@ public class TableModule extends AbstractPresenterModule {
         bindPresenterWidget(IncludeExcludeFilterPresenter.class,
                 IncludeExcludeFilterView.class,
                 IncludeExcludeFilterViewImpl.class);
-        bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
         bindPresenterWidget(

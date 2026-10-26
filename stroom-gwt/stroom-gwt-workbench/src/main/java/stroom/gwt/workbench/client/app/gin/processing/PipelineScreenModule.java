@@ -28,12 +28,9 @@ import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
-import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
-import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
-import stroom.pipeline.stepping.client.view.XPathFilterViewImpl;
 import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter;
 import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter;
@@ -55,15 +52,12 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
-import stroom.processor.client.presenter.ProfilePeriodEditPresenter;
-import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.EditFeedDependencyViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
-import stroom.processor.client.view.ProfilePeriodEditViewImpl;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
 import stroom.processor.task.client.view.ProcessorTaskViewImpl;
@@ -99,9 +93,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SteppingFilterPresenter.class,
                 SteppingFilterView.class,
                 SteppingFilterViewImpl.class);
-        bindPresenterWidget(XPathFilterPresenter.class,
-                XPathFilterView.class,
-                XPathFilterViewImpl.class);
         bindPresenterWidget(ElementPresenter.class,
                 ElementView.class,
                 ElementViewImpl.class);
@@ -123,9 +114,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorProfileEditPresenter.class,
                 ProcessorProfileEditView.class,
                 ProcessorProfileEditViewImpl.class);
-        bindPresenterWidget(ProfilePeriodEditPresenter.class,
-                ProfilePeriodEditView.class,
-                ProfilePeriodEditViewImpl.class);
         bindPresenterWidget(ProcessorTaskPresenter.class,
                 ProcessorTaskView.class,
                 ProcessorTaskViewImpl.class);

@@ -96,7 +96,7 @@ public final class ProcessorProfilesScreenStories {
             .build();
 
     // The period editor's caption.
-    // ProfilePeriodEditPresenter captions it 'Edit Period' (even for a new period)
+    // ProfilePeriodEditorController captions it 'Edit Period' (even for a new period)
     private static final String PERIOD_CAPTION = "Edit Period";
 
     private ProcessorProfilesScreenStories() {

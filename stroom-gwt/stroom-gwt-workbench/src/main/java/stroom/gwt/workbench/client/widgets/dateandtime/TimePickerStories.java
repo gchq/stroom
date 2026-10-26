@@ -102,7 +102,7 @@ public final class TimePickerStories {
         final TimeBox box = new TimeBox();
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Time");
-        // As Stroom's presenters attach one, e.g. ProfilePeriodEditPresenter
+        // As Stroom's controllers attach one, e.g. ProfilePeriodEditorController
         final TimeBoxController controller = harness.own(new TimeBoxController(() ->
                 new TimePickerController(harness.getEventBus(), new TimePicker())));
         controller.attach(box);

@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.view;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.XPathFilter.SearchType;
-import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
+/// The XPath filter dialog's content, for stepping: where to look in the output, and what
+/// to match there.
+public class XPathFilterEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     FormGroup valueContainer;
     @UiField
@@ -52,9 +54,9 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     TickBox ignoreCase;
 
-    @Inject
-    public XPathFilterViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public XPathFilterEditor() {
+        initWidget(BINDER.createAndBindUi(this));
         matchType.addItems(MatchType.values());
         matchType.setValue(MatchType.EQUALS);
 
@@ -68,17 +70,13 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         xPathContainer.setVisible(SearchType.XPATH.equals(searchType.getValue()));
     }
 
-    @Override
+    /// Puts the focus in the XPath.
     public void focus() {
         xPath.setFocus(true);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    @Override
+    /// @return The XPath to look at: the one entered, or every element for All text.
     public String getXPath() {
         final SearchType selected = searchType.getValue();
         return switch (selected) {
@@ -88,49 +86,49 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         };
     }
 
-    @Override
+    /// @param xPath The XPath.
     public void setXPath(final String xPath) {
         this.xPath.setText(xPath);
     }
 
-    @Override
+    /// @return How the value is matched.
     public MatchType getMatchType() {
         return matchType.getValue();
     }
 
-    @Override
+    /// @param matchType How the value is matched.
     public void setMatchType(final MatchType matchType) {
         this.matchType.setValue(matchType);
         changeVisibility(matchType);
     }
 
-    @Override
+    /// @return Where to look.
     public SearchType getSearchType() {
         return searchType.getValue();
     }
 
-    @Override
+    /// @param searchType Where to look.
     public void setSearchType(final SearchType searchType) {
         this.searchType.setValue(searchType);
         updateXPathVisibility();
     }
 
-    @Override
+    /// @return The value to match.
     public String getValue() {
         return value.getText();
     }
 
-    @Override
+    /// @param value The value to match.
     public void setValue(final String value) {
         this.value.setText(value);
     }
 
-    @Override
+    /// @return Whether case is ignored.
     public Boolean isIgnoreCase() {
         return ignoreCase.getValue();
     }
 
-    @Override
+    /// @param value Whether case is ignored.
     public void setIgnoreCase(final Boolean value) {
         ignoreCase.setValue(value);
     }
@@ -145,7 +143,7 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     }
 
     @UiHandler("searchType")
-    public void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
+    void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
         final SearchType selected = e.getValue();
         switch (selected) {
             case ALL:
@@ -160,11 +158,15 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     }
 
     @UiHandler("matchType")
-    public void onMatchTypeChange(final ValueChangeEvent<MatchType> e) {
+    void onMatchTypeChange(final ValueChangeEvent<MatchType> e) {
         changeVisibility(e.getValue());
     }
 
-    public interface Binder extends UiBinder<Widget, XPathFilterViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, XPathFilterEditor> {
 
     }
 }

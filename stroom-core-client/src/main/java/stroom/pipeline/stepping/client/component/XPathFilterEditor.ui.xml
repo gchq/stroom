@@ -4,7 +4,7 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="XPathFilterViewImpl max form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="searchLocation" label="Search type"
                         helpText="Where to look in the output. All text tests every element. XPath tests only the nodes selected by an XPath expression. Default is All text."
                         screenReaderText="All text tests every element; XPath tests selected nodes. Default is All text.">

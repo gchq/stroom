@@ -24,6 +24,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -107,8 +108,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -164,7 +163,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final ToolbarToggleButton valueFilterButton;
     private final ToolbarButton annotateButton;
     private final ButtonView askAiButton;
-    private final DownloadPresenter downloadPresenter;
+    private final DownloadSearchResultsController downloadOptions;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
     private final TimeZones timeZones;
@@ -205,7 +204,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
-                          final DownloadPresenter downloadPresenter,
+                          final DownloadSearchResultsController downloadOptions,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache,
@@ -218,12 +217,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super(eventBus, view, settingsPresenterProvider);
         own(formatPresenter);
         own(tableFilterPresenter);
-        own(downloadPresenter);
+        own(downloadOptions);
         own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;
-        this.downloadPresenter = downloadPresenter;
+        this.downloadOptions = downloadOptions;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
         this.timeZones = timeZones;
@@ -552,37 +551,29 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                ShowPopupEvent.builder(downloadPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .caption("Download Options")
-                        .onShow(e -> downloadPresenter.getView().focus())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final DashboardSearchRequest searchRequest = getDashboardSearchRequest(currentSearch,
-                                        queryKey);
+                downloadOptions.show(true, () -> {
+                    final DashboardSearchRequest searchRequest = getDashboardSearchRequest(currentSearch,
+                            queryKey);
 
-                                final DownloadSearchResultsRequest downloadSearchResultsRequest =
-                                        new DownloadSearchResultsRequest(
-                                                searchRequest,
-                                                getComponentConfig().getId(),
-                                                downloadPresenter.getFileType(),
-                                                downloadPresenter.downloadAllTables(),
-                                                downloadPresenter.isSample(),
-                                                downloadPresenter.getPercent());
-                                restFactory
-                                        .create(DASHBOARD_RESOURCE)
-                                        .method(res -> res.downloadSearchResults(
-                                                currentSearchModel.getCurrentNode(),
-                                                downloadSearchResultsRequest))
-                                        .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
-                                                this,
-                                                result))
-                                        .taskMonitorFactory(this)
-                                        .exec();
-                            }
-                            e.hide();
-                        })
-                        .fire();
+                    final DownloadSearchResultsRequest downloadSearchResultsRequest =
+                            new DownloadSearchResultsRequest(
+                                    searchRequest,
+                                    getComponentConfig().getId(),
+                                    downloadOptions.getFileType(),
+                                    downloadOptions.isDownloadAllTables(),
+                                    downloadOptions.isSample(),
+                                    downloadOptions.getPercent());
+                    restFactory
+                            .create(DASHBOARD_RESOURCE)
+                            .method(res -> res.downloadSearchResults(
+                                    currentSearchModel.getCurrentNode(),
+                                    downloadSearchResultsRequest))
+                            .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                    this,
+                                    result))
+                            .taskMonitorFactory(this)
+                            .exec();
+                });
             }
         }
     }

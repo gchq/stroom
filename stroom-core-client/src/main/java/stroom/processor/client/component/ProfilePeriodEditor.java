@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.view;
+package stroom.processor.client.component;
 
-import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
+import stroom.processor.client.view.DaysOfWeek;
 import stroom.util.shared.time.Days;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.TimeBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ProfilePeriodEditViewImpl
-        extends ViewImpl
-        implements ProfilePeriodEditView {
+/// The Edit Period dialog's content: when a processor profile's period applies, and the
+/// threads processing may use then.
+public class ProfilePeriodEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     DaysOfWeek days;
@@ -51,98 +51,94 @@ public class ProfilePeriodEditViewImpl
     @UiField
     ValueSpinner maxClusterThreads;
 
-    @Inject
-    public ProfilePeriodEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        maxNodeThreads.setMin(0);
-        maxNodeThreads.setMax(1000000);
-        maxClusterThreads.setMin(0);
-        maxClusterThreads.setMax(1000000);
+    /// Makes the content.
+    public ProfilePeriodEditor() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    @Override
+    /// Puts the focus in the start time.
     public void focus() {
         startTime.focus();
     }
 
-    @Override
+    /// @return The days ticked.
     public Days getDays() {
         return days.getValue();
     }
 
-    @Override
+    /// @param days The days the period applies on.
     public void setDays(final Days days) {
         this.days.setValue(days);
     }
 
-    @Override
+    /// @return The start time, for its controller to attach to.
     public TimeBox getStartTime() {
         return startTime;
     }
 
-    @Override
+    /// @return The end time, for its controller to attach to.
     public TimeBox getEndTime() {
         return endTime;
     }
 
-    @Override
+    /// @return Whether each node's threads are limited.
     public boolean isLimitNodeThreads() {
         return limitNodeThreads.getValue();
     }
 
-    @Override
+    /// @param limitNodeThreads Whether each node's threads are limited.
     public void setLimitNodeThreads(final boolean limitNodeThreads) {
         this.limitNodeThreads.setValue(limitNodeThreads);
         maxNodeThreads.setEnabled(limitNodeThreads);
     }
 
-    @Override
+    /// @return The most threads each node may use.
     public int getMaxNodeThreads() {
         return maxNodeThreads.getIntValue();
     }
 
-    @Override
+    /// @param maxNodeThreads The most threads each node may use.
     public void setMaxNodeThreads(final int maxNodeThreads) {
         this.maxNodeThreads.setValue(maxNodeThreads);
     }
 
-    @Override
+    /// @return Whether the cluster's threads are limited.
     public boolean isLimitClusterThreads() {
         return limitClusterThreads.getValue();
     }
 
-    @Override
+    /// @param limitTotalClusterThreads Whether the cluster's threads are limited.
     public void setLimitClusterThreads(final boolean limitTotalClusterThreads) {
         this.limitClusterThreads.setValue(limitTotalClusterThreads);
         maxClusterThreads.setEnabled(limitTotalClusterThreads);
     }
 
-    @Override
+    /// @return The most threads the cluster may use.
     public int getMaxClusterThreads() {
         return maxClusterThreads.getIntValue();
     }
 
-    @Override
+    /// @param totalClusterThreads The most threads the cluster may use.
     public void setMaxClusterThreads(final int totalClusterThreads) {
         this.maxClusterThreads.setValue(totalClusterThreads);
     }
 
     @UiHandler("limitNodeThreads")
-    public void onLimitNodeThreads(final ValueChangeEvent<Boolean> event) {
+    void onLimitNodeThreads(final ValueChangeEvent<Boolean> event) {
         maxNodeThreads.setEnabled(limitNodeThreads.getValue());
     }
 
     @UiHandler("limitClusterThreads")
-    public void onLimitClusterThreads(final ValueChangeEvent<Boolean> event) {
+    void onLimitClusterThreads(final ValueChangeEvent<Boolean> event) {
         maxClusterThreads.setEnabled(limitClusterThreads.getValue());
     }
 
-    public interface Binder extends UiBinder<Widget, ProfilePeriodEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ProfilePeriodEditor> {
 
     }
 }

@@ -24,6 +24,7 @@ import stroom.annotation.client.component.ChooserController.DataSupplier;
 import stroom.annotation.client.component.CommentEditController;
 import stroom.annotation.client.component.MultiChooserController;
 import stroom.annotation.client.component.OpenChooser;
+import stroom.annotation.client.component.RetentionPeriodController;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
@@ -156,7 +157,7 @@ public class AnnotationEditPresenter
     private final OpenChooser openChooser = new OpenChooser();
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
-    private final DurationPresenter retentionDurationProvider;
+    private final Provider<RetentionPeriodController> retentionPeriodProvider;
     private final DurationLabel durationLabel;
     private final Provider<CommentEditController> commentEditProvider;
 
@@ -189,19 +190,18 @@ public class AnnotationEditPresenter
                                    final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
-                                   final DurationPresenter retentionDurationProvider,
+                                   final Provider<RetentionPeriodController> retentionPeriodProvider,
                                    final DurationLabel durationLabel,
                                    final Provider<CommentEditController> commentEditProvider) {
         super(eventBus, view);
         own(assignedToPresenter);
-        own(retentionDurationProvider);
         this.annotationResourceClient = annotationResourceClient;
         this.chooserProvider = chooserProvider;
         this.assignedToPresenter = assignedToPresenter;
         this.multiChooserProvider = multiChooserProvider;
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.retentionDurationProvider = retentionDurationProvider;
+        this.retentionPeriodProvider = retentionPeriodProvider;
         this.durationLabel = durationLabel;
         this.commentEditProvider = commentEditProvider;
 
@@ -389,7 +389,7 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        retentionDurationProvider.show(currentRetentionPeriod, this::changeRetentionPeriod);
+        retentionPeriodProvider.get().edit(this, currentRetentionPeriod, this::changeRetentionPeriod);
     }
 
     private void changeRetentionPeriod(final SimpleDuration retentionPeriod) {

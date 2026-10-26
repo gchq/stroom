@@ -22,6 +22,7 @@ import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.stepping.client.component.XPathFilterEditorController;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.svg.shared.SvgImage;
@@ -33,7 +34,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -44,6 +44,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class SteppingFilterPresenter extends
     protected static final String BASE_CLASS = "pipelineElementChooser";
     private static final int ICON_COL_WIDTH = 22;
     private final XPathListPresenter xPathListPresenter;
-    private final XPathFilterPresenter xPathFilterPresenter;
+    private final Provider<XPathFilterEditorController> xPathFilterEditorProvider;
     private List<XPathFilter> xPathFilters;
 
     private final MultiSelectionModelImpl<PipelineElement> elementSelectionModel = new MultiSelectionModelImpl<>();
@@ -78,13 +79,12 @@ public class SteppingFilterPresenter extends
     public SteppingFilterPresenter(final EventBus eventBus,
                                    final SteppingFilterView view,
                                    final XPathListPresenter xPathListPresenter,
-                                   final XPathFilterPresenter xPathFilterProvider,
+                                   final Provider<XPathFilterEditorController> xPathFilterEditorProvider,
                                    final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         own(xPathListPresenter);
-        own(xPathFilterProvider);
         this.xPathListPresenter = xPathListPresenter;
-        this.xPathFilterPresenter = xPathFilterProvider;
+        this.xPathFilterEditorProvider = xPathFilterEditorProvider;
 
         xPathListPresenter.getToolbar().setName("XPath actions");
         addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
@@ -177,30 +177,18 @@ public class SteppingFilterPresenter extends
         xPathFilter.setSearchType(SearchType.ALL);
         xPathFilter.setMatchType(XPathFilter.DEFAULT_MATCH_TYPE);
 
-        final HidePopupRequestEvent.Handler handler = e -> {
-            if (e.isOk()) {
-                xPathFilterPresenter.write();
-                xPathFilters.add(xPathFilter);
-
-                xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
-                updateLocalActiveFilterState();
-            }
-            e.hide();
-        };
-        xPathFilterPresenter.add(xPathFilter, handler);
+        xPathFilterEditorProvider.get().edit(this, "Add XPath Filter", xPathFilter, () -> {
+            xPathFilters.add(xPathFilter);
+            xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
+            updateLocalActiveFilterState();
+        });
     }
 
     private void editXPathFilter() {
         final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
         if (list.size() == 1) {
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    xPathFilterPresenter.write();
-                    xPathListPresenter.refresh();
-                }
-                e.hide();
-            };
-            xPathFilterPresenter.edit(list.get(0), handler);
+            xPathFilterEditorProvider.get().edit(this, "Edit XPath Filter", list.get(0),
+                    xPathListPresenter::refresh);
         }
     }
 
