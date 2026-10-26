@@ -106,6 +106,13 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final String REPLACE_ARG = "replace";
     static final String ADD_NEW_ARG = "addNew";
     static final String NEW_TABLE_ARG = "newTable";
+    static final String TABLE_CHANGES_ARG = "tableChanges";
+    // What a chart's table may be changed by, with the chart: its columns, grouping, sorting, filtering and
+    // formatting, and its query's expression.
+    private static final Set<String> TABLE_CHANGE_OPS = Set.of(DashboardChanges.GROUP, DashboardChanges.UNGROUP,
+            DashboardChanges.ADD_COLUMN, DashboardChanges.EDIT_COLUMN, DashboardChanges.MOVE_COLUMN,
+            DashboardChanges.HIDE_COLUMN, DashboardChanges.SHOW_COLUMN, DashboardChanges.SORT, DashboardChanges.FILTER,
+            DashboardChanges.SET_EXPRESSION, DashboardChanges.ADD_FORMAT_RULE, DashboardChanges.REMOVE_FORMAT_RULE);
     static final String FILTER_ARG = "filter";
     /// The component id a selection filter is planned with for the chart it is added with, which the browser puts
     /// the chart's own id in place of once it has added it.
@@ -260,7 +267,28 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                                  + "set to its name). One button adds the table, the chart (and "
                                                  + "its filter) together, so don't propose the table first. Its "
                                                  + "rows aren't known until its query runs, so only its columns "
-                                                 + "are checked.")
+                                                 + "are checked. With replace, the chart replaced is moved to the "
+                                                 + "new table.")
+                                        .chatOnly(" The changes are as propose_dashboard_change takes them.")
+                                        .build())
+                                .build())
+                        .addProperty(TABLE_CHANGES_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
+                                        .description(ToolDescription.builder()
+                                                .general("A change to the table charted.")
+                                                .chatOnly(" As propose_dashboard_change takes them.")
+                                                .build())
+                                        .build())
+                                .description(ToolDescription.builder()
+                                        .general("Optional, echarts or d3 on a dashboard. When the table charted "
+                                                 + "needs changing for the chart (e.g. grouped by the pair a "
+                                                 + "network's links join, with a count() column for their weight): "
+                                                 + "its changes (group, ungroup, add_column, edit_column, sort, "
+                                                 + "filter, ... without table). One button changes the table and "
+                                                 + "adds the chart (or, with replace, updates it) together, so "
+                                                 + "don't propose the table change first. The changed rows aren't "
+                                                 + "known until its query runs again, so only its columns are "
+                                                 + "checked. Not with newTable.")
                                         .chatOnly(" The changes are as propose_dashboard_change takes them.")
                                         .build())
                                 .build())
@@ -434,15 +462,28 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         // A new table to chart, added beside this one by the chart's button, or this table.
         final boolean dashboardChart = !query && embedded == null && !CONTENT_PACK.equals(library);
         if (!dashboardChart && (argsMap(request).get(NEW_TABLE_ARG) != null
+                                || argsMap(request).get(TABLE_CHANGES_ARG) != null
                                 || argsMap(request).get(FILTER_ARG) != null)) {
-            throw new WorkspaceException(NEW_TABLE_ARG + " and " + FILTER_ARG + " are for a chart generated (library "
-                                         + ECHARTS + " or " + D3 + ") on a dashboard table.");
+            throw new WorkspaceException(NEW_TABLE_ARG + ", " + TABLE_CHANGES_ARG + " and " + FILTER_ARG + " are for "
+                                         + "a chart generated (library " + ECHARTS + " or " + D3 + ") on a "
+                                         + "dashboard table.");
+        }
+        if (argsMap(request).get(NEW_TABLE_ARG) != null && argsMap(request).get(TABLE_CHANGES_ARG) != null) {
+            throw new WorkspaceException("Give " + NEW_TABLE_ARG + " or " + TABLE_CHANGES_ARG + ", not both: a new "
+                                         + "table's changes go in " + NEW_TABLE_ARG + ".");
         }
         final NewTable newTable = argsMap(request).get(NEW_TABLE_ARG) == null
                 ? null
                 : newTable(argsMap(request).get(NEW_TABLE_ARG), table, tableName, part.text(), tab);
         if (newTable != null && newTable.problem() != null) {
             return ToolResult.text(newTable.problem());
+        }
+        // Changes to the table charted, made with the chart.
+        final NewTable changedTable = argsMap(request).get(TABLE_CHANGES_ARG) == null
+                ? null
+                : changedTable(argsMap(request).get(TABLE_CHANGES_ARG), table, tableName, part.text(), tab);
+        if (changedTable != null && changedTable.problem() != null) {
+            return ToolResult.text(changedTable.problem());
         }
         final String chartTable = newTable != null
                 ? newTable.name()
@@ -459,6 +500,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             sample = new SampleOutcome(null, "the new table '" + newTable.name() + "' hasn't run, so only its "
                                              + "columns were checked: its rows are drawn once the button adds it "
                                              + "and its query runs.");
+        } else if (changedTable != null) {
+            columns = changedTable.columns();
+            sample = new SampleOutcome(null, "table '" + tableName + "' as changed hasn't run, so only its "
+                                             + "columns were checked: its rows are drawn once the button changes it "
+                                             + "and its query runs again.");
         } else {
             final Map<String, String> tableFormats = ResultsRequests.columnFormats(results);
             final Map<String, String> tableExpressions = ResultsRequests.columnExpressions(results);
@@ -500,15 +546,22 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             if (addNew) {
                 throw new WorkspaceException("Give " + REPLACE_ARG + " or " + ADD_NEW_ARG + ", not both.");
             }
-            if (newTable != null || argsMap(request).get(FILTER_ARG) != null) {
-                throw new WorkspaceException("A chart that replaces another keeps its table and filters: give "
-                                             + NEW_TABLE_ARG + " and " + FILTER_ARG + " only for a new chart.");
+            if (argsMap(request).get(FILTER_ARG) != null) {
+                throw new WorkspaceException("A chart that replaces another keeps the filters its clicks drive "
+                                             + "(those it can, renamed for the new chart): give " + FILTER_ARG
+                                             + " only for a new chart, and change a replaced chart's filters with "
+                                             + "propose_dashboard_change.");
             }
             replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library,
                     query || embedded != null);
             if (replaced != null) {
-                conversion = ChartConversions.convert(replaced, kind, mappings, columns, sample.sample(),
-                        part.text());
+                // Of the chart as it will be: on its new table, if it is moved to one.
+                final Component onTable = new Component(replaced.type(), replaced.name(), replaced.id(),
+                        replaced.dataSource(), replaced.visualisation(), chartTable, replaced.settings());
+                conversion = ChartConversions.convert(onTable, kind, mappings, columns, sample.sample(),
+                        newTable == null
+                                ? part.text()
+                                : withNewChart(part.text(), kind, mappings, replaced.name(), chartTable, newTable));
                 replace = replace.withSelections(conversion.renamed());
             }
         } else if (!query && embedded == null && !addNew && newTable == null) {
@@ -562,9 +615,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         }
         return generate(chartLibrary, kind, mappings, chartStyle, options, target, query, embedded, table, chartTable,
                 part, name, summary, placement, replace, request, context, notes,
-                newTable == null
-                        ? List.of()
-                        : newTable.changes(), filterChanges);
+                newTable != null
+                        ? newTable.changes()
+                        : changedTable != null
+                                ? changedTable.changes()
+                                : List.of(), filterChanges);
     }
 
     // A table for a chart, added by its button beside the table given: the changes that add it (as
@@ -601,6 +656,56 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 addedColumns(built.changes(), name, beside, names), null);
     }
 
+    // The table charted, changed with the chart: its changes (as propose_dashboard_change takes them, without
+    // table), checked and built, and its columns as they leave it; or why it can't be changed.
+    private NewTable changedTable(final Object value,
+                                  final AiTabSearch table,
+                                  final String tableName,
+                                  final String dashboardText,
+                                  final StoredTabSnapshot tab) {
+        final List<Change> changes;
+        try {
+            changes = DashboardChanges.parse(value);
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(TABLE_CHANGES_ARG + ": " + e.getMessage());
+        }
+        final List<String> others = changes.stream()
+                .filter(change -> !TABLE_CHANGE_OPS.contains(change.op()) || change.table() != null)
+                .map(Change::op)
+                .distinct()
+                .toList();
+        if (!others.isEmpty()) {
+            throw new WorkspaceException(TABLE_CHANGES_ARG + " changes only the table charted ('" + tableName
+                                         + "'), without table: its columns, grouping, sorting, filters and "
+                                         + "formatting, and its query's expression, not " + String.join(", ", others)
+                                         + ". For a table of its own, give " + NEW_TABLE_ARG + ".");
+        }
+        final ProposeDashboardChangeTool.Built built = dashboardChanges.build(changes, table, tableName,
+                dashboardText, NullSafe.list(tab.searches()));
+        if (!built.problems().isEmpty()) {
+            return new NewTable(tableName, List.of(), List.of(), "No chart was offered: the changes to table '"
+                                                                 + tableName + "' aren't valid:\n- "
+                                                                 + String.join("\n- ", built.problems())
+                                                                 + "\nCorrect them and propose the chart again.");
+        }
+        final AskStroomAiContext results = table.getLive() != null
+                ? table.getLive()
+                : table.getResults();
+        final Map<String, String> formats = ResultsRequests.columnFormats(results);
+        final Map<String, String> expressions = ResultsRequests.columnExpressions(results);
+        final Map<String, Integer> groups = ResultsRequests.columnGroups(results);
+        final Map<String, TableColumn> columns = new LinkedHashMap<>();
+        NullSafe.list(table.getColumns()).forEach(column -> columns.put(column, new TableColumn(column,
+                formats.get(column), expressions.get(column), groups.get(column))));
+        built.changes().stream()
+                .filter(change -> change.table() == null)
+                .forEach(change -> applyColumnChange(columns, change));
+        final List<String> names = NullSafe.list(built.checked().columnsOf(null));
+        return new NewTable(tableName, built.changes().stream().map(Change::toMap).toList(), names.stream()
+                .map(column -> columns.getOrDefault(column, new TableColumn(column, null)))
+                .toList(), null);
+    }
+
     // The columns of a table the changes add, as they leave it (in the order given): each with its expression,
     // format and group level, from the columns it copies and the changes to its columns.
     static List<TableColumn> addedColumns(final List<Change> changes,
@@ -625,42 +730,51 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             if (change.table() == null || !change.table().equalsIgnoreCase(table)) {
                 continue;
             }
-            final TableColumn before = change.column() == null
-                    ? null
-                    : columns.get(change.column());
-            switch (change.op()) {
-                case DashboardChanges.ADD_COLUMN -> columns.put(change.name(), new TableColumn(change.name(),
-                        formatType(change.format()), change.expression(), null));
-                case DashboardChanges.EDIT_COLUMN -> {
-                    if (before != null) {
-                        final String renamed = NullSafe.nonBlankStringElse(change.name(), before.name());
-                        columns.remove(before.name());
-                        columns.put(renamed, new TableColumn(renamed, change.format() != null
-                                ? formatType(change.format())
-                                : before.format(), NullSafe.nonBlankStringElse(change.expression(),
-                                before.expression()), before.group()));
-                    }
-                }
-                case DashboardChanges.GROUP -> {
-                    if (before != null) {
-                        columns.put(before.name(), new TableColumn(before.name(), before.format(),
-                                before.expression(), change.level()));
-                    }
-                }
-                case DashboardChanges.UNGROUP -> {
-                    if (before != null) {
-                        columns.put(before.name(), new TableColumn(before.name(), before.format(),
-                                before.expression(), null));
-                    }
-                }
-                default -> {
-                    // Sorting, filtering, hiding and moving leave the columns as they are.
-                }
-            }
+            applyColumnChange(columns, change);
         }
         return names.stream()
                 .map(column -> columns.getOrDefault(column, new TableColumn(column, null)))
                 .toList();
+    }
+
+    // A change to a table's columns, applied to them as they are: a column added, edited, grouped or ungrouped.
+    private static void applyColumnChange(final Map<String, TableColumn> columns, final Change change) {
+        final TableColumn before = change.column() == null
+                ? null
+                : columns.get(change.column());
+        switch (change.op()) {
+            case DashboardChanges.ADD_COLUMN -> columns.put(change.name(), new TableColumn(change.name(),
+                    formatType(change.format()), change.expression(), null));
+            case DashboardChanges.EDIT_COLUMN -> {
+                if (before != null) {
+                    final String renamed = NullSafe.nonBlankStringElse(change.name(), before.name());
+                    columns.remove(before.name());
+                    columns.put(renamed, new TableColumn(renamed, change.format() != null
+                            ? formatType(change.format())
+                            : before.format(), NullSafe.nonBlankStringElse(change.expression(),
+                            before.expression()), before.group()));
+                }
+            }
+            case DashboardChanges.GROUP -> {
+                // A change's level counts from 1, a column's group from 0. Seen in testing: a column grouped
+                // at level 2 was said to be at level 3.
+                if (before != null) {
+                    columns.put(before.name(), new TableColumn(before.name(), before.format(),
+                            before.expression(), change.level() == null
+                            ? 0
+                            : Math.max(0, change.level() - 1)));
+                }
+            }
+            case DashboardChanges.UNGROUP -> {
+                if (before != null) {
+                    columns.put(before.name(), new TableColumn(before.name(), before.format(),
+                            before.expression(), null));
+                }
+            }
+            default -> {
+                // Sorting, filtering, hiding and moving leave the columns as they are.
+            }
+        }
     }
 
     // A column's format type, as a table's columns give it (e.g. DATE_TIME), from its name in a change (e.g. Date

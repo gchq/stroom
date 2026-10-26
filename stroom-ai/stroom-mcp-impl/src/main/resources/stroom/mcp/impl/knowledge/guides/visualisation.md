@@ -73,9 +73,14 @@ Asked for a chart described in words, map the description to a kind and its sett
 chose and which you didn't. For example, "a calendar-like heatmap of user activity" is either a calendar of counts
 by day, or a heatmap of weekday by hour of day. If no table has the columns the kind needs, give
 `propose_visualisation` a `newTable`: the changes that add one (as `propose_dashboard_change` takes them:
-`add_table`, then its columns, each with `table` set to its name). The chart's button adds the table, the chart
-and its filter together, so don't propose the table first. Its rows aren't known until its query runs, so only its
-columns are checked. Columns for the common kinds:
+`add_table`, then its columns, each with `table` set to its name). If the table charted only needs changing (e.g.
+grouped by the pair a network's links join, with a `count()` for their weight), give `tableChanges` instead: its
+changes, without `table`. Either way the chart's button changes the table and adds the chart (and its filter)
+together, so never propose the table change first, with a second button for the chart. This holds when updating a
+chart too (`replace`): with `newTable` the chart replaced is moved to the new table, in the same button. Its rows
+aren't known until its query runs, so only its columns are checked. A chart is drawn from a table's top-level
+rows, so the columns it maps are grouped at the same level (both at level 1, not one at 1 and the next at 2).
+Columns for the common kinds:
 
 - A day for a calendar or line: `floorDay(${EventTime})` formatted as Date Time. Text from `formatDate()` isn't
   read as a date.
@@ -219,14 +224,18 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - Dates must be in a column formatted as Date Time to go on a time axis; dates held as text are drawn as
   categories, or can't be placed at all on a scatter plot.
 - Bar, line and scatter charts zoom with the mouse wheel and pan by dragging (a scatter plot on both axes), and a
-  network graph zooms and pans the same way. The toolbar above the chart (under its title) has its controls: Reset zoom, Select a
-  time range (a time axis, or bars of dates; then drag across the chart), Clear the selection, what is selected,
-  and the refresh button. Charts have no title of their own: the dashboard shows the Visualisation pane's name
-  above it, so name the pane well.
+  network graph zooms and pans the same way. The toolbar above the chart (under its title) has its controls:
+  Select a time range (a time axis, or bars of dates; then drag across the chart), Clear the selection, Zoom in,
+  Zoom out, Reset zoom, Pause layout (a network graph's, while it settles), Show all series (once some are hidden
+  from the legend), Download (a PNG image, or the data drawn as CSV for those who may download search results),
+  Ask Stroom AI (attaches the data the chart draws), Interval (with Auto Interval: Auto, or a fixed interval),
+  what is selected, and the refresh button. Point the user to these rather than to settings. Charts have no title
+  of their own: the dashboard shows the Visualisation pane's name above it, so name the pane well.
 - A line chart over a Date Time x, or a bar chart of dates (not sorted by value), takes `autoInterval`: the chart
   groups the table's rows into an interval that suits the time shown, coarser zoomed out and finer zoomed in, and
   says which in its toolbar. It can't be finer than the table's own grouping, so group the table finely (e.g.
-  `floorMinute()`) with a Max Rows that holds the span, and let the chart coarsen it. `intervalCombine` (Sum,
+  `floorMinute()`) with a Max Rows that holds the span, and let the chart coarsen it; the toolbar's Interval can
+  fix one instead. `intervalCombine` (Sum,
   Average, Min, Max) is how an interval's values are combined; it follows the measure column (count() and sum()
   Sum, max() Max) unless given. Offer it for a time series over a long or varying span.
 - Bar, line and scatter charts take `units` (count, bytes, percent, ms, seconds) for how values read, `logScale`,

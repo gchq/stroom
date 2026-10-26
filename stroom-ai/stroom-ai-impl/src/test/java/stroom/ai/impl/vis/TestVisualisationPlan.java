@@ -26,6 +26,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,6 +184,19 @@ class TestVisualisationPlan {
                     null, null, replace.withSelections(Map.of("x", key))).validate())
                     .hasMessageContaining("A selection key renamed must be a role or column name");
         }
+    }
+
+    @Test
+    void aReplacedChartComesWithItsTablesChangesButNotAFilter() {
+        final Replace replace = new Replace("vis-1", "Old chart", new DocRef(VisualisationDoc.TYPE, "v1", "Bars"));
+        final List<Map<String, Object>> tableChanges = List.of(Map.of("op", "group", "column", "From", "level", 1));
+        new VisualisationPlan("bar", Map.of("category", "From", "value", "Count"), Map.of(), null, "Events",
+                "table-1", "Old chart", null, "h", null, null, replace, null, tableChanges, null).validate();
+
+        assertThatThrownBy(() -> new VisualisationPlan("bar", Map.of("category", "From", "value", "Count"),
+                Map.of(), null, "Events", "table-1", "Old chart", null, "h", null, null, replace, null, null,
+                tableChanges).validate())
+                .hasMessageContaining("Only a new chart on a dashboard comes with a filter");
     }
 
     @Test

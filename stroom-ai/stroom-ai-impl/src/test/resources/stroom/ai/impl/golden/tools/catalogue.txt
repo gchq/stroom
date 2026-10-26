@@ -1827,7 +1827,7 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     },
     "newTable" : {
-      "description" : "Optional, echarts or d3 on a dashboard. When no table has the columns the chart needs: a new table to chart, added beside table (fed by the same query): add_table (copy false) first, then its columns (add_column, group, sort, ... each with table set to its name). One button adds the table, the chart (and its filter) together, so don't propose the table first. Its rows aren't known until its query runs, so only its columns are checked. The changes are as propose_dashboard_change takes them.",
+      "description" : "Optional, echarts or d3 on a dashboard. When no table has the columns the chart needs: a new table to chart, added beside table (fed by the same query): add_table (copy false) first, then its columns (add_column, group, sort, ... each with table set to its name). One button adds the table, the chart (and its filter) together, so don't propose the table first. Its rows aren't known until its query runs, so only its columns are checked. With replace, the chart replaced is moved to the new table. The changes are as propose_dashboard_change takes them.",
       "items" : {
         "description" : "A change to the dashboard. As propose_dashboard_change takes them.",
         "properties" : { },
@@ -2003,6 +2003,16 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
     "table" : {
       "description" : "Optional. The dashboard table (or embedded query) to chart, by the name the user sees, when the dashboard has several.",
       "type" : "string"
+    },
+    "tableChanges" : {
+      "description" : "Optional, echarts or d3 on a dashboard. When the table charted needs changing for the chart (e.g. grouped by the pair a network's links join, with a count() column for their weight): its changes (group, ungroup, add_column, edit_column, sort, filter, ... without table). One button changes the table and adds the chart (or, with replace, updates it) together, so don't propose the table change first. The changed rows aren't known until its query runs again, so only its columns are checked. Not with newTable. The changes are as propose_dashboard_change takes them.",
+      "items" : {
+        "description" : "A change to the table charted. As propose_dashboard_change takes them.",
+        "properties" : { },
+        "required" : [ ],
+        "type" : "object"
+      },
+      "type" : "array"
     }
   },
   "required" : [ "library", "summary" ],
