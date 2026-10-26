@@ -18,25 +18,27 @@ package stroom.script.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.script.client.component.ScriptDependencyListController;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, ScriptDoc> {
 
-    private final ScriptDependencyListPresenter scriptDependencyListPresenter;
+    private final ScriptDependencyListController scriptDependencyListPresenter;
 
     @Inject
     public ScriptSettingsPresenter(final EventBus eventBus,
                                    final ScriptSettingsView view,
-                                   final ScriptDependencyListPresenter scriptDependencyListPresenter) {
+                                   final ScriptDependencyListController scriptDependencyListPresenter) {
         super(eventBus, view);
         own(scriptDependencyListPresenter);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
-        view.setDependencyList(scriptDependencyListPresenter.getView());
+        view.setDependencyList(scriptDependencyListPresenter);
 
         scriptDependencyListPresenter.setOnChange(this::onChange);
     }
@@ -54,6 +56,6 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
 
     public interface ScriptSettingsView extends View {
 
-        void setDependencyList(View view);
+        void setDependencyList(IsWidget view);
     }
 }
