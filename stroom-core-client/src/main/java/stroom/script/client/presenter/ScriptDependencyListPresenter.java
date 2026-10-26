@@ -20,7 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -39,7 +39,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc> {
 
     private final ScriptListPresenter scriptListPresenter;
-    private final DocSelectionPopup explorerDropDownTreePresenter;
+    private final ExplorerPopupController explorerDropDownTreePresenter;
     private final ButtonView addButton;
     private final ButtonView removeButton;
     private List<DocRef> scripts;
@@ -52,13 +52,14 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
                                          final ScriptListPresenter scriptListPresenter,
-                                         final DocSelectionPopup explorerDropDownTreePresenter) {
+                                         final ExplorerPopupController explorerDropDownTreePresenter) {
         super(eventBus, view);
         own(scriptListPresenter);
         own(explorerDropDownTreePresenter);
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
 
+        explorerDropDownTreePresenter.setIncludeNullSelection(false);
         explorerDropDownTreePresenter.setIncludedTypes(ScriptDoc.TYPE);
         explorerDropDownTreePresenter.setRequiredPermissions(DocumentPermission.USE);
 

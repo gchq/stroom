@@ -20,7 +20,7 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
-import stroom.explorer.client.presenter.DocSelectionController;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;

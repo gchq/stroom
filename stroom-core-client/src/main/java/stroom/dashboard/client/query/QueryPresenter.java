@@ -37,7 +37,7 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -105,7 +105,7 @@ public class QueryPresenter
     private final ExpressionTreeController expressionTree;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
-    private final Provider<DocSelectionPopup> pipelineSelection;
+    private final Provider<ExplorerPopupController> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final RestFactory restFactory;
     private final UiConfigCache clientPropertyCache;
@@ -136,7 +136,7 @@ public class QueryPresenter
                           final ExpressionTreeController expressionTree,
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
-                          final Provider<DocSelectionPopup> pipelineSelection,
+                          final Provider<ExplorerPopupController> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final IndexLoader indexLoader,
                           final RestFactory restFactory,
@@ -446,11 +446,12 @@ public class QueryPresenter
                 .timeRange(dashboardContext.getResolvedTimeRange())
                 .build();
 
-        final DocSelectionPopup chooser = makeDialog(pipelineSelection);
+        final ExplorerPopupController chooser = pipelineSelection.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.show(pipeline -> {
+        chooser.showOnce(this, pipeline -> {
             if (pipeline != null) {
                 setProcessorLimits(queryData, pipeline);
             }

@@ -30,10 +30,6 @@ import stroom.core.client.view.FullScreenViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.EntityCheckTreePresenter;
-import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
@@ -49,8 +45,6 @@ import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionCho
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.client.presenter.TypeFilterViewImpl;
-import stroom.explorer.client.view.EntityCheckTreeViewImpl;
-import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
@@ -116,8 +110,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
-        bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
-        bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);
         bindPresenter(
                 ExplorerNodeEditTagsPresenter.class,
                 ExplorerNodeEditTagsView.class,

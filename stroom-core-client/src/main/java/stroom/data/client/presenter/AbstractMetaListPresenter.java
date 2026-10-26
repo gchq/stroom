@@ -29,7 +29,7 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -103,7 +103,7 @@ public abstract class AbstractMetaListPresenter
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
-    private final Provider<DocSelectionPopup> pipelineSelection;
+    private final Provider<ExplorerPopupController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
     private ResultPage<MetaRow> resultPage;
@@ -126,7 +126,7 @@ public abstract class AbstractMetaListPresenter
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                              final Provider<DocSelectionPopup> pipelineSelection,
+                              final Provider<ExplorerPopupController> pipelineSelection,
                               final ExpressionValidator expressionValidator,
                               final boolean allowSelectAll,
                               final RefCellsController refCells) {
@@ -669,11 +669,12 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final DocSelectionPopup chooser = makeDialog(pipelineSelection);
+        final ExplorerPopupController chooser = pipelineSelection.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
-        chooser.show(consumer);
+        chooser.showOnce(this, consumer);
     }
 
     /**

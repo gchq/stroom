@@ -21,8 +21,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Provides;
@@ -47,7 +45,6 @@ public class ExplorerGinModule extends AbstractGinModule {
 
     @Override
     protected void configure() {
-        bind(ExplorerPopupView.class).to(ExplorerPopupViewImpl.class);
     }
 
     /// @return The current harness's event bus.

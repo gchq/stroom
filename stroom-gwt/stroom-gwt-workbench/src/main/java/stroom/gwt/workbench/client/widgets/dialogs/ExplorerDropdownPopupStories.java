@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.dialogs;
 
-import stroom.explorer.client.presenter.ExplorerPopupPresenter;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
@@ -29,7 +29,7 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [ExplorerPopupPresenter] (the explorer tree dialog that a document
+/// Stories for Stroom's [ExplorerPopupController] (the explorer tree dialog that a document
 /// selection box opens, with a quick filter above the tree).
 ///
 /// The presenter fetches its tree from the explorer service, which the harness answers from the
@@ -63,24 +63,22 @@ public final class ExplorerDropdownPopupStories {
         final Spy onClose = context.fn(ON_CLOSE);
         final ScreenHarness harness = ScreenHarness.create(context,
                 TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree()).build());
-        final ExplorerPopupPresenter popup = SelectorWidgets.explorerPopup(harness);
-        // The tree starts with Stroom's "None" row (the presenter's
+        final ExplorerPopupController popup = SelectorWidgets.explorerPopup(harness);
+        harness.own(popup);
+        // The tree starts with Stroom's "None" row (the controller's
         // default setIncludeNullSelection(true))
         if (includedTypes.length > 0) {
             popup.setIncludedTypes(includedTypes);
         }
-        harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
-            if (event.getPresenterWidget() == popup) {
-                onClose.call();
-            }
-        }));
+        // The chooser is the story's only dialog
+        harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> onClose.call()));
         harness.add(DialogWidgets.button(buttonText, DialogWidgets.PRIMARY, event -> show(popup)));
         // The popup is shown from the start
         show(popup);
         return harness.asWidget();
     }
 
-    private static void show(final ExplorerPopupPresenter popup) {
+    private static void show(final ExplorerPopupController popup) {
         popup.show(docRef -> {
             // The story only closes the popup
         });

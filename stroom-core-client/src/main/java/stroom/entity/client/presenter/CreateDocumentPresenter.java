@@ -20,7 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.client.component.EntityTree;
+import stroom.explorer.client.component.EntityTreeController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
@@ -38,6 +39,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
@@ -48,7 +50,7 @@ public class CreateDocumentPresenter
         HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
 
-    private final EntityTreePresenter entityTreePresenter;
+    private final EntityTreeController folders;
     private String docType;
     private String caption;
     private String name = "";
@@ -58,16 +60,14 @@ public class CreateDocumentPresenter
     @Inject
     public CreateDocumentPresenter(final EventBus eventBus,
                                    final CreateDocumentView view,
-                                   final EntityTreePresenter entityTreePresenter) {
+                                   final Provider<EntityTreeController> entityTreeControllerProvider) {
         super(eventBus, view);
-        own(entityTreePresenter);
 
-        this.entityTreePresenter = entityTreePresenter;
+        this.folders = make(entityTreeControllerProvider).attach(view.getFolders());
         view.setUiHandlers(this);
-        view.setFolderView(entityTreePresenter.getView());
 
-        entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
-        entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
+        folders.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
+        folders.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
     @Override
@@ -75,15 +75,15 @@ public class CreateDocumentPresenter
         docType = event.getDocType();
         newDocConsumer = event.getNewDocConsumer();
 
-        entityTreePresenter.setSelectedItem(null);
-        entityTreePresenter.setSelectedItem(event.getSelected());
-        entityTreePresenter.getTreeController().reset();
-        entityTreePresenter.getTreeController().setEnsureVisible(event.getSelected());
+        folders.setSelectedItem(null);
+        folders.setSelectedItem(event.getSelected());
+        folders.getTreeController().reset();
+        folders.getTreeController().setEnsureVisible(event.getSelected());
 
         // We want to select the parent folder, so we have a default dest to move into.
-        entityTreePresenter.setSelectParentIfNotFound(true);
+        folders.setSelectParentIfNotFound(true);
 
-        entityTreePresenter.getTreeController().refresh();
+        folders.getTreeController().refresh();
 
         caption = event.getDialogCaption();
         if (event.getInitialDocName() != null) {
@@ -152,7 +152,7 @@ public class CreateDocumentPresenter
     }
 
     private ExplorerNode getFolder() {
-        return entityTreePresenter.getSelectedItem();
+        return folders.getSelectedItem();
     }
 
     // --------------------------------------------------------------------------------
@@ -172,7 +172,8 @@ public class CreateDocumentPresenter
         /// Clears any message about the name being invalid.
         void setNameValid();
 
-        void setFolderView(View view);
+        /// @return The folder picker, for the presenter to attach its controller to.
+        EntityTree getFolders();
 
         PermissionInheritance getPermissionInheritance();
 

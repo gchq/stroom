@@ -19,7 +19,7 @@ package stroom.data.client.presenter;
 import stroom.core.client.LocationManager;
 import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.preferences.client.DateTimeFormatter;
@@ -40,7 +40,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                              final DateTimeFormatter dateTimeFormatter,
                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                             final Provider<DocSelectionPopup> pipelineSelection,
+                             final Provider<ExplorerPopupController> pipelineSelection,
                              final ExpressionValidator expressionValidator,
                              final RefCellsController refCells) {
         super(eventBus,

@@ -25,8 +25,8 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.query.client.QueryClient;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
@@ -47,7 +47,7 @@ public class BasicEmbeddedQuerySettingsPresenter
         implements Focus, BasicEmbeddedQuerySettingsUiHandlers {
 
     private final DocSelectionBoxPresenter querySelectionPresenter;
-    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
+    private final Provider<ExplorerPopupController> docSelectionPopupProvider;
     private final QueryClient queryClient;
     private QueryDoc loaded;
     private QueryDoc readEmbeddedQueryDoc;
@@ -56,7 +56,7 @@ public class BasicEmbeddedQuerySettingsPresenter
     public BasicEmbeddedQuerySettingsPresenter(final EventBus eventBus,
                                                final BasicEmbeddedQuerySettingsView view,
                                                final DocSelectionBoxPresenter querySelectionPresenter,
-                                               final Provider<DocSelectionPopup> docSelectionPopupProvider,
+                                               final Provider<ExplorerPopupController> docSelectionPopupProvider,
                                                final QueryClient queryClient) {
         super(eventBus, view);
         own(querySelectionPresenter);
@@ -180,11 +180,12 @@ public class BasicEmbeddedQuerySettingsPresenter
 
     @Override
     public void onCopyQuery() {
-        final DocSelectionPopup chooser = makeDialog(docSelectionPopupProvider);
+        final ExplorerPopupController chooser = docSelectionPopupProvider.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Query To Copy");
         chooser.setIncludedTypes(QueryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.show((doc, e) -> {
+        chooser.showOnce(this, (doc, e) -> {
             if (doc != null) {
                 queryClient.loadQueryDoc(doc,
                         queryDoc -> {

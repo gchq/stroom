@@ -47,16 +47,12 @@ import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.util.client.GlobalKeyHandler;
 
@@ -88,13 +84,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 FullScreenView.class,
                 FullScreenViewImpl.class);
 
-        bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
 
-        bindPresenterWidget(
-                EntityTreePresenter.class,
-                EntityTreePresenter.EntityTreeView.class,
-                EntityTreeViewImpl.class);
         bindPresenterWidget(
                 ExpressionPresenter.class,
                 ExpressionView.class,

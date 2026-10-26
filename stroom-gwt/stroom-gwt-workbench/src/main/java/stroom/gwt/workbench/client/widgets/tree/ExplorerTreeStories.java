@@ -17,10 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.tree;
 
+import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
-import stroom.explorer.client.presenter.EntityTreeUiHandlers;
-import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -33,7 +32,6 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.util.client.MultiSelectEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -226,7 +224,13 @@ public final class ExplorerTreeStories {
                                final ExplorerFixture fixture,
                                final Options options) {
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(fixture).build());
-        final ExplorerTree tree = new ExplorerTree();
+        // With a quick filter, the tree is the one Stroom's folder picker (EntityTree) declares
+        final EntityTree view = options.quickFilter
+                ? new EntityTree()
+                : null;
+        final ExplorerTree tree = view != null
+                ? view.getTree()
+                : new ExplorerTree();
         tree.setMultiSelect(options.multiSelect);
         // Owned by the story's root, as a screen's controller owns it in Stroom
         final ExplorerTreeController controller = harness.own(
@@ -268,19 +272,16 @@ public final class ExplorerTreeStories {
 
         final Widget widget;
         if (options.quickFilter) {
-            final EntityTreeViewImpl view = new EntityTreeViewImpl(GWT.create(EntityTreeViewImpl.Binder.class));
-            view.setCellTree(tree);
             final Spy onNameFilterChange = context.fn(ON_NAME_FILTER_CHANGE);
-            final EntityTreeUiHandlers handlers = filter -> {
+            view.setOnFilterChange(filter -> {
                 onNameFilterChange.call(filter);
                 if (options.onNameFilterChange != null) {
                     options.onNameFilterChange.accept(filter);
                 }
                 controller.changeNameFilter(filter);
-            };
-            view.setUiHandlers(handlers);
+            });
             if (options.nameFilter != null) {
-                // The filter's text, as Stroom's ExplorerPopupPresenter.setInitialQuickFilter shows it
+                // The filter's text, as Stroom's ExplorerPopupController.setInitialQuickFilter shows it
                 final NodeList<Element> inputs = view.asWidget().getElement().getElementsByTagName("input");
                 if (inputs.getLength() > 0) {
                     InputElement.as(inputs.getItem(0)).setValue(options.nameFilter);

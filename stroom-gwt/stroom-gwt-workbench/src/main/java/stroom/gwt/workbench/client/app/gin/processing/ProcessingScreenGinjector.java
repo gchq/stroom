@@ -26,7 +26,7 @@ import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
@@ -134,8 +134,8 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     /// @return A pipeline's stepper, as `PipelinePresenter` shows it in stepping mode.
     SteppingPresenter getSteppingPresenter();
 
-    /// @return A document chooser popup, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
-    DocSelectionPopup getDocSelectionPopup();
+    /// @return A document chooser, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
+    ExplorerPopupController getExplorerPopupController();
 
     /// @return The 'Change Step Filters' dialog, as `SteppingPresenter` shows it.
     SteppingFilterPresenter getSteppingFilterPresenter();

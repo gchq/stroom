@@ -3,7 +3,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max form overflow-hidden">
         <form:FormGroup identity="exportConfigSelect" label="Items To Export"
                         helpText="Tick the documents and folders to include in the export. Type in the filter box to find items by name." addStyleNames="max overflow-hidden"
@@ -13,7 +14,9 @@
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
                     <b:Toolbar ui:field="toolbar" name="Export options" addStyleNames="dock-min"/>
                 </g:FlowPanel>
-                <g:MaxScrollPanel ui:field="tree" styleName="dock-max form-control-border form-control-background"/>
+                <g:MaxScrollPanel styleName="dock-max form-control-border form-control-background">
+                    <ex:ExplorerTree ui:field="tree"/>
+                </g:MaxScrollPanel>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>

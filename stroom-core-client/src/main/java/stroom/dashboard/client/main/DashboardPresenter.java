@@ -48,7 +48,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
@@ -114,7 +114,7 @@ public class DashboardPresenter
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
-    private final Provider<DocSelectionPopup> dashboardSelection;
+    private final Provider<ExplorerPopupController> dashboardSelection;
     private CurrentSelectionPresenter currentSelectionPresenter;
     private String lastLabel;
     private boolean loaded;
@@ -151,7 +151,7 @@ public class DashboardPresenter
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
                               final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider,
                               final UrlParameters urlParameters,
-                              final Provider<DocSelectionPopup> dashboardSelection) {
+                              final Provider<ExplorerPopupController> dashboardSelection) {
         super(eventBus, view);
         own(queryToolbarPresenter);
         this.queryToolbarPresenter = queryToolbarPresenter;
@@ -641,12 +641,13 @@ public class DashboardPresenter
     }
 
     public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
-        final DocSelectionPopup chooser = makeDialog(dashboardSelection);
+        final ExplorerPopupController chooser = dashboardSelection.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Dashboard");
         chooser.setIncludedTypes(DashboardDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.EDIT);
 
-        chooser.show(dashDocRef -> {
+        chooser.showOnce(this, dashDocRef -> {
             if (dashDocRef != null) {
                 OpenDocumentEvent.builder(this, dashDocRef)
                         .forceOpen(true)

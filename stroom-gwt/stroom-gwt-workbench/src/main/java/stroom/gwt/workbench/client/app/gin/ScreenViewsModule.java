@@ -26,8 +26,6 @@ import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.Advanced
 import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -70,7 +68,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
 
         // StreamStoreModule: editors, expressions and the explorer drop downs
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
-        bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
         // DashboardModule
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);

@@ -2,13 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max form overflow-hidden">
         <form:FormGroup identity="copyDocumentSelectParentGroup"
                         label="Select the parent folder"
                         helpText="The folder that the document(s) will be copied into."
                         addStyleNames="dock-max overflow-hidden">
-            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden"/>
+            <g:SimplePanel styleName="dock-max overflow-hidden">
+                <ex:EntityTree ui:field="folders"/>
+            </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup ui:field="nameFormGroup"
                         identity="copyDocumentName"

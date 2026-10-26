@@ -20,7 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dictionary.client.presenter.DocRefListPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -39,7 +39,7 @@ import java.util.List;
 public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<WrapperView> {
 
     private final DocRefListPresenter docRefListPresenter;
-    private final Provider<DocSelectionPopup> dictionarySelection;
+    private final Provider<ExplorerPopupController> dictionarySelection;
     private final ButtonView addButton;
     private final ButtonView removeButton;
 
@@ -49,7 +49,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     public IncludeExcludeFilterDictionaryPresenter(final EventBus eventBus,
                                                    final WrapperView view,
                                                    final DocRefListPresenter docRefListPresenter,
-                                                   final Provider<DocSelectionPopup> dictionarySelection) {
+                                                   final Provider<ExplorerPopupController> dictionarySelection) {
         super(eventBus, view);
         own(docRefListPresenter);
         this.docRefListPresenter = docRefListPresenter;
@@ -74,11 +74,12 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     }
 
     private void onAdd() {
-        final DocSelectionPopup chooser = makeDialog(dictionarySelection);
+        final ExplorerPopupController chooser = dictionarySelection.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.show(docRef -> {
+        chooser.showOnce(this, docRef -> {
             if (docRef != null && !dictionaries.contains(docRef)) {
                 dictionaries.add(docRef);
                 refresh();

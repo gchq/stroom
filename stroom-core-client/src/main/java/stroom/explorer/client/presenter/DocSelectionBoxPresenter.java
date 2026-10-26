@@ -18,6 +18,8 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.DocSelectionController;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.security.shared.DocumentPermission;
@@ -47,7 +49,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownBox> imp
     @Inject
     public DocSelectionBoxPresenter(final EventBus eventBus,
                                     final DropDownBox view,
-                                    final ExplorerPopupPresenter explorerPopupPresenter,
+                                    final ExplorerPopupController explorerPopupPresenter,
                                     final RestFactory restFactory) {
         super(eventBus, view);
         controller = own(new DocSelectionController(eventBus, explorerPopupPresenter, restFactory));

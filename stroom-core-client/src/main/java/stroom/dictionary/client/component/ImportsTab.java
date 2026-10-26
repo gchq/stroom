@@ -20,7 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dictionary.client.presenter.DocRefListPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -37,11 +37,11 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Provider;
 
 /// A dictionary's Imports tab: the dictionaries it imports, which can be added and removed unless
 /// the dictionary is read only, and the effective words of the one selected.
@@ -54,11 +54,11 @@ public class ImportsTab extends Controller {
 
     private final PresenterAdapter<DocRefListPresenter> importList;
     private final EffectiveWordsList effectiveWords;
-    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
+    private final Provider<ExplorerPopupController> docSelectionPopupProvider;
     private final ToolbarButton addButton;
     private final ToolbarButton removeButton;
     // Made when first used, and kept for the next time
-    private PresenterAdapter<DocSelectionPopup> docSelectionPopup;
+    private ExplorerPopupController docSelectionPopup;
     private List<DocRef> imports = new ArrayList<>();
     private DocRef dictionary;
     private boolean readOnly = true;
@@ -74,7 +74,7 @@ public class ImportsTab extends Controller {
     public ImportsTab(final EventBus eventBus,
                       final Provider<DocRefListPresenter> docRefListPresenterProvider,
                       final EffectiveWordsList effectiveWords,
-                      final Provider<DocSelectionPopup> docSelectionPopupProvider) {
+                      final Provider<ExplorerPopupController> docSelectionPopupProvider) {
         super(eventBus);
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.effectiveWords = own(effectiveWords);
@@ -139,9 +139,10 @@ public class ImportsTab extends Controller {
 
     private void addImport() {
         if (docSelectionPopup == null) {
-            docSelectionPopup = own(PresenterAdapter.of(docSelectionPopupProvider::get));
+            docSelectionPopup = make(docSelectionPopupProvider);
+            docSelectionPopup.setIncludeNullSelection(false);
         }
-        final DocSelectionPopup chooser = docSelectionPopup.getPresenter();
+        final ExplorerPopupController chooser = docSelectionPopup;
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

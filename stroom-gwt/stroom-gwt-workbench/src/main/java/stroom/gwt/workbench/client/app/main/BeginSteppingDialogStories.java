@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -38,13 +38,14 @@ import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/BeginSteppingDialog`, showing what Stroom shows for a
-/// `BeginPipelineSteppingEvent` with no pipeline: the real [DocSelectionPopup] captioned 'Choose
+/// `BeginPipelineSteppingEvent` with no pipeline: the real [ExplorerPopupController] captioned 'Choose
 /// Pipeline To Step With', with the pipeline the server guesses for the stream selected, as
 /// `PipelinePlugin.onBeginStepping` shows it (the story does the same as the plugin, which needs
 /// the whole app to be created).
@@ -127,11 +128,12 @@ public final class BeginSteppingDialogStories {
         final String childStreamType = "RAW";
 
         // As PipelinePlugin.onBeginStepping does for an event with no pipeline
-        final DocSelectionPopup chooser = injector.getDocSelectionPopup();
+        final ExplorerPopupController chooser = injector.getExplorerPopupController();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption(CAPTION);
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
-        final Runnable showChooser = () -> chooser.show(pipeline -> {
+        final Runnable showChooser = () -> chooser.showOnce(harness.getAppRoot(), pipeline -> {
             if (pipeline != null) {
                 // PipelinePlugin.step
                 restFactory
@@ -145,7 +147,7 @@ public final class BeginSteppingDialogStories {
                                                       + ", metaId=" + row.getMeta().getId());
                             }
                         })
-                        .taskMonitorFactory(chooser)
+                        .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
                         .exec();
             }
         }, PopupType.CREATE_OK_CANCEL_DIALOG);
@@ -154,7 +156,7 @@ public final class BeginSteppingDialogStories {
                 .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
                         stepLocation.getMetaId(), null)))
                 .onSuccess(docRef -> chooser.setSelectedEntityReference(docRef, showChooser))
-                .taskMonitorFactory(chooser)
+                .taskMonitorFactory(new DefaultTaskMonitorFactory(chooser))
                 .exec());
         return harness.asWidget();
     }

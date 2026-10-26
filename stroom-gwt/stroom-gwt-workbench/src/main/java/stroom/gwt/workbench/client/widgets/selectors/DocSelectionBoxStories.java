@@ -18,8 +18,8 @@
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -239,7 +239,7 @@ public final class DocSelectionBoxStories {
     private static DocSelectionBoxPresenter box(final StoryContext context,
                                                 final ScreenHarness harness,
                                                 final String caption) {
-        final ExplorerPopupPresenter popup = SelectorWidgets.explorerPopup(harness);
+        final ExplorerPopupController popup = SelectorWidgets.explorerPopup(harness);
         if (caption != null) {
             popup.setCaption(caption);
         }

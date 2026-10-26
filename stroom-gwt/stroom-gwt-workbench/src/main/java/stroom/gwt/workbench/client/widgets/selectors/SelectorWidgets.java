@@ -17,9 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.selectors;
 
+import stroom.explorer.client.component.DocSelectionController;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.explorer.client.presenter.DocSelectionController;
-import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.component.UserRefSelectionController;
@@ -46,14 +46,14 @@ public final class SelectorWidgets {
     /// Creates an explorer popup (the tree dialog a document selection box opens).
     ///
     /// @param harness The story's harness.
-    /// @return The presenter.
-    public static ExplorerPopupPresenter explorerPopup(final ScreenHarness harness) {
+    /// @return The chooser's controller.
+    public static ExplorerPopupController explorerPopup(final ScreenHarness harness) {
         if (ginjector == null) {
             ginjector = GWT.create(ExplorerGinjector.class);
         }
         ExplorerGinModule.setCurrent(harness);
         try {
-            return ginjector.getExplorerPopupPresenter();
+            return ginjector.getExplorerPopupController();
         } finally {
             ExplorerGinModule.setCurrent(null);
         }
@@ -87,7 +87,7 @@ public final class SelectorWidgets {
     /// @param popup   The popup, from [#explorerPopup(ScreenHarness)].
     /// @return The presenter.
     public static DocSelectionBoxPresenter docSelectionBox(final ScreenHarness harness,
-                                                           final ExplorerPopupPresenter popup) {
+                                                           final ExplorerPopupController popup) {
         return new DocSelectionBoxPresenter(harness.getEventBus(),
                 new DropDownBox(),
                 popup,

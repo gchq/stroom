@@ -25,7 +25,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -46,6 +46,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -68,7 +69,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
-    private final Provider<DocSelectionPopup> pipelineSelection;
+    private final Provider<ExplorerPopupController> pipelineSelection;
+    private final AppRoot appRoot;
     private final Provider<PipelinePresenter> editorProvider;
     private final RestFactory restFactory;
     private final DocRefSelectionPresenter docRefSelectionPresenter;
@@ -80,13 +82,15 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<DocSelectionPopup> pipelineSelection,
-                          final DocRefSelectionPresenter docRefSelectionPresenter) {
+                          final Provider<ExplorerPopupController> pipelineSelection,
+                          final DocRefSelectionPresenter docRefSelectionPresenter,
+                          final AppRoot appRoot) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
         this.docRefSelectionPresenter = docRefSelectionPresenter;
+        this.appRoot = appRoot;
 
         getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
             final Processor processor = event.getProcessorFilter().getProcessor();
@@ -193,7 +197,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     public void onBeginStepping(final BeginPipelineSteppingEvent event) {
-        final DocSelectionPopup chooser = pipelineSelection.get();
+        final ExplorerPopupController chooser = pipelineSelection.get();
+        chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
@@ -215,17 +220,18 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                             event.getChildStreamId())))
                     .onSuccess(docRef ->
                             chooser.setSelectedEntityReference(docRef, showChooser))
-                    .taskMonitorFactory(chooser)
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         }
     }
 
-    private void choosePipeline(final DocSelectionPopup docRefChooserPopup,
+    private void choosePipeline(final ExplorerPopupController docRefChooserPopup,
                                 final StepType stepType,
                                 final StepLocation stepLocation,
                                 final String childStreamType) {
 
-        docRefChooserPopup.show(pipeDocRef -> {
+        // The app owns the chooser while it is shown, as a plugin owns nothing
+        docRefChooserPopup.showOnce(appRoot, pipeDocRef -> {
             if (pipeDocRef != null) {
                 step(stepType, stepLocation, childStreamType, pipeDocRef);
             }

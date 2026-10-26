@@ -20,7 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
-import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.client.component.EntityTree;
+import stroom.explorer.client.component.EntityTreeController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -34,6 +35,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -42,7 +44,7 @@ public class CopyDocumentPresenter
         extends MyPresenterWidget<CopyDocumentView>
         implements ShowCopyDocumentDialogEvent.Handler {
 
-    private final EntityTreePresenter entityTreePresenter;
+    private final EntityTreeController folders;
     private List<ExplorerNode> explorerNodeList;
     private boolean singleItemMode;
     private ExplorerNode firstChild;
@@ -50,21 +52,19 @@ public class CopyDocumentPresenter
     @Inject
     public CopyDocumentPresenter(final EventBus eventBus,
                                  final CopyDocumentView view,
-                                 final EntityTreePresenter entityTreePresenter) {
+                                 final Provider<EntityTreeController> entityTreeControllerProvider) {
         super(eventBus, view);
-        own(entityTreePresenter);
-        this.entityTreePresenter = entityTreePresenter;
-        view.setFolderView(entityTreePresenter.getView());
+        this.folders = make(entityTreeControllerProvider).attach(view.getFolders());
 
-        entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
-        entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
+        folders.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
+        folders.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
     @Override
     public void onCopy(final ShowCopyDocumentDialogEvent event) {
         this.explorerNodeList = event.getExplorerNodeList();
 
-        entityTreePresenter.setSelectedItem(null);
+        folders.setSelectedItem(null);
 
         singleItemMode = event.getExplorerNodeList().size() == 1;
         firstChild = event.getExplorerNodeList().get(0);
@@ -84,13 +84,13 @@ public class CopyDocumentPresenter
             getView().setName("");
         }
 
-        entityTreePresenter.setSelectedItem(firstChild);
-        entityTreePresenter.getTreeController().reset();
-        entityTreePresenter.getTreeController().setEnsureVisible(firstChild);
-        entityTreePresenter.getTreeController().refresh();
+        folders.setSelectedItem(firstChild);
+        folders.getTreeController().reset();
+        folders.getTreeController().setEnsureVisible(firstChild);
+        folders.getTreeController().refresh();
 
         // We want to select the parent folder, so we have a default dest to copy into.
-        entityTreePresenter.setSelectParentIfNotFound(true);
+        folders.setSelectParentIfNotFound(true);
 
         show();
     }
@@ -108,13 +108,13 @@ public class CopyDocumentPresenter
                 .modal()
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> entityTreePresenter.focus())
+                .onShow(e -> folders.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         if (singleItemMode && NullSafe.isBlankString(getView().getName())) {
                             AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", e::reset);
                         } else {
-                            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+                            final ExplorerNode folder = folders.getSelectedItem();
                             CopyDocumentEvent.fire(
                                     CopyDocumentPresenter.this,
                                     e,
@@ -143,7 +143,8 @@ public class CopyDocumentPresenter
 
         void setNameVisible(boolean visible);
 
-        void setFolderView(View view);
+        /// @return The folder picker, for the presenter to attach its controller to.
+        EntityTree getFolders();
 
         PermissionInheritance getPermissionInheritance();
 

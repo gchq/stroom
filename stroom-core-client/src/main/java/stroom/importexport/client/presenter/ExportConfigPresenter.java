@@ -22,8 +22,9 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.component.EntityCheckTreeController;
+import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -50,6 +51,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashSet;
@@ -63,7 +65,7 @@ public class ExportConfigPresenter
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final LocationManager locationManager;
-    private final EntityCheckTreePresenter treePresenter;
+    private final EntityCheckTreeController tree;
     private final TypeFilterPresenter typeFilterPresenter;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
@@ -75,16 +77,15 @@ public class ExportConfigPresenter
     public ExportConfigPresenter(final EventBus eventBus,
                                  final ExportConfigView view,
                                  final LocationManager locationManager,
-                                 final EntityCheckTreePresenter treePresenter,
+                                 final Provider<EntityCheckTreeController> entityCheckTreeControllerProvider,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final RestFactory restFactory,
                                  final DocumentTypeCache documentTypeCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(treePresenter);
         own(typeFilterPresenter);
         this.locationManager = locationManager;
-        this.treePresenter = treePresenter;
+        this.tree = make(entityCheckTreeControllerProvider).attach(view.getTree());
         this.typeFilterPresenter = typeFilterPresenter;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
@@ -92,16 +93,15 @@ public class ExportConfigPresenter
         filter = getView().getToolbar().toggle(SvgImage.FILTER, "Filter Document Types", null);
         filter.setPressed(hasActiveFilter);
 
-        view.setTreeView(treePresenter.getView());
-        treePresenter.setFilterErrorConsumer(view::setFilterError);
+        tree.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);
 
         // Only show the System node at the root for export
-        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
+        tree.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
 
-        own(typeFilterPresenter.addSelectionListener(event -> treePresenter.setIncludedTypeSet(
+        own(typeFilterPresenter.addSelectionListener(event -> tree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         own(filter.addClickHandler((e) ->
@@ -124,8 +124,8 @@ public class ExportConfigPresenter
     public void onExport(final ExportConfigEvent event) {
         if (event.getSelection() != null) {
             for (final ExplorerNode node : event.getSelection()) {
-                treePresenter.getTreeController().setEnsureVisible(new HashSet<>(event.getSelection()));
-                treePresenter.setSelected(node, true);
+                tree.getTreeController().setEnsureVisible(new HashSet<>(event.getSelection()));
+                tree.setSelected(node, true);
             }
         }
 
@@ -154,8 +154,8 @@ public class ExportConfigPresenter
         // Set the data for the type filter.
         documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, this);
 
-        treePresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        treePresenter.refresh();
+        tree.setRequiredPermissions(DocumentPermission.VIEW);
+        tree.refresh();
 
         getView().focus();
     }
@@ -164,7 +164,7 @@ public class ExportConfigPresenter
 //        // Disable the popup ok/cancel buttons before we attempt export.
 //        DisablePopupEvent.builder(this).fire();
 
-        final Set<ExplorerNode> dataItems = treePresenter.getSelectedSet();
+        final Set<ExplorerNode> dataItems = tree.getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
             AlertEvent.fireWarn(this, "No folders have been selected for export", event::reset);
@@ -192,7 +192,7 @@ public class ExportConfigPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        treePresenter.changeNameFilter(name);
+        tree.changeNameFilter(name);
     }
 
     @Override
@@ -207,7 +207,8 @@ public class ExportConfigPresenter
 
     public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
 
-        void setTreeView(View view);
+        /// @return The tree of items to tick, for the presenter to attach its controller to.
+        ExplorerTree getTree();
 
         /**
          * Show why the server rejected the filter, or clear it when passed null.

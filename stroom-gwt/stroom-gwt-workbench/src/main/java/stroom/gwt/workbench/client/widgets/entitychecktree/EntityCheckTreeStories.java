@@ -17,9 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.entitychecktree;
 
+import stroom.explorer.client.component.EntityCheckTreeController;
+import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
-import stroom.explorer.client.presenter.EntityCheckTreePresenter;
-import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
@@ -32,20 +32,20 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories for Stroom's [EntityCheckTreePresenter]: an explorer tree with a tri-state tick box on
+/// Stories for Stroom's [EntityCheckTreeController]: an explorer tree with a tri-state tick box on
 /// each node (e.g. for choosing the documents to export). The tree is fetched from an [ExplorerFixture].
 public final class EntityCheckTreeStories {
 
@@ -99,11 +99,13 @@ public final class EntityCheckTreeStories {
                         .withUuid("sys"));
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(fixture).build());
 
-        final EntityCheckTreeViewImpl view = new EntityCheckTreeViewImpl(
-                GWT.create(EntityCheckTreeViewImpl.Binder.class));
-        final EntityCheckTreePresenter presenter = new EntityCheckTreePresenter(view,
+        // In a panel, as the export dialog's template declares it in one
+        final ExplorerTree explorerTree = new ExplorerTree();
+        final SimplePanel view = new SimplePanel(explorerTree);
+        final EntityCheckTreeController presenter = new EntityCheckTreeController(
                 () -> new ExplorerTreeController(harness.getRestFactory()));
         harness.own(presenter);
+        presenter.attach(explorerTree);
         presenter.refresh();
 
         final Label checked = new Label();

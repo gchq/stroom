@@ -18,7 +18,7 @@ package stroom.query.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionController;
+import stroom.explorer.client.component.DocSelectionController;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;

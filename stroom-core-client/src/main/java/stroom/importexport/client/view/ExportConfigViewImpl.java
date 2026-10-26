@@ -16,19 +16,18 @@
 
 package stroom.importexport.client.view;
 
+import stroom.explorer.client.component.ExplorerTree;
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ExportConfigUiHandlers;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -40,7 +39,7 @@ public class ExportConfigViewImpl
     @UiField
     QuickFilter nameFilter;
     @UiField
-    MaxScrollPanel tree;
+    ExplorerTree tree;
     @UiField
     Toolbar toolbar;
 
@@ -62,8 +61,8 @@ public class ExportConfigViewImpl
     }
 
     @Override
-    public void setTreeView(final View view) {
-        tree.setWidget(view.asWidget());
+    public ExplorerTree getTree() {
+        return tree;
     }
 
     @Override

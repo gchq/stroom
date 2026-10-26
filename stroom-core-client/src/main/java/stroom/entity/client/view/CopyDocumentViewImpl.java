@@ -17,16 +17,15 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
+import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,7 +34,7 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
 
     private final Widget widget;
     @UiField
-    SimplePanel foldersInner;
+    EntityTree folders;
     @UiField
     FormGroup nameFormGroup;
     @UiField
@@ -75,10 +74,8 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
     }
 
     @Override
-    public void setFolderView(final View view) {
-        view.asWidget().setWidth("100%");
-        view.asWidget().setHeight("100%");
-        foldersInner.setWidget(view.asWidget());
+    public EntityTree getFolders() {
+        return folders;
     }
 
     @Override

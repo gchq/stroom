@@ -460,8 +460,8 @@ for that directory), so no screen needed editing.
   box's input is a text field too.
 - **Quick filters** are named for what they filter ("Filter users and groups"), as a placeholder is
   only a hint: by a form group's label, in their template (`accessibleName`), or by their presenter
-  through the shared views' `setAccessibleName` (`QuickFilterPageView`, `QuickFilterDialogView`,
-  `ExplorerPopupView`). A selection box's list's filter is "Filter" and the box's name.
+  through the shared views' `setAccessibleName` (`QuickFilterPageView`, `QuickFilterDialogView`;
+  the explorer's chooser, `ExplorerPopup`, names its own in its template). A selection box's list's filter is "Filter" and the box's name.
 - **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
   were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
   (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
@@ -589,7 +589,7 @@ been tried with a screen reader.
 
 The document and user pickers (`DocSelectionController` and `UserRefSelectionController`, drawn by
 `DropDownBox`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
-quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of users and groups
+quick filter over the explorer tree (`ExplorerPopupController`) or a grid of users and groups
 (`UserRefPopupPresenter`). Enter or Space on a picker opens it.
 
 - **Modal.** The dialogs are shown `.modal(true)`: the glass covers the page, they are `aria-modal`,

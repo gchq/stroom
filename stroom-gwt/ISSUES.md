@@ -2474,7 +2474,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   with its tick. The widget looks as it did. Workbench: `Widgets/Inputs/TickBox` `Basic`,
   `ReadOnly`, `NoLabel`; `Widgets/Cell Renderers/TickBoxCell` `InGrid`.
 * **The pickers' dialogs couldn't be used well from the keyboard, and the focus left them**
-  (`ExplorerPopupPresenter`, `UserRefPopupPresenter`, `QuickFilter`, `PopupUtil`): Down in the
+  (`ExplorerPopupController`, `UserRefPopupPresenter`, `QuickFilter`, `PopupUtil`): Down in the
   quick filter did nothing; tabbing into the tree landed on "None", not the chosen document, and
   into the grid on an unnamed element; moving only highlighted, Space choosing; Enter on a user did
   nothing; and Tab from Cancel went to the page behind, as no dialog kept the focus in it (and the

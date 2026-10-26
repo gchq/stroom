@@ -2,12 +2,15 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ex="urn:import:stroom.explorer.client.component">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent folder"
                         addStyleNames="dock-max overflow-hidden focus-ring-room"
                         helpText="The folder to create the new item in.">
-            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden default-min-sizes focus-ring-room"/>
+            <g:SimplePanel styleName="dock-max overflow-hidden default-min-sizes focus-ring-room">
+                <ex:EntityTree ui:field="folders"/>
+            </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup ui:field="nameGroup" identity="createDocumentName" label="Name" addStyleNames="dock-min" required="true"
                         helpText="The name of the new item. Folder names may only contain letters, numbers, spaces and _ - . ( )."

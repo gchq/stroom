@@ -17,14 +17,13 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
+import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -33,7 +32,7 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
     private final Widget widget;
 
     @UiField
-    SimplePanel foldersInner;
+    EntityTree folders;
     @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 
@@ -54,10 +53,8 @@ public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
     }
 
     @Override
-    public void setFolderView(final View view) {
-        view.asWidget().setWidth("100%");
-        view.asWidget().setHeight("100%");
-        foldersInner.setWidget(view.asWidget());
+    public EntityTree getFolders() {
+        return folders;
     }
 
     @Override

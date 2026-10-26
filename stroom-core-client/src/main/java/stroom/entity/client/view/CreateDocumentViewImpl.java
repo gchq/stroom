@@ -17,12 +17,12 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
+import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,7 +38,7 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHan
 
     private final Widget widget;
     @UiField
-    SimplePanel foldersInner;
+    EntityTree folders;
     @UiField
     FormGroup nameGroup;
     @UiField
@@ -73,8 +72,8 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHan
     }
 
     @Override
-    public void setFolderView(final View view) {
-        foldersInner.setWidget(view.asWidget());
+    public EntityTree getFolders() {
+        return folders;
     }
 
     @Override

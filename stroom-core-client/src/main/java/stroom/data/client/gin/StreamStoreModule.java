@@ -51,8 +51,6 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
-import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 
 public class StreamStoreModule extends PluginModule {
 
@@ -106,6 +104,5 @@ public class StreamStoreModule extends PluginModule {
 
         bind(ProcessorTaskListPresenter.class);
 
-        bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
     }
 }
