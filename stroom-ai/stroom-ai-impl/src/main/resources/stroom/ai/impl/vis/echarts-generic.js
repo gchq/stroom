@@ -905,6 +905,55 @@ if (!window.visualisations) {
     }
 
     // What a click on a category chart's bar or point selects: its category, and its series if one is mapped.
+    // For a chart whose categories are dates in time order (e.g. a bar per day), what a range dragged across them
+    // stands for: from the start of the first to the end of the last (e.g. the whole of its day). Null if they
+    // aren't dates in order (e.g. sorted by value), as a range across them would mean nothing.
+    function categoryTimes(fields, id, categories, prefs) {
+        if (fields.type(id) !== "DATE_TIME" || categories.length === 0) {
+            return null;
+        }
+        var times = categories.map(function (label) {
+            return Number(fields.rawOf(id, label));
+        });
+        var rising = true;
+        var falling = true;
+        for (var i = 0; i < times.length; i++) {
+            if (!isFinite(times[i])) {
+                return null;
+            }
+            if (i > 0) {
+                rising = rising && times[i] > times[i - 1];
+                falling = falling && times[i] < times[i - 1];
+            }
+        }
+        if (!rising && !falling) {
+            return null;
+        }
+        var bucket = fields.bucket(id);
+        var last = times.length - 1;
+        return {
+            // The time from the first category's start to the last's end, of those between two (by index).
+            range: function (first, second) {
+                var a = Math.max(0, Math.min(last, Math.round(Math.min(first, second))));
+                var b = Math.max(0, Math.min(last, Math.round(Math.max(first, second))));
+                var start = Math.min(times[a], times[b]);
+                var latest = Math.max(times[a], times[b]);
+                var end = bucketEnd(latest, bucket, prefs.timeZone);
+                return [start, end > latest ? end - 1 : latest];
+            },
+            // The indices of the first and last categories within a time range, or null if none are.
+            indices: function (start, end) {
+                var found = null;
+                times.forEach(function (time, index) {
+                    if (time >= start && time <= end) {
+                        found = found ? [found[0], index] : [index, index];
+                    }
+                });
+                return found;
+            }
+        };
+    }
+
     function matrixSelectAt(fields, matrix, categoryId) {
         return function (seriesIndex, dataIndex) {
             var category = matrix.categories[dataIndex];
@@ -948,6 +997,8 @@ if (!window.visualisations) {
             xAxis: horizontal ? valAxis : catAxis,
             yAxis: horizontal ? catAxis : valAxis,
             selectAt: matrixSelectAt(fields, matrix, "category"),
+            // Bars of dates in time order: a time range is dragged across them.
+            rangeAt: categoryTimes(fields, "category", matrix.categories, prefs),
             series: matrix.series.map(function (series) {
                 return {
                     type: "bar",
@@ -2705,7 +2756,7 @@ if (!window.visualisations) {
         });
     }
 
-    function addZoom(kind, option, style, settings) {
+    function addZoom(kind, option, style, settings, rangeAt) {
         var top;
         var right;
         if (kind === "graph") {
@@ -2769,19 +2820,25 @@ if (!window.visualisations) {
             iconStyle: {borderColor: style.subtleText},
             emphasis: {iconStyle: {borderColor: style.text, textFill: style.text}}
         };
-        addRangeSelect(kind, option, style);
+        addRangeSelect(kind, option, style, rangeAt);
     }
 
-    // A tool to select a time range on a chart whose x axis is time (a line chart's, or a scatter plot's), by
-    // dragging across it. The range is the chart's selection (from and to), for the dashboard's filters.
-    function addRangeSelect(kind, option, style) {
-        if ((kind !== "line" && kind !== "scatter") || !option.toolbox || !option.xAxis
-            || option.xAxis.type !== "time") {
+    // A tool to select a time range by dragging across the chart: along a time axis (a line chart's, or a scatter
+    // plot's), or across bars of dates in time order (down them, for a horizontal bar chart). The range is the
+    // chart's selection (from and to), for the dashboard's filters.
+    function addRangeSelect(kind, option, style, rangeAt) {
+        if (!option.toolbox || !option.xAxis || !option.yAxis) {
             return;
         }
+        var timeAxis = (kind === "line" || kind === "scatter") && option.xAxis.type === "time";
+        var dateBars = kind === "bar" && rangeAt;
+        if (!timeAxis && !dateBars) {
+            return;
+        }
+        var down = dateBars && option.yAxis.type === "category";
+        var brushType = down ? "lineY" : "lineX";
         option.brush = {
-            xAxisIndex: 0,
-            brushType: "lineX",
+            brushType: brushType,
             brushMode: "single",
             transformable: true,
             // Kept until cleared with the tool or the selection bar, so what is drawn stays the selection.
@@ -2791,10 +2848,30 @@ if (!window.visualisations) {
             brushStyle: {borderWidth: 1, color: "rgba(120, 140, 180, 0.15)", borderColor: style.subtleText},
             outOfBrush: {colorAlpha: 0.35}
         };
-        option.toolbox.feature.brush = {
-            type: ["lineX", "clear"],
-            title: {lineX: "Select a time range", clear: "Clear the time range"}
-        };
+        option.brush[down ? "yAxisIndex" : "xAxisIndex"] = 0;
+        var types = {};
+        types[brushType] = "Select a time range";
+        types.clear = "Clear the time range";
+        option.toolbox.feature.brush = {type: [brushType, "clear"], title: types};
+    }
+
+    // The range tool's area for a selected time range: along the time axis, or across the bars it covers (by
+    // index). Null if no bar is in it.
+    function brushArea(option, rangeAt, range) {
+        if (!option.brush) {
+            return null;
+        }
+        var coords = rangeAt ? rangeAt.indices(range[0], range[1]) : range;
+        if (!coords) {
+            return null;
+        }
+        var area = {brushType: option.brush.brushType, coordRange: coords};
+        if (option.brush.yAxisIndex !== undefined) {
+            area.yAxisIndex = 0;
+        } else {
+            area.xAxisIndex = 0;
+        }
+        return area;
     }
 
     function buildOption(context, settings, data, prefs, style) {
@@ -2824,6 +2901,9 @@ if (!window.visualisations) {
             return null;
         };
         delete option.selectAt;
+        // For categories that are dates in order, what a range dragged across them stands for.
+        var rangeAt = option.rangeAt || null;
+        delete option.rangeAt;
         Object.keys(option).forEach(function (key) {
             if (option[key] === undefined) {
                 delete option[key];
@@ -2864,7 +2944,7 @@ if (!window.visualisations) {
         });
 
         applyValueSettings(kind, option, settings, style, prefs, report);
-        addZoom(kind, option, style, settings);
+        addZoom(kind, option, style, settings, rangeAt);
 
         var cleaned = sanitiseOptions(settings.options);
         cleaned.warnings.forEach(function (warning) {
@@ -2897,7 +2977,7 @@ if (!window.visualisations) {
         } else if (report.points === 0) {
             report.status = "nothing-drawn";
         }
-        return {option: option, report: report, selectAt: selectAt};
+        return {option: option, report: report, selectAt: selectAt, rangeAt: option.brush ? rangeAt : null};
     }
 
     // ------------------------------------------------------------------------------------------
@@ -3209,10 +3289,9 @@ if (!window.visualisations) {
             }
             if (selected.range) {
                 // A time range is shown as the range tool's area.
+                var area = built ? brushArea(built.option, built.rangeAt, selected.range) : null;
                 if (built && built.option.brush) {
-                    chart.dispatchAction({type: "brush", areas: type === "select"
-                        ? [{brushType: "lineX", xAxisIndex: 0, coordRange: selected.range}]
-                        : []});
+                    chart.dispatchAction({type: "brush", areas: type === "select" && area ? [area] : []});
                 }
             } else {
                 selected.items.forEach(function (item) {
@@ -3286,6 +3365,12 @@ if (!window.visualisations) {
             }
             var start = Math.min(from, to);
             var end = Math.max(from, to);
+            if (built && built.rangeAt) {
+                // Across bars: from the first bar's time to the end of the last's.
+                var times = built.rangeAt.range(from, to);
+                start = times[0];
+                end = times[1];
+            }
             if (selected && selected.items) {
                 showSelected("unselect");
             }
@@ -3461,6 +3546,7 @@ if (!window.visualisations) {
         sanitiseOptions: sanitiseOptions,
         readPreferences: readPreferences,
         selectionLabel: selectionLabel,
+        brushArea: brushArea,
         reversed: reversed,
         Fields: Fields,
         version: ADAPTER_VERSION

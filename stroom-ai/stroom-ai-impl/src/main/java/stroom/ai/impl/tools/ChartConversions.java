@@ -195,10 +195,12 @@ final class ChartConversions {
                 }
             });
             if (timeAxis(oldKind, oldMappings, columns, sample) && !timeAxis(kind, mappings, columns, sample)) {
-                warnings.add("The " + oldName + "'s time axis goes, with its zoom and the time range dragged "
-                             + "across it" + (kind == ChartKind.BAR
-                        ? ": a bar chart draws each time as a bar of its own"
-                        : "") + ".");
+                warnings.add(isDate(mappings.get("category"), columns, sample) && kind == ChartKind.BAR
+                        ? "The " + oldName + "'s time axis goes: a bar chart draws each time as a bar of its own. "
+                          + "A time range is still dragged across the bars (its range tool), while they are in "
+                          + "time order rather than sorted by value."
+                        : "The " + oldName + "'s time axis goes, with its zoom and the time range dragged across "
+                          + "it.");
             }
         }
         if (kind == ChartKind.LINE && oldKind != ChartKind.LINE
@@ -347,9 +349,13 @@ final class ChartConversions {
         if (kind != ChartKind.LINE && kind != ChartKind.SCATTER) {
             return false;
         }
-        final String x = mappings.get("x");
+        return isDate(mappings.get("x"), columns, sample);
+    }
+
+    // Whether a column of the table holds dates.
+    private static boolean isDate(final String name, final List<TableColumn> columns, final Sample sample) {
         return columns.stream()
-                .filter(column -> column.name().equals(x))
+                .filter(column -> column.name().equals(name))
                 .findFirst()
                 .flatMap(column -> holds(column, sample))
                 .filter(ChartRole.Values.DATE::equals)
