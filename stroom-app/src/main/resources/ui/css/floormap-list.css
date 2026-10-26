@@ -23,9 +23,11 @@
     height: 100%;
 }
 
+/* A toolbar (24px, with a 2px margin) in a 26px strip, as it was: no margin under it. Not clipped,
+   so a focused button's ring shows whole */
 .floormap-list__toolbar {
-    flex: 0 0 26px;
-    overflow: hidden;
+    flex: 0 0 24px;
+    margin-bottom: 0;
 }
 
 .floormap-list__grid {

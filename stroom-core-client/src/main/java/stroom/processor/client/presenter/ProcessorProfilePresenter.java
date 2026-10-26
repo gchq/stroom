@@ -19,11 +19,11 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.processor.client.component.ProcessorProfileListController;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.inject.Inject;
@@ -36,52 +36,29 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     public static final String TAB_TYPE = "ProcessorProfiles";
 
-    private final ProcessorProfileListPresenter processorProfileListPresenter;
+    private final ProcessorProfileListController processorProfileList;
     private final Provider<ProcessorProfileEditPresenter> editProvider;
     private final ProcessorProfileClient processorProfileClient;
 
-    private final ButtonView newButton;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
 
     @Inject
     public ProcessorProfilePresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final ProcessorProfileListPresenter processorProfileListPresenter,
+            final ProcessorProfileListController processorProfileList,
             final Provider<ProcessorProfileEditPresenter> editProvider,
             final ProcessorProfileClient processorProfileClient) {
 
         super(eventBus, view);
-        own(processorProfileListPresenter);
-        this.processorProfileListPresenter = processorProfileListPresenter;
+        own(processorProfileList);
+        this.processorProfileList = processorProfileList;
         this.editProvider = editProvider;
         this.processorProfileClient = processorProfileClient;
 
-        processorProfileListPresenter.getView().getToolbar().setName("Profile actions");
-        newButton = processorProfileListPresenter.getView().getToolbar().button(
-                SvgImage.ADD,
-                "New Processor Profile",
-                this::add);
-        openButton = processorProfileListPresenter.getView().getToolbar().button(
-                SvgImage.EDIT,
-                "Edit Selected Processor Profile",
-                this::edit);
-        openButton.setEnabled(false);
-        deleteButton = processorProfileListPresenter.getView().getToolbar().button(
-                SvgImage.DELETE,
-                "Delete Selected Processor Profiles",
-                this::delete);
-        deleteButton.setEnabled(false);
-
-        view.setView(processorProfileListPresenter.getView());
-
-        own(processorProfileListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                edit();
-            }
-        }));
+        processorProfileList.setOnNew(this::add);
+        processorProfileList.setOnEdit(this::edit);
+        processorProfileList.setOnDelete(this::delete);
+        view.setView(processorProfileList);
     }
 
     private void add() {
@@ -91,7 +68,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit() {
-        final ProcessorProfile processorProfile = processorProfileListPresenter.getSelectionModel().getSelected();
+        final ProcessorProfile processorProfile = processorProfileList.getSelectionModel().getSelected();
         if (processorProfile != null) {
             processorProfileClient.fetchById(processorProfile.getId(), this::edit, this);
         }
@@ -103,7 +80,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void delete() {
-        final List<ProcessorProfile> list = processorProfileListPresenter.getSelectionModel().getSelectedItems();
+        final List<ProcessorProfile> list = processorProfileList.getSelectionModel().getSelectedItems();
         if (!NullSafe.isEmptyCollection(list)) {
             String message = "Are you sure you want to delete the selected processor profile?";
             if (list.size() > 1) {
@@ -112,7 +89,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
             ConfirmEvent.fire(ProcessorProfilePresenter.this, message,
                     result -> {
                         if (result) {
-                            processorProfileListPresenter.getSelectionModel().clear();
+                            processorProfileList.getSelectionModel().clear();
                             for (final ProcessorProfile processorProfile : list) {
                                 processorProfileClient.delete(processorProfile.getId(), response -> refresh(), this);
                             }
@@ -121,15 +98,9 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
         }
     }
 
-    private void enableButtons() {
-        final boolean enabled = processorProfileListPresenter.getSelectionModel().getSelected() != null;
-        openButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
-    }
-
     @Override
     public void refresh() {
-        processorProfileListPresenter.refresh();
+        processorProfileList.refresh();
     }
 
     @Override

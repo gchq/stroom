@@ -16,9 +16,9 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 public class WrapperViewImpl extends ViewImpl implements WrapperView {
@@ -30,7 +30,7 @@ public class WrapperViewImpl extends ViewImpl implements WrapperView {
         return widget;
     }
 
-    public void setView(final View view) {
+    public void setView(final IsWidget view) {
         setWidget(view.asWidget());
     }
 

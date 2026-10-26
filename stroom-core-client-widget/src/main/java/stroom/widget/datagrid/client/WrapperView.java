@@ -18,11 +18,12 @@ package stroom.widget.datagrid.client;
 
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 public interface WrapperView extends View {
 
-    void setView(View view);
+    void setView(IsWidget view);
 
     void setWidget(Widget widget);
 }
