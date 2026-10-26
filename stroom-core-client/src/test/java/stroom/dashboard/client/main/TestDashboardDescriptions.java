@@ -25,6 +25,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,5 +114,48 @@ class TestDashboardDescriptions {
         assertThat(added.op()).isEqualTo(Op.OR);
         assertThat(DashboardDescriptions.withChartId(planned, "vis-1", "vis-1")).isSameAs(planned);
         assertThat(DashboardDescriptions.withChartId(null, "new-chart", "vis-1")).isNull();
+    }
+
+    @Test
+    void aConvertedChartsSelectionKeysAreRenamedInItsFilters() {
+        final ExpressionOperator filter = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("Day").condition(Condition.GREATER_THAN_OR_EQUAL_TO)
+                        .value("${component.vis-1.selection.from}").build())
+                .addOperator(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("User").condition(Condition.EQUALS)
+                                .value("${component.vis-1.selection.x}").build())
+                        .addTerm(ExpressionTerm.builder().field("Kind").condition(Condition.EQUALS)
+                                .value("${component.vis-1.selection.category}").build())
+                        .addTerm(ExpressionTerm.builder().field("Host").condition(Condition.EQUALS)
+                                .value("${component.vis-1.selection.xy}").build())
+                        .addTerm(ExpressionTerm.builder().field("Other").condition(Condition.EQUALS)
+                                .value("${component.vis-2.selection.x}").build())
+                        .build())
+                .build();
+        // Swapped at once, not one after the other.
+        final Map<String, String> renamed = Map.of("x", "category", "category", "series");
+
+        final ExpressionOperator converted = DashboardDescriptions.withSelections(filter, "vis-1", renamed);
+
+        assertThat(converted.toString())
+                .contains("User = ${component.vis-1.selection.category}")
+                // Only whole keys, of this chart.
+                .contains("Host = ${component.vis-1.selection.xy}")
+                .contains("Other = ${component.vis-2.selection.x}")
+                .contains("Kind = ${component.vis-1.selection.series}")
+                .contains("${component.vis-1.selection.from}");
+        assertThat(converted.op()).isEqualTo(Op.OR);
+        assertThat(DashboardDescriptions.withSelections(filter, "vis-3", renamed)).isSameAs(filter);
+        assertThat(DashboardDescriptions.withSelections(filter, "vis-1", Map.of())).isSameAs(filter);
+        assertThat(DashboardDescriptions.withSelections(null, "vis-1", renamed)).isNull();
+    }
+
+    @Test
+    void renamedKeysAreReadAsTheServerGivesThem() {
+        assertThat(DashboardDescriptions.renamedKeys("x=category, series=name"))
+                .containsOnly(Map.entry("x", "category"), Map.entry("series", "name"));
+        assertThat(DashboardDescriptions.renamedKeys("broken,=name,x=")).isEmpty();
+        assertThat(DashboardDescriptions.renamedKeys(null)).isEmpty();
     }
 }

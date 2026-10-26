@@ -89,6 +89,12 @@ class TestProposeVisualisationTool {
                                                  + "Visualisation: 'Bar chart' (uuid bar-uuid)\n"
                                                  + "Linked table: 'Links'\n"
                                                  + RENDER_REPORT_LINE + "\n";
+    // The dashboard with the old chart's pane as it draws, and the query its clicks filter.
+    private static final String CONVERTED_TEXT = "## Query 'Query' (id query-1)\n"
+                                                 + "Query selection filters: [id f1] AND {From = "
+                                                 + "${component.vis-1.selection.category}}; [id f2] AND {To = "
+                                                 + "${component.vis-1.selection.series}}\n"
+                                                 + DASHBOARD_TEXT;
     private static final String EMBEDDED_QUERY_TEXT = "from \"Messages\"\nselect From, To, count() as Count";
     private static final String QUERY_TEXT = "from \"Messages\"\nselect From, To, count() as Count\n";
     private static final String SAMPLE_PATH = "/tabs/1/results/links.csv";
@@ -229,6 +235,73 @@ class TestProposeVisualisationTool {
             assertThat(plan.componentName()).isEqualTo("Old chart");
             assertThat(plan.componentId()).isEqualTo("table-1");
         });
+    }
+
+    @Test
+    void aConvertedChartsFiltersFollowItAndWhatItLosesIsSaid() {
+        // The old chart: a bar chart of messages per sender, split by recipient, whose clicks filter the query.
+        dashboardTab(List.of(linksTable()), false, CONVERTED_TEXT);
+        Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
+        Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
+        Mockito.when(chartLibraries.generatedChart(OLD_CHART)).thenReturn(mapOf("kind", "bar", "category", "From",
+                "value", "Count", "series", "To"));
+        final Map<String, Object> args = pieArgs();
+        args.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+
+        assertThat(call(args))
+                .contains("shown an 'Update visualisation' button for a pie chart of table 'Links'")
+                .contains("Selection filter [id f1] on 'Query' follows the new chart: category is now name.")
+                .contains("What converting the chart loses (tell the user before they click):\n"
+                          + "- Selection filter [id f2] on 'Query' uses the bar chart's selection 'series', which "
+                          + "a click on the pie chart doesn't select (it selects: name, From)")
+                .contains("- 'To' (the bar chart's series) isn't in the pie chart.");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
+            assertThat(plan.replace().selections()).containsExactlyEntriesOf(Map.of("category", "name"));
+            assertThat(plan.replace().componentId()).isEqualTo("vis-1");
+        });
+    }
+
+    @Test
+    void aConversionTheTableCantMakeRecommendsWhatItCan() {
+        // Asked for in testing: a pie chart converted to a time series, when the table has no time.
+        dashboardTab(List.of(linksTable()), false, CONVERTED_TEXT);
+        Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
+        Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
+        Mockito.when(chartLibraries.generatedChart(OLD_CHART)).thenReturn(mapOf("kind", "pie", "name", "From",
+                "value", "Count"));
+        final Map<String, Object> args = pieArgs();
+        args.put(ProposeVisualisationTool.KIND_ARG, "calendar");
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("date", "From", "value", "Count"));
+        args.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+
+        assertThat(call(args))
+                .startsWith("No chart was offered: the table 'Links' can't make this calendar heatmap:")
+                .contains("It would replace pane 'Old chart', a pie chart (name = 'From', value = 'Count').")
+                .contains("The table has no Date Time column for date (the day, e.g. EventTime rounded with "
+                          + "floorDay(), formatted as Date Time).")
+                .contains("For a time series, the table needs a Date Time column")
+                .contains("As it is, the table can make: pie (name = 'From', value = 'Count'); bar (category = "
+                          + "'From', value = 'Count')")
+                .doesNotContain("line (");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aPieChartConvertedToALineChartOfCategoriesIsWarnedAbout() {
+        dashboardTab(List.of(linksTable()), false, CONVERTED_TEXT);
+        Mockito.when(chartLibraries.isGenerated(OLD_CHART)).thenReturn(true);
+        Mockito.when(documentAccess.canEdit(OLD_CHART)).thenReturn(true);
+        Mockito.when(chartLibraries.generatedChart(OLD_CHART)).thenReturn(mapOf("kind", "pie", "name", "From",
+                "value", "Count"));
+        final Map<String, Object> args = pieArgs();
+        args.put(ProposeVisualisationTool.KIND_ARG, "line");
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "From", "y", "Count"));
+        args.put(ProposeVisualisationTool.REPLACE_ARG, "Old chart");
+
+        assertThat(call(args))
+                .contains("'Update visualisation' button for a line chart")
+                .contains("- x 'From' isn't a Date Time column, so this line chart isn't a time series");
     }
 
     @Test
@@ -1034,6 +1107,15 @@ class TestProposeVisualisationTool {
                 mapOf("op", "group", "table", "Daily", "column", "From", "level", 1)));
     }
 
+    // A pie chart of the messages each sender sent.
+    private static Map<String, Object> pieArgs() {
+        return mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "pie",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("name", "From", "value", "Count"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by sender");
+    }
+
     private static Map<String, Object> graphArgs() {
         return mapOf(
                 ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
@@ -1081,11 +1163,15 @@ class TestProposeVisualisationTool {
     }
 
     private void dashboardTab(final List<AiTabSearch> tables, final boolean cut) {
+        dashboardTab(tables, cut, DASHBOARD_TEXT);
+    }
+
+    private void dashboardTab(final List<AiTabSearch> tables, final boolean cut, final String text) {
         final StoredTabSnapshot snapshot = new StoredTabSnapshot(5, 1, DASHBOARD, "/", "Messages", "Dashboard",
                 false, null, "h", 0L, List.of(), tables, null);
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
         Mockito.when(tabSnapshots.part(CHAT, snapshot, AiTabSnapshotPart.DASHBOARD))
-                .thenReturn(Optional.of(new UnsavedPart(DASHBOARD_TEXT, cut, "/tabs/1/dashboard.md")));
+                .thenReturn(Optional.of(new UnsavedPart(text, cut, "/tabs/1/dashboard.md")));
     }
 
     // A StroomQL query tab, whose table's column formats aren't known.
