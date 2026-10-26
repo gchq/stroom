@@ -20,7 +20,6 @@ import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -68,7 +67,7 @@ public final class AppPermissionsViewImpl
     }
 
     @Override
-    public void setAppUserPermissionListView(final View view) {
+    public void setAppUserPermissionListView(final IsWidget view) {
         appUserPermissionsList.setWidget(view.asWidget());
     }
 

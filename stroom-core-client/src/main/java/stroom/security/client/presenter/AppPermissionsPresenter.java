@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.component.AppPermissionsEditController;
+import stroom.security.client.component.AppUserPermissionsListController;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.PermissionShowLevel;
@@ -38,7 +39,7 @@ public class AppPermissionsPresenter
 
     public static final String TAB_TYPE = "ApplicationPermissions";
 
-    private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
+    private final AppUserPermissionsListController appUserPermissionsList;
     private final AppPermissionsEditController appPermissionsEdit;
 
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
@@ -47,28 +48,28 @@ public class AppPermissionsPresenter
     public AppPermissionsPresenter(
             final EventBus eventBus,
             final AppPermissionsView view,
-            final AppUserPermissionsListPresenter appUserPermissionsListPresenter,
+            final AppUserPermissionsListController appUserPermissionsList,
             final AppPermissionsEditController appPermissionsEdit) {
 
         super(eventBus, view);
-        own(appUserPermissionsListPresenter);
+        own(appUserPermissionsList);
         own(appPermissionsEdit);
-        this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
+        this.appUserPermissionsList = appUserPermissionsList;
         this.appPermissionsEdit = appPermissionsEdit;
-        view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
+        view.setAppUserPermissionListView(appUserPermissionsList);
         view.setAppPermissionsEditView(appPermissionsEdit);
 
         permissionVisibility = getView().getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
+        appUserPermissionsList.setShowLevel(permissionVisibility.getValue());
 
-        own(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(appUserPermissionsList.getSelectionModel().addSelectionHandler(e -> {
             editPermissions();
         }));
         own(permissionVisibility.addValueChangeHandler(e -> {
-            appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
-            appUserPermissionsListPresenter.refresh();
+            appUserPermissionsList.setShowLevel(permissionVisibility.getValue());
+            appUserPermissionsList.refresh();
         }));
 
         appPermissionsEdit.setOnChange(change -> {
@@ -84,22 +85,22 @@ public class AppPermissionsPresenter
     }
 
     public void setFilterInput(final String filterInput) {
-        appUserPermissionsListPresenter.setQuickFilter(filterInput);
+        appUserPermissionsList.setQuickFilter(filterInput);
     }
 
     public void showUser(final UserRef userRef) {
-        appUserPermissionsListPresenter.showUser(userRef);
+        appUserPermissionsList.showUser(userRef);
     }
 
     private void editPermissions() {
-        final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
+        final AppUserPermissions appUserPermissions = appUserPermissionsList.getSelectionModel()
                 .getSelected();
         final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
         appPermissionsEdit.setUserRef(userRef);
     }
 
     public void refresh() {
-        appUserPermissionsListPresenter.refresh();
+        appUserPermissionsList.refresh();
     }
 
     @Override
@@ -125,7 +126,7 @@ public class AppPermissionsPresenter
 
         SelectionBox<PermissionShowLevel> getPermissionVisibility();
 
-        void setAppUserPermissionListView(View view);
+        void setAppUserPermissionListView(IsWidget view);
 
         void setAppPermissionsEditView(IsWidget view);
     }
