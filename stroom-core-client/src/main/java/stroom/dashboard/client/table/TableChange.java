@@ -67,6 +67,9 @@ public final class TableChange {
     public static final String ADD_SELECTION_FILTER = "add_selection_filter";
     /// Removes a selection handler from a component ([#getTargetId()]), by its id ([#getFilter()]).
     public static final String REMOVE_SELECTION_FILTER = "remove_selection_filter";
+    /// Renames keys of a chart's selection ([#getTargetId()]) in every selection filter its clicks drive, as
+    /// [#getValue()] gives them (`old=new` pairs, comma separated), once the chart is converted to another kind.
+    public static final String REMAP_SELECTION = "remap_selection";
     /// For add_selection_filter: filters the query's search.
     public static final String QUERY_FILTER = "query";
     /// For add_selection_filter: filters a table's rows.

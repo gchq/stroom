@@ -37,8 +37,10 @@ public final class EChartsTemplate {
     /// The adapter's vis class, as the Visualisation's function name.
     public static final String FUNCTION_NAME = "visualisations.EChartsGeneric";
 
-    static final String KIND_CONTROL = "kind";
-    static final String FIELDS_CONTROL = "fields";
+    /// The control holding the chart's kind.
+    public static final String KIND_CONTROL = "kind";
+    /// The control holding the order of the fields in each data row.
+    public static final String FIELDS_CONTROL = "fields";
     static final String OPTIONS_CONTROL = "options";
     /// The controls every template has besides its kind's roles and style settings.
     static final List<String> CONTROLS = List.of(KIND_CONTROL, FIELDS_CONTROL, OPTIONS_CONTROL);
@@ -181,6 +183,41 @@ public final class EChartsTemplate {
         return changed
                 ? JsonUtil.writeValueAsString(settings, true)
                 : settingsJson;
+    }
+
+    /// Reads a generated Visualisation's settings back: each control's default value, by its id, e.g. its chart
+    /// kind and the column mapped to each role.
+    ///
+    /// @param settingsJson A generated Visualisation's settings JSON.
+    /// @return The default value of each control that has one, in the order given; empty if they can't be read.
+    public static Map<String, String> defaults(final String settingsJson) {
+        if (NullSafe.isBlankString(settingsJson)) {
+            return Map.of();
+        }
+        final Map<?, ?> settings;
+        try {
+            settings = JsonUtil.readValue(settingsJson, Map.class);
+        } catch (final RuntimeException e) {
+            return Map.of();
+        }
+        final Map<String, String> defaults = new LinkedHashMap<>();
+        for (final Object tab : settings != null && settings.get("tabs") instanceof final List<?> tabs
+                ? tabs
+                : List.of()) {
+            final Object controls = tab instanceof final Map<?, ?> tabMap
+                    ? tabMap.get("controls")
+                    : null;
+            for (final Object item : controls instanceof final List<?> list
+                    ? list
+                    : List.of()) {
+                if (item instanceof final Map<?, ?> control
+                    && control.get("id") instanceof final String id
+                    && control.get("defaultValue") != null) {
+                    defaults.put(id, String.valueOf(control.get("defaultValue")));
+                }
+            }
+        }
+        return defaults;
     }
 
     /// @param kind The chart kind.

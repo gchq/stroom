@@ -183,6 +183,24 @@ public class ChartLibraries {
         });
     }
 
+    /// Reads the chart a Visualisation Stroom AI generated draws: its kind and the column mapped to each of its
+    /// roles, as its own settings give them (a vis component's settings may override them).
+    ///
+    /// @param visualisation A Visualisation.
+    /// @return Each of its controls' default values, by control id (e.g. `kind`, and each role's id); empty if it
+    /// isn't one Stroom AI generated, or can't be read.
+    public Map<String, String> generatedChart(final DocRef visualisation) {
+        if (visualisation == null) {
+            return Map.of();
+        }
+        return securityContext.asProcessingUserResult(() -> {
+            final VisualisationDoc doc = readVisualisation(visualisationStoreProvider.get(), visualisation);
+            return doc != null && ChartLibrary.forFunctionName(doc.getFunctionName()).isPresent()
+                    ? EChartsTemplate.defaults(doc.getSettings())
+                    : Map.of();
+        });
+    }
+
     private static boolean namedECharts(final DocRef ref) {
         return NullSafe.string(ref.getName()).toLowerCase(Locale.ROOT).contains("echarts");
     }

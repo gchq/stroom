@@ -18,6 +18,7 @@ package stroom.ai.impl.vis;
 
 import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
+import stroom.ai.impl.vis.VisualisationPlan.Replace;
 import stroom.ai.shared.AiCreateVisualisation;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.docref.DocRef;
@@ -37,6 +38,7 @@ import jakarta.inject.Provider;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /// Prepares a Visualisation the agent planned, when the user clicks its `create_visualisation` button: puts the
@@ -48,6 +50,9 @@ import java.util.stream.Collectors;
 /// chart and renamed here, saved at once, if the user may edit it; the browser then shows it in the same vis
 /// component, unsaved.
 public class VisualisationActions {
+
+    /// The dashboard change renaming the keys of a chart's selection in the selection filters its clicks drive.
+    static final String REMAP_SELECTION = "remap_selection";
 
     private final ChartLibraries chartLibraries;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
@@ -149,7 +154,7 @@ public class VisualisationActions {
             return new AiCreateVisualisation(replaced.getName(), null, functionName, adapter,
                     settings, description, target, plan.componentId(), plan.table(), componentName,
                     replacementSettings(kind, plan.mappings()), null, plan.snapshotHash(), null, null, replaced,
-                    plan.replace().componentId(), null, null);
+                    plan.replace().componentId(), null, changesJson(selectionsRenamed(plan.replace())));
         }
         return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                 description, target, plan.componentId(), plan.table(), plan.componentName(),
@@ -157,6 +162,25 @@ public class VisualisationActions {
                 NullSafe.nonBlankStringElse(plan.placement(), VisualisationPlan.BELOW),
                 plan.snapshotHash(), null, null, null, null, changesJson(plan.tableChanges()),
                 changesJson(plan.filterChanges()));
+    }
+
+    /// The dashboard change renaming the keys of a replaced chart's selection that its selection filters use, for
+    /// the new chart (e.g. a line chart's x as a bar chart's category), so they follow it.
+    ///
+    /// @param replace The chart replaced.
+    /// @return The change, as the browser takes it (`remap_selection`: the chart's id, and each key as
+    /// `old=new`, comma separated); none if no key is renamed.
+    static List<Map<String, Object>> selectionsRenamed(final Replace replace) {
+        if (NullSafe.isEmptyMap(replace.selections())) {
+            return List.of();
+        }
+        final Map<String, Object> change = new LinkedHashMap<>();
+        change.put("op", REMAP_SELECTION);
+        change.put("target_id", replace.componentId());
+        change.put("value", new TreeMap<>(replace.selections()).entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining(",")));
+        return List.of(change);
     }
 
     // Dashboard changes as the browser takes them: a JSON array, or null for none.

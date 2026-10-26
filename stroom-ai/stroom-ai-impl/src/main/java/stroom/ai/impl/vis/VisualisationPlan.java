@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /// A chart the agent plans to generate with ECharts, as kept in a `create_visualisation` button until the user
 /// clicks it: what to draw, from which table, and where the new Visualisation goes on the dashboard (or in the
@@ -91,6 +92,9 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     static final int MAX_OPTIONS = 20_000;
     /// The most dashboard changes a plan may carry, to add its table or its filter.
     static final int MAX_CHANGES = 100;
+    // A key of a chart's selection, as a selection filter's term names it: a role id or a column name, without what
+    // would end or split the term's ${component.<id>.selection.<key>}, or a list of them.
+    private static final Pattern SELECTION_KEY = Pattern.compile("[^${}=,\\p{Cntrl}]{1,200}");
 
     /// The top-level ECharts option keys the adapter accepts as overrides (kept in step with
     /// `ALLOWED_TOP_LEVEL_KEYS` in `echarts-generic.js`).
@@ -285,6 +289,17 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                                                    + "Visualisation it shows.");
             }
             checkText("the replaced component's name", replace.componentName());
+            if (NullSafe.map(replace.selections()).size() > MAX_CHANGES) {
+                throw new IllegalArgumentException("A chart replacing another may rename at most " + MAX_CHANGES
+                                                   + " selection keys.");
+            }
+            NullSafe.map(replace.selections()).forEach((from, to) -> {
+                if (!SELECTION_KEY.matcher(NullSafe.string(from)).matches()
+                    || !SELECTION_KEY.matcher(NullSafe.string(to)).matches()) {
+                    throw new IllegalArgumentException("A selection key renamed must be a role or column name, "
+                                                       + "not '" + from + "' or '" + to + "'.");
+                }
+            });
         }
     }
 
@@ -386,10 +401,30 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     /// @param componentId   The vis component's id.
     /// @param componentName Its name, as the user sees it.
     /// @param visualisation The Visualisation it shows, which is rewritten for the new chart.
+    /// @param selections    The keys of its selection that the dashboard's selection filters use, renamed for the
+    ///                      new chart (e.g. a line chart's x as a bar chart's category), by old key; or null if none
+    ///                      are.
     @JsonInclude(Include.NON_NULL)
     public record Replace(@JsonProperty("componentId") String componentId,
                           @JsonProperty("componentName") String componentName,
-                          @JsonProperty("visualisation") DocRef visualisation) {
+                          @JsonProperty("visualisation") DocRef visualisation,
+                          @JsonProperty("selections") Map<String, String> selections) {
 
+        /// A chart replaced whose selection's keys aren't renamed.
+        ///
+        /// @param componentId   The vis component's id.
+        /// @param componentName Its name, as the user sees it.
+        /// @param visualisation The Visualisation it shows.
+        public Replace(final String componentId, final String componentName, final DocRef visualisation) {
+            this(componentId, componentName, visualisation, null);
+        }
+
+        /// @param renamed The keys of its selection renamed for the new chart, by old key.
+        /// @return The chart replaced, with them; none if empty.
+        public Replace withSelections(final Map<String, String> renamed) {
+            return new Replace(componentId, componentName, visualisation, NullSafe.isEmptyMap(renamed)
+                    ? null
+                    : Map.copyOf(renamed));
+        }
     }
 }

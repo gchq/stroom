@@ -26,10 +26,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /// Reads a dashboard's description ([DashboardPresenter#getComparableDescription()]) by component, so changes the AI
 /// chat applied are applied, and undone, on top of whatever else the user has changed since, as long as what they
-/// replace hasn't changed; and puts a chart's id in the filter its clicks drive, once the chart is added.
+/// replace hasn't changed; and puts a chart's id in the filter its clicks drive, once the chart is added, and the
+/// keys of its selection a converted chart renames.
 public final class DashboardDescriptions {
 
     // What starts a component's heading, e.g. "## Table 'Events' (id table-1)".
@@ -93,17 +95,78 @@ public final class DashboardDescriptions {
         }
         final String planned = "component." + from + ".selection.";
         final String actual = "component." + to + ".selection.";
+        return withValues(expression, value -> value.replace(planned, actual));
+    }
+
+    /// @param expression A selection filter's expression, its terms naming a chart's selection, e.g.
+    ///                   `${component.vis-1.selection.x}`.
+    /// @param chartId    The chart's id.
+    /// @param renamed    Keys of the chart's selection renamed (e.g. a line chart's x as a bar chart's category,
+    ///                   once it is converted to one), by old key.
+    /// @return The expression, each of its terms naming a key renamed naming the new one; the same expression if
+    /// none names one.
+    public static ExpressionOperator withSelections(final ExpressionOperator expression,
+                                                    final String chartId,
+                                                    final Map<String, String> renamed) {
+        if (expression == null || NullSafe.isEmptyMap(renamed)) {
+            return expression;
+        }
+        final String prefix = "${component." + chartId + ".selection.";
+        final ExpressionOperator changed = withValues(expression, value -> renameKeys(value, prefix, renamed));
+        return changed.equals(expression)
+                ? expression
+                : changed;
+    }
+
+    /// @param text Keys renamed, as `old=new` pairs separated by commas, e.g. `x=category,series=name`.
+    /// @return The new key for each old one.
+    public static Map<String, String> renamedKeys(final String text) {
+        final Map<String, String> renamed = new HashMap<>();
+        for (final String pair : NullSafe.string(text).split(",")) {
+            final int equals = pair.indexOf('=');
+            if (equals > 0 && equals < pair.length() - 1) {
+                renamed.put(pair.substring(0, equals).trim(), pair.substring(equals + 1).trim());
+            }
+        }
+        return renamed;
+    }
+
+    // The expression with each term's value changed.
+    private static ExpressionOperator withValues(final ExpressionOperator expression,
+                                                 final Function<String, String> change) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .op(expression.op())
                 .enabled(expression.getEnabled());
         for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
             if (child instanceof final ExpressionOperator operator) {
-                builder.addOperator(withChartId(operator, from, to));
+                builder.addOperator(withValues(operator, change));
             } else if (child instanceof final ExpressionTerm term) {
-                builder.addTerm(term.copy().value(NullSafe.string(term.getValue()).replace(planned, actual)).build());
+                builder.addTerm(term.copy().value(change.apply(NullSafe.string(term.getValue()))).build());
             }
         }
         return builder.build();
+    }
+
+    // The value with each key of the selection (after the prefix, up to its closing brace) renamed. Not with a
+    // regular expression, which the browser's code can't use.
+    private static String renameKeys(final String value, final String prefix, final Map<String, String> renamed) {
+        final StringBuilder sb = new StringBuilder();
+        int from = 0;
+        int start = value.indexOf(prefix);
+        while (start >= 0) {
+            final int keyStart = start + prefix.length();
+            final int end = value.indexOf('}', keyStart);
+            if (end < 0) {
+                break;
+            }
+            final String key = value.substring(keyStart, end);
+            sb.append(value, from, keyStart).append(renamed.containsKey(key)
+                    ? renamed.get(key)
+                    : key);
+            from = end;
+            start = value.indexOf(prefix, end);
+        }
+        return sb.append(value.substring(from)).toString();
     }
 
     /// @param proposedHash The hash ([AiTabSnapshotPart#hashLines(String)]) of a query's expression as the

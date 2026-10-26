@@ -33,6 +33,7 @@ import stroom.util.shared.RandomId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /// Applies a change to one of a dashboard component's settings made outside its Settings dialog (e.g. a change
 /// proposed from elsewhere and checked there), as the dialog would, and puts a component's name and settings back
@@ -171,6 +172,88 @@ public final class ComponentSettingChanges {
         }
         presenter.applySettings(changed);
         return null;
+    }
+
+    /// Renames keys of a chart's selection in a component's selection filters (its query filters and its table
+    /// filters), so they follow the chart once it is converted to another kind, e.g. a line chart's x as a bar
+    /// chart's category.
+    ///
+    /// @param component A component.
+    /// @param chartId   The chart's id.
+    /// @param renamed   The keys renamed, by old key.
+    /// @return True if any of its filters named a key renamed, and so was changed.
+    static boolean renameSelections(final Component component,
+                                    final String chartId,
+                                    final Map<String, String> renamed) {
+        if (!(component instanceof final AbstractComponentPresenter<?> presenter)) {
+            return false;
+        }
+        final ComponentSettings changed = withSelectionsRenamed(presenter.getSettings(), chartId, renamed);
+        if (changed == null) {
+            return false;
+        }
+        presenter.applySettings(changed);
+        return true;
+    }
+
+    /// @param settings A component's settings.
+    /// @param chartId  A chart's id.
+    /// @param renamed  Keys of the chart's selection renamed, by old key.
+    /// @return The settings with the keys renamed in their selection filters (query and table), or null if none
+    /// names one.
+    static ComponentSettings withSelectionsRenamed(final ComponentSettings settings,
+                                                   final String chartId,
+                                                   final Map<String, String> renamed) {
+        if (settings instanceof final TableComponentSettings table) {
+            final List<ComponentSelectionHandler> filters = renamed(table.getSelectionFilter(), chartId, renamed);
+            return filters == null
+                    ? null
+                    : table.copy().selectionFilter(filters).build();
+        }
+        if (settings instanceof final QueryComponentSettings query) {
+            final List<ComponentSelectionHandler> filters = renamed(query.getSelectionQuery(), chartId, renamed);
+            return filters == null
+                    ? null
+                    : query.copy().selectionQuery(filters).build();
+        }
+        if (settings instanceof final EmbeddedQueryComponentSettings embedded) {
+            final List<ComponentSelectionHandler> queryFilters = renamed(embedded.getSelectionQuery(), chartId,
+                    renamed);
+            final List<ComponentSelectionHandler> tableFilters = renamed(embedded.getSelectionFilter(), chartId,
+                    renamed);
+            return queryFilters == null && tableFilters == null
+                    ? null
+                    : embedded.copy()
+                            .selectionQuery(queryFilters != null
+                                    ? queryFilters
+                                    : embedded.getSelectionQuery())
+                            .selectionFilter(tableFilters != null
+                                    ? tableFilters
+                                    : embedded.getSelectionFilter())
+                            .build();
+        }
+        return null;
+    }
+
+    // The handlers with the chart's selection keys renamed, or null if none names one.
+    private static List<ComponentSelectionHandler> renamed(final List<ComponentSelectionHandler> handlers,
+                                                           final String chartId,
+                                                           final Map<String, String> renamed) {
+        boolean any = false;
+        final List<ComponentSelectionHandler> list = new ArrayList<>();
+        for (final ComponentSelectionHandler handler : NullSafe.list(handlers)) {
+            final ExpressionOperator expression = DashboardDescriptions.withSelections(handler.getExpression(),
+                    chartId, renamed);
+            if (expression != handler.getExpression()) {
+                any = true;
+                list.add(handler.copy().expression(expression).build());
+            } else {
+                list.add(handler);
+            }
+        }
+        return any
+                ? list
+                : null;
     }
 
     private static boolean has(final List<ComponentSelectionHandler> handlers, final String id) {

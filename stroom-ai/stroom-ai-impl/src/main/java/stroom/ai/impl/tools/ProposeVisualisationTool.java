@@ -475,20 +475,25 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             NullSafe.consume(column.format(), format -> formats.put(column.name(), format));
             NullSafe.consume(column.expression(), expression -> expressions.put(column.name(), expression));
         });
+        // A chart of a table that already has one Stroom AI generated replaces it, or is added beside it, as the
+        // user chooses: the chart it replaces as it draws now, if it is one Stroom AI generated.
+        final String replaceName = NullSafe.get(stringArg(request, REPLACE_ARG), String::strip);
+        final boolean addNew = booleanArg(request, ADD_NEW_ARG, false);
+        final Component replaced = NullSafe.isNonBlankString(replaceName) && !query && embedded == null
+                ? replacedChart(DashboardComponents.parse(part.text()), replaceName)
+                : null;
         final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
         if (!check.ok()) {
             return ToolResult.text("No chart was offered: the table '" + chartTable + "' can't make this "
                                    + kind.displayName().toLowerCase(Locale.ROOT) + ":\n- "
                                    + String.join("\n- ", check.problems())
-                                   + "\nTell the user why, and suggest the way forward above (offer the change, "
+                                   + recommendations(kind, columns, sample.sample(), replaced)
+                                   + "\nTell the user why, and recommend the way forward above (offer the change, "
                                    + "e.g. with propose_dashboard_change, if they want it); or try another chart "
                                    + "kind or columns.");
         }
-        // A chart of a table that already has one Stroom AI generated replaces it, or is added beside it, as the
-        // user chooses.
-        final String replaceName = NullSafe.get(stringArg(request, REPLACE_ARG), String::strip);
-        final boolean addNew = booleanArg(request, ADD_NEW_ARG, false);
         Replace replace = null;
+        ChartConversions.Conversion conversion = null;
         if (NullSafe.isNonBlankString(replaceName)) {
             if (addNew) {
                 throw new WorkspaceException("Give " + REPLACE_ARG + " or " + ADD_NEW_ARG + ", not both.");
@@ -499,6 +504,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             }
             replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library,
                     query || embedded != null);
+            if (replaced != null) {
+                conversion = ChartConversions.convert(replaced, kind, mappings, columns, sample.sample(),
+                        part.text());
+                replace = replace.withSelections(conversion.renamed());
+            }
         } else if (!query && embedded == null && !addNew && newTable == null) {
             final List<Component> generated = generatedCharts(DashboardComponents.parse(part.text()), tableName);
             if (!generated.isEmpty()) {
@@ -518,6 +528,13 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (!check.warnings().isEmpty()) {
             notes.append("\nWarnings (tell the user the ones that matter):\n- ")
                     .append(String.join("\n- ", check.warnings()));
+        }
+        if (conversion != null) {
+            conversion.notes().forEach(note -> notes.append('\n').append(note));
+            if (!conversion.warnings().isEmpty()) {
+                notes.append("\nWhat converting the chart loses (tell the user before they click):\n- ")
+                        .append(String.join("\n- ", conversion.warnings()));
+            }
         }
 
         if (CONTENT_PACK.equals(library)) {
@@ -1147,6 +1164,53 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                + "rewrites its Visualisation for the new chart and renames it (saved at once), keeping its place "
                + "on the dashboard, or to add the new chart beside it. Then call " + NAME + " again with "
                + REPLACE_ARG + " (the pane's name) or " + ADD_NEW_ARG + " true.";
+    }
+
+    // The chart a pane shows, as it draws now (its Visualisation's settings, overridden by the pane's), if it is
+    // one Stroom AI generated; else null.
+    private Component replacedChart(final List<Component> components, final String paneName) {
+        return components.stream()
+                .filter(component -> DashboardComponents.VISUALISATION.equals(component.type()))
+                .filter(component -> component.name().equalsIgnoreCase(paneName))
+                .findFirst()
+                .map(pane -> ChartConversions.drawnWith(pane, chartLibraries.generatedChart(pane.visualisation())))
+                .filter(chart -> ChartConversions.kindOf(chart).isPresent())
+                .orElse(null);
+    }
+
+    // For a chart the table can't make: what the table lacks for it, and the kinds it can make as it is (keeping
+    // the columns of the chart it would replace where it can), to recommend instead.
+    static String recommendations(final ChartKind kind,
+                                  final List<TableColumn> columns,
+                                  final Sample sample,
+                                  final Component replaced) {
+        final StringBuilder text = new StringBuilder();
+        final Map<String, String> preferred = replaced == null
+                ? Map.of()
+                : ChartConversions.mappingsOf(replaced);
+        if (replaced != null) {
+            final ChartKind oldKind = ChartConversions.kindOf(replaced).orElseThrow();
+            text.append("\nIt would replace pane '").append(replaced.name()).append("', a ")
+                    .append(oldKind.displayName().toLowerCase(Locale.ROOT)).append(" (")
+                    .append(describeMappings(preferred)).append(").");
+        }
+        final List<String> lacks = ChartConversions.lacks(kind, columns, sample);
+        if (!lacks.isEmpty()) {
+            text.append("\nThe table has no ").append(String.join(", or ", lacks)).append('.');
+        }
+        if (!ChartConversions.hasDates(columns, sample)
+            && (kind == ChartKind.LINE || kind.roles().stream().anyMatch(role -> role.required()
+                                                                  && role.values() == ChartRole.Values.DATE))) {
+            text.append(' ').append(ChartConversions.timeColumnHint());
+        }
+        final List<ChartConversions.Suggestion> suggestions = ChartConversions.suggestions(columns, sample,
+                preferred, Set.of(kind));
+        if (!suggestions.isEmpty()) {
+            text.append("\nAs it is, the table can make: ").append(suggestions.stream()
+                    .map(ChartConversions.Suggestion::describe)
+                    .collect(Collectors.joining("; "))).append('.');
+        }
+        return text.toString();
     }
 
     // The chart a new one replaces, checked: a Visualisation pane of the same table, showing a chart Stroom AI

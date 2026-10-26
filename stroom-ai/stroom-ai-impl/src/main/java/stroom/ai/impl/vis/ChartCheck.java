@@ -52,6 +52,10 @@ public final class ChartCheck {
     static final int MAX_LINE_CATEGORIES = 500;
 
     private static final String FORMAT_DATE = "formatDate";
+    // An expression that is a number when its rows are grouped: a count, or a sum, average, minimum or maximum.
+    private static final Pattern AGGREGATE = Pattern.compile(
+            "^\\s*(count|countUnique|countGroups|sum|average|avg|min|max|stDev|variance)\\s*\\(",
+            Pattern.CASE_INSENSITIVE);
 
     private static final Pattern NUMBER = Pattern.compile(
             "\\s*[-+]?((\\d{1,3}(,\\d{3})+|\\d+)(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?\\s*");
@@ -108,6 +112,43 @@ public final class ChartCheck {
             checkTimeInterval(kind, mapped, style, columns, sample, result);
         }
         return result;
+    }
+
+    /// Says what a column holds, from its format, its expression and the values sampled, for choosing the
+    /// columns of a chart the table can make.
+    ///
+    /// @param column A column of the table.
+    /// @param sample A sample of the table's rows, or null if none could be had.
+    /// @return [ChartRole.Values#NUMBER], [ChartRole.Values#DATE] or [ChartRole.Values#ANY] (text), or empty if
+    /// it can't be told (no format, aggregate or values to go by).
+    public static Optional<ChartRole.Values> holds(final TableColumn column, final Sample sample) {
+        final String format = NullSafe.string(column.format()).toUpperCase(Locale.ROOT);
+        switch (format) {
+            case "DATE_TIME" -> {
+                return Optional.of(ChartRole.Values.DATE);
+            }
+            case "NUMBER" -> {
+                return Optional.of(ChartRole.Values.NUMBER);
+            }
+            case "TEXT" -> {
+                return Optional.of(ChartRole.Values.ANY);
+            }
+            default -> {
+                // General, or not known: by the values.
+            }
+        }
+        final Values values = Values.of(column.name(), sample);
+        if (values.nonBlank > 0) {
+            if ((double) values.numbers / values.nonBlank >= NUMERIC_SHARE) {
+                return Optional.of(ChartRole.Values.NUMBER);
+            }
+            return Optional.of((double) values.dates / values.nonBlank >= NUMERIC_SHARE
+                    ? ChartRole.Values.DATE
+                    : ChartRole.Values.ANY);
+        }
+        return AGGREGATE.matcher(NullSafe.string(column.expression())).find()
+                ? Optional.of(ChartRole.Values.NUMBER)
+                : Optional.empty();
     }
 
     // Every required role mapped, every mapping to a role the kind has and a column the table has.
