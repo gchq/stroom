@@ -24,8 +24,6 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.ExpressionPresenter;
-import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
@@ -39,7 +37,6 @@ import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.MetaViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
@@ -73,10 +70,6 @@ public class StreamStoreModule extends PluginModule {
                 ProcessorTaskPresenter.class,
                 StreamTaskView.class,
                 StreamTaskViewImpl.class);
-        bindPresenterWidget(
-                ExpressionPresenter.class,
-                ExpressionView.class,
-                ExpressionViewImpl.class);
         bindPresenterWidget(
                 SourceTabPresenter.class,
                 SourceTabView.class,

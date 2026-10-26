@@ -29,10 +29,10 @@ import stroom.analytics.shared.ScheduleBounds;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.IconCell;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
@@ -56,10 +56,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -98,7 +95,7 @@ public class ExecutionScheduleManager
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
     private final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter;
     private final Provider<ExecutionScheduleRunNowController> runNowProvider;
-    private final Provider<ExpressionPresenter> expressionPresenterProvider;
+    private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
 
     private ButtonView singleEditButton;
@@ -120,7 +117,7 @@ public class ExecutionScheduleManager
                                     final ScheduledProcessEditPresenter scheduledProcessEditPresenter,
                                     final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter,
                                     final Provider<ExecutionScheduleRunNowController> runNowProvider,
-                                    final Provider<ExpressionPresenter> expressionPresenterProvider,
+                                    final Provider<ExpressionDialogController> filterDialogProvider,
                                     final ExpressionValidator expressionValidator,
                                     final RefCellsController refCells) {
         super(eventBus, view);
@@ -132,7 +129,7 @@ public class ExecutionScheduleManager
         this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
         this.batchExecutionScheduleEditPresenter = batchExecutionScheduleEditPresenter;
         this.runNowProvider = runNowProvider;
-        this.expressionPresenterProvider = expressionPresenterProvider;
+        this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
 
@@ -579,43 +576,30 @@ public class ExecutionScheduleManager
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = makeDialog(expressionPresenterProvider);
-        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-            if (e.isOk()) {
-                final ExpressionOperator expression = presenter.write();
-                expressionValidator.validateExpression(
-                        ExecutionScheduleManager.this,
-                        ExecutionScheduleFields.getFields(),
-                        expression, validExpression -> {
-                            if (!validExpression.equals(request.getExpression())) {
-                                setExpression(validExpression);
-                                selectionModel.clear();
-                                e.hide();
-                            } else {
-                                // Nothing changed!
-                                e.hide();
-                            }
-                        },
-                        // If it isn't valid, let the user change it or cancel
-                        e::reset,
-                        this);
-            } else {
-                e.hide();
-            }
-        };
-        presenter.read(request.getExpression(),
-            ExecutionScheduleFields.DOC_REF,
-            ExecutionScheduleFields.getFields());
-
-        presenter.getWidget().getElement().addClassName("default-min-sizes");
-        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-        ShowPopupEvent.builder(presenter)
-            .popupType(PopupType.OK_CANCEL_DIALOG)
-            .popupSize(popupSize)
-            .caption("Filter Schedules")
-            .onShow(e -> presenter.focus())
-            .onHideRequest(HidePopupRequestEventHandler)
-            .fire();
+        filterDialogProvider.get().show(this,
+                "Filter Schedules",
+                PopupSize.resizable(1_000, 600),
+                request.getExpression(),
+                ExecutionScheduleFields.DOC_REF,
+                ExecutionScheduleFields.getFields(),
+                (expression, e) -> {
+                    expressionValidator.validateExpression(
+                            ExecutionScheduleManager.this,
+                            ExecutionScheduleFields.getFields(),
+                            expression, validExpression -> {
+                                if (!validExpression.equals(request.getExpression())) {
+                                    setExpression(validExpression);
+                                    selectionModel.clear();
+                                    e.hide();
+                                } else {
+                                    // Nothing changed!
+                                    e.hide();
+                                }
+                            },
+                            // If it isn't valid, let the user change it or cancel
+                            e::reset,
+                            this);
+                });
     }
 
 

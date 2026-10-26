@@ -18,7 +18,7 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
@@ -70,11 +70,8 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -126,7 +123,7 @@ public class SteppingPresenter
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
     private final SteppingMetaListPresenter steppingMetaListPresenter;
-    private final Provider<ExpressionPresenter> streamListFilterPresenterProvider;
+    private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
     // elementId => ElementPresenter
     private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
@@ -168,7 +165,7 @@ public class SteppingPresenter
                              final SteppingFilterPresenter steppingFilterPresenter,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
-                             final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
+                             final Provider<ExpressionDialogController> filterDialogProvider,
                              final ExpressionValidator expressionValidator) {
         super(eventBus, view);
         own(sourcePresenter);
@@ -186,7 +183,7 @@ public class SteppingPresenter
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.steppingMetaListPresenter = make(metaListPresenterProvider);
-        this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
+        this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
 
         final Toolbar buttonPanel = new Toolbar("Stepping");
@@ -316,61 +313,45 @@ public class SteppingPresenter
     }
 
     private void onStreamListFilter() {
-        final ExpressionPresenter presenter = makeDialog(streamListFilterPresenterProvider);
-
-        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-            if (e.isOk()) {
-                final ExpressionOperator expression = presenter.write();
-
-                expressionValidator.validateExpression(
-                        SteppingPresenter.this,
-                        MetaFields.getAllFields(),
-                        expression, expression2 -> {
-                            if (!expression2.equals(getCriteria().getExpression())) {
-                                if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                    ConfirmEvent.fire(SteppingPresenter.this,
-                                            "You are setting advanced filters!  It is recommended you constrain " +
-                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                            + "Are you sure you want to apply this advanced filter?",
-                                            confirm -> {
-                                                if (confirm) {
-                                                    setExpression(expression2);
-                                                    e.hide();
-                                                } else {
-                                                    // Don't hide
-                                                    e.reset();
-                                                }
-                                            });
+        filterDialogProvider.get().show(this,
+                "Filter Streams",
+                PopupSize.resizable(1_000, 600),
+                getCriteria().getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                MetaFields.getAllFields(),
+                (expression, e) -> {
+                    expressionValidator.validateExpression(
+                            SteppingPresenter.this,
+                            MetaFields.getAllFields(),
+                            expression, expression2 -> {
+                                if (!expression2.equals(getCriteria().getExpression())) {
+                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                        ConfirmEvent.fire(SteppingPresenter.this,
+                                                "You are setting advanced filters!  It is recommended you constrain " +
+                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                + "Are you sure you want to apply this advanced filter?",
+                                                confirm -> {
+                                                    if (confirm) {
+                                                        setExpression(expression2);
+                                                        e.hide();
+                                                    } else {
+                                                        // Don't hide
+                                                        e.reset();
+                                                    }
+                                                });
+                                    } else {
+                                        setExpression(expression2);
+                                        e.hide();
+                                    }
                                 } else {
-                                    setExpression(expression2);
+                                    // Nothing changed!
                                     e.hide();
                                 }
-                            } else {
-                                // Nothing changed!
-                                e.hide();
-                            }
-                        },
-                        // If it isn't valid, let the user change it or cancel
-                        e::reset,
-                        this);
-            } else {
-                e.hide();
-            }
-        };
-
-        presenter.read(getCriteria().getExpression(),
-                MetaFields.STREAM_STORE_DOC_REF,
-                MetaFields.getAllFields());
-
-        presenter.getWidget().getElement().addClassName("default-min-sizes");
-        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Filter Streams")
-                .onShow(e -> presenter.focus())
-                .onHideRequest(HidePopupRequestEventHandler)
-                .fire();
+                            },
+                            // If it isn't valid, let the user change it or cancel
+                            e::reset,
+                            this);
+                });
     }
 
     public void setExpression(final ExpressionOperator expression) {

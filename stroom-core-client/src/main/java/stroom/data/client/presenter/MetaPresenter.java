@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -45,10 +46,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -76,7 +74,7 @@ public class MetaPresenter
     private final MetaRelationListPresenter metaRelationListPresenter;
     private final DataPresenter dataPresenter;
     private final Provider<DataUploadPresenter> streamUploadPresenter;
-    private final Provider<ExpressionPresenter> streamListFilterPresenter;
+    private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ButtonView streamListFilter;
     private final ButtonView streamListInfo;
     private final ClientSecurityContext securityContext;
@@ -100,7 +98,7 @@ public class MetaPresenter
                          final MetaListPresenter metaListPresenter,
                          final MetaRelationListPresenter metaRelationListPresenter,
                          final DataPresenter dataPresenter,
-                         final Provider<ExpressionPresenter> streamListFilterPresenter,
+                         final Provider<ExpressionDialogController> filterDialogProvider,
                          final Provider<DataUploadPresenter> streamUploadPresenter,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory,
@@ -112,7 +110,7 @@ public class MetaPresenter
         own(dataPresenter);
         this.metaListPresenter = metaListPresenter;
         this.metaRelationListPresenter = metaRelationListPresenter;
-        this.streamListFilterPresenter = streamListFilterPresenter;
+        this.filterDialogProvider = filterDialogProvider;
         this.streamUploadPresenter = streamUploadPresenter;
         this.dataPresenter = dataPresenter;
         this.restFactory = restFactory;
@@ -217,61 +215,45 @@ public class MetaPresenter
     }
 
     private void onStreamListFilter() {
-        final ExpressionPresenter presenter = makeDialog(streamListFilterPresenter);
-
-        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-            if (e.isOk()) {
-                final ExpressionOperator expression = presenter.write();
-
-                expressionValidator.validateExpression(
-                        MetaPresenter.this,
-                        MetaFields.getAllFields(),
-                        expression, expression2 -> {
-                            if (!expression2.equals(getCriteria().getExpression())) {
-                                if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                    ConfirmEvent.fire(MetaPresenter.this,
-                                            "You are setting advanced filters!  It is recommended you constrain " +
-                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                            + "Are you sure you want to apply this advanced filter?",
-                                            confirm -> {
-                                                if (confirm) {
-                                                    setExpression(expression2);
-                                                    e.hide();
-                                                } else {
-                                                    // Don't hide
-                                                    e.reset();
-                                                }
-                                            });
+        filterDialogProvider.get().show(this,
+                "Filter Streams",
+                PopupSize.resizable(1_000, 600),
+                getCriteria().getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                MetaFields.getAllFields(),
+                (expression, e) -> {
+                    expressionValidator.validateExpression(
+                            MetaPresenter.this,
+                            MetaFields.getAllFields(),
+                            expression, expression2 -> {
+                                if (!expression2.equals(getCriteria().getExpression())) {
+                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                        ConfirmEvent.fire(MetaPresenter.this,
+                                                "You are setting advanced filters!  It is recommended you constrain " +
+                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                + "Are you sure you want to apply this advanced filter?",
+                                                confirm -> {
+                                                    if (confirm) {
+                                                        setExpression(expression2);
+                                                        e.hide();
+                                                    } else {
+                                                        // Don't hide
+                                                        e.reset();
+                                                    }
+                                                });
+                                    } else {
+                                        setExpression(expression2);
+                                        e.hide();
+                                    }
                                 } else {
-                                    setExpression(expression2);
+                                    // Nothing changed!
                                     e.hide();
                                 }
-                            } else {
-                                // Nothing changed!
-                                e.hide();
-                            }
-                        },
-                        // If it isn't valid, let the user change it or cancel
-                        e::reset,
-                        this);
-            } else {
-                e.hide();
-            }
-        };
-
-        presenter.read(getCriteria().getExpression(),
-                MetaFields.STREAM_STORE_DOC_REF,
-                MetaFields.getAllFields());
-
-        presenter.getWidget().getElement().addClassName("default-min-sizes");
-        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Filter Streams")
-                .onShow(e -> presenter.focus())
-                .onHideRequest(HidePopupRequestEventHandler)
-                .fire();
+                            },
+                            // If it isn't valid, let the user change it or cancel
+                            e::reset,
+                            this);
+                });
     }
 
     private void setExpression(final ExpressionOperator expression) {

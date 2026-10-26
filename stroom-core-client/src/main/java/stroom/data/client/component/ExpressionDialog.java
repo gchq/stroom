@@ -14,45 +14,42 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client.component;
 
-import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
+/// The filter dialogs' content (Filter Streams, Filter Processors and the like): an expression
+/// editor, filling the dialog.
+public class ExpressionDialog extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel expression;
 
-    @Inject
-    public ExpressionViewImpl(final ExpressionViewImpl.Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public ExpressionDialog() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view.asWidget());
+    /// @param expressionEditor The expression editor, which its controller makes with its own
+    ///                         content.
+    public void setExpressionEditor(final IsWidget expressionEditor) {
+        expression.setWidget(expressionEditor.asWidget());
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {
+    interface Binder extends UiBinder<Widget, ExpressionDialog> {
 
     }
 }

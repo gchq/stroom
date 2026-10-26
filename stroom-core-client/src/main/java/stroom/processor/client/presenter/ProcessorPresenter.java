@@ -19,7 +19,7 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.component.ExpressionDialogController;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -43,10 +43,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -76,7 +73,7 @@ public class ProcessorPresenter
     private final ExpressionTreeController expressionTree;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
-    private final Provider<ExpressionPresenter> filterPresenterProvider;
+    private final Provider<ExpressionDialogController> filterDialogProvider;
     private final Provider<BatchProcessorFilterEditPresenter> batchProcessorFilterEditPresenterProvider;
 
     private ProcessorType processorType;
@@ -106,7 +103,7 @@ public class ProcessorPresenter
                               final ExpressionTreeController expressionTree,
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
-                              final Provider<ExpressionPresenter> filterPresenterProvider,
+                              final Provider<ExpressionDialogController> filterDialogProvider,
                               final Provider<BatchProcessorFilterEditPresenter>
                                       batchProcessorFilterEditPresenterProvider) {
         super(eventBus, view);
@@ -117,7 +114,7 @@ public class ProcessorPresenter
         this.expressionTree = expressionTree;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
-        this.filterPresenterProvider = filterPresenterProvider;
+        this.filterDialogProvider = filterDialogProvider;
         this.batchProcessorFilterEditPresenterProvider = batchProcessorFilterEditPresenterProvider;
 
         // Stop users from selecting expression items.
@@ -236,31 +233,20 @@ public class ProcessorPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = makeDialog(filterPresenterProvider);
-        final HidePopupRequestEvent.Handler handler = e -> {
-            if (e.isOk()) {
-                processorListPresenter.setExpression(presenter.write());
-                refresh();
-            }
-            e.hide();
-        };
-
         final List<QueryField> fields = new ArrayList<>();
         fields.addAll(ProcessorFields.getFields());
         fields.addAll(ProcessorFilterFields.getFields());
-        presenter.read(processorListPresenter.getExpression(),
+        filterDialogProvider.get().show(this,
+                "Filter Processors",
+                PopupSize.resizable(800, 600),
+                processorListPresenter.getExpression(),
                 ProcessorFilterFields.PROCESSOR_FILTERS_DOC_REF,
-                fields);
-
-        presenter.getWidget().getElement().addClassName("default-min-sizes");
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Filter Processors")
-                .onShow(e -> presenter.focus())
-                .onHideRequest(handler)
-                .fire();
+                fields,
+                (expression, e) -> {
+                    processorListPresenter.setExpression(expression);
+                    refresh();
+                    e.hide();
+                });
     }
 
     private void enableButtons(final boolean enabled) {

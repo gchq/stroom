@@ -29,15 +29,12 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.data.client.presenter.ExpressionPresenter;
-import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
-import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
@@ -83,10 +80,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
 
 
 
-        bindPresenterWidget(
-                ExpressionPresenter.class,
-                ExpressionView.class,
-                ExpressionViewImpl.class);
         bindPresenterWidget(
                 IFrameContentPresenter.class,
                 IFrameContentView.class,

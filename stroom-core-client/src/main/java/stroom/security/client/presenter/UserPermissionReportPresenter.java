@@ -16,7 +16,7 @@
 
 package stroom.security.client.presenter;
 
-import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.component.ExpressionDialogController;
 import stroom.explorer.client.presenter.DocumentPermissionsListPresenter;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.item.client.SelectionBox;
@@ -36,7 +36,6 @@ import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -54,7 +53,7 @@ public class UserPermissionReportPresenter
         extends MyPresenterWidget<UserPermissionReportView>
         implements QuickFilterUiHandlers {
 
-    private final Provider<ExpressionPresenter> docFilterPresenterProvider;
+    private final Provider<ExpressionDialogController> filterDialogProvider;
     private final DocumentPermissionsListPresenter documentPermissionsListPresenter;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
@@ -72,7 +71,7 @@ public class UserPermissionReportPresenter
     public UserPermissionReportPresenter(final EventBus eventBus,
                                          final UserPermissionReportView view,
                                          final QuickFilterPageView quickFilterPageView,
-                                         final Provider<ExpressionPresenter> docFilterPresenterProvider,
+                                         final Provider<ExpressionDialogController> filterDialogProvider,
                                          final DocumentPermissionsListPresenter documentPermissionsListPresenter,
                                          final Provider<DocumentUserPermissionsEditPresenter>
                                                  documentUserPermissionsEditPresenterProvider,
@@ -84,7 +83,7 @@ public class UserPermissionReportPresenter
         this.documentPermissionsListPresenter = documentPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
-        this.docFilterPresenterProvider = docFilterPresenterProvider;
+        this.filterDialogProvider = filterDialogProvider;
 
         view.setPermissionListView(quickFilterPageView);
         quickFilterPageView.setDataView(documentPermissionsListPresenter.getView());
@@ -147,29 +146,18 @@ public class UserPermissionReportPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = makeDialog(docFilterPresenterProvider);
-        final HidePopupRequestEvent.Handler handler = e -> {
-            if (e.isOk()) {
-                filterExpression = presenter.write();
-                documentPermissionsListPresenter.resetRange();
-                refresh();
-            }
-            e.hide();
-        };
-
-        presenter.read(filterExpression,
+        filterDialogProvider.get().show(this,
+                "Filter Documents",
+                PopupSize.resizable(800, 600),
+                filterExpression,
                 DocumentPermissionFields.DOCUMENT_STORE_DOC_REF,
-                DocumentPermissionFields.getFields());
-
-        presenter.getWidget().getElement().addClassName("default-min-sizes");
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Filter Documents")
-                .onShow(e -> presenter.focus())
-                .onHideRequest(handler)
-                .fire();
+                DocumentPermissionFields.getFields(),
+                (expression, e) -> {
+                    filterExpression = expression;
+                    documentPermissionsListPresenter.resetRange();
+                    refresh();
+                    e.hide();
+                });
     }
 
     private void onEdit() {
