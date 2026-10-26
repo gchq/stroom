@@ -21,8 +21,6 @@ import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticN
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
-import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter;
-import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
@@ -37,7 +35,6 @@ import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledP
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
-import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
@@ -62,9 +59,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AnalyticNotificationEditPresenter.class,
                 AnalyticNotificationEditView.class,
                 AnalyticNotificationEditViewImpl.class);
-        bindPresenterWidget(AnalyticEmailDestinationPresenter.class,
-                AnalyticEmailDestinationView.class,
-                AnalyticEmailDestinationViewImpl.class);
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);

@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticEmailDestinationController;
 import stroom.analytics.client.component.AnalyticStreamDestinationController;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.shared.AnalyticProcessType;
@@ -29,7 +30,6 @@ import stroom.config.global.shared.ConfigTarget;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
@@ -47,7 +47,7 @@ public class AnalyticNotificationEditPresenter
         implements ChangeUiHandlers {
 
     private final AnalyticStreamDestinationController analyticStreamDestination;
-    private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
+    private final AnalyticEmailDestinationController analyticEmailDestination;
     private final UiConfigCache uiConfigCache;
     private String notificationUUID;
 
@@ -56,18 +56,18 @@ public class AnalyticNotificationEditPresenter
     public AnalyticNotificationEditPresenter(final EventBus eventBus,
                                              final AnalyticNotificationEditView view,
                                              final AnalyticStreamDestinationController analyticStreamDestination,
-                                             final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
+                                             final AnalyticEmailDestinationController analyticEmailDestination,
                                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         own(analyticStreamDestination);
-        own(analyticEmailDestinationPresenter);
+        own(analyticEmailDestination);
         this.uiConfigCache = uiConfigCache;
         view.setUiHandlers(this);
         this.analyticStreamDestination = analyticStreamDestination;
-        this.analyticEmailDestinationPresenter = analyticEmailDestinationPresenter;
+        this.analyticEmailDestination = analyticEmailDestination;
 
         analyticStreamDestination.setOnChange(this::onChange);
-        analyticEmailDestinationPresenter.setOnChange(this::onChange);
+        analyticEmailDestination.setOnChange(this::onChange);
     }
 
     public void read(final DocRef docRef,
@@ -103,7 +103,7 @@ public class AnalyticNotificationEditPresenter
 
                 final NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
                         destination, defaultConfig);
-                NullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
+                NullSafe.consume(emailDestination, analyticEmailDestination::read);
 
                 final NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
                         destination, defaultConfig);
@@ -148,7 +148,7 @@ public class AnalyticNotificationEditPresenter
         if (getView().getDestinationType() != null) {
             switch (getView().getDestinationType()) {
                 case EMAIL: {
-                    destination = analyticEmailDestinationPresenter.write();
+                    destination = analyticEmailDestination.write();
                     break;
                 }
                 case STREAM: {
@@ -178,7 +178,7 @@ public class AnalyticNotificationEditPresenter
         if (destinationType != null) {
             switch (destinationType) {
                 case EMAIL: {
-                    getView().setDestinationView(analyticEmailDestinationPresenter.getView());
+                    getView().setDestinationView(analyticEmailDestination);
                     break;
                 }
                 case STREAM: {

@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.ChangeUiHandlers;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.StringWrapper;
-import stroom.widget.button.client.Button;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
@@ -43,46 +40,48 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class AnalyticEmailDestinationPresenter
-        extends MyPresenterWidget<AnalyticEmailDestinationView>
-        implements ChangeUiHandlers {
+/// An analytic notification's email settings ([AnalyticEmailDestination]): checks them, tests
+/// their templates on the server and sends a test email.
+public class AnalyticEmailDestinationController extends Controller {
 
     // TODO Make a jinja mode
     private static final AceEditorMode ACE_EDITOR_MODE = AceEditorMode.TEXT;
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
 
-    private final EditorPresenter subjectEditorPresenter;
-    private final EditorPresenter bodyEditorPresenter;
+    private final AnalyticEmailDestination view;
+    private final CodeEditorController subjectEditor;
+    private final CodeEditorController bodyEditor;
     private final RestFactory restFactory;
 
     private Runnable onChange = () -> {
     };
 
+    /// Made by GIN, with its settings.
+    ///
+    /// @param eventBus                     The application's event bus.
+    /// @param view                         The settings.
+    /// @param codeEditorControllerProvider Makes the templates' editors' controllers.
+    /// @param restFactory                  Tests the templates and sends the test email.
     @Inject
-    public AnalyticEmailDestinationPresenter(final EventBus eventBus,
-                                             final AnalyticEmailDestinationView view,
-                                             final EditorPresenter subjectEditorPresenter,
-                                             final EditorPresenter bodyEditorPresenter,
-                                             final RestFactory restFactory) {
-        super(eventBus, view);
-        own(subjectEditorPresenter);
-        own(bodyEditorPresenter);
-        this.subjectEditorPresenter = subjectEditorPresenter;
-        this.bodyEditorPresenter = bodyEditorPresenter;
+    public AnalyticEmailDestinationController(final EventBus eventBus,
+                                              final AnalyticEmailDestination view,
+                                              final Provider<CodeEditorController> codeEditorControllerProvider,
+                                              final RestFactory restFactory) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
-        initEditor(this.subjectEditorPresenter);
-        initEditor(this.bodyEditorPresenter);
-        view.setUiHandlers(this);
-        view.setSubjectTemplateEditorView(subjectEditorPresenter.getView());
-        view.setBodyTemplateEditorView(bodyEditorPresenter.getView());
+        initWidget(view);
+        subjectEditor = make(codeEditorControllerProvider).attach(view.getSubjectTemplateEditor());
+        bodyEditor = make(codeEditorControllerProvider).attach(view.getBodyTemplateEditor());
+        initEditor(subjectEditor);
+        initEditor(bodyEditor);
 
-        getView().getSendTestEmailBtn().addClickHandler(this::onSendTestEmailClicked);
-        getView().getTestSubjectTemplateBtn().addClickHandler(event -> {
-            testTemplate(NotificationEmailDestination::getSubjectTemplate, ValidationMode.SUBJECT);
-        });
-        getView().getTestBodyTemplateBtn().addClickHandler(event -> {
-            testTemplate(NotificationEmailDestination::getBodyTemplate, ValidationMode.BODY);
-        });
+        view.setOnChange(() -> onChange.run());
+        view.setOnSendTestEmail(this::onSendTestEmail);
+        view.setOnTestSubjectTemplate(() ->
+                testTemplate(NotificationEmailDestination::getSubjectTemplate, ValidationMode.SUBJECT));
+        view.setOnTestBodyTemplate(() ->
+                testTemplate(NotificationEmailDestination::getBodyTemplate, ValidationMode.BODY));
     }
 
 //    private void initSubjectEditor(final EditorPresenter editorPresenter) {
@@ -95,13 +94,63 @@ public class AnalyticEmailDestinationPresenter
 //        editorPresenter.getViewAsHexOption().setUnavailable();
 //    }
 
+    /// @return The settings shown, as they are now.
     public NotificationEmailDestination getCurrentEmailDestination() {
         return new NotificationEmailDestination(
-                getView().getTo(),
-                getView().getCc(),
-                getView().getBcc(),
-                subjectEditorPresenter.getText(),
-                bodyEditorPresenter.getText());
+                view.getTo(),
+                view.getCc(),
+                view.getBcc(),
+                subjectEditor.getText(),
+                bodyEditor.getText());
+    }
+
+    /// Shows email settings.
+    ///
+    /// @param destination The settings, or null to leave what is shown.
+    public void read(final NotificationEmailDestination destination) {
+//        uiConfigCache.get()
+//                .onSuccess(extendedUiConfig -> {
+        if (destination != null) {
+            view.setTo(destination.getTo());
+            view.setCc(destination.getCc());
+            view.setBcc(destination.getBcc());
+            subjectEditor.setText(destination.getSubjectTemplate());
+            bodyEditor.setText(destination.getBodyTemplate());
+        }
+//                    } else {
+//                        subjectEditorPresenter.setText(extendedUiConfig.getDefaultSubjectTemplate());
+//                        bodyEditorPresenter.setText(extendedUiConfig.getDefaultBodyTemplate());
+//                });
+    }
+
+    /// @return The settings shown.
+    public NotificationEmailDestination write() {
+        return NotificationEmailDestination
+                .builder()
+                .to(view.getTo())
+                .cc(view.getCc())
+                .bcc(view.getBcc())
+                .subjectTemplate(subjectEditor.getText())
+                .bodyTemplate(bodyEditor.getText())
+                .build();
+    }
+
+    /// @param onChange What to run when the user changes the email settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    private void initEditor(final CodeEditorController editor) {
+        editor.setMode(ACE_EDITOR_MODE);
+        editor.getOptions().getIndicatorsOption().setOff();
+        editor.getOptions().getIndicatorsOption().setUnavailable();
+        editor.getOptions().getLineWrapOption().setOn();
+        editor.getOptions().getLineNumbersOption().setOff();
+        editor.getOptions().getViewAsHexOption().setOff();
+        editor.getOptions().getViewAsHexOption().setUnavailable();
+        editor.getFormatAction().setUnavailable();
+
+        own(editor.addValueChangeHandler(event -> onChange.run()));
     }
 
     private void testTemplate(final Function<NotificationEmailDestination, String> templateGetter,
@@ -118,29 +167,31 @@ public class AnalyticEmailDestinationPresenter
                     })
                     .onFailure(throwable ->
                             AlertEvent.fireError(this, throwable.getMessage(), null))
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
 
-    private void onSendTestEmailClicked(final ClickEvent event) {
+    private void onSendTestEmail() {
         final NotificationEmailDestination emailDestination = getCurrentEmailDestination();
 
         if (validate(emailDestination)) {
             final String msg = "This will send a single test email using the configured templates and " +
-                    "an example detection event to the following recipients:\n"
-                    + "To: " + emailDestination.getTo() + "\n"
-                    + "Cc: " + emailDestination.getCc() + "\n"
-                    + "Bcc: " + emailDestination.getBcc() + "\n"
-                    + "\n"
-                    + "Are you sure?";
+                               "an example detection event to the following recipients:\n"
+                               + "To: " + emailDestination.getTo() + "\n"
+                               + "Cc: " + emailDestination.getCc() + "\n"
+                               + "Bcc: " + emailDestination.getBcc() + "\n"
+                               + "\n"
+                               + "Are you sure?";
 
             ConfirmEvent.fire(this, msg, isOk -> {
-                if (isOk) {
+                if (isOk && !isDisposed()) {
                     restFactory
                             .create(ANALYTIC_RULE_RESOURCE)
                             .call(res -> res.sendTestEmail(emailDestination))
-                            .taskMonitorFactory(getView().getSendTestEmailBtn())
+                            .owner(this)
+                            .taskMonitorFactory(view.getSendTestEmailTaskMonitor())
                             .exec();
                 }
             });
@@ -194,82 +245,12 @@ public class AnalyticEmailDestinationPresenter
         return true;
     }
 
-    private void initEditor(final EditorPresenter editorPresenter) {
-        editorPresenter.setMode(ACE_EDITOR_MODE);
-        editorPresenter.getIndicatorsOption().setOff();
-        editorPresenter.getIndicatorsOption().setUnavailable();
-        editorPresenter.getLineWrapOption().setOn();
-        editorPresenter.getLineNumbersOption().setOff();
-        editorPresenter.getViewAsHexOption().setOff();
-        editorPresenter.getViewAsHexOption().setUnavailable();
-        editorPresenter.getFormatAction().setUnavailable();
-
-        editorPresenter.addValueChangeHandler(event -> onChange());
-    }
-
-    public void read(final NotificationEmailDestination destination) {
-//        uiConfigCache.get()
-//                .onSuccess(extendedUiConfig -> {
-        if (destination != null) {
-            getView().setTo(destination.getTo());
-            getView().setCc(destination.getCc());
-            getView().setBcc(destination.getBcc());
-            subjectEditorPresenter.setText(destination.getSubjectTemplate());
-            bodyEditorPresenter.setText(destination.getBodyTemplate());
-        }
-//                    } else {
-//                        subjectEditorPresenter.setText(extendedUiConfig.getDefaultSubjectTemplate());
-//                        bodyEditorPresenter.setText(extendedUiConfig.getDefaultBodyTemplate());
-//                });
-    }
-
-    public NotificationEmailDestination write() {
-        return NotificationEmailDestination
-                .builder()
-                .to(getView().getTo())
-                .cc(getView().getCc())
-                .bcc(getView().getBcc())
-                .subjectTemplate(subjectEditorPresenter.getText())
-                .bodyTemplate(bodyEditorPresenter.getText())
-                .build();
-    }
-
-    @Override
-    public void onChange() {
-        onChange.run();
-    }
-
-    /// @param onChange What to run when the user changes the email settings.
-    public void setOnChange(final Runnable onChange) {
-        this.onChange = onChange;
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface AnalyticEmailDestinationView extends View, HasUiHandlers<ChangeUiHandlers> {
-
-        String getTo();
-
-        void setTo(String to);
-
-        String getCc();
-
-        void setCc(String cc);
-
-        String getBcc();
-
-        void setBcc(String bcc);
-
-        void setSubjectTemplateEditorView(View view);
-
-        void setBodyTemplateEditorView(View view);
-
-        Button getSendTestEmailBtn();
-
-        Button getTestSubjectTemplateBtn();
-
-        Button getTestBodyTemplateBtn();
+    // The task monitor its owner gives it, else its own spinner
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null
+                ? provided
+                : new DefaultTaskMonitorFactory(this);
     }
 
 

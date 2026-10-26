@@ -2,8 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max form AnalyticEmailDestinationViewImpl">
+    <g:FlowPanel styleName="max form analytic-email-destination">
         <form:FormGroup identity="analyticEmailDestinationTo"
                         label="To"
                         helpText="Email addresses to send the notification to. Separate several addresses with semicolons, e.g. a@example.com; b@example.com. At least one of To, Cc or Bcc must be given."
@@ -30,11 +31,13 @@
                         helpText="Jinja template for the email subject, e.g. Detector '{{{{ detectorName | escape }}' Alert. It must be a single line and cannot be blank. Select Test Template to see example output."
                         screenReaderText="Jinja template on one line. Required.">
             <g:FlowPanel styleName="dock-min form">
-                <g:SimplePanel ui:field="subjectTemplatePanel"
-                               addStyleNames="dock-max form-control-border"/>
+                <g:SimplePanel addStyleNames="dock-max form-control-border analytic-email-destination__subject">
+                    <ed:CodeEditor ui:field="subjectTemplate"/>
+                </g:SimplePanel>
                 <b:Button addStyleNames="dock-min allow-focus"
                           ui:field="testSubjectTemplateBtn"
-                          text="Test Template"/>
+                          text="Test Template"
+                          icon="TICK"/>
             </g:FlowPanel>
         </form:FormGroup>
 
@@ -43,11 +46,13 @@
                         helpText="Jinja template for the email body. If the output contains HTML tags the email is sent as HTML, otherwise as plain text. It cannot be blank; select Test Template to see example output."
                         screenReaderText="Jinja template. Required. Output containing HTML tags is sent as HTML.">
             <g:FlowPanel styleName="dock-min form">
-                <g:SimplePanel ui:field="bodyTemplatePanel"
-                               addStyleNames="dock-max form-control-border"/>
+                <g:SimplePanel addStyleNames="dock-max form-control-border analytic-email-destination__body">
+                    <ed:CodeEditor ui:field="bodyTemplate"/>
+                </g:SimplePanel>
                 <b:Button addStyleNames="dock-min allow-focus"
                           ui:field="testBodyTemplateBtn"
-                          text="Test Template"/>
+                          text="Test Template"
+                          icon="TICK"/>
             </g:FlowPanel>
         </form:FormGroup>
 

@@ -265,6 +265,26 @@ public final class AnalyticRuleEditorStories {
                     play.waitFor(() -> play.expect(toField(dialog)).toHaveValue("ops@example.com"));
                     expectNoProblems(play);
                 })
+                // An email notification's subject template is tested on the server, which shows its
+                // output in an alert
+                .story("EmailTestTemplate", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    pickDestinationType(play, dialog, "Email");
+                    final Play subject = dialog.within(dialog.findByText("Email Subject Template", "label")
+                            .closest(".form-group"));
+                    play.click(subject.getByRole("button", "Test Template"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/analyticRule/v1/testTemplate")
+                                    .withJsonBodyContaining("{\"string\": \"Detection: {{ ruleName }}\"}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("INFO: Example template output:"));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // Table preferences are kept on the rule: hiding a column makes it dirty
                 .story("TablePreferencesPersistOnTheDoc", context -> render(context, FIXTURES, UI_CONFIG))
                 .withPlay(AnalyticRuleEditorStories::hideCountColumn)
@@ -331,6 +351,8 @@ public final class AnalyticRuleEditorStories {
                 .route(RequestMatcher.post("/analyticDataShard/v1/find").withQuery("nodeName=node9"),
                         RestReply.json(NODE9_SHARDS))
                 .route(RequestMatcher.post("/duplicateCheck/v1/find"), RestReply.json(DUPLICATES))
+                .route(RequestMatcher.post("/analyticRule/v1/testTemplate"),
+                        RestReply.json("{\"string\": \"Detection: My Rule\"}"))
                 .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionSchedule"),
                         RestReply.json(EMPTY_PAGE))
                 .route(RequestMatcher.post("/scheduledTime/v1"), RestReply.json("{\"nextScheduledTimeMs\": 0}"))

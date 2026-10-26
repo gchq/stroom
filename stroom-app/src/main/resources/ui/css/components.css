@@ -1386,23 +1386,6 @@
     border-radius: .25rem;
 }
 
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate {
-    /*width: 1000px;*/
-}
-
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .code-editor {
-    height: 60px;
-}
-
-.AnalyticEmailDestinationViewImpl .button {
-    width: 200px;
-}
-
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .code-editor {
-    min-height: 300px;
-}
-
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
     border-top: 1px solid var(--border-color);
