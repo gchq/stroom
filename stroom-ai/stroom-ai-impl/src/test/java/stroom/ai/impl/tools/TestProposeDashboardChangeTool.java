@@ -699,6 +699,41 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void anyEndOfALinkAlsoMatchesAClickedNode() {
+        // Chat 120, as the agent gave it: asked for "the person as sender or as recipient", it gave only the link's
+        // ends, so a clicked node (which selects node, not source or target) filtered nothing. Node terms are added
+        // for the same columns, so a node matches either end, and a link still matches both its ends.
+        dashboardTab(false, SETTINGS + "## Visualisation 'Chat flows' (id vis-1)\n"
+                            + "Visualisation: 'Network' (uuid vis-uuid)\n"
+                            + "Linked table: 'Events'\n"
+                            + "Vis settings: {\"source\":\"UserId\",\"target\":\"EventType\"}\n");
+
+        assertThat(run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chat flows",
+                "mode", "table", "match", "any", "terms", List.of(
+                        Map.of("field", "UserId", "selection", "source"),
+                        Map.of("field", "EventType", "selection", "target"))))))
+                .contains("UserId = its node")
+                .contains("EventType = its node");
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat(query).containsEntry("op", "OR");
+            assertThat((List<?>) query.get("children")).extracting(child ->
+                            ((List<?>) asMap(child).get("children")).size())
+                    .containsExactly(1, 1, 2);
+        });
+
+        // Matching all its terms, a link's pair: a node isn't added (it would never match both ends at once).
+        run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Chat flows",
+                "mode", "table", "terms", List.of(
+                        Map.of("field", "UserId", "selection", "source"),
+                        Map.of("field", "EventType", "selection", "target")))));
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(JsonUtil.writeValueAsString(asMap(((List<?>) action.get("changes")).getFirst())
+                        .get("query"), false)).doesNotContain("selection.node"));
+    }
+
+    @Test
     void aLinksEndsAtAnyLevelStayTogether() {
         // A link between two levels selects only those two (e.g. target and level3): with the source and target
         // terms in one group, the rest drop out, so each link filters by both its own ends.
@@ -716,8 +751,10 @@ class TestProposeDashboardChangeTool {
         assertThat(takeUserActions()).singleElement().satisfies(action -> {
             final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
                     .get("query"));
-            assertThat((List<?>) query.get("children")).singleElement().satisfies(group ->
-                    assertThat((List<?>) asMap(group).get("children")).hasSize(3));
+            // The link's ends together, and (matching any) a clicked node at either end, each on its own.
+            assertThat((List<?>) query.get("children")).hasSize(3)
+                    .extracting(group -> ((List<?>) asMap(group).get("children")).size())
+                    .containsExactly(1, 1, 3);
         });
     }
 
@@ -929,5 +966,118 @@ class TestProposeDashboardChangeTool {
         final List<Map<String, Object>> taken = List.copyOf(offered);
         offered.clear();
         return taken;
+    }
+
+    // The selection filters Stroom AI builds, from what the user asks for, as a dashboard applies them to what each
+    // chart's click selects. Written to a golden file (selection-filters/scenarios.json), which the client's
+    // TestDashboardContextImpl reads: it puts each case's selections, as the charts give them, into the expression
+    // built here, and checks the rows kept are those expected. Together they test the whole chain a click goes
+    // through, which each side's own tests can't. Seen in testing: a filter on "the person as sender or as
+    // recipient" filtered nothing for a clicked node, though every part passed its own tests.
+    @Test
+    void selectionFiltersKeepTheRowsTheUserMeans() {
+        final List<Map<String, Object>> scenarios = List.of(
+                scenario("network, either end (match any): a node at either end, or a link's pair",
+                        "any", List.of(term("sender", "source"), term("recipient", "target")), Set.of(), List.of(
+                                filterCase("nothing selected", List.of(), 0, 1, 2, 3, 4, 5),
+                                filterCase("node mchen", List.of(Map.of("node", "mchen")), 2, 3, 5),
+                                filterCase("link devans to phall (directed)", List.of(link("devans", "phall")), 0),
+                                filterCase("link devans to phall (undirected, sent both ways)",
+                                        List.of(link("devans", "phall"), link("phall", "devans")), 0, 1),
+                                filterCase("nodes jlee and phall (Ctrl-click)",
+                                        List.of(Map.of("node", "jlee"), Map.of("node", "phall")), 0, 1, 4, 5))),
+                scenario("network, exact pair (match all): a link's pair; a node filters nothing",
+                        "all", List.of(term("sender", "source"), term("recipient", "target")), Set.of(), List.of(
+                                filterCase("link mchen to cdavis", List.of(link("mchen", "cdavis")), 2),
+                                filterCase("node mchen", List.of(Map.of("node", "mchen")), 0, 1, 2, 3, 4, 5))),
+                scenario("bar chart of senders: the clicked bar's sender",
+                        "all", List.of(term("sender", "category")), Set.of(), List.of(
+                                filterCase("bar mchen", List.of(Map.of("category", "mchen", "sender", "mchen")), 2, 5),
+                                filterCase("bars jlee and phall (Ctrl-click)", List.of(
+                                        Map.of("category", "jlee", "sender", "jlee"),
+                                        Map.of("category", "phall", "sender", "phall")), 1, 4))),
+                scenario("time series of days: within the time selected",
+                        "all", List.of(term("EventTime", "x")), Set.of("x", "Day"), List.of(
+                                filterCase("range dragged over 14 and 15 October", List.of(Map.of(
+                                        "from", "2026-10-14T00:00:00.000Z",
+                                        "to", "2026-10-15T23:59:59.999Z")), 0, 1, 2),
+                                filterCase("day 16 October clicked", List.of(Map.of(
+                                        "x", "2026-10-16T00:00:00.000Z", "Day", "2026-10-16T00:00:00.000Z",
+                                        "from", "2026-10-16T00:00:00.000Z",
+                                        "to", "2026-10-16T23:59:59.999Z")), 3, 4))),
+                scenario("line per sender over days: the clicked point's day and sender",
+                        "all", List.of(term("EventTime", "x"), term("sender", "series")), Set.of("x", "Day"),
+                        List.of(filterCase("mchen on 15 October", List.of(Map.of(
+                                "x", "2026-10-15T00:00:00.000Z", "series", "mchen",
+                                "from", "2026-10-15T00:00:00.000Z", "to", "2026-10-15T23:59:59.999Z")), 2))));
+        final Map<String, Object> fixture = new java.util.LinkedHashMap<>();
+        fixture.put("chartId", "vis-1");
+        fixture.put("rows", List.of(
+                row("devans", "phall", "2026-10-14T09:00:00.000Z"),
+                row("phall", "devans", "2026-10-14T15:00:00.000Z"),
+                row("mchen", "cdavis", "2026-10-15T10:00:00.000Z"),
+                row("cdavis", "mchen", "2026-10-16T11:00:00.000Z"),
+                row("jlee", "swhite", "2026-10-16T12:00:00.000Z"),
+                row("mchen", "jlee", "2026-10-17T08:00:00.000Z")));
+        fixture.put("scenarios", scenarios);
+
+        stroom.ai.impl.GoldenFiles.assertMatches("selection-filters/scenarios.json",
+                JsonUtil.writeValueAsString(sorted(fixture), true));
+    }
+
+    // The fixture with each map's keys in order, so the file is the same each run (Map.of's order isn't).
+    private static Object sorted(final Object value) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> sorted = new java.util.TreeMap<>();
+            map.forEach((key, item) -> sorted.put(String.valueOf(key), sorted(item)));
+            return sorted;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(TestProposeDashboardChangeTool::sorted).toList();
+        }
+        return value;
+    }
+
+    // A case: what the chart's click selects, as the chart gives it, and the rows (by number) the filter keeps.
+    private static Map<String, Object> filterCase(final String name,
+                                                  final List<Map<String, String>> selections,
+                                                  final Integer... rows) {
+        final Map<String, Object> filterCase = new java.util.LinkedHashMap<>();
+        filterCase.put("name", name);
+        filterCase.put("selections", selections);
+        filterCase.put("keeps", List.of(rows));
+        return filterCase;
+    }
+
+    // A scenario: a filter as the agent gives it (match and terms), the chart's date keys, the expression the tool
+    // builds for it, and its cases.
+    private static Map<String, Object> scenario(final String name,
+                                                final String match,
+                                                final List<Map<String, String>> terms,
+                                                final Set<String> dateKeys,
+                                                final List<Map<String, Object>> cases) {
+        final Change change = DashboardChanges.parse(List.of(Map.of("op", "add_selection_filter", "target", "Table",
+                "chart", "Chart", "mode", "table", "match", match, "terms", terms))).getFirst();
+        final Change built = ProposeDashboardChangeTool.withNodeEnds(
+                ProposeDashboardChangeTool.withDatesAsRanges(change, dateKeys));
+        final Map<String, Object> scenario = new java.util.LinkedHashMap<>();
+        scenario.put("name", name);
+        scenario.put("expression", JsonUtil.readValue(JsonUtil.writeValueAsString(
+                ProposeDashboardChangeTool.filterExpression(built, "vis-1"), false), Map.class));
+        scenario.put("cases", cases);
+        return scenario;
+    }
+
+    private static Map<String, String> term(final String field, final String selection) {
+        return Map.of("field", field, "selection", selection);
+    }
+
+    // A clicked link's selection, as a network graph gives it: its ends by role and by column.
+    private static Map<String, String> link(final String source, final String target) {
+        return Map.of("source", source, "target", target, "sender", source, "recipient", target);
+    }
+
+    private static Map<String, String> row(final String sender, final String recipient, final String time) {
+        return Map.of("sender", sender, "recipient", recipient, "EventTime", time);
     }
 }

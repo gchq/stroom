@@ -117,6 +117,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     // with more (a link selects only its own two ends, so the rest drop out).
     private static final Set<String> LINK_ENDS = Set.of("source", "target", "level3", "level4", "level5",
             "level6");
+    // The selection key of a network's clicked node, at either end of its links.
+    static final String NODE_SELECTION = "node";
     // A selection filter's id, as the dashboard file gives it.
     private static final Pattern SELECTION_FILTER_ID = Pattern.compile("\\[id ([^\\]\\s]+)]");
     // A component's heading in the dashboard file, e.g. "## Table 'Events' (id table-1)".
@@ -923,37 +925,76 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 resolved.add(change);
                 continue;
             }
-            final Change ranged = withDatesAsRanges(change, dateKeys);
-            // Stroom ANDs the terms of an operator that name the same component's selection, whatever the
-            // operator, so for any of them to match, each is put in an operator of its own (seen in testing: a
-            // filter on a sender or a recipient being the clicked node matched only messages to oneself).
-            final boolean any = "any".equals(ranged.filter());
-            final ExpressionOperator.Builder filter = ExpressionOperator.builder().op(any
-                    ? Op.OR
-                    : Op.AND);
-            // A clicked link's source and target terms stay together: both ends must match (the chart sends a link
-            // that is the same either way round both ways, so it matches in either direction).
-            final List<ExpressionTerm> linkTerms = new ArrayList<>();
-            final long termCount = ranged.settings().values().stream()
-                    .mapToLong(selections -> DashboardChanges.selectionsOf(selections).size())
-                    .sum();
-            ranged.settings().forEach((field, selections) -> DashboardChanges.selectionsOf(selections)
-                    .forEach(key -> {
-                        final List<ExpressionTerm> terms = selectionTerms(field, key, chart.id());
-                        if (any && LINK_ENDS.contains(key)) {
-                            linkTerms.addAll(terms);
-                        } else if (any && termCount > 1) {
-                            filter.addOperator(ExpressionOperator.builder().addTerms(terms).build());
-                        } else {
-                            terms.forEach(filter::addTerm);
-                        }
-                    }));
-            if (!linkTerms.isEmpty()) {
-                filter.addOperator(ExpressionOperator.builder().addTerms(linkTerms).build());
-            }
-            resolved.add(ranged.toBuilder().targetId(target.id()).ref(chart.id()).query(filter.build()).build());
+            final Change ranged = withNodeEnds(withDatesAsRanges(change, dateKeys));
+            resolved.add(ranged.toBuilder().targetId(target.id()).ref(chart.id())
+                    .query(filterExpression(ranged, chart.id())).build());
         }
         return resolved;
+    }
+
+    /// The expression of a selection filter, from its terms as checked (dates made ranges, see
+    /// [#withDatesAsRanges(Change, Set)], and a network's node ends added, see [#withNodeEnds(Change)]): each field
+    /// compared with what the chart's selection holds, all of them, or any (match any).
+    ///
+    /// @param change  The add_selection_filter change, as checked.
+    /// @param chartId The id of the chart whose selection it uses.
+    /// @return The filter's expression.
+    static ExpressionOperator filterExpression(final Change change, final String chartId) {
+        // Stroom ANDs the terms of an operator that name the same component's selection, whatever the
+        // operator, so for any of them to match, each is put in an operator of its own (seen in testing: a
+        // filter on a sender or a recipient being the clicked node matched only messages to oneself).
+        final boolean any = "any".equals(change.filter());
+        final ExpressionOperator.Builder filter = ExpressionOperator.builder().op(any
+                ? Op.OR
+                : Op.AND);
+        // A clicked link's source and target terms stay together: both ends must match (the chart sends a link
+        // that is the same either way round both ways, so it matches in either direction).
+        final List<ExpressionTerm> linkTerms = new ArrayList<>();
+        final long termCount = change.settings().values().stream()
+                .mapToLong(selections -> DashboardChanges.selectionsOf(selections).size())
+                .sum();
+        change.settings().forEach((field, selections) -> DashboardChanges.selectionsOf(selections)
+                .forEach(key -> {
+                    final List<ExpressionTerm> terms = selectionTerms(field, key, chartId);
+                    if (any && LINK_ENDS.contains(key)) {
+                        linkTerms.addAll(terms);
+                    } else if (any && termCount > 1) {
+                        filter.addOperator(ExpressionOperator.builder().addTerms(terms).build());
+                    } else {
+                        terms.forEach(filter::addTerm);
+                    }
+                }));
+        if (!linkTerms.isEmpty()) {
+            filter.addOperator(ExpressionOperator.builder().addTerms(linkTerms).build());
+        }
+        return filter.build();
+    }
+
+    // A filter matching any of its terms, on a network's link ends (e.g. sender = its source, recipient = its
+    // target), also matches a clicked node at either end: a node selects node, not source or target, so without
+    // node terms a clicked node filtered nothing. Seen in testing: asked for "the person as sender or as
+    // recipient", a node click left every row. A field compared with node already is left as it is.
+    static Change withNodeEnds(final Change change) {
+        if (!"any".equals(change.filter()) || change.settings().values().stream()
+                .flatMap(selections -> DashboardChanges.selectionsOf(selections).stream())
+                .anyMatch(NODE_SELECTION::equals)) {
+            return change;
+        }
+        final Map<String, String> settings = new LinkedHashMap<>();
+        boolean added = false;
+        for (final Map.Entry<String, String> entry : change.settings().entrySet()) {
+            final List<String> selections = DashboardChanges.selectionsOf(entry.getValue());
+            if (selections.stream().anyMatch(LINK_ENDS::contains)) {
+                settings.put(entry.getKey(), entry.getValue() + DashboardChanges.SELECTIONS_SEPARATOR
+                                             + NODE_SELECTION);
+                added = true;
+            } else {
+                settings.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return added
+                ? change.toBuilder().settings(settings).build()
+                : change;
     }
 
     // The filter with each term comparing a field with a date the chart selects (e.g. a time axis's x) made a
