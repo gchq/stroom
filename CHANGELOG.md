@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.8-parallel-pathways] - 2026-10-26
+
+* Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.
+
+* Bug **#5815** : Change Credentials so that editing their name or expiry no longer needs the secret to be re-entered. Secrets are never shown, the type is fixed once created and a new Replace Secret action replaces a secret in place. Also redact SSH key passphrases from audit logs.
+
+* Bug **#5815** : Fix creating Credentials with the name of existing Credentials taking over the existing Credentials and their secret. Duplicate and blank names are now rejected.
+
+* Feature **#5796** : Add a 'Key Store File' credential type that refers to a key store file at the same path on every node, e.g. one kept up to date by cert-manager, rather than an uploaded one. Paths must be in a directory listed in the new `stroom.credentials.allowedKeyStoreFileDirs` property, which is empty by default.
+
+* Feature **#5796** : Refresh cached HTTP clients in the background every 10 minutes (`stroom.pipeline.httpClientCache.refreshAfterWrite`) so that changes to key store files on disk are picked up. Clients still in use are only closed once finished with.
+
+* Build : Update gradle wrapper from 9.8.0 to 9.8.1.
+
+* Feature **#5796** : Add `stroom.credentials.keyStoreFiles` to create 'Key Store File' credentials from the YAML config when Stroom starts, owned by `stroom.credentials.keyStoreFilesOwnerSubjectId` (default the Administrators group).
+
+* Bug **#5887** : Stop S3 Event Service from setting DLQ message attributes with null/blank values.
+
+* Bug : Change default value of prop `receive.s3Event.sqs.maxNumberOfMessages` from 1000 to 10. Add config value validation constraints.
+
+* Feature **#5879** : Use Stroom credentials and HTTP client settings for Elastic Cluster documents. The API key is now chosen from the Access Token credentials and is no longer sent to the browser. TLS (key/trust stores), proxy and timeouts are set with the standard HTTP client settings. **Breaking change**: the inline CA certificate, API key ID/secret and timeouts are no longer used, so existing Elastic Cluster documents must be updated after upgrade. Create an Access Token credential holding the base64 encoded API key (the `encoded` value Elasticsearch returns) and, if needed, a PKCS12 trust store credential holding the cluster's CA certificate, then select them in the document. Testing a cluster now requires Edit permission on it.
+
+
 ## [v7.14-beta.8] - 2026-10-16
 
 * Feature : Add `random-integer(upperbound)` XSLT function.
@@ -2701,7 +2724,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.8-parallel-pathways...HEAD
+[v7.14-beta.8-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.8-parallel-pathways
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
 [v7.14-beta.6]: https://github.com/gchq/stroom/compare/v7.14-beta.5...v7.14-beta.6
