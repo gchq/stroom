@@ -32,6 +32,7 @@ import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.receive.rules.client.component.FieldListController;
 import stroom.receive.rules.client.component.RuleSetSettingsController;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
@@ -80,7 +81,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final RuleSetSettingsController ruleSetSettings;
     // Shows the Rules tab's component in the tab panel
     private final ControllerLayer ruleSetSettingsLayer;
-    private final FieldListPresenter fieldListPresenter;
+    private final FieldListController fieldListPresenter;
+    private final ControllerLayer fieldListLayer;
     private final LazyValue<MarkdownEditController> lazyMarkdownEdit;
     private final RestFactory restFactory;
     private final Toolbar toolbar;
@@ -99,7 +101,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final RuleSetSettingsController ruleSetSettings,
-                            final Provider<FieldListPresenter> fieldListPresenterProvider,
+                            final Provider<FieldListController> fieldListPresenterProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final RestFactory restFactory,
                             final HasSaveRegistry hasSaveRegistry,
@@ -114,6 +116,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         ruleSetSettingsLayer = new ControllerLayer(ruleSetSettings);
         ruleSetSettings.setOnChange(this::onChange);
         fieldListPresenter = make(fieldListPresenterProvider);
+        fieldListLayer = new ControllerLayer(fieldListPresenter);
         ruleSetSettings.setFields(fieldListPresenter::getFields);
         this.lazyMarkdownEdit = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
@@ -308,7 +311,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         if (RULES_TAB.equals(tab)) {
             callback.accept(ruleSetSettingsLayer);
         } else if (FIELDS_TAB.equals(tab)) {
-            callback.accept(fieldListPresenter);
+            callback.accept(fieldListLayer);
         } else if (DOCUMENTATION_TAB.equals(tab)) {
             if (markdownEditLayer == null) {
                 markdownEditLayer = new ControllerLayer(lazyMarkdownEdit.getValue());
