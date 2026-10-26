@@ -375,6 +375,28 @@ if (!window.visualisations) {
         window.document.body.removeChild(link);
     }
 
+    // Puts what the user is looking at in a chart's report, for the chat's agent (as the dashboard's description
+    // gives it): the interval Auto Interval groups by, the part zoomed in on, what is selected and the series hidden
+    // from the legend; each left out when there is none. Stroom keeps these short.
+    function setView(report, view) {
+        ["interval", "shown", "selection", "hiddenSeries"].forEach(function (key) {
+            delete report[key];
+        });
+        if (view.interval) {
+            report.interval = view.interval;
+        }
+        if (view.shown) {
+            report.shown = view.shown;
+        }
+        if (view.selection) {
+            report.selection = view.selection;
+        }
+        if (view.hiddenSeries && view.hiddenSeries.length) {
+            report.hiddenSeries = view.hiddenSeries.slice(0, 10);
+        }
+        return report;
+    }
+
     // Saves text as a file, e.g. CSV.
     function saveText(name, text, type) {
         var blob = new window.Blob([text], {type: type});
@@ -3271,8 +3293,71 @@ if (!window.visualisations) {
         function reportSelection() {
             if (lastReport) {
                 lastReport.selected = !!selected;
+                setView(lastReport, {
+                    interval: built ? built.interval : null,
+                    shown: zoomShown(),
+                    selection: selected ? (selected.items ? selected.items.map(function (item) {
+                        return item.label;
+                    }).join("; ") : selected.label) : null,
+                    hiddenSeries: hiddenNames
+                });
                 sendReport(lastReport);
             }
+        }
+
+        // The part of the chart zoomed in on, as the user sees it, e.g. "Day from 2026-10-14 to 2026-10-16", or
+        // null if it isn't zoomed.
+        function zoomShown() {
+            if (!chart || !built || !zoomed) {
+                return null;
+            }
+            var option = chart.getOption();
+            var parts = [];
+            (option.dataZoom || []).forEach(function (zoom, index) {
+                if (zoom.type !== "inside" || (zoom.start <= 0 && zoom.end >= 100)) {
+                    return;
+                }
+                var model = chart.getModel().getComponent("dataZoom", index);
+                var range = model && model.getValueRange ? model.getValueRange() : null;
+                var onX = zoom.xAxisIndex !== undefined && [].concat(zoom.xAxisIndex).length > 0;
+                var axis = [].concat(onX ? option.xAxis : option.yAxis)[0] || {};
+                if (!range) {
+                    return;
+                }
+                var from;
+                var to;
+                if (axis.type === "time") {
+                    var pattern = lastPrefs ? lastPrefs.compactTimePattern : undefined;
+                    var timeZone = lastPrefs ? lastPrefs.timeZone : undefined;
+                    from = formatTime(range[0], pattern, timeZone);
+                    to = formatTime(range[1], pattern, timeZone);
+                } else if (axis.type === "category" && Array.isArray(axis.data)) {
+                    var first = Math.max(0, Math.round(range[0]));
+                    var last = Math.min(axis.data.length - 1, Math.round(range[1]));
+                    from = "'" + labelText(axis.data[first]) + "'";
+                    to = "'" + labelText(axis.data[last]) + "' (" + (last - first + 1) + " of " + axis.data.length
+                        + ")";
+                } else {
+                    from = formatNumber(range[0]);
+                    to = formatNumber(range[1]);
+                }
+                parts.push((axis.name || (onX ? "x" : "y")) + " from " + from + " to " + to);
+            });
+            var graph = built.option.series ? graphSeries(built.option) : null;
+            if (!parts.length && graph) {
+                var series = (option.series || []).filter(function (item) {
+                    return item.type === "graph";
+                })[0];
+                if (series && series.zoom && series.zoom !== 1) {
+                    parts.push("zoomed in " + (Math.round(series.zoom * 10) / 10) + "x");
+                }
+            }
+            return parts.length ? parts.join("; ") : null;
+        }
+
+        // A category's label, as an axis's data holds it.
+        function labelText(item) {
+            return item && typeof item === "object" && item.value !== undefined ? String(item.value) : String(item);
         }
 
         function selectedLabel() {
@@ -3295,6 +3380,7 @@ if (!window.visualisations) {
         var rangeMode = false;
         // Whether some series are hidden, from the legend: Stroom's toolbar then offers to show them all.
         var hiddenSeries = false;
+        var hiddenNames = [];
         // The interval chosen in Stroom's toolbar for Auto Interval (null for Auto), and whether a network graph's
         // layout is paused.
         var chosenInterval = null;
@@ -3335,6 +3421,8 @@ if (!window.visualisations) {
                 layoutPaused: layoutPaused,
                 note: notes.length ? notes.join(" · ") : null
             });
+            // The agent sees what the user does: the view goes in the chart's report too.
+            reportSelection();
         }
 
         // Turns the range tool on or off: while on, dragging across the chart selects a time range.
@@ -3752,9 +3840,10 @@ if (!window.visualisations) {
             chart.on("datazoom", onDataZoom);
             chart.on("legendselectchanged", function (params) {
                 var shown = params && params.selected ? params.selected : {};
-                hiddenSeries = Object.keys(shown).some(function (name) {
+                hiddenNames = Object.keys(shown).filter(function (name) {
                     return shown[name] === false;
                 });
+                hiddenSeries = hiddenNames.length > 0;
                 sendControls();
             });
             chart.on("graphroam", function () {
@@ -3798,6 +3887,7 @@ if (!window.visualisations) {
                 // Drawn afresh, every series shown and the layout moving, at the zoom it had, and the range tool on
                 // again if it was.
                 hiddenSeries = false;
+                hiddenNames = [];
                 layoutPaused = false;
                 zoomed = !!(zoomWindows && zoomWindows.some(function (area) {
                     return area.start > 0 || area.end < 100;
@@ -3880,6 +3970,7 @@ if (!window.visualisations) {
             } else if (name === "showAllSeries" && chart) {
                 chart.dispatchAction({type: "legendAllSelect"});
                 hiddenSeries = false;
+                hiddenNames = [];
                 sendControls();
             } else if (name === "downloadImage" && chart && built) {
                 saveFile((value || "chart") + ".png", chart.getDataURL({type: "png", pixelRatio: 2,
@@ -3910,6 +4001,7 @@ if (!window.visualisations) {
         buildOption: buildOption,
         formatTime: formatTime,
         sanitiseOptions: sanitiseOptions,
+        setView: setView,
         readPreferences: readPreferences,
         selectionLabel: selectionLabel,
         brushArea: brushArea,

@@ -335,6 +335,28 @@ if (!window.visualisations) {
         window.document.body.removeChild(link);
     }
 
+    // Puts what the user is looking at in a chart's report, for the chat's agent (as the dashboard's description
+    // gives it): the interval Auto Interval groups by, the part zoomed in on, what is selected and the series hidden
+    // from the legend; each left out when there is none. Stroom keeps these short.
+    function setView(report, view) {
+        ["interval", "shown", "selection", "hiddenSeries"].forEach(function (key) {
+            delete report[key];
+        });
+        if (view.interval) {
+            report.interval = view.interval;
+        }
+        if (view.shown) {
+            report.shown = view.shown;
+        }
+        if (view.selection) {
+            report.selection = view.selection;
+        }
+        if (view.hiddenSeries && view.hiddenSeries.length) {
+            report.hiddenSeries = view.hiddenSeries.slice(0, 10);
+        }
+        return report;
+    }
+
     // Saves text as a file, e.g. CSV.
     function saveText(name, text, type) {
         var blob = new window.Blob([text], {type: type});
@@ -4589,12 +4611,48 @@ if (!window.visualisations) {
             }
         }
 
-        // Tells Stroom whether something is selected on the chart (never what), with the chart's report.
+        // Tells Stroom whether something is selected on the chart, with the chart's report, and what the user is
+        // looking at (see setView), as the ECharts adapter does.
         function reportSelection() {
             if (lastReport) {
                 lastReport.selected = !!selected;
+                setView(lastReport, {
+                    interval: drawn ? drawn.interval : null,
+                    shown: zoomShown(),
+                    selection: selected ? (selected.items ? selected.items.map(function (item) {
+                        return item.label;
+                    }).join("; ") : selected.label) : null,
+                    hiddenSeries: Object.keys(state.hidden || {})
+                });
                 sendReport(lastReport);
             }
+        }
+
+        // The part of the chart zoomed in on, as the user sees it: the time shown, the part of the axis, or how far
+        // a network graph is zoomed in; null if it isn't zoomed.
+        function zoomShown() {
+            if (!drawn) {
+                return null;
+            }
+            if (drawn.zoomKind === "geo") {
+                return state.geoZoom && state.geoZoom.k !== 1
+                    ? "zoomed in " + (Math.round(state.geoZoom.k * 10) / 10) + "x" : null;
+            }
+            if (!state.zoom) {
+                return null;
+            }
+            var axis = drawn.timeAxis;
+            if (axis) {
+                var times = axis.range(0, axis.down ? axis.plot.height : axis.plot.width);
+                var pattern = lastPrefs ? lastPrefs.compactTimePattern : undefined;
+                var timeZone = lastPrefs ? lastPrefs.timeZone : undefined;
+                if (isFinite(times[0]) && isFinite(times[1])) {
+                    return "time from " + formatTime(times[0], pattern, timeZone) + " to "
+                        + formatTime(times[1], pattern, timeZone);
+                }
+            }
+            return "zoomed to " + Math.round(state.zoom.start * 100) + "%-" + Math.round(state.zoom.end * 100)
+                + "% of the " + (drawn.categoriesDown ? "y" : "x") + " axis";
         }
 
         function showMessage(text, style) {
@@ -4650,6 +4708,8 @@ if (!window.visualisations) {
                 layoutPaused: false,
                 note: notes.length ? notes.join(" · ") : null
             });
+            // The agent sees what the user does: the view goes in the chart's report too.
+            reportSelection();
         }
 
         // True if a link between two things is the same either way round: a chord diagram's, or an undirected

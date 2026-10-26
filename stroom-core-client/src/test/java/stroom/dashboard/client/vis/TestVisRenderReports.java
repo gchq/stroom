@@ -80,8 +80,35 @@ class TestVisRenderReports {
     }
 
     @Test
-    void keepsWhetherSomethingIsSelectedButNotWhat() {
-        // So the agent can tell a click on the chart is what filters the dashboard, without seeing data values.
+    @SuppressWarnings("unchecked")
+    void keepsWhatTheUserIsLookingAtCutShort() {
+        // Asked for in testing: the agent couldn't see what the user had zoomed in on or selected.
+        final Map<String, Object> report = new HashMap<>();
+        report.put("status", "ok");
+        report.put("interval", "1 hour");
+        report.put("shown", "Day from 2026-10-14 00:00 to 2026-10-16 12:00");
+        report.put("selection", "devans → phall · 3; " + "x".repeat(400));
+        report.put("hiddenSeries", List.of("alice", 42, "bob", "c".repeat(100), "d", "e", "f", "g", "h", "i", "j",
+                "k"));
+
+        final Map<String, Object> clean = VisRenderReports.sanitise(report);
+
+        assertThat(clean)
+                .containsEntry("interval", "1 hour")
+                .containsEntry("shown", "Day from 2026-10-14 00:00 to 2026-10-16 12:00");
+        assertThat((String) clean.get("selection")).startsWith("devans → phall · 3; ")
+                .hasSize(VisRenderReports.MAX_TEXT + 3);
+        assertThat((List<Object>) clean.get("hiddenSeries"))
+                .hasSize(VisRenderReports.MAX_HIDDEN_SERIES)
+                .startsWith("alice", "bob", "c".repeat(VisRenderReports.MAX_SHORT_TEXT) + "...");
+        // None hidden: left out.
+        assertThat(VisRenderReports.sanitise(Map.of("status", "ok", "hiddenSeries", List.of())))
+                .doesNotContainKey("hiddenSeries");
+    }
+
+    @Test
+    void keepsWhetherSomethingIsSelected() {
+        // So the agent can tell a click on the chart is what filters the dashboard.
         assertThat(VisRenderReports.sanitise(Map.of("status", "empty", "selected", true)))
                 .containsEntry("selected", true);
         assertThat(VisRenderReports.sanitise(Map.of("status", "empty", "selected", "Morgan Chen")))
