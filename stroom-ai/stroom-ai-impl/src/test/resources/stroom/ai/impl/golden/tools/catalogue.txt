@@ -1697,6 +1697,22 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The column for date.",
           "type" : "string"
         },
+        "level3" : {
+          "description" : "The column for level3.",
+          "type" : "string"
+        },
+        "level4" : {
+          "description" : "The column for level4.",
+          "type" : "string"
+        },
+        "level5" : {
+          "description" : "The column for level5.",
+          "type" : "string"
+        },
+        "level6" : {
+          "description" : "The column for level6.",
+          "type" : "string"
+        },
         "name" : {
           "description" : "The column for name.",
           "type" : "string"
