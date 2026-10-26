@@ -44,6 +44,7 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 | histogram | **value**, series | How a number is spread, e.g. response times or bytes; one row per event, not grouped |
 | sankey | **source**, **target**, value, level3 to level6 | Flows from one thing to the next, e.g. source IP to destination IP to port |
 | chord | **source**, **target**, weight, level3 to level6 | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
+| sunburst | **name**, level2 to level6, value | A whole split by levels, as rings, e.g. events by region, then host, then process; a click selects a segment's path (its name and each level out to it) |
 | gauge | **value**, name | A value against its range, e.g. the latest or the maximum; a gauge per name when a name column is mapped, else the first row's value |
 
 A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
