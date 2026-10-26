@@ -221,6 +221,10 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - The content pack's D3 Visualisations take only their own settings, by their own ids.
 - A setting a chart's Visualisation doesn't have (one generated before the setting was added, e.g. `nodeColours`)
   can't be set on its pane: replace the chart (`replace`, the same kind) to regenerate it with every setting.
+- A network graph of one row per message (or event) needs no new table to show magnitude: without a `weight`
+  column each row counts once, so each link is as wide as its rows (e.g. a pair's messages), and `nodeSize`
+  total sizes each node by its links' total (the messages a person sent and received). Map `weight` only for a
+  column of counts or amounts (e.g. a grouped table's `count()`).
 - A network graph's node colours: `nodeColours` group (by its `sourceGroup`/`targetGroup` columns) or node (each
   node its own colour). Its links are drawn in their source node's colour: don't override that (e.g. with a
   `lineStyle` colour in options), which leaves every link one colour.
