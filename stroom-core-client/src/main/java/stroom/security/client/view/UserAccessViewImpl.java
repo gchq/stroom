@@ -17,7 +17,6 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -53,7 +52,7 @@ public class UserAccessViewImpl extends ViewImpl implements UserAccessView {
     }
 
     @Override
-    public void setSessionList(final View view) {
+    public void setSessionList(final IsWidget view) {
         sessionsContainer.setWidget(view.asWidget());
     }
 

@@ -22,6 +22,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.component.UserAccessListController;
+import stroom.security.client.component.UserSessionsListController;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
 import stroom.security.shared.UserAccessResource;
@@ -56,7 +57,7 @@ public class UserAccessPresenter
     public static final String TAB_TYPE = "UserAccess";
 
     private final UserAccessListController listPresenter;
-    private final UserSessionsListPresenter sessionsListPresenter;
+    private final UserSessionsListController sessionsListPresenter;
     private final RestFactory restFactory;
     private final ButtonView revokeButton;
     private final ButtonView openUserButton;
@@ -67,7 +68,7 @@ public class UserAccessPresenter
     public UserAccessPresenter(final EventBus eventBus,
                                final UserAccessView view,
                                final UserAccessListController listPresenter,
-                               final UserSessionsListPresenter sessionsListPresenter,
+                               final UserSessionsListController sessionsListPresenter,
                                final RestFactory restFactory,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
@@ -78,7 +79,7 @@ public class UserAccessPresenter
         this.restFactory = restFactory;
 
         view.setList(listPresenter);
-        view.setSessionList(sessionsListPresenter.getView());
+        view.setSessionList(sessionsListPresenter);
 
         // Named for exactly what it does. "Revoke this user's access" was the earlier wording and claimed
         // more than the action delivers: nothing about the user's access is withdrawn, and they can sign
@@ -244,6 +245,6 @@ public class UserAccessPresenter
         /**
          * The detail pane: the selected user's individual sessions.
          */
-        void setSessionList(View view);
+        void setSessionList(IsWidget view);
     }
 }
