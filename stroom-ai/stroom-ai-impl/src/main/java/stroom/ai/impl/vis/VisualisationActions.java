@@ -154,7 +154,8 @@ public class VisualisationActions {
             return new AiCreateVisualisation(replaced.getName(), null, functionName, adapter,
                     settings, description, target, plan.componentId(), plan.table(), componentName,
                     replacementSettings(kind, plan.mappings()), null, plan.snapshotHash(), null, null, replaced,
-                    plan.replace().componentId(), null, changesJson(selectionsRenamed(plan.replace())));
+                    plan.replace().componentId(), changesJson(plan.tableChanges()),
+                    changesJson(selectionsRenamed(plan.replace())));
         }
         return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                 description, target, plan.componentId(), plan.table(), plan.componentName(),

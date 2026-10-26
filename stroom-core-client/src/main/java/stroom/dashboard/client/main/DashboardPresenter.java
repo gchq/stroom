@@ -1541,7 +1541,16 @@ public class DashboardPresenter
                     if (TableChange.RENAME.equals(change.getOp())) {
                         target.setComponentName(change.getName());
                     } else if (TableChange.SET_VIS_SETTINGS.equals(change.getOp())) {
-                        failed = applyVisSettings(target, change);
+                        // Linked to the table it names, if it names one: one these changes add, or the
+                        // dashboard has (e.g. a chart replaced, moved to a table added for it).
+                        final Component linked = change.getTable() == null
+                                ? null
+                                : added.containsKey(change.getTable().toLowerCase())
+                                        ? added.get(change.getTable().toLowerCase())
+                                        : tableNamed(change.getTable());
+                        failed = change.getTable() != null && linked == null
+                                ? "there is no table '" + change.getTable() + "' to link it to."
+                                : applyVisSettings(target, change, linked);
                         failed = failed == null
                                 ? null
                                 : prefix + failed;
@@ -1574,6 +1583,11 @@ public class DashboardPresenter
             query.setExpression(expression);
             query.onChange();
         }
+        // A table added has no rows until its query runs again, which a search started before it gives none of.
+        // Seen in testing: a table added for a chart stayed empty, and the chart with it, until the query was run.
+        if (added.values().stream().anyMatch(table -> table instanceof TablePresenter)) {
+            rerunQuery(component);
+        }
         syncSettingsDialogs(component, configsBefore.keySet());
         // A change to an embedded query, rather than a table, is undone by putting its settings back.
         if (undoKey != null && (before != null || !configsBefore.isEmpty())) {
@@ -1583,6 +1597,15 @@ public class DashboardPresenter
                     getComparableDescription()));
         }
         return null;
+    }
+
+    // Runs the classic query that feeds a table again, unless it is running.
+    private void rerunQuery(final Component table) {
+        final String queryId = TableChange.queryId(table);
+        if (queryId != null && components.get(queryId) instanceof final QueryPresenter queryPresenter
+            && !queryPresenter.getSearchState()) {
+            queryPresenter.start();
+        }
     }
 
     // Adds a table beside another as a tab, fed by the same query, with its columns or none, with the name asked for
@@ -1735,7 +1758,7 @@ public class DashboardPresenter
 
     // Changes a Visualisation component's settings: merges the change's settings into them, switches it to the
     // change's Visualisation if it gives one, and fetches its data again, as its data depends on them.
-    private String applyVisSettings(final Component target, final TableChange change) {
+    private String applyVisSettings(final Component target, final TableChange change, final Component linked) {
         if (!(target instanceof final VisPresenter vis)
             || !(vis.getSettings() instanceof final VisComponentSettings current)) {
             return "the component isn't a visualisation.";
@@ -1747,6 +1770,9 @@ public class DashboardPresenter
         final VisComponentSettings.Builder builder = current.copy().json(json);
         if (change.getDoc() != null) {
             builder.visualisation(change.getDoc());
+        }
+        if (linked != null) {
+            builder.tableId(linked.getId());
         }
         vis.applySettings(builder.build());
         refreshVisData(vis);
