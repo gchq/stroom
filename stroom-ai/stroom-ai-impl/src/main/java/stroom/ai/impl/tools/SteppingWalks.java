@@ -156,32 +156,45 @@ public class SteppingWalks {
         /// @throws stroom.ai.impl.workspace.ToolTimeoutException if the call is cancelled, or runs past its time
         /// limit ([ToolDeadline]), while the step is unfinished.
         public SteppingResult first() {
-            return step(StepType.FIRST, null);
+            return step(StepType.FIRST, null, code);
         }
 
         /// @return The stream's last record, stepped.
         /// @throws IllegalStateException if the step doesn't finish in time.
         public SteppingResult last() {
-            return step(StepType.LAST, null);
+            return step(StepType.LAST, null, code);
         }
 
         /// @param location Where the last step was.
         /// @return The next record, stepped.
         /// @throws IllegalStateException if the step doesn't finish in time.
         public SteppingResult forward(final StepLocation location) {
-            return step(StepType.FORWARD, location);
+            return step(StepType.FORWARD, location, code);
         }
 
         /// @param location A record.
         /// @return That record, stepped again.
         /// @throws IllegalStateException if the step doesn't finish in time.
         public SteppingResult refresh(final StepLocation location) {
-            return step(StepType.REFRESH, location);
+            return step(StepType.REFRESH, location, code);
         }
 
-        private SteppingResult step(final StepType stepType, final StepLocation location) {
+        /// Steps a record again with other code than the walk's, in the same session, so the stream isn't
+        /// captured again: e.g. code that finds something out about the record, then code that uses it.
+        ///
+        /// @param location A record.
+        /// @param stepCode Code to step with in place of some elements' saved code, by element id.
+        /// @return That record, stepped again with the code.
+        /// @throws IllegalStateException if the step doesn't finish in time.
+        public SteppingResult refresh(final StepLocation location, final Map<String, String> stepCode) {
+            return step(StepType.REFRESH, location, NullSafe.map(stepCode));
+        }
+
+        private SteppingResult step(final StepType stepType,
+                                    final StepLocation location,
+                                    final Map<String, String> stepCode) {
             final long stopAtMs = System.currentTimeMillis() + timeLimit.toMillis();
-            SteppingResult result = steppingService.step(request(stepType, location));
+            SteppingResult result = steppingService.step(request(stepType, location, stepCode));
             sessionUuid = NullSafe.getOrElse(result, SteppingResult::getSessionUuid, sessionUuid);
             while (result != null && !result.isComplete()) {
                 // Stops at once when the call is cancelled (its thread interrupted) or past its time limit.
@@ -190,20 +203,22 @@ public class SteppingWalks {
                     throw new IllegalStateException("Stepping did not finish in time; try fewer records or a "
                                                     + "smaller stream");
                 }
-                result = steppingService.step(request(stepType, location));
+                result = steppingService.step(request(stepType, location, stepCode));
                 sessionUuid = NullSafe.getOrElse(result, SteppingResult::getSessionUuid, sessionUuid);
             }
             return result;
         }
 
-        private PipelineStepRequest request(final StepType stepType, final StepLocation location) {
+        private PipelineStepRequest request(final StepType stepType,
+                                            final StepLocation location,
+                                            final Map<String, String> stepCode) {
             return PipelineStepRequest.builder()
                     .sessionUuid(sessionUuid)
                     .criteria(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(streamId)))
                     .stepLocation(location)
                     .stepType(stepType)
                     .pipelineDoc(pipeline)
-                    .code(code)
+                    .code(stepCode)
                     .stepSize(1)
                     .timeout(REQUEST_WAIT_MS)
                     .build();
@@ -216,7 +231,7 @@ public class SteppingWalks {
                 return;
             }
             try {
-                steppingService.terminateStepping(request(StepType.REFRESH, null));
+                steppingService.terminateStepping(request(StepType.REFRESH, null, code));
             } catch (final RuntimeException e) {
                 LOGGER.debug("Unable to end stepping session {}", sessionUuid, e);
             }

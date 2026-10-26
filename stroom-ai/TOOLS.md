@@ -55,6 +55,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `ls` | Lists the chat's workspace files | all | yes | | | | yes (workspace) | |
 | `memory` | Reads and changes the user's and the chat's memory | Agent | no | | | | yes (chat) | |
 | `pipeline` | Chains data tools over workspace files | all | yes | | | | yes (workspace) | |
+| `preview_extraction` | Tries a draft search extraction for the attached dashboard's table on some of its events, by stepping, to add values from the events | all | yes | Stepping, View Data | | View | yes (attached tab) | `step_records` (part) |
 | `processor_tasks` | Processing failures and why, backlogs, task lists and counts across the cluster | all | yes | Manage Processors | View Data | | workspace | `processing_status`, `summarise_streams` (errors) |
 | `propose_code_change` | Proposes a change to the XSLT or converter being stepped, tried by stepping | all | yes | | | View | yes (stepping tab, button) | `summarise_fix`, `step_pipeline` (part) |
 | `propose_dashboard` | Offers a button to create a dashboard from StroomQL | all | yes | | | Use | yes (button) | `verify_index` (part: it creates a dashboard) |

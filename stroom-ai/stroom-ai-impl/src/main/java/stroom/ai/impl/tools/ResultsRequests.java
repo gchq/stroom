@@ -240,6 +240,23 @@ final class ResultsRequests {
         return groups;
     }
 
+    /// The settings of a dashboard table, e.g. whether it extracts values and with which pipeline.
+    ///
+    /// @param context A table's search request.
+    /// @return Its settings, or null for a query's table.
+    static TableSettings tableSettings(final AskStroomAiContext context) {
+        if (!(context instanceof final DashboardTableContext dashboard) || dashboard.getSearchRequest() == null) {
+            return null;
+        }
+        return NullSafe.list(dashboard.getSearchRequest().getComponentResultRequests()).stream()
+                .filter(TableResultRequest.class::isInstance)
+                .map(TableResultRequest.class::cast)
+                .map(TableResultRequest::getTableSettings)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
     // The columns of a dashboard table's search request, or none for a query.
     private static List<Column> columns(final AskStroomAiContext context) {
         if (!(context instanceof final DashboardTableContext dashboard) || dashboard.getSearchRequest() == null) {
