@@ -49,6 +49,9 @@ public final class EChartsTemplate {
     /// The options control's label, which names no charting library: any library's charts can take their options
     /// the same way.
     static final String OPTIONS_LABEL = "Chart Options (JSON)";
+    /// The options control's value with no overrides: an empty JSON object, so its editor shows the user what it
+    /// takes, rather than an empty box that looks like a fault.
+    static final String NO_OPTIONS = "{}";
 
     private EChartsTemplate() {
         // Static only.
@@ -110,7 +113,7 @@ public final class EChartsTemplate {
         final Map<String, Object> optionsControl = control(OPTIONS_CONTROL, JSON_CONTROL_TYPE, OPTIONS_LABEL);
         optionsControl.put("defaultValue", NullSafe.isNonBlankString(optionsJson)
                 ? optionsJson.strip()
-                : "");
+                : NO_OPTIONS);
         advancedControls.add(optionsControl);
 
         final List<Map<String, Object>> tabs = new ArrayList<>();

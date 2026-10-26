@@ -4389,6 +4389,21 @@ if (!window.visualisations) {
         };
     }
 
+    // How far a force layout keeps its nodes from its edges.
+    var FORCE_MARGIN = 20;
+
+    // A force layout's positions laid out at one size, stretched to another.
+    function fitLayout(positions, from, to) {
+        if (from[0] === to[0] && from[1] === to[1]) {
+            return positions;
+        }
+        var sx = (to[0] - 2 * FORCE_MARGIN) / Math.max(1, from[0] - 2 * FORCE_MARGIN);
+        var sy = (to[1] - 2 * FORCE_MARGIN) / Math.max(1, from[1] - 2 * FORCE_MARGIN);
+        return positions.map(function (at) {
+            return [FORCE_MARGIN + (at[0] - FORCE_MARGIN) * sx, FORCE_MARGIN + (at[1] - FORCE_MARGIN) * sy];
+        });
+    }
+
     // How the layout settles, by the Physics setting: how far apart linked nodes sit and how hard nodes push apart.
     var PHYSICS = {
         settled: {edge: 1, repulsion: 1},
@@ -4467,8 +4482,10 @@ if (!window.visualisations) {
                 moves[i][1] += (height / 2 - positions[i][1]) * 0.02 * k;
                 var length = Math.max(0.01, Math.sqrt(moves[i][0] * moves[i][0] + moves[i][1] * moves[i][1]));
                 var step = Math.min(length, temperature);
-                positions[i][0] = Math.max(20, Math.min(width - 20, positions[i][0] + moves[i][0] / length * step));
-                positions[i][1] = Math.max(20, Math.min(height - 20, positions[i][1] + moves[i][1] / length * step));
+                positions[i][0] = Math.max(FORCE_MARGIN, Math.min(width - FORCE_MARGIN,
+                    positions[i][0] + moves[i][0] / length * step));
+                positions[i][1] = Math.max(FORCE_MARGIN, Math.min(height - FORCE_MARGIN,
+                    positions[i][1] + moves[i][1] / length * step));
             }
             temperature = Math.max(0.5, temperature * 0.97);
         }
@@ -4555,7 +4572,9 @@ if (!window.visualisations) {
         var plot = plotArea(ctx, legend, 4, -22);
         var physics = PHYSICS[String(textSetting(settings, "physics") || "settled").toLowerCase()] ||
             PHYSICS.settled;
-        var cacheKey = [plot.width, plot.height, textSetting(settings, "physics"), !!clusters,
+        // Laid out once for the data, and stretched to the chart's size as it is resized, so a resize doesn't move
+        // the nodes about.
+        var cacheKey = [textSetting(settings, "physics"), !!clusters,
             shownNodes.map(function (node) {
             return node.name;
         }).join("\u0001"), shownLinks.map(function (link) {
@@ -4567,8 +4586,9 @@ if (!window.visualisations) {
                     return clusters.of[node.name] === undefined ? -1 : clusters.of[node.name];
                 }) : null);
             ctx.cache.layoutKey = cacheKey;
+            ctx.cache.layoutSize = [plot.width, plot.height];
         }
-        var positions = ctx.cache.layout;
+        var positions = fitLayout(ctx.cache.layout, ctx.cache.layoutSize, [plot.width, plot.height]);
         var at = {};
         shownNodes.forEach(function (node, i) {
             at[node.name] = positions[i];
