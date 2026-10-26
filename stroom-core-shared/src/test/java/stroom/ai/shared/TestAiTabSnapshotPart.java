@@ -36,4 +36,14 @@ class TestAiTabSnapshotPart {
         assertThat(AiTabSnapshotPart.hashText(String.valueOf((char) 0x100)))
                 .isNotEqualTo(AiTabSnapshotPart.hashText(String.valueOf((char) 0)));
     }
+
+    @Test
+    void theHashOfLinesIgnoresHowTheyAreLaidOut() {
+        assertThat(AiTabSnapshotPart.hashLines("AND\n  EventType = Logon\n"))
+                .isEqualTo(AiTabSnapshotPart.hashLines("  AND\nEventType = Logon"))
+                .isEqualTo(AiTabSnapshotPart.hashLines("AND\n\n    EventType = Logon  \n\n"))
+                .isNotEqualTo(AiTabSnapshotPart.hashLines("AND\n  EventType = Logoff\n"))
+                .isNotEqualTo(AiTabSnapshotPart.hashLines("AND EventType = Logon"));
+        assertThat(AiTabSnapshotPart.hashLines(null)).isEqualTo(AiTabSnapshotPart.hashLines(""));
+    }
 }

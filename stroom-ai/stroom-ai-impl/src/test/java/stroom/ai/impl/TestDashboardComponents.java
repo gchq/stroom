@@ -86,6 +86,43 @@ class TestDashboardComponents {
     }
 
     @Test
+    void theExpressionOfTheQueryFeedingATableIsRead() {
+        final String dashboard = """
+                Time range: All time
+
+                ## Query 'Query' (id query-1)
+                Data source: Index 'Events' (uuid index-uuid)
+                Expression:
+                AND
+                  EventType = Logon
+                  OR
+                    UserId = alice
+                Query selection filters: [id ab12c] AND {UserId = ${component.vis-1.selection.category}}
+                Settings: queryOnOpen true
+
+                ## Query 'Other' (id query-2)
+                Data source: Index 'Events' (uuid index-uuid)
+                Expression:
+                AND
+
+                ## Table 'Events' (id table-1)
+                Query: query-1
+                Columns:
+                - UserId: ${UserId}
+
+                ## Table 'Unfed' (id table-2)
+                Columns:
+                - UserId: ${UserId}
+                """;
+
+        assertThat(DashboardComponents.queryExpression(dashboard, "table-1"))
+                .hasValue("AND\n  EventType = Logon\n  OR\n    UserId = alice\n");
+        // A table fed by no query on the dashboard, or no such table.
+        assertThat(DashboardComponents.queryExpression(dashboard, "table-2")).isEmpty();
+        assertThat(DashboardComponents.queryExpression(dashboard, "table-9")).isEmpty();
+    }
+
+    @Test
     void anEmbeddedQuerysStroomQlIsRead() {
         final String dashboard = """
                 Time range: All time

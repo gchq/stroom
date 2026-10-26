@@ -154,7 +154,35 @@ class TestProposeDashboardChangeTool {
                 .singleElement()
                 .satisfies(change -> assertThat(asMap(change))
                         .containsEntry("op", "set_expression")
-                        .containsEntry("query", DashboardChanges.expressionToMap(expression))));
+                        .containsEntry("query", DashboardChanges.expressionToMap(expression))
+                        // The dashboard gives no expression for the query, so there is none to keep.
+                        .doesNotContainKey("ref")));
+    }
+
+    @Test
+    void theExpressionAChangeReplacesGoesWithItSoAChangedOneIsntWrittenOver() {
+        // The rest of the dashboard may change before the change is applied, but not the expression it replaces.
+        dashboardTab(false, "Time range: last hour\n"
+                            + "## Query 'Query' (id query-1)\n"
+                            + "Data source: Index 'Windows events' (uuid index-uuid)\n"
+                            + "Expression:\n"
+                            + "AND\n"
+                            + "  EventType = Logon\n"
+                            + "Settings: queryOnOpen true\n"
+                            + "## Table 'Events' (id table-1)\n"
+                            + "Query: query-1\n"
+                            + "- UserId\n");
+        Mockito.when(dashboardBuilder.whereExpression(Mockito.eq(INDEX), Mockito.anyString()))
+                .thenReturn(ExpressionOperator.builder().build());
+
+        run(List.of(Map.of("op", "set_expression", "where", "EventType = \"Logoff\"")));
+
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
+                .extractingByKey("changes")
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
+                .singleElement()
+                .satisfies(change -> assertThat(asMap(change))
+                        .containsEntry("ref", AiTabSnapshotPart.hashLines("AND\n  EventType = Logon"))));
     }
 
     @Test

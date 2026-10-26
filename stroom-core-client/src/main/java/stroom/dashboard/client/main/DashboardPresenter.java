@@ -1335,8 +1335,10 @@ public class DashboardPresenter
     /// Applies changes made programmatically to one of the dashboard's tables, as its column menus would, unsaved:
     /// changes to the table, to the expression of the classic query that feeds it, and tables added beside it as
     /// tabs (fed by the same query), which later changes name as their table. They are applied all or none: if one
-    /// can't be, the dashboard is put back as it was. Once applied, they can be undone with
-    /// [#undoTableChanges(String)] while the dashboard is as they left it.
+    /// can't be, the dashboard is put back as it was. They are applied on top of whatever else has changed since
+    /// they were proposed: each finds what it changes again, and a query expression they replace must be as it was
+    /// (see [DashboardDescriptions#sameExpression(String, ExpressionOperator)]). Once applied, they can be undone
+    /// with [#undoTableChanges(String)] while the components they changed or added are as they left them.
     ///
     /// @param componentId The table's component id.
     /// @param name        The table's name, used if no component has the id.
@@ -1361,9 +1363,12 @@ public class DashboardPresenter
             return "The dashboard has no table '" + name + "'.";
         }
         ExpressionOperator expression = null;
+        // The hash of the expression it replaces, as it was when proposed.
+        String replacedExpression = null;
         for (final TableChange change : changes) {
             if (TableChange.SET_EXPRESSION.equals(change.getOp())) {
                 expression = change.getQuery();
+                replacedExpression = change.getRef();
                 if (expression == null) {
                     return "The query's new expression can't be read.";
                 }
@@ -1379,11 +1384,17 @@ public class DashboardPresenter
                 return "Table '" + name + "' isn't fed by a classic query on this dashboard, so its expression "
                        + "can't be set.";
             }
+            // Everything else changed since it was proposed is kept, but not an expression changed since: the
+            // new one would replace it.
+            if (replacedExpression != null && !DashboardDescriptions.sameExpression(replacedExpression,
+                    query.getExpression())) {
+                return "The query's expression has changed since this was proposed, so it isn't replaced. Ask "
+                       + "again for an up-to-date change.";
+            }
         } else {
             query = null;
         }
 
-        final String descriptionBefore = getComparableDescription();
         final TableComponentSettings before = TableChange.snapshot(component);
         final ExpressionOperator expressionBefore = query != null
                 ? query.getExpression()
@@ -1544,7 +1555,7 @@ public class DashboardPresenter
         if (undoKey != null && (before != null || !configsBefore.isEmpty())) {
             appliedChanges.put(undoKey, new AppliedChanges(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
-                    added.values().stream().map(Component::getId).toList(), configsBefore, descriptionBefore,
+                    added.values().stream().map(Component::getId).toList(), configsBefore,
                     getComparableDescription()));
         }
         return null;
@@ -1793,30 +1804,21 @@ public class DashboardPresenter
         enableQueryButtons();
     }
 
-    /// @return For each set of changes applied with an undo key and not undone, the dashboard's description just
-    /// after them mapped to its description just before them, so a change proposed before them can be told from
-    /// one proposed against a dashboard changed some other way.
-    public Map<String, String> getAppliedChangeDescriptions() {
-        final Map<String, String> descriptions = new HashMap<>();
-        for (final AppliedChanges applied : appliedChanges.values()) {
-            descriptions.put(applied.descriptionAfter, applied.descriptionBefore);
-        }
-        return descriptions;
-    }
-
     /// @param undoKey What applied changes are known by.
-    /// @return True if they can be undone: they were applied here, and the dashboard is as they left it.
+    /// @return True if they can be undone: they were applied here, and the components they changed or added are as
+    /// they left them (others may have changed since, as undoing doesn't touch them).
     public boolean canUndoTableChanges(final String undoKey) {
         final AppliedChanges undo = undoKey == null
                 ? null
                 : appliedChanges.get(undoKey);
         return undo != null
                && components.get(undo.componentId) != null
-               && undo.descriptionAfter.equals(getComparableDescription());
+               && DashboardDescriptions.sameComponents(undo.descriptionAfter, getComparableDescription(),
+                undo.touchedIds());
     }
 
     /// Undoes applied changes, putting the table back as it was before them, as an unsaved edit, if the
-    /// dashboard is as they left it.
+    /// components they changed or added are as they left them.
     ///
     /// @param undoKey What the changes are known by.
     /// @return True if they were undone.
@@ -1943,8 +1945,8 @@ public class DashboardPresenter
 
     // Changes that have been applied: the table they changed and its settings before, the query whose expression
     // they set (if they did) and that expression before, the components they added, the name and settings of each
-    // other component they renamed or changed, and the dashboard's description just before and just after, which it
-    // must still have for them to be undone.
+    // other component they renamed or changed, and the dashboard's description just after, whose parts for those
+    // components it must still have for them to be undone.
     private static class AppliedChanges {
 
         private final String componentId;
@@ -1953,7 +1955,6 @@ public class DashboardPresenter
         private final ExpressionOperator expressionBefore;
         private final List<String> addedIds;
         private final Map<String, ComponentConfig> configsBefore;
-        private final String descriptionBefore;
         private final String descriptionAfter;
 
         private AppliedChanges(final String componentId,
@@ -1962,7 +1963,6 @@ public class DashboardPresenter
                        final ExpressionOperator expressionBefore,
                        final List<String> addedIds,
                        final Map<String, ComponentConfig> configsBefore,
-                       final String descriptionBefore,
                        final String descriptionAfter) {
             this.componentId = componentId;
             this.before = before;
@@ -1970,8 +1970,17 @@ public class DashboardPresenter
             this.expressionBefore = expressionBefore;
             this.addedIds = addedIds;
             this.configsBefore = configsBefore;
-            this.descriptionBefore = descriptionBefore;
             this.descriptionAfter = descriptionAfter;
+        }
+
+        // The ids of the components the changes changed or added.
+        private Set<String> touchedIds() {
+            final Set<String> ids = new HashSet<>();
+            ids.add(componentId);
+            NullSafe.consume(queryId, ids::add);
+            ids.addAll(addedIds);
+            ids.addAll(configsBefore.keySet());
+            return ids;
         }
     }
 

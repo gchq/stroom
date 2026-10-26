@@ -450,8 +450,8 @@ public class UserActionService {
     }
 
     /// Lets the browser apply a proposed change to a dashboard table, unsaved, if the user may edit the dashboard
-    /// (as changing it by hand needs). The browser has already checked the dashboard hasn't changed since the
-    /// proposal and, if it had unsaved changes, saved them with the dashboard's own Save (logged by that Save).
+    /// (as changing it by hand needs). The browser applies it on top of the dashboard as it then is, changes made
+    /// since the proposal included, refusing only what it can't find again or a query expression changed since.
     /// The button is claimed first, so it applies once. Nothing is saved here or after.
     private AiUserActionResult applyDashboardChange(final int chatId,
                                                     final AiChatMessage message,

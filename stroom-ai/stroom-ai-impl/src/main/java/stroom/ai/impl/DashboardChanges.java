@@ -494,7 +494,7 @@ public final class DashboardChanges {
                 throw new IllegalArgumentException(prefix + "set_expression needs where: the query's conditions, "
                                                    + "as a StroomQL where clause has them.");
             }
-            return Change.builder(op).where(where).query(query).build();
+            return Change.builder(op).where(where).query(query).ref(text(map, "ref", prefix)).build();
         }
         if (!ADD_COLUMN.equals(op) && column == null) {
             throw new IllegalArgumentException(prefix + op + " needs the column, by its name as the user sees it.");
