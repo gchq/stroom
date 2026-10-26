@@ -47,7 +47,7 @@ if (!window.visualisations) {
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
 
     // The space kept clear at the chart's right edge. Stroom's refresh button and the chart's controls are in the
-    // toolbar under the chart, so this is only a margin.
+    // toolbar above the chart, so this is only a margin.
     var STROOM_BUTTON_SPACE = 16;
 
     // A selected item's border, and the solid line drawn either side of a selected link (half as thick).
@@ -4537,7 +4537,7 @@ if (!window.visualisations) {
             return items.length === 1 ? items[0].label : items[0].label + " and " + (items.length - 1) + " more";
         }
 
-        // Tells Stroom which of the chart's controls apply, for the toolbar it shows under the chart (reset zoom,
+        // Tells Stroom which of the chart's controls apply, for the toolbar it shows above the chart (reset zoom,
         // select a time range, clear the selection), with what is selected and whether rows were left out, as the
         // ECharts adapter does.
         function sendControls() {
@@ -4611,7 +4611,7 @@ if (!window.visualisations) {
             send();
         }
 
-        // A control in Stroom's toolbar under the chart was used: resetZoom, rangeMode (turns the range tool on
+        // A control in Stroom's toolbar above the chart was used: resetZoom, rangeMode (turns the range tool on
         // or off) or clearSelection.
         this.command = function (name) {
             if (name === "resetZoom") {
