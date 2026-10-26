@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Value;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -149,6 +150,25 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(add).toHaveAttribute("aria-expanded", "false"));
                     play.waitFor(() -> play.expect(screen.querySelector(ASSET_NAME)).not().toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // A new file's name with a character a name can't hold is refused, saying which
+                // (the dialog said "Item name not set" for any name it refused)
+                .story("NewFileIllegalName", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.type(dialog.querySelector(ASSET_NAME), "a/b.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            // The spy records the message as HTML, its quotes escaped
+                            ValueMatcher.stringContaining("File names must not contain the character")));
+                    play.expect(screen.getByText("New File", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                 })
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {

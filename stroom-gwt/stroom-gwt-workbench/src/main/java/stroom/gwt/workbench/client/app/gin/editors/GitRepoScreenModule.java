@@ -16,12 +16,9 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter;
-import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter.GitRepoCommitDialogView;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
-import stroom.gitrepo.client.view.GitRepoCommitDialogViewImpl;
 import stroom.gitrepo.client.view.GitRepoSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -39,9 +36,6 @@ public class GitRepoScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(GitRepoSettingsPresenter.class,
                 GitRepoSettingsView.class,
                 GitRepoSettingsViewImpl.class);
-        bindPresenterWidget(GitRepoCommitDialogPresenter.class,
-                GitRepoCommitDialogView.class,
-                GitRepoCommitDialogViewImpl.class);
     }
 }
 

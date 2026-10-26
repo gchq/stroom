@@ -1538,12 +1538,6 @@
 }
 
 /* GitRepo stuff */
-/* Commit message dialog */
-.gitrepo-commit-message-dialog textarea {
-    width: 100%;
-    height: 220px;
-    resize: none;
-}
 .gitrepo-credentials-dialog input {
     width: 100%;
 }

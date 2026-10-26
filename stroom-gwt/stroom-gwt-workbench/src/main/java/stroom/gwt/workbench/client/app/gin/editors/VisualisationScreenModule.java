@@ -16,16 +16,10 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter.DocumentAssetAddItemDialogView;
-import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter.DocumentAssetEditAssetDialogView;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
-import stroom.document.asset.client.view.DocumentAssetAddItemDialogViewImpl;
-import stroom.document.asset.client.view.DocumentAssetEditAssetDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetViewImpl;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
@@ -49,12 +43,6 @@ public class VisualisationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DocumentAssetUploadFileDialogPresenter.class,
                 DocumentAssetUploadFileDialogView.class,
                 DocumentAssetUploadFileDialogViewImpl.class);
-        bindPresenterWidget(DocumentAssetAddItemDialogPresenter.class,
-                DocumentAssetAddItemDialogView.class,
-                DocumentAssetAddItemDialogViewImpl.class);
-        bindPresenterWidget(DocumentAssetEditAssetDialogPresenter.class,
-                DocumentAssetEditAssetDialogView.class,
-                DocumentAssetEditAssetDialogViewImpl.class);
     }
 }
 

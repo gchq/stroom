@@ -17,16 +17,10 @@
 package stroom.document.asset.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter.DocumentAssetAddItemDialogView;
-import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter;
-import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter.DocumentAssetEditAssetDialogView;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
-import stroom.document.asset.client.view.DocumentAssetAddItemDialogViewImpl;
-import stroom.document.asset.client.view.DocumentAssetEditAssetDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetViewImpl;
 
@@ -39,11 +33,5 @@ public class DocumentAssetModule extends PluginModule {
         bindPresenterWidget(DocumentAssetUploadFileDialogPresenter.class,
                 DocumentAssetUploadFileDialogView.class,
                 DocumentAssetUploadFileDialogViewImpl.class);
-        bindPresenterWidget(DocumentAssetAddItemDialogPresenter.class,
-                DocumentAssetAddItemDialogView.class,
-                DocumentAssetAddItemDialogViewImpl.class);
-        bindPresenterWidget(DocumentAssetEditAssetDialogPresenter.class,
-                DocumentAssetEditAssetDialogView.class,
-                DocumentAssetEditAssetDialogViewImpl.class);
     }
 }

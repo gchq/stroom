@@ -22,7 +22,9 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter.DialogType;
+import stroom.document.asset.client.component.DocumentAssetAddItemDialogController;
+import stroom.document.asset.client.component.DocumentAssetAddItemDialogController.DialogType;
+import stroom.document.asset.client.component.DocumentAssetEditAssetDialogController;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
@@ -45,7 +47,6 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.presenter.client.View;
@@ -141,12 +142,12 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Dialog that appears when user wants to add a folder
      */
-    private final DocumentAssetAddItemDialogPresenter addItemDialog;
+    private final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider;
 
     /**
      * Dialog that appears when user wants to edit the tree item
      */
-    private final DocumentAssetEditAssetDialogPresenter editAssetDialog;
+    private final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider;
 
     /**
      * Editor widget
@@ -189,19 +190,17 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                         final DocumentAssetView view,
                                         final RestFactory restFactory,
                                         final DocumentAssetUploadFileDialogPresenter uploadFileDialog,
-                                        final DocumentAssetAddItemDialogPresenter addItemDialog,
-                                        final DocumentAssetEditAssetDialogPresenter editAssetDialog,
+                                        final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
+                                        final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         own(uploadFileDialog);
-        own(addItemDialog);
-        own(editAssetDialog);
         addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;
         this.uploadFileDialog = uploadFileDialog;
-        this.addItemDialog = addItemDialog;
-        this.editAssetDialog = editAssetDialog;
+        this.addItemDialogProvider = addItemDialogProvider;
+        this.editAssetDialogProvider = editAssetDialogProvider;
         this.editorPresenter = make(editorPresenterProvider);
 
         tree.setAccessibleName("Assets");
@@ -429,38 +428,19 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             tree.getSelectedItem());
 
             final String path = DocumentAssetPresenterUtils.getItemPath(parentItem);
-            final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(addItemDialog);
             final DialogType dialogType = addFile
                     ? DialogType.FILE_DIALOG
                     : DialogType.FOLDER_DIALOG;
-            addItemDialog.setupPopup(popupEventBuilder, path, ILLEGAL_ASSET_NAME_CHARACTERS, dialogType);
-            popupEventBuilder
-                    .onHideRequest(event -> {
-                        if (event.isOk()) {
-                            // Ok pressed
-                            if (addItemDialog.isValid()) {
-                                final String itemName = getNonClashingLabel(parentItem,
-                                        addItemDialog.getView().getName(),
-                                        null);
-                                DocumentAssetPresenterUtils
-                                        .markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
-                                final String newItemPath =
-                                        DocumentAssetPresenterUtils.getNewItemPath(parentItem, itemName);
-                                if (addFile) {
-                                    doUpdateNewFile(newItemPath);
-                                } else {
-                                    doUpdateNewFolder(newItemPath);
-                                }
-                                event.hide();
-                            } else {
-                                AlertEvent.fireWarn(this, "Item name not set", event::reset);
-                            }
-                        } else {
-                            // Cancel pressed
-                            event.hide();
-                        }
-                    })
-                    .fire();
+            addItemDialogProvider.get().show(this, path, ILLEGAL_ASSET_NAME_CHARACTERS, dialogType, name -> {
+                final String itemName = getNonClashingLabel(parentItem, name, null);
+                DocumentAssetPresenterUtils.markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
+                final String newItemPath = DocumentAssetPresenterUtils.getNewItemPath(parentItem, itemName);
+                if (addFile) {
+                    doUpdateNewFile(newItemPath);
+                } else {
+                    doUpdateNewFolder(newItemPath);
+                }
+            });
         }
 
     }
@@ -508,34 +488,17 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         if (!isReadOnly()) {
             final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
             if (selectedItem != null) {
-                final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(editAssetDialog);
-                editAssetDialog.setupPopup(popupEventBuilder, selectedItem, ILLEGAL_ASSET_NAME_CHARACTERS);
-                popupEventBuilder
-                        .onHideRequest(event -> {
-                            if (event.isOk()) {
-                                if (editAssetDialog.isValid()) {
-                                    final String oldPath =
-                                            DocumentAssetPresenterUtils.getItemPath(selectedItem);
-                                    final DocumentAssetTreeItem parentItem =
-                                            selectedItem.getParentItem();
-                                    final String text = getNonClashingLabel(parentItem,
-                                            editAssetDialog.getView().getText(),
-                                            editAssetDialog.getView().getId());
-                                    final String newPath =
-                                            DocumentAssetPresenterUtils.getNewItemPath(parentItem, text);
-                                    doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
-                                    event.hide();
-                                } else {
-                                    AlertEvent.fireWarn(this,
-                                            editAssetDialog.getValidationErrorMessage(),
-                                            event::reset);
-                                }
-                            } else {
-                                // Cancel pressed
-                                event.hide();
-                            }
-                        })
-                        .fire();
+                editAssetDialogProvider.get().edit(this,
+                        selectedItem.getLabel(),
+                        selectedItem.isLeaf(),
+                        ILLEGAL_ASSET_NAME_CHARACTERS,
+                        name -> {
+                            final String oldPath = DocumentAssetPresenterUtils.getItemPath(selectedItem);
+                            final DocumentAssetTreeItem parentItem = selectedItem.getParentItem();
+                            final String text = getNonClashingLabel(parentItem, name, selectedItem.getId());
+                            final String newPath = DocumentAssetPresenterUtils.getNewItemPath(parentItem, text);
+                            doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
+                        });
             }
         }
     }

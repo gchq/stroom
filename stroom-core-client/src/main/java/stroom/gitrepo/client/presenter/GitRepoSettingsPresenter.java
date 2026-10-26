@@ -25,6 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.gitrepo.client.component.GitRepoCommitDialogController;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
@@ -35,7 +36,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 
@@ -60,9 +60,9 @@ public class GitRepoSettingsPresenter
     private final RestFactory restFactory;
 
     /**
-     * Shows the commit message dialog box.
+     * Makes the commit message dialog box.
      */
-    private final GitRepoCommitDialogPresenter commitDialog;
+    private final Provider<GitRepoCommitDialogController> commitDialogProvider;
 
     /**
      * Server REST API for GitRepoDocs
@@ -89,24 +89,23 @@ public class GitRepoSettingsPresenter
      * @param eventBus     For parent class
      * @param view         The View for showing stuff to users
      * @param restFactory  For talking to the server
-     * @param commitDialog Injected dialog for commit message
+     * @param commitDialogProvider Makes the dialog for the commit message
      */
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
-                                    final GitRepoCommitDialogPresenter commitDialog,
+                                    final Provider<GitRepoCommitDialogController> commitDialogProvider,
                                     final CredentialClient credentialClient,
                                     final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
-        own(commitDialog);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
         this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
         view.setUiHandlers(this);
-        this.commitDialog = commitDialog;
+        this.commitDialogProvider = commitDialogProvider;
         final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
                 Set.of(CredentialType.SSH_KEY, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
         credentialListModel.setTaskMonitorFactory(this);
@@ -208,25 +207,8 @@ public class GitRepoSettingsPresenter
 
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
-            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
-            commitDialog.setupDialog(builder);
-            builder
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            // OK pressed so check if the dialog is valid
-                            if (commitDialog.isValid()) {
-                                e.hide();
-                                requestGitRepoPush(taskMonitorFactory, commitDialog.getView().getCommitMessage());
-                            } else {
-                                // Something is wrong - tell user what it is and reset the dialog
-                                AlertEvent.fireWarn(commitDialog, commitDialog.getValidationMessage(), e::reset);
-                            }
-                        } else {
-                            // Cancel pressed
-                            e.hide();
-                        }
-                    })
-                    .fire();
+            commitDialogProvider.get().show(this,
+                    message -> requestGitRepoPush(taskMonitorFactory, message));
         } else {
             AlertEvent.fireWarn(this,
                     "Git repository information not available",
