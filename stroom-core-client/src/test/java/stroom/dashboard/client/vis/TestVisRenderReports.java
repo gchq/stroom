@@ -224,4 +224,29 @@ class TestVisRenderReports {
         assertThat((List<Object>) VisRenderReports.sanitise(Map.of("status", "ok", "trends", many)).get("trends"))
                 .hasSize(VisRenderReports.MAX_TRENDS);
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void keepsANetworksClusters() {
+        final Map<String, Object> first = new HashMap<>();
+        first.put("name", "mchen +11");
+        first.put("size", 12.0);
+        first.put("group", "Finance");
+        first.put("groupShare", 92.0);
+        first.put("members", List.of("everyone"));
+        final Map<String, Object> clusters = new HashMap<>();
+        clusters.put("count", 3.0);
+        clusters.put("modularity", 0.6049);
+        clusters.put("top", Collections.nCopies(20, first));
+        clusters.put("bridges", List.of(Map.of("name", "mchen", "otherClusters", 2.0, "messages", "secret"),
+                "not a bridge"));
+
+        final Map<String, Object> clean = (Map<String, Object>) VisRenderReports.sanitise(
+                Map.of("status", "ok", "clusters", clusters)).get("clusters");
+
+        assertThat(clean).containsEntry("count", 3L).containsEntry("modularity", 0.6);
+        assertThat((List<Object>) clean.get("top")).hasSize(VisRenderReports.MAX_CLUSTERS)
+                .first().isEqualTo(Map.of("name", "mchen +11", "size", 12L, "group", "Finance", "groupShare", 92L));
+        assertThat((List<Object>) clean.get("bridges")).containsExactly(Map.of("name", "mchen", "otherClusters", 2L));
+    }
 }

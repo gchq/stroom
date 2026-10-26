@@ -96,7 +96,7 @@ class TestListVisualisationsTool {
     @Test
     void aNetworkGraphsColoursPhysicsAndOptionsAreDescribed() {
         assertThat(run())
-                .contains("nodeColours (one of group, node, default 'group'): group colours nodes by their "
+                .contains("nodeColours (one of group, node, cluster, default 'group'): group colours nodes by their "
                           + "sourceGroup and targetGroup columns")
                 .contains("Layout (echarts): force-directed, animating as it settles (up to 500 nodes)")
                 .contains("{\"seriesDefaults\": {\"force\": {...}}}: repulsion (default 160")
