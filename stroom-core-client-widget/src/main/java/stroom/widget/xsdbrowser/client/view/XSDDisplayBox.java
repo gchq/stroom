@@ -64,7 +64,7 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
         this.titleText.setText(titleText);
 
         if (node != null) {
-            title.addStyleDependentName("selectable");
+            title.addStyleName("xsd-browser__box-title--selectable");
             title.addClickHandler(event -> {
                 final boolean doubleClick = doubleClickTest.test(node);
                 model.setSelectedItem(node, doubleClick);
@@ -75,10 +75,10 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
         // Any content below the title takes the rest of the height
         if (content != null) {
             final ScrollPanel scrollPanel = new ScrollPanel();
-            scrollPanel.addStyleName("boxContent");
+            scrollPanel.addStyleName("xsd-browser__box-content");
             scrollPanel.add(content);
             box.add(scrollPanel);
-            title.addStyleDependentName("noContent");
+            title.addStyleName("xsd-browser__box-title--no-content");
         }
 
         setSelected(false);
@@ -94,9 +94,9 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
         this.selected = selected;
 
         if (selected) {
-            title.addStyleDependentName("selected");
+            title.addStyleName("xsd-browser__box-title--selected");
         } else {
-            title.removeStyleDependentName("selected");
+            title.removeStyleName("xsd-browser__box-title--selected");
         }
     }
 

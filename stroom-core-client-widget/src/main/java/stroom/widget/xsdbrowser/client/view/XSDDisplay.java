@@ -87,10 +87,10 @@ public class XSDDisplay extends Composite {
 
     private XSDDisplayBox getRootDisplay(final SelectionMap map, final XSDNode node) {
         final FlowPanel midPanel = new FlowPanel();
-        midPanel.addStyleName("midPanel");
+        midPanel.addStyleName("xsd-browser__mid-panel");
 
         midPanel.add(new XSDDisplayBox(
-                "xsdBrowser-xsdTitleElements",
+                "xsd-browser__title-elements",
                 "Elements",
                 getNodeListDisplay(
                         null,
@@ -106,7 +106,7 @@ public class XSDDisplay extends Composite {
                 null));
 
         midPanel.add(new XSDDisplayBox(
-                "xsdBrowser-xsdTitleTypes",
+                "xsd-browser__title-types",
                 "Types",
                 getNodeListDisplay(
                         null,
@@ -130,7 +130,7 @@ public class XSDDisplay extends Composite {
             title = title + targetNamespace;
         }
         final XSDDisplayBox box = new XSDDisplayBox(
-                "xsdBrowser-xsdTitleSchema", title, midPanel, map, model, node);
+                "xsd-browser__title-schema", title, midPanel, map, model, node);
 
         return box;
     }
@@ -145,7 +145,7 @@ public class XSDDisplay extends Composite {
         final FlowPanel right = column(true);
 
         left.add(new XSDDisplayBox(
-                "xsdBrowser-xsdTitleElement",
+                "xsd-browser__title-element",
                 node.getName(),
                 null,
                 map,
@@ -165,7 +165,7 @@ public class XSDDisplay extends Composite {
 
         for (final XSDNode child : node.getChildTypes()) {
             final XSDDisplayBox typeBox = getTypeBox(null, map, child);
-            typeBox.addStyleName("displayTypeBox");
+            typeBox.addStyleName("xsd-browser__type-box");
             right.add(typeBox);
         }
 
@@ -175,9 +175,9 @@ public class XSDDisplay extends Composite {
     // A column of boxes, one above another, either centred or to its left
     private FlowPanel column(final boolean centred) {
         final FlowPanel column = new FlowPanel();
-        column.addStyleName("xsdBrowser-column");
+        column.addStyleName("xsd-browser__column");
         if (centred) {
-            column.addStyleName("xsdBrowser-column--centred");
+            column.addStyleName("xsd-browser__column--centred");
         }
         return column;
     }
@@ -185,7 +185,7 @@ public class XSDDisplay extends Composite {
     // Two columns side by side, with a gap between them
     private FlowPanel columns(final FlowPanel left, final FlowPanel right) {
         final FlowPanel layout = new FlowPanel();
-        layout.addStyleName("xsdBrowser-columns");
+        layout.addStyleName("xsd-browser__columns");
         layout.add(left);
         layout.add(right);
         return layout;
@@ -207,7 +207,7 @@ public class XSDDisplay extends Composite {
             if (title != null) {
                 if (node.getType() == XSDType.SIMPLE_TYPE) {
                     return new XSDDisplayBox(
-                            "xsdBrowser-xsdTitleSimpleType",
+                            "xsd-browser__title-simple-type",
                             title,
                             null,
                             map,
@@ -216,7 +216,7 @@ public class XSDDisplay extends Composite {
                 }
 
                 return new XSDDisplayBox(
-                        "xsdBrowser-xsdTitleComplexType",
+                        "xsd-browser__title-complex-type",
                         title,
                         getNodeListDisplay(
                                 layoutColumn,
@@ -283,15 +283,15 @@ public class XSDDisplay extends Composite {
             }
 
             // Apply some overall styles to surround the content (the cells are aligned to the
-            // middle by xsdbrowser.css).
+            // middle by xsd-browser.css).
             for (row = 0; row < layout.getRowCount(); row++) {
-                layout.addCellStyleName(row, 0, "xsdBrowser-nodeGrid__cell--start");
-                layout.addCellStyleName(row, layout.getColumnCount() - 1, "xsdBrowser-nodeGrid__cell--end");
+                layout.addCellStyleName(row, 0, "xsd-browser__node-grid-cell--start");
+                layout.addCellStyleName(row, layout.getColumnCount() - 1, "xsd-browser__node-grid-cell--end");
             }
 
             if (layout.getRowCount() > 0) {
-                addRowStyleName(layout, 0, "xsdBrowser-nodeGrid__cell--top");
-                addRowStyleName(layout, layout.getRowCount() - 1, "xsdBrowser-nodeGrid__cell--bottom");
+                addRowStyleName(layout, 0, "xsd-browser__node-grid-cell--top");
+                addRowStyleName(layout, layout.getRowCount() - 1, "xsd-browser__node-grid-cell--bottom");
             }
 
             // If we didn't add any rows then set the layout to null.
@@ -374,7 +374,7 @@ public class XSDDisplay extends Composite {
 
                             layoutColumn.add(typeBox);
                             final SimplePanel superArrow = new SimplePanel();
-                            superArrow.getElement().setClassName("xsdBrowser-superArrowSelect");
+                            superArrow.getElement().setClassName("xsd-browser__super-arrow-select");
                             layoutColumn.add(superArrow);
                         }
 
@@ -461,7 +461,7 @@ public class XSDDisplay extends Composite {
                 final FlowPanel fp = new FlowPanel();
                 fp.add(getImage(type));
                 fp.add(html);
-                fp.addStyleName("xsdBrowser-occurrence");
+                fp.addStyleName("xsd-browser__occurrence");
 
                 layout.setWidget(row, col, fp);
             } else {
@@ -469,7 +469,7 @@ public class XSDDisplay extends Composite {
             }
 
             final SimplePanel panel = new SimplePanel();
-            panel.getElement().setClassName("xsdBrowser-xsdTree03");
+            panel.getElement().setClassName("xsd-browser__tree-03");
             layout.setWidget(row, col + 1, panel);
 
         } else {
@@ -531,7 +531,7 @@ public class XSDDisplay extends Composite {
             // Add line images to get back to the structure level.
             if (node.getParent() != null && node.getParent().getType().isStructural()) {
                 for (int i = col; i < colCount - 6; i++) {
-                    layout.setWidget(row, i, image("xsdBrowser-xsdTree03"));
+                    layout.setWidget(row, i, image("xsd-browser__tree-03"));
                 }
             }
 
@@ -543,22 +543,22 @@ public class XSDDisplay extends Composite {
                     if (parent.isFirstChild() && parent.isLastChild()) {
                         layout.setWidget(row,
                                 pos,
-                                image("xsdBrowser-xsdTree03"));
+                                image("xsd-browser__tree-03"));
                     } else if (parent.isFirstChild()) {
                         layout.setWidget(row,
                                 pos,
-                                image("xsdBrowser-xsdTree06"));
+                                image("xsd-browser__tree-06"));
                     } else if (parent.isLastChild()) {
                         layout.setWidget(row,
                                 pos,
-                                image("xsdBrowser-xsdTree09"));
+                                image("xsd-browser__tree-09"));
                     } else {
                         layout.setWidget(row,
                                 pos,
-                                image("xsdBrowser-xsdTree05"));
+                                image("xsd-browser__tree-05"));
                     }
                 } else if (!parent.isLastChild()) {
-                    layout.setWidget(row, pos, image("xsdBrowser-xsdTree02"));
+                    layout.setWidget(row, pos, image("xsd-browser__tree-02"));
                 }
 
                 parent = parent.getParent();
@@ -567,7 +567,7 @@ public class XSDDisplay extends Composite {
 
             if (image != null) {
                 layout.setWidget(row, colCount - 6, image);
-                image.addStyleName("marginRight");
+                image.addStyleName("xsd-browser__icon");
             }
             if (lblName != null) {
                 layout.setWidget(row, colCount - 5, lblName);
@@ -579,7 +579,7 @@ public class XSDDisplay extends Composite {
             }
             if (lblType != null) {
                 layout.setWidget(row, colCount - 1, lblType);
-                lblType.addStyleName("marginLeft");
+                lblType.addStyleName("xsd-browser__type-name");
             }
         }
     }
@@ -592,7 +592,7 @@ public class XSDDisplay extends Composite {
 
     private void addSeparator(final XSDNodeGrid layout) {
         // Add a row with a black border at the bottom.
-        addRowStyleName(layout, layout.getRowCount() - 1, "xsdBrowser-nodeGrid__cell--separator");
+        addRowStyleName(layout, layout.getRowCount() - 1, "xsd-browser__node-grid-cell--separator");
     }
 
     private void addRowStyleName(final XSDNodeGrid layout, final int row, final String styleName) {
@@ -607,37 +607,37 @@ public class XSDDisplay extends Composite {
 
         switch (type) {
             case ALL:
-                className = "xsdBrowser-xsdAll";
+                className = "xsd-browser__node-all";
                 title = "All";
                 break;
             case ANY:
-                className = "xsdBrowser-xsdAny";
+                className = "xsd-browser__node-any";
                 break;
             case ATTRIBUTE:
-                className = "xsdBrowser-xsdAttribute";
+                className = "xsd-browser__node-attribute";
                 break;
             case CHOICE:
-                className = "xsdBrowser-xsdChoice";
+                className = "xsd-browser__node-choice";
                 title = "Choice";
                 break;
             case COMPLEX_TYPE:
-                className = "xsdBrowser-xsdComplexType";
+                className = "xsd-browser__node-complex-type";
                 break;
             case ELEMENT:
-                className = "xsdBrowser-xsdElement";
+                className = "xsd-browser__node-element";
                 break;
             case ELEMENT_REF:
-                className = "xsdBrowser-xsdElementRef";
+                className = "xsd-browser__node-element-ref";
                 break;
             case SCHEMA:
-                className = "xsdBrowser-xsdTitleSchema";
+                className = "xsd-browser__title-schema";
                 break;
             case SEQUENCE:
-                className = "xsdBrowser-xsdSequence";
+                className = "xsd-browser__node-sequence";
                 title = "Sequence";
                 break;
             case SIMPLE_TYPE:
-                className = "xsdBrowser-xsdSimpleType";
+                className = "xsd-browser__node-simple-type";
                 break;
             default:
                 break;
@@ -655,10 +655,10 @@ public class XSDDisplay extends Composite {
         return null;
     }
 
-    // A label kept on one line (xsdbrowser.css)
+    // A label kept on one line (xsd-browser.css)
     private static Label oneLineLabel(final String text) {
         final Label label = new Label(text);
-        label.addStyleName("xsdBrowser-oneLine");
+        label.addStyleName("xsd-browser__one-line");
         return label;
     }
 }

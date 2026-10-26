@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
-import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
-import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 
 /// The presenter and view bindings of Stroom's `XMLSchemaModule`
@@ -33,9 +30,6 @@ public class XMLSchemaScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(XMLSchemaPresenter.class);
-        bindPresenterWidget(XSDBrowserPresenter.class,
-                XSDBrowserView.class,
-                XSDBrowserViewImpl.class);
     }
 }
 

@@ -27,16 +27,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// The rows of an XSD node's children, with the tree lines that join them, as a CSS grid of a fixed
-/// number of columns (`xsdbrowser.css`, `--xsd-node-grid__columns`). It replaced a GWT `Grid` (an HTML
+/// number of columns (`xsd-browser.css`, `--xsd-browser__node-grid-columns`). It replaced a GWT `Grid` (an HTML
 /// table, used only for its layout), and keeps its cells in the page in the same order, a row at a
 /// time.
 ///
 /// Every cell of every row is made, empty until given a widget, so that a style set on a row
-/// (e.g. a border under it, `xsdBrowser-nodeGrid__cell--separator`) runs the width of the grid.
+/// (e.g. a border under it, `xsd-browser__node-grid-cell--separator`) runs the width of the grid.
 class XSDNodeGrid extends Composite {
 
-    private static final String GRID = "xsdBrowser-nodeGrid";
-    private static final String CELL = GRID + "__cell";
+    private static final String GRID = "xsd-browser__node-grid";
+    private static final String CELL = GRID + "-cell";
 
     private final FlowPanel panel = new FlowPanel();
     private final int columnCount;
@@ -46,7 +46,7 @@ class XSDNodeGrid extends Composite {
     XSDNodeGrid(final int columnCount) {
         this.columnCount = columnCount;
         panel.setStyleName(GRID);
-        CssProperties.set(panel.getElement(), "--xsd-node-grid__columns", String.valueOf(columnCount));
+        CssProperties.set(panel.getElement(), "--xsd-browser__node-grid-columns", String.valueOf(columnCount));
         initWidget(panel);
     }
 
@@ -89,7 +89,7 @@ class XSDNodeGrid extends Composite {
     ///
     /// @param row       The cell's row.
     /// @param col       The cell's column.
-    /// @param styleName The class, e.g. `xsdBrowser-nodeGrid__cell--start`.
+    /// @param styleName The class, e.g. `xsd-browser__node-grid-cell--start`.
     void addCellStyleName(final int row, final int col, final String styleName) {
         rows.get(row).get(col).addStyleName(styleName);
     }
@@ -97,7 +97,7 @@ class XSDNodeGrid extends Composite {
     /// Adds a class to every cell of a row.
     ///
     /// @param row       The row.
-    /// @param styleName The class, e.g. `xsdBrowser-nodeGrid__cell--separator`.
+    /// @param styleName The class, e.g. `xsd-browser__node-grid-cell--separator`.
     void addRowStyleName(final int row, final String styleName) {
         for (int col = 0; col < columnCount; col++) {
             addCellStyleName(row, col, styleName);

@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-.xsdBrowser * {
+/*
+ * A schema's browser (XSDBrowser): its diagram of boxes (XSDDisplay, XSDDisplayBox), the selected
+ * node's documentation and its constraints (XSDConstraintDisplay).
+ */
+
+.xsd-browser * {
 	-moz-user-focus: ignore;
 	-moz-user-input: disabled;
 	-moz-user-select: none;
@@ -26,33 +31,29 @@
 	user-select: none;
 }
 
-.xsdBrowser .bar {
-	
-}
-
-.xsdBrowser .link {
+.xsd-browser__link {
 	display: inline-block;
 	cursor: pointer;
 	padding: 2px 5px;
 	text-decoration: underline;
 }
 
-.xsdBrowser-documentation {
+.xsd-browser__documentation {
 	overflow: auto;
 	padding: 5px;
 }
 
-.xsdBrowser-constraints {
+.xsd-browser__constraints {
 	overflow: auto;
 }
 
-.xsdBrowser-content {
+.xsd-browser__diagram {
 	padding: 20px;
 	overflow: auto;
 }
 
 /* A box: its title, then its content below it, centred */
-.xsdBrowser .box {
+.xsd-browser__box {
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--xsdbrowser-box__border-color);
@@ -61,46 +62,41 @@
 	align-items: center;
 }
 
-.xsdBrowser .boxContent {
+.xsd-browser__box-content {
 	flex: 1 1 auto;
 	max-width: 100%;
 }
 
 /* A box title's image, then its text beside it */
-.xsdBrowser .boxTitle-row {
+.xsd-browser__box-title-row {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-.xsdBrowser .boxTitle-text {
+.xsd-browser__box-title-text {
 	color: white;
 	white-space: nowrap;
 }
 
 /* The title of a box whose node can be selected */
-.xsdBrowser .boxTitle-selectable {
+.xsd-browser__box-title--selectable {
 	cursor: pointer;
 }
 
-.xsdBrowser .boxTitle {
+.xsd-browser__box-title {
 	width: 100%;
 	background: var(--xsdbrowser-title__background-color);
 	padding: 2px;
 	border: 1px solid var(--xsdbrowser-title__background-color);
 }
 
-.xsdBrowser .boxTitle-selected {
-	width: 100%;
+.xsd-browser__box-title--selected {
 	background: var(--xsdbrowser-title__background-color--selected);
-	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title__background-color--selected);
+	border-color: var(--xsdbrowser-title__background-color--selected);
 }
 
-.xsdBrowser .boxTitle-noContent {
-}
-
-.xsdBrowser .outerBox {
+.xsd-browser__outer-box {
 	display: flex;
 	flex-direction: column;
 	width: fit-content;
@@ -109,16 +105,16 @@
 	border-radius: .25rem;
 }
 
-.xsdBrowser .restrictionType {
+.xsd-browser__restriction-type {
 	font-weight: 500;
 }
 
-.xsdBrowser .padding {
+.xsd-browser__padded {
 	padding: 5px;
 }
 
 /* The schema's boxes (its elements and its types) side by side */
-.xsdBrowser .midPanel {
+.xsd-browser__mid-panel {
 	display: flex;
 	align-items: flex-start;
 	gap: 5px;
@@ -126,102 +122,102 @@
 }
 
 /* An element or a type's boxes, in two columns side by side */
-.xsdBrowser .xsdBrowser-columns {
+.xsd-browser__columns {
 	display: flex;
 	align-items: flex-start;
 	gap: 40px;
 }
 
-.xsdBrowser .xsdBrowser-column {
+.xsd-browser__column {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 }
 
-.xsdBrowser .xsdBrowser-column--centred {
+.xsd-browser__column--centred {
 	align-items: center;
 }
 
 /* The rows of a node's children, as wide as they need, each cell's content in its middle */
-.xsdBrowser .xsdBrowser-nodeGrid {
+.xsd-browser__node-grid {
 	display: grid;
-	grid-template-columns: repeat(var(--xsd-node-grid__columns), auto);
+	grid-template-columns: repeat(var(--xsd-browser__node-grid-columns), auto);
 	width: max-content;
 }
 
-.xsdBrowser .xsdBrowser-nodeGrid__cell {
+.xsd-browser__node-grid-cell {
 	display: flex;
 	align-items: center;
 }
 
 /* An empty cell holds a space, as the table this grid replaced did, so that a column left empty
    (e.g. the occurrences, when they aren't shown) still spaces out the columns either side of it */
-.xsdBrowser .xsdBrowser-nodeGrid__cell:empty::before {
+.xsd-browser__node-grid-cell:empty::before {
 	content: "\00a0";
 }
 
 /* Space around the rows: before the first column, after the last, above the first row and below
    the last */
-.xsdBrowser .xsdBrowser-nodeGrid__cell--start {
+.xsd-browser__node-grid-cell--start {
 	padding-left: 5px;
 }
 
-.xsdBrowser .xsdBrowser-nodeGrid__cell--end {
+.xsd-browser__node-grid-cell--end {
 	padding-right: 5px;
 }
 
-.xsdBrowser .xsdBrowser-nodeGrid__cell--top {
+.xsd-browser__node-grid-cell--top {
 	padding-top: 3px;
 }
 
-.xsdBrowser .xsdBrowser-nodeGrid__cell--bottom {
+.xsd-browser__node-grid-cell--bottom {
 	padding-bottom: 3px;
 }
 
 /* A line under the last row of a group, e.g. the attributes */
-.xsdBrowser .xsdBrowser-nodeGrid__cell--separator {
+.xsd-browser__node-grid-cell--separator {
 	border-bottom: 1px solid black;
 }
 
-.xsdBrowser .displayTypeBox {
+.xsd-browser__type-box {
 	margin-bottom: 20px;
 }
 
-.xsdBrowser .nodeTypeBox {
+.xsd-browser__node-type-box {
 	margin-bottom: 40px;
 }
 
-.xsdBrowser .marginRight {
+.xsd-browser__icon {
 	margin-right: 5px;
 }
 
-.xsdBrowser .marginLeft {
+.xsd-browser__type-name {
 	margin-left: 5px;
 }
 
 /* A label kept on one line, e.g. an occurrence or a constraint's value */
-.xsdBrowser .xsdBrowser-oneLine {
+.xsd-browser__one-line {
 	white-space: nowrap;
 }
 
-.xsdBrowser .nodeLabel {
+.xsd-browser__node-label {
 	margin-right: 5px;
 	cursor: pointer;
 	white-space: nowrap;
 	text-align: left;
 }
 
-.xsdBrowser .nodeLabelSelected {
+.xsd-browser__node-label--selected {
   background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
   color: var(--row__text-color--selected) !important;
 }
 
 /* A node's image with its occurrences (e.g. 0..1) over it */
-.xsdBrowser .xsdBrowser-occurrence {
+.xsd-browser__occurrence {
 	position: relative;
 }
 
-.xsdBrowser .occuranceLabel {
+.xsd-browser__occurrence-label {
 	position: absolute;
 	left: 16px;
 	top: 9px;
@@ -229,205 +225,205 @@
 	color: var(--link__text-color);
 }
 
-.xsdBrowser .xsdBrowser-superArrow {
+.xsd-browser__super-arrow {
   background-image: url("../images/xsdbrowser/superArrow.png");
   width: 13px;
   height: 60px;
 }
 
-.xsdBrowser .xsdBrowser-superArrowSelect {
+.xsd-browser__super-arrow-select {
   background-image: url("../images/xsdbrowser/superArrowSelect.png");
   width: 13px;
   height: 60px;
 }
 
-.stroom-theme-dark .xsdBrowser .xsdBrowser-superArrowSelect {
+.stroom-theme-dark .xsd-browser__super-arrow-select {
   background-image: url("../images/xsdbrowser/superArrowSelect-dark.png");
   width: 13px;
   height: 60px;
 }
 
-.xsdBrowser .xsdBrowser-xsdAll {
+.xsd-browser__node-all {
   background-image: url("../images/xsdbrowser/xsdAll.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdAny {
+.xsd-browser__node-any {
   background-image: url("../images/xsdbrowser/xsdAny.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdAttribute {
+.xsd-browser__node-attribute {
   background-image: url("../images/xsdbrowser/xsdAttribute.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdBrowser-Title {
+.xsd-browser__browser-title {
   background-image: url("../images/xsdbrowser/xsdBrowser-Title.png");
   width: 32px;
   height: 500px;
 }
 
-.xsdBrowser .xsdBrowser-xsdBrowser-Title-selected {
+.xsd-browser__browser-title-selected {
   background-image: url("../images/xsdbrowser/xsdBrowser-Title-selected.png");
   width: 32px;
   height: 500px;
 }
 
-.xsdBrowser .xsdBrowser-xsdChoice {
+.xsd-browser__node-choice {
   background-image: url("../images/xsdbrowser/xsdChoice.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdComplexType {
+.xsd-browser__node-complex-type {
   background-image: url("../images/xsdbrowser/xsdComplexType.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdElement {
+.xsd-browser__node-element {
   background-image: url("../images/xsdbrowser/xsdElement.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdElementRef {
+.xsd-browser__node-element-ref {
   background-image: url("../images/xsdbrowser/xsdElementRef.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdSequence {
+.xsd-browser__node-sequence {
   background-image: url("../images/xsdbrowser/xsdSequence.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdSimpleType {
+.xsd-browser__node-simple-type {
   background-image: url("../images/xsdbrowser/xsdSimpleType.png");
   width: 20px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleAttributes {
+.xsd-browser__title-attributes {
   background-image: url("../images/xsdbrowser/xsdTitleAttributes.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleComplexType {
+.xsd-browser__title-complex-type {
   background-image: url("../images/xsdbrowser/xsdTitleComplexType.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleDirectives {
+.xsd-browser__title-directives {
   background-image: url("../images/xsdbrowser/xsdTitleDirectives.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleElement {
+.xsd-browser__title-element {
   background-image: url("../images/xsdbrowser/xsdTitleElement.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleElements {
+.xsd-browser__title-elements {
   background-image: url("../images/xsdbrowser/xsdTitleElements.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleGroups {
+.xsd-browser__title-groups {
   background-image: url("../images/xsdbrowser/xsdTitleGroups.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleSchema {
+.xsd-browser__title-schema {
   background-image: url("../images/xsdbrowser/xsdTitleSchema.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleSimpleType {
+.xsd-browser__title-simple-type {
   background-image: url("../images/xsdbrowser/xsdTitleSimpleType.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTitleTypes {
+.xsd-browser__title-types {
   background-image: url("../images/xsdbrowser/xsdTitleTypes.png");
   width: var(--icon-width);
   height: var(--icon-height);
 }
 
-.xsdBrowser .xsdBrowser-xsdTree01 {
+.xsd-browser__tree-01 {
   background-image: url("../images/xsdbrowser/xsdTree01.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree02 {
+.xsd-browser__tree-02 {
   background-image: url("../images/xsdbrowser/xsdTree02.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree03 {
+.xsd-browser__tree-03 {
   background-image: url("../images/xsdbrowser/xsdTree03.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree04 {
+.xsd-browser__tree-04 {
   background-image: url("../images/xsdbrowser/xsdTree04.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree05 {
+.xsd-browser__tree-05 {
   background-image: url("../images/xsdbrowser/xsdTree05.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree06 {
+.xsd-browser__tree-06 {
   background-image: url("../images/xsdbrowser/xsdTree06.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree07 {
+.xsd-browser__tree-07 {
   background-image: url("../images/xsdbrowser/xsdTree07.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree08 {
+.xsd-browser__tree-08 {
   background-image: url("../images/xsdbrowser/xsdTree08.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree09 {
+.xsd-browser__tree-09 {
   background-image: url("../images/xsdbrowser/xsdTree09.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree10 {
+.xsd-browser__tree-10 {
   background-image: url("../images/xsdbrowser/xsdTree10.png");
   width: 15px;
   height: 20px;
 }
 
-.xsdBrowser .xsdBrowser-xsdTree11 {
+.xsd-browser__tree-11 {
   background-image: url("../images/xsdbrowser/xsdTree11.png");
   width: 15px;
   height: 20px;

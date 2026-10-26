@@ -231,6 +231,22 @@ public final class CodeDocumentEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // The Graphical tab (the default) shows the schema's diagram, with its navigation, and
+                // shows it again after the Text tab. The schema is empty, so Home, Back and Forward
+                // have nowhere to go (they once threw, as nothing had been shown)
+                .story("XmlSchemaGraphical", context -> schema(context, false))
+                .withPlay(play -> {
+                    final Query navigation = play.findByRole("group", "Schema navigation");
+                    play.expect(play.within(navigation).getByRole("button", "Schema Home")).toBeVisible();
+                    play.click(play.within(navigation).getByRole("button", "Schema Home"));
+                    play.click(play.within(navigation).getByRole("button", "Back"));
+                    play.click(play.within(navigation).getByRole("button", "Forward"));
+                    openTab(play, "Text");
+                    play.waitFor(() -> play.expect(play.queryByRole("group", "Schema navigation")).toBeNull());
+                    openTab(play, "Graphical");
+                    play.waitFor(() -> play.expect(play.getByRole("group", "Schema navigation")).toBeVisible());
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Text tab, to compare with its read only partner
                 .story("XmlSchemaTextEditable", context -> schema(context, false))
                 .withPlay(play -> {

@@ -16,6 +16,8 @@
 
 package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -24,17 +26,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
-import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
+import stroom.widget.xsdbrowser.client.component.XSDBrowser;
+import stroom.widget.xsdbrowser.client.component.XSDBrowserController;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's XSD browser ([XSDBrowserPresenter], the box diagram shown by the XML
+/// Stories for Stroom's XSD browser ([XSDBrowserController], the box diagram shown by the XML
 /// schema editor).
 public final class XsdBrowserStories {
 
@@ -172,7 +173,7 @@ public final class XsdBrowserStories {
                 .story("KeyboardNavigation", XsdBrowserStories::fromArgs)
                 .withArgs(Args.of(OPEN, "book"))
                 .withPlay(play -> {
-                    final Query documentation = play.querySelector(".xsdBrowser-documentation");
+                    final Query documentation = play.querySelector(".xsd-browser__documentation");
                     play.waitFor(() -> play.expect(documentation).toHaveTextContent(BOOK_DOCUMENTATION));
                     final Play navigation = play.within(play.getByRole("group", "Schema navigation"));
                     final Query home = navigation.getByRole("button", "Schema Home");
@@ -205,11 +206,11 @@ public final class XsdBrowserStories {
     }
 
     private static Widget fromArgs(final StoryContext context) {
-        final XSDBrowserPresenter presenter = new XSDBrowserPresenter(
-                new SimpleEventBus(),
-                new XSDBrowserViewImpl(GWT.create(XSDBrowserViewImpl.Binder.class)));
+        final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
+        final XSDBrowserController browser = harness.own(new XSDBrowserController(harness.getEventBus(),
+                new XSDBrowser()));
         final XSDModel model = new XSDModel();
-        presenter.setModel(model);
+        browser.setModel(model);
         model.setContents(context.getArgs().getString(XSD_TEXT, ""));
         open(model, context.getArgs().getString(OPEN, ""));
 
@@ -220,8 +221,9 @@ public final class XsdBrowserStories {
         frame.getElement().getStyle().setProperty("borderRadius", "4px");
         frame.getElement().getStyle().setProperty("overflow", "hidden");
         frame.getElement().getStyle().setProperty("position", "relative");
-        frame.add(presenter.getWidget());
-        return frame;
+        frame.add(browser);
+        harness.add(frame);
+        return harness.asWidget();
     }
 
     // Opens the global element or type with this name, if there is one

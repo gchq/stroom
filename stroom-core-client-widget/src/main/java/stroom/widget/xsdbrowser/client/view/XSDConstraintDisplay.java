@@ -63,7 +63,7 @@ public class XSDConstraintDisplay extends Composite {
             } else {
                 lblRestrictionType = oneLineLabel("Pattern");
             }
-            lblRestrictionType.addStyleName("restrictionType");
+            lblRestrictionType.addStyleName("xsd-browser__restriction-type");
 
             // The restriction's type, then its values, one above another
             final FlowPanel layout = new FlowPanel();
@@ -74,7 +74,7 @@ public class XSDConstraintDisplay extends Composite {
             }
 
             final SimplePanel simplePanel = new SimplePanel();
-            simplePanel.addStyleName("padding");
+            simplePanel.addStyleName("xsd-browser__padded");
             simplePanel.add(layout);
 
             return simplePanel;
@@ -83,10 +83,10 @@ public class XSDConstraintDisplay extends Composite {
         return null;
     }
 
-    // A label kept on one line (xsdbrowser.css)
+    // A label kept on one line (xsd-browser.css)
     private static Label oneLineLabel(final String text) {
         final Label label = new Label(text);
-        label.addStyleName("xsdBrowser-oneLine");
+        label.addStyleName("xsd-browser__one-line");
         return label;
     }
 }

@@ -33,7 +33,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
+import stroom.widget.xsdbrowser.client.component.XSDBrowserController;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.xmlschema.client.component.XMLSchemaSettingsController;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -65,7 +65,8 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final RestFactory restFactory;
-    private XSDBrowserPresenter xsdBrowserPresenter;
+    // The Graphical tab, whose content is the schema browser
+    private final ControllerTabProvider<XSDBrowserController, XmlSchemaDoc> graphicalTab;
     private EditorPresenter codePresenter;
     private final XSDModel data = new XSDModel();
     private boolean updateDiagram;
@@ -78,7 +79,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     public XMLSchemaPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
                               final Provider<XMLSchemaSettingsController> settingsProvider,
-                              final Provider<XSDBrowserPresenter> xsdBrowserPresenterProvider,
+                              final Provider<XSDBrowserController> xsdBrowserProvider,
                               final Provider<EditorPresenter> codePresenterProvider,
                               final Provider<MarkdownEditController> markdownEditProvider,
                               final DocumentUserPermissionsTabProvider<XmlSchemaDoc> documentUserPermissionsTabProvider,
@@ -100,14 +101,16 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
             }
         };
 
-        addTab(GRAPHICAL, new AbstractTabProvider<XmlSchemaDoc, XSDBrowserPresenter>() {
-            @Override
-            protected XSDBrowserPresenter createPresenter() {
-                xsdBrowserPresenter = xsdBrowserPresenterProvider.get();
-                xsdBrowserPresenter.setModel(data);
-                return xsdBrowserPresenter;
-            }
-        });
+        graphicalTab = new ControllerTabProvider<>(getEventBus(),
+                () -> {
+                    final XSDBrowserController xsdBrowser = xsdBrowserProvider.get();
+                    xsdBrowser.setModel(data);
+                    return xsdBrowser;
+                },
+                // It shows the schema's model, which is read from the document's text when shown
+                (xsdBrowser, docRef, document) -> {
+                });
+        addTab(GRAPHICAL, graphicalTab);
         addTab(TEXT, new AbstractTabProvider<XmlSchemaDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
@@ -204,7 +207,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     @Override
     protected void afterSelectTab(final MyPresenterWidget<?> content) {
         if (content != null) {
-            if (content.equals(xsdBrowserPresenter)) {
+            if (graphicalTab.isPresenter(content)) {
                 if (updateDiagram) {
                     updateDiagram = false;
                     if (codePresenter != null) {

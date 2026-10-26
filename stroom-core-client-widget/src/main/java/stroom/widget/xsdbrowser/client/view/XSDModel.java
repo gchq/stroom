@@ -50,11 +50,19 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
     private DOMParseException parseException;
 
     public void home() {
+        // Nothing has been shown yet, e.g. the schema is empty
+        if (history.isEmpty()) {
+            return;
+        }
         historyPos = 0;
         setSelectedItem(history.get(historyPos), true, false);
     }
 
     public void back() {
+        // Nothing has been shown yet, e.g. the schema is empty
+        if (history.isEmpty()) {
+            return;
+        }
         historyPos--;
         if (historyPos < 0) {
             historyPos = 0;
@@ -64,6 +72,10 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
     }
 
     public void forward() {
+        // Nothing has been shown yet, e.g. the schema is empty
+        if (history.isEmpty()) {
+            return;
+        }
         historyPos++;
         if (historyPos >= history.size()) {
             historyPos = history.size() - 1;

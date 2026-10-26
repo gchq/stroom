@@ -32,7 +32,7 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
     public XSDNodeLabel(final String title, final SelectionMap selectionMap, final XSDModel model, final XSDNode node,
                         final XSDNode refNode) {
         final Label label = new Label(title);
-        label.addStyleName("nodeLabel");
+        label.addStyleName("xsd-browser__node-label");
 
         selectionMap.addSelectionItem(node, this);
         selectionMap.addSelectionItem(refNode, this);
@@ -67,9 +67,9 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
         final Element cell = getElement().getParentElement();
 
         if (selected) {
-            cell.addClassName("nodeLabelSelected");
+            cell.addClassName("xsd-browser__node-label--selected");
         } else {
-            cell.removeClassName("nodeLabelSelected");
+            cell.removeClassName("xsd-browser__node-label--selected");
         }
     }
 }

@@ -21,6 +21,7 @@ import stroom.entity.client.component.TabbedController.TabReader;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerView;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -85,6 +86,15 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
             host = new Host(make.get());
         }
         return host;
+    }
+
+    /// Tells whether a presenter is this tab's, without making it: it is made only when the tab is
+    /// first shown.
+    ///
+    /// @param presenter A presenter, e.g. the one a document has just shown.
+    /// @return True if it is this tab's.
+    public boolean isPresenter(final MyPresenterWidget<?> presenter) {
+        return host != null && host == presenter;
     }
 
     @Override
