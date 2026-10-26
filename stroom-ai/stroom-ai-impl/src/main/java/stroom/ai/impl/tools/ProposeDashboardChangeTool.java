@@ -193,7 +193,14 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addEnumProperty("match", List.of("all", "any"), "For add_format_rule: whether a row must meet all "
                                                                 + "the conditions (the default) or any of them. For "
                                                                 + "add_selection_filter: whether all its terms must "
-                                                                + "hold (the default) or any.")
+                                                                + "hold (the default) or any. With any, a clicked "
+                                                                + "link's source and target terms still hold "
+                                                                + "together, so one filter can match a clicked node "
+                                                                + "at either end or a clicked link. A link of an "
+                                                                + "undirected graph or a chord diagram matches either "
+                                                                + "way round, as the chart sends it both ways. "
+                                                                + "Several filters on one target match when any of "
+                                                                + "them does.")
                 .addEnumProperty("style", DashboardChanges.FORMAT_STYLES, "For add_format_rule: the colour to give "
                                                                           + "matching rows.")
                 .addEnumProperty("format_type", DashboardChanges.FORMAT_TYPES, "For add_format_rule: what the "
