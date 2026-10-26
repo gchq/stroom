@@ -38,17 +38,23 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 | line | **x**, **y**, series | Change over time; give x a Date Time column (round it with e.g. `roundHour()`) |
 | pie | **name**, **value** | Shares of a whole with few parts (12 or fewer; the rest become Other) |
 | scatter | **x**, **y**, size, series | How two measures relate, e.g. bytes against duration |
-| graph | **source**, **target**, weight, sourceGroup, targetGroup | Relationships and how connected things are, e.g. who messages whom |
+| graph | **source**, **target**, weight, sourceGroup, targetGroup, level3 to level6 | Relationships and how connected things are, e.g. who messages whom |
 | heatmap | **x**, **y**, **value** | A value across two dimensions, e.g. events by hour of day and day of week |
 | calendar | **date**, **value** | A value a day over weeks or months, e.g. daily event counts (`floorDay()`, Date Time) |
 | histogram | **value**, series | How a number is spread, e.g. response times or bytes; one row per event, not grouped |
-| sankey | **source**, **target**, value | Flows from one thing to the next, e.g. source IP to port; loops are left out |
-| chord | **source**, **target**, weight | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
+| sankey | **source**, **target**, value, level3 to level6 | Flows from one thing to the next, e.g. source IP to destination IP to port |
+| chord | **source**, **target**, weight, level3 to level6 | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
 | gauge | **value**, name | A value against its range, e.g. the latest or the maximum; a gauge per name when a name column is mapped, else the first row's value |
 
 A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
-selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair; a Sankey
-diagram leaves out the weakest flow that would close a loop (a to b, b to a), and says so.
+selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair.
+
+A Sankey diagram, network graph or chord diagram can follow more than two columns: map level3 (then level4 to
+level6) to the columns after target, e.g. source IP, destination IP, then port. Each row links each column to the
+next, up to the first it leaves empty. A Sankey diagram's levels each have their own nodes (an IP at two levels is
+two nodes, so no flow loops); a network graph's and chord diagram's nodes are shared. A click on a link between two
+levels selects those two levels' values (e.g. target and level3): give a filter a term for each level's column
+with its own selection, as for source and target.
 
 A network graph sizes each node by its number of connections (its degree) and draws each link as wide as its
 weight. Its table usually wants one row per pair, e.g. grouped by sender and recipient (both at level 1) with a

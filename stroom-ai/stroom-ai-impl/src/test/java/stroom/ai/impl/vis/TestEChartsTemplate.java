@@ -54,7 +54,7 @@ class TestEChartsTemplate {
         assertThat(controls.get("maxNodes")).containsEntry("defaultValue", "300").containsEntry("min", "2");
         assertThat(controls.get("kind")).containsEntry("defaultValue", "graph");
         assertThat(controls.get("fields")).containsEntry("defaultValue",
-                "source,target,weight,sourceGroup,targetGroup");
+                "source,target,weight,sourceGroup,targetGroup,level3,level4,level5,level6");
         // Edited in a code editor, under a label that names no charting library.
         assertThat(controls.get("options")).containsEntry("defaultValue", "{\"color\":[\"#5470c6\"]}")
                 .containsEntry("type", "json")
