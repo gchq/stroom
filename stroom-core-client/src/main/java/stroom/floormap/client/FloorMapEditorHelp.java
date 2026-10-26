@@ -57,6 +57,18 @@ public final class FloorMapEditorHelp {
                                               final String heading,
                                               final SafeHtml content) {
         final ToolbarButton helpButton = toolbar.button(SvgImage.HELP_OUTLINE, name, null);
+        wire(helpButton, heading, content);
+        return helpButton;
+    }
+
+    /// Makes a help button (e.g. one a template declares) show the help in the in-app help popup.
+    ///
+    /// @param helpButton The button.
+    /// @param heading    The heading at the top of the help popup.
+    /// @param content    The help to show.
+    public static void wire(final ToolbarButton helpButton,
+                            final String heading,
+                            final SafeHtml content) {
         // Showing help leaves the focus where it was
         helpButton.setFocusOnMouseDown(false);
         HelpPopup.markOpener(helpButton.getElement());
@@ -68,7 +80,6 @@ public final class FloorMapEditorHelp {
                         .append(content)
                         .toSafeHtml())
                 .fire());
-        return helpButton;
     }
 
     /// Help for the map canvas — the interaction model: selecting, moving,

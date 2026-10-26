@@ -41,7 +41,7 @@ import java.util.List;
 /// The `App/Editors/FloorMapMap` stories, showing Stroom's real [FloorMapMapPresenter] (a Floor
 /// Map's read-only 'Map' tab: the map canvas, its timeline and its dock of Tracking, Layers and
 /// Groups panels) with fake REST replies, for its three lists: the Tracking panel's entities
-/// (`FloorMapTrackingPresenter`), the Groups panel's groups (`FloorMapGroupsPresenter`) and the
+/// (`FloorMapTrackingController`), the Groups panel's groups (`FloorMapGroupsController`) and the
 /// members of a cluster on the map (`FloorMapClusterPresenter`, a dialog opened by clicking the
 /// cluster's glyph).
 ///

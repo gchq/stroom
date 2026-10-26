@@ -24,11 +24,14 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.component.FactObject;
 import stroom.floormap.client.component.FloorMapCanvasController;
 import stroom.floormap.client.component.FloorMapDockController;
+import stroom.floormap.client.component.FloorMapFactListController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.component.FloorMapSetScaleController;
+import stroom.floormap.client.component.FloorMapTimeListController;
 import stroom.floormap.client.component.FloorMapTimelineController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
@@ -154,8 +157,8 @@ public class FloorMapEditorPresenter
     private final RestFactory restFactory;
     private final FloorMapCanvasController canvas;
     private final FloorMapTimelineController floorMapTimeline;
-    private final FloorMapFactListPresenter floorMapFactListPresenter;
-    private final FloorMapTimeListPresenter floorMapTimeListPresenter;
+    private final FloorMapFactListController floorMapFactList;
+    private final FloorMapTimeListController floorMapTimeList;
     private final FloorMapObjectEditPresenter floorMapObjectEditPresenter;
 
     /// The dialog that turns a measured line into the map's scale.
@@ -220,8 +223,8 @@ public class FloorMapEditorPresenter
                                    final RestFactory restFactory,
                                    final Provider<FloorMapCanvasController> canvasProvider,
                                    final Provider<FloorMapTimelineController> timelineProvider,
-                                   final Provider<FloorMapFactListPresenter> factListProvider,
-                                   final Provider<FloorMapTimeListPresenter> timeListProvider,
+                                   final Provider<FloorMapFactListController> factListProvider,
+                                   final Provider<FloorMapTimeListController> timeListProvider,
                                    final Provider<FloorMapObjectEditPresenter> propertiesProvider,
                                    final Provider<FloorMapDockController> dockProvider,
                                    final FloorMapLayers layersPanel,
@@ -236,8 +239,8 @@ public class FloorMapEditorPresenter
         // for this presenter rather than sharing singletons used elsewhere.
         this.canvas = make(canvasProvider);
         this.floorMapTimeline = make(timelineProvider);
-        this.floorMapFactListPresenter = make(factListProvider);
-        this.floorMapTimeListPresenter = make(timeListProvider);
+        this.floorMapFactList = make(factListProvider);
+        this.floorMapTimeList = make(timeListProvider);
         this.floorMapObjectEditPresenter = make(propertiesProvider);
         // Let the properties dialog state an image's real-world size: the canvas
         // has already measured any image it has drawn, so this needs no second
@@ -301,14 +304,14 @@ public class FloorMapEditorPresenter
         getView().setCanvasView(canvas);
         getView().setDockView(dock);
         getView().setTimelineView(floorMapTimeline);
-        getView().setFactListView(floorMapFactListPresenter.getView());
-        getView().setTimeListView(floorMapTimeListPresenter.getView());
+        getView().setFactListView(floorMapFactList);
+        getView().setTimeListView(floorMapTimeList);
 
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List
         // is the navigable row-per-object view of what the canvas is drawing.
         canvas.setTextAlternativeId(
-                floorMapFactListPresenter.getGridElementId());
+                floorMapFactList.getGridElementId());
         // Properties are shown as a modal dialog — no slot needed.
 
         // ---- Timeline events ------------------------------------------------
@@ -318,19 +321,18 @@ public class FloorMapEditorPresenter
         canvas.setOnContextMenu(this::onCanvasContextMenu);
 
         // ---- Fact List selection + Show All toggle --------------------------
-        floorMapFactListPresenter.setMultiSelectionConsumer(this::onFactListSelectionChanged);
-        floorMapFactListPresenter.setShowAllConsumer(() -> onShowAllFactsToggled(true));
-        floorMapFactListPresenter.setShowTimeFilteredConsumer(() -> onShowAllFactsToggled(false));
-        floorMapFactListPresenter.setAddConsumer(this::onAddFactToFactList);
-        floorMapFactListPresenter.setEndConsumer(key -> onEndFacts(Collections.singletonList(key)));
-        floorMapFactListPresenter.setDeleteConsumer(this::onDeleteFactFromFactList);
+        floorMapFactList.setOnSelectionChange(this::onFactListSelectionChanged);
+        floorMapFactList.setOnShowAll(this::onShowAllFactsToggled);
+        floorMapFactList.setOnAdd(this::onAddFactToFactList);
+        floorMapFactList.setOnEnd(key -> onEndFacts(Collections.singletonList(key)));
+        floorMapFactList.setOnDelete(this::onDeleteFactFromFactList);
 
         // ---- Time List selection / toolbar ----------------------------------
-        floorMapTimeListPresenter.setSelectionConsumer(this::onTimeSelectedInTimeList);
-        floorMapTimeListPresenter.setEditConsumer(this::onEditTimeInTimeList);
-        floorMapTimeListPresenter.setAddConsumer(this::onAddTimeInTimeList);
-        floorMapTimeListPresenter.setDeleteConsumer(this::onDeleteTimeFromTimeList);
-        floorMapTimeListPresenter.setDeletedTest(this::isHidden);
+        floorMapTimeList.setOnSelectionChange(this::onTimeSelectedInTimeList);
+        floorMapTimeList.setOnEdit(this::onEditTimeInTimeList);
+        floorMapTimeList.setOnAdd(this::onAddTimeInTimeList);
+        floorMapTimeList.setOnDelete(this::onDeleteTimeFromTimeList);
+        floorMapTimeList.setDeletedTest(this::isHidden);
     }
 
     // -----------------------------------------------------------------------
@@ -405,8 +407,8 @@ public class FloorMapEditorPresenter
 
         final String mapName = getMapName();
         if (mapName == null) {
-            floorMapFactListPresenter.setData(new ArrayList<>());
-            floorMapTimeListPresenter.setData(new ArrayList<>());
+            floorMapFactList.setFacts(new ArrayList<>());
+            floorMapTimeList.setEntries(new ArrayList<>());
             return;
         }
 
@@ -961,11 +963,11 @@ public class FloorMapEditorPresenter
     private void updateFactList(final List<TemporalEntry> entries) {
         final List<FloorMapFieldMapping> schema = valueSchema();
         final boolean showAll = model.isShowAllFacts();
-        final List<FloorMapFactListPresenter.FactObject> factObjects = new ArrayList<>();
+        final List<FactObject> factObjects = new ArrayList<>();
         // The latest version per key decides whether a fact is deleted.
         for (final TemporalEntry entry : model.latestEntryPerKey(entries, !showAll)) {
-            final FloorMapFactListPresenter.FactObject factObject =
-                    FloorMapFactListPresenter.FactObject.fromEntry(entry, schema);
+            final FactObject factObject =
+                    FactObject.fromEntry(entry, schema);
             if (!isHidden(entry)) {
                 factObjects.add(factObject);
             } else if (showAll) {
@@ -974,11 +976,11 @@ public class FloorMapEditorPresenter
             }
         }
 
-        floorMapFactListPresenter.setData(factObjects);
+        floorMapFactList.setFacts(factObjects);
 
         // Restore the full (multi-)selection highlight without re-firing, so the
         // Fact List stays in sync with the canvas across data refreshes.
-        floorMapFactListPresenter.setSelectedKeys(model.getSelectedFactKeys());
+        floorMapFactList.setSelectedKeys(model.getSelectedFactKeys());
     }
 
     // -----------------------------------------------------------------------
@@ -1006,7 +1008,7 @@ public class FloorMapEditorPresenter
     private void applySelection(final java.util.Collection<String> keys) {
         model.setSelection(keys);
         canvas.setSelectedObjectIds(keys);
-        floorMapFactListPresenter.setSelectedKeys(keys);
+        floorMapFactList.setSelectedKeys(keys);
         reflectSelectionSideEffects(keys);
     }
 
@@ -1023,7 +1025,7 @@ public class FloorMapEditorPresenter
             floorMapObjectEditPresenter.setObject(primary);
             loadTimeListForSelectedFact();
         } else {
-            floorMapTimeListPresenter.setData(new ArrayList<>());
+            floorMapTimeList.setEntries(new ArrayList<>());
             floorMapObjectEditPresenter.setObject(null);
         }
     }
@@ -1088,9 +1090,9 @@ public class FloorMapEditorPresenter
     ///
     /// @param factObjects the selected fact objects (possibly empty)
     private void onFactListSelectionChanged(
-            final java.util.List<FloorMapFactListPresenter.FactObject> factObjects) {
+            final java.util.List<FactObject> factObjects) {
         final java.util.List<String> keys = new ArrayList<>();
-        for (final FloorMapFactListPresenter.FactObject o : factObjects) {
+        for (final FactObject o : factObjects) {
             keys.add(o.getKey());
         }
         applySelection(keys);
@@ -1249,7 +1251,7 @@ public class FloorMapEditorPresenter
                     if (ok) {
                         deleteAllShardsForKey(mapName, key, () -> {
                             if (wasSelected) {
-                                floorMapTimeListPresenter.setData(new ArrayList<>());
+                                floorMapTimeList.setEntries(new ArrayList<>());
                                 floorMapObjectEditPresenter.loadEntry(null);
                             }
                             loadAtTime(model.getSelectedTime());
@@ -1347,8 +1349,8 @@ public class FloorMapEditorPresenter
 
         // Rebuild the Time List optimistically from the same merged view.
         final List<TemporalEntry> merged = model.buildMergedTimeList();
-        floorMapTimeListPresenter.setData(merged);
-        floorMapTimeListPresenter.selectAtIndex(selectIndex);
+        floorMapTimeList.setEntries(merged);
+        floorMapTimeList.selectAtIndex(selectIndex);
 
         refreshCanvasOnly();
     }
@@ -1639,7 +1641,7 @@ public class FloorMapEditorPresenter
 
                         // Select the new object in the Fact List and canvas
                         canvas.setSelectedObjectId(model.getSelectedFactKey());
-                        floorMapFactListPresenter.setSelected(model.getSelectedFactKey());
+                        floorMapFactList.setSelected(model.getSelectedFactKey());
 
                         // Populate the Time List optimistically from pending
                         // changes (the server doesn't know about this entry yet)
@@ -1801,7 +1803,7 @@ public class FloorMapEditorPresenter
                         model.setSelectedFactKey(saved.getKey());
 
                         canvas.setSelectedObjectId(model.getSelectedFactKey());
-                        floorMapFactListPresenter.setSelected(model.getSelectedFactKey());
+                        floorMapFactList.setSelected(model.getSelectedFactKey());
 
                         // Populate the Time List optimistically from pending
                         // changes (the server doesn't know about this entry yet)
@@ -2087,8 +2089,8 @@ public class FloorMapEditorPresenter
     /// @param timeMs the timeline position to select against
     private void refreshTimeListAtTime(final long timeMs) {
         final List<TemporalEntry> merged = model.buildMergedTimeList();
-        floorMapTimeListPresenter.setData(merged);
-        floorMapTimeListPresenter.selectAtTime(timeMs);
+        floorMapTimeList.setEntries(merged);
+        floorMapTimeList.selectAtTime(timeMs);
     }
 
     /// Refreshes the canvas using the latest Fact List data at the current time.
@@ -2140,7 +2142,7 @@ public class FloorMapEditorPresenter
     private void loadTimeListForSelectedFact() {
         final String mapName = getMapName();
         if (mapName == null || model.getSelectedFactKey() == null) {
-            floorMapTimeListPresenter.setData(new ArrayList<>());
+            floorMapTimeList.setEntries(new ArrayList<>());
             return;
         }
         fetchTimeList(mapName, model.getSelectedFactKey());
@@ -2199,12 +2201,12 @@ public class FloorMapEditorPresenter
         /// Shows the Fact List, the bottom-left column.
         ///
         /// @param view Its view.
-        void setFactListView(View view);
+        void setFactListView(IsWidget view);
 
         /// Shows the Time List, the bottom-right column, filling the remaining space.
         ///
         /// @param view Its view.
-        void setTimeListView(View view);
+        void setTimeListView(IsWidget view);
 
         /// Shows or hides the right-hand dock, preserving its dragged width.
         ///

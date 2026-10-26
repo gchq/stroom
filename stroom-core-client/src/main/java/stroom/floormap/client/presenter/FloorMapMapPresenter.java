@@ -22,8 +22,10 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.component.FloorMapCanvasController;
 import stroom.floormap.client.component.FloorMapDockController;
+import stroom.floormap.client.component.FloorMapGroupsController;
 import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.component.FloorMapTimelineController;
+import stroom.floormap.client.component.FloorMapTrackingController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
@@ -97,8 +99,8 @@ import java.util.function.Consumer;
 ///
 /// - [#MAP] – the [FloorMapCanvasController] (canvas / visualisation)
 /// - [#DOCK] – the [FloorMapDockController] (right-hand dock; hosts the
-///   [FloorMapTrackingPresenter] tracking panel as its first tab, then
-///   [FloorMapLayers] and [FloorMapGroupsPresenter])
+///   [FloorMapTrackingController] tracking panel as its first tab, then
+///   [FloorMapLayers] and [FloorMapGroupsController])
 /// - [#TIMELINE] – the [FloorMapTimelineController] (timeline scrubber)
 ///
 /// Three [QueryModel]-based searches are maintained: the facts query playback,
@@ -112,9 +114,9 @@ public class FloorMapMapPresenter
 
     private final FloorMapCanvasController canvas;
     private final FloorMapTimelineController floorMapTimeline;
-    private final FloorMapTrackingPresenter floorMapTrackingPresenter;
+    private final FloorMapTrackingController floorMapTracking;
     private final FloorMapLayers layersPanel;
-    private final FloorMapGroupsPresenter floorMapGroupsPresenter;
+    private final FloorMapGroupsController floorMapGroups;
 
     /// The Map tab's staged document-level edits — just the Groups panel's edits.
     /// The tab does not otherwise write the document, so a group edit is staged
@@ -389,9 +391,9 @@ public class FloorMapMapPresenter
                                 final ResultStoreModel resultStoreModel,
                                 final Provider<FloorMapCanvasController> canvasProvider,
                                 final Provider<FloorMapTimelineController> floorMapTimelineProvider,
-                                final Provider<FloorMapTrackingPresenter> floorMapEntityListPresenterProvider,
+                                final Provider<FloorMapTrackingController> floorMapTrackingProvider,
                                 final FloorMapLayers layersPanel,
-                                final Provider<FloorMapGroupsPresenter> floorMapGroupsPresenterProvider,
+                                final Provider<FloorMapGroupsController> floorMapGroupsProvider,
                                 final Provider<FloorMapDockController> dockProvider,
                                 final Provider<FloorMapClusterPresenter> floorMapClusterPresenter) {
         super(eventBus, view);
@@ -399,18 +401,18 @@ public class FloorMapMapPresenter
         this.floorMapClusterPresenter = floorMapClusterPresenter;
         this.canvas = make(canvasProvider);
         this.floorMapTimeline = make(floorMapTimelineProvider);
-        this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
+        this.floorMapTracking = make(floorMapTrackingProvider);
         this.layersPanel = layersPanel;
-        this.floorMapGroupsPresenter = make(floorMapGroupsPresenterProvider);
+        this.floorMapGroups = make(floorMapGroupsProvider);
         final FloorMapDockController dock = make(dockProvider);
 
         // Default initial time
         this.selectedTime = System.currentTimeMillis();
 
         // The Tracking, Layers and Groups panels live as tabs of the right-hand dock.
-        dock.addTab("Tracking", floorMapTrackingPresenter);
+        dock.addTab("Tracking", floorMapTracking);
         dock.addTab("Layers", layersPanel);
-        dock.addTab("Groups", floorMapGroupsPresenter);
+        dock.addTab("Groups", floorMapGroups);
         // Layer visibility is a transient view control on the Map tab; push
         // changes to the canvas as hidden / dimmed type sets.
         layersPanel.setOnChange(() ->
@@ -421,15 +423,15 @@ public class FloorMapMapPresenter
         // Group membership IS persisted (it is document configuration), so an edit
         // is staged and marks the document dirty. Which groups are *highlighted* is
         // not — that is transient view state pushed straight to the canvas.
-        floorMapGroupsPresenter.setGroupsEditHandler(this::onGroupsEdited);
-        floorMapGroupsPresenter.setHighlightChangeHandler(this::pushGroupOverlay);
+        floorMapGroups.setOnGroupsEdit(this::onGroupsEdited);
+        floorMapGroups.setOnHighlightChange(this::pushGroupOverlay);
 
         // Let the Tracking panel put its selected row into a group without the
         // user having to switch tabs and find the entity again in the picker.
-        floorMapTrackingPresenter.setAddToGroupSupport(
-                floorMapGroupsPresenter::getGroups,
-                floorMapGroupsPresenter::addMember,
-                floorMapGroupsPresenter::createGroupWith);
+        floorMapTracking.setAddToGroupSupport(
+                floorMapGroups::getGroups,
+                floorMapGroups::addMember,
+                floorMapGroups::createGroupWith);
 
         getView().setMapView(canvas);
         getView().setDockView(dock);
@@ -513,7 +515,7 @@ public class FloorMapMapPresenter
         // must stay a pan — but they can still be tracked from the panel.
         canvas.setOnObjectSelected(objectId -> {
             if (objectId != null && entityList.contains(objectId)) {
-                floorMapTrackingPresenter.setSelected(objectId);
+                floorMapTracking.setSelected(objectId);
                 canvas.setTrackedObjectId(objectId);
             }
         });
@@ -533,7 +535,7 @@ public class FloorMapMapPresenter
                         // Picking a member does exactly what picking its row in the
                         // Tracking panel does, so the two cannot diverge.
                         memberId -> {
-                            floorMapTrackingPresenter.setSelected(memberId);
+                            floorMapTracking.setSelected(memberId);
                             canvas.setTrackedObjectId(memberId);
                         });
             }
@@ -549,7 +551,7 @@ public class FloorMapMapPresenter
         // selecting nothing stops tracking. Re-clicking the selected row
         // re-invokes this consumer, which re-centres and resumes following
         // after a manual pan paused it.
-        this.floorMapTrackingPresenter.setSelectionConsumer(entry ->
+        this.floorMapTracking.setOnSelectionChange(entry ->
                 canvas.setTrackedObjectId(entry != null
                         ? entry.getId()
                         : null));
@@ -591,7 +593,7 @@ public class FloorMapMapPresenter
         // exposed as a single summarised image; this is what tells a screen-reader
         // user that the row-by-row detail behind that summary exists, and where.
         canvas.setTextAlternativeId(
-                floorMapTrackingPresenter.getGridElementId());
+                floorMapTracking.getGridElementId());
     }
 
     /// Returns the Map tab's buttons. [FloorMapPresenter]'s base class
@@ -626,7 +628,7 @@ public class FloorMapMapPresenter
         // A (re-)opened document starts with a fresh entity roster and no
         // inherited area containment.
         entityList.clear();
-        floorMapTrackingPresenter.setData(Collections.emptyList());
+        floorMapTracking.setEntities(Collections.emptyList());
         lastFacts = null;
         lastEventObjects = null;
         lastRawEventObjects = null;
@@ -650,7 +652,7 @@ public class FloorMapMapPresenter
         orderNoteReported = false;
         orderCheckedQuery = null;
         lastAreaMembership = FloorMapAreaMembership.EMPTY;
-        floorMapTrackingPresenter.clearAreaState();
+        floorMapTracking.clearAreaState();
         canvas.setAreaMembership(FloorMapAreaMembership.EMPTY);
 
         // What one map unit means in the real world — labels the grid and the
@@ -663,7 +665,7 @@ public class FloorMapMapPresenter
         // yet, else the document's). setGroups also clears the transient highlight
         // state, so a (re-)opened document starts with nothing highlighted.
         docSession.reconcileAfterRead(document);
-        floorMapGroupsPresenter.setGroups(docSession.groups(document.getGroups()));
+        floorMapGroups.setGroups(docSession.groups(document.getGroups()));
 
         // Populate the Layers panel from the document's type styles and sync the
         // canvas with the current (transient) layer visibility.
@@ -743,8 +745,8 @@ public class FloorMapMapPresenter
     /// not move the camera.
     private void pushGroupOverlay() {
         canvas.setGroupOverlay(FloorMapGroupOverlay.of(
-                floorMapGroupsPresenter.getGroups(),
-                floorMapGroupsPresenter.getShownGroupIds()));
+                floorMapGroups.getGroups(),
+                floorMapGroups.getShownGroupIds()));
     }
 
     /// Returns the facts query to execute, built from the document's value schema on
@@ -1456,7 +1458,7 @@ public class FloorMapMapPresenter
         final FloorMapAreaMembership membership =
                 FloorMapAreaMembership.compute(lastFacts, lastEventObjects);
         canvas.setAreaMembership(membership);
-        floorMapTrackingPresenter.setAreaMembership(membership, this::entityDisplayName);
+        floorMapTracking.setAreaMembership(membership, this::entityDisplayName);
 
         // The Groups panel's live counts move with the same data, so they are
         // recomputed on the same trigger.
@@ -1472,8 +1474,8 @@ public class FloorMapMapPresenter
     /// only entities that are inside one. The membership is used purely for the area
     /// breakdown.
     private void refreshGroupSnapshot() {
-        floorMapGroupsPresenter.setSnapshot(FloorMapGroupSnapshot.compute(
-                floorMapGroupsPresenter.getGroups(),
+        floorMapGroups.setSnapshot(FloorMapGroupSnapshot.compute(
+                floorMapGroups.getGroups(),
                 lastFacts,
                 lastEventObjects,
                 lastAreaMembership));
@@ -1518,7 +1520,7 @@ public class FloorMapMapPresenter
     /// @return the group names; empty when the entity is in none
     private List<String> entityGroupNames(final String id) {
         final List<String> names = new ArrayList<>();
-        for (final FloorMapGroup group : floorMapGroupsPresenter.getGroups()) {
+        for (final FloorMapGroup group : floorMapGroups.getGroups()) {
             if (group.contains(id)) {
                 names.add(group.getName());
             }
@@ -1530,13 +1532,13 @@ public class FloorMapMapPresenter
     /// current selection. Restoring the selected id does not re-fire the
     /// selection consumer because `EntityEntry` equality is id-based.
     private void refreshEntityGrid() {
-        final String selectedId = floorMapTrackingPresenter.getSelectedId();
+        final String selectedId = floorMapTracking.getSelectedId();
         final List<EntityEntry> entities = entityList.getEntities();
-        floorMapTrackingPresenter.setData(entities);
-        floorMapTrackingPresenter.setSelected(selectedId);
+        floorMapTracking.setEntities(entities);
+        floorMapTracking.setSelected(selectedId);
         // The Groups panel's member picker offers the same roster, and names its
         // members and areas through the same resolver.
-        floorMapGroupsPresenter.setRoster(entities, this::entityDisplayName);
+        floorMapGroups.setRoster(entities, this::entityDisplayName);
     }
 
 

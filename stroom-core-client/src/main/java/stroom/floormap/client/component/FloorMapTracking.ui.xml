@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The floor map's Tracking panel: its actions above its grid (floormap-list.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="floormap-list">
+        <b:Toolbar name="Tracking actions" addStyleNames="floormap-list__toolbar">
+            <b:ToolbarButton ui:field="stopTrackingButton" svg="CLEAR" title="Stop Tracking" enabled="false"/>
+            <!-- Puts the tracked entity in a group without leaving the panel (groups are otherwise
+                 edited on the Groups tab) -->
+            <b:ToolbarButton ui:field="addToGroupButton" svg="ADD" title="Add to Group" opensMenu="true"
+                             enabled="false"/>
+            <b:ToolbarToggleButton ui:field="showFactsButton" svg="LOCATE"
+                                   title="Show Facts (objects, backgrounds and areas)"/>
+        </b:Toolbar>
+        <dg:DataGrid ui:field="dataGrid" tableName="Tracking" addStyleNames="floormap-list__grid"/>
+    </g:FlowPanel>
+</ui:UiBinder>

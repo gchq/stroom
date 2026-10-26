@@ -20,10 +20,6 @@ import stroom.floormap.client.presenter.FloorMapClusterPresenter;
 import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.client.presenter.FloorMapFactListPresenter;
-import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactListView;
-import stroom.floormap.client.presenter.FloorMapGroupsPresenter;
-import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsView;
 import stroom.floormap.client.presenter.FloorMapInitPresenter;
 import stroom.floormap.client.presenter.FloorMapInitPresenter.FloorMapInitView;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
@@ -32,20 +28,12 @@ import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
-import stroom.floormap.client.presenter.FloorMapTimeListPresenter;
-import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
-import stroom.floormap.client.presenter.FloorMapTrackingPresenter;
-import stroom.floormap.client.presenter.FloorMapTrackingPresenter.FloorMapTrackingView;
 import stroom.floormap.client.view.FloorMapClusterViewImpl;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
-import stroom.floormap.client.view.FloorMapFactListViewImpl;
-import stroom.floormap.client.view.FloorMapGroupsViewImpl;
 import stroom.floormap.client.view.FloorMapInitViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
-import stroom.floormap.client.view.FloorMapTimeListViewImpl;
-import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FloorMapModule`
@@ -64,12 +52,6 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapEditorPresenter.class,
                 FloorMapEditorView.class,
                 FloorMapEditorViewImpl.class);
-        bindPresenterWidget(FloorMapFactListPresenter.class,
-                FloorMapFactListView.class,
-                FloorMapFactListViewImpl.class);
-        bindPresenterWidget(FloorMapTimeListPresenter.class,
-                FloorMapTimeListView.class,
-                FloorMapTimeListViewImpl.class);
         bindPresenterWidget(FloorMapObjectEditPresenter.class,
                 FloorMapObjectEditView.class,
                 FloorMapObjectEditViewImpl.class);
@@ -79,12 +61,6 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapMapPresenter.class,
                 FloorMapMapView.class,
                 FloorMapMapViewImpl.class);
-        bindPresenterWidget(FloorMapTrackingPresenter.class,
-                FloorMapTrackingView.class,
-                FloorMapTrackingViewImpl.class);
-        bindPresenterWidget(FloorMapGroupsPresenter.class,
-                FloorMapGroupsView.class,
-                FloorMapGroupsViewImpl.class);
         bindPresenterWidget(FloorMapClusterPresenter.class,
                 FloorMapClusterView.class,
                 FloorMapClusterViewImpl.class);

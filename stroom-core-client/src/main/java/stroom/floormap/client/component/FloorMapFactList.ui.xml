@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- The floor map editor's Fact List panel: its actions above its grid (floormap-list.css) -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="floormap-list">
+        <b:Toolbar name="Fact list actions" addStyleNames="floormap-list__toolbar">
+            <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add New Object"/>
+            <b:ToolbarButton ui:field="endButton" svg="REMOVE" title="Delete From This Time (keeps history)"
+                             enabled="false"/>
+            <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Erase History (delete every version)"
+                             enabled="false"/>
+            <b:ToolbarToggleButton ui:field="showAllButton" svg="HISTORY" title="Show All (ignore time filter)"/>
+            <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Fact List help"/>
+        </b:Toolbar>
+        <dg:DataGrid ui:field="dataGrid" tableName="Facts" addStyleNames="floormap-list__grid"/>
+    </g:FlowPanel>
+</ui:UiBinder>

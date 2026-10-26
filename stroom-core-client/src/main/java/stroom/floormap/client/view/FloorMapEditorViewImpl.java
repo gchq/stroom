@@ -180,12 +180,12 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
     }
 
     @Override
-    public void setFactListView(final View view) {
+    public void setFactListView(final IsWidget view) {
         factListPanel.setWidget(view.asWidget());
     }
 
     @Override
-    public void setTimeListView(final View view) {
+    public void setTimeListView(final IsWidget view) {
         timeListPanel.setWidget(view.asWidget());
     }
 
