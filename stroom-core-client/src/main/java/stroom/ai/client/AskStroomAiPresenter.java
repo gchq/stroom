@@ -2730,7 +2730,6 @@ public class AskStroomAiPresenter
                 AiToolMessages.getString(change, "componentId"),
                 AiToolMessages.getString(change, "component"),
                 changes,
-                AiToolMessages.getString(change, "snapshotHash"),
                 onResult -> askStroomAiClient.doUserAction(chatId, messageId, actionId,
                         result -> onResult.accept(result.isDone()
                                 ? null
@@ -3214,7 +3213,6 @@ public class AskStroomAiPresenter
                 first.getTableId(),
                 first.getTableName(),
                 changes,
-                first.getSnapshotHash(),
                 onResult -> onResult.accept(null),
                 () -> showUserActionStatus(messageId, actionId, "DONE",
                         done + " and added them to the dashboard, not saved. Save the dashboard to keep them."),
@@ -3251,7 +3249,6 @@ public class AskStroomAiPresenter
                 create.getTableId(),
                 create.getTableName(),
                 List.of(change),
-                create.getSnapshotHash(),
                 onResult -> onResult.accept(null),
                 () -> showUserActionStatus(messageId, actionId, "DONE",
                         created + " and put it in the show clause of embedded query '" + create.getTableName()
@@ -3300,7 +3297,6 @@ public class AskStroomAiPresenter
                 create.getTableId(),
                 create.getTableName(),
                 changes,
-                create.getSnapshotHash(),
                 onResult -> onResult.accept(null),
                 () -> showUserActionStatus(messageId, actionId, "DONE",
                         replaced + " and showed it in its pane, not saved. Save the dashboard to keep the pane's "
@@ -3368,7 +3364,6 @@ public class AskStroomAiPresenter
                 create.getTableId(),
                 create.getTableName(),
                 List.of(change),
-                create.getSnapshotHash(),
                 onResult -> onResult.accept(null),
                 () -> showUserActionStatus(messageId, actionId, "DONE",
                         created + " and added it to the dashboard, not saved. Save the dashboard to keep it."),
