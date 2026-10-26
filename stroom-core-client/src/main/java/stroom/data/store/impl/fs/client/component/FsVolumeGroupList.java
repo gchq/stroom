@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,82 +14,71 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.client.presenter;
+package stroom.data.store.impl.fs.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.entity.shared.ExpressionCriteria;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
+/// The data volume groups, a row each (its name, the types of its volumes and how many it has);
+/// several can be selected.
+public class FsVolumeGroupList extends Component {
 
-    private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
-            GWT.create(FsVolumeGroupResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final DataGrid<FsVolumeGroupRow> dataGrid;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<FsVolumeGroupRow> dataGrid;
+
     private final MultiSelectionModelImpl<FsVolumeGroupRow> selectionModel;
-    private final RestDataProvider<FsVolumeGroupRow, ResultPage<FsVolumeGroupRow>> dataProvider;
 
-    @Inject
-    public FsVolumeGroupListPresenter(final EventBus eventBus,
-                                      final PagerPanel view,
-                                      final RestFactory restFactory) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public FsVolumeGroupList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(row -> row.getGroup().getId());
-        dataGrid.setTableName("FS Volume Groups");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-        getWidget().getElement().addClassName("default-min-sizes");
+        addColumns();
+    }
 
-        initTableColumns();
-
-        final ExpressionCriteria criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<FsVolumeGroupRow, ResultPage<FsVolumeGroupRow>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<FsVolumeGroupRow>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setRange(criteria, range);
-                restFactory
-                        .create(FS_VOLUME_GROUP_RESOURCE)
-                        .method(resource ->
-                                resource.findExtended(criteria))
-                        .onSuccess(dataConsumer)
-                        .onFailure(errorHandler)
-                        .taskMonitorFactory(view)
-                        .exec();
-            }
-        };
+    /// @param dataProvider Gives the list its rows, a page at a time.
+    public void setDataProvider(final AbstractDataProvider<FsVolumeGroupRow> dataProvider) {
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @return The selection.
+    public MultiSelectionModel<FsVolumeGroupRow> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
+    }
+
+    private void addColumns() {
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(
@@ -132,11 +121,11 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
                 "");
     }
 
-    public MultiSelectionModel<FsVolumeGroupRow> getSelectionModel() {
-        return selectionModel;
-    }
 
-    public void refresh() {
-        dataProvider.refresh();
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FsVolumeGroupList> {
+
     }
 }

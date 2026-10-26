@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.store.impl.fs.client.component.FsVolumeStatusListController;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
@@ -37,6 +38,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -52,7 +54,7 @@ public class FsVolumeGroupEditPresenter
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final FsVolumeStatusListPresenter volumeStatusListPresenter;
+    private final FsVolumeStatusListController volumeStatusListPresenter;
     private final Provider<FsVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
 
@@ -70,7 +72,7 @@ public class FsVolumeGroupEditPresenter
     @Inject
     public FsVolumeGroupEditPresenter(final EventBus eventBus,
                                       final FsVolumeGroupEditView view,
-                                      final FsVolumeStatusListPresenter volumeStatusListPresenter,
+                                      final FsVolumeStatusListController volumeStatusListPresenter,
                                       final Provider<FsVolumeEditPresenter> editProvider,
                                       final RestFactory restFactory) {
         super(eventBus, view);
@@ -79,19 +81,19 @@ public class FsVolumeGroupEditPresenter
         this.editProvider = editProvider;
         this.restFactory = restFactory;
 
-        volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+        volumeStatusListPresenter.getToolbar().setName("Volume actions");
+        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
                 "New Data Volume", this::create);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Data Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Data Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes",
+        rescanButton = volumeStatusListPresenter.getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes",
                 this::onRescan);
 
-        view.setListView(volumeStatusListPresenter.getView());
+        view.setListView(volumeStatusListPresenter);
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
 
         own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
@@ -290,6 +292,6 @@ public class FsVolumeGroupEditPresenter
 
         void setName(String name);
 
-        void setListView(View listView);
+        void setListView(IsWidget listView);
     }
 }

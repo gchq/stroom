@@ -18,11 +18,11 @@ package stroom.data.store.impl.fs.client.view;
 
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -62,7 +62,7 @@ public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroup
     }
 
     @Override
-    public void setListView(final View listView) {
+    public void setListView(final IsWidget listView) {
         list.setWidget(listView.asWidget());
     }
 

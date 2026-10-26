@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,139 +14,62 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.client.presenter;
+package stroom.data.store.impl.fs.client.component;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
-import stroom.data.store.impl.fs.shared.FsVolumeGroup;
-import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.preferences.client.DateTimeFormatter;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.Selection;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
+/// A data volume group's volumes, a row each (its path, type and status, its total, limit, used and
+/// free space, how full it is and when it was last written to), faded unless active; several can be
+/// selected.
+public class FsVolumeStatusList extends Component {
 
-    private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final DataGrid<FsVolume> dataGrid;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<FsVolume> dataGrid;
+
     private final MultiSelectionModelImpl<FsVolume> selectionModel;
-    private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
-    private FindFsVolumeCriteria criteria;
-    private RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
-    @Inject
-    public FsVolumeStatusListPresenter(final EventBus eventBus,
-                                       final PagerPanel view,
-                                       final RestFactory restFactory,
-                                       final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view);
-        this.restFactory = restFactory;
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list, with no columns until [#addColumns(Function)].
+    public FsVolumeStatusList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FsVolume::getId);
-        dataGrid.setTableName("FS Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-
-        this.dateTimeFormatter = dateTimeFormatter;
-        getWidget().getElement().addClassName("default-min-sizes");
-
-        initTableColumns();
     }
 
-    public void setGroup(final FsVolumeGroup group) {
-        criteria = new FindFsVolumeCriteria(
-                null,
-                group,
-                null,
-                Selection.selectAll());
-        if (dataProvider == null) {
-            dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(getEventBus()) {
-                @Override
-                protected void exec(final Range range,
-                                    final Consumer<ResultPage<FsVolume>> dataConsumer,
-                                    final RestErrorHandler errorHandler) {
-                    CriteriaUtil.setRange(criteria, range);
-                    restFactory
-                            .create(FS_VOLUME_RESOURCE)
-                            .method(resource ->
-                                    resource.find(criteria))
-                            .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
-                            .taskMonitorFactory(getView())
-                            .exec();
-                }
-            };
-            dataProvider.addDataDisplay(dataGrid);
-        } else {
-            dataProvider.refresh();
-        }
-    }
-
-    private String getPath(final FsVolume volume) {
-        if (volume == null) {
-            return null;
-        }
-        if (FsVolumeType.isS3VolumeType(volume.getVolumeType()) && volume.getS3ClientConfig() != null) {
-            final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
-            final List<String> parts = new ArrayList<>();
-            NullSafe.consumeNonBlankString(
-                    s3ClientConfig.getRegion(),
-                    region -> "region: " + region,
-                    parts::add);
-            NullSafe.consumeNonBlankString(
-                    s3ClientConfig.getBucketName(),
-                    region -> "bucket: " + region,
-                    parts::add);
-            NullSafe.consumeNonBlankString(
-                    s3ClientConfig.getKeyPattern(),
-                    region -> "key: " + region,
-                    parts::add);
-            return String.join(", ", parts);
-        } else {
-            return volume.getPath();
-        }
-    }
-
-    private boolean isEnabled(final FsVolume volume) {
-        final VolumeUseStatus volumeUseStatus = NullSafe.get(volume, FsVolume::getStatus);
-        return VolumeUseStatus.ACTIVE == volumeUseStatus;
-    }
-
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// Adds the columns, once.
+    ///
+    /// @param dateTimeFormat Formats a time in milliseconds since the epoch, with how long ago it was.
+    public void addColumns(final Function<Long, String> dateTimeFormat) {
         // Path.
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.textWithTooltipColumnBuilder(this::getPath, Function.identity())
@@ -261,7 +184,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
         // Usage Date.
         dataGrid.addResizableColumn(
                 DataGridUtil.textWithTooltipColumnBuilder((FsVolume vol) ->
-                                        dateTimeFormatter.formatWithDuration(vol.getVolumeState().getUpdateTimeMs()),
+                                        dateTimeFormat.apply(vol.getVolumeState().getUpdateTimeMs()),
                                 Function.identity())
                         .enabledWhen(this::isEnabled)
                         .build(),
@@ -272,6 +195,56 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
+    /// @param dataProvider Gives the list its rows, a page at a time.
+    public void setDataProvider(final AbstractDataProvider<FsVolume> dataProvider) {
+        dataProvider.addDataDisplay(dataGrid);
+    }
+
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @return The selection.
+    public MultiSelectionModel<FsVolume> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
+    }
+
+    private String getPath(final FsVolume volume) {
+        if (volume == null) {
+            return null;
+        }
+        if (FsVolumeType.isS3VolumeType(volume.getVolumeType()) && volume.getS3ClientConfig() != null) {
+            final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
+            final List<String> parts = new ArrayList<>();
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getRegion(),
+                    region -> "region: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getBucketName(),
+                    region -> "bucket: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getKeyPattern(),
+                    region -> "key: " + region,
+                    parts::add);
+            return String.join(", ", parts);
+        } else {
+            return volume.getPath();
+        }
+    }
+
+    private boolean isEnabled(final FsVolume volume) {
+        final VolumeUseStatus volumeUseStatus = NullSafe.get(volume, FsVolume::getStatus);
+        return VolumeUseStatus.ACTIVE == volumeUseStatus;
+    }
+
     private Number getUsePercentage(final FsVolume volume) {
         final OptionalDouble optUsedPercent = volume.getCapacityInfo()
                 .getUsedCapacityPercent();
@@ -280,7 +253,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
                 : null;
     }
 
-    public String getLimitAsStr(final FsVolume volume) {
+    private String getLimitAsStr(final FsVolume volume) {
         if (volume.getByteLimit() == null) {
             return "";
         }
@@ -296,11 +269,11 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
                 : "?";
     }
 
-    public MultiSelectionModel<FsVolume> getSelectionModel() {
-        return selectionModel;
-    }
 
-    public void refresh() {
-        dataProvider.refresh();
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FsVolumeStatusList> {
+
     }
 }

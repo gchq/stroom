@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupListController;
 import stroom.data.store.impl.fs.client.component.NewFsVolumeGroupController;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
@@ -42,7 +43,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final FsVolumeGroupListPresenter volumeStatusListPresenter;
+    private final FsVolumeGroupListController volumeStatusListPresenter;
     private final Provider<FsVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider;
@@ -55,7 +56,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     public FsVolumeGroupPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final FsVolumeGroupListPresenter volumeStatusListPresenter,
+            final FsVolumeGroupListController volumeStatusListPresenter,
             final Provider<FsVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
             final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider) {
@@ -67,17 +68,17 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.restFactory = restFactory;
         this.newFsVolumeGroupControllerProvider = newFsVolumeGroupControllerProvider;
 
-        volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+        volumeStatusListPresenter.getToolbar().setName("Volume group actions");
+        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
                 "New Data Volume Group", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Data Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Data Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
-        view.setView(volumeStatusListPresenter.getView());
+        view.setView(volumeStatusListPresenter);
 
         own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
