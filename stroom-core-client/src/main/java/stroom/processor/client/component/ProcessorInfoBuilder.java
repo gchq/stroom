@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
+package stroom.processor.client.component;
 
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;

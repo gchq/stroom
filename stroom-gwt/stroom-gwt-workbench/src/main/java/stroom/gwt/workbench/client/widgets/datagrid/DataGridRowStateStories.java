@@ -52,7 +52,7 @@ import java.util.List;
 /// doesn't scroll).
 ///
 /// The grid's columns are those of Stroom's grids with controls in their cells: a tick box and a
-/// value spinner (as `ProcessorListPresenter`'s), and a text field and a selection box (as
+/// value spinner (as `ProcessorList`'s), and a text field and a selection box (as
 /// `FloorMapSettingsPresenter`'s value schema).
 ///
 /// A row's states are partly pseudo-classes (`:hover`, `:focus-within`, `:focus-visible`), which a

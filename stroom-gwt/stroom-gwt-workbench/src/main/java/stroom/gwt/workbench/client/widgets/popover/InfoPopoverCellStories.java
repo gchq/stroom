@@ -43,7 +43,7 @@ import java.util.Collections;
 ///
 /// An `InfoColumn` is a grid column of info icons; clicking one shows the row's details in a
 /// [TooltipPresenter] to the right of the cell, as Stroom's monitoring screens (e.g.
-/// `ProcessorListPresenter`) do. The story shows a one-row grid with just that column.
+/// `ProcessorList`) do. The story shows a one-row grid with just that column.
 public final class InfoPopoverCellStories {
 
     private static final String BODY = "Popover body content";

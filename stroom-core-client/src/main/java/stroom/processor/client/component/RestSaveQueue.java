@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.processor.client.presenter;
-
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.web.bindery.event.shared.EventBus;
+package stroom.processor.client.component;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public abstract class RestSaveQueue<K, V> implements HasHandlers {
+/// Saves values one at a time for each key: a value set while the key's last is being saved is
+/// saved after it, and only the latest of several such is.
+///
+/// @param <K> The type of a key, e.g. a processor's id.
+/// @param <V> The type of a value, e.g. whether it is enabled.
+public abstract class RestSaveQueue<K, V> {
 
-    private final EventBus eventBus;
     private final Map<K, Boolean> setting = new HashMap<>();
     private final Map<K, V> nextValue = new HashMap<>();
 
-    public RestSaveQueue(final EventBus eventBus) {
-        this.eventBus = eventBus;
-    }
-
+    /// Saves a value, now or once the key's value being saved is saved.
+    ///
+    /// @param key   The key.
+    /// @param value The value.
     public void setValue(final K key, final V value) {
         nextValue.put(key, value);
         if (!setting.containsKey(key)) {
@@ -52,10 +52,10 @@ public abstract class RestSaveQueue<K, V> implements HasHandlers {
         }
     }
 
+    /// Saves a value.
+    ///
+    /// @param key      The key.
+    /// @param value    The value.
+    /// @param consumer Given the key once the value is saved, or saving it fails.
     protected abstract void doAction(final K key, final V value, final Consumer<K> consumer);
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
-    }
 }

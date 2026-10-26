@@ -17,7 +17,6 @@
 package stroom.processor.client.view;
 
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -50,7 +49,7 @@ public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
     }
 
     @Override
-    public void setProcessorList(final View view) {
+    public void setProcessorList(final IsWidget view) {
         this.processorList.setWidget(view.asWidget());
     }
 

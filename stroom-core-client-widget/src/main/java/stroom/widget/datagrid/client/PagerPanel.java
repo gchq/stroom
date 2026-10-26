@@ -98,6 +98,14 @@ public class PagerPanel extends Component implements View, TaskMonitorFactory, H
         return toolbar;
     }
 
+    /// Shows or hides the toolbar, e.g. hides it while none of the buttons a template declared are
+    /// shown.
+    ///
+    /// @param visible Whether the toolbar shows.
+    public void setToolbarVisible(final boolean visible) {
+        toolbar.setVisible(visible);
+    }
+
     /// @param name The toolbar's name, after the list, e.g. "Cache actions".
     public void setToolbarName(final String name) {
         toolbar.setName(name);
