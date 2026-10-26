@@ -82,14 +82,16 @@ public enum ChartKind {
                     StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     GRAPH("graph", "Network graph", "a force-directed graph of links between things; each node is sized by its "
-                                    + "number of connections",
+                                    + "number of connections, or its links' total (nodeSize); each link is as "
+                                    + "wide as its weight, or the rows it comes from",
             List.of(
                     new ChartRole("source", "Source", true, ChartRole.Values.ANY,
                             "one end of each link, e.g. the sender"),
                     new ChartRole("target", "Target", true, ChartRole.Values.ANY,
                             "the other end, e.g. the recipient"),
                     new ChartRole("weight", "Weight (Optional)", false, ChartRole.Values.NUMBER,
-                            "how strong each link is, e.g. a count() of messages; drawn as its width"),
+                            "how strong each link is, e.g. a count() of messages; drawn as its width. Without it, "
+                            + "each row counts once, so a table of one row per message needs none"),
                     new ChartRole("sourceGroup", "Source Group (Optional)", false, ChartRole.Values.ANY,
                             "colours the source node by this column"),
                     new ChartRole("targetGroup", "Target Group (Optional)", false, ChartRole.Values.ANY,
@@ -98,7 +100,7 @@ public enum ChartKind {
                     level(4, "a further node level 3 links to"),
                     level(5, "a further node level 4 links to"),
                     level(6, "a further node level 5 links to")),
-            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS,
+            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS, StyleSetting.NODE_SIZE,
                     StyleSetting.SHOW_LABELS_AUTO, StyleSetting.PHYSICS, StyleSetting.THUMBNAIL,
                     StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
 
