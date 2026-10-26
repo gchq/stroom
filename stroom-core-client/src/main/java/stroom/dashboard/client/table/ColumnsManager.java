@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.query.api.Column;
@@ -65,7 +66,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
-    private final FormatPresenter formatPresenter;
+    private final Provider<ColumnFormatController> columnFormatProvider;
     private final TableFilterPresenter tableFilterPresenter;
     private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
     private int columnsStartIndex;
@@ -79,14 +80,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final TablePresenter tablePresenter,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
-                          final FormatPresenter formatPresenter,
+                          final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
-        this.formatPresenter = formatPresenter;
+        this.columnFormatProvider = columnFormatProvider;
         this.tableFilterPresenter = tableFilterPresenter;
         this.columnValuesFilterPresenter = columnValuesFilterPresenter;
     }
@@ -342,7 +343,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     public void showFormat(final Column column) {
-        formatPresenter.show(column, (oldField, newField) -> {
+        columnFormatProvider.get().show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.onChange();
             tablePresenter.refresh();

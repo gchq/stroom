@@ -25,6 +25,7 @@ import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
+import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
@@ -32,7 +33,6 @@ import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
@@ -169,14 +169,13 @@ public class QueryResultTablePresenter
                                      final DownloadSearchResultsController downloadOptions,
                                      final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,
-                                     final FormatPresenter formatPresenter,
+                                     final Provider<ColumnFormatController> columnFormatProvider,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
                                      final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         own(downloadOptions);
-        own(formatPresenter);
         own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
@@ -201,7 +200,7 @@ public class QueryResultTablePresenter
         // Its dialogs are this one's, each made for one use
         columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
-                formatPresenter,
+                columnFormatProvider,
                 () -> makeDialog(rulesPresenterProvider),
                 columnFilterEditorProvider,
                 columnValuesFilterPresenter);

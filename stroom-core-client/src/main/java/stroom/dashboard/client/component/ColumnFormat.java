@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
-import stroom.widget.form.client.AccessibleName;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> implements FormatView {
+/// The Format dialog's content, for a table column: the type of its values and, for numbers and
+/// dates, how they are shown, and whether long values wrap. Only the settings of the type chosen
+/// are shown.
+public class ColumnFormat extends Component {
 
+    /// The date and time formats offered, the first being the default.
     public static final List<String> STANDARD_FORMATS = Arrays
             .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
@@ -55,14 +57,12 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
                     "MM/dd/yyyy",
                     "d MMM yyyy");
 
-    private static final int ROW_COUNT = 9;
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup formatDecimalPlaces;
     @UiField
     FormGroup formatUseSeparator;
-
     @UiField
     FormGroup formatUsePreferences;
     @UiField
@@ -103,219 +103,203 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @UiField
     TickBox wrap;
 
-    @Inject
-    public FormatViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        // Named by the part they are, as the Time Zone Offset label names the pair
-        AccessibleName.set(timeZoneOffsetHours, "Hours");
-        AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
-
-        decimalPlaces.setValue(0);
-        decimalPlaces.setMin(0);
-        decimalPlaces.setMax(10);
-
+    /// Makes the content.
+    public ColumnFormat() {
+        initWidget(BINDER.createAndBindUi(this));
         format.addItems(STANDARD_FORMATS);
-
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
         timeZoneUse.addItem(Use.OFFSET);
-
-        timeZoneOffsetHours.setMin(-12);
-        timeZoneOffsetHours.setMax(12);
-        timeZoneOffsetHours.setValue(0);
-        timeZoneOffsetHours.setMinStep(1);
-        timeZoneOffsetHours.setMaxStep(1);
-
-        timeZoneOffsetMinutes.setMin(0);
-        timeZoneOffsetMinutes.setMax(59);
-        timeZoneOffsetMinutes.setValue(0);
-        timeZoneOffsetMinutes.setMinStep(30);
-        timeZoneOffsetMinutes.setMaxStep(30);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the type.
     public void focus() {
         type.focus();
     }
 
-    @Override
+    /// @param types The types offered.
     public void setTypes(final List<Type> types) {
         this.type.addItems(types);
     }
 
-    @Override
+    /// @return The type chosen.
+    public Type getType() {
+        return type.getValue();
+    }
+
+    /// Chooses a type, showing its settings.
+    ///
+    /// @param type The type.
     public void setType(final Type type) {
         this.type.setValue(type);
-
-        formatDecimalPlaces.setVisible(Type.NUMBER.equals(type));
-        formatUseSeparator.setVisible(Type.NUMBER.equals(type));
-
-        formatUsePreferences.setVisible(Type.DATE_TIME.equals(type));
-        formatFormat.setVisible(Type.DATE_TIME.equals(type));
-        formatCustom.setVisible(Type.DATE_TIME.equals(type));
-        formatCustomFormat.setVisible(Type.DATE_TIME.equals(type));
-        formatTimeZone.setVisible(Type.DATE_TIME.equals(type));
-        formatTimeZoneId.setVisible(Type.DATE_TIME.equals(type) &&
-                                    Use.ID.equals(this.timeZoneUse.getValue()));
-        formatTimeZoneOffset.setVisible(Type.DATE_TIME.equals(type) &&
-                                        Use.OFFSET.equals(this.timeZoneUse.getValue()));
+        showSettings();
     }
 
-    @Override
+    /// @return The number of decimal places.
     public int getDecimalPlaces() {
-        return this.decimalPlaces.getIntValue();
+        return decimalPlaces.getIntValue();
     }
 
-    @Override
+    /// @param decimalPlaces The number of decimal places.
     public void setDecimalPlaces(final int decimalPlaces) {
         this.decimalPlaces.setValue(decimalPlaces);
     }
 
-    @Override
+    /// @return Whether digits are grouped.
     public boolean isUseSeparator() {
-        return this.separate.getValue();
+        return separate.getValue();
     }
 
-    @Override
+    /// @param useSeparator Whether digits are grouped.
     public void setUseSeparator(final boolean useSeparator) {
-        this.separate.setValue(useSeparator);
+        separate.setValue(useSeparator);
     }
 
-    @Override
+    /// @return Whether the user's preferences say how dates are shown.
     public boolean isUsePreferences() {
-        return this.usePreferences.getValue();
+        return usePreferences.getValue();
     }
 
-    @Override
+    /// @param usePreferences Whether the user's preferences say how dates are shown.
     public void setUsePreferences(final boolean usePreferences) {
         this.usePreferences.setValue(usePreferences);
     }
 
-    @Override
+    /// @return The date and time pattern: the custom one if Custom is ticked, otherwise the
+    /// standard one chosen.
     public String getPattern() {
         if (custom.getValue()) {
             return text.getText();
         }
-
         return format.getValue();
     }
 
-    @Override
+    /// Shows a date and time pattern: chosen from the standard formats if it is one, otherwise as
+    /// a custom format.
+    ///
+    /// @param pattern The pattern, or null or blank for the first standard format.
     public void setPattern(final String pattern) {
         String text = pattern;
-        if (text == null || text.trim().length() == 0) {
+        if (text == null || text.trim().isEmpty()) {
             text = STANDARD_FORMATS.get(0);
         }
-
         final int formatIndex = STANDARD_FORMATS.indexOf(text);
         if (formatIndex != -1) {
             this.format.setValue(text);
         }
-
         final boolean custom = formatIndex == -1;
         this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);
     }
 
-    @Override
+    /// @param timeZoneIds The named time zones offered.
     public void setTimeZoneIds(final List<String> timeZoneIds) {
-        this.timeZoneId.addItems(timeZoneIds);
+        timeZoneId.addItems(timeZoneIds);
     }
 
-    @Override
+    /// @return How the time zone is given.
     public Use getTimeZoneUse() {
-        return this.timeZoneUse.getValue();
+        return timeZoneUse.getValue();
     }
 
-    @Override
+    /// @param use How the time zone is given.
     public void setTimeZoneUse(final Use use) {
-        this.timeZoneUse.setValue(use);
+        timeZoneUse.setValue(use);
     }
 
-    @Override
+    /// @return The named time zone chosen.
     public String getTimeZoneId() {
-        return this.timeZoneId.getValue();
+        return timeZoneId.getValue();
     }
 
-    @Override
+    /// @param timeZoneId The named time zone.
     public void setTimeZoneId(final String timeZoneId) {
         this.timeZoneId.setValue(timeZoneId);
     }
 
-    @Override
+    /// @return The offset's hours, or null for none.
     public Integer getTimeZoneOffsetHours() {
-        final int val = this.timeZoneOffsetHours.getIntValue();
-        if (val == 0) {
-            return null;
-        }
-        return val;
+        return nullIfZero(timeZoneOffsetHours.getIntValue());
     }
 
-    @Override
+    /// @param timeZoneOffsetHours The offset's hours, or null for none.
     public void setTimeZoneOffsetHours(final Integer timeZoneOffsetHours) {
-        if (timeZoneOffsetHours == null) {
-            this.timeZoneOffsetHours.setValue(0);
-        } else {
-            this.timeZoneOffsetHours.setValue(timeZoneOffsetHours);
-        }
+        this.timeZoneOffsetHours.setValue(timeZoneOffsetHours == null
+                ? 0
+                : timeZoneOffsetHours);
     }
 
-    @Override
+    /// @return The offset's minutes, or null for none.
     public Integer getTimeZoneOffsetMinutes() {
-        final int val = this.timeZoneOffsetMinutes.getIntValue();
-        if (val == 0) {
-            return null;
-        }
-        return val;
+        return nullIfZero(timeZoneOffsetMinutes.getIntValue());
     }
 
-    @Override
+    /// @param timeZoneOffsetMinutes The offset's minutes, or null for none.
     public void setTimeZoneOffsetMinutes(final Integer timeZoneOffsetMinutes) {
-        if (timeZoneOffsetMinutes == null) {
-            this.timeZoneOffsetMinutes.setValue(0);
-        } else {
-            this.timeZoneOffsetMinutes.setValue(timeZoneOffsetMinutes);
-        }
+        this.timeZoneOffsetMinutes.setValue(timeZoneOffsetMinutes == null
+                ? 0
+                : timeZoneOffsetMinutes);
     }
 
-    @Override
+    /// @return Whether long values wrap.
     public boolean isWrap() {
         return wrap.getValue();
     }
 
-    @Override
+    /// @param wrap Whether long values wrap.
     public void setWrap(final boolean wrap) {
         this.wrap.setValue(wrap);
     }
 
+    private static Integer nullIfZero(final int value) {
+        return value == 0
+                ? null
+                : value;
+    }
+
+    // Shows the settings of the type chosen, and the time zone's id or offset as it is given
+    private void showSettings() {
+        final Type type = this.type.getValue();
+        final boolean number = Type.NUMBER.equals(type);
+        final boolean dateTime = Type.DATE_TIME.equals(type);
+        formatDecimalPlaces.setVisible(number);
+        formatUseSeparator.setVisible(number);
+        formatUsePreferences.setVisible(dateTime);
+        formatFormat.setVisible(dateTime);
+        formatCustom.setVisible(dateTime);
+        formatCustomFormat.setVisible(dateTime);
+        formatTimeZone.setVisible(dateTime);
+        formatTimeZoneId.setVisible(dateTime && Use.ID.equals(timeZoneUse.getValue()));
+        formatTimeZoneOffset.setVisible(dateTime && Use.OFFSET.equals(timeZoneUse.getValue()));
+    }
+
     @UiHandler("custom")
-    public void onCustomCheckBoxClick(final ValueChangeEvent<Boolean> event) {
+    void onCustom(final ValueChangeEvent<Boolean> event) {
         text.setEnabled(custom.getValue());
     }
 
     @UiHandler("type")
-    public void onTypeValueChange(final ValueChangeEvent<Type> event) {
-        getUiHandlers().onTypeChange(type.getValue());
+    void onType(final ValueChangeEvent<Type> event) {
+        showSettings();
     }
 
     @UiHandler("format")
-    public void onFormatValueChange(final ValueChangeEvent<String> event) {
-        setPattern(this.format.getValue());
+    void onFormat(final ValueChangeEvent<String> event) {
+        setPattern(format.getValue());
     }
 
     @UiHandler("timeZoneUse")
-    public void onTimeZoneUseValueChange(final ValueChangeEvent<Use> event) {
-        setType(this.type.getValue());
+    void onTimeZoneUse(final ValueChangeEvent<Use> event) {
+        showSettings();
     }
 
-    public interface Binder extends UiBinder<Widget, FormatViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ColumnFormat> {
 
     }
 }

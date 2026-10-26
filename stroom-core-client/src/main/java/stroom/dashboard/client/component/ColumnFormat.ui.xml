@@ -15,7 +15,7 @@
         <form:FormGroup ui:field="formatDecimalPlaces" identity="formatDecimalPlaces" label="Decimal Places"
                         helpText="Number of decimal places to show, from 0 to 10."
                         screenReaderText="0 to 10.">
-            <valuespinner:ValueSpinner ui:field="decimalPlaces"
+            <valuespinner:ValueSpinner ui:field="decimalPlaces" minValue="0" maxValue="10"
                                        addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatUseSeparator"
@@ -56,8 +56,11 @@
                         helpText="Fixed offset from UTC, as hours (-12 to +12) and minutes (0 to 59)."
                         screenReaderText="Hours, then minutes.">
             <g:FlowPanel>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
+                <!-- Named by the part they are, as the Time Zone Offset label names the pair -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" minValue="-12" maxValue="12"
+                                           minStep="1" maxStep="1" ariaLabel="Hours"/>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" minValue="0" maxValue="59"
+                                           minStep="30" maxStep="30" ariaLabel="Minutes"/>
             </g:FlowPanel>
         </form:FormGroup>
 

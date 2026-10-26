@@ -18,10 +18,10 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
+import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
@@ -65,7 +65,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
     private final EventBus eventBus;
     private final QueryResultTablePresenter tablePresenter;
-    private final FormatPresenter formatPresenter;
+    private final Provider<ColumnFormatController> columnFormatProvider;
     private final Provider<RulesPresenter> rulesPresenterProvider;
     private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
     private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
@@ -76,13 +76,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
     public QueryTableColumnsManager(final EventBus eventBus,
                                     final QueryResultTablePresenter tablePresenter,
-                                    final FormatPresenter formatPresenter,
+                                    final Provider<ColumnFormatController> columnFormatProvider,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
-        this.formatPresenter = formatPresenter;
+        this.columnFormatProvider = columnFormatProvider;
         this.rulesPresenterProvider = rulesPresenterProvider;
         this.columnFilterEditorProvider = columnFilterEditorProvider;
         this.columnValuesFilterPresenter = columnValuesFilterPresenter;
@@ -277,7 +277,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     }
 
     public void showFormat(final Column column) {
-        formatPresenter.show(column, (oldColumn, newColumn) -> {
+        columnFormatProvider.get().show(tablePresenter, column, (oldColumn, newColumn) -> {
             final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.refresh();

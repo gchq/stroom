@@ -24,6 +24,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.input.FilterableTable;
@@ -201,7 +202,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final LocationManager locationManager,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
-                          final FormatPresenter formatPresenter,
+                          final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadSearchResultsController downloadOptions,
@@ -215,7 +216,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                           final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
-        own(formatPresenter);
         own(tableFilterPresenter);
         own(downloadOptions);
         own(columnValuesFilterPresenter);
@@ -277,7 +277,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 this,
                 renameColumnControllerProvider,
                 () -> makeDialog(expressionPresenterProvider),
-                formatPresenter,
+                columnFormatProvider,
                 tableFilterPresenter,
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
