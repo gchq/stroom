@@ -17,7 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.data.client.component.ExpressionDialogController;
-import stroom.explorer.client.presenter.DocumentPermissionsListPresenter;
+import stroom.explorer.client.component.DocumentPermissionsListController;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionOperator;
@@ -33,7 +33,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -54,13 +53,10 @@ public class UserPermissionReportPresenter
         implements QuickFilterUiHandlers {
 
     private final Provider<ExpressionDialogController> filterDialogProvider;
-    private final DocumentPermissionsListPresenter documentPermissionsListPresenter;
+    private final DocumentPermissionsListController documentPermissionsList;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
-    private final ButtonView docEdit;
-    private final ButtonView docFilter;
-    private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
     private String quickFilter;
     private ExpressionOperator combinedExpression;
@@ -72,25 +68,25 @@ public class UserPermissionReportPresenter
                                          final UserPermissionReportView view,
                                          final QuickFilterPageView quickFilterPageView,
                                          final Provider<ExpressionDialogController> filterDialogProvider,
-                                         final DocumentPermissionsListPresenter documentPermissionsListPresenter,
+                                         final DocumentPermissionsListController documentPermissionsList,
                                          final Provider<DocumentUserPermissionsEditPresenter>
                                                  documentUserPermissionsEditPresenterProvider,
                                          final Provider<BatchDocumentPermissionsEditPresenter>
                                                  batchDocumentPermissionsEditPresenterProvider,
                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(documentPermissionsListPresenter);
-        this.documentPermissionsListPresenter = documentPermissionsListPresenter;
+        own(documentPermissionsList);
+        this.documentPermissionsList = documentPermissionsList;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.filterDialogProvider = filterDialogProvider;
 
         view.setPermissionListView(quickFilterPageView);
-        quickFilterPageView.setDataView(documentPermissionsListPresenter.getView());
+        quickFilterPageView.setDataView(documentPermissionsList);
         quickFilterPageView.setUiHandlers(this);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        documentPermissionsListPresenter.setFilterErrorConsumer(quickFilterPageView::setFilterError);
+        documentPermissionsList.setOnFilterError(quickFilterPageView::setFilterError);
         quickFilterPageView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
         quickFilterPageView.setLabel("Documents");
@@ -108,40 +104,19 @@ public class UserPermissionReportPresenter
         permissionVisibility = view.getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
+        documentPermissionsList.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
 
-        documentPermissionsListPresenter.getView().getToolbar().setName("Document permission actions");
-        docEdit = documentPermissionsListPresenter.getView().getToolbar().button(
-                SvgImage.EDIT,
-                "Edit Permissions For Selected Document",
-                this::onEdit);
-        docEdit.setEnabled(false);
-        docFilter = documentPermissionsListPresenter.getView().getToolbar().button(
-                SvgImage.FILTER,
-                "Filter Documents",
-                this::onFilter);
-        batchEdit = documentPermissionsListPresenter.getView().getToolbar().button(
-                SvgImage.GENERATE,
-                "Batch Edit Permissions For Filtered Documents",
-                this::onBatchEdit);
-        batchEdit.setEnabled(false);
-
-        documentPermissionsListPresenter.setCurrentResultHandler(resultPage -> {
+        documentPermissionsList.setOnEdit(this::onEdit);
+        documentPermissionsList.setOnFilter(this::onFilter);
+        documentPermissionsList.setOnBatchEdit(this::onBatchEdit);
+        documentPermissionsList.setOnResultPage(resultPage -> {
             docs = resultPage;
-            batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
+            documentPermissionsList.setBatchEditEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
 
         own(permissionVisibility.addValueChangeHandler(e -> {
-            documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
-            documentPermissionsListPresenter.refresh();
-        }));
-        own(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
-            final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel()
-                    .getSelected();
-            docEdit.setEnabled(selected != null);
-            if (selected != null && e.getSelectionType().isDoubleSelect()) {
-                onEdit();
-            }
+            documentPermissionsList.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
+            documentPermissionsList.refresh();
         }));
     }
 
@@ -154,20 +129,20 @@ public class UserPermissionReportPresenter
                 DocumentPermissionFields.getFields(),
                 (expression, e) -> {
                     filterExpression = expression;
-                    documentPermissionsListPresenter.resetRange();
+                    documentPermissionsList.resetRange();
                     refresh();
                     e.hide();
                 });
     }
 
     private void onEdit() {
-        final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel().getSelected();
+        final FindResultWithPermissions selected = documentPermissionsList.getSelected();
         if (selected != null) {
             final DocumentUserPermissionsEditPresenter presenter =
                     makeDialog(documentUserPermissionsEditPresenterProvider);
             presenter.show(selected.getFindResult().getDocRef(),
                     selected.getPermissions(),
-                    documentPermissionsListPresenter::refresh,
+                    documentPermissionsList::refresh,
                     this);
         }
     }
@@ -178,7 +153,7 @@ public class UserPermissionReportPresenter
         presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
         presenter.show(combinedExpression,
                 NullSafe.get(docs, ResultPage::getPageResponse),
-                documentPermissionsListPresenter::refresh);
+                documentPermissionsList::refresh);
     }
 
     private void refresh() {
@@ -192,8 +167,8 @@ public class UserPermissionReportPresenter
         }
 
         combinedExpression = builder.build();
-        documentPermissionsListPresenter.getCriteriaBuilder().expression(combinedExpression);
-        documentPermissionsListPresenter.refresh();
+        documentPermissionsList.getCriteriaBuilder().expression(combinedExpression);
+        documentPermissionsList.refresh();
     }
 
     private ExpressionOperator getShowAllExpression() {
@@ -212,8 +187,8 @@ public class UserPermissionReportPresenter
         // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest. The
         // show-all term stays an expression: it is this screen's own default, not user input.
         quickFilter = text;
-        documentPermissionsListPresenter.getCriteriaBuilder().quickFilter(text);
-        documentPermissionsListPresenter.resetRange();
+        documentPermissionsList.getCriteriaBuilder().quickFilter(text);
+        documentPermissionsList.resetRange();
         refresh();
     }
 //
@@ -268,11 +243,11 @@ public class UserPermissionReportPresenter
 
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        documentPermissionsListPresenter.getCriteriaBuilder().userRef(userRef);
+        documentPermissionsList.getCriteriaBuilder().userRef(userRef);
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
-        documentPermissionsListPresenter.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
+        documentPermissionsList.getCriteriaBuilder().requiredPermissions(Set.of(DocumentPermission.VIEW));
         refresh();
     }
 
