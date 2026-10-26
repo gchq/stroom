@@ -17,7 +17,9 @@
 package stroom.dashboard.client.main;
 
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
@@ -27,7 +29,7 @@ import java.util.Objects;
 
 /// Reads a dashboard's description ([DashboardPresenter#getComparableDescription()]) by component, so changes the AI
 /// chat applied are applied, and undone, on top of whatever else the user has changed since, as long as what they
-/// replace hasn't changed.
+/// replace hasn't changed; and puts a chart's id in the filter its clicks drive, once the chart is added.
 public final class DashboardDescriptions {
 
     // What starts a component's heading, e.g. "## Table 'Events' (id table-1)".
@@ -76,6 +78,32 @@ public final class DashboardDescriptions {
         final Map<String, String> partsAfter = componentParts(after);
         return NullSafe.collection(componentIds).stream()
                 .allMatch(id -> Objects.equals(partsBefore.get(id), partsAfter.get(id)));
+    }
+
+    /// @param expression A selection filter's expression, its terms naming a chart's selection, e.g.
+    ///                   `${component.new-chart.selection.x}`.
+    /// @param from       The chart's id the filter was planned with.
+    /// @param to         The chart's id on the dashboard.
+    /// @return The expression, its terms naming the chart by its id on the dashboard.
+    public static ExpressionOperator withChartId(final ExpressionOperator expression,
+                                                 final String from,
+                                                 final String to) {
+        if (expression == null || from.equals(to)) {
+            return expression;
+        }
+        final String planned = "component." + from + ".selection.";
+        final String actual = "component." + to + ".selection.";
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                .op(expression.op())
+                .enabled(expression.getEnabled());
+        for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
+            if (child instanceof final ExpressionOperator operator) {
+                builder.addOperator(withChartId(operator, from, to));
+            } else if (child instanceof final ExpressionTerm term) {
+                builder.addTerm(term.copy().value(NullSafe.string(term.getValue()).replace(planned, actual)).build());
+            }
+        }
+        return builder.build();
     }
 
     /// @param proposedHash The hash ([AiTabSnapshotPart#hashLines(String)]) of a query's expression as the

@@ -35,6 +35,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -131,12 +132,12 @@ public class VisualisationActions {
             // The browser puts the show clause in the embedded query: tableId is its component id.
             return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                     description, target, plan.componentId(), plan.table(), null, null, null, plan.snapshotHash(),
-                    showArguments(kind, plan.mappings()), plan.baseQuery(), null, null);
+                    showArguments(kind, plan.mappings()), plan.baseQuery(), null, null, null, null);
         }
         if (plan.isQuery()) {
             return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                     description, target, null, null, null, null, null, null, showArguments(kind, plan.mappings()),
-                    plan.baseQuery(), null, null);
+                    plan.baseQuery(), null, null, null, null);
         }
         if (plan.isReplacement()) {
             final DocRef replaced = rewrite(plan.replace().visualisation(), name, functionName, adapter, settings,
@@ -148,13 +149,21 @@ public class VisualisationActions {
             return new AiCreateVisualisation(replaced.getName(), null, functionName, adapter,
                     settings, description, target, plan.componentId(), plan.table(), componentName,
                     replacementSettings(kind, plan.mappings()), null, plan.snapshotHash(), null, null, replaced,
-                    plan.replace().componentId());
+                    plan.replace().componentId(), null, null);
         }
         return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                 description, target, plan.componentId(), plan.table(), plan.componentName(),
                 componentSettings(kind, plan.mappings()),
                 NullSafe.nonBlankStringElse(plan.placement(), VisualisationPlan.BELOW),
-                plan.snapshotHash(), null, null, null, null);
+                plan.snapshotHash(), null, null, null, null, changesJson(plan.tableChanges()),
+                changesJson(plan.filterChanges()));
+    }
+
+    // Dashboard changes as the browser takes them: a JSON array, or null for none.
+    private static String changesJson(final List<Map<String, Object>> changes) {
+        return NullSafe.isEmptyCollection(changes)
+                ? null
+                : JsonUtil.writeValueAsString(changes, false);
     }
 
     // Rewrites a Visualisation Stroom AI generated for the new chart, and renames it, as the user. Saved at once.
