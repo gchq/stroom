@@ -18,4 +18,4 @@
             <tickbox:TickBox ui:field="optional"/>
         </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

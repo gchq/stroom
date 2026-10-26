@@ -20,8 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pathways.client.PathwaysPlugin;
 import stroom.pathways.client.TracesDocPlugin;
 import stroom.pathways.client.TracesPlugin;
-import stroom.pathways.client.presenter.ConstraintEditPresenter;
-import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.client.presenter.PathwayEditPresenter;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 import stroom.pathways.client.presenter.PathwaysPresenter;
@@ -32,7 +30,6 @@ import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.pathways.client.presenter.TracesSettingsPresenter;
 import stroom.pathways.client.presenter.TracesSettingsPresenter.TracesSettingsView;
-import stroom.pathways.client.view.ConstraintEditViewImpl;
 import stroom.pathways.client.view.PathwayEditViewImpl;
 import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.pathways.client.view.TracesSettingsViewImpl;
@@ -59,8 +56,5 @@ public class PathwaysModule extends PluginModule {
         bindPresenterWidget(TracesListTabPresenter.class,
                 TracesView.class,
                 TracesViewImpl.class);
-        bindPresenterWidget(ConstraintEditPresenter.class,
-                ConstraintEditView.class,
-                ConstraintEditViewImpl.class);
     }
 }

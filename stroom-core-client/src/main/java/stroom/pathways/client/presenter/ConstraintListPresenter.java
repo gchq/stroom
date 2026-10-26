@@ -16,12 +16,11 @@
 
 package stroom.pathways.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
-import stroom.pathways.shared.otel.trace.NanoTime;
+import stroom.pathways.client.component.ConstraintEditorController;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.svg.shared.SvgImage;
@@ -34,6 +33,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class ConstraintListPresenter
     private final RestFactory restFactory;
     private final DataGrid<Constraint> dataGrid;
     private final MultiSelectionModelImpl<Constraint> selectionModel;
-    private final ConstraintEditPresenter constraintEditPresenter;
+    private final Provider<ConstraintEditorController> constraintEditorProvider;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -73,9 +73,8 @@ public class ConstraintListPresenter
                                    final PagerPanel view,
                                    final RestFactory restFactory,
 //                                   final DateTimeFormatter dateTimeFormatter,
-                                   final ConstraintEditPresenter constraintEditPresenter) {
+                                   final Provider<ConstraintEditorController> constraintEditorProvider) {
         super(eventBus, view);
-        own(constraintEditPresenter);
         this.pagerView = view;
         this.restFactory = restFactory;
 //        this.dateTimeFormatter = dateTimeFormatter;
@@ -89,7 +88,7 @@ public class ConstraintListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
-        this.constraintEditPresenter = constraintEditPresenter;
+        this.constraintEditorProvider = constraintEditorProvider;
 
         pagerView.getToolbar().setName("Constraint actions");
         newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
@@ -220,42 +219,21 @@ public class ConstraintListPresenter
     }
 
     private void onAdd() {
-        final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        constraintEditPresenter.read(new Constraint("New", null, false));
-        constraintEditPresenter.show("New Constraint", e -> {
-            try {
-                if (e.isOk()) {
-                    final Constraint constraint = constraintEditPresenter.write();
-                    pathNode.getConstraints().remove(constraint.getName());
+        constraintEditorProvider.get().edit(this, "New Constraint", new Constraint("New", null, false),
+                constraint -> {
                     pathNode.getConstraints().put(constraint.getName(), constraint);
                     refresh();
-                }
-            } catch (final RuntimeException ex) {
-                AlertEvent.fireErrorFromException(this, "Error", ex, null);
-            } finally {
-                e.hide();
-            }
-        });
+                });
     }
 
     private void onEdit() {
         final Constraint existingConstraint = selectionModel.getSelected();
         if (existingConstraint != null) {
-            constraintEditPresenter.read(existingConstraint);
-            constraintEditPresenter.show("Edit Constraint", e -> {
-                try {
-                    if (e.isOk()) {
-                        final Constraint constraint = constraintEditPresenter.write();
-                        pathNode.getConstraints().remove(constraint.getName());
-                        pathNode.getConstraints().put(constraint.getName(), constraint);
-                        refresh();
-
-                    }
-                } catch (final RuntimeException ex) {
-                    AlertEvent.fireErrorFromException(this, "Error", ex, null);
-                } finally {
-                    e.hide();
-                }
+            constraintEditorProvider.get().edit(this, "Edit Constraint", existingConstraint, constraint -> {
+                // A renamed constraint replaces the one it was
+                pathNode.getConstraints().remove(existingConstraint.getName());
+                pathNode.getConstraints().put(constraint.getName(), constraint);
+                refresh();
             });
         }
     }

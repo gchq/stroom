@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.view;
+package stroom.pathways.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.shared.pathway.ConstraintValueType;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ConstraintEditViewImpl extends ViewImpl implements ConstraintEditView {
+/// The New and Edit Constraint dialog's content, for a node of a pathway: the constraint's
+/// name, the type of its value, the value as text and whether it is optional.
+public class ConstraintEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -41,63 +42,62 @@ public class ConstraintEditViewImpl extends ViewImpl implements ConstraintEditVi
     @UiField
     TickBox optional;
 
-    @Inject
-    public ConstraintEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content.
+    public ConstraintEditor() {
+        initWidget(BINDER.createAndBindUi(this));
         type.addItems(ConstraintValueType.values());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus in the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
+    /// @return The name entered.
     public String getName() {
         return name.getText();
     }
 
-    @Override
-    public void setName(final String fieldName) {
-        name.setText(fieldName);
+    /// @param name The constraint's name.
+    public void setName(final String name) {
+        this.name.setText(name);
     }
 
-    @Override
+    /// @return The type of value chosen.
     public ConstraintValueType getType() {
         return type.getValue();
     }
 
-    @Override
+    /// @param type The type of the constraint's value.
     public void setType(final ConstraintValueType type) {
         this.type.setValue(type);
     }
 
-    @Override
+    /// @return The value entered, as text.
     public String getValue() {
         return value.getValue();
     }
 
-    @Override
+    /// @param value The constraint's value, as text.
     public void setValue(final String value) {
         this.value.setValue(value);
     }
 
-    @Override
+    /// @return Whether the constraint is optional.
     public boolean isOptional() {
         return optional.getValue();
     }
 
-    @Override
+    /// @param optional Whether the constraint is optional.
     public void setOptional(final boolean optional) {
         this.optional.setValue(optional);
     }
 
-    public interface Binder extends UiBinder<Widget, ConstraintEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ConstraintEditor> {
 
     }
 }

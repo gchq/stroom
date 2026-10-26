@@ -20,10 +20,12 @@ import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -174,6 +176,63 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Pathway", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // The Constraint dialog: a renamed constraint replaces the one it was, a value that
+                // can't be read is refused and the dialog stays open, a range is shown as it is
+                // typed, and New adds one (it threw before, the new constraint having no value)
+                .story("ConstraintDialog", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("login-flow"));
+                    play.click(play.getByRole("button", "Edit Selected Pathway"));
+                    final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.findByText("Auth"));
+                    // Selecting a constraint enables the list's buttons (see EditConstraints)
+                    play.click(dialog.findByText("host"));
+                    play.click(dialog.getByRole("button", "Edit Selected Constraint"));
+                    final Play edit = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query name = edit.getByLabelText("Name");
+                    play.expect(name).toHaveValue("host");
+                    play.clear(name);
+                    play.type(name, "port");
+                    play.click(edit.within(edit.getByText("Type", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Integer Range", ".selection-popup *"));
+                    final Query value = edit.getByLabelText("Value");
+                    play.type(value, "80");
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("two values")));
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.expect(screen.getByText("Edit Constraint", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.clear(value);
+                    play.type(value, "80,443");
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(dialog.getByText("port")).toBeInTheDocument());
+                    play.expect(dialog.queryByText("host")).toBeNull();
+                    // The range is shown again as it was typed
+                    play.click(dialog.getByText("port"));
+                    play.click(dialog.getByRole("button", "Edit Selected Constraint"));
+                    final Play again = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(again.getByLabelText("Value")).toHaveValue("80,443");
+                    play.click(again.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // New
+                    play.click(dialog.getByRole("button", "New Constraint"));
+                    final Play add = play.within(screen.findByText("New Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(add.getByLabelText("Name")).toHaveValue("New");
+                    play.click(add.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(dialog.getByText("New")).toBeInTheDocument());
+                    DocEditors.expectNoUnhandledRequests(play);
                 })
                 // Settings: the document's configuration; an edit enables Save
                 .story("Settings", context -> render(context, "pathways-1", PATHWAYS, false))
