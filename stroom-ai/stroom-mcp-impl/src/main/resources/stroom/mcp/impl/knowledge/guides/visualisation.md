@@ -122,7 +122,9 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
   `match` any. A link selects its `source` and `target`: add a term for each (the source's field with `source`,
   the target's with `target`), which are kept together, so a link filters by both its ends. An undirected graph
   or a chord diagram sends a link both ways round, so it matches in either direction; a Sankey diagram's flows,
-  and a directed graph's links, match only their own direction.
+  and a directed graph's links, match only their own direction. One filter with all four terms (`match` any)
+  filters by a clicked node or a clicked link: there is no need for two.
+- Several filters on one target match when any of them does.
 - Ctrl-click (or Shift-click) selects several items, and the filter matches any of them.
 - Dates are filtered by time, never by equality. A term giving a date field (or a table's date column) a date
   the chart selects (a time axis's x, a calendar's date, any Date Time column) keeps it within the selected
