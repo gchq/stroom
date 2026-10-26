@@ -21,15 +21,20 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
+import stroom.preferences.client.component.EditorPreferencesController;
+import stroom.preferences.client.component.ThemePreferencesController;
+import stroom.preferences.client.component.TimePreferencesController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -53,9 +58,12 @@ public final class UserPreferencesPresenter
     private static final TabData KEYBOARD_SHORTCUTS = new TabDataImpl("Keyboard Shortcuts");
 
     private final UserPreferencesManager userPreferencesManager;
-    private final ThemePreferencesPresenter themePreferencesPresenter;
-    private final EditorPreferencesPresenter editorPreferencesPresenter;
-    private final TimePreferencesPresenter timePreferencesPresenter;
+    private final ThemePreferencesController themePreferences;
+    private final ControllerLayer themePreferencesLayer;
+    private final EditorPreferencesController editorPreferences;
+    private final ControllerLayer editorPreferencesLayer;
+    private final TimePreferencesController timePreferences;
+    private final ControllerLayer timePreferencesLayer;
     private final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter;
     private UserPreferences fetchedUserPreferences;
 
@@ -64,60 +72,62 @@ public final class UserPreferencesPresenter
             final EventBus eventBus,
             final UserPreferencesView view,
             final UserPreferencesManager userPreferencesManager,
-            final ThemePreferencesPresenter themePreferencesPresenter,
-            final EditorPreferencesPresenter editorPreferencesPresenter,
-            final TimePreferencesPresenter timePreferencesPresenter,
+            final ThemePreferencesController themePreferences,
+            final EditorPreferencesController editorPreferences,
+            final TimePreferencesController timePreferences,
             final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        own(themePreferencesPresenter);
-        own(editorPreferencesPresenter);
-        own(timePreferencesPresenter);
+        own(themePreferences);
+        own(editorPreferences);
+        own(timePreferences);
         own(keyBindingPreferencesPresenter);
         this.userPreferencesManager = userPreferencesManager;
-        this.themePreferencesPresenter = themePreferencesPresenter;
-        this.editorPreferencesPresenter = editorPreferencesPresenter;
-        this.timePreferencesPresenter = timePreferencesPresenter;
+        this.themePreferences = themePreferences;
+        themePreferencesLayer = new ControllerLayer(themePreferences);
+        this.editorPreferences = editorPreferences;
+        editorPreferencesLayer = new ControllerLayer(editorPreferences);
+        this.timePreferences = timePreferences;
+        timePreferencesLayer = new ControllerLayer(timePreferences);
         this.keyBindingPreferencesPresenter = keyBindingPreferencesPresenter;
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext
                 .hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
 
-        addTab(THEME, themePreferencesPresenter);
-        addTab(EDITOR, editorPreferencesPresenter);
-        addTab(DATE_AND_TIME, timePreferencesPresenter);
-        addTab(KEYBOARD_SHORTCUTS, keyBindingPreferencesPresenter);
+        addTab(THEME);
+        addTab(EDITOR);
+        addTab(DATE_AND_TIME);
+        addTab(KEYBOARD_SHORTCUTS);
         view.getTabBar().selectTab(THEME);
         switchTab(THEME);
 
         own(getView().getTabBar().addSelectionHandler(e ->
                 switchTab(e.getSelectedItem())));
-        themePreferencesPresenter.setOnChange(this::onChange);
-        editorPreferencesPresenter.setOnChange(this::onChange);
-        timePreferencesPresenter.setOnChange(this::onChange);
+        themePreferences.setOnChange(this::onChange);
+        editorPreferences.setOnChange(this::onChange);
+        timePreferences.setOnChange(this::onChange);
         keyBindingPreferencesPresenter.setOnChange(this::onChange);
     }
 
-    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
+    private void addTab(final TabData tabData) {
         getView().getTabBar().addTab(tabData);
-//        getView().getLayerContainer().add(presenterWidget.getWidget());
     }
 
     private void switchTab(final TabData tabData) {
         getView().getTabBar().selectTab(tabData);
         if (Objects.equals(THEME, tabData)) {
-            setLayer(themePreferencesPresenter);
+            setLayer(themePreferencesLayer);
         } else if (Objects.equals(EDITOR, tabData)) {
-            setLayer(editorPreferencesPresenter);
+            setLayer(editorPreferencesLayer);
         } else if (Objects.equals(DATE_AND_TIME, tabData)) {
-            setLayer(timePreferencesPresenter);
+            setLayer(timePreferencesLayer);
         } else if (Objects.equals(KEYBOARD_SHORTCUTS, tabData)) {
             setLayer(keyBindingPreferencesPresenter);
         }
     }
 
-    private void setLayer(final MyPresenterWidget<?> presenterWidget) {
-        getView().getLayerContainer().show(presenterWidget);
+    private void setLayer(final Layer layer) {
+        getView().getLayerContainer().show(layer);
     }
 
     @Override
@@ -129,7 +139,7 @@ public final class UserPreferencesPresenter
             // Theme changed
             final ThemeType themeTypeBefore = Theme.getThemeType(before.getTheme());
             final ThemeType themeTypeAfter = Theme.getThemeType(after.getTheme());
-            final boolean change = editorPreferencesPresenter.updateTheme(themeTypeBefore, themeTypeAfter);
+            final boolean change = editorPreferences.updateTheme(themeTypeBefore, themeTypeAfter);
             if (change) {
                 // Update the prefs with the change
                 after = write(before);
@@ -185,7 +195,7 @@ public final class UserPreferencesPresenter
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(PopupSize.resizable(640, 588, 533, 588))
                     .caption(caption)
-                    .onShow(e -> themePreferencesPresenter.getView().focus())
+                    .onShow(e -> themePreferences.focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
                             final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
@@ -212,17 +222,17 @@ public final class UserPreferencesPresenter
     }
 
     private void read(final UserPreferences userPreferences) {
-        themePreferencesPresenter.read(userPreferences);
-        editorPreferencesPresenter.read(userPreferences);
-        timePreferencesPresenter.read(userPreferences);
+        themePreferences.read(userPreferences);
+        editorPreferences.read(userPreferences);
+        timePreferences.read(userPreferences);
         keyBindingPreferencesPresenter.read(userPreferences);
     }
 
     private UserPreferences write(final UserPreferences userPreferences) {
         final UserPreferences.Builder builder = userPreferences.copy();
-        themePreferencesPresenter.write(builder);
-        editorPreferencesPresenter.write(builder);
-        timePreferencesPresenter.write(builder);
+        themePreferences.write(builder);
+        editorPreferences.write(builder);
+        timePreferences.write(builder);
         keyBindingPreferencesPresenter.write(builder);
         return builder.build();
     }

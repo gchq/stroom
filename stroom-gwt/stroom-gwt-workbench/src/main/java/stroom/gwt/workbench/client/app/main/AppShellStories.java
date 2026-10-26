@@ -360,6 +360,24 @@ public final class AppShellStories {
                             "One dark");
                     expectNoProblems(play);
                 })
+                // The Date and Time tab: a time zone given as an offset shows the offset's hours,
+                // named for what they are (the minutes are hidden: browsers don't support them)
+                .story("DateAndTimePreferences", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    final Query timeZone = dialog.querySelector("#userPreferencesTimeZone .selection-box__input");
+                    play.waitFor(() -> play.expect(timeZone).toHaveAttribute("role", "combobox"));
+                    play.click(timeZone);
+                    play.click(screen.findByText("Offset", ".selection-popup .selectionItemCell-text"));
+                    play.waitFor(() -> play.expect(dialog.getByRole("spinbutton", "Hours")).toBeVisible());
+                    play.expect(dialog.queryByRole("spinbutton", "Minutes")).toBeNull();
+                    expectNoProblems(play);
+                })
                 // The Keyboard Shortcuts tab lists each action the user can bind, one row per
                 // shortcut, with the built-in arrow keys that can't be changed
                 .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))

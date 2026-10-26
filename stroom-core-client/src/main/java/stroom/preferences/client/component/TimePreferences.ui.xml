@@ -37,8 +37,13 @@
                         helpText="The number of hours ahead of or behind UTC, from -12 to +12. Only shown when Time Zone is Offset."
                         screenReaderText="Hours from UTC, -12 to +12.">
             <g:FlowPanel>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
+                <!-- Named by the part they are, as the Time Zone Offset label names the pair -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours" accessibleName="Hours"
+                                           minValue="-12" maxValue="12" minStep="1" maxStep="1"/>
+                <!-- Browsers don't support minute offsets, so it is hidden for now -->
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" accessibleName="Minutes"
+                                           minValue="0" maxValue="45" minStep="15" maxStep="15" delta="15"
+                                           visible="false"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>
