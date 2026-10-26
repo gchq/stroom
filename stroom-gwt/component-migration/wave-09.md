@@ -60,9 +60,22 @@ dashboard were GWT compiled. Fixed:
 Found and recorded (ISSUES.md): a pipeline property's default value on its selected row fails colour
 contrast.
 
+## Stroom's widgets (26 October 2026)
+
+Wherever Stroom has its own version of one of GWT's widgets, Stroom's is used, and checked:
+the 59 templates and 70 classes left with GWT's `TextBox` or `TextArea` (presenter views, widgets'
+insides, stories) have `TextInput` and `TextAreaInput`; the explorer's logo and Current Activity
+button are Stroom's `Button`, with its new `setContent(SafeHtml)` for content of its own; the login's
+"Forgot password?" is a `LinkButton` (a `Hyperlink` added a history entry); the stories' native list
+and radio buttons are a `SelectionBox` and a `RadioGroup`. Checkstyle refuses GWT's versions' imports
+and `new TextBox(`/`new TextArea(` (`GwtWidgetWithStroomVersion`, `GwtTextBoxWithStroomVersion`),
+and `TestStroomWidgetsOnly` their tags in templates (AGENTS.md, "Stroom's widgets only"). A bug master
+has too, fixed on the way (changelog, `TestActivitySummary`): the Current Activity summary showed an
+activity's property names and values as HTML; `ActivitySummary` escapes them.
+
 ## Done (26 October 2026)
 
-All 42 units, in 17 commits and the audit's: FULLRUN. Each commit ran its stories with the leak check
+All 42 units, in 17 commits, the audit's and the Stroom widgets' (below): the last full run passed all 1,709 stories with the leak check; of its 46 screenshots that differed, 40 are the force graphs and 4 other recorded noise (the Markdown preview's font, the Tree visualisation's `ShowAndHide`, the data grid's spinner column, the line chart's `PageKeys`), and the 2 changed on purpose are the view states table (no native list; a radio group) and the form group's several controls (a selection box). The app and the standalone dashboard GWT compile, checkstyle is clean and the client modules' 1,908 JUnit tests pass. Each commit ran its stories with the leak check
 and the screenshot diff. Six bugs fixed on the way, each with a changelog entry and a story or test
 (master has each): a refused new asset name always said "Item name not set"; Edit Element didn't show
 the element's own description (a typed and cancelled one was shown again, and OK could give it to
