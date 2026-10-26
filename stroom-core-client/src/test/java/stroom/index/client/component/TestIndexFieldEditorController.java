@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.index.client.presenter;
+package stroom.index.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.index.client.component.DenseVectorFieldController;
-import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,26 +37,33 @@ import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestIndexFieldEditPresenter {
+class TestIndexFieldEditorController {
 
     private EventBus eventBus;
-    private IndexFieldEditView view;
-    private IndexFieldEditPresenter presenter;
+    private IndexFieldEditor view;
+    private IndexFieldEditorController controller;
     private HidePopupRequestEvent hideRequest;
     private BiConsumer<IndexFieldImpl, HidePopupRequestEvent> onOk;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
+        // The content is a widget, which can only be made in a browser
+        GWTMockUtilities.disarm();
         eventBus = Mockito.mock(EventBus.class);
-        view = Mockito.mock(IndexFieldEditView.class);
+        view = Mockito.mock(IndexFieldEditor.class);
         Mockito.when(view.getType()).thenReturn(FieldType.TEXT);
-        presenter = new IndexFieldEditPresenter(
+        controller = new IndexFieldEditorController(
                 eventBus,
                 view,
                 Mockito.mock(DenseVectorFieldController.class));
         hideRequest = Mockito.mock(HidePopupRequestEvent.class);
         onOk = Mockito.mock(BiConsumer.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        GWTMockUtilities.restore();
     }
 
     @ParameterizedTest
@@ -66,7 +73,7 @@ class TestIndexFieldEditPresenter {
         Mockito.when(hideRequest.isOk()).thenReturn(true);
         Mockito.when(view.getFieldName()).thenReturn(fieldName);
 
-        presenter.onHideRequest(hideRequest, onOk);
+        controller.onHideRequest(hideRequest, onOk);
 
         Mockito.verifyNoInteractions(onOk);
         Mockito.verify(hideRequest, Mockito.never()).hide();
@@ -83,7 +90,7 @@ class TestIndexFieldEditPresenter {
         Mockito.when(hideRequest.isOk()).thenReturn(true);
         Mockito.when(view.getFieldName()).thenReturn("  myField  ");
 
-        presenter.onHideRequest(hideRequest, onOk);
+        controller.onHideRequest(hideRequest, onOk);
 
         final ArgumentCaptor<IndexFieldImpl> captor = ArgumentCaptor.forClass(IndexFieldImpl.class);
         Mockito.verify(onOk).accept(captor.capture(), Mockito.eq(hideRequest));
@@ -98,7 +105,7 @@ class TestIndexFieldEditPresenter {
     void cancelHidesDialog() {
         Mockito.when(hideRequest.isOk()).thenReturn(false);
 
-        presenter.onHideRequest(hideRequest, onOk);
+        controller.onHideRequest(hideRequest, onOk);
 
         Mockito.verify(hideRequest).hide();
         Mockito.verifyNoInteractions(onOk);
@@ -106,7 +113,7 @@ class TestIndexFieldEditPresenter {
 
     private AlertEvent captureAlertEvent() {
         final ArgumentCaptor<GwtEvent<?>> captor = ArgumentCaptor.forClass(GwtEvent.class);
-        Mockito.verify(eventBus).fireEventFromSource(captor.capture(), Mockito.eq(presenter));
+        Mockito.verify(eventBus).fireEventFromSource(captor.capture(), Mockito.eq(controller));
         assertThat(captor.getValue())
                 .isInstanceOf(AlertEvent.class);
         return (AlertEvent) captor.getValue();

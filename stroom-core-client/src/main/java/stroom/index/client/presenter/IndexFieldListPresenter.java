@@ -24,6 +24,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.index.client.component.IndexFieldEditorController;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
@@ -49,6 +50,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -67,7 +69,7 @@ public class IndexFieldListPresenter
     private final RestFactory restFactory;
     private final DataGrid<IndexFieldImpl> dataGrid;
     private final MultiSelectionModelImpl<IndexFieldImpl> selectionModel;
-    private final IndexFieldEditPresenter indexFieldEditPresenter;
+    private final Provider<IndexFieldEditorController> indexFieldEditorProvider;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -83,10 +85,9 @@ public class IndexFieldListPresenter
                                    final QuickFilterPageView view,
                                    final PagerPanel pagerView,
                                    final RestFactory restFactory,
-                                   final IndexFieldEditPresenter indexFieldEditPresenter,
+                                   final Provider<IndexFieldEditorController> indexFieldEditorProvider,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(indexFieldEditPresenter);
         getView().setAccessibleName("Filter fields");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
@@ -101,7 +102,7 @@ public class IndexFieldListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
-        this.indexFieldEditPresenter = indexFieldEditPresenter;
+        this.indexFieldEditorProvider = indexFieldEditorProvider;
 
         pagerView.getToolbar().setName("Field actions");
         newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
@@ -251,8 +252,8 @@ public class IndexFieldListPresenter
     }
 
     private void onAdd() {
-        indexFieldEditPresenter.read(IndexFieldImpl.builder().build());
-        indexFieldEditPresenter.show("New Field", (indexField, e) -> restFactory
+        indexFieldEditorProvider.get().edit(this, "New Field", IndexFieldImpl.builder().build(),
+                (indexField, e) -> restFactory
                 .create(INDEX_RESOURCE)
                 .method(res -> res.addField(new AddField(docRef, indexField)))
                 .onSuccess(response -> {
@@ -268,8 +269,7 @@ public class IndexFieldListPresenter
     private void onEdit() {
         final IndexFieldImpl existingField = selectionModel.getSelected();
         if (existingField != null) {
-            indexFieldEditPresenter.read(existingField);
-            indexFieldEditPresenter.show("Edit Field", (indexField, e) -> restFactory
+            indexFieldEditorProvider.get().edit(this, "Edit Field", existingField, (indexField, e) -> restFactory
                     .create(INDEX_RESOURCE)
                     .method(res -> res.updateField(new UpdateField(
                             docRef,

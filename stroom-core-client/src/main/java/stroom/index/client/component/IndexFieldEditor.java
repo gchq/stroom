@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.index.client.view;
+package stroom.index.client.component;
 
-import stroom.document.client.event.ChangeUiHandlers;
-import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.FieldType;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,13 +32,13 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class IndexFieldEditViewImpl
-        extends ViewWithUiHandlers<ChangeUiHandlers>
-        implements IndexFieldEditView {
+/// The New and Edit Field dialog's content, for a Lucene index: the field's type, name, how it
+/// is indexed and, for a dense vector, its options.
+public class IndexFieldEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     SelectionBox<FieldType> type;
     @UiField
@@ -57,112 +56,117 @@ public class IndexFieldEditViewImpl
     @UiField
     SimplePanel denseVectorOptions;
 
-    @Inject
-    public IndexFieldEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    private Runnable onTypeChange = () -> {
+    };
 
+    /// Makes the content.
+    public IndexFieldEditor() {
+        initWidget(BINDER.createAndBindUi(this));
         type.addItems(LuceneFieldTypes.FIELD_TYPES);
         analyser.addItems(AnalyzerType.values());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the type.
     public void focus() {
         type.focus();
     }
 
-    @Override
+    /// @return The field's type.
     public FieldType getType() {
         return type.getValue();
     }
 
-    @Override
+    /// @param type The field's type.
     public void setType(final FieldType type) {
         this.type.setValue(type);
     }
 
-    @Override
+    /// @return The name entered.
     public String getFieldName() {
         return name.getText();
     }
 
-    @Override
+    /// @param fieldName The field's name.
     public void setFieldName(final String fieldName) {
         name.setText(fieldName);
     }
 
-    @Override
+    /// @return Whether the field's value is stored.
     public boolean isStored() {
         return stored.getValue();
     }
 
-    @Override
+    /// @param stored Whether the field's value is stored.
     public void setStored(final boolean stored) {
         this.stored.setValue(stored);
     }
 
-    @Override
+    /// @return Whether the field is indexed.
     public boolean isIndexed() {
         return indexed.getValue();
     }
 
-    @Override
+    /// @param indexed Whether the field is indexed.
     public void setIndexed(final boolean indexed) {
         this.indexed.setValue(indexed);
     }
 
-    @Override
+    /// @return Whether term positions are kept.
     public boolean isTermPositions() {
         return positions.getValue();
     }
 
-    @Override
+    /// @param termPositions Whether term positions are kept.
     public void setTermPositions(final boolean termPositions) {
         positions.setValue(termPositions);
     }
 
-    @Override
+    /// @return The analyser.
     public AnalyzerType getAnalyzerType() {
         return analyser.getValue();
     }
 
-    @Override
+    /// @param analyzerType The analyser.
     public void setAnalyzerType(final AnalyzerType analyzerType) {
         this.analyser.setValue(analyzerType);
     }
 
-    @Override
+    /// @return Whether matching is case sensitive.
     public boolean isCaseSensitive() {
         return caseSensitive.getValue();
     }
 
-    @Override
+    /// @param caseSensitive Whether matching is case sensitive.
     public void setCaseSensitive(final boolean caseSensitive) {
         this.caseSensitive.setValue(caseSensitive);
     }
 
-    @Override
+    /// @param options The dense vector options, which their controller makes with their own
+    ///                content.
     public void setDenseVectorOptions(final IsWidget options) {
         this.denseVectorOptions.setWidget(options);
     }
 
-    @Override
+    /// @param visible Whether the dense vector options are shown.
     public void setDenseVectorOptionsVisible(final boolean visible) {
         this.denseVectorOptions.setVisible(visible);
     }
 
-    @UiHandler("type")
-    public void onChange(final ValueChangeEvent<?> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChange();
-        }
+    /// @param onTypeChange Run when the type is changed.
+    public void setOnTypeChange(final Runnable onTypeChange) {
+        this.onTypeChange = onTypeChange;
     }
 
-    public interface Binder extends UiBinder<Widget, IndexFieldEditViewImpl> {
+    @UiHandler("type")
+    void onType(final ValueChangeEvent<?> event) {
+        onTypeChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, IndexFieldEditor> {
 
     }
 }
