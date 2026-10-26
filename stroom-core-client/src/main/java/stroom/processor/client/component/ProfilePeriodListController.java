@@ -17,7 +17,6 @@
 package stroom.processor.client.component;
 
 import stroom.processor.shared.ProfilePeriod;
-import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -30,7 +29,8 @@ import java.util.List;
 import java.util.UUID;
 
 /// A processor profile's periods ([ProfilePeriodList]), as its owner gives them: New and Edit open the
-/// period's editor, Remove removes the selected one, unless read only ([Contexts#READ_ONLY]).
+/// period's editor, Remove removes the selected one. A profile is not a document, so the list is
+/// never read only.
 public class ProfilePeriodListController extends Controller implements Focus {
 
     private final ProfilePeriodList view;
@@ -53,7 +53,6 @@ public class ProfilePeriodListController extends Controller implements Focus {
         view.setOnAdd(this::onAdd);
         view.setOnEdit(this::showEditor);
         view.setOnRemove(this::onRemove);
-        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
     @Override
