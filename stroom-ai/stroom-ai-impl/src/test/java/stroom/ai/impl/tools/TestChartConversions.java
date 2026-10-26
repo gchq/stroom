@@ -177,6 +177,21 @@ class TestChartConversions {
     }
 
     @Test
+    void aReplacedChartKeepsItsStyleUnlessGivenAnother() {
+        // Seen in testing: a network graph weighted by a count lost its colours, its nodes coloured each their own
+        // going back to one colour.
+        final Component graph = ChartConversions.drawnWith(pane(mapOf("physics", "spread")), mapOf("kind", "graph",
+                "source", "User", "target", "Host", "nodeColours", "node", "directed", "true", "showLabels", "auto",
+                "smooth", "true"));
+
+        assertThat(ChartConversions.styleKept(graph, ChartKind.GRAPH, Map.of("directed", "false")))
+                // As given: directed; a default (showLabels auto): left out; another kind's (smooth): left out.
+                .containsExactlyInAnyOrderEntriesOf(Map.of("nodeColours", "node", "physics", "spread"));
+        // Another kind keeps what it has of them.
+        assertThat(ChartConversions.styleKept(graph, ChartKind.SANKEY, Map.of())).isEmpty();
+    }
+
+    @Test
     void whatATableLacksForAKindIsSaid() {
         assertThat(ChartConversions.lacks(ChartKind.CALENDAR, NO_DATES, NO_DATES_SAMPLE)).containsExactly(
                 "Date Time column for date (the day, e.g. EventTime rounded with floorDay(), formatted as Date "

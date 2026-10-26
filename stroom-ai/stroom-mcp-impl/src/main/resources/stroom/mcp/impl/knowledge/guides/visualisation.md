@@ -213,7 +213,10 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - A setting a chart's Visualisation doesn't have (one generated before the setting was added, e.g. `nodeColours`)
   can't be set on its pane: replace the chart (`replace`, the same kind) to regenerate it with every setting.
 - A network graph's node colours: `nodeColours` group (by its `sourceGroup`/`targetGroup` columns) or node (each
-  node its own colour). Its layout animates by default; `list_visualisations` gives the `seriesDefaults.force`
+  node its own colour). Its links are drawn in their source node's colour: don't override that (e.g. with a
+  `lineStyle` colour in options), which leaves every link one colour.
+- A chart replaced (`replace`) keeps the old chart's style settings that the new one has (e.g. `nodeColours`),
+  unless you give others; the result says which were kept. Its layout animates by default; `list_visualisations` gives the `seriesDefaults.force`
   options that tune its physics.
 
 ## Notes
