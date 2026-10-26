@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.component.AnnotationTagListController;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -36,7 +37,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
 
     public static final String TAB_TYPE = "AnnotationTags";
 
-    private final AnnotationTagListPresenter annotationTagListPresenter;
+    private final AnnotationTagListController annotationTagListPresenter;
     private final Provider<AnnotationTagCreatePresenter> createProvider;
     private final Provider<AnnotationTagEditPresenter> editProvider;
     private final AnnotationResourceClient annotationResourceClient;
@@ -52,7 +53,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     public AnnotationTagPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final AnnotationTagListPresenter annotationTagListPresenter,
+            final AnnotationTagListController annotationTagListPresenter,
             final Provider<AnnotationTagCreatePresenter> createProvider,
             final Provider<AnnotationTagEditPresenter> editProvider,
             final AnnotationResourceClient annotationResourceClient) {
@@ -64,18 +65,18 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
         this.editProvider = editProvider;
         this.annotationResourceClient = annotationResourceClient;
 
-        annotationTagListPresenter.getView().getToolbar().setName("Tag actions");
-        newButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Annotation Tag",
+        annotationTagListPresenter.getToolbar().setName("Tag actions");
+        newButton = annotationTagListPresenter.getToolbar().button(SvgImage.ADD, "New Annotation Tag",
                 this::add);
-        openButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+        openButton = annotationTagListPresenter.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Annotation Tag", this::edit);
         openButton.setEnabled(false);
-        deleteButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+        deleteButton = annotationTagListPresenter.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Annotation Tag",
                 this::delete);
         deleteButton.setEnabled(false);
 
-        view.setView(annotationTagListPresenter.getView());
+        view.setView(annotationTagListPresenter);
 
         own(annotationTagListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
