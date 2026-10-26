@@ -1283,7 +1283,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
 
         if (replace != null) {
             return ToolResult.text(
-                    "The user has been shown a 'Replace visualisation' button for a "
+                    "The user has been shown an 'Update visualisation' button for a "
                     + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("
                     + describeMappings(mappings) + "), drawn with " + library.displayName() + " "
                     + installed.version() + ". When they click it, Visualisation '"
