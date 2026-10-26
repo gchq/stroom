@@ -41,9 +41,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,10 +64,12 @@ import java.util.regex.Pattern;
 ///   declares, version 6 or later. Any such build is used, so an administrator upgrades ECharts by putting a newer
 ///   build in the Script doc, with no new Stroom release. Who may edit that Script doc is a matter for its
 ///   permissions, as for any other visualisation script: its code runs, unsandboxed, in every generated chart.
-/// - The adapter (`echarts-generic.js`, bundled here) is created on first use as a Script doc in the same folder as
-///   ECharts, depending on it, with the ECharts doc's permissions, so whoever can load ECharts can load the
-///   adapter. It is found again by the marker in its banner; its content and dependencies are put back to the
-///   bundled ones whenever they differ, and its permissions given the library's again.
+/// - The adapter (`echarts-generic.js`, bundled here) is created as a chart is generated, as a Script doc in the
+///   same folder as ECharts, depending on it, with the ECharts doc's permissions, so whoever can load ECharts can
+///   load the adapter. It is named for its content (e.g. `ECharts Generic 3fa2c1`) and never changed, so the charts
+///   drawn with it keep drawing as they did when Stroom is upgraded, and nodes of different versions don't undo
+///   each other's; a new version of Stroom's adapter is created beside it as the next chart is generated. Nothing
+///   is done as Stroom starts.
 /// - D3 is installed the same way, as a Script doc holding a D3 build, version 3 or later (the content pack's 3.4.8
 ///   is one); the newest is used. Its adapter (`d3-generic.js`) is put beside it as ECharts' is.
 /// - The content pack's own D3 Visualisations can also be wired to a table as they are (see [D3Visualisation]).
@@ -280,9 +286,10 @@ public class ChartLibraries {
         return securityContext.hasDocumentPermission(ref, DocumentPermission.USE);
     }
 
-    /// Puts the adapter in place beside an ECharts library: finds it in the library's folder, creates it if it
-    /// isn't there, and puts back the bundled content and the library as its only dependency if either differs.
-    /// Either way it is given the library's permissions again, so whoever can load ECharts can load it.
+    /// Puts the adapter in place beside an ECharts library, as a chart is generated: finds the Script doc in the
+    /// library's folder that holds this version of Stroom's adapter, depending on the library, or creates it if
+    /// there isn't one. Either way it is given the library's permissions again, so whoever can load ECharts can load
+    /// it.
     ///
     /// @param echarts The library.
     /// @return The adapter's Script doc.
@@ -298,111 +305,95 @@ public class ChartLibraries {
         return ensureAdapter(ChartLibrary.D3, d3.script());
     }
 
-    // Puts a library's adapter in place beside the library's Script doc.
-    private DocRef ensureAdapter(final ChartLibrary library, final DocRef libraryScript) {
+    // Puts a library's adapter in place beside the library's Script doc. An adapter is never changed once
+    // created, so the charts already drawn with it (on this node or another, of this Stroom version or another)
+    // keep drawing as they did; a new version of the adapter is a new Script doc, named for its content. Only one
+    // node at a time creates one here; two nodes creating one at once create the same content twice, which is
+    // harmless, and the same one (the first by UUID) is used from then on.
+    private synchronized DocRef ensureAdapter(final ChartLibrary library, final DocRef libraryScript) {
         return securityContext.asProcessingUserResult(() -> {
-            final ScriptStore scriptStore = scriptStoreProvider.get();
             final ExplorerNodeService nodeService = explorerNodeServiceProvider.get();
             final ExplorerNode folder = nodeService.getParent(libraryScript)
                     .orElseGet(nodeService::getRoot);
             final String source = adapterSource(library);
-
-            for (final ExplorerNode child : NullSafe.list(nodeService.getChildren(folder.getDocRef()))) {
-                if (!ScriptDoc.TYPE.equals(child.getType())) {
-                    continue;
-                }
-                final ScriptDoc doc = read(scriptStore, child.getDocRef());
-                if (doc == null || adapterVersion(library, doc.getData()).isEmpty()) {
-                    continue;
-                }
-                final boolean sameContent = normalise(source).equals(normalise(doc.getData()));
-                final List<DocRef> dependencies = NullSafe.list(doc.getDependencies());
-                final boolean dependsOnLibrary = dependencies.size() == 1
-                                                 && Objects.equals(dependencies.getFirst().getUuid(),
-                        libraryScript.getUuid());
-                if (!sameContent || !dependsOnLibrary) {
-                    LOGGER.info("Putting the {} adapter {} back to Stroom's version {}", library.displayName(),
-                            child.getDocRef(), adapterVersion(library, source).orElse(0));
-                    scriptStore.writeDocument(doc.copy()
-                            .data(source)
-                            .dependencies(List.of(libraryScript))
-                            .build());
-                }
-                documentPermissionServiceProvider.get().addDocumentPermissions(libraryScript, child.getDocRef());
-                return child.getDocRef();
-            }
-
-            LOGGER.info("Creating the {} adapter beside {} in {}", library.displayName(), libraryScript,
-                    folder.getDocRef());
-            final DocRef created = explorerServiceProvider.get()
-                    .create(ScriptDoc.TYPE, library.adapterName(), folder, PermissionInheritance.DESTINATION)
-                    .getDocRef();
-            final ScriptDoc doc = scriptStore.readDocument(created);
-            scriptStore.writeDocument(doc.copy()
-                    .description("Stroom's adapter for visualisations generated by Stroom AI, drawn with "
-                                 + library.displayName() + ". Created by Stroom; changes to it are replaced when "
-                                 + "Stroom updates it.")
-                    .data(source)
-                    .dependencies(List.of(libraryScript))
-                    .build());
-            documentPermissionServiceProvider.get().addDocumentPermissions(libraryScript, created);
-            return created;
+            final DocRef adapter = findAdapter(folder, source, libraryScript)
+                    .orElseGet(() -> {
+                        final DocRef created = createAdapter(library, folder, source, libraryScript);
+                        // Another node may have created one at the same time.
+                        return findAdapter(folder, source, libraryScript).orElse(created);
+                    });
+            documentPermissionServiceProvider.get().addDocumentPermissions(libraryScript, adapter);
+            return adapter;
         });
     }
 
-    /// Puts each adapter Stroom has created (ECharts' and D3's) back to the bundled one, if its content differs, so
-    /// the charts already generated draw with this version of Stroom's adapter (e.g. with its click selection), not
-    /// only the charts generated from now on. Run as Stroom starts. Each keeps its dependencies and permissions, which
-    /// [#ensureAdapter(EChartsInstall)] puts back when a chart is next generated.
-    ///
-    /// @return The adapters that were put back.
-    public List<DocRef> updateAdapters() {
-        return securityContext.asProcessingUserResult(() -> {
-            final ScriptStore scriptStore = scriptStoreProvider.get();
-            final List<DocRef> updated = new ArrayList<>();
-            for (final DocRef ref : NullSafe.list(scriptStore.list())) {
-                final ScriptDoc doc = read(scriptStore, ref);
-                final ChartLibrary library = doc == null
-                        ? null
-                        : adapterLibrary(doc.getData()).orElse(null);
-                if (library == null) {
-                    continue;
-                }
-                final String source = adapterSource(library);
-                if (!normalise(source).equals(normalise(doc.getData()))) {
-                    LOGGER.info("Putting the {} adapter {} back to Stroom's version {}", library.displayName(),
-                            ref, adapterVersion(library, source).orElse(0));
-                    scriptStore.writeDocument(doc.copy().data(source).build());
-                    updated.add(ref);
-                }
-            }
-            return updated;
-        });
+    // The adapter in a folder that holds exactly this source and depends only on the library, the first by UUID
+    // if there are several. One changed by hand, or left by an earlier version of Stroom, isn't it.
+    private Optional<DocRef> findAdapter(final ExplorerNode folder,
+                                         final String source,
+                                         final DocRef libraryScript) {
+        final ScriptStore scriptStore = scriptStoreProvider.get();
+        final String wanted = normalise(source);
+        return NullSafe.list(explorerNodeServiceProvider.get().getChildren(folder.getDocRef())).stream()
+                .filter(child -> ScriptDoc.TYPE.equals(child.getType()))
+                .map(ExplorerNode::getDocRef)
+                .filter(ref -> {
+                    final ScriptDoc doc = read(scriptStore, ref);
+                    return doc != null
+                           && doc.getData() != null
+                           && wanted.equals(normalise(doc.getData()))
+                           && dependsOnlyOn(doc, libraryScript);
+                })
+                .min(Comparator.comparing(DocRef::getUuid));
     }
 
-    /// Brings each Visualisation Stroom AI generated up to date with the template's options control (a code editor
-    /// for the chart's options, see [EChartsTemplate#withCurrentOptionsControl(String)]), so charts generated
-    /// before it get it too. Run as Stroom starts. Their other settings, and the options set, are kept.
+    private static boolean dependsOnlyOn(final ScriptDoc doc, final DocRef libraryScript) {
+        final List<DocRef> dependencies = NullSafe.list(doc.getDependencies());
+        return dependencies.size() == 1
+               && Objects.equals(dependencies.getFirst().getUuid(), libraryScript.getUuid());
+    }
+
+    private DocRef createAdapter(final ChartLibrary library,
+                                 final ExplorerNode folder,
+                                 final String source,
+                                 final DocRef libraryScript) {
+        final String name = adapterName(library, source);
+        LOGGER.info("Creating the {} adapter {} beside {} in {}", library.displayName(), name, libraryScript,
+                folder.getDocRef());
+        final ScriptStore scriptStore = scriptStoreProvider.get();
+        final DocRef created = explorerServiceProvider.get()
+                .create(ScriptDoc.TYPE, name, folder, PermissionInheritance.DESTINATION)
+                .getDocRef();
+        final ScriptDoc doc = scriptStore.readDocument(created);
+        scriptStore.writeDocument(doc.copy()
+                .description("Stroom's adapter for visualisations generated by Stroom AI, drawn with "
+                             + library.displayName() + ". Created by Stroom, and never changed by it: the charts "
+                             + "generated with it keep drawing with it. A changed copy isn't used for new charts.")
+                .data(source)
+                .dependencies(List.of(libraryScript))
+                .build());
+        return created;
+    }
+
+    /// Names an adapter's Script doc for its content, so each version of an adapter has its own, e.g.
+    /// `ECharts Generic 3fa2c1`.
     ///
-    /// @return The Visualisations that were updated.
-    public List<DocRef> updateGeneratedVisualisations() {
-        return securityContext.asProcessingUserResult(() -> {
-            final VisualisationStore store = visualisationStoreProvider.get();
-            final List<DocRef> updated = new ArrayList<>();
-            for (final DocRef ref : NullSafe.list(store.list())) {
-                final VisualisationDoc doc = readVisualisation(store, ref);
-                if (doc == null || ChartLibrary.forFunctionName(doc.getFunctionName()).isEmpty()) {
-                    continue;
-                }
-                final String settings = EChartsTemplate.withCurrentOptionsControl(doc.getSettings());
-                if (!Objects.equals(settings, doc.getSettings())) {
-                    LOGGER.info("Giving the generated Visualisation {} the current chart options control", ref);
-                    store.writeDocument(doc.copy().settings(settings).build());
-                    updated.add(ref);
-                }
-            }
-            return updated;
-        });
+    /// @param library The library it adapts.
+    /// @param source  Its source.
+    /// @return Its name.
+    static String adapterName(final ChartLibrary library, final String source) {
+        return library.adapterName() + " " + contentHash(source);
+    }
+
+    // The first six hex digits of the SHA-256 of a source's content, as compared.
+    static String contentHash(final String source) {
+        try {
+            final byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(normalise(source).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest).substring(0, 6);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /// @return The bundled ECharts adapter's source.
