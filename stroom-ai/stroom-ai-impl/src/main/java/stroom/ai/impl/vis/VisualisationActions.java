@@ -112,8 +112,8 @@ public class VisualisationActions {
                 : chartLibraries.ensureAdapter(echarts);
         final String functionName = library.functionName();
         final String settings = EChartsTemplate.settingsJson(kind, plan.mappings(),
-                VisualisationPlan.normaliseStyle(kind, plan.style(), library),
-                VisualisationPlan.normaliseOptions(plan.options(), library), library);
+                VisualisationPlan.normaliseStyle(kind, plan.style()),
+                VisualisationPlan.normaliseOptions(plan.options(), library));
         final ExplorerNode folder = explorerNodeServiceProvider.get().getParent(target)
                 .map(VisualisationActions::inExplorerTree)
                 .orElse(null);

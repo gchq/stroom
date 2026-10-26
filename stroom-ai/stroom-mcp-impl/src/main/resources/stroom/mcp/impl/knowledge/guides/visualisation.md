@@ -201,8 +201,8 @@ table and chart. `current_results` snapshots its results by its name, as a table
   a `threshold` line (with `thresholdLabel`), `breakOutliers` to cut the axis when a few values dwarf the rest, and
   `zoomSlider`; bar and line charts an `averageLine`, a scatter plot `jitter`. Pie, heatmap, calendar and histogram
   charts take `units` too. A network graph takes `physics` (settled, lively, spread) and a `thumbnail` overview.
-  `breakOutliers`, `zoomSlider` and `thumbnail` are drawn only with ECharts; with D3 the options take only
-  `color`.
+  Both libraries draw every setting, and look and work alike; with D3 the options take only `color` (the
+  others are ECharts' own).
 - Charts follow the user's theme and their date and time preferences (format and time zone), and update when those
   change.
 - A chart draws at most its Max Rows (5000 by default) of the table's rows, and a network graph at most its Max
