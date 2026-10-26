@@ -138,7 +138,7 @@ public class DashboardPresenter
     private static final String DEFAULT_PARAMS_INPUT = "Params";
     // What starts the line of a Visualisation's render report in the description, and the most of it given.
     private static final String RENDER_REPORT = "Render report: ";
-    private static final int MAX_RENDER_REPORT_CHARS = 600;
+    private static final int MAX_RENDER_REPORT_CHARS = 1200;
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;

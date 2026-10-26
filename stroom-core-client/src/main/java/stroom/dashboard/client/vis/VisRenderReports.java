@@ -32,8 +32,9 @@ import java.util.Set;
 
 /// Keeps only what Stroom expects of a visualisation's render report (see `stroom.report` in `vis.js`), as any
 /// script in the frame can send one: its status, counts, sizes, the library, the reasons rows were left out (from
-/// a fixed set) and short messages. Reports reach the chat's agent, so nothing else a script sends, such as data
-/// values, gets through.
+/// a fixed set), short messages, and what the user is looking at (the interval, the part zoomed in on, what is
+/// selected and the series hidden, which are cut short). Reports reach the chat's agent, so nothing else a script
+/// sends gets through.
 ///
 /// The filtering ([#sanitise(Map)]) works on plain Java values, so it can be tested on the JVM; [#sanitise(JSONObject)]
 /// only converts to and from the browser's JSON.
@@ -47,7 +48,13 @@ public final class VisRenderReports {
     private static final List<String> NUMBERS = List.of("rows", "series", "points", "nodes", "links", "width",
             "height", "svgCount", "canvasCount", "elementCount");
     private static final List<String> TEXTS = List.of("source", "adapter", "adapterVersion", "library",
-            "libraryVersion", "kind");
+            "libraryVersion", "kind", "interval");
+    // What the user is looking at: the part of the chart zoomed in on, and what is selected, as the chart labels it.
+    // These hold data values (e.g. the names of what is selected), shown to the chat's agent so it can talk about
+    // what the user sees; kept short, as any script in the frame can send them.
+    private static final List<String> VIEW_TEXTS = List.of("shown", "selection");
+    // The series hidden from the legend, by name.
+    static final int MAX_HIDDEN_SERIES = 10;
     // Whether something is selected on the chart (never what is: that would be a data value), and whether its rows
     // reached its row limit, so the rest were left out.
     private static final List<String> BOOLEANS = List.of("selected", "truncated");
@@ -122,6 +129,24 @@ public final class VisRenderReports {
                 }
             }
             clean.put("warnings", cleanWarnings);
+        }
+        for (final String name : VIEW_TEXTS) {
+            final String text = text(report.get(name), MAX_TEXT);
+            if (text != null) {
+                clean.put(name, text);
+            }
+        }
+        if (report.get("hiddenSeries") instanceof final List<?> hidden) {
+            final List<Object> cleanHidden = new ArrayList<>();
+            for (final Object name : hidden) {
+                final String text = text(name, MAX_SHORT_TEXT);
+                if (text != null && cleanHidden.size() < MAX_HIDDEN_SERIES) {
+                    cleanHidden.add(text);
+                }
+            }
+            if (!cleanHidden.isEmpty()) {
+                clean.put("hiddenSeries", cleanHidden);
+            }
         }
         final String error = text(report.get("error"), MAX_TEXT);
         if (error != null) {
