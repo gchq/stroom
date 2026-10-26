@@ -2713,16 +2713,7 @@ public class AskStroomAiPresenter
         }
         final int chatId = currentChat.getId();
         final String change = AiToolMessages.getString(json, "dashboardChange");
-        final List<TableChange> changes = new ArrayList<>();
-        final JSONArray operations = AiToolMessages.getArray(change, "operations");
-        for (int i = 0; operations != null && i < operations.size(); i++) {
-            final JSONObject operation = operations.get(i).isObject();
-            if (operation != null) {
-                final String operationJson = operation.toString();
-                changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name),
-                        AiToolMessages.toJava(operation.get("query")), AiToolMessages.toJava(operation.get("doc"))));
-            }
-        }
+        final List<TableChange> changes = operations(AiToolMessages.getArray(change, "operations"));
         final DocRef dashboard = docRef(AiToolMessages.getString(json, "doc"));
         button.setAttribute("disabled", "disabled");
         final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
@@ -3353,20 +3344,37 @@ public class AskStroomAiPresenter
             return;
         }
 
-        final TableChange change = TableChange.builder(TableChange.ADD_VIS)
+        // A table of its own is added first (beside the table with tableId), and its filter last, once it is on the
+        // dashboard.
+        final List<TableChange> tableChanges = operations(create.getTableChanges());
+        final List<TableChange> filterChanges = operations(create.getFilterChanges());
+        final boolean newTable = !tableChanges.isEmpty();
+        final List<TableChange> changes = new ArrayList<>(tableChanges);
+        changes.add(TableChange.builder(TableChange.ADD_VIS)
                 .name(create.getComponentName())
+                .table(newTable
+                        ? create.getTableName()
+                        : null)
                 .doc(visualisation)
                 .value(create.getComponentSettings())
                 .placement(create.getPlacement())
-                .build();
+                .build());
+        changes.addAll(filterChanges);
+        final String added = created + " and added it to the dashboard" + (newTable
+                ? " with table '" + create.getTableName() + "'"
+                : "") + (filterChanges.isEmpty()
+                ? ""
+                : ", its clicks filtering it") + ", not saved. Save the dashboard to keep it.";
         final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
                 create.getTarget(),
                 create.getTableId(),
-                create.getTableName(),
-                List.of(change),
+                // A new table is found by its name among those the changes add, not as the table with tableId.
+                newTable
+                        ? null
+                        : create.getTableName(),
+                changes,
                 onResult -> onResult.accept(null),
-                () -> showUserActionStatus(messageId, actionId, "DONE",
-                        created + " and added it to the dashboard, not saved. Save the dashboard to keep it."),
+                () -> showUserActionStatus(messageId, actionId, "DONE", added),
                 message -> {
                     if (message != null) {
                         AlertEvent.fireWarn(this, created + ", but it couldn't be added to the dashboard: "
@@ -3378,6 +3386,28 @@ public class AskStroomAiPresenter
         if (!event.isHandled()) {
             AlertEvent.fireWarn(this, created + ", but the dashboard can't be opened here to add it.", null);
         }
+    }
+
+    /// @param json Dashboard changes as the server gives them: a JSON array of operations, or null.
+    /// @return The changes, for the dashboard to apply; none if null.
+    private static List<TableChange> operations(final String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        return operations(JSONParser.parseStrict(json).isArray());
+    }
+
+    private static List<TableChange> operations(final JSONArray operations) {
+        final List<TableChange> changes = new ArrayList<>();
+        for (int i = 0; operations != null && i < operations.size(); i++) {
+            final JSONObject operation = operations.get(i).isObject();
+            if (operation != null) {
+                final String operationJson = operation.toString();
+                changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name),
+                        AiToolMessages.toJava(operation.get("query")), AiToolMessages.toJava(operation.get("doc"))));
+            }
+        }
+        return changes;
     }
 
     /// Shows how a Visualisation the user created from the chat drew, on the button's card: what it drew, or

@@ -427,20 +427,12 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                        + "description: tell the user the StroomQL to use instead.");
             }
         }
-        final Checked checked = DashboardChanges.check(changes, NullSafe.list(table.getColumns()), tableName,
-                NullSafe.list(tab.searches()).stream()
-                        .map(search -> NullSafe.nonBlankStringElse(search.getName(), search.getComponentId()))
-                        .toList());
-        final List<String> problems = new ArrayList<>(checked.problems());
-        problems.addAll(expressionProblems(checked.changes(), table));
-        final List<Change> withExpressions = withQueryExpressions(checked.changes(), table, settings.text(), problems);
-        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withExpressions,
-                        settings.text(), tableName, problems), checked, settings.text(), NullSafe.list(tab.searches()),
-                tableName, problems), checked, settings.text(), NullSafe.list(tab.searches()), problems);
-        if (!problems.isEmpty()) {
-            return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
-                                   + "\nCorrect it and propose it again.");
+        final Built result = build(changes, table, tableName, settings.text(), NullSafe.list(tab.searches()));
+        if (!result.problems().isEmpty()) {
+            return ToolResult.text("No change was proposed, as it isn't valid:\n- "
+                                   + String.join("\n- ", result.problems()) + "\nCorrect it and propose it again.");
         }
+        final List<Change> built = result.changes();
 
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
@@ -465,6 +457,33 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                   + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
                   + "undo with Undo apply. Tell them about the button rather than saying the dashboard was changed."
                   + eventNote(built, table, tableName)).withUserAction(action);
+    }
+
+    /// Checks changes to a table on a dashboard, and builds them as the browser applies them: what this tool
+    /// proposes, and what another proposes with its own change (e.g. propose_visualisation, a table for its chart).
+    ///
+    /// @param changes       The changes, as the model gave them.
+    /// @param table         The table (or embedded query) they change, or add a table beside.
+    /// @param tableName     Its name, as the user sees it.
+    /// @param dashboardText The dashboard's description, as the browser gives it.
+    /// @param searches      The dashboard's tables and embedded queries.
+    /// @return The changes as built, the checks' findings, and why any can't be made (none if all can).
+    Built build(final List<Change> changes,
+                final AiTabSearch table,
+                final String tableName,
+                final String dashboardText,
+                final List<AiTabSearch> searches) {
+        final Checked checked = DashboardChanges.check(changes, NullSafe.list(table.getColumns()), tableName,
+                searches.stream()
+                        .map(search -> NullSafe.nonBlankStringElse(search.getName(), search.getComponentId()))
+                        .toList());
+        final List<String> problems = new ArrayList<>(checked.problems());
+        problems.addAll(expressionProblems(checked.changes(), table));
+        final List<Change> withExpressions = withQueryExpressions(checked.changes(), table, dashboardText, problems);
+        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withExpressions,
+                dashboardText, tableName, problems), checked, dashboardText, searches, tableName, problems), checked,
+                dashboardText, searches, problems);
+        return new Built(built, checked, List.copyOf(problems));
     }
 
     // Resolves the component each rename and set_setting changes, by name (or a table these changes add), and checks
@@ -1136,5 +1155,18 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     public boolean readsUntrustedContent() {
         // Column names and expressions are written by users.
         return true;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Changes to a dashboard table, checked and built (see [#build(List, AiTabSearch, String, String, List)]).
+    ///
+    /// @param changes  The changes as the browser applies them.
+    /// @param checked  What checking them found, e.g. the columns of a table they add.
+    /// @param problems Why any of them can't be made; none if all can.
+    record Built(List<Change> changes, Checked checked, List<String> problems) {
+
     }
 }

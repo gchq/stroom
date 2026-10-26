@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.DashboardChanges;
+import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.DashboardComponents;
 import stroom.ai.impl.DashboardComponents.Component;
 import stroom.ai.impl.DashboardComponents.EmbeddedQuery;
@@ -103,6 +105,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final String SUMMARY_ARG = "summary";
     static final String REPLACE_ARG = "replace";
     static final String ADD_NEW_ARG = "addNew";
+    static final String NEW_TABLE_ARG = "newTable";
+    static final String FILTER_ARG = "filter";
+    /// The component id a selection filter is planned with for the chart it is added with, which the browser puts
+    /// the chart's own id in place of once it has added it.
+    public static final String NEW_CHART_ID = "new-chart";
     static final String ECHARTS = "echarts";
     static final String D3 = "d3";
     /// Wires one of the visualisations content pack's own D3 Visualisations to the table; nothing is generated.
@@ -139,6 +146,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     private final CurrentResultsTool currentResultsTool;
     private final ChartLibraries chartLibraries;
     private final AiAuditLog auditLog;
+    private final ProposeDashboardChangeTool dashboardChanges;
 
     @Inject
     ProposeVisualisationTool(final ChatWorkspace workspace,
@@ -146,13 +154,15 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                              final DocumentAccess documentAccess,
                              final CurrentResultsTool currentResultsTool,
                              final ChartLibraries chartLibraries,
-                             final AiAuditLog auditLog) {
+                             final AiAuditLog auditLog,
+                             final ProposeDashboardChangeTool dashboardChanges) {
         super(workspace);
         this.tabSnapshots = tabSnapshots;
         this.documentAccess = documentAccess;
         this.currentResultsTool = currentResultsTool;
         this.chartLibraries = chartLibraries;
         this.auditLog = auditLog;
+        this.dashboardChanges = dashboardChanges;
     }
 
     @Override
@@ -200,7 +210,12 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                   + "gives. When the table already has a chart Stroom AI generated (e.g. the user "
                                   + "asks for it as another kind of chart), ask the user (ask_user) whether to "
                                   + "replace it or add a new one, unless they have said, and give replace or "
-                                  + "addNew. You never write the chart's code or settings JSON: Stroom builds them.")
+                                  + "addNew. Before proposing a chart on a dashboard, ask the user (ask_user) how "
+                                  + "its clicks should filter the dashboard (the whole dashboard, one table, or "
+                                  + "nothing), unless they have said, and give filter: it is added with the chart. "
+                                  + "When no table has the columns the chart needs, give newTable: the chart's "
+                                  + "button adds the table with it, so don't propose the table first. You never "
+                                  + "write the chart's code or settings JSON: Stroom builds them.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addEnumProperty(LIBRARY_ARG, List.of(ECHARTS, D3, CONTENT_PACK), "The charting library "
@@ -230,6 +245,58 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                 + "(the default), or as a tab beside it.")
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what the chart shows, shown with the "
                                                         + "button.")
+                        .addProperty(NEW_TABLE_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
+                                        .description(ToolDescription.builder()
+                                                .general("A change to the dashboard.")
+                                                .chatOnly(" As propose_dashboard_change takes them.")
+                                                .build())
+                                        .build())
+                                .description(ToolDescription.builder()
+                                        .general("Optional, echarts or d3 on a dashboard. When no table has the "
+                                                 + "columns the chart needs: a new table to chart, added beside "
+                                                 + "table (fed by the same query): add_table (copy false) first, "
+                                                 + "then its columns (add_column, group, sort, ... each with table "
+                                                 + "set to its name). One button adds the table, the chart (and "
+                                                 + "its filter) together, so don't propose the table first. Its "
+                                                 + "rows aren't known until its query runs, so only its columns "
+                                                 + "are checked.")
+                                        .chatOnly(" The changes are as propose_dashboard_change takes them.")
+                                        .build())
+                                .build())
+                        .addProperty(FILTER_ARG, ObjectSchema.builder()
+                                .addEnumProperty("mode", DashboardChanges.FILTER_MODES, "query filters the "
+                                                                                        + "target's search; table "
+                                                                                        + "the target table's rows.")
+                                .addStringProperty("target", "The query, embedded query or table to filter (or "
+                                                             + "the new table).")
+                                .addEnumProperty("match", List.of("all", "any"), "All its terms must hold (the "
+                                                                                 + "default), or any.")
+                                .addProperty("terms", ArraySchema.builder()
+                                        .items(ObjectSchema.builder()
+                                                .addStringProperty("field", "A query field (mode query) or a "
+                                                                            + "column of the target table (mode "
+                                                                            + "table).")
+                                                .addStringProperty("selection", "What the chart selects to "
+                                                                                + "compare it with: an input "
+                                                                                + "(e.g. category, series, x) or "
+                                                                                + "its column's name.")
+                                                .required("field", "selection")
+                                                .build())
+                                        .build())
+                                .required("mode", "target", "terms")
+                                .description(ToolDescription.builder()
+                                        .general("Optional, echarts or d3 on a dashboard. How a click on the new "
+                                                 + "chart filters the dashboard (a selection filter on a query's "
+                                                 + "search or a table's rows), added with the chart by its "
+                                                 + "button.")
+                                        .chatOnly(" As propose_dashboard_change's add_selection_filter, without "
+                                                  + "chart. Before proposing a chart that can filter, ask the user "
+                                                  + "(ask_user) how its clicks should: the whole dashboard (the "
+                                                  + "query), one table, or nothing; give it unless they choose "
+                                                  + "nothing.")
+                                        .build())
+                                .build())
                         .addStringProperty(REPLACE_ARG, "Optional, echarts or d3 on a dashboard. The name of the "
                                                         + "Visualisation pane whose chart (one Stroom AI generated, "
                                                         + "of the same table) the new one replaces: its "
@@ -364,21 +431,53 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             embedded = null;
         }
 
-        // Check the table's data can make the chart.
+        // A new table to chart, added beside this one by the chart's button, or this table.
+        final boolean dashboardChart = !query && embedded == null && !CONTENT_PACK.equals(library);
+        if (!dashboardChart && (argsMap(request).get(NEW_TABLE_ARG) != null
+                                || argsMap(request).get(FILTER_ARG) != null)) {
+            throw new WorkspaceException(NEW_TABLE_ARG + " and " + FILTER_ARG + " are for a chart generated (library "
+                                         + ECHARTS + " or " + D3 + ") on a dashboard table.");
+        }
+        final NewTable newTable = argsMap(request).get(NEW_TABLE_ARG) == null
+                ? null
+                : newTable(argsMap(request).get(NEW_TABLE_ARG), table, tableName, part.text(), tab);
+        if (newTable != null && newTable.problem() != null) {
+            return ToolResult.text(newTable.problem());
+        }
+        final String chartTable = newTable != null
+                ? newTable.name()
+                : tableName;
+
+        // Check the table's data can make the chart: a new table's columns, as it hasn't run.
         final AskStroomAiContext results = table.getLive() != null
                 ? table.getLive()
                 : table.getResults();
-        final Map<String, String> formats = ResultsRequests.columnFormats(results);
-        final Map<String, String> expressions = ResultsRequests.columnExpressions(results);
-        final Map<String, Integer> groups = ResultsRequests.columnGroups(results);
-        final List<TableColumn> columns = NullSafe.list(table.getColumns()).stream()
-                .map(column -> new TableColumn(column, formats.get(column), expressions.get(column),
-                        groups.get(column)))
-                .toList();
-        final SampleOutcome sample = sample(request, context, table);
+        final List<TableColumn> columns;
+        final SampleOutcome sample;
+        if (newTable != null) {
+            columns = newTable.columns();
+            sample = new SampleOutcome(null, "the new table '" + newTable.name() + "' hasn't run, so only its "
+                                             + "columns were checked: its rows are drawn once the button adds it "
+                                             + "and its query runs.");
+        } else {
+            final Map<String, String> tableFormats = ResultsRequests.columnFormats(results);
+            final Map<String, String> tableExpressions = ResultsRequests.columnExpressions(results);
+            final Map<String, Integer> groups = ResultsRequests.columnGroups(results);
+            columns = NullSafe.list(table.getColumns()).stream()
+                    .map(column -> new TableColumn(column, tableFormats.get(column), tableExpressions.get(column),
+                            groups.get(column)))
+                    .toList();
+            sample = sample(request, context, table);
+        }
+        final Map<String, String> formats = new LinkedHashMap<>();
+        final Map<String, String> expressions = new LinkedHashMap<>();
+        columns.forEach(column -> {
+            NullSafe.consume(column.format(), format -> formats.put(column.name(), format));
+            NullSafe.consume(column.expression(), expression -> expressions.put(column.name(), expression));
+        });
         final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
         if (!check.ok()) {
-            return ToolResult.text("No chart was offered: the table '" + tableName + "' can't make this "
+            return ToolResult.text("No chart was offered: the table '" + chartTable + "' can't make this "
                                    + kind.displayName().toLowerCase(Locale.ROOT) + ":\n- "
                                    + String.join("\n- ", check.problems())
                                    + "\nTell the user why, and suggest the way forward above (offer the change, "
@@ -394,9 +493,13 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             if (addNew) {
                 throw new WorkspaceException("Give " + REPLACE_ARG + " or " + ADD_NEW_ARG + ", not both.");
             }
+            if (newTable != null || argsMap(request).get(FILTER_ARG) != null) {
+                throw new WorkspaceException("A chart that replaces another keeps its table and filters: give "
+                                             + NEW_TABLE_ARG + " and " + FILTER_ARG + " only for a new chart.");
+            }
             replace = replacement(DashboardComponents.parse(part.text()), replaceName, tableName, library,
                     query || embedded != null);
-        } else if (!query && embedded == null && !addNew) {
+        } else if (!query && embedded == null && !addNew && newTable == null) {
             final List<Component> generated = generatedCharts(DashboardComponents.parse(part.text()), tableName);
             if (!generated.isEmpty()) {
                 return ToolResult.text(askReplaceOrAdd(tableName, generated));
@@ -420,9 +523,226 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (CONTENT_PACK.equals(library)) {
             return contentPack(kind, mappings, target, query, tableName, placement, name, notes);
         }
-        notes.append(clickFilterNote(kind, mappings, expressions, formats, query, tableName));
-        return generate(chartLibrary, kind, mappings, style, options, target, query, embedded, table, tableName,
-                part, name, summary, placement, replace, request, context, notes);
+        // The filter the chart's clicks drive, added with it.
+        final String componentName = NullSafe.nonBlankStringElse(stringArg(request, COMPONENT_NAME_ARG),
+                replace != null
+                        ? replace.componentName()
+                        : name);
+        List<Map<String, Object>> filterChanges = List.of();
+        if (argsMap(request).get(FILTER_ARG) != null) {
+            final FilterOutcome filter = filterChanges(argsMap(request).get(FILTER_ARG), kind, mappings, componentName,
+                    chartTable, newTable, table, tableName, part.text(), tab);
+            if (filter.problem() != null) {
+                return ToolResult.text(filter.problem());
+            }
+            filterChanges = filter.changes();
+            notes.append("\nIts clicks filter the dashboard (added with it): ").append(filter.description())
+                    .append('.');
+        } else {
+            notes.append(clickFilterNote(kind, mappings, expressions, formats, query, chartTable));
+        }
+        return generate(chartLibrary, kind, mappings, style, options, target, query, embedded, table, chartTable,
+                part, name, summary, placement, replace, request, context, notes,
+                newTable == null
+                        ? List.of()
+                        : newTable.changes(), filterChanges);
+    }
+
+    // A table for a chart, added by its button beside the table given: the changes that add it (as
+    // propose_dashboard_change takes them), checked and built, its name and its columns as they leave it; or why it
+    // can't be added.
+    private NewTable newTable(final Object value,
+                              final AiTabSearch beside,
+                              final String besideName,
+                              final String dashboardText,
+                              final StoredTabSnapshot tab) {
+        final List<Change> changes;
+        try {
+            changes = DashboardChanges.parse(value);
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(NEW_TABLE_ARG + ": " + e.getMessage());
+        }
+        if (changes.isEmpty() || !DashboardChanges.ADD_TABLE.equals(changes.getFirst().op())
+            || changes.stream().skip(1).anyMatch(change -> DashboardChanges.ADD_TABLE.equals(change.op())
+                                                           || DashboardChanges.ADD_VIS.equals(change.op())
+                                                           || DashboardChanges.ADD_TEXT.equals(change.op()))) {
+            throw new WorkspaceException(NEW_TABLE_ARG + " must start with add_table (its name), then only change "
+                                         + "that table's columns, each with table set to its name.");
+        }
+        final String name = changes.getFirst().name();
+        final ProposeDashboardChangeTool.Built built = dashboardChanges.build(changes, beside, besideName,
+                dashboardText, NullSafe.list(tab.searches()));
+        if (!built.problems().isEmpty()) {
+            return new NewTable(name, List.of(), List.of(), "No chart was offered: the new table isn't valid:\n- "
+                                                            + String.join("\n- ", built.problems())
+                                                            + "\nCorrect it and propose the chart again.");
+        }
+        final List<String> names = NullSafe.list(built.checked().columnsOf(name));
+        return new NewTable(name, built.changes().stream().map(Change::toMap).toList(),
+                addedColumns(built.changes(), name, beside, names), null);
+    }
+
+    // The columns of a table the changes add, as they leave it (in the order given): each with its expression,
+    // format and group level, from the columns it copies and the changes to its columns.
+    static List<TableColumn> addedColumns(final List<Change> changes,
+                                          final String table,
+                                          final AiTabSearch copied,
+                                          final List<String> names) {
+        final Map<String, TableColumn> columns = new LinkedHashMap<>();
+        for (final Change change : changes) {
+            if (DashboardChanges.ADD_TABLE.equals(change.op())) {
+                if (Boolean.TRUE.equals(change.copy())) {
+                    final AskStroomAiContext results = copied.getLive() != null
+                            ? copied.getLive()
+                            : copied.getResults();
+                    final Map<String, String> formats = ResultsRequests.columnFormats(results);
+                    final Map<String, String> expressions = ResultsRequests.columnExpressions(results);
+                    final Map<String, Integer> groups = ResultsRequests.columnGroups(results);
+                    NullSafe.list(copied.getColumns()).forEach(column -> columns.put(column, new TableColumn(column,
+                            formats.get(column), expressions.get(column), groups.get(column))));
+                }
+                continue;
+            }
+            if (change.table() == null || !change.table().equalsIgnoreCase(table)) {
+                continue;
+            }
+            final TableColumn before = change.column() == null
+                    ? null
+                    : columns.get(change.column());
+            switch (change.op()) {
+                case DashboardChanges.ADD_COLUMN -> columns.put(change.name(), new TableColumn(change.name(),
+                        formatType(change.format()), change.expression(), null));
+                case DashboardChanges.EDIT_COLUMN -> {
+                    if (before != null) {
+                        final String renamed = NullSafe.nonBlankStringElse(change.name(), before.name());
+                        columns.remove(before.name());
+                        columns.put(renamed, new TableColumn(renamed, change.format() != null
+                                ? formatType(change.format())
+                                : before.format(), NullSafe.nonBlankStringElse(change.expression(),
+                                before.expression()), before.group()));
+                    }
+                }
+                case DashboardChanges.GROUP -> {
+                    if (before != null) {
+                        columns.put(before.name(), new TableColumn(before.name(), before.format(),
+                                before.expression(), change.level()));
+                    }
+                }
+                case DashboardChanges.UNGROUP -> {
+                    if (before != null) {
+                        columns.put(before.name(), new TableColumn(before.name(), before.format(),
+                                before.expression(), null));
+                    }
+                }
+                default -> {
+                    // Sorting, filtering, hiding and moving leave the columns as they are.
+                }
+            }
+        }
+        return names.stream()
+                .map(column -> columns.getOrDefault(column, new TableColumn(column, null)))
+                .toList();
+    }
+
+    // A column's format type, as a table's columns give it (e.g. DATE_TIME), from its name in a change (e.g. Date
+    // Time); null if none.
+    private static String formatType(final String format) {
+        return format == null
+                ? null
+                : format.strip().toUpperCase(Locale.ROOT).replace(' ', '_');
+    }
+
+    // The selection filter a new chart's clicks drive, as propose_dashboard_change's add_selection_filter checks and
+    // builds it, against the dashboard as it will be once the button has added the chart (and its table): the chart
+    // planned with the id NEW_CHART_ID, which the browser puts the chart's own in place of.
+    private FilterOutcome filterChanges(final Object value,
+                                        final ChartKind kind,
+                                        final Map<String, String> mappings,
+                                        final String componentName,
+                                        final String chartTable,
+                                        final NewTable newTable,
+                                        final AiTabSearch table,
+                                        final String tableName,
+                                        final String dashboardText,
+                                        final StoredTabSnapshot tab) {
+        if (!(value instanceof final Map<?, ?> given)) {
+            throw new WorkspaceException(FILTER_ARG + " must be an object: mode, target, match and terms.");
+        }
+        final Map<String, Object> filter = new LinkedHashMap<>();
+        given.forEach((key, entry) -> filter.put(String.valueOf(key), entry));
+        filter.put("op", DashboardChanges.ADD_SELECTION_FILTER);
+        filter.put("chart", componentName);
+        final List<Change> changes;
+        try {
+            changes = DashboardChanges.parse(List.of(filter));
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(FILTER_ARG + ": " + e.getMessage());
+        }
+        final Change change = changes.getFirst();
+        // Terms on the new table's columns, which its own check can't see (it hasn't run).
+        if (newTable != null && DashboardChanges.TABLE_FILTER.equals(change.value())
+            && newTable.name().equalsIgnoreCase(change.target())) {
+            final List<String> names = newTable.columns().stream().map(TableColumn::name).toList();
+            final List<String> unknown = change.settings().keySet().stream()
+                    .filter(field -> !names.contains(field))
+                    .toList();
+            if (!unknown.isEmpty()) {
+                return new FilterOutcome(List.of(), null, "No chart was offered: its filter isn't valid: the new "
+                                                          + "table has no column " + String.join(", ", unknown)
+                                                          + ". Its columns are: " + String.join(", ", names) + ".");
+            }
+        }
+        final ProposeDashboardChangeTool.Built built = dashboardChanges.build(changes, table, tableName,
+                withNewChart(dashboardText, kind, mappings, componentName, chartTable, newTable),
+                NullSafe.list(tab.searches()));
+        if (!built.problems().isEmpty()) {
+            return new FilterOutcome(List.of(), null, "No chart was offered: its filter isn't valid:\n- "
+                                                      + String.join("\n- ", built.problems())
+                                                      + "\nCorrect it and propose the chart again.");
+        }
+        return new FilterOutcome(built.changes().stream().map(Change::toMap).toList(),
+                String.join("; ", DashboardChanges.describe(built.changes())), null);
+    }
+
+    // The dashboard's description as it will be once a chart's button has added the chart, and the table it adds
+    // (if it adds one): for checking the filter the chart's clicks drive.
+    static String withNewChart(final String dashboardText,
+                               final ChartKind kind,
+                               final Map<String, String> mappings,
+                               final String componentName,
+                               final String chartTable,
+                               final NewTable newTable) {
+        final StringBuilder text = new StringBuilder(NullSafe.string(dashboardText));
+        if (newTable != null) {
+            text.append("\n## Table '").append(newTable.name()).append("' (id new-table)\nColumns:\n");
+            newTable.columns().forEach(column -> {
+                text.append("- ").append(column.name()).append(": ").append(NullSafe.string(column.expression()));
+                NullSafe.consume(column.format(), format -> text.append(" (format ").append(formatName(format))
+                        .append(")"));
+                text.append('\n');
+            });
+        }
+        final Map<String, String> settings = new LinkedHashMap<>(NullSafe.map(mappings));
+        settings.put("kind", kind.id());
+        text.append("\n## Visualisation '").append(componentName).append("' (id ").append(NEW_CHART_ID)
+                .append(")\nLinked table: '").append(chartTable).append("'\nVis settings: ")
+                .append(JsonUtil.writeValueAsString(settings, false)).append('\n');
+        return text.toString();
+    }
+
+    // A column's format, as the dashboard's description names it (e.g. Date Time), from its type (e.g. DATE_TIME).
+    private static String formatName(final String type) {
+        final String words = type.toLowerCase(Locale.ROOT).replace('_', ' ');
+        final StringBuilder name = new StringBuilder();
+        for (final String word : words.split(" ")) {
+            if (!word.isEmpty()) {
+                if (!name.isEmpty()) {
+                    name.append(' ');
+                }
+                name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+            }
+        }
+        return name.toString();
     }
 
     // Several charts proposed together, behind one button: each checked against its table's rows as a single chart
@@ -726,16 +1046,17 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (kind == ChartKind.GRAPH || kind == ChartKind.SANKEY || kind == ChartKind.CHORD) {
             selects.add("node (a node's name, from either end)");
         }
-        return "\nClick filtering: once the chart is created, a click on it selects " + String.join(", ", selects)
-               + ". In one line, offer to make clicks filter the dashboard (add_selection_filter, once its pane is "
-               + "on the dashboard): "
+        return "\nClick filtering: a click on it selects " + String.join(", ", selects)
+               + ". It was offered without a filter (next time, ask first and give filter, to add it with the "
+               + "chart). In one line, offer to make clicks filter the dashboard (add_selection_filter, once its "
+               + "pane is on the dashboard): "
                + (fields.isEmpty()
                 ? "the rows of table '" + tableName + "' or another table by column(s) " + String.join(", ", columns)
                   + " (the search can't be filtered by them, as they aren't plain fields of the data source)"
                 : "the search of the query feeding '" + tableName + "' by field(s) " + String.join(", ", fields)
                   + " (every table it feeds narrows, this chart too), or a table's rows by column(s) "
                   + String.join(", ", columns) + " (this chart stays whole)")
-               + ". Ask which, unless the user has said; propose it only once they've created the chart."
+               + ". Ask which (ask_user), unless the user has said; propose it once they've created the chart."
                + (kind == ChartKind.GRAPH || kind == ChartKind.SANKEY || kind == ChartKind.CHORD
                 ? " For a network, give match any with a term per end by node, and the link's ends (the source's "
                   + "field or column with selection source, the target's with selection target), so a clicked "
@@ -892,7 +1213,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                 final Replace replace,
                                 final ToolCall request,
                                 final ToolCallContext context,
-                                final StringBuilder notes) {
+                                final StringBuilder notes,
+                                final List<Map<String, Object>> tableChanges,
+                                final List<Map<String, Object>> filterChanges) {
         final Installed installed = installed(library).orElse(null);
         if (installed == null) {
             return ToolResult.text(notInstalled(library, "No chart was offered"));
@@ -933,7 +1256,13 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                         ? part.text()
                         : NullSafe.get(embedded, EmbeddedQuery::query),
                 replace,
-                library.id());
+                library.id(),
+                tableChanges.isEmpty()
+                        ? null
+                        : tableChanges,
+                filterChanges.isEmpty()
+                        ? null
+                        : filterChanges);
         try {
             plan.validate();
         } catch (final IllegalArgumentException e) {
@@ -1151,6 +1480,18 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     }
 
     // A sample of rows and a note on where it came from, or null and why there is none.
+    // A table a chart's button adds for it: its name, the changes that add it (as the browser applies them) and its
+    // columns as they leave it; or why it can't be added.
+    record NewTable(String name, List<Map<String, Object>> changes, List<TableColumn> columns, String problem) {
+
+    }
+
+    // The filter a new chart's button adds: its change (as the browser applies it) and what it does; or why it can't
+    // be added.
+    private record FilterOutcome(List<Map<String, Object>> changes, String description, String problem) {
+
+    }
+
     private record SampleOutcome(Sample sample, String note) {
 
     }
