@@ -16,7 +16,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisContextFactory;
@@ -98,6 +97,8 @@ public class QueryResultVisPresenter
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
+    // The settings last drawn with, as the data is: a redraw put off (see update) is still made if they change.
+    private JavaScriptObject lastSettings;
 
     private VisSelectionModel visSelectionModel;
     private boolean pause;
@@ -126,18 +127,13 @@ public class QueryResultVisPresenter
         view.getToolbar().setHandlers(this);
         view.getToolbar().setDataDownloadAllowed(securityContext.hasAppPermission(
                 AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        // Ask Stroom AI about the chart, its Visualisation attached to the chat.
+        view.getToolbar().setAskAiContext(() -> VisToolbar.chartContext(currentVisualisation));
 
         visFrame.setReportHandler(this::onRenderReport);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
-    }
-
-    /// Shows Ask Stroom AI in the chart's toolbar, which attaches the query's results the chart draws to the chat.
-    ///
-    /// @param askAiContext Gives the search behind the results, or null if it hasn't run.
-    public void setAskAiContext(final Supplier<AskStroomAiContext> askAiContext) {
-        getView().getToolbar().setAskAiContext(askAiContext);
     }
 
     /// @param fileName Gives the name of a file the chart is saved to, without its extension.
@@ -536,13 +532,16 @@ public class QueryResultVisPresenter
         if (now > nextUpdate) {
             nextUpdate = now + UPDATE_INTERVAL;
             lastData = currentData;
+            lastSettings = currentSettings;
             refreshVisualisation();
         } else {
             if (updateTimer == null) {
                 updateTimer = new Timer() {
                     @Override
                     public void run() {
-                        if (lastData != currentData) {
+                        // Seen in testing: a chart replaced by the AI chat kept its old look until its query was
+                        // run again, as its new Visualisation's settings arrived with the same data.
+                        if (lastData != currentData || lastSettings != currentSettings) {
                             update();
                         }
                     }
