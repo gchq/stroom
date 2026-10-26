@@ -123,8 +123,8 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
             if (!chartLibraries.currentUserCanUse(d3Library.script())) {
                 sb.append(", but the user doesn't have Use permission on it, so its charts won't load for them");
             }
-            sb.append(". Generates any of the kinds below (library d3), drawn by Stroom's own adapter; not the "
-                      + "settings marked echarts only. The newest D3 installed is used.\n");
+            sb.append(". Generates any of the kinds below (library d3), with any of their settings, drawn by Stroom's "
+                      + "own adapter to look and work as ECharts' do. The newest D3 installed is used.\n");
         }
 
         final Map<ChartKind, DocRef> d3 = chartLibraries.findContentPackD3();
@@ -158,9 +158,7 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
                 sb.append("\n");
             }
             sb.append("Style settings: ").append(kind.styleSettings().stream()
-                    .map(setting -> describe(setting) + (ChartLibrary.D3.supports(setting)
-                            ? ""
-                            : " (echarts only)"))
+                    .map(ListVisualisationsTool::describe)
                     .collect(Collectors.joining("; "))).append("\n");
             NullSafe.consume(TUNING.get(kind), tuning -> sb.append(tuning).append("\n"));
         }

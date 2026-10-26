@@ -336,7 +336,9 @@ if (!window.visualisations) {
             var copy = {};
             Object.keys(value).forEach(function (key) {
                 if (FORBIDDEN_OPTION_KEYS[key]) {
-                    warnings.push("Ignored option '" + path + key + "'");
+                    // Seen in testing: a legend made to scroll (as it already does), taken to be one that can't.
+                    warnings.push("Ignored option '" + path + key + "'" + (path + key === "legend.type"
+                        ? ": the legend already scrolls, a page at a time, when its entries don't fit" : ""));
                 } else {
                     copy[key] = stripForbidden(value[key], warnings, path + key + ".");
                 }
@@ -851,12 +853,14 @@ if (!window.visualisations) {
         if (legendShown && position === "top") {
             top += 28;
         }
+        // The margins are the bounds of the axes' labels and names, which are kept inside them.
         return {
             top: top,
-            left: 16,
+            left: 8,
             right: legendShown && position === "right" ? 140 : STROOM_BUTTON_SPACE,
-            bottom: legendShown && position === "bottom" ? 36 : 16,
-            containLabel: true
+            bottom: legendShown && position === "bottom" ? 32 : 8,
+            outerBoundsMode: "same",
+            outerBoundsContain: "all"
         };
     }
 
@@ -870,8 +874,14 @@ if (!window.visualisations) {
         };
     }
 
+    // An axis's name is centred along it, clear of its labels (at its end, it was cut off at the chart's edge, and at
+    // the top of a y axis, drawn over the legend).
+    function axisName(name) {
+        return {name: name || "", nameLocation: "middle", nameGap: 24, nameMoveOverlap: true};
+    }
+
     function valueAxis(name, style, axisType, prefs) {
-        var axis = merge({type: axisType || "value", name: name || "", nameGap: 28}, axisStyle(style));
+        var axis = merge(merge({type: axisType || "value"}, axisName(name)), axisStyle(style));
         if (axisType === "time") {
             axis.axisLabel.formatter = function (value) {
                 return formatTime(value, prefs.compactTimePattern, prefs.timeZone);
@@ -885,7 +895,7 @@ if (!window.visualisations) {
     }
 
     function categoryAxis(name, categories, style) {
-        return merge({type: "category", name: name || "", nameGap: 28, data: categories}, axisStyle(style));
+        return merge(merge({type: "category", data: categories}, axisName(name)), axisStyle(style));
     }
 
     // What a click on a category chart's bar or point selects: its category, and its series if one is mapped.
@@ -921,6 +931,8 @@ if (!window.visualisations) {
 
         var catAxis = categoryAxis(textSetting(settings, "xAxisName") || fields.column("category"),
             matrix.categories, style);
+        // A horizontal bar chart's categories read from the top down, in their order (e.g. largest first).
+        catAxis.inverse = horizontal;
         var valAxis = valueAxis(textSetting(settings, "yAxisName") || fields.column("value"), style, "value", prefs);
 
         return {
@@ -1223,7 +1235,8 @@ if (!window.visualisations) {
         var bands = gaugeBands(textSetting(settings, "bands"), min, max);
         var columns = Math.ceil(Math.sqrt(names.length || 1));
         var gridRows = Math.ceil((names.length || 1) / columns);
-        var radius = Math.min(100 / columns, 100 / gridRows) * 0.42;
+        // As a percentage of half the chart's smaller side, as ECharts takes it.
+        var radius = Math.min(100 / columns, 100 / gridRows) * 0.84;
         var format = function (value) {
             return prefs.formatValue(value);
         };
@@ -1331,9 +1344,11 @@ if (!window.visualisations) {
             tooltip: {
                 trigger: "item",
                 formatter: function (params) {
+                    // A jittered point's own x and y, kept at its end.
+                    var value = boolSetting(settings, "jitter", false) ? params.value.slice(-2) : params.value;
                     var lines = [escapeHtml(params.seriesName)];
-                    lines.push(escapeHtml((fields.column("x") || "x") + ": " + axisText(params.value[0], xType)));
-                    lines.push(escapeHtml((fields.column("y") || "y") + ": " + axisText(params.value[1], yType)));
+                    lines.push(escapeHtml((fields.column("x") || "x") + ": " + axisText(value[0], xType)));
+                    lines.push(escapeHtml((fields.column("y") || "y") + ": " + axisText(value[1], yType)));
                     if (hasSize) {
                         lines.push(escapeHtml(fields.column("size") + ": " + formatNumber(params.value[2])));
                     }
@@ -1600,7 +1615,7 @@ if (!window.visualisations) {
                 categories: groups.map(function (group) {
                     return {name: group};
                 }),
-                force: physicsOf(settings, nodeCount),
+                force: physicsOfShown(settings, nodeCount),
                 edgeSymbol: directed ? ["none", "arrow"] : ["none", "none"],
                 edgeSymbolSize: 6,
                 emphasis: {focus: "adjacency", lineStyle: {width: 4}},
@@ -1634,6 +1649,16 @@ if (!window.visualisations) {
         };
     }
 
+    // The force layout's physics (see physicsOf), always laid out moving when the thumbnail shows: without, ECharts
+    // 6 recurses until it runs out of stack (seen in testing, on a graph too large to lay out moving).
+    function physicsOfShown(settings, nodeCount) {
+        var physics = physicsOf(settings, nodeCount);
+        if (boolSetting(settings, "thumbnail", false)) {
+            physics.layoutAnimation = true;
+        }
+        return physics;
+    }
+
     // The force layout's physics by the Physics setting: settled (as it settles quickly), lively (kept moving longer,
     // with less friction and gravity) or spread (nodes pushed further apart, on longer links).
     function physicsOf(settings, nodeCount) {
@@ -1655,6 +1680,8 @@ if (!window.visualisations) {
     // neighbouring ones differ, lighter on a dark theme.
     var BASE_PALETTE = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4",
         "#ea7ccc"];
+    // How many colours a chart's series are given in turn.
+    var MAX_PALETTE = 30;
 
     function distinctColours(count, style) {
         var colours = BASE_PALETTE.slice(0, Math.min(count, BASE_PALETTE.length));
@@ -2133,6 +2160,8 @@ if (!window.visualisations) {
         report.points = network.links.length;
         var vertical = String(textSetting(settings, "orient") || "horizontal").toLowerCase() === "vertical";
         var showLabels = boolSetting(settings, "showLabels", true);
+        // A Sankey diagram's nodes take their own colours, not the chart's: given the chart's, in turn.
+        var colours = distinctColours(network.nodeNames.length, style);
 
         return {
             tooltip: {trigger: "item"},
@@ -2148,8 +2177,8 @@ if (!window.visualisations) {
                 emphasis: {focus: "adjacency"},
                 lineStyle: {color: "gradient", opacity: 0.35},
                 label: {show: showLabels, color: style.text, position: vertical ? "bottom" : "right"},
-                data: network.nodeNames.map(function (name) {
-                    return {name: name};
+                data: network.nodeNames.map(function (name, i) {
+                    return {name: name, itemStyle: {color: colours[i]}};
                 }),
                 links: network.links.map(function (link) {
                     return {source: link.source, target: link.target, value: link.value};
@@ -2427,9 +2456,44 @@ if (!window.visualisations) {
             });
         }
         if (kind === "scatter" && boolSetting(settings, "jitter", false)) {
-            option.xAxis.jitter = 8;
-            option.yAxis.jitter = 8;
+            jitterPoints(series);
         }
+    }
+
+    // A fraction from -0.5 to 0.5 that is the same for the same index, to spread overlapping points (Jitter).
+    function jitterOf(index) {
+        var value = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
+        return value - Math.floor(value) - 0.5;
+    }
+
+    // Moves each scatter point a little (up to 1% of the plot each way), the same each time, so points on the same
+    // spot can be told apart. ECharts jitters only a category axis, and a scatter plot's are numbers or times. Each
+    // point keeps its own x and y after its other values, for its tooltip (as arrays, which a large scatter plot
+    // needs).
+    function jitterPoints(series) {
+        var extent = [[Infinity, -Infinity], [Infinity, -Infinity]];
+        series.forEach(function (one) {
+            (one.data || []).forEach(function (point) {
+                [0, 1].forEach(function (d) {
+                    extent[d][0] = Math.min(extent[d][0], point[d]);
+                    extent[d][1] = Math.max(extent[d][1], point[d]);
+                });
+            });
+        });
+        var spans = extent.map(function (range) {
+            return range[1] > range[0] ? range[1] - range[0] : 1;
+        });
+        var index = 0;
+        series.forEach(function (one) {
+            one.data = (one.data || []).map(function (point) {
+                index++;
+                var moved = point.slice();
+                moved[0] = point[0] + jitterOf(index) * spans[0] * 0.02;
+                moved[1] = point[1] + jitterOf(index + 7919) * spans[1] * 0.02;
+                moved.push(point[0], point[1]);
+                return moved;
+            });
+        });
     }
 
     function addZoom(kind, option, style, settings) {
@@ -2453,12 +2517,15 @@ if (!window.visualisations) {
             if (boolSetting(settings, "zoomSlider", false)) {
                 // A zoom bar along the bottom (or, for a horizontal bar chart, the right), driving the same axis.
                 var along = option.dataZoom[0];
+                // Along the plot: as wide (or high) as the grid.
                 var slider = {
                     type: "slider",
                     height: along.yAxisIndex === 0 ? undefined : 16,
                     width: along.yAxisIndex === 0 ? 16 : undefined,
                     bottom: along.yAxisIndex === 0 ? undefined : 6,
-                    right: along.yAxisIndex === 0 ? 8 : undefined,
+                    right: along.yAxisIndex === 0 ? 8 : option.grid.right,
+                    left: along.yAxisIndex === 0 ? undefined : option.grid.left,
+                    top: along.yAxisIndex === 0 ? option.grid.top : undefined,
                     borderColor: style.border,
                     textStyle: {color: style.subtleText},
                     filterMode: along.filterMode
@@ -2469,6 +2536,10 @@ if (!window.visualisations) {
                 } else {
                     slider.xAxisIndex = 0;
                     option.grid.bottom += 28;
+                    // A legend along the bottom goes above the slider.
+                    if (option.legend && option.legend.show && option.legend.bottom === 0) {
+                        option.legend.bottom = 28;
+                    }
                 }
                 option.dataZoom.push(slider);
             }
@@ -2569,6 +2640,9 @@ if (!window.visualisations) {
             });
         });
 
+        // The same colours for every kind, whatever ECharts version draws it (and as the D3 adapter draws them),
+        // unless the options give others.
+        option.color = option.color || distinctColours(MAX_PALETTE, style);
         // Visualisations generated before titles were dropped may still have a Title setting: it isn't drawn.
         option.title = {show: false};
         option.backgroundColor = "transparent";
