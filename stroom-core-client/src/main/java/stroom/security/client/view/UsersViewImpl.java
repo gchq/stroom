@@ -17,11 +17,11 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UsersPresenter.UsersView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,7 +44,7 @@ public final class UsersViewImpl extends ViewImpl implements UsersView {
     }
 
     @Override
-    public void setUserList(final View view) {
+    public void setUserList(final IsWidget view) {
         this.userList.setWidget(view.asWidget());
     }
 

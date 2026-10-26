@@ -18,11 +18,11 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.widget.layout.client.SplitPane;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -61,12 +61,12 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
-    public void setUserList(final View view) {
+    public void setUserList(final IsWidget view) {
         this.userList.setWidget(view.asWidget());
     }
 
     @Override
-    public void setParentsView(final View view) {
+    public void setParentsView(final IsWidget view) {
         parents.setWidget(view.asWidget());
     }
 
@@ -76,7 +76,7 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
-    public void setChildrenView(final View view) {
+    public void setChildrenView(final IsWidget view) {
         children.setWidget(view.asWidget());
     }
 

@@ -61,7 +61,7 @@ public final class UserGroupsScreenStories {
     /// The name of the spy recording the screens opened from the action menus.
     static final String OPEN_SCREEN = "openScreen";
 
-    // Each list's quick filter, named for what it filters (UserListPresenter)
+    // Each list's quick filter, named for what it filters (UserList)
     private static final String FILTER = "Filter users and groups";
 
     private static final String ALICE = """

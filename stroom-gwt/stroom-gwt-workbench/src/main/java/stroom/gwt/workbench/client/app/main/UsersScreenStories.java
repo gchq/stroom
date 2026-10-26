@@ -230,7 +230,7 @@ public final class UsersScreenStories {
                 .story("FocusedOpen", context -> render(context, ALICE_REF))
                 .withPlay(play -> {
                     play.findByText("Alice Anderson");
-                    // OpenUsersScreenEvent carries the user, and UserListPresenter.showUser filters by
+                    // OpenUsersScreenEvent carries the user, and UserListController.showUser filters by
                     // its display name with the 'display' field ('display:"Alice Anderson"'). The quick
                     // filter has no label, only a placeholder
                     play.expect(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))

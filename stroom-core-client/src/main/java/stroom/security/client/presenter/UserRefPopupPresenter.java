@@ -65,7 +65,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 // TODO I think this is not really needed as AccountService will create/update stroom_user
-//  records so we can just re-use UserListPresenter
+//  records so we can just re-use UserListController
 //
 
 /**

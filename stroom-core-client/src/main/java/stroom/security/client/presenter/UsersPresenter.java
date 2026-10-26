@@ -19,7 +19,8 @@ package stroom.security.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.component.CreateNewGroupController;
-import stroom.security.client.presenter.UserListPresenter.Mode;
+import stroom.security.client.component.UserListController;
+import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
@@ -31,6 +32,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,7 +46,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final UserListPresenter userList;
+    private final UserListController userList;
     private final RestFactory restFactory;
     private final CreateUserPresenter createUserPresenter;
     private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
@@ -55,7 +57,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     @Inject
     public UsersPresenter(final EventBus eventBus,
                           final UsersView view,
-                          final UserListPresenter userList,
+                          final UserListController userList,
                           final RestFactory restFactory,
                           final CreateUserPresenter createUserPresenter,
                           final Provider<CreateNewGroupController> createNewGroupControllerProvider) {
@@ -67,10 +69,10 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
         this.createUserPresenter = createUserPresenter;
         this.createNewGroupControllerProvider = createNewGroupControllerProvider;
 
-        view.setUserList(this.userList.getView());
+        view.setUserList(this.userList);
 
-        this.userList.getView().setLabel("Users:");
-        this.userList.getView().setHelpText(HtmlBuilder.builder()
+        this.userList.setLabel("Users:");
+        this.userList.setHelpText(HtmlBuilder.builder()
                 .para(htmlBuilder -> htmlBuilder.append(
                         "Lists all Stroom users. Users can be added, deleted, disabled and enabled."))
                 .toSafeHtml());
@@ -159,6 +161,6 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     public interface UsersView extends View {
 
-        void setUserList(View view);
+        void setUserList(IsWidget view);
     }
 }

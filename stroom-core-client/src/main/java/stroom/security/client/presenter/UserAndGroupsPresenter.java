@@ -22,8 +22,9 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.component.CreateNewGroupController;
+import stroom.security.client.component.UserListController;
+import stroom.security.client.component.UserListController.Mode;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
-import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
@@ -39,6 +40,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -53,9 +55,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final UserListPresenter userList;
-    private final UserListPresenter parentsList;
-    private final UserListPresenter childrenList;
+    private final UserListController userList;
+    private final UserListController parentsList;
+    private final UserListController childrenList;
 
     private final CreateUserPresenter createUserPresenter;
     private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
@@ -76,7 +78,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     @Inject
     public UserAndGroupsPresenter(final EventBus eventBus,
                                   final UserAndGroupsView view,
-                                  final Provider<UserListPresenter> userListPresenterProvider,
+                                  final Provider<UserListController> userListPresenterProvider,
                                   final CreateUserPresenter createUserPresenter,
                                   final Provider<CreateNewGroupController> createNewGroupControllerProvider,
                                   final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
@@ -86,8 +88,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         own(createUserPresenter);
         this.userList = make(userListPresenterProvider);
         this.userList.setMode(Mode.USERS_AND_GROUPS);
-        this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
-        this.userList.getView().setHelpText(HtmlBuilder.builder()
+        this.userList.setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
+        this.userList.setHelpText(HtmlBuilder.builder()
                 .para(paraBuilder -> paraBuilder
                         .append("Lists all users and user groups. User groups can be added and deleted."))
                 .para(paraBuilder -> paraBuilder
@@ -95,7 +97,6 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         .italic("Users")
                         .append(" screen."))
                 .toSafeHtml());
-        this.userList.setName("userList");
         // Top pane doesn't need to link back to itself
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
         this.userList.setResultPageConsumer(userResultPage ->
@@ -105,12 +106,10 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.parentsList = make(userListPresenterProvider);
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
-        this.parentsList.setName("parentsList");
         this.parentsList.setValidUserScreensForActionMenu(UserScreen.all());
 
         this.childrenList = make(userListPresenterProvider);
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
-        this.childrenList.setName("childrenList");
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
 
         this.createUserPresenter = createUserPresenter;
@@ -118,9 +117,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
         this.restFactory = restFactory;
 
-        view.setUserList(userList.getView());
-        view.setParentsView(parentsList.getView());
-        view.setChildrenView(childrenList.getView());
+        view.setUserList(userList);
+        view.setParentsView(parentsList);
+        view.setChildrenView(childrenList);
 
         final Toolbar userActions = userList.getToolbar();
         userActions.setName("User and group actions");
@@ -231,9 +230,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 .build());
         parentsList.refresh();
 
-        parentsList.getView().setLabel(getIdentityDescription(userRef, CaseType.SENTENCE) + " is a member of:");
+        parentsList.setLabel(getIdentityDescription(userRef, CaseType.SENTENCE) + " is a member of:");
         final String lowerUserDesc = getIdentityDescription(userRef, CaseType.LOWER);
-        parentsList.getView().setHelpText(HtmlBuilder.builder()
+        parentsList.setHelpText(HtmlBuilder.builder()
                 .para("Lists user groups that " + lowerUserDesc + " is a direct member of.")
                 .para(paraBuilder -> paraBuilder
                         .append("Use the '")
@@ -266,8 +265,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         final String identityDesc = getIdentityDescription(userRef, CaseType.LOWER);
         if (userRef.isGroup()) {
-            childrenList.getView().setLabel("Members of " + identityDesc + ":");
-            childrenList.getView().setHelpText(HtmlBuilder.builder()
+            childrenList.setLabel("Members of " + identityDesc + ":");
+            childrenList.setHelpText(HtmlBuilder.builder()
                     .para("Lists users and user groups that are direct members of " + identityDesc + ".")
                     .para(paraBuilder -> paraBuilder
                             .append("Use the '")
@@ -283,8 +282,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                             .append("."))
                     .toSafeHtml());
         } else {
-            childrenList.getView().setLabel("No group selected");
-            childrenList.getView().setHelpText(HtmlBuilder.builder()
+            childrenList.setLabel("No group selected");
+            childrenList.setHelpText(HtmlBuilder.builder()
                     .para("Users cannot have members.")
                     .toSafeHtml());
         }
@@ -321,8 +320,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             addMembersInButton.setEnabled(selected.isGroup());
 
         } else {
-            parentsList.getView().setLabel("No Selection");
-            childrenList.getView().setLabel("No Selection");
+            parentsList.setLabel("No Selection");
+            childrenList.setLabel("No Selection");
             // The panes stay shown (dimmed), so empty them rather than leave the last selection's
             // groups and members under 'No Selection'
             parentsList.clear();
@@ -341,7 +340,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private void addUserToGroup(final UserRef user,
                                 final UserRef group,
-                                final UserListPresenter userListPresenter,
+                                final UserListController userListPresenter,
                                 final UserRef selection) {
         if (group != null && user != null) {
             restFactory
@@ -375,14 +374,14 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         parentsList.refresh();
                         childrenList.refresh();
                     })
-                    .taskMonitorFactory(userListPresenter.getPagerView())
+                    .taskMonitorFactory(userListPresenter.getTaskMonitor())
                     .exec();
         }
     }
 
     private void removeUserFromGroup(final User user,
                                      final User group,
-                                     final UserListPresenter userListPresenter) {
+                                     final UserListController userListPresenter) {
         if (NullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(userListPresenter);
 
@@ -400,7 +399,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                             userListPresenter.getSelectionModel().setSelected(nextSelection);
                         }
                     })
-                    .taskMonitorFactory(userListPresenter.getPagerView())
+                    .taskMonitorFactory(userListPresenter.getTaskMonitor())
                     .exec();
         }
     }
@@ -455,12 +454,12 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         parentsList.refresh();
                         childrenList.refresh();
                     })
-                    .taskMonitorFactory(parentsList.getPagerView())
+                    .taskMonitorFactory(parentsList.getTaskMonitor())
                     .exec();
         }
     }
 
-    private User getNextSelection(final UserListPresenter userListPresenter) {
+    private User getNextSelection(final UserListController userListPresenter) {
         final User currentSelection = userListPresenter.getSelectionModel().getSelected();
         User nextSelection = null;
         final ResultPage<User> resultPage = userListPresenter.getCurrentData();
@@ -579,16 +578,16 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         void setUserListVisible(boolean visible);
 
-        void setUserList(View view);
+        void setUserList(IsWidget view);
 
-        void setParentsView(View view);
+        void setParentsView(IsWidget view);
 
         /// Enables the Member Of pane, or dims it and makes it inert while nothing is selected.
         ///
         /// @param enabled Whether the pane is enabled.
         void setParentsEnabled(boolean enabled);
 
-        void setChildrenView(View view);
+        void setChildrenView(IsWidget view);
 
         void setChildrenVisible(boolean visible);
 

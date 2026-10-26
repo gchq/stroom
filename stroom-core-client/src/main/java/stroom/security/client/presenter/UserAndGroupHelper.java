@@ -26,6 +26,7 @@ import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.client.component.CreateNewGroupController;
+import stroom.security.client.component.UserListController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.event.OpenUserEvent;
@@ -125,7 +126,7 @@ public class UserAndGroupHelper {
                 : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
-    public static void onDelete(final UserListPresenter userListPresenter,
+    public static void onDelete(final UserListController userListPresenter,
                                 final RestFactory restFactory,
                                 final HasHandlers hasHandlers) {
 
@@ -156,7 +157,7 @@ public class UserAndGroupHelper {
                                             "Error deleting " + userDescription,
                                             error.getMessage(),
                                             null))
-                            .taskMonitorFactory(userListPresenter.getPagerView())
+                            .taskMonitorFactory(userListPresenter.getTaskMonitor())
                             .exec();
                 }
             });
@@ -169,7 +170,7 @@ public class UserAndGroupHelper {
     /// @param createNewGroupControllerProvider Makes the dialog.
     /// @param opener                           What shows the dialog, which owns it while shown.
     /// @param taskMonitorFactory               Shows the progress of the update.
-    public static void onEditUserOrGroup(final UserListPresenter userListPresenter,
+    public static void onEditUserOrGroup(final UserListController userListPresenter,
                                          final Provider<CreateNewGroupController> createNewGroupControllerProvider,
                                          final HasControllerNode opener,
                                          final TaskMonitorFactory taskMonitorFactory) {
@@ -182,7 +183,7 @@ public class UserAndGroupHelper {
         }
     }
 
-    public static Consumer<User> createAfterChangeConsumer(final UserListPresenter userListPresenter) {
+    public static Consumer<User> createAfterChangeConsumer(final UserListController userListPresenter) {
         return user -> {
             userListPresenter.getSelectionModel()
                     .clear(true);
