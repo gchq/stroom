@@ -1059,8 +1059,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                + ". Ask which (ask_user), unless the user has said; propose it once they've created the chart."
                + (kind == ChartKind.GRAPH || kind == ChartKind.SANKEY || kind == ChartKind.CHORD
                 ? " For a network, give match any with a term per end by node, and the link's ends (the source's "
-                  + "field or column with selection source, the target's with selection target), so a clicked "
-                  + "node or link both filter; a link matches either direction unless the chart is directed."
+                  + "field or column with selection source, the target's with selection target, and each further "
+                  + "level's with its own, e.g. level3), so a clicked node or link both filter; a link matches "
+                  + "either direction unless the chart is directed."
                 : "")
                + " Ctrl-click or Shift-click selects several items; the filter then matches any of them."
                + rangeNote(kind, mappings, expressions, formats);

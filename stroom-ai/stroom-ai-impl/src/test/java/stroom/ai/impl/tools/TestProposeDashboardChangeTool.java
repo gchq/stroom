@@ -661,6 +661,29 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void aLinksEndsAtAnyLevelStayTogether() {
+        // A link between two levels selects only those two (e.g. target and level3): with the source and target
+        // terms in one group, the rest drop out, so each link filters by both its own ends.
+        dashboardTab(false, SETTINGS + "## Visualisation 'Flows' (id vis-1)\n"
+                            + "Visualisation: 'Flows' (uuid vis-uuid)\n"
+                            + "Linked table: 'Events'\n"
+                            + "Vis settings: {\"source\":\"UserId\",\"target\":\"EventType\","
+                            + "\"level3\":\"Host\"}\n");
+
+        run(List.of(Map.of("op", "add_selection_filter", "target", "Events", "chart", "Flows", "mode", "table",
+                "match", "any", "terms", List.of(Map.of("field", "UserId", "selection", "source"),
+                        Map.of("field", "EventType", "selection", "target"),
+                        Map.of("field", "UserId", "selection", "level3")))));
+
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
+            final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
+                    .get("query"));
+            assertThat((List<?>) query.get("children")).singleElement().satisfies(group ->
+                    assertThat((List<?>) asMap(group).get("children")).hasSize(3));
+        });
+    }
+
+    @Test
     void aTableFilterCanUseAColumnTheProposalAdds() {
         // Seen in testing: a column added for a table filter, and the filter on it, were refused together, as the
         // filter was checked against the table's columns before the proposal's changes.
