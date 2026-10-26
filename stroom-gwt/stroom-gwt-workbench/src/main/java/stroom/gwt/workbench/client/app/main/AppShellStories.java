@@ -523,7 +523,7 @@ public final class AppShellStories {
                             .toBeInTheDocument());
                     play.click(screen.getByRole("button", TextMatch.regex("close|ok", "i")));
                     // Once the warning is closed, Stroom closes the splash screen
-                    // and never shows the app (SplashPresenter hides it and passes the rejection on),
+                    // and never shows the app (SplashController hides it and passes the rejection on),
                     // so the terms can't then be accepted in the same story: nothing was acknowledged
                     play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
                     play.expect(play.queryByText("Dictionaries")).toBeNull();

@@ -16,12 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.presenter.PromptPresenter.PromptView;
-import stroom.alert.client.view.CommonAlertViewImpl;
-import stroom.alert.client.view.PromptViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AlertModule`
@@ -33,12 +27,6 @@ public class AlertScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(PromptPresenter.class,
-                PromptView.class,
-                PromptViewImpl.class);
-        bindPresenterWidget(CommonAlertPresenter.class,
-                CommonAlertView.class,
-                CommonAlertViewImpl.class);
     }
 }
 

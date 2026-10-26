@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// Stroom has no separate host component: its `RestFactory` gives every request with no failure
 /// handler a `DefaultErrorHandler`, which fires an `AlertEvent`, which `AlertPlugin` shows in
-/// `CommonAlertPresenter`'s 'Alert' dialog. The story's button makes such a request
+/// `CommonAlertController`'s 'Alert' dialog. The story's button makes such a request
 /// (`NodeResource.listAllNodes`, `GET /node/v1/all`), answered with an error, and the harness shows
 /// Stroom's real alert dialog.
 public final class ApiErrorAlertHostStories {

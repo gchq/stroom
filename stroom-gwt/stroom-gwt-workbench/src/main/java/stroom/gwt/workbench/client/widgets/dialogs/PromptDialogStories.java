@@ -23,7 +23,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 /// Stories for Stroom's prompt.
 ///
 /// The same prompt as `Widgets/Dialogs/AlertDialog`'s `Prompt` story: a `PromptEvent` handled by
-/// Stroom's `PromptPresenter`.
+/// Stroom's `AlertPlugin`, with the browser's prompt.
 public final class PromptDialogStories {
 
     private PromptDialogStories() {

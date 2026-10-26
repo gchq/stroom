@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.processing;
 
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
-import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
@@ -37,9 +34,6 @@ public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(CommonAlertPresenter.class,
-                CommonAlertView.class,
-                CommonAlertViewImpl.class);
         bindPresenterWidget(DataUploadPresenter.class,
                 DataUploadView.class,
                 DataUploadViewImpl.class);

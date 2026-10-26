@@ -17,10 +17,8 @@
 package stroom.gwt.workbench.client.widgets;
 
 import stroom.alert.client.AlertPlugin;
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.view.CommonAlertViewImpl;
-import stroom.alert.client.view.PromptViewImpl;
+import stroom.alert.client.component.CommonAlert;
+import stroom.alert.client.component.CommonAlertController;
 import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -117,13 +115,13 @@ public final class StoryPopups {
     }
 
     /// Shows alerts and confirmations (`AlertEvent`, `ConfirmEvent`) as Stroom does, with
-    /// Stroom's [AlertPlugin] and `CommonAlertPresenter`.
+    /// Stroom's [AlertPlugin] and `CommonAlertController`.
     ///
     /// @return This, for chaining.
     public StoryPopups withAlerts() {
         final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
-                new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()),
-                () -> new PromptPresenter(eventBus, new PromptViewImpl()));
+                () -> new CommonAlertController(eventBus, new CommonAlert()),
+                new AppRoot());
         return this;
     }
 

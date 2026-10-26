@@ -19,8 +19,6 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.event.PromptEvent;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.view.PromptViewImpl;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
@@ -35,6 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Stories for Stroom's alert, confirmation and prompt dialogs.
 ///
 /// A Stroom screen shows these by firing `AlertEvent`, `ConfirmEvent` or `PromptEvent`, which
-/// Stroom's `AlertPlugin` (with `CommonAlertPresenter`) and `PromptPresenter` handle. The stories
+/// Stroom's `AlertPlugin` (with `CommonAlertController`, and the browser's prompt) handles. The stories
 /// fire the same events.
 public final class AlertDialogStories {
 
@@ -147,13 +146,14 @@ public final class AlertDialogStories {
     /// @return The story's widget.
     static Widget prompt(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context);
-        // As its listener registers Stroom's PromptPresenter for the event
-        final PromptPresenter promptPresenter = new PromptPresenter(popups.getEventBus(), new PromptViewImpl());
-        popups.addCleanUp(popups.getEventBus().addHandler(PromptEvent.getType(), promptPresenter)::removeHandler);
+        // As Stroom's AlertPlugin handles the event
+        popups.addCleanUp(popups.getEventBus().addHandler(PromptEvent.getType(), event ->
+                event.getCallback().onResult(Window.prompt(event.getMessage(), event.getInitialValue())))
+                ::removeHandler);
         final HasHandlers handlers = DialogWidgets.handlers(popups.getEventBus());
 
         final InlineLabel result = DialogWidgets.result();
-        // Stroom's PromptViewImpl uses the browser's own prompt
+        // Stroom's AlertPlugin uses the browser's own prompt
         // (Window.prompt), not a styled dialog, and so accepts blank input.
         final Widget button = DialogWidgets.button("Show prompt", DialogWidgets.PRIMARY, event -> PromptEvent.fire(
                 handlers,

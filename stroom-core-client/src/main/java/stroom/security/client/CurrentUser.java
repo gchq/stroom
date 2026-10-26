@@ -17,7 +17,7 @@
 package stroom.security.client;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.SplashPresenter;
+import stroom.activity.client.SplashScreen;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
@@ -30,14 +30,11 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
-import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
@@ -52,23 +49,19 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final Provider<SplashPresenter> splashPresenterProvider;
+    private final SplashScreen splashScreen;
     private final CurrentActivity currentActivity;
     private UserRef userRef;
     private Set<AppPermission> permissions;
 
-    private final AppRoot appRoot;
-
     @Inject
     public CurrentUser(final EventBus eventBus,
                        final RestFactory restFactory,
-                       final Provider<SplashPresenter> splashPresenterProvider,
-                       final CurrentActivity currentActivity,
-                       final AppRoot appRoot) {
-        this.appRoot = appRoot;
+                       final SplashScreen splashScreen,
+                       final CurrentActivity currentActivity) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.splashPresenterProvider = splashPresenterProvider;
+        this.splashScreen = splashScreen;
         this.currentActivity = currentActivity;
     }
 
@@ -150,11 +143,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     private void showSplash() {
-        final SplashPresenter splash = appRoot.makeDialog(splashPresenterProvider);
-        splash.show(ok -> {
-            // Told whether or not the splash screen was shown (it isn't unless it is enabled), so
-            // released here too, once whatever is handling this is done
-            Scheduler.get().scheduleDeferred(splash::dispose);
+        splashScreen.show(this, ok -> {
             if (ok) {
                 currentActivity.showInitialActivityChooser(activity -> CurrentUserChangedEvent.fire(CurrentUser.this));
             }

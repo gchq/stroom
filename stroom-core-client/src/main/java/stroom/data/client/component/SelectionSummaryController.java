@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
-import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
+import stroom.alert.client.component.CommonAlert;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
@@ -24,10 +24,13 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Range;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.shared.GWT;
@@ -38,26 +41,47 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
 
-public class SelectionSummaryPresenter
-        extends MyPresenterWidget<CommonAlertView> {
+/// The summary of the items selected in a list of streams ([CommonAlert]), made for one use: shown
+/// before an action on them (e.g. delete or reprocess) is confirmed, or on its own.
+public class SelectionSummaryController extends Controller {
 
     public static final int MAX_DISTINCT_ITEMS = Math.min(10, SelectionSummary.MAX_GROUP_CONCAT_PARTS);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+    private final CommonAlert view;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The content.
+    /// @param restFactory       Fetches the summary.
+    /// @param dateTimeFormatter Formats the items' ages.
     @Inject
-    public SelectionSummaryPresenter(final EventBus eventBus,
-                                     final CommonAlertView view,
-                                     final RestFactory restFactory,
-                                     final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view);
+    public SelectionSummaryController(final EventBus eventBus,
+                                      final CommonAlert view,
+                                      final RestFactory restFactory,
+                                      final DateTimeFormatter dateTimeFormatter) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
+        initWidget(view);
     }
 
-    public void show(final FindMetaCriteria criteria,
+    /// Shows the summary of the items selected in a dialog, owned by `opener` until it is closed.
+    ///
+    /// @param opener     What shows it.
+    /// @param criteria   The items selected.
+    /// @param permission The permission the user needs on them.
+    /// @param postAction What the action does to them, e.g. "deleted", or null to only summarise.
+    /// @param action     The action asked about, e.g. "delete", or null to only summarise.
+    /// @param caption    The dialog's caption.
+    /// @param reprocess  Whether the action is to reprocess them.
+    /// @param runnable   Runs the action, on OK.
+    public void show(final HasControllerNode opener,
+                     final FindMetaCriteria criteria,
                      final DocumentPermission permission,
                      final String postAction,
                      final String action,
@@ -65,12 +89,12 @@ public class SelectionSummaryPresenter
                      final boolean reprocess,
                      final Runnable runnable) {
 
-        getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
+        view.setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
         final PopupType popupType = postAction != null
                 ? PopupType.OK_CANCEL_DIALOG
                 : PopupType.CLOSE_DIALOG;
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(popupType)
                 .modal(popupType == PopupType.OK_CANCEL_DIALOG)
                 .caption(caption)
@@ -82,7 +106,8 @@ public class SelectionSummaryPresenter
                                         new SelectionSummaryRequest(criteria, permission)))
                                 .onSuccess(result ->
                                         update(postAction, action, result))
-                                .taskMonitorFactory(this)
+                                .owner(this)
+                                .taskMonitorFactory(taskMonitor())
                                 .exec();
                     } else {
                         restFactory
@@ -91,7 +116,8 @@ public class SelectionSummaryPresenter
                                         res.getSelectionSummary(new SelectionSummaryRequest(criteria, permission)))
                                 .onSuccess(result ->
                                         update(postAction, action, result))
-                                .taskMonitorFactory(this)
+                                .owner(this)
+                                .taskMonitorFactory(taskMonitor())
                                 .exec();
                     }
                 })
@@ -102,6 +128,14 @@ public class SelectionSummaryPresenter
                     e.hide();
                 })
                 .fire();
+    }
+
+    // The dialog's task monitor, else Stroom's own busy indicator
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null
+                ? provided
+                : new DefaultTaskMonitorFactory(this);
     }
 
     private void update(final String postAction, final String action, final SelectionSummary result) {
@@ -163,9 +197,9 @@ public class SelectionSummaryPresenter
             sb.appendEscaped("Are you sure you want to ");
             sb.appendEscaped(action);
             sb.appendEscaped("?");
-            getView().setQuestion(sb.toSafeHtml());
+            view.setQuestion(sb.toSafeHtml());
         } else {
-            getView().setInfo(sb.toSafeHtml());
+            view.setInfo(sb.toSafeHtml());
         }
     }
 

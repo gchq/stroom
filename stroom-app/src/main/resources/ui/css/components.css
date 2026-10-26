@@ -716,10 +716,6 @@
     user-select: text;
 }
 
-.splashViewImpl-content {
-    padding: 5px;
-}
-
 .explorerTreeViewImpl-bar div {
     display: inline-block;
     white-space: nowrap;

@@ -103,7 +103,7 @@ final class ShellScreen {
         harness.afterStartUp(() -> {
             registerPlugins();
             createMain();
-            injector.getSplashPresenter().show(ok -> {
+            injector.getSplashScreen().show(harness.getHasHandlers(), ok -> {
                 if (ok) {
                     injector.getCurrentActivity().showInitialActivityChooser(activity ->
                             ShowMainEvent.fire(harness.getHasHandlers(), initialDocRef));

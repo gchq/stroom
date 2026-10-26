@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.gin.shell;
 
 import stroom.about.client.AboutPlugin;
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.SplashPresenter;
+import stroom.activity.client.SplashScreen;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
@@ -187,7 +187,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     TabSessionManager getTabSessionManager();
 
     /// @return The splash screen (terms of use) Stroom shows at login.
-    SplashPresenter getSplashPresenter();
+    SplashScreen getSplashScreen();
 
     /// @return The current activity (a singleton), which shows the activity chooser.
     CurrentActivity getCurrentActivity();

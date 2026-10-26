@@ -22,9 +22,6 @@ import stroom.activity.client.ActivityEditViewImpl;
 import stroom.activity.client.ManageActivityPresenter;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.client.ManageActivityViewImpl;
-import stroom.activity.client.SplashPresenter;
-import stroom.activity.client.SplashPresenter.SplashView;
-import stroom.activity.client.SplashViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ActivityModule`
@@ -36,9 +33,6 @@ public class ActivityScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(SplashPresenter.class,
-                SplashView.class,
-                SplashViewImpl.class);
         bindPresenterWidget(ManageActivityPresenter.class,
                 ManageActivityView.class,
                 ManageActivityViewImpl.class);

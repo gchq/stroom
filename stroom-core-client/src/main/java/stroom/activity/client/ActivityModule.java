@@ -18,14 +18,12 @@ package stroom.activity.client;
 
 import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
-import stroom.activity.client.SplashPresenter.SplashView;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class ActivityModule extends AbstractPresenterModule {
 
     @Override
     protected void configure() {
-        bindPresenterWidget(SplashPresenter.class, SplashView.class, SplashViewImpl.class);
         bindPresenterWidget(ManageActivityPresenter.class, ManageActivityView.class, ManageActivityViewImpl.class);
         bindPresenterWidget(ActivityEditPresenter.class, ActivityEditView.class, ActivityEditViewImpl.class);
     }

@@ -23,6 +23,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
 import stroom.data.client.component.RefCellsController;
+import stroom.data.client.component.SelectionSummaryController;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -101,7 +102,7 @@ public abstract class AbstractMetaListPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
-    private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
+    private final Provider<SelectionSummaryController> selectionSummaryControllerProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
@@ -124,7 +125,7 @@ public abstract class AbstractMetaListPresenter
                               final RestFactory restFactory,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
-                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
+                              final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<ExplorerPopupController> pipelineSelection,
                               final ExpressionValidator expressionValidator,
@@ -135,7 +136,7 @@ public abstract class AbstractMetaListPresenter
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
+        this.selectionSummaryControllerProvider = selectionSummaryControllerProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
@@ -865,7 +866,7 @@ public abstract class AbstractMetaListPresenter
                              final String caption,
                              final boolean reprocess,
                              final Runnable runnable) {
-        makeDialog(selectionSummaryPresenterProvider).show(
+        selectionSummaryControllerProvider.get().show(this,
                 criteria,
                 permission,
                 postAction,

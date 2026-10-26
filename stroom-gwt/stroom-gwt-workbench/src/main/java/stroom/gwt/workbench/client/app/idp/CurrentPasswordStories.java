@@ -112,7 +112,7 @@ public final class CurrentPasswordStories {
 
         // Stroom's CurrentUser, holding the signed in user, as the login sets it
         final CurrentUser currentUser = new CurrentUser(harness.getEventBus(), harness.getRestFactory(),
-                null, null, harness.getAppRoot());
+                null, null);
         currentUser.setUserAndPermissions(new AppUserPermissions(StartupFixtures.ADMIN,
                 EnumSet.of(AppPermission.ADMINISTRATOR)), false);
         final CurrentPasswordPresenter presenter = new CurrentPasswordPresenter(harness.getEventBus(),

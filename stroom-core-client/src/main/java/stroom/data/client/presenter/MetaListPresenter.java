@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
 import stroom.data.client.component.RefCellsController;
+import stroom.data.client.component.SelectionSummaryController;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.meta.shared.DataRetentionFields;
@@ -38,7 +39,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                              final RestFactory restFactory,
                              final LocationManager locationManager,
                              final DateTimeFormatter dateTimeFormatter,
-                             final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
+                             final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                              final Provider<ExplorerPopupController> pipelineSelection,
                              final ExpressionValidator expressionValidator,
@@ -48,7 +49,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                 restFactory,
                 locationManager,
                 dateTimeFormatter,
-                selectionSummaryPresenterProvider,
+                selectionSummaryControllerProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,
                 expressionValidator,

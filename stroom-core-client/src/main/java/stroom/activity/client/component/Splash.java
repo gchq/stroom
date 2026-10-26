@@ -14,37 +14,39 @@
  * limitations under the License.
  */
 
-package stroom.activity.client;
+package stroom.activity.client.component;
 
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashView {
+/// The splash screen's content: the terms the site asks users to accept, as HTML.
+public class Splash extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     HTML html;
 
-    @Inject
-    public SplashViewImpl(final Binder binder) {
-        this.widget = binder.createAndBindUi(this);
+    /// Makes empty content.
+    public Splash() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
+    /// @param html The terms, as HTML.
     public void setHtml(final String html) {
         this.html.setHTML(html);
     }
 
-    public interface Binder extends UiBinder<Widget, SplashViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, Splash> {
 
     }
 }

@@ -18,13 +18,11 @@
 package stroom.gwt.workbench.client.app.screen;
 
 import stroom.alert.client.AlertPlugin;
+import stroom.alert.client.component.CommonAlert;
+import stroom.alert.client.component.CommonAlertController;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.alert.client.presenter.PromptPresenter;
-import stroom.alert.client.view.CommonAlertViewImpl;
-import stroom.alert.client.view.PromptViewImpl;
 import stroom.data.client.event.AskStroomAiTableRequest;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
@@ -249,8 +247,8 @@ public final class ScreenHarness {
         eventBus.addHandler(ConfirmEvent.getType(), event -> spy(CONFIRM_SPY, describe(event)));
         if (builder.realAlerts) {
             final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
-                    new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()),
-                    () -> new PromptPresenter(eventBus, new PromptViewImpl()));
+                    () -> new CommonAlertController(eventBus, new CommonAlert()),
+                    getAppRoot());
         }
     }
 
