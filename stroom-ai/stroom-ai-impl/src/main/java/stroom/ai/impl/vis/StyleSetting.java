@@ -46,8 +46,8 @@ public enum StyleSetting {
     DIRECTED("directed", "Directed", Control.BOOLEAN, "false", List.of(), null, null,
             "draws an arrow from source to target"),
     NODE_COLOURS("nodeColours", "Node Colours", Control.SELECTION, "group", List.of("group", "node"), null, null,
-            "group colours nodes by their sourceGroup and targetGroup columns (one colour if neither is mapped), "
-            + "with a legend; node gives each node its own colour"),
+            "group colours nodes by their sourceGroup and targetGroup columns, with a legend (each node its own "
+            + "colour if neither is mapped); node gives each node its own colour"),
     NODE_SIZE("nodeSize", "Node Size", Control.SELECTION, "connections", List.of("connections", "total"), null,
             null, "connections sizes each node by how many others it links to; total by its links' total: their "
                   + "weights, or without a weight column the rows they come from (e.g. the messages a person sent "

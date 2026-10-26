@@ -3793,7 +3793,10 @@ if (!window.visualisations) {
         var settings = ctx.settings;
         requireFields(fields, ["source", "target"]);
         var network = networkOf(ctx);
-        var byGroup = String(textSetting(settings, "nodeColours") || "group").toLowerCase() !== "node";
+        // By group, unless each node its own (nodeColours node) or there are no groups (no sourceGroup or
+        // targetGroup column), as the ECharts adapter colours them.
+        var byGroup = String(textSetting(settings, "nodeColours") || "group").toLowerCase() !== "node"
+            && (fields.has("sourceGroup") || fields.has("targetGroup"));
         var groups = [];
         network.nodes.forEach(function (node) {
             var group = node.group === null ? "(none)" : node.group;
