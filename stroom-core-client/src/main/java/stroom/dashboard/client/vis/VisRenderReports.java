@@ -54,7 +54,8 @@ public final class VisRenderReports {
     // The reasons the ECharts adapter gives for rows it leaves out.
     private static final Set<String> DROPPED_REASONS = Set.of("value not a number", "value negative",
             "x not a number or date", "y not a number", "x or y not a number or date", "source or target empty",
-            "source and target the same", "weight not a number or negative");
+            "source and target the same", "weight not a number or negative", "date not a date",
+            "flow would close a loop");
 
     private VisRenderReports() {
         // Static only.

@@ -6,10 +6,11 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 
 ## Steps
 
-1. Call `list_visualisations`: which charting libraries are installed (ECharts, and the visualisations content
-   pack's D3 ones), the chart kinds each can draw, and each kind's columns and style settings.
-2. If more than one library is installed and the user hasn't said, ask which to use (`ask_user`), recommending
-   ECharts. Ask too about anything unclear that changes the chart: which column is the weight of a link, whether
+1. Call `list_visualisations`: which charting libraries are installed (ECharts and D3, which Stroom generates
+   charts with, and the visualisations content pack's own D3 charts), the chart kinds each can draw, and each
+   kind's columns and style settings.
+2. If both ECharts and D3 are installed and the user hasn't said, ask which to use (`ask_user`), recommending
+   ECharts (it has a few more settings). Ask too about anything unclear that changes the chart: which column is the weight of a link, whether
    to count messages or distinct conversations, the time bucket for a time axis.
 3. Look at the table's columns, and its rows with `current_results` when the shape matters. A chart needs a column
    for each required input; values such as a bar's length or a link's weight must be numbers.
@@ -18,11 +19,11 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
    StroomQL with `propose_query_change`; chart it once that is applied.
 5. Call `propose_visualisation` with the library, the kind, the columns for each input, a name saying what it shows,
    and any style. It checks the table's rows can make the chart.
-   - With ECharts it offers a "Create visualisation" button. The user names it and picks its folder (the
+   - With `echarts` or `d3` it offers a "Create visualisation" button. The user names it and picks its folder (the
      dashboard's, by default) in Stroom's own dialog; it is then added below the table (or as a tab beside it), or
      put in the query's `show` clause, unsaved. It redraws whenever the table updates.
-   - With D3 it gives the `add_vis` change (or the `show` clause) that wires the content pack's existing
-     Visualisation to the table, for you to propose.
+   - With `content-pack` it gives the `add_vis` change (or the `show` clause) that wires the content pack's
+     existing D3 Visualisation to the table, for you to propose.
    - If it says the data can't make the chart, tell the user why and suggest the fix it gives. Don't propose it
      anyway, and don't try other columns that don't mean what the user asked.
 6. Once the chart draws, its render report (what it drew, rows left out and why, or its error) shows on the
@@ -159,7 +160,7 @@ Say what is filtering the rows out, and offer the fix:
 A dashboard's Embedded Query component runs StroomQL (shown in the dashboard's description) with its own results
 table and chart. `current_results` snapshots its results by its name, as a table's.
 
-- Chart it with `propose_visualisation` (library echarts), naming it as the table: Stroom puts the chart's `show`
+- Chart it with `propose_visualisation` (library echarts or d3), naming it as the table: Stroom puts the chart's `show`
   clause at the end of its StroomQL, unsaved, and runs it. It has one chart, so a new one takes the old one's place.
 - One that shows a Query by reference is charted in that Query: ask the user to open and attach it.
 - Its settings (`queryOnOpen`, `autoRefresh`, `refreshInterval`) change with a `set_setting` in
@@ -198,6 +199,8 @@ table and chart. `current_results` snapshots its results by its name, as a table
   a `threshold` line (with `thresholdLabel`), `breakOutliers` to cut the axis when a few values dwarf the rest, and
   `zoomSlider`; bar and line charts an `averageLine`, a scatter plot `jitter`. Pie, heatmap, calendar and histogram
   charts take `units` too. A network graph takes `physics` (settled, lively, spread) and a `thumbnail` overview.
+  `breakOutliers`, `zoomSlider` and `thumbnail` are drawn only with ECharts; with D3 the options take only
+  `color`.
 - Charts follow the user's theme and their date and time preferences (format and time zone), and update when those
   change.
 - A chart draws at most its Max Rows (5000 by default) of the table's rows, and a network graph at most its Max
@@ -205,3 +208,5 @@ table and chart. `current_results` snapshots its results by its name, as a table
 - ECharts is installed by an administrator, as a Script doc holding `echarts.min.js` from an Apache ECharts
   release, version 6 or later; an administrator upgrades it by putting a newer release's build in that Script doc.
   Stroom adds its own adapter beside it the first time a chart is created.
+- D3 is installed the same way, as a Script doc holding a D3 build, version 3 or later (e.g. `d3.min.js` from D3
+  7); the visualisations content pack includes D3 3. Where several are installed the newest is used.

@@ -42,12 +42,14 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +64,9 @@ import java.util.regex.Pattern;
 ///   ECharts, depending on it, with the ECharts doc's permissions, so whoever can load ECharts can load the
 ///   adapter. It is found again by the marker in its banner; its content and dependencies are put back to the
 ///   bundled ones whenever they differ, and its permissions given the library's again.
-/// - D3 means the visualisations content pack's D3 Visualisations (see [D3Visualisation]).
+/// - D3 is installed the same way, as a Script doc holding a D3 build, version 3 or later (the content pack's 3.4.8
+///   is one); the newest is used. Its adapter (`d3-generic.js`) is put beside it as ECharts' is.
+/// - The content pack's own D3 Visualisations can also be wired to a table as they are (see [D3Visualisation]).
 ///
 /// The search runs as the processing user, as Stroom loads a visualisation's scripts with elevated read; whether
 /// the user may use what was found is reported separately.
@@ -87,7 +91,12 @@ public class ChartLibraries {
     private static final Pattern FULL_VERSION = Pattern.compile(
             "\\bversion[\\w$]*\\s*=\\s*['\"](\\d+)\\.(\\d+)\\.(\\d+)[^'\"]*['\"]\\s*;\\s*var\\s+dependencies\\s*=");
 
-    private static final Pattern ADAPTER_VERSION = Pattern.compile(Pattern.quote(ADAPTER_MARKER) + "\\s*(\\d+)");
+    // D3 4 and later begin with a banner naming their version: "// https://d3js.org v7.9.0" (or "Version 4.13.0").
+    private static final Pattern D3_BANNER = Pattern.compile("d3js\\.org (?:Version |v)(\\d+)\\.(\\d+)\\.(\\d+)");
+    // D3 3 declares its version as the d3 object's first property: `var d3 = {\n version: "3.4.8"` in the full build,
+    // `var ao={version:"3.5.17"}` (and `this.d3=ao`) in the minified one.
+    private static final Pattern D3_V3_VERSION = Pattern.compile("\\{\\s*version\\s*:\\s*\"(3)\\.(\\d+)\\.(\\d+)\"");
+    private static final Pattern D3_V3_OBJECT = Pattern.compile("var\\s+d3\\s*=\\s*\\{\\s*version\\s*:");
 
     private final Provider<ScriptStore> scriptStoreProvider;
     private final Provider<VisualisationStore> visualisationStoreProvider;
@@ -96,7 +105,7 @@ public class ChartLibraries {
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
     private final SecurityContext securityContext;
 
-    private volatile String adapterSource;
+    private final Map<ChartLibrary, String> adapterSources = new ConcurrentHashMap<>();
 
     @Inject
     public ChartLibraries(final Provider<ScriptStore> scriptStoreProvider,
@@ -146,7 +155,7 @@ public class ChartLibraries {
                     .filter(ChartLibraries::namedECharts)
                     .filter(ref -> {
                         final ScriptDoc doc = read(scriptStore, ref);
-                        return doc != null && adapterVersion(doc.getData()).isEmpty()
+                        return doc != null && adapterLibrary(doc.getData()).isEmpty()
                                && echartsVersion(doc.getData()).isEmpty();
                     })
                     .toList();
@@ -165,7 +174,7 @@ public class ChartLibraries {
         return securityContext.asProcessingUserResult(() -> {
             try {
                 final VisualisationDoc doc = visualisationStoreProvider.get().readDocument(visualisation);
-                return doc != null && EChartsTemplate.FUNCTION_NAME.equals(doc.getFunctionName());
+                return doc != null && ChartLibrary.forFunctionName(doc.getFunctionName()).isPresent();
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> LogUtil.message("Couldn't read visualisation {}: {}", visualisation,
                         e.getMessage()));
@@ -260,71 +269,91 @@ public class ChartLibraries {
     /// @param echarts The library.
     /// @return The adapter's Script doc.
     public DocRef ensureAdapter(final EChartsInstall echarts) {
+        return ensureAdapter(ChartLibrary.ECHARTS, echarts.script());
+    }
+
+    /// Puts the D3 adapter in place beside a D3 library, as [#ensureAdapter(EChartsInstall)] does for ECharts.
+    ///
+    /// @param d3 The library.
+    /// @return The adapter's Script doc.
+    public DocRef ensureAdapter(final D3Install d3) {
+        return ensureAdapter(ChartLibrary.D3, d3.script());
+    }
+
+    // Puts a library's adapter in place beside the library's Script doc.
+    private DocRef ensureAdapter(final ChartLibrary library, final DocRef libraryScript) {
         return securityContext.asProcessingUserResult(() -> {
             final ScriptStore scriptStore = scriptStoreProvider.get();
             final ExplorerNodeService nodeService = explorerNodeServiceProvider.get();
-            final ExplorerNode folder = nodeService.getParent(echarts.script())
+            final ExplorerNode folder = nodeService.getParent(libraryScript)
                     .orElseGet(nodeService::getRoot);
-            final String source = adapterSource();
+            final String source = adapterSource(library);
 
             for (final ExplorerNode child : NullSafe.list(nodeService.getChildren(folder.getDocRef()))) {
                 if (!ScriptDoc.TYPE.equals(child.getType())) {
                     continue;
                 }
                 final ScriptDoc doc = read(scriptStore, child.getDocRef());
-                if (doc == null || adapterVersion(doc.getData()).isEmpty()) {
+                if (doc == null || adapterVersion(library, doc.getData()).isEmpty()) {
                     continue;
                 }
                 final boolean sameContent = normalise(source).equals(normalise(doc.getData()));
                 final List<DocRef> dependencies = NullSafe.list(doc.getDependencies());
                 final boolean dependsOnLibrary = dependencies.size() == 1
                                                  && Objects.equals(dependencies.getFirst().getUuid(),
-                        echarts.script().getUuid());
+                        libraryScript.getUuid());
                 if (!sameContent || !dependsOnLibrary) {
-                    LOGGER.info("Putting the ECharts adapter {} back to Stroom's version {}", child.getDocRef(),
-                            adapterVersion(source).orElse(0));
+                    LOGGER.info("Putting the {} adapter {} back to Stroom's version {}", library.displayName(),
+                            child.getDocRef(), adapterVersion(library, source).orElse(0));
                     scriptStore.writeDocument(doc.copy()
                             .data(source)
-                            .dependencies(List.of(echarts.script()))
+                            .dependencies(List.of(libraryScript))
                             .build());
                 }
-                documentPermissionServiceProvider.get().addDocumentPermissions(echarts.script(), child.getDocRef());
+                documentPermissionServiceProvider.get().addDocumentPermissions(libraryScript, child.getDocRef());
                 return child.getDocRef();
             }
 
-            LOGGER.info("Creating the ECharts adapter beside {} in {}", echarts.script(), folder.getDocRef());
+            LOGGER.info("Creating the {} adapter beside {} in {}", library.displayName(), libraryScript,
+                    folder.getDocRef());
             final DocRef created = explorerServiceProvider.get()
-                    .create(ScriptDoc.TYPE, ADAPTER_NAME, folder, PermissionInheritance.DESTINATION)
+                    .create(ScriptDoc.TYPE, library.adapterName(), folder, PermissionInheritance.DESTINATION)
                     .getDocRef();
             final ScriptDoc doc = scriptStore.readDocument(created);
             scriptStore.writeDocument(doc.copy()
-                    .description("Stroom's adapter for visualisations generated by Stroom AI, drawn with ECharts. "
-                                 + "Created by Stroom; changes to it are replaced when Stroom updates it.")
+                    .description("Stroom's adapter for visualisations generated by Stroom AI, drawn with "
+                                 + library.displayName() + ". Created by Stroom; changes to it are replaced when "
+                                 + "Stroom updates it.")
                     .data(source)
-                    .dependencies(List.of(echarts.script()))
+                    .dependencies(List.of(libraryScript))
                     .build());
-            documentPermissionServiceProvider.get().addDocumentPermissions(echarts.script(), created);
+            documentPermissionServiceProvider.get().addDocumentPermissions(libraryScript, created);
             return created;
         });
     }
 
-    /// Puts each ECharts adapter Stroom has created back to the bundled one, if its content differs, so the charts
-    /// already generated draw with this version of Stroom's adapter (e.g. with its click selection), not only the
-    /// charts generated from now on. Run as Stroom starts. Each keeps its dependencies and permissions, which
+    /// Puts each adapter Stroom has created (ECharts' and D3's) back to the bundled one, if its content differs, so
+    /// the charts already generated draw with this version of Stroom's adapter (e.g. with its click selection), not
+    /// only the charts generated from now on. Run as Stroom starts. Each keeps its dependencies and permissions, which
     /// [#ensureAdapter(EChartsInstall)] puts back when a chart is next generated.
     ///
     /// @return The adapters that were put back.
     public List<DocRef> updateAdapters() {
         return securityContext.asProcessingUserResult(() -> {
             final ScriptStore scriptStore = scriptStoreProvider.get();
-            final String source = adapterSource();
             final List<DocRef> updated = new ArrayList<>();
             for (final DocRef ref : NullSafe.list(scriptStore.list())) {
                 final ScriptDoc doc = read(scriptStore, ref);
-                if (doc != null && adapterVersion(doc.getData()).isPresent()
-                    && !normalise(source).equals(normalise(doc.getData()))) {
-                    LOGGER.info("Putting the ECharts adapter {} back to Stroom's version {}", ref,
-                            adapterVersion(source).orElse(0));
+                final ChartLibrary library = doc == null
+                        ? null
+                        : adapterLibrary(doc.getData()).orElse(null);
+                if (library == null) {
+                    continue;
+                }
+                final String source = adapterSource(library);
+                if (!normalise(source).equals(normalise(doc.getData()))) {
+                    LOGGER.info("Putting the {} adapter {} back to Stroom's version {}", library.displayName(),
+                            ref, adapterVersion(library, source).orElse(0));
                     scriptStore.writeDocument(doc.copy().data(source).build());
                     updated.add(ref);
                 }
@@ -344,7 +373,7 @@ public class ChartLibraries {
             final List<DocRef> updated = new ArrayList<>();
             for (final DocRef ref : NullSafe.list(store.list())) {
                 final VisualisationDoc doc = readVisualisation(store, ref);
-                if (doc == null || !EChartsTemplate.FUNCTION_NAME.equals(doc.getFunctionName())) {
+                if (doc == null || ChartLibrary.forFunctionName(doc.getFunctionName()).isEmpty()) {
                     continue;
                 }
                 final String settings = EChartsTemplate.withCurrentOptionsControl(doc.getSettings());
@@ -358,37 +387,98 @@ public class ChartLibraries {
         });
     }
 
-    /// @return The bundled adapter's source.
+    /// @return The bundled ECharts adapter's source.
     public String adapterSource() {
-        String source = adapterSource;
-        if (source == null) {
-            try (final InputStream in = ChartLibraries.class.getResourceAsStream(ADAPTER_RESOURCE)) {
+        return adapterSource(ChartLibrary.ECHARTS);
+    }
+
+    /// @param library A library.
+    /// @return Its bundled adapter's source.
+    public String adapterSource(final ChartLibrary library) {
+        return adapterSources.computeIfAbsent(library, key -> {
+            try (final InputStream in = ChartLibraries.class.getResourceAsStream(key.adapterResource())) {
                 if (in == null) {
-                    throw new UncheckedIOException(new IOException("No bundled file " + ADAPTER_RESOURCE));
+                    throw new UncheckedIOException(new IOException("No bundled file " + key.adapterResource()));
                 }
-                source = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-            adapterSource = source;
-        }
-        return source;
+        });
     }
 
     static Optional<Integer> adapterVersion(final String source) {
+        return adapterVersion(ChartLibrary.ECHARTS, source);
+    }
+
+    /// @param library A library.
+    /// @param source  A Script doc's content.
+    /// @return The version in its banner, if it is the library's adapter.
+    static Optional<Integer> adapterVersion(final ChartLibrary library, final String source) {
         if (source == null) {
             return Optional.empty();
         }
-        final Matcher matcher = ADAPTER_VERSION.matcher(source);
+        final Matcher matcher = Pattern.compile(Pattern.quote(library.adapterMarker()) + "\\s*(\\d+)")
+                .matcher(source);
         return matcher.find()
                 ? Optional.of(Integer.parseInt(matcher.group(1)))
                 : Optional.empty();
     }
 
+    /// @param source A Script doc's content.
+    /// @return The library whose adapter it is, if it is one of Stroom's adapters.
+    static Optional<ChartLibrary> adapterLibrary(final String source) {
+        return Arrays.stream(ChartLibrary.values())
+                .filter(library -> adapterVersion(library, source).isPresent())
+                .findFirst();
+    }
+
+    /// Finds the D3 library: a Script doc holding a D3 build, version 3 or later (e.g. the content pack's 3.4.8,
+    /// or 7.9.0 installed by an administrator). Where several are installed, the newest version wins, so
+    /// installing a newer D3 moves the charts generated from then on to it.
+    ///
+    /// @return The library, if one is installed.
+    public Optional<D3Install> findD3Library() {
+        return securityContext.asProcessingUserResult(() -> {
+            final ScriptStore scriptStore = scriptStoreProvider.get();
+            D3Install best = null;
+            for (final DocRef ref : NullSafe.list(scriptStore.list())) {
+                final ScriptDoc doc = read(scriptStore, ref);
+                final Optional<String> version = doc == null
+                        ? Optional.empty()
+                        : d3Version(doc.getData());
+                if (version.isPresent() && (best == null || compareVersions(version.get(), best.version()) > 0)) {
+                    best = new D3Install(ref, version.get());
+                }
+            }
+            return Optional.ofNullable(best);
+        });
+    }
+
+    /// Says which D3 version a Script doc's content is, if it is a D3 build of version 3 or later: D3 4 and later
+    /// name their version in a `d3js.org` banner; D3 3 declares it as its `version` property.
+    ///
+    /// @param source A Script doc's content.
+    /// @return The version, e.g. `7.9.0` or `3.4.8`, if the content is such a build.
+    static Optional<String> d3Version(final String source) {
+        if (source == null || adapterLibrary(source).isPresent()) {
+            return Optional.empty();
+        }
+        final Matcher banner = D3_BANNER.matcher(source);
+        if (banner.find()) {
+            return Optional.of(banner.group(1) + "." + banner.group(2) + "." + banner.group(3));
+        }
+        final Matcher v3 = D3_V3_VERSION.matcher(source);
+        if ((source.contains("this.d3=") || D3_V3_OBJECT.matcher(source).find()) && v3.find()) {
+            return Optional.of(v3.group(1) + "." + v3.group(2) + "." + v3.group(3));
+        }
+        return Optional.empty();
+    }
+
     /// Finds the content pack's D3 Visualisations, by their UUIDs, else by their function names.
     ///
     /// @return Those installed, by chart kind.
-    public Map<ChartKind, DocRef> findD3() {
+    public Map<ChartKind, DocRef> findContentPackD3() {
         return securityContext.asProcessingUserResult(() -> {
             final VisualisationStore store = visualisationStoreProvider.get();
             final Map<ChartKind, DocRef> found = new EnumMap<>(ChartKind.class);
@@ -434,7 +524,7 @@ public class ChartLibraries {
             final VisualisationDoc doc = readVisualisation(store, ref);
             if (doc != null) {
                 list.add(new InstalledVisualisation(ref, doc.getFunctionName(),
-                        EChartsTemplate.FUNCTION_NAME.equals(doc.getFunctionName())));
+                        ChartLibrary.forFunctionName(doc.getFunctionName()).isPresent()));
             }
         }
         return list;
@@ -448,6 +538,18 @@ public class ChartLibraries {
     /// @param version Its version, e.g. `6.1.0`.
     public record EChartsInstall(DocRef script, String version) {
 
+    }
+
+    /// An installed D3 library.
+    ///
+    /// @param script  Its Script doc.
+    /// @param version Its version, e.g. `7.9.0` or `3.4.8`.
+    public record D3Install(DocRef script, String version) {
+
+        /// @return Its major version, e.g. 7.
+        public int major() {
+            return Integer.parseInt(version.substring(0, version.indexOf('.')));
+        }
     }
 
     /// A Visualisation doc in Stroom.

@@ -199,6 +199,14 @@ public enum ChartKind {
         return styleSettings;
     }
 
+    /// @param library A charting library.
+    /// @return The style settings a user can change when it is drawn with that library.
+    public List<StyleSetting> styleSettings(final ChartLibrary library) {
+        return styleSettings.stream()
+                .filter(library::supports)
+                .toList();
+    }
+
     /// @param roleId A role's id.
     /// @return The role, if the kind has it.
     public Optional<ChartRole> role(final String roleId) {

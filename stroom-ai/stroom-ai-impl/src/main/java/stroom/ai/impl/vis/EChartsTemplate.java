@@ -62,6 +62,23 @@ public final class EChartsTemplate {
                                       final Map<String, String> mappings,
                                       final Map<String, String> style,
                                       final String optionsJson) {
+        return settingsJson(kind, mappings, style, optionsJson, ChartLibrary.ECHARTS);
+    }
+
+    /// Builds the settings JSON for a chart drawn with a library: the same template, without the settings the
+    /// library's adapter doesn't draw.
+    ///
+    /// @param kind        The chart kind.
+    /// @param mappings    The column mapped to each role, by role id.
+    /// @param style       The style settings chosen, by setting id, already normalised.
+    /// @param optionsJson Option overrides as a JSON object, or null for none.
+    /// @param library     The library it is drawn with.
+    /// @return The settings JSON.
+    public static String settingsJson(final ChartKind kind,
+                                      final Map<String, String> mappings,
+                                      final Map<String, String> style,
+                                      final String optionsJson,
+                                      final ChartLibrary library) {
         final List<Map<String, Object>> dataControls = new ArrayList<>();
         for (final ChartRole role : kind.roles()) {
             final Map<String, Object> control = control(role.id(), "field", role.label());
@@ -74,7 +91,7 @@ public final class EChartsTemplate {
 
         final List<Map<String, Object>> styleControls = new ArrayList<>();
         final List<Map<String, Object>> limitControls = new ArrayList<>();
-        for (final StyleSetting setting : kind.styleSettings()) {
+        for (final StyleSetting setting : kind.styleSettings(library)) {
             final Map<String, Object> control = control(setting.id(), setting.control().type(), setting.label());
             final String chosen = NullSafe.get(style, map -> map.get(setting.id()));
             control.put("defaultValue", chosen != null

@@ -54,6 +54,7 @@ import java.util.Set;
 /// @param baseQuery    For a StroomQL query, its text when the chart was planned, else null.
 /// @param replace      For a chart replacing one Stroom AI generated earlier on the dashboard, which one; else null
 ///                     for a new chart. [#componentName()] is then the vis component's name once replaced.
+/// @param library      The id of the library it is drawn with (see [ChartLibrary]); null for ECharts.
 @JsonInclude(Include.NON_NULL)
 public record VisualisationPlan(@JsonProperty("kind") String kind,
                                 @JsonProperty("mappings") Map<String, String> mappings,
@@ -66,7 +67,8 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                                 @JsonProperty("snapshotHash") String snapshotHash,
                                 @JsonProperty("query") Boolean query,
                                 @JsonProperty("baseQuery") String baseQuery,
-                                @JsonProperty("replace") Replace replace) {
+                                @JsonProperty("replace") Replace replace,
+                                @JsonProperty("library") String library) {
 
     /// Places a new vis component in a new pane below its table.
     public static final String BELOW = "below";
@@ -87,9 +89,42 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     public static final Set<String> OPTION_KEYS = Set.of("legend", "grid", "xAxis", "yAxis", "tooltip", "color",
             "textStyle", "animation", "animationDuration", "dataZoom", "seriesDefaults");
 
+    /// The top-level option keys the D3 adapter takes: its colours. The rest are ECharts option keys.
+    public static final Set<String> D3_OPTION_KEYS = Set.of("color");
+
     /// Reads a plan from JSON, by its components.
     @JsonCreator
     public VisualisationPlan {
+    }
+
+    /// A plan for a chart drawn with ECharts.
+    ///
+    /// @param kind          The chart kind's id.
+    /// @param mappings      The column mapped to each role, by role id.
+    /// @param style         The style settings chosen, by setting id.
+    /// @param options       ECharts option overrides as a JSON object, or null.
+    /// @param table         The name of the table it draws; null for a StroomQL query.
+    /// @param componentId   The dashboard table's component id, or null for a StroomQL query.
+    /// @param componentName The name of the new vis component, or null for a StroomQL query.
+    /// @param placement     Where it goes on the dashboard.
+    /// @param snapshotHash  The hash of what it was planned against.
+    /// @param query         True if it is for a StroomQL query's `show` clause.
+    /// @param baseQuery     For a StroomQL query, its text when the chart was planned, else null.
+    /// @param replace       The chart it replaces, or null.
+    public VisualisationPlan(final String kind,
+                             final Map<String, String> mappings,
+                             final Map<String, String> style,
+                             final String options,
+                             final String table,
+                             final String componentId,
+                             final String componentName,
+                             final String placement,
+                             final String snapshotHash,
+                             final Boolean query,
+                             final String baseQuery,
+                             final Replace replace) {
+        this(kind, mappings, style, options, table, componentId, componentName, placement, snapshotHash, query,
+                baseQuery, replace, null);
     }
 
     /// A plan for a new chart.
@@ -117,7 +152,15 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                              final Boolean query,
                              final String baseQuery) {
         this(kind, mappings, style, options, table, componentId, componentName, placement, snapshotHash, query,
-                baseQuery, null);
+                baseQuery, null, null);
+    }
+
+    /// @return The library it is drawn with: ECharts unless another is named.
+    public ChartLibrary chartLibrary() {
+        return library == null
+                ? ChartLibrary.ECHARTS
+                : ChartLibrary.find(library).orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown charting library '" + library + "'."));
     }
 
     /// @return The plan as JSON, to keep in a button.
@@ -169,8 +212,9 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
             }
             checkText("the column for " + entry.getKey(), entry.getValue());
         }
-        normaliseStyle(chartKind, style);
-        normaliseOptions(options);
+        final ChartLibrary chartLibrary = chartLibrary();
+        normaliseStyle(chartKind, style, chartLibrary);
+        normaliseOptions(options, chartLibrary);
         checkText("the table's name", table);
         checkText("the component's name", componentName);
         if (placement != null && !PLACEMENTS.contains(placement)) {
@@ -215,6 +259,29 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     /// @return The settings, normalised.
     /// @throws IllegalArgumentException naming a setting the kind doesn't have or a value it doesn't take.
     public static Map<String, String> normaliseStyle(final ChartKind kind, final Map<String, String> style) {
+        return normaliseStyle(kind, style, ChartLibrary.ECHARTS);
+    }
+
+    /// Checks style settings for a chart drawn with a library, and puts their values in the form the
+    /// visualisation takes.
+    ///
+    /// @param kind    The chart kind.
+    /// @param style   The settings chosen, by setting id.
+    /// @param library The library it is drawn with.
+    /// @return The settings, normalised.
+    /// @throws IllegalArgumentException naming a setting the kind (or the library) doesn't have, or a value it
+    /// doesn't take.
+    public static Map<String, String> normaliseStyle(final ChartKind kind,
+                                                     final Map<String, String> style,
+                                                     final ChartLibrary library) {
+        for (final String id : NullSafe.map(style).keySet()) {
+            kind.styleSetting(id)
+                    .filter(setting -> !library.supports(setting))
+                    .ifPresent(setting -> {
+                        throw new IllegalArgumentException(setting.id() + " is drawn only with ECharts, not "
+                                                           + library.displayName() + ".");
+                    });
+        }
         final Map<String, String> normalised = new LinkedHashMap<>();
         for (final Entry<String, String> entry : NullSafe.map(style).entrySet()) {
             final StyleSetting setting = kind.styleSetting(entry.getKey())
@@ -238,6 +305,20 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     /// @return The overrides, compacted, or null if none.
     /// @throws IllegalArgumentException if they aren't a JSON object, or are too long.
     public static String normaliseOptions(final String options) {
+        return normaliseOptions(options, ChartLibrary.ECHARTS);
+    }
+
+    /// Checks option overrides for a chart drawn with a library: ECharts takes [#OPTION_KEYS], D3 only
+    /// [#D3_OPTION_KEYS].
+    ///
+    /// @param options The overrides, or null.
+    /// @param library The library.
+    /// @return The overrides, compacted, or null if none.
+    /// @throws IllegalArgumentException if they aren't a JSON object of keys the library takes, or are too long.
+    public static String normaliseOptions(final String options, final ChartLibrary library) {
+        final Set<String> keys = library == ChartLibrary.D3
+                ? D3_OPTION_KEYS
+                : OPTION_KEYS;
         if (NullSafe.isBlankString(options)) {
             return null;
         }
@@ -255,13 +336,13 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
         }
         final List<String> unknown = new ArrayList<>();
         for (final Object key : map.keySet()) {
-            if (!OPTION_KEYS.contains(String.valueOf(key))) {
+            if (!keys.contains(String.valueOf(key))) {
                 unknown.add(String.valueOf(key));
             }
         }
         if (!unknown.isEmpty()) {
             throw new IllegalArgumentException("Options can't set " + String.join(", ", unknown) + ". They may "
-                                               + "set: " + String.join(", ", OPTION_KEYS.stream().sorted()
+                                               + "set: " + String.join(", ", keys.stream().sorted()
                                                        .toList()) + ".");
         }
         return JsonUtil.writeValueAsString(parsed, false);

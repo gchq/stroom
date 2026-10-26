@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.vis;
 
+import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
 import stroom.ai.shared.AiCreateVisualisation;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -38,9 +39,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /// Prepares a Visualisation the agent planned, when the user clicks its `create_visualisation` button: puts the
-/// ECharts adapter in place, builds the Visualisation's settings from the plan, and says where to suggest creating
-/// it (the dashboard's or query's folder) and how to wire it up. The browser then opens Stroom's New Visualisation
-/// dialog; nothing is created here except the adapter.
+/// adapter of the library it is drawn with (ECharts or D3) in place, builds the Visualisation's settings from the
+/// plan, and says where to suggest creating it (the dashboard's or query's folder) and how to wire it up. The
+/// browser then opens Stroom's New Visualisation dialog; nothing is created here except the adapter.
 ///
 /// A chart that replaces one Stroom AI generated earlier is different: its Visualisation is rewritten for the new
 /// chart and renamed here, saved at once, if the user may edit it; the browser then shows it in the same vis
@@ -83,19 +84,36 @@ public class VisualisationActions {
             throw new IllegalStateException(e.getMessage(), e);
         }
         final ChartKind kind = plan.chartKind();
-        final EChartsInstall echarts = chartLibraries.findECharts()
-                .orElseThrow(() -> new IllegalStateException("ECharts is no longer installed as a Script doc, so "
-                                                             + "the chart can't be drawn. Ask an administrator to "
-                                                             + "install it."));
-        if (!chartLibraries.currentUserCanUse(echarts.script())) {
-            throw new IllegalStateException("You don't have Use permission on Script '"
-                                            + echarts.script().getName() + "' (ECharts), so the chart wouldn't "
-                                            + "load for you. Ask an administrator for it.");
+        final ChartLibrary library = plan.chartLibrary();
+        final String missing = library.displayName() + " is no longer installed as a Script doc, so the chart can't "
+                               + "be drawn. Ask an administrator to install it.";
+        final DocRef script;
+        final String version;
+        final D3Install d3;
+        final EChartsInstall echarts;
+        if (library == ChartLibrary.D3) {
+            d3 = chartLibraries.findD3Library().orElseThrow(() -> new IllegalStateException(missing));
+            echarts = null;
+            script = d3.script();
+            version = d3.version();
+        } else {
+            echarts = chartLibraries.findECharts().orElseThrow(() -> new IllegalStateException(missing));
+            d3 = null;
+            script = echarts.script();
+            version = echarts.version();
         }
-        final DocRef adapter = chartLibraries.ensureAdapter(echarts);
+        if (!chartLibraries.currentUserCanUse(script)) {
+            throw new IllegalStateException("You don't have Use permission on Script '" + script.getName() + "' ("
+                                            + library.displayName() + "), so the chart wouldn't load for you. Ask "
+                                            + "an administrator for it.");
+        }
+        final DocRef adapter = d3 != null
+                ? chartLibraries.ensureAdapter(d3)
+                : chartLibraries.ensureAdapter(echarts);
+        final String functionName = library.functionName();
         final String settings = EChartsTemplate.settingsJson(kind, plan.mappings(),
-                VisualisationPlan.normaliseStyle(kind, plan.style()),
-                VisualisationPlan.normaliseOptions(plan.options()));
+                VisualisationPlan.normaliseStyle(kind, plan.style(), library),
+                VisualisationPlan.normaliseOptions(plan.options(), library), library);
         final ExplorerNode folder = explorerNodeServiceProvider.get().getParent(target)
                 .map(VisualisationActions::inExplorerTree)
                 .orElse(null);
@@ -105,32 +123,34 @@ public class VisualisationActions {
                 : plan.isQuery()
                 ? " of query '" + target.getName() + "'"
                 : " of table '" + plan.table() + "' on dashboard '" + target.getName() + "'")
-                                   + ", drawn with ECharts " + echarts.version() + ". Change its columns and "
+                                   + ", drawn with " + library.displayName() + " " + version + ". Change its "
+                                   + "columns and "
                                    + "style in its settings, or ask Stroom AI to tailor it.";
 
         if (plan.isEmbeddedQuery()) {
             // The browser puts the show clause in the embedded query: tableId is its component id.
-            return new AiCreateVisualisation(name, folder, EChartsTemplate.FUNCTION_NAME, adapter, settings,
+            return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                     description, target, plan.componentId(), plan.table(), null, null, null, plan.snapshotHash(),
                     showArguments(kind, plan.mappings()), plan.baseQuery(), null, null);
         }
         if (plan.isQuery()) {
-            return new AiCreateVisualisation(name, folder, EChartsTemplate.FUNCTION_NAME, adapter, settings,
+            return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                     description, target, null, null, null, null, null, null, showArguments(kind, plan.mappings()),
                     plan.baseQuery(), null, null);
         }
         if (plan.isReplacement()) {
-            final DocRef replaced = rewrite(plan.replace().visualisation(), name, adapter, settings, description);
+            final DocRef replaced = rewrite(plan.replace().visualisation(), name, functionName, adapter, settings,
+                    description);
             // The component's name is only given if it changes.
             final String componentName = plan.componentName().equals(plan.replace().componentName())
                     ? null
                     : plan.componentName();
-            return new AiCreateVisualisation(replaced.getName(), null, EChartsTemplate.FUNCTION_NAME, adapter,
+            return new AiCreateVisualisation(replaced.getName(), null, functionName, adapter,
                     settings, description, target, plan.componentId(), plan.table(), componentName,
                     replacementSettings(kind, plan.mappings()), null, plan.snapshotHash(), null, null, replaced,
                     plan.replace().componentId());
         }
-        return new AiCreateVisualisation(name, folder, EChartsTemplate.FUNCTION_NAME, adapter, settings,
+        return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                 description, target, plan.componentId(), plan.table(), plan.componentName(),
                 componentSettings(kind, plan.mappings()),
                 NullSafe.nonBlankStringElse(plan.placement(), VisualisationPlan.BELOW),
@@ -140,6 +160,7 @@ public class VisualisationActions {
     // Rewrites a Visualisation Stroom AI generated for the new chart, and renames it, as the user. Saved at once.
     private DocRef rewrite(final DocRef visualisation,
                            final String name,
+                           final String functionName,
                            final DocRef adapter,
                            final String settings,
                            final String description) {
@@ -154,7 +175,7 @@ public class VisualisationActions {
         final VisualisationStore store = visualisationStoreProvider.get();
         final VisualisationDoc doc = store.readDocument(visualisation);
         store.writeDocument(doc.copy()
-                .functionName(EChartsTemplate.FUNCTION_NAME)
+                .functionName(functionName)
                 .scriptRef(adapter)
                 .settings(settings)
                 .description(description)
