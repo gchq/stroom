@@ -1418,8 +1418,8 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
             "type" : "string"
           },
           "placement" : {
-            "description" : "For add_vis: below (the default) for a new pane below the table, or tab for a tab beside it.",
-            "enum" : [ "below", "tab" ],
+            "description" : "For add_vis: charts (the default) for a tab with the dashboard's charts, or at its bottom if it has none; bottom for a new pane at the bottom of the dashboard; below for a new pane below the table; tab for a tab beside it. Give one only if the user asks.",
+            "enum" : [ "charts", "bottom", "below", "tab" ],
             "type" : "string"
           },
           "position" : {
@@ -1841,8 +1841,8 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "string"
     },
     "placement" : {
-      "description" : "Optional. Where the chart goes on the dashboard: in a new pane below the table (the default), or as a tab beside it.",
-      "enum" : [ "below", "tab" ],
+      "description" : "Optional, only if the user asks. Where the chart goes on the dashboard: charts (the default) as a tab with the dashboard's charts, or at its bottom if it has none; bottom in a new pane at the bottom of the dashboard; below in a new pane below the table; tab as a tab beside the table.",
+      "enum" : [ "charts", "bottom", "below", "tab" ],
       "type" : "string"
     },
     "replace" : {

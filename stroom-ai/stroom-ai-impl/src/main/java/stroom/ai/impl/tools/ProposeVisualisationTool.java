@@ -102,6 +102,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final String NAME_ARG = "name";
     static final String COMPONENT_NAME_ARG = "componentName";
     static final String PLACEMENT_ARG = "placement";
+    // Where the agent can ask for a chart to go.
+    static final List<String> PLACEMENTS = List.of(VisualisationPlan.CHARTS, VisualisationPlan.BOTTOM,
+            VisualisationPlan.BELOW, VisualisationPlan.TAB);
     static final String SUMMARY_ARG = "summary";
     static final String REPLACE_ARG = "replace";
     static final String ADD_NEW_ARG = "addNew";
@@ -247,9 +250,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                                      + "connections'. The user confirms or changes it.")
                         .addStringProperty(COMPONENT_NAME_ARG, "Optional. The name of the chart's pane on the "
                                                                + "dashboard; the Visualisation's name by default.")
-                        .addEnumProperty(PLACEMENT_ARG, List.of(VisualisationPlan.BELOW, VisualisationPlan.TAB),
-                                "Optional. Where the chart goes on the dashboard: in a new pane below the table "
-                                + "(the default), or as a tab beside it.")
+                        .addEnumProperty(PLACEMENT_ARG, PLACEMENTS,
+                                "Optional, only if the user asks. Where the chart goes on the dashboard: charts (the "
+                                + "default) as a tab with the dashboard's charts, or at its bottom if it has none; "
+                                + "bottom in a new pane at the bottom of the dashboard; below in a new pane below "
+                                + "the table; tab as a tab beside the table.")
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what the chart shows, shown with the "
                                                         + "button.")
                         .addProperty(NEW_TABLE_ARG, ArraySchema.builder()
@@ -398,10 +403,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final String name = stringArg(request, NAME_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         final String placement = NullSafe.nonBlankStringElse(stringArg(request, PLACEMENT_ARG),
-                VisualisationPlan.BELOW);
-        if (!VisualisationPlan.BELOW.equals(placement) && !VisualisationPlan.TAB.equals(placement)) {
-            throw new WorkspaceException("Give placement as " + VisualisationPlan.BELOW + " or "
-                                         + VisualisationPlan.TAB + ".");
+                VisualisationPlan.CHARTS);
+        if (!PLACEMENTS.contains(placement)) {
+            throw new WorkspaceException("Give placement as " + String.join(", ", PLACEMENTS) + ".");
         }
         if (!CONTENT_PACK.equals(library) && (name == null || name.isBlank() || name.length() > MAX_NAME_CHARS)) {
             throw new WorkspaceException("Give the new Visualisation a name of up to " + MAX_NAME_CHARS
@@ -928,6 +932,12 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         }
         final String layout = NullSafe.get(stringArg(request, LAYOUT_ARG),
                 text -> text.strip().toLowerCase(Locale.ROOT));
+        // Where the user asked for the charts to go, if they did.
+        final String asked = NullSafe.get(stringArg(request, PLACEMENT_ARG),
+                text -> text.strip().toLowerCase(Locale.ROOT));
+        if (asked != null && !PLACEMENTS.contains(asked)) {
+            throw new WorkspaceException("Give placement as " + String.join(", ", PLACEMENTS) + ".");
+        }
         if (layout != null && !LAYOUTS.contains(layout)) {
             throw new WorkspaceException("Give layout as one of " + String.join(", ", LAYOUTS) + ".");
         }
@@ -1034,7 +1044,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 final String componentName = NullSafe.nonBlankStringElse(
                         NullSafe.get(spec.get(COMPONENT_NAME_ARG), value -> String.valueOf(value).strip()), name);
                 final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, chartStyle, options,
-                        tableName, table.getComponentId(), componentName, placement(layout, onTable), snapshotHash,
+                        tableName, table.getComponentId(), componentName, placement(layout, onTable, asked), snapshotHash,
                         null, null, null, chartLibrary.id());
                 try {
                     plan.validate();
@@ -1086,8 +1096,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                + "\nWhen they click it, Stroom asks for one folder (the dashboard's, by default), "
                                + "creates a Visualisation for each there, named as above, and adds them to dashboard '"
                                + target.getName() + "' " + (planned.size() == 1
-                ? "below its table"
-                : describeLayout(arranged)) + ", unsaved. Nothing changes "
+                ? placementText(NullSafe.nonBlankStringElse(asked, VisualisationPlan.CHARTS))
+                : describeLayout(arranged, asked)) + ", unsaved. Nothing changes "
                                + "until they click it. Tell them about the button rather than saying the charts "
                                + "were made." + leftOut + notes)
                 .withUserAction(action);
@@ -1109,10 +1119,19 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
 
     /// @param layout  How several charts are arranged, or null for a single chart.
     /// @param onTable How many charts of the same table come before this one.
-    /// @return Where the chart goes: a table's first chart below the table, the rest by the layout.
-    static String placement(final String layout, final int onTable) {
-        if (onTable == 0 || layout == null) {
-            return VisualisationPlan.BELOW;
+    /// @param asked   Where the user asked for the charts to go, or null.
+    /// @return Where the chart goes: a table's first chart where the user asked, else as a tab with the dashboard's
+    ///         charts (or at its bottom if it has none), or, laid out beside or below the others, at the bottom of
+    ///         the dashboard; the rest by the layout.
+    static String placement(final String layout, final int onTable, final String asked) {
+        if (onTable == 0 && asked != null) {
+            return asked;
+        }
+        if (layout == null || (onTable == 0 && TABS.equals(layout))) {
+            return VisualisationPlan.CHARTS;
+        }
+        if (onTable == 0) {
+            return VisualisationPlan.BOTTOM;
         }
         return switch (layout) {
             case ROW -> VisualisationPlan.RIGHT;
@@ -1124,12 +1143,27 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         };
     }
 
-    private static String describeLayout(final String layout) {
+    // Where a chart goes on the dashboard, in words.
+    static String placementText(final String placement) {
+        return switch (NullSafe.string(placement)) {
+            case VisualisationPlan.BELOW -> "in a new pane below its table";
+            case VisualisationPlan.TAB -> "as a tab beside its table";
+            case VisualisationPlan.BOTTOM -> "at the bottom of the dashboard";
+            default -> "as a tab with the dashboard's charts (at the bottom of the dashboard if it has none)";
+        };
+    }
+
+    private static String describeLayout(final String layout, final String asked) {
+        final String where = asked != null
+                ? placementText(asked)
+                : TABS.equals(layout)
+                        ? placementText(VisualisationPlan.CHARTS)
+                        : placementText(VisualisationPlan.BOTTOM);
         return switch (layout) {
-            case COLUMN -> "below their tables, one below another";
-            case GRID -> "below their tables, in rows of up to " + GRID_COLUMNS;
-            case TABS -> "below their tables, stacked as tabs in one pane";
-            default -> "below their tables, side by side";
+            case COLUMN -> where + ", one below another";
+            case GRID -> where + ", in rows of up to " + GRID_COLUMNS;
+            case TABS -> where + ", stacked as tabs in one pane";
+            default -> where + ", side by side";
         };
     }
 
@@ -1523,9 +1557,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 : query
                 ? "put in the query's show clause, naming it by its UUID (show \"<its uuid>\" ("
                   + showArguments(kind, mappings) + ")), unsaved"
-                : "added to dashboard '" + target.getName() + "' " + ("tab".equals(placement)
-                        ? "as a tab beside"
-                        : "below") + " table '" + tableName + "', unsaved";
+                : "added to dashboard '" + target.getName() + "' " + placementText(placement) + ", linked to table '"
+                  + tableName + "', unsaved";
         return ToolResult.text(
                 "The user has been shown a 'Create visualisation' button for a "
                 + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("

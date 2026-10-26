@@ -152,7 +152,8 @@ class TestProposeVisualisationTool {
                 .contains("shown a 'Create visualisation' button for a network graph of table 'Links' "
                           + "(source = 'From', target = 'To', weight = 'Count'), drawn with ECharts 6.1.0")
                 .contains("with the name 'Message links' in the dashboard's folder")
-                .contains("added to dashboard 'Messages' below table 'Links', unsaved")
+                .contains("added to dashboard 'Messages' as a tab with the dashboard's charts (at the bottom of "
+                          + "the dashboard if it has none), linked to table 'Links', unsaved")
                 .contains("Sample: 3 rows from snapshot " + SAMPLE_PATH)
                 .contains("From the sample: rows 3, nodes 3, links 3.");
         assertThat(takeUserActions()).singleElement().satisfies(action -> {
@@ -169,7 +170,8 @@ class TestProposeVisualisationTool {
             assertThat(plan.table()).isEqualTo("Links");
             assertThat(plan.componentId()).isEqualTo("table-1");
             assertThat(plan.componentName()).isEqualTo("Message links");
-            assertThat(plan.placement()).isEqualTo(VisualisationPlan.BELOW);
+            // With the dashboard's charts by default, or at its bottom if it has none.
+            assertThat(plan.placement()).isEqualTo(VisualisationPlan.CHARTS);
             // The render report, which changes as the chart draws, is left out of the hash.
             assertThat(plan.snapshotHash())
                     .isEqualTo(AiTabSnapshotPart.hashText(DashboardComponents.withoutRenderReports(DASHBOARD_TEXT)))
@@ -380,7 +382,8 @@ class TestProposeVisualisationTool {
         args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("directed", "yes", "maxNodes", " 50 "));
         args.put(ProposeVisualisationTool.OPTIONS_ARG, "{ \"color\": [\"#5470c6\"] }");
 
-        assertThat(call(args)).contains("added to dashboard 'Messages' as a tab beside table 'Links', unsaved");
+        assertThat(call(args)).contains("added to dashboard 'Messages' as a tab beside its table, linked to table "
+                                        + "'Links', unsaved");
 
         assertThat(takeUserActions()).singleElement().satisfies(action -> {
             final VisualisationPlan plan = VisualisationPlan.fromJson((String) action.get("plan"));
@@ -645,7 +648,7 @@ class TestProposeVisualisationTool {
                 .containsEntry("name", "Force")
                 .containsEntry("visualisation", FORCE.getUuid())
                 .containsEntry("settings", mapOf("source", "From", "target", "To", "count", "Count"))
-                .containsEntry("placement", VisualisationPlan.BELOW);
+                .containsEntry("placement", VisualisationPlan.CHARTS);
         assertThat(takeUserActions()).isEmpty();
         Mockito.verifyNoInteractions(auditLog);
     }
@@ -738,7 +741,7 @@ class TestProposeVisualisationTool {
         assertThat(callWith(ProposeVisualisationTool.NAME_ARG, "x".repeat(101)))
                 .startsWith("Error: Give the new Visualisation a name");
         assertThat(callWith(ProposeVisualisationTool.PLACEMENT_ARG, "left"))
-                .isEqualTo("Error: Give placement as below or tab.");
+                .isEqualTo("Error: Give placement as charts, bottom, below, tab.");
         assertThat(callWith(ProposeVisualisationTool.SUMMARY_ARG, "x".repeat(501)))
                 .isEqualTo("Error: The summary may be at most 500 characters.");
         assertThat(takeUserActions()).isEmpty();
@@ -846,7 +849,8 @@ class TestProposeVisualisationTool {
                     .get("plan"));
             final VisualisationPlan second = VisualisationPlan.fromJson((String) ((Map<?, ?>) charts.get(1))
                     .get("plan"));
-            assertThat(first.placement()).isEqualTo(VisualisationPlan.BELOW);
+            // Stacked as tabs: with the dashboard's charts.
+            assertThat(first.placement()).isEqualTo(VisualisationPlan.CHARTS);
             assertThat(second.placement()).isEqualTo(VisualisationPlan.WITH);
             assertThat(second.chartKind()).isEqualTo(ChartKind.PIE);
         });
@@ -879,16 +883,36 @@ class TestProposeVisualisationTool {
 
     @Test
     void aLayoutPlacesEachChartAfterItsTablesFirst() {
+        // Laid out in a grid, the first at the bottom of the dashboard, so the grid doesn't split another chart's
+        // pane.
         assertThat(IntStream.range(0, 5)
-                .mapToObj(i -> ProposeVisualisationTool.placement(ProposeVisualisationTool.GRID, i)))
-                .containsExactly(VisualisationPlan.BELOW, VisualisationPlan.RIGHT, VisualisationPlan.RIGHT,
+                .mapToObj(i -> ProposeVisualisationTool.placement(ProposeVisualisationTool.GRID, i, null)))
+                .containsExactly(VisualisationPlan.BOTTOM, VisualisationPlan.RIGHT, VisualisationPlan.RIGHT,
                         VisualisationPlan.UNDER, VisualisationPlan.RIGHT);
-        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.ROW, 1)).isEqualTo(
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.ROW, 1, null)).isEqualTo(
                 VisualisationPlan.RIGHT);
-        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.COLUMN, 1)).isEqualTo(
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.COLUMN, 1, null)).isEqualTo(
                 VisualisationPlan.UNDER);
-        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.TABS, 1)).isEqualTo(
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.TABS, 0, null)).isEqualTo(
+                VisualisationPlan.CHARTS);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.TABS, 1, null)).isEqualTo(
                 VisualisationPlan.WITH);
+        // A single chart: with the dashboard's charts.
+        assertThat(ProposeVisualisationTool.placement(null, 0, null)).isEqualTo(VisualisationPlan.CHARTS);
+    }
+
+    @Test
+    void whereTheUserAskedForChartsIsKept() {
+        // Seen in testing: a chart was put beside its table though the dashboard had charts. Where the user asks
+        // is kept; only the first chart of a table goes there, the rest by the layout.
+        assertThat(ProposeVisualisationTool.placement(null, 0, VisualisationPlan.BELOW)).isEqualTo(
+                VisualisationPlan.BELOW);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.ROW, 0, VisualisationPlan.TAB))
+                .isEqualTo(VisualisationPlan.TAB);
+        assertThat(ProposeVisualisationTool.placement(ProposeVisualisationTool.ROW, 1, VisualisationPlan.TAB))
+                .isEqualTo(VisualisationPlan.RIGHT);
+        assertThat(ProposeVisualisationTool.placementText(VisualisationPlan.CHARTS))
+                .isEqualTo("as a tab with the dashboard's charts (at the bottom of the dashboard if it has none)");
     }
 
     // D3 7.9.0 installed, which the user may use.

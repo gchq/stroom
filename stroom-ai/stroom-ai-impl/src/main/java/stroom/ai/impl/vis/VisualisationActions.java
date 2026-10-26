@@ -160,7 +160,7 @@ public class VisualisationActions {
         return new AiCreateVisualisation(name, folder, functionName, adapter, settings,
                 description, target, plan.componentId(), plan.table(), plan.componentName(),
                 componentSettings(kind, plan.mappings()),
-                NullSafe.nonBlankStringElse(plan.placement(), VisualisationPlan.BELOW),
+                NullSafe.nonBlankStringElse(plan.placement(), VisualisationPlan.CHARTS),
                 plan.snapshotHash(), null, null, null, null, changesJson(plan.tableChanges()),
                 changesJson(plan.filterChanges()));
     }

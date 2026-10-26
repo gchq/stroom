@@ -74,7 +74,12 @@ public final class TableChange {
     public static final String QUERY_FILTER = "query";
     /// For add_selection_filter: filters a table's rows.
     public static final String TABLE_FILTER = "table";
-    /// For add_vis: in a new pane below the table (the default).
+    /// For add_vis: as a tab in the pane of a chart already on the dashboard (one linked to the same table if any),
+    /// or in a new pane at the bottom of the dashboard if it has none (the default).
+    public static final String CHARTS = "charts";
+    /// For add_vis: in a new pane at the bottom of the dashboard.
+    public static final String BOTTOM = "bottom";
+    /// For add_vis: in a new pane below the table.
     public static final String BELOW = "below";
     /// For add_vis: as a tab beside the table.
     public static final String TAB = "tab";

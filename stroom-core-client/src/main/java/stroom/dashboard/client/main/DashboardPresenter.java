@@ -1677,9 +1677,6 @@ public class DashboardPresenter
         return text;
     }
 
-    // Adds a Visualisation component linked to a table, showing the Visualisation the change gives with its settings,
-    // in a new pane below the table or as a tab beside it, with the name asked for (made unique if the dashboard has
-    // the name already).
     // A table on the dashboard, by its name (ignoring case), e.g. for one of several charts added together that is
     // linked to another table than the change's; or null.
     private Component tableNamed(final String name) {
@@ -1692,6 +1689,9 @@ public class DashboardPresenter
         return null;
     }
 
+    // Adds a Visualisation component linked to a table, showing the Visualisation the change gives with its settings,
+    // with the name asked for (made unique if the dashboard has the name already). It goes where the change says:
+    // by default as a tab with the dashboard's charts, or in a new pane at the bottom of the dashboard if it has none.
     private Component addVis(final Component table,
                              final TableChange change,
                              final Component lastVis,
@@ -1745,15 +1745,52 @@ public class DashboardPresenter
             onChange();
             return vis;
         }
-        if (TableChange.TAB.equals(change.getPlacement())
-            || !layoutPresenter.addTabBelow(tableTab.getParent(), tabConfig)) {
-            // Beside the table: asked for, or if it can't go below it.
-            tableTab.getParent().add(tabConfig);
-            layoutPresenter.clear();
-            layoutPresenter.refresh();
+        final String placement = NullSafe.nonBlankStringElse(change.getPlacement(), TableChange.CHARTS);
+        final MutableTabLayoutConfig chartPane = TableChange.CHARTS.equals(placement)
+                ? chartPane(table, vis)
+                : null;
+        if (chartPane != null) {
+            addShownTab(chartPane, tabConfig);
+        } else if (TableChange.TAB.equals(placement)) {
+            addShownTab(tableTab.getParent(), tabConfig);
+        } else if (TableChange.BELOW.equals(placement)
+                ? !layoutPresenter.addTabBelow(tableTab.getParent(), tabConfig)
+                : !layoutPresenter.addTabAtBottom(tabConfig)) {
+            // Beside the table if it can't go where asked.
+            addShownTab(tableTab.getParent(), tabConfig);
         }
         onChange();
         return vis;
+    }
+
+    // The pane of a chart already on the dashboard, which a new chart joins as a tab: one linked to the same table if
+    // there is one, else the last chart's; null if the dashboard has no other chart.
+    private MutableTabLayoutConfig chartPane(final Component table, final Component added) {
+        MutableTabLayoutConfig sameTable = null;
+        MutableTabLayoutConfig any = null;
+        for (final Component component : components) {
+            final MutableTabLayoutConfig pane = component instanceof VisPresenter && component != added
+                    ? NullSafe.get(component.getTabConfig(), MutableTabConfig::getParent)
+                    : null;
+            if (pane != null) {
+                any = pane;
+                if (((VisPresenter) component).getSettings() instanceof final VisComponentSettings settings
+                    && table.getId().equals(settings.getTableId())) {
+                    sameTable = pane;
+                }
+            }
+        }
+        return sameTable != null
+                ? sameTable
+                : any;
+    }
+
+    // Adds a tab to a pane and shows it, so a chart added among others is the one seen.
+    private void addShownTab(final MutableTabLayoutConfig pane, final MutableTabConfig tabConfig) {
+        pane.add(tabConfig);
+        pane.setSelected(pane.indexOf(tabConfig));
+        layoutPresenter.clear();
+        layoutPresenter.refresh();
     }
 
     // Changes a Visualisation component's settings: merges the change's settings into them, switches it to the
