@@ -17,6 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.docref.HasDisplayValue;
+import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.shared.User;
 import stroom.ui.config.client.UiConfigCache;
@@ -24,11 +25,13 @@ import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -38,7 +41,7 @@ import java.util.function.Consumer;
 
 public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> implements CreateUserUiHandlers {
 
-    private final CreateNewGroupPresenter createNewGroupPresenter;
+    private final CreateNewGroupController createNewGroupController;
     private final CreateExternalUserPresenter createNewUserPresenter;
     private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
     private final UiConfigCache uiConfigCache;
@@ -46,15 +49,15 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
     @Inject
     public CreateUserPresenter(final EventBus eventBus,
                                final CreateUserView view,
-                               final CreateNewGroupPresenter createNewGroupPresenter,
+                               final CreateNewGroupController createNewGroupController,
                                final CreateExternalUserPresenter createNewUserPresenter,
                                final CreateMultipleUsersPresenter createMultipleUsersPresenter,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        own(createNewGroupPresenter);
+        own(createNewGroupController);
         own(createNewUserPresenter);
         own(createMultipleUsersPresenter);
-        this.createNewGroupPresenter = createNewGroupPresenter;
+        this.createNewGroupController = createNewGroupController;
         this.createNewUserPresenter = createNewUserPresenter;
         this.createMultipleUsersPresenter = createMultipleUsersPresenter;
         this.uiConfigCache = uiConfigCache;
@@ -67,7 +70,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
             getView().setCreateTypes(List.of(CreateType.USER_GROUP));
             getView().setCreateType(CreateType.USER_GROUP);
             final PopupSize popupSize = PopupSize.resizableX();
-            show("Add User Group", createNewGroupPresenter.getView(), consumer, popupSize);
+            show("Add User Group", createNewGroupController, consumer, popupSize);
         } else {
             getView().setCreateTypesVisible(true);
             final List<CreateType> createTypes = new ArrayList<>();
@@ -86,14 +89,11 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                       final Consumer<User> consumer,
                       final PopupSize popupSize) {
         onTypeChange();
-        createNewGroupPresenter.getView().setName("");
-        createNewGroupPresenter.getView().setNameValid();
+        createNewGroupController.clear();
         createNewUserPresenter.getView().clear();
         createMultipleUsersPresenter.getView().clear();
 
-        createNewGroupPresenter.setDialogActionUiHandlers(e -> {
-            DialogEvent.fire(this, this, e);
-        });
+        createNewGroupController.setOnEnter(() -> DialogEvent.fire(this, this, DialogAction.OK));
         createNewUserPresenter.setDialogActionUiHandlers(e -> {
             DialogEvent.fire(this, this, e);
         });
@@ -110,7 +110,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                     if (e.isOk()) {
                         switch (getView().getCreateType()) {
                             case USER_GROUP: {
-                                createNewGroupPresenter.create(consumer, e, this);
+                                createNewGroupController.create(consumer, e, this);
                                 break;
                             }
                             case IDP_USER: {
@@ -133,7 +133,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
     public void onTypeChange() {
         switch (getView().getCreateType()) {
             case USER_GROUP: {
-                getView().setTypeView(createNewGroupPresenter.getView());
+                getView().setTypeView(createNewGroupController);
                 break;
             }
             case IDP_USER: {
@@ -184,6 +184,6 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
 
         CreateType getCreateType();
 
-        void setTypeView(View view);
+        void setTypeView(IsWidget content);
     }
 }

@@ -19,6 +19,7 @@ package stroom.node.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.node.client.NodeGroupClient;
+import stroom.node.client.component.NewNodeGroupController;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -38,7 +39,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private final NodeGroupListPresenter nodeGroupListPresenter;
     private final Provider<NodeGroupEditPresenter> editProvider;
     private final NodeGroupClient nodeGroupClient;
-    private final Provider<NewNodeGroupPresenter> newNodeGroupPresenterProvider;
+    private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -51,14 +52,14 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final NodeGroupListPresenter nodeGroupListPresenter,
             final Provider<NodeGroupEditPresenter> editProvider,
             final NodeGroupClient nodeGroupClient,
-            final Provider<NewNodeGroupPresenter> newNodeGroupPresenterProvider) {
+            final Provider<NewNodeGroupController> newNodeGroupControllerProvider) {
 
         super(eventBus, view);
         own(nodeGroupListPresenter);
         this.nodeGroupListPresenter = nodeGroupListPresenter;
         this.editProvider = editProvider;
         this.nodeGroupClient = nodeGroupClient;
-        this.newNodeGroupPresenterProvider = newNodeGroupPresenterProvider;
+        this.newNodeGroupControllerProvider = newNodeGroupControllerProvider;
 
         nodeGroupListPresenter.getView().getToolbar().setName("Node group actions");
         newButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Node Group", this::add);
@@ -81,8 +82,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        final NewNodeGroupPresenter presenter = makeDialog(newNodeGroupPresenterProvider);
-        presenter.show("", nodeGroup -> {
+        newNodeGroupControllerProvider.get().show(this, "", nodeGroup -> {
             edit(nodeGroup);
             refresh();
         });

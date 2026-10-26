@@ -133,7 +133,7 @@ public final class NodeGroupsScreenStories {
                     // The 'New Node Group' button is an icon button titled 'New Node Group'
                     play.click(play.getByTitle("New Node Group"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
-                    // The name field is Stroom's shared NameDocumentViewImpl ('nameDocumentName')
+                    // The name field is Stroom's shared NameEntry ('nameDocumentName')
                     play.type(screen.querySelector("#nameDocumentName"), "Reporting");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

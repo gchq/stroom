@@ -24,13 +24,10 @@ import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentView;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.entity.client.presenter.NameDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentView;
 import stroom.entity.client.view.CopyDocumentViewImpl;
 import stroom.entity.client.view.CreateDocumentViewImpl;
 import stroom.entity.client.view.InfoDocumentViewImpl;
 import stroom.entity.client.view.MoveDocumentViewImpl;
-import stroom.entity.client.view.NameDocumentViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `EntityModule`
@@ -54,9 +51,6 @@ public class EntityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(InfoDocumentPresenter.class,
                 InfoDocumentView.class,
                 InfoDocumentViewImpl.class);
-        bindSharedView(NameDocumentView.class,
-                NameDocumentViewImpl.class);
-        bind(NameDocumentPresenter.class);
     }
 }
 

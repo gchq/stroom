@@ -120,6 +120,7 @@ import stroom.gwt.workbench.client.app.main.ProcessorTaskSummaryStories;
 import stroom.gwt.workbench.client.app.main.PropertiesScreenStories;
 import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
 import stroom.gwt.workbench.client.app.main.RecentItemsDialogStories;
+import stroom.gwt.workbench.client.app.main.RenameDocumentDialogStories;
 import stroom.gwt.workbench.client.app.main.ResultStoresDialogStories;
 import stroom.gwt.workbench.client.app.main.ServerTasksScreenStories;
 import stroom.gwt.workbench.client.app.main.SigningKeysScreenStories;
@@ -225,6 +226,7 @@ public final class AppStories {
         DependencyInfoDialogStories.addTo(registry);
         // App/Main/DocInfoDialog
         DocInfoDialogStories.addTo(registry);
+        RenameDocumentDialogStories.addTo(registry);
         // App/Main/DocumentCreatePermissionsGrid
         DocumentCreatePermissionsGridStories.addTo(registry);
         // App/Main/DocumentPermissionsScreen

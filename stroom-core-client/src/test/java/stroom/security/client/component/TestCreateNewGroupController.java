@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.entity.client.presenter.NameDocumentView;
+import stroom.entity.client.component.NameEntry;
 import stroom.security.shared.UserResource;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -34,18 +34,18 @@ import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestCreateNewGroupPresenter {
+class TestCreateNewGroupController {
 
-    private NameDocumentView view;
+    private NameEntry view;
     private final FakeRestFactory restFactory = new FakeRestFactory();
-    private CreateNewGroupPresenter presenter;
+    private CreateNewGroupController controller;
 
     @BeforeEach
     void setUp() {
         // The REST resource is made with GWT.create, which only works in a browser
         GWTMockUtilities.disarm();
-        view = Mockito.mock(NameDocumentView.class);
-        presenter = new CreateNewGroupPresenter(new SimpleEventBus(), view, restFactory);
+        view = Mockito.mock(NameEntry.class);
+        controller = new CreateNewGroupController(new SimpleEventBus(), view, restFactory);
     }
 
     @AfterEach
@@ -61,7 +61,7 @@ class TestCreateNewGroupPresenter {
         Mockito.when(view.getName()).thenReturn(name);
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
 
-        presenter.create(user -> {
+        controller.create(user -> {
         }, okPressed, Mockito.mock(TaskMonitorFactory.class));
 
         Mockito.verify(view).setNameInvalid("You must provide a name for the group");
@@ -76,7 +76,7 @@ class TestCreateNewGroupPresenter {
         Mockito.when(view.getName()).thenReturn(" Admins ");
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
 
-        presenter.create(user -> {
+        controller.create(user -> {
         }, okPressed, Mockito.mock(TaskMonitorFactory.class));
 
         // The group is created with the name trimmed

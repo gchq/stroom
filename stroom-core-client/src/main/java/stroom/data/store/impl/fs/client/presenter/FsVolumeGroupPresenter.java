@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.store.impl.fs.client.component.NewFsVolumeGroupController;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
@@ -44,7 +45,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private final FsVolumeGroupListPresenter volumeStatusListPresenter;
     private final Provider<FsVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
-    private final Provider<NewFsVolumeGroupPresenter> newFsVolumeGroupPresenterProvider;
+    private final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -57,14 +58,14 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final FsVolumeGroupListPresenter volumeStatusListPresenter,
             final Provider<FsVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
-            final Provider<NewFsVolumeGroupPresenter> newFsVolumeGroupPresenterProvider) {
+            final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider) {
 
         super(eventBus, view);
         own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
-        this.newFsVolumeGroupPresenterProvider = newFsVolumeGroupPresenterProvider;
+        this.newFsVolumeGroupControllerProvider = newFsVolumeGroupControllerProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
         newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
@@ -87,8 +88,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        final NewFsVolumeGroupPresenter presenter = makeDialog(newFsVolumeGroupPresenterProvider);
-        presenter.show("", volumeGroup -> {
+        newFsVolumeGroupControllerProvider.get().show(this, "", volumeGroup -> {
             edit(volumeGroup);
             refresh();
         });

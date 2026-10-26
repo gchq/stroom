@@ -40,7 +40,6 @@ import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentPresenter;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
@@ -210,9 +209,6 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return The 'Move' dialog, shown for `ShowMoveDocumentDialogEvent`.
     MoveDocumentPresenter getMoveDocumentPresenter();
-
-    /// @return The 'Rename' dialog, shown for `ShowRenameDocumentDialogEvent`.
-    NameDocumentPresenter getNameDocumentPresenter();
 
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentPresenter getInfoDocumentPresenter();

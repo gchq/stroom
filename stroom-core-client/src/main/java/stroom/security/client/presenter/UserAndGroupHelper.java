@@ -25,6 +25,7 @@ import stroom.security.client.AppPermissionsPlugin;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
+import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
 import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.event.OpenUserEvent;
@@ -40,11 +41,9 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
@@ -164,32 +163,22 @@ public class UserAndGroupHelper {
         }
     }
 
+    /// Renames the group selected, if a group is, in the Edit User Group dialog.
+    ///
+    /// @param userListPresenter                The list of users and groups.
+    /// @param createNewGroupControllerProvider Makes the dialog.
+    /// @param opener                           What shows the dialog, which owns it while shown.
+    /// @param taskMonitorFactory               Shows the progress of the update.
     public static void onEditUserOrGroup(final UserListPresenter userListPresenter,
-                                         final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider,
+                                         final Provider<CreateNewGroupController> createNewGroupControllerProvider,
+                                         final HasControllerNode opener,
                                          final TaskMonitorFactory taskMonitorFactory) {
         final User user = userListPresenter.getSelectionModel().getSelected();
         if (user != null && user.isGroup()) {
-            final CreateNewGroupPresenter createNewGroupPresenter =
-                    createNewGroupPresenterProvider.get();
-            createNewGroupPresenter.getView().setName(user.getSubjectId());
-            final PopupSize popupSize = PopupSize.resizable(600, 200);
-            ShowPopupEvent.builder(createNewGroupPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Edit User Group")
-                    .onShow(e -> createNewGroupPresenter.getView().focus())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            createNewGroupPresenter.editGroupName(
-                                    user,
-                                    createAfterChangeConsumer(userListPresenter),
-                                    e,
-                                    taskMonitorFactory);
-                        } else {
-                            e.hide();
-                        }
-                    })
-                    .fire();
+            createNewGroupControllerProvider.get().edit(opener,
+                    user,
+                    createAfterChangeConsumer(userListPresenter),
+                    taskMonitorFactory);
         }
     }
 

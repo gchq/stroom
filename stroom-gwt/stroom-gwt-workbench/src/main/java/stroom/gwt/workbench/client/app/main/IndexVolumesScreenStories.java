@@ -81,6 +81,14 @@ public final class IndexVolumesScreenStories {
             .addAll(FIXTURES)
             .build();
 
+    // A new group, 'Archive', that no group has the name of yet
+    private static final RestFixtures NEW_GROUP_FIXTURES = RestFixtures.builder()
+            .get("/index/volumeGroup/v2/fetchByName/Archive", RestReply.noContent())
+            .post("/index/volumeGroup/v2", RestReply.json("{\"id\": 2, \"name\": \"Archive\"}"))
+            .addAll(FIXTURES)
+            .build();
+
+    private static final String NEW_GROUP = "New Index Volume Group";
     private static final String EDIT_GROUP = "Edit Index Volume Group - Default";
     private static final String NEW_VOLUME = "New Index Volume";
 
@@ -95,6 +103,23 @@ public final class IndexVolumesScreenStories {
         registry.component("App/Main/IndexVolumesScreen", IndexVolumesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Group list → group dialog (volume list) → New Index Volume dialog creates a volume
+                // New group: a name, then OK, creates it, and its dialog opens
+                .story("NewGroup", context -> render(context, NEW_GROUP_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    screen.findByText(NEW_GROUP, StroomDom.DIALOG_TITLE);
+                    play.type(screen.getByLabelText("Name"), "Archive");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/index/volumeGroup/v2").withBodyContaining("Archive")
+                                    .toSpyMatcher()));
+                    screen.findByText("Edit Index Volume Group - Archive");
+                    play.expect(screen.queryByText(NEW_GROUP, StroomDom.DIALOG_TITLE)).toBeNull();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 .story("Volumes", IndexVolumesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();

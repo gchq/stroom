@@ -16,16 +16,20 @@
 
 package stroom.entity.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
+import stroom.entity.client.component.RenameDocumentController;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentPresenter;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.widget.component.client.AppRoot;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -42,14 +46,16 @@ public class DocumentDialogScreens {
     /// @param createDocumentPresenterProvider Makes the CreateDocumentPresenter.
     /// @param infoDocumentPresenterProvider Makes the InfoDocumentPresenter.
     /// @param moveDocumentPresenterProvider Makes the MoveDocumentPresenter.
-    /// @param nameDocumentPresenterProvider Makes the NameDocumentPresenter.
+    /// @param renameDocumentControllerProvider Makes a document's Rename dialog.
+    /// @param appRoot The app, which owns each Rename dialog while it is shown.
     @Inject
     public DocumentDialogScreens(final EventBus eventBus,
                                  final Provider<CopyDocumentPresenter> copyDocumentPresenterProvider,
                                  final Provider<CreateDocumentPresenter> createDocumentPresenterProvider,
                                  final Provider<InfoDocumentPresenter> infoDocumentPresenterProvider,
                                  final Provider<MoveDocumentPresenter> moveDocumentPresenterProvider,
-                                 final Provider<NameDocumentPresenter> nameDocumentPresenterProvider) {
+                                 final Provider<RenameDocumentController> renameDocumentControllerProvider,
+                                 final AppRoot appRoot) {
         eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event ->
                 copyDocumentPresenterProvider.get().onCopy(event));
         eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event ->
@@ -59,6 +65,17 @@ public class DocumentDialogScreens {
         eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event ->
                 moveDocumentPresenterProvider.get().onMove(event));
         eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event ->
-                nameDocumentPresenterProvider.get().onRename(event));
+                renameEach(new ArrayList<>(event.getExplorerNodeList()), renameDocumentControllerProvider, appRoot));
+    }
+
+    // Renames the documents one after another, each in a dialog of its own
+    private static void renameEach(final List<ExplorerNode> documents,
+                                   final Provider<RenameDocumentController> renameDocumentControllerProvider,
+                                   final AppRoot appRoot) {
+        if (!documents.isEmpty()) {
+            final ExplorerNode document = documents.remove(0);
+            renameDocumentControllerProvider.get().rename(appRoot, document, () ->
+                    renameEach(documents, renameDocumentControllerProvider, appRoot));
+        }
     }
 }

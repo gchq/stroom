@@ -25,6 +25,8 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -67,6 +69,15 @@ public final class DataVolumesScreenStories {
             .post("/fsVolume/v1", request -> RestReply.json(request.getBody()))
             .build();
 
+    // A new group, 'Archive', that no group has the name of yet
+    private static final RestFixtures NEW_GROUP_FIXTURES = RestFixtures.builder()
+            .get("/fsVolume/volumeGroup/v2/fetchByName/Archive", RestReply.noContent())
+            .post("/fsVolume/volumeGroup/v2", RestReply.json("{\"id\": 2, \"name\": \"Archive\"}"))
+            .addAll(FIXTURES)
+            .build();
+
+    private static final String NEW_GROUP = "New Data Volume Group";
+
     private DataVolumesScreenStories() {
         // Static utility
     }
@@ -99,12 +110,48 @@ public final class DataVolumesScreenStories {
                                     .withJsonBodyContaining("{\"path\": \"/data2\", \"volumeGroup\": {\"id\": 1}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // New group: a name, then Enter, creates it, and its dialog opens
+                .story("NewGroup", context -> render(context, NEW_GROUP_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    screen.findByText(NEW_GROUP, StroomDom.DIALOG_TITLE);
+                    final Query name = screen.getByLabelText("Name");
+                    play.waitFor(() -> play.expect(name).toHaveFocus());
+                    play.type(name, "Archive");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/fsVolume/volumeGroup/v2").withBodyContaining("Archive")
+                                    .toSpyMatcher()));
+                    screen.findByText("Edit Data Volume Group - Archive");
+                    play.expect(screen.queryByText(NEW_GROUP, StroomDom.DIALOG_TITLE)).toBeNull();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // A name another group has is refused, and the dialog stays open
+                .story("NewGroupNameInUse", DataVolumesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    play.type(screen.findByLabelText("Name"), "Default");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("already in use")));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/fsVolume/volumeGroup/v2").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> harness.show(injector.getFsVolumeGroupPresenter()));

@@ -80,6 +80,9 @@ public final class UserGroupsScreenStories {
                     RestReply.json(page(ALICE)))
             .post("/users/v1/find", RestReply.json(page(ALICE, ADMINS)))
             .post("/users/v1/updateUser", request -> RestReply.json(request.getBody()))
+            .post("/users/v1/createGroup", RestReply.json("""
+                    {"id": 3, "uuid": "g-auditors", "subjectId": "Auditors", "displayName": "Auditors",
+                      "group": true, "enabled": true}"""))
             // The user picker (UserRefPopupPresenter)
             .post("/userRef/v1/find", RestReply.json("""
                     {"values": [{"uuid": "u-alice", "subjectId": "alice", "displayName": "Alice Anderson",
@@ -213,6 +216,25 @@ public final class UserGroupsScreenStories {
                                     .withJsonBodyContaining("""
                                             {"uuid": "g-admins", "subjectId": "Admins", "displayName": "Admins"}""")
                                     .toSpyMatcher()));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Create Group asks for the group's name; Enter creates it
+                .story("CreateGroup", UserGroupsScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Alice A Anderson");
+                    play.click(play.getByTitle("Create Group"));
+                    final Play dialog = screen.within(screen.findByText("Add User Group", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query name = dialog.getByLabelText("Name");
+                    play.waitFor(() -> play.expect(name).toHaveFocus());
+                    play.type(name, "Auditors");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/users/v1/createGroup").withBodyContaining("Auditors")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add User Group", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Every list has an action menu; the membership panes keep the User Groups link

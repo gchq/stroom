@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.shared.User;
@@ -46,7 +47,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     private final UserListPresenter userList;
     private final RestFactory restFactory;
     private final CreateUserPresenter createUserPresenter;
-    private final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider;
+    private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
 
     //    private final ToolbarButton editButton;
     private final ToolbarButton deleteButton;
@@ -57,14 +58,14 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
                           final UserListPresenter userList,
                           final RestFactory restFactory,
                           final CreateUserPresenter createUserPresenter,
-                          final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider) {
+                          final Provider<CreateNewGroupController> createNewGroupControllerProvider) {
         super(eventBus, view);
         own(userList);
         own(createUserPresenter);
         this.userList = userList;
         this.restFactory = restFactory;
         this.createUserPresenter = createUserPresenter;
-        this.createNewGroupPresenterProvider = createNewGroupPresenterProvider;
+        this.createNewGroupControllerProvider = createNewGroupControllerProvider;
 
         view.setUserList(this.userList.getView());
 
@@ -99,7 +100,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     private void onEditUserOrGroup() {
         // The edit dialog is this one's, made for one use
-        UserAndGroupHelper.onEditUserOrGroup(userList, () -> makeDialog(createNewGroupPresenterProvider), this);
+        UserAndGroupHelper.onEditUserOrGroup(userList, createNewGroupControllerProvider, this, this);
     }
 
     private void onDelete() {

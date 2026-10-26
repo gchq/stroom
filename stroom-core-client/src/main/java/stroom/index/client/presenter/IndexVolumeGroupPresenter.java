@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.index.client.component.NewIndexVolumeGroupController;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
@@ -42,7 +43,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     private final IndexVolumeGroupListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
-    private final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider;
+    private final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -55,14 +56,14 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
             final IndexVolumeGroupListPresenter volumeStatusListPresenter,
             final Provider<IndexVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
-            final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider) {
+            final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider) {
 
         super(eventBus, view);
         own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
-        this.newIndexVolumeGroupPresenterProvider = newIndexVolumeGroupPresenterProvider;
+        this.newIndexVolumeGroupControllerProvider = newIndexVolumeGroupControllerProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
         newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
@@ -108,8 +109,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 //    }
 
     private void add() {
-        final NewIndexVolumeGroupPresenter presenter = makeDialog(newIndexVolumeGroupPresenterProvider);
-        presenter.show("", indexVolumeGroup -> {
+        newIndexVolumeGroupControllerProvider.get().show(this, "", indexVolumeGroup -> {
             edit(indexVolumeGroup);
             refresh();
         });
