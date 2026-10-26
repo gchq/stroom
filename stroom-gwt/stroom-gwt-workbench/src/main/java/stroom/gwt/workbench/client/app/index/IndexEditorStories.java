@@ -85,6 +85,9 @@ public final class IndexEditorStories {
 
     private static final String FIND_FIELDS = "/index/v2/findFields";
 
+    // IndexResource.updateField(): saves an edited field
+    private static final String UPDATE_FIELD = "/index/v2/updateField";
+
     // IndexResource.reset(): deletes the index's shards, replying with how many were marked
     private static final String RESET = "/index/v2/index-events/reset";
 
@@ -92,6 +95,7 @@ public final class IndexEditorStories {
             .get("/index/v2/index-events", RestReply.json(DOC))
             .put("/index/v2/index-events", request -> RestReply.json(request.getBody()))
             .post(FIND_FIELDS, RestReply.json(FIELDS))
+            .put(UPDATE_FIELD, RestReply.json("true"))
             .post("/index/v2/shard/find", RestReply.json(SHARDS))
             .post("/index/volumeGroup/v2/find", RestReply.json(VOLUME_GROUPS))
             .build();
@@ -179,6 +183,25 @@ public final class IndexEditorStories {
                     play.expect(screen.getByText("Embedding Model", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Nearest Neighbour Count", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Minimum Rerank Score", "label")).toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
+                })
+                // OK saves a dense vector field with the settings shown: those edited and those kept
+                .story("DenseVectorFieldSaved", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("Embedding")).toBeInTheDocument());
+                    play.click(play.getByText("Embedding"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
+                    play.waitFor(() -> play.expect(screen.getByText("Minimum Rerank Score", "label"))
+                            .toBeInTheDocument());
+                    play.clear(screen.querySelector("#rerankScoreMinimum"));
+                    play.type(screen.querySelector("#rerankScoreMinimum"), "0.5");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_FIELD).withJsonBodyContaining(
+                                    "{\"fieldName\": \"Embedding\", \"indexField\": {\"denseVectorFieldConfig\":"
+                                    + " {\"vectorSimilarityFunction\": \"COSINE\", \"segmentSize\": 1500,"
+                                    + " \"rerankScoreMinimum\": 0.5}}}").toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
                 // The Fields tab (the default) as an editable partner for FieldsReadOnly

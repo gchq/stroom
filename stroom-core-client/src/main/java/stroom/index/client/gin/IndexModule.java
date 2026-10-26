@@ -18,8 +18,6 @@ package stroom.index.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.index.client.IndexPlugin;
-import stroom.index.client.presenter.DenseVectorFieldPresenter;
-import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldView;
 import stroom.index.client.presenter.IndexDataPresenter;
 import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexFieldEditPresenter;
@@ -29,7 +27,6 @@ import stroom.index.client.presenter.IndexVolumeEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.index.client.view.DenseVectorFieldViewImpl;
 import stroom.index.client.view.IndexDataViewImpl;
 import stroom.index.client.view.IndexFieldEditViewImpl;
 import stroom.index.client.view.IndexVolumeEditViewImpl;
@@ -52,10 +49,6 @@ public class IndexModule extends PluginModule {
                 IndexVolumeEditPresenter.IndexVolumeEditView.class,
                 IndexVolumeEditViewImpl.class);
         bindPresenterWidget(IndexFieldEditPresenter.class, IndexFieldEditView.class, IndexFieldEditViewImpl.class);
-        bindPresenterWidget(
-                DenseVectorFieldPresenter.class,
-                DenseVectorFieldView.class,
-                DenseVectorFieldViewImpl.class);
         bindPresenterWidget(
                 IndexDataPresenter.class,
                 IndexDataView.class,

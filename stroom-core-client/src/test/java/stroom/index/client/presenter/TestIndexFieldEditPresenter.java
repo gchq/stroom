@@ -17,6 +17,7 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.index.client.component.DenseVectorFieldController;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.FieldType;
@@ -53,7 +54,7 @@ class TestIndexFieldEditPresenter {
         presenter = new IndexFieldEditPresenter(
                 eventBus,
                 view,
-                Mockito.mock(DenseVectorFieldPresenter.class));
+                Mockito.mock(DenseVectorFieldController.class));
         hideRequest = Mockito.mock(HidePopupRequestEvent.class);
         onOk = Mockito.mock(BiConsumer.class);
     }

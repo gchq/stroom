@@ -18,6 +18,7 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.ChangeUiHandlers;
+import stroom.index.client.component.DenseVectorFieldController;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.AnalyzerType;
@@ -34,6 +35,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -44,16 +46,16 @@ public class IndexFieldEditPresenter
         extends MyPresenterWidget<IndexFieldEditView>
         implements ChangeUiHandlers {
 
-    private final DenseVectorFieldPresenter denseVectorFieldPresenter;
+    private final DenseVectorFieldController denseVectorField;
 
     @Inject
     public IndexFieldEditPresenter(final EventBus eventBus,
                                    final IndexFieldEditView view,
-                                   final DenseVectorFieldPresenter denseVectorFieldPresenter) {
+                                   final DenseVectorFieldController denseVectorField) {
         super(eventBus, view);
-        own(denseVectorFieldPresenter);
-        this.denseVectorFieldPresenter = denseVectorFieldPresenter;
-        view.setDenseVectorOptions(denseVectorFieldPresenter.getView());
+        own(denseVectorField);
+        this.denseVectorField = denseVectorField;
+        view.setDenseVectorOptions(denseVectorField);
         view.setUiHandlers(this);
     }
 
@@ -65,7 +67,7 @@ public class IndexFieldEditPresenter
         getView().setTermPositions(indexField.isTermPositions());
         getView().setAnalyzerType(indexField.getAnalyzerType());
         getView().setCaseSensitive(indexField.isCaseSensitive());
-        denseVectorFieldPresenter.read(NullSafe.getOrElse(
+        denseVectorField.read(NullSafe.getOrElse(
                 indexField,
                 IndexField::getDenseVectorFieldConfig,
                 DenseVectorFieldConfig.builder().build()));
@@ -92,7 +94,7 @@ public class IndexFieldEditPresenter
                 .termPositions(getView().isTermPositions())
                 .analyzerType(getView().getAnalyzerType())
                 .caseSensitive(getView().isCaseSensitive())
-                .denseVectorFieldConfig(denseVectorFieldPresenter.write())
+                .denseVectorFieldConfig(denseVectorField.write())
                 .build();
     }
 
@@ -171,6 +173,6 @@ public class IndexFieldEditPresenter
 
         void setDenseVectorOptionsVisible(boolean visible);
 
-        void setDenseVectorOptions(View view);
+        void setDenseVectorOptions(IsWidget options);
     }
 }

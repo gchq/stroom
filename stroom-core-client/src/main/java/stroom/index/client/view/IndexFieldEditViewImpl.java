@@ -22,7 +22,6 @@ import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.FieldType;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -30,6 +29,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -146,8 +146,8 @@ public class IndexFieldEditViewImpl
     }
 
     @Override
-    public void setDenseVectorOptions(final View view) {
-        this.denseVectorOptions.setWidget(view.asWidget());
+    public void setDenseVectorOptions(final IsWidget options) {
+        this.denseVectorOptions.setWidget(options);
     }
 
     @Override

@@ -22,8 +22,6 @@ import stroom.annotation.client.ChangeAssignedToViewImpl;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChangeStatusViewImpl;
-import stroom.index.client.presenter.DenseVectorFieldPresenter;
-import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldView;
 import stroom.index.client.presenter.IndexDataPresenter;
 import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexFieldEditPresenter;
@@ -33,7 +31,6 @@ import stroom.index.client.presenter.IndexVolumeEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.index.client.view.DenseVectorFieldViewImpl;
 import stroom.index.client.view.IndexDataViewImpl;
 import stroom.index.client.view.IndexFieldEditViewImpl;
 import stroom.index.client.view.IndexVolumeEditViewImpl;
@@ -61,9 +58,6 @@ public class IndexScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(IndexFieldEditPresenter.class,
                 IndexFieldEditView.class,
                 IndexFieldEditViewImpl.class);
-        bindPresenterWidget(DenseVectorFieldPresenter.class,
-                DenseVectorFieldView.class,
-                DenseVectorFieldViewImpl.class);
         // The index's Data tab, and the annotation dialogs its results table opens
         bindPresenterWidget(IndexDataPresenter.class,
                 IndexDataView.class,
