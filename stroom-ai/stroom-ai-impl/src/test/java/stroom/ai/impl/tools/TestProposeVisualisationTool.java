@@ -216,7 +216,7 @@ class TestProposeVisualisationTool {
         args.put(ProposeVisualisationTool.REPLACE_ARG, "old chart");
 
         assertThat(call(args))
-                .contains("shown a 'Replace visualisation' button for a network graph of table 'Links'")
+                .contains("shown an 'Update visualisation' button for a network graph of table 'Links'")
                 .contains("Visualisation 'Bar chart' is rewritten for it and renamed 'Message links', saved at "
                           + "once")
                 .contains("pane 'Old chart' shows it, unsaved on the dashboard");

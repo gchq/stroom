@@ -193,7 +193,15 @@ class TestVisualisationPlan {
                 // A line chart's columns, which the old chart may have had.
                 .containsEntry("x", "")
                 .containsEntry("y", "")
-                .containsEntry("source", "");
+                .containsEntry("source", "")
+                // Seen in testing: a line chart made a bar chart kept the pane's kind, field order and style, so
+                // asked for x and y. They are cleared, so the rewritten Visualisation's own apply.
+                .containsEntry("kind", "")
+                .containsEntry("fields", "")
+                .containsEntry("options", "")
+                .containsEntry("stack", "")
+                .containsEntry("zoomSlider", "")
+                .containsEntry("smooth", "");
     }
 
     @Test

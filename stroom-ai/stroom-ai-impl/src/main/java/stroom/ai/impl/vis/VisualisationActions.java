@@ -200,7 +200,9 @@ public class VisualisationActions {
     }
 
     /// The settings of a vis component whose chart is replaced: the column mapped to each role of the new kind,
-    /// and every other kind's roles emptied, so columns mapped for the old chart don't linger.
+    /// and every other setting the component may hold emptied (any kind's roles and style settings, and its chart
+    /// kind, field order and options), so the rewritten Visualisation's own apply. Seen in testing: a line chart
+    /// converted to a bar chart kept the pane's kind (line) and field order, so it asked for x and y.
     ///
     /// @param kind     The new chart kind.
     /// @param mappings The column mapped to each of its roles, by role id.
@@ -211,6 +213,12 @@ public class VisualisationActions {
             for (final ChartRole role : other.roles()) {
                 settings.put(role.id(), "");
             }
+            for (final StyleSetting setting : other.styleSettings()) {
+                settings.put(setting.id(), "");
+            }
+        }
+        for (final String control : EChartsTemplate.CONTROLS) {
+            settings.put(control, "");
         }
         for (final ChartRole role : kind.roles()) {
             settings.put(role.id(), NullSafe.string(NullSafe.get(mappings, map -> map.get(role.id()))).strip());

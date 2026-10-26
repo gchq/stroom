@@ -437,7 +437,7 @@ public class UserActions {
         }
         final String summary = NullSafe.get(string(map.get("summary")), String::strip);
         final String label = plan.isReplacement()
-                ? "Replace visualisation '" + plan.replace().visualisation().getName() + "' with a "
+                ? "Update visualisation '" + plan.replace().visualisation().getName() + "' to a "
                   + plan.chartKind().displayName().toLowerCase(Locale.ROOT) + " of table '" + plan.table()
                   + "', renamed '" + name + "' (saved at once), in pane '" + plan.replace().componentName()
                   + "' of dashboard '" + target.getName() + "'"

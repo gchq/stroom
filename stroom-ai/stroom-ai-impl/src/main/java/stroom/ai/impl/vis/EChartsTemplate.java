@@ -40,6 +40,8 @@ public final class EChartsTemplate {
     static final String KIND_CONTROL = "kind";
     static final String FIELDS_CONTROL = "fields";
     static final String OPTIONS_CONTROL = "options";
+    /// The controls every template has besides its kind's roles and style settings.
+    static final List<String> CONTROLS = List.of(KIND_CONTROL, FIELDS_CONTROL, OPTIONS_CONTROL);
     /// The control type Stroom shows as a code editor for a JSON value, indented to read and edit.
     static final String JSON_CONTROL_TYPE = "json";
     /// The options control's label, which names no charting library: any library's charts can take their options

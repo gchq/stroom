@@ -160,6 +160,17 @@ final class UserActionsUi {
         return APPLY_DASHBOARD_CHANGE.equals(action) && "DONE".equals(status);
     }
 
+    /// @param action  An action.
+    /// @param request Its request (for a chart, its plan as JSON), or null.
+    /// @return What its button says: for a chart that replaces one, that it updates it.
+    static String buttonText(final String action, final String request) {
+        // A plan's JSON leaves out what it doesn't have, so only a replacement's names the chart it replaces.
+        if (CREATE_VISUALISATION.equals(action) && request != null && request.contains("\"replace\":{")) {
+            return "Update visualisation…";
+        }
+        return buttonText(action);
+    }
+
     /// @param action An action.
     /// @return What its button says.
     static String buttonText(final String action) {
