@@ -157,6 +157,15 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
   one, use a `remove_selection_filter` change naming the `target` and the id as its `filter`. To change one,
   remove it and add the new one in the same proposal.
 
+### What the user is looking at
+
+A chart's render report (in the dashboard's description) also says what the user sees on it now, each left out
+when there is none: `shown`, the part zoomed in on (e.g. `Day from 2026-10-14 00:00 to 2026-10-16 12:00`, or a
+network graph `zoomed in 2x`); `selection`, what is clicked, as the chart labels it (e.g. `devans → phall · 3`);
+`hiddenSeries`, the series hidden from the legend; and `interval`, the interval Auto Interval groups by. Use them
+for "what's this spike" or "explain what I've selected": read the rows behind them from the chart's table
+(`current_results`, filtered to the time shown or the item selected), as the report has no other values.
+
 ### When a chart shows nothing
 
 Check these in turn:
