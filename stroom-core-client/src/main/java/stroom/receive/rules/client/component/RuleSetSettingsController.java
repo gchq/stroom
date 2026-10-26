@@ -23,7 +23,6 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.component.RuleSetSettings.RuleAction;
-import stroom.receive.rules.client.presenter.RuleSetListPresenter;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -50,7 +49,7 @@ import java.util.stream.Collectors;
 public class RuleSetSettingsController extends Controller {
 
     private final RuleSetSettings view;
-    private final RuleSetListPresenter listPresenter;
+    private final RuleSetListController listPresenter;
     private final ExpressionTreeController expressionTree;
     private final Provider<RuleEditorController> ruleEditorProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
@@ -64,7 +63,7 @@ public class RuleSetSettingsController extends Controller {
     @Inject
     public RuleSetSettingsController(final EventBus eventBus,
                                      final RuleSetSettings view,
-                                     final RuleSetListPresenter listPresenter,
+                                     final RuleSetListController listPresenter,
                                      final ExpressionTreeController expressionTree,
                                      final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
@@ -74,7 +73,7 @@ public class RuleSetSettingsController extends Controller {
         this.ruleEditorProvider = ruleEditorProvider;
 
         initWidget(view);
-        view.setRuleList(listPresenter.getWidget(), listPresenter.getToolbar());
+        view.setRuleList(listPresenter.asWidget(), listPresenter.getToolbar());
         view.setExpression(expressionTree.asWidget());
         view.setOnAction(this::onAction);
 

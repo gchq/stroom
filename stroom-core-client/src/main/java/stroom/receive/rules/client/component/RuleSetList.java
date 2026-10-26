@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,56 +14,72 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.client.presenter;
+package stroom.receive.rules.client.component;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.function.Function;
 
-public class RuleSetListPresenter extends MyPresenterWidget<PagerPanel> implements Focus {
+/// A rule set's data receipt rules, a row each (its number, name, expression, action and state),
+/// faded where disabled; several can be selected.
+public class RuleSetList extends Component {
 
-    private final DataGrid<ReceiveDataRule> dataGrid;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<ReceiveDataRule> dataGrid;
+
     private final MultiSelectionModelImpl<ReceiveDataRule> selectionModel;
 
-    @Inject
-    public RuleSetListPresenter(final EventBus eventBus,
-                                final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public RuleSetList() {
+        initWidget(BINDER.createAndBindUi(this));
         // A rule has no id: its number is its position, which an edit keeps but a move changes
         dataGrid.setKeyProvider(ReceiveDataRule::getRuleNumber);
-        dataGrid.setTableName("Receive Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
+        addColumns();
     }
 
-    @Override
+    /// Puts the focus on the list.
     public void focus() {
         dataGrid.setFocus(true);
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// @param data The rules.
+    public void setData(final List<ReceiveDataRule> data) {
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
+    }
+
+    /// @return The selection.
+    public MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
+    }
+
+    private void addColumns() {
         // Rule.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
@@ -125,36 +141,16 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerPanel> implemen
                 ColumnSizeConstants.SMALL_COL);
     }
 
-    public void setData(final List<ReceiveDataRule> data) {
-        dataGrid.setRowData(0, data);
-        dataGrid.setRowCount(data.size());
-    }
-
-    public MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
-        return selectionModel;
-    }
-
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return getView().getToolbar();
-    }
-
     private SafeHtml getSafeHtml(final ReceiveDataRule row,
                                  final Function<ReceiveDataRule, String> valueFunc) {
-        final String value = valueFunc.apply(row);
-        return SafeHtmlUtils.fromString(value);
-//        if (row.isEnabled()) {
-//            return SafeHtmlUtils.fromString(value);
-//        } else {
-//            return new SafeHtmlBuilder()
-//                    .appendHtmlConstant("<span title=\"")
-//                    .appendEscaped(value)
-//                    .appendHtmlConstant("\">")
-//                    .appendEscaped(value)
-//                    .appendHtmlConstant("</span>")
-//                    .toSafeHtml();
-//        }
+        return SafeHtmlUtils.fromString(valueFunc.apply(row));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, RuleSetList> {
+
     }
 }

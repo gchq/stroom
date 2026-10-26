@@ -131,7 +131,7 @@ public final class DataReceiptRulesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Reject test feeds");
                     play.expect(play.getByText("Reject")).toBeInTheDocument();
-                    // GWT gives the headings tool tips (RuleSetListPresenter)
+                    // GWT gives the headings tool tips (RuleSetList)
                     play.expect(play.getByTitle(
                             "The number of the rule. Rules are evaluated in ascending order of rule number."))
                             .toBeInTheDocument();
