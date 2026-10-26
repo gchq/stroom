@@ -41,7 +41,7 @@ if (!window.visualisations) {
     var ADAPTER_VERSION = "1";
 
     var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord",
-        "gauge"];
+        "gauge", "sunburst"];
 
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
@@ -719,6 +719,77 @@ if (!window.visualisations) {
         });
 
         return {categories: categories, series: seriesData};
+    }
+
+    // The rings of a sunburst, inner first: its name, then each further level.
+    var RING_ROLES = ["name", "level2", "level3", "level4", "level5", "level6"];
+
+    // A sunburst's tree from the rows: each row's path (its name, then each further level up to the first it leaves
+    // empty) adds its value (or 1) to each segment along it. A segment keeps its rows' total, so a row that stops at
+    // it leaves part of the ring beyond it empty. Each segment knows what a click on it selects: its path.
+    function sunburstTree(rows, fields, prefs, report) {
+        var hasValue = fields.has("value");
+        var root = {children: [], byName: {}, value: 0};
+        var missing = 0;
+        var badValue = 0;
+        rows.forEach(function (row) {
+            var steps = [];
+            for (var i = 0; i < RING_ROLES.length; i++) {
+                if (!fields.has(RING_ROLES[i])) {
+                    continue;
+                }
+                var raw = fields.value(row, RING_ROLES[i]);
+                if (isBlank(raw)) {
+                    break;
+                }
+                steps.push({role: RING_ROLES[i], raw: raw, label: fields.label(row, RING_ROLES[i], prefs)});
+            }
+            if (steps.length === 0 || steps[0].role !== "name") {
+                missing++;
+                return;
+            }
+            var value = hasValue ? toNumber(fields.value(row, "value")) : 1;
+            if (isNaN(value) || value < 0) {
+                badValue++;
+                return;
+            }
+            var node = root;
+            root.value += value;
+            var pairs = [];
+            steps.forEach(function (step) {
+                pairs.push([step.role, step.raw]);
+                var child = node.byName[step.label];
+                if (!child) {
+                    child = {name: step.label, value: 0, children: [], byName: {}, pairs: pairs.slice()};
+                    node.byName[step.label] = child;
+                    node.children.push(child);
+                }
+                child.value += value;
+                node = child;
+            });
+        });
+        addDropped(report, "name empty", missing);
+        addDropped(report, (fields.column("value") || "value") + " not a number or negative", badValue);
+        // Largest first, round each ring.
+        (function sort(node) {
+            node.children.sort(function (a, b) {
+                return b.value - a.value;
+            });
+            node.children.forEach(sort);
+        })(root);
+        return root;
+    }
+
+    // Each segment of a sunburst's tree, depth first: the order ECharts numbers them in (after its root).
+    function treeNodes(root) {
+        var nodes = [];
+        (function walk(node) {
+            node.children.forEach(function (child) {
+                nodes.push(child);
+                walk(child);
+            });
+        })(root);
+        return nodes;
     }
 
     // A number from a decimal setting, or the default if it is blank or isn't one.
@@ -2635,6 +2706,91 @@ if (!window.visualisations) {
         });
     }
 
+    // A sunburst, as ECharts draws one: a ring per level round a hole, each segment as wide as its rows' total,
+    // in its inner segment's colour, labelled along its radius where it has room.
+    function drawSunburst(ctx) {
+        var fields = ctx.fields;
+        requireFields(fields, ["name"]);
+        var root = sunburstTree(ctx.rows, fields, ctx.prefs, ctx.report);
+        var nodes = treeNodes(root);
+        var depth = 0;
+        (function measure(node, level) {
+            depth = Math.max(depth, level);
+            node.children.forEach(function (child) {
+                measure(child, level + 1);
+            });
+        })(root, 0);
+        var colours = paletteOf(ctx.options, root.children.length, ctx.style);
+        var showLabels = boolSetting(ctx.settings, "showLabels", true);
+        var half = Math.min(ctx.size.width, ctx.size.height) / 2;
+        var hole = half * 0.12;
+        var ring = depth > 0 ? (half * 0.8 - hole) / depth : 0;
+        var centreX = ctx.size.width / 2;
+        var centreY = ctx.size.height * 0.52;
+        var g = ctx.svg.append("g").attr("transform", "translate(" + centreX + "," + centreY + ")");
+        ctx.geo = g;
+        ctx.geoOrigin = [centreX, centreY];
+        var arc = ctx.C.arc();
+        var segments = [];
+        (function place(node, start, end, level, colour, ancestors) {
+            var angle = start;
+            node.children.forEach(function (child, i) {
+                var sweep = node.value > 0 ? (end - start) * child.value / node.value : 0;
+                var own = colour || colours[i % colours.length];
+                var inner = hole + level * ring;
+                var part = {startAngle: angle, endAngle: angle + sweep, innerRadius: inner, outerRadius: inner + ring};
+                var path = g.append("path").attr("d", arc(part)).attr("fill", own)
+                    .attr("stroke", ctx.style.dark ? "#1b1e24" : "#ffffff").attr("stroke-width", 1);
+                var selection = fields.selection(child.pairs);
+                outline(path, ctx, ctx.isSelected(selection));
+                var names = ancestors.concat([child.name]);
+                ctx.mark(path, selection, names.join(" › ") + ": " + ctx.format(child.value));
+                var segment = {element: path.node(), node: child, ancestors: ancestors.length};
+                segments.push(segment);
+                if (showLabels && sweep * 180 / Math.PI >= 8) {
+                    sunburstLabel(g, child.name, part, ctx.style);
+                }
+                place(child, angle, angle + sweep, level + 1, own, names);
+                angle += sweep;
+            });
+        })(root, 0, Math.PI * 2, 0, null, []);
+        // ECharts' ancestor focus: under the pointer, a segment and those it is within stand out.
+        segments.forEach(function (segment) {
+            segment.element.addEventListener("mouseenter", function () {
+                segments.forEach(function (other) {
+                    var within = other === segment || other.node.pairs.length < segment.node.pairs.length &&
+                        segment.node.pairs.slice(0, other.node.pairs.length).every(function (pair, i) {
+                            return pair[1] === other.node.pairs[i][1];
+                        });
+                    other.element.style.opacity = within ? "" : "0.3";
+                });
+            });
+            segment.element.addEventListener("mouseleave", function () {
+                segments.forEach(function (other) {
+                    other.element.style.opacity = "";
+                });
+            });
+        });
+        ctx.report.series = root.children.length;
+        ctx.report.points = nodes.length;
+        ctx.zoomKind = "geo";
+    }
+
+    // A segment's name along its radius, centred in it, read the right way up on either side.
+    function sunburstLabel(g, name, part, style) {
+        var middle = (part.startAngle + part.endAngle) / 2;
+        var radius = (part.innerRadius + part.outerRadius) / 2;
+        var x = Math.sin(middle) * radius;
+        var y = -Math.cos(middle) * radius;
+        var degrees = middle * 180 / Math.PI - 90;
+        if (degrees > 90) {
+            degrees -= 180;
+        }
+        var room = Math.max(2, Math.floor((part.outerRadius - part.innerRadius - 2) / (SMALL_FONT_SIZE * 0.55)));
+        svgText(g, shorten(name, room), x, y, style, {anchor: "middle", baseline: "middle", size: SMALL_FONT_SIZE})
+            .attr("transform", "rotate(" + degrees + "," + x + "," + y + ")").attr("pointer-events", "none");
+    }
+
     function drawGauge(ctx) {
         var fields = ctx.fields;
         var settings = ctx.settings;
@@ -3704,7 +3860,8 @@ if (!window.visualisations) {
         histogram: drawHistogram,
         sankey: drawSankey,
         chord: drawChord,
-        gauge: drawGauge
+        gauge: drawGauge,
+        sunburst: drawSunburst
     };
 
     // ------------------------------------------------------------------------------------------

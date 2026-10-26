@@ -378,6 +378,7 @@ public final class ChartCheck {
             }
             case CALENDAR -> result.stats.put("days", distinct(sample, mapped.get("date")));
             case HISTOGRAM -> seriesWarning(mapped, sample, maxSeries, result);
+            case SUNBURST -> result.stats.put("innerSegments", distinct(sample, mapped.get("name")));
             case GAUGE -> {
                 final int gauges = mapped.containsKey("name")
                         ? distinct(sample, mapped.get("name"))

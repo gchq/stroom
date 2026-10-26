@@ -167,7 +167,21 @@ public enum ChartKind {
                     new ChartRole("name", "Name (Optional)", false, ChartRole.Values.ANY,
                             "a gauge per value of this column, e.g. Host; without it, the first row is shown")),
             List.of(StyleSetting.GAUGE_MIN, StyleSetting.GAUGE_MAX, StyleSetting.BANDS, StyleSetting.UNITS,
-                    StyleSetting.MAX_GAUGES, StyleSetting.MAX_VALUES));
+                    StyleSetting.MAX_GAUGES, StyleSetting.MAX_VALUES)),
+
+    SUNBURST("sunburst", "Sunburst", "rings of a whole: the inner ring by name, each ring out splitting the one "
+                                     + "inside it by a further column",
+            List.of(
+                    new ChartRole("name", "Name", true, ChartRole.Values.ANY,
+                            "the inner ring's segments, e.g. a region"),
+                    ring(2, "splits each inner segment, e.g. the hosts in a region"),
+                    ring(3, "splits each level 2 segment, e.g. the processes on a host"),
+                    ring(4, "splits each level 3 segment"),
+                    ring(5, "splits each level 4 segment"),
+                    ring(6, "splits each level 5 segment"),
+                    new ChartRole("value", "Value (Optional)", false, ChartRole.Values.NUMBER,
+                            "each segment's size, e.g. a count() column; each row counts once if not given")),
+            List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.UNITS, StyleSetting.MAX_VALUES));
 
     private final String id;
     private final String displayName;
@@ -217,6 +231,12 @@ public enum ChartKind {
     private static ChartRole level(final int level, final String description) {
         return new ChartRole("level" + level, "Level " + level + " (Optional)", false, ChartRole.Values.ANY,
                 description + "; a row's links stop at the first level it leaves empty");
+    }
+
+    // A further ring of a sunburst (2 to 6), splitting the segments of the ring inside it.
+    private static ChartRole ring(final int level, final String description) {
+        return new ChartRole("level" + level, "Level " + level + " (Optional)", false, ChartRole.Values.ANY,
+                description + "; a row's rings stop at the first level it leaves empty");
     }
 
     /// @param roleId A role's id.

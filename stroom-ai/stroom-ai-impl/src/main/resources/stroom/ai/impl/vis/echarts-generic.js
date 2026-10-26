@@ -38,7 +38,7 @@ if (!window.visualisations) {
 
     var ADAPTER_VERSION = "1";
     var KINDS = ["bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord",
-        "gauge"];
+        "gauge", "sunburst"];
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
     // Stroom puts its own refresh button over the top-right corner of a dashboard's visualisation, so nothing
@@ -1080,6 +1080,131 @@ if (!window.visualisations) {
                 return fields.selection(pairs);
             },
             series: series
+        };
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Rings of a whole: sunburst
+    // ------------------------------------------------------------------------------------------
+
+    // The rings of a sunburst, inner first: its name, then each further level.
+    var RING_ROLES = ["name", "level2", "level3", "level4", "level5", "level6"];
+
+    // A sunburst's tree from the rows: each row's path (its name, then each further level up to the first it leaves
+    // empty) adds its value (or 1) to each segment along it. A segment keeps its rows' total, so a row that stops at
+    // it leaves part of the ring beyond it empty. Each segment knows what a click on it selects: its path.
+    function sunburstTree(rows, fields, prefs, report) {
+        var hasValue = fields.has("value");
+        var root = {children: [], byName: {}, value: 0};
+        var missing = 0;
+        var badValue = 0;
+        rows.forEach(function (row) {
+            var steps = [];
+            for (var i = 0; i < RING_ROLES.length; i++) {
+                if (!fields.has(RING_ROLES[i])) {
+                    continue;
+                }
+                var raw = fields.value(row, RING_ROLES[i]);
+                if (isBlank(raw)) {
+                    break;
+                }
+                steps.push({role: RING_ROLES[i], raw: raw, label: fields.label(row, RING_ROLES[i], prefs)});
+            }
+            if (steps.length === 0 || steps[0].role !== "name") {
+                missing++;
+                return;
+            }
+            var value = hasValue ? toNumber(fields.value(row, "value")) : 1;
+            if (isNaN(value) || value < 0) {
+                badValue++;
+                return;
+            }
+            var node = root;
+            root.value += value;
+            var pairs = [];
+            steps.forEach(function (step) {
+                pairs.push([step.role, step.raw]);
+                var child = node.byName[step.label];
+                if (!child) {
+                    child = {name: step.label, value: 0, children: [], byName: {}, pairs: pairs.slice()};
+                    node.byName[step.label] = child;
+                    node.children.push(child);
+                }
+                child.value += value;
+                node = child;
+            });
+        });
+        addDropped(report, "name empty", missing);
+        addDropped(report, (fields.column("value") || "value") + " not a number or negative", badValue);
+        // Largest first, round each ring.
+        (function sort(node) {
+            node.children.sort(function (a, b) {
+                return b.value - a.value;
+            });
+            node.children.forEach(sort);
+        })(root);
+        return root;
+    }
+
+    // Each segment of a sunburst's tree, depth first: the order ECharts numbers them in (after its root).
+    function treeNodes(root) {
+        var nodes = [];
+        (function walk(node) {
+            node.children.forEach(function (child) {
+                nodes.push(child);
+                walk(child);
+            });
+        })(root);
+        return nodes;
+    }
+
+    function sunburstModel(rows, fields, settings, prefs, style, report) {
+        requireFields(fields, ["name"]);
+        var root = sunburstTree(rows, fields, prefs, report);
+        var nodes = treeNodes(root);
+        var showLabels = boolSetting(settings, "showLabels", true);
+        report.series = root.children.length;
+        report.points = nodes.length;
+        var colours = distinctColours(root.children.length, style);
+
+        function data(node, colour) {
+            return node.children.map(function (child, i) {
+                var item = {name: child.name, value: child.value};
+                // Each inner segment its own colour, the segments outside it its colour.
+                var own = colour || colours[i % colours.length];
+                item.itemStyle = {color: own};
+                if (child.children.length) {
+                    item.children = data(child, own);
+                }
+                return item;
+            });
+        }
+
+        return {
+            tooltip: {trigger: "item", formatter: function (params) {
+                var path = (params.treePathInfo || []).slice(1).map(function (step) {
+                    return step.name;
+                });
+                return escapeHtml(path.join(" › ") + ": " + prefs.formatValue(params.value));
+            }},
+            // A segment selects its path from the centre: its name and each level out to it.
+            selectAt: function (seriesIndex, dataIndex) {
+                var node = nodes[dataIndex - 1];
+                return node ? fields.selection(node.pairs) : null;
+            },
+            series: [{
+                type: "sunburst",
+                // A click selects a segment (for the dashboard's filters), rather than zooming into it.
+                nodeClick: false,
+                radius: ["12%", "80%"],
+                center: ["50%", "52%"],
+                sort: null,
+                emphasis: {focus: "ancestor"},
+                itemStyle: {borderColor: style.dark ? "#1b1e24" : "#ffffff", borderWidth: 1},
+                label: {show: showLabels, color: style.text, rotate: "radial", minAngle: 8},
+                data: data(root, null),
+                flatData: [null].concat(nodes)
+            }]
         };
     }
 
@@ -2284,7 +2409,8 @@ if (!window.visualisations) {
         histogram: histogramModel,
         sankey: sankeyModel,
         chord: chordModel,
-        gauge: gaugeModel
+        gauge: gaugeModel,
+        sunburst: sunburstModel
     };
 
     function newReport(kind) {
@@ -3164,7 +3290,8 @@ if (!window.visualisations) {
             selected.items.forEach(function (item) {
                 item.seriesIndex = undefined;
                 for (var s = 0; s < series.length && item.seriesIndex === undefined; s++) {
-                    var lists = [[series[s].data || [], undefined]];
+                    // A sunburst's items are its tree's nodes, listed as ECharts numbers them (see sunburstModel).
+                    var lists = [[series[s].flatData || series[s].data || [], undefined]];
                     if (series[s].links) {
                         lists.push([series[s].links, "edge"]);
                     }

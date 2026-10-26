@@ -891,6 +891,29 @@ class TestProposeVisualisationTool {
 
     // The arguments for an ECharts network graph of who messages whom, to change per test.
     @Test
+    void aSunburstRingsTheTablesColumnsFromTheInside() {
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "sunburst",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("name", "From", "level2", "To", "value", "Count"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by sender and recipient",
+                ProposeVisualisationTool.SUMMARY_ARG, "Who sends, then to whom.",
+                ProposeVisualisationTool.ADD_NEW_ARG, true);
+
+        assertThat(call(args)).contains("'Create visualisation' button for a sunburst of table 'Links'")
+                .contains("innerSegments 3")
+                // A click selects its path, by which the dashboard can be filtered.
+                .contains("a click on it selects name (column 'From'), level2 (column 'To')");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(VisualisationPlan.fromJson((String) action.get("plan")).mappings())
+                        .containsEntry("level2", "To"));
+
+        // The inner ring is needed.
+        args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("level2", "To"));
+        assertThat(call(args)).contains("Map a column to name");
+    }
+
+    @Test
     void aChartOfANewTableAddsTheTableWithIt() {
         // Seen in testing: a table, then a reload, then the chart took three steps; the chart's button now adds a
         // table of its own with it.
