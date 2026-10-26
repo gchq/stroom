@@ -30,6 +30,7 @@ FROM eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24@sha256:1e20ead9eec7234db293f1913
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
+# Semi-fixed brotli version is to fix CVE-2026-111497, can remove once eclipse-temurin includes latest alpine
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
@@ -37,7 +38,8 @@ RUN echo "http_proxy: $http_proxy" && \
         jq \
         curl \
         su-exec \
-        tini
+        tini \
+        'brotli-libs>=1.2.1-r0'
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

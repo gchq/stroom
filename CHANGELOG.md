@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Dependency : Change docker images to force `brotli-libs>=1.2.1-r0`.
+
+* Dependency : Uplift `com.hubspot.jinjava` from 2.8.2 to 2.8.4.
 
 * Dependency : Uplift docker image base from `eclipse-temurin:25.0.3_9-jdk-alpine-3.23` to `eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24`.
 
