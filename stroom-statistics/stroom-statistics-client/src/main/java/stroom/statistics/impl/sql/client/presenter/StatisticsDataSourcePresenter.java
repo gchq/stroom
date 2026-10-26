@@ -17,10 +17,10 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
@@ -59,7 +59,7 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
             final Provider<StatisticsDataSourceSettingsPresenter> statisticsDataSourceSettingsPresenterProvider,
             final StatisticsFieldListPresenter statisticsFieldListPresenter,
             final StatisticsCustomMaskListPresenter statisticsCustomMaskListPresenter,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<StatisticStoreDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         own(statisticsFieldListPresenter);
@@ -74,19 +74,19 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
         addTab(SETTINGS, new DocTabProvider<>(statisticsDataSourceSettingsPresenterProvider::get));
         addTab(FIELDS, new DocTabProvider<>(() -> statisticsFieldListPresenter));
         addTab(CUSTOM_ROLLUPS, new DocTabProvider<>(() -> statisticsCustomMaskListPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<StatisticStoreDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<StatisticStoreDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final StatisticStoreDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public StatisticStoreDoc onWrite(final MarkdownEditPresenter presenter,
+            public StatisticStoreDoc onWrite(final MarkdownEditController markdownEdit,
                                              final StatisticStoreDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

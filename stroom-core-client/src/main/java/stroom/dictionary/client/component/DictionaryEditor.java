@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -73,7 +73,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                             final Provider<WordsTab> wordsTabProvider,
                             final Provider<ImportsTab> importsTabProvider,
                             final Provider<EffectiveWordsList> effectiveWordsListProvider,
-                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                            final Provider<MarkdownEditController> markdownEditProvider,
                             final Provider<DocumentUserPermissionsPresenter> permissionsPresenterProvider,
                             final RestFactory restFactory,
                             final LocationManager locationManager) {
@@ -105,11 +105,12 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
         addTab(DOCUMENTATION,
                 () -> {
                     // It tells the editor of changes itself (Contexts.DIRTY)
-                    return PresenterAdapter.of(markdownEditPresenterProvider::get)
-                            .onReadOnly(MarkdownEditPresenter::setReadOnly);
+                    final MarkdownEditController documentation = markdownEditProvider.get();
+                    documentation.followReadOnly();
+                    return documentation;
                 },
-                (documentation, docRef, doc) -> documentation.getPresenter().setText(doc.getDescription()),
-                (documentation, doc) -> doc.copy().description(documentation.getPresenter().getText()).build());
+                (documentation, docRef, doc) -> documentation.setText(doc.getDescription()),
+                (documentation, doc) -> doc.copy().description(documentation.getText()).build());
         addTab(PERMISSIONS,
                 () -> PresenterAdapter.of(permissionsPresenterProvider::get),
                 (permissions, docRef, doc) -> permissions.getPresenter().setDocRef(docRef));

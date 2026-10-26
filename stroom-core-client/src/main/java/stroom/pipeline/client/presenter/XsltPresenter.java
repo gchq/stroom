@@ -18,10 +18,10 @@ package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -44,7 +44,7 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
     public XsltPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final Provider<EditorPresenter> editorPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final Provider<MarkdownEditController> markdownEditProvider,
                          final DocumentUserPermissionsTabProvider<XsltDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
@@ -77,19 +77,19 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final XsltDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public XsltDoc onWrite(final MarkdownEditPresenter presenter,
+            public XsltDoc onWrite(final MarkdownEditController markdownEdit,
                                    final XsltDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

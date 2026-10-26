@@ -19,11 +19,11 @@ package stroom.feed.client.presenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.feed.client.component.FeedSettingsController;
 import stroom.feed.shared.FeedDoc;
@@ -53,7 +53,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
                          final Provider<FeedSettingsController> settingsProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final Provider<MarkdownEditController> markdownEditProvider,
                          final DocumentUserPermissionsTabProvider<FeedDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
@@ -102,19 +102,19 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 FeedSettingsController::read,
                 FeedSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final FeedDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public FeedDoc onWrite(final MarkdownEditPresenter presenter,
+            public FeedDoc onWrite(final MarkdownEditController markdownEdit,
                                    final FeedDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

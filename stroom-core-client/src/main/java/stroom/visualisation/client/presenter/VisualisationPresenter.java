@@ -18,11 +18,11 @@ package stroom.visualisation.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.visualisation.client.component.VisualisationSettingsController;
@@ -52,7 +52,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
                                   final LinkTabPanelView view,
                                   final Provider<VisualisationSettingsController> settingsProvider,
                                   final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter,
-                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                  final Provider<MarkdownEditController> markdownEditProvider,
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -63,19 +63,19 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
                 VisualisationSettingsController::read,
                 VisualisationSettingsController::write));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final VisualisationDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public VisualisationDoc onWrite(final MarkdownEditPresenter presenter,
+            public VisualisationDoc onWrite(final MarkdownEditController markdownEdit,
                                             final VisualisationDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

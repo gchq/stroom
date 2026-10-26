@@ -21,11 +21,11 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.shared.SvgImage;
@@ -80,7 +80,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                               final Provider<XMLSchemaSettingsController> settingsProvider,
                               final Provider<XSDBrowserPresenter> xsdBrowserPresenterProvider,
                               final Provider<EditorPresenter> codePresenterProvider,
-                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                              final Provider<MarkdownEditController> markdownEditProvider,
                               final DocumentUserPermissionsTabProvider<XmlSchemaDoc> documentUserPermissionsTabProvider,
                               final RestFactory restFactory) {
         super(eventBus, view);
@@ -152,19 +152,19 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 XMLSchemaSettingsController::read,
                 XMLSchemaSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final XmlSchemaDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public XmlSchemaDoc onWrite(final MarkdownEditPresenter presenter,
+            public XmlSchemaDoc onWrite(final MarkdownEditController markdownEdit,
                                         final XmlSchemaDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

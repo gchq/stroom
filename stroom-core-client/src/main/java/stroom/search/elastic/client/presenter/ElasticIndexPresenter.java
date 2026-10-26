@@ -17,11 +17,11 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.elastic.client.component.ElasticIndexSettingsController;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -47,7 +47,7 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
             final LinkTabPanelView view,
             final Provider<ElasticIndexSettingsController> indexSettingsProvider,
             final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<ElasticIndexDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
@@ -55,19 +55,19 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
                 ElasticIndexSettingsController::read,
                 ElasticIndexSettingsController::write));
         addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final ElasticIndexDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public ElasticIndexDoc onWrite(final MarkdownEditPresenter presenter,
+            public ElasticIndexDoc onWrite(final MarkdownEditController markdownEdit,
                                            final ElasticIndexDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

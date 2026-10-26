@@ -17,11 +17,11 @@
 package stroom.floormap.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.floormap.client.component.FloorMapEventStoreSettingsController;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
@@ -51,7 +51,7 @@ public class FloorMapEventStorePresenter
             final LinkTabPanelView view,
             final Provider<FloorMapEventStoreSettingsController> settingsProvider,
             final Provider<FloorMapEventStoreDataPresenter> dataPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<FloorMapEventStoreDoc> permissionsTabProvider) {
         super(eventBus, view);
 
@@ -60,19 +60,19 @@ public class FloorMapEventStorePresenter
                 FloorMapEventStoreSettingsController::write));
         addTab(DATA, new DocTabProvider<>(dataPresenterProvider::get));
         addTab(DOCUMENTATION,
-                new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+                new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
                     @Override
-                    public void onRead(final MarkdownEditPresenter presenter,
+                    public void onRead(final MarkdownEditController markdownEdit,
                                        final DocRef docRef,
                                        final FloorMapEventStoreDoc document) {
-                        presenter.setText(document.getDescription());
-                        presenter.setReadOnly(isReadOnly());
+                        markdownEdit.setText(document.getDescription());
+                        markdownEdit.setReadOnly(isReadOnly());
                     }
 
                     @Override
-                    public FloorMapEventStoreDoc onWrite(final MarkdownEditPresenter presenter,
+                    public FloorMapEventStoreDoc onWrite(final MarkdownEditController markdownEdit,
                                                          final FloorMapEventStoreDoc document) {
-                        return document.copyEventStore().description(presenter.getText()).build();
+                        return document.copyEventStore().description(markdownEdit.getText()).build();
                     }
                 });
         addTab(PERMISSIONS, permissionsTabProvider);

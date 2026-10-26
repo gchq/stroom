@@ -17,10 +17,10 @@
 package stroom.view.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.view.shared.ViewDoc;
@@ -42,25 +42,25 @@ public class ViewPresenter extends DocTabPresenter<LinkTabPanelView, ViewDoc> {
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final Provider<ViewSettingsPresenter> settingsPresenterProvider,
-                         final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                         final Provider<MarkdownEditController> markdownEditProvider,
                          final DocumentUserPermissionsTabProvider<ViewDoc>
                                  documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final ViewDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public ViewDoc onWrite(final MarkdownEditPresenter presenter,
+            public ViewDoc onWrite(final MarkdownEditController markdownEdit,
                                    final ViewDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

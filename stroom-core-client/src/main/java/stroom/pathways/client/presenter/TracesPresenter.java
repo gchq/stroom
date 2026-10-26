@@ -17,10 +17,10 @@
 package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
@@ -49,7 +49,7 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
                            final LinkTabPanelView view,
                            final TracesListTabPresenter tracesListTabPresenter,
                            final Provider<TracesSettingsPresenter> tracesSettingsPresenterProvider,
-                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                           final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<TracesDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         own(tracesListTabPresenter);
@@ -57,19 +57,19 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
 
         addTab(TRACES, new DocTabProvider<>(() -> tracesListTabPresenter));
         addTab(SETTINGS, new DocTabProvider<>(tracesSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<TracesDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TracesDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final TracesDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public TracesDoc onWrite(final MarkdownEditPresenter presenter,
+            public TracesDoc onWrite(final MarkdownEditController markdownEdit,
                                      final TracesDoc document) {
-                return document.copyTraces().description(presenter.getText()).build();
+                return document.copyTraces().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

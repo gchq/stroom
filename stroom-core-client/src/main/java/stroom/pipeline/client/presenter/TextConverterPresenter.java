@@ -18,11 +18,11 @@ package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.client.component.TextConverterSettingsController;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -51,7 +51,7 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
                                   final LinkTabPanelView view,
                                   final Provider<TextConverterSettingsController> settingsProvider,
                                   final Provider<EditorPresenter> editorPresenterProvider,
-                                  final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                  final Provider<MarkdownEditController> markdownEditProvider,
                                   final DocumentUserPermissionsTabProvider<TextConverterDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -95,19 +95,19 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 TextConverterSettingsController::read,
                 TextConverterSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final TextConverterDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public TextConverterDoc onWrite(final MarkdownEditPresenter presenter,
+            public TextConverterDoc onWrite(final MarkdownEditController markdownEdit,
                                             final TextConverterDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

@@ -20,10 +20,10 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.shared.SvgImage;
@@ -52,7 +52,7 @@ public class AnnotationPresenter
 
     private final AnnotationResourceClient annotationResourceClient;
     private final AnnotationEditPresenter annotationEditPresenter;
-    private MarkdownEditPresenter markdownEditPresenter;
+    private MarkdownEditController markdownEdit;
 
     @SuppressWarnings("checkstyle:linelength")
     @Inject
@@ -63,7 +63,7 @@ public class AnnotationPresenter
                                final AnnotationLinkPresenter linkTo,
                                final AnnotationLinkPresenter linkFrom,
                                final LinkedEventPresenter linkedEventPresenter,
-                               final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                               final Provider<MarkdownEditController> markdownEditProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         own(annotationEditPresenter);
@@ -82,28 +82,29 @@ public class AnnotationPresenter
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
         addTab(LINK_TO, new DocTabProvider<>(() -> linkTo));
         addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(() -> {
-            if (markdownEditPresenter == null) {
-                markdownEditPresenter = make(markdownEditPresenterProvider);
-                markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(getEventBus(), () -> {
+            if (markdownEdit == null) {
+                // Owned by the tab that shows it
+                markdownEdit = markdownEditProvider.get();
+                markdownEdit.setAddButtonsFirst(markdownToolbar -> {
                     saveButton = markdownToolbar.button(SvgImage.SAVE, "Save Annotation Description",
                             this::saveDescription);
                     saveButton.setEnabled(descriptionDirty);
                 });
-                markdownEditPresenter.addDirtyListener(this::setDescriptionDirty);
+                markdownEdit.addDirtyListener(this::setDescriptionDirty);
             }
-            return markdownEditPresenter;
+            return markdownEdit;
         }) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController documentation,
                                final DocRef docRef,
                                final Annotation document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                documentation.setText(document.getDescription());
+                documentation.setReadOnly(isReadOnly());
             }
 
             @Override
-            public Annotation onWrite(final MarkdownEditPresenter presenter,
+            public Annotation onWrite(final MarkdownEditController documentation,
                                       final Annotation document) {
 //                document.setDescription(presenter.getText());
                 return document;
@@ -117,7 +118,7 @@ public class AnnotationPresenter
     private void saveDescription() {
         annotationResourceClient.change(
                 new SingleAnnotationChangeRequest(getDocRef(),
-                        new ChangeDescription(markdownEditPresenter.getText())),
+                        new ChangeDescription(markdownEdit.getText())),
                 success -> {
                     if (success) {
                         AnnotationChangeEvent.fire(this, getDocRef());

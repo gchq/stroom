@@ -29,9 +29,9 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.receive.rules.client.component.RuleSetSettingsController;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
@@ -60,7 +60,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +81,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     // Shows the Rules tab's component in the tab panel
     private final ControllerLayer ruleSetSettingsLayer;
     private final FieldListPresenter fieldListPresenter;
-    private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
+    private final LazyValue<MarkdownEditController> lazyMarkdownEdit;
     private final RestFactory restFactory;
     private final Toolbar toolbar;
     // The buttons the tab showing added to the toolbar, removed when another tab is shown
@@ -90,6 +89,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final HasSaveRegistry hasSaveRegistry;
 
     private Layer currentContent;
+    // The Documentation tab's controller's layer, made with it
+    private ControllerLayer markdownEditLayer;
     private String lastLabel;
     private ReceiveDataRules receiveDataRules = null;
     private boolean dirty;
@@ -99,7 +100,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                             final LinkTabPanelView view,
                             final RuleSetSettingsController ruleSetSettings,
                             final Provider<FieldListPresenter> fieldListPresenterProvider,
-                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                            final Provider<MarkdownEditController> markdownEditProvider,
                             final RestFactory restFactory,
                             final HasSaveRegistry hasSaveRegistry,
                             final UiConfigCache uiConfigCache) {
@@ -114,9 +115,9 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         ruleSetSettings.setOnChange(this::onChange);
         fieldListPresenter = make(fieldListPresenterProvider);
         ruleSetSettings.setFields(fieldListPresenter::getFields);
-        this.lazyMarkdownEditPresenter = new LazyValue<>(
+        this.lazyMarkdownEdit = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
-                (Supplier<MarkdownEditPresenter>) () -> make(markdownEditPresenterProvider),
+                (Supplier<MarkdownEditController>) () -> make(markdownEditProvider),
                 this::setDescriptionOnPresenter);
         this.restFactory = restFactory;
 
@@ -179,9 +180,9 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         AlertEvent.fireWarn(this, msg, null, null);
     }
 
-    private void setDescriptionOnPresenter(final MarkdownEditPresenter markdownEditPresenter) {
-        markdownEditPresenter.setText(receiveDataRules.getDescription());
-        markdownEditPresenter.setReadOnly(false);
+    private void setDescriptionOnPresenter(final MarkdownEditController markdownEdit) {
+        markdownEdit.setText(receiveDataRules.getDescription());
+        markdownEdit.setReadOnly(false);
     }
 
     public void addTab(final TabData tab) {
@@ -209,7 +210,11 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                         tabButtons.clear();
                         getView().clearToolbar();
                         getView().addToolbar(toolbar);
-                        if (currentContent instanceof final HasToolbar hasToolbar) {
+                        // The Documentation tab's buttons are its controller's
+                        final Object toolbarSource = currentContent == markdownEditLayer
+                                ? lazyMarkdownEdit.getValue()
+                                : currentContent;
+                        if (toolbarSource instanceof final HasToolbar hasToolbar) {
                             for (final Widget widget : hasToolbar.getDocumentButtons()) {
                                 toolbar.add(widget);
                                 tabButtons.add(widget);
@@ -257,15 +262,15 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.receiveDataRules = rules;
         ruleSetSettings.read(receiveDataRules);
         fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules);
-        lazyMarkdownEditPresenter.consumeIfInitialised(this::setDescriptionOnPresenter);
+        lazyMarkdownEdit.consumeIfInitialised(this::setDescriptionOnPresenter);
     }
 
     private ReceiveDataRules write(final ReceiveDataRules rules) {
         ReceiveDataRules updated = rules;
         updated = ruleSetSettings.write(updated);
         updated = fieldListPresenter.write(updated);
-        if (lazyMarkdownEditPresenter.isInitialised()) {
-            updated = updated.copy().description(lazyMarkdownEditPresenter.getValue().getText()).build();
+        if (lazyMarkdownEdit.isInitialised()) {
+            updated = updated.copy().description(lazyMarkdownEdit.getValue().getText()).build();
         }
         return updated;
     }
@@ -305,7 +310,10 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         } else if (FIELDS_TAB.equals(tab)) {
             callback.accept(fieldListPresenter);
         } else if (DOCUMENTATION_TAB.equals(tab)) {
-            callback.accept(lazyMarkdownEditPresenter.getValue());
+            if (markdownEditLayer == null) {
+                markdownEditLayer = new ControllerLayer(lazyMarkdownEdit.getValue());
+            }
+            callback.accept(markdownEditLayer);
         } else {
             callback.accept(null);
         }

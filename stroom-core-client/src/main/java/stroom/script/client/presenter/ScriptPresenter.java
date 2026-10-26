@@ -20,11 +20,11 @@ import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -51,7 +51,7 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
                            final LinkTabPanelView view,
                            final Provider<ScriptSettingsPresenter> settingsPresenterProvider,
                            final Provider<EditorPresenter> editorPresenterProvider,
-                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                           final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<ScriptDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
@@ -91,19 +91,19 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             }
         });
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final ScriptDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public ScriptDoc onWrite(final MarkdownEditPresenter presenter,
+            public ScriptDoc onWrite(final MarkdownEditController markdownEdit,
                                      final ScriptDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

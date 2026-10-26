@@ -17,11 +17,11 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.client.component.IndexSettingsController;
 import stroom.index.shared.LuceneIndexDoc;
@@ -52,7 +52,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                           final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
                           final Provider<IndexShardPresenter> indexShardPresenterProvider,
                           final Provider<IndexDataPresenter> indexDataPresenterProvider,
-                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                          final Provider<MarkdownEditController> markdownEditProvider,
                           final DocumentUserPermissionsTabProvider<LuceneIndexDoc> documentUserPermissionsTabProvider,
                           final ClientSecurityContext securityContext) {
         super(eventBus, view);
@@ -69,19 +69,19 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                 IndexSettingsController::read,
                 IndexSettingsController::write));
         addTab(DATA, new DocTabProvider<LuceneIndexDoc>(indexDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final LuceneIndexDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public LuceneIndexDoc onWrite(final MarkdownEditPresenter presenter,
+            public LuceneIndexDoc onWrite(final MarkdownEditController markdownEdit,
                                           final LuceneIndexDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

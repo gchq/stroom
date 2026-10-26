@@ -18,11 +18,10 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.entity.client.component.MarkdownEdit;
+import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.component.MarkdownPreviewController;
 import stroom.entity.client.presenter.MarkdownConverter;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
-import stroom.entity.client.presenter.MarkdownPreviewPresenter;
-import stroom.entity.client.view.MarkdownEditViewImpl;
-import stroom.entity.client.view.MarkdownPreviewViewImpl;
 import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -30,11 +29,8 @@ import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
-import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.iframe.client.component.IFrame;
-import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.GWT;
@@ -46,16 +42,15 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Stories for Stroom's Markdown editor ([MarkdownEditPresenter], as used for documentation
+/// Stories for Stroom's Markdown editor ([MarkdownEditController], as used for documentation
 /// tabs).
 ///
-/// The presenter's toolbar (Edit Documentation and Help with Documentation), which Stroom shows in the document
-/// tab's tool bar, is shown above it. The presenter reads the help URL from the UI config, so
-/// the stories use a [ScreenHarness].
+/// Its toolbar (Edit Documentation and Help with Documentation), which Stroom shows in the document
+/// tab's tool bar, is shown above it. It reads the help URL from the UI config, so the stories use
+/// a [ScreenHarness].
 public final class MarkdownEditorStories {
 
     // Spy names
-    private static final String ON_CHANGE = AceEditorStories.ON_CHANGE;
     private static final String ON_DIRTY = "onDirty";
 
     private static final RestFixtures FIXTURES = RestFixtures.builder().build();
@@ -159,45 +154,34 @@ public final class MarkdownEditorStories {
         final UserPreferencesManager userPreferencesManager = new PageThemeUserPreferencesManager(
                 harness.getRestFactory(), currentPreferences);
         final MarkdownConverter markdownConverter = new MarkdownConverter(userPreferencesManager);
-        final MarkdownPreviewPresenter previewPresenter = new MarkdownPreviewPresenter(
+        final MarkdownEditController markdownEdit = new MarkdownEditController(
                 eventBus,
-                new MarkdownPreviewViewImpl(GWT.create(MarkdownPreviewViewImpl.Binder.class)),
-                EditorWidgets.editorPresenter(eventBus),
-                new IFramePresenter(eventBus, new IFrame()),
+                new MarkdownEdit(),
+                () -> new MarkdownPreviewController(
+                        eventBus,
+                        () -> EditorWidgets.codeEditorController(eventBus),
+                        markdownConverter),
                 harness.getUiConfigCache(),
-                userPreferencesManager,
                 markdownConverter);
-        final MarkdownEditPresenter presenter = new MarkdownEditPresenter(
-                eventBus,
-                new MarkdownEditViewImpl(GWT.create(MarkdownEditViewImpl.Binder.class)),
-                previewPresenter,
-                EditorWidgets.editorPresenter(eventBus),
-                new IFramePresenter(eventBus, new IFrame()),
-                harness.getUiConfigCache(),
-                userPreferencesManager,
-                markdownConverter);
-        harness.own(presenter);
+        harness.own(markdownEdit);
 
-        final Spy onChange = harness.fn(ON_CHANGE);
-        harness.addRegistration(previewPresenter.addValueChangeHandler(event ->
-                onChange.call(previewPresenter.getText())));
         final Spy onDirty = harness.fn(ON_DIRTY);
-        harness.addRegistration(presenter.addDirtyListener(onDirty::call));
+        harness.addRegistration(markdownEdit.addDirtyListener(onDirty::call));
 
         // As the document tab does: read only first, then the text
-        presenter.setReadOnly(readOnly);
-        presenter.setText(text);
+        markdownEdit.setReadOnly(readOnly);
+        markdownEdit.setText(text);
 
         // A 520px high flex column
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("height", "520px");
         frame.getElement().getStyle().setProperty("display", "flex");
         frame.getElement().getStyle().setProperty("flexDirection", "column");
-        for (final Widget toolbar : presenter.getDocumentButtons()) {
+        for (final Widget toolbar : markdownEdit.getDocumentButtons()) {
             toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
             frame.add(toolbar);
         }
-        final Widget content = presenter.getWidget();
+        final Widget content = markdownEdit.asWidget();
         content.getElement().getStyle().setProperty("flex", "1 1 auto");
         content.getElement().getStyle().setProperty("minHeight", "0");
         content.getElement().getStyle().setProperty("position", "relative");

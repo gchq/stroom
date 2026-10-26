@@ -19,11 +19,11 @@ package stroom.floormap.client.presenter;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -88,7 +88,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                              final Provider<FloorMapMapPresenter> floorMapMapPresenterProvider,
                              final Provider<FloorMapEditorPresenter> floorMapEditorPresenterProvider,
                              final Provider<FloorMapSettingsPresenter> floorMapSettingsPresenterProvider,
-                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final Provider<MarkdownEditController> markdownEditProvider,
                              final Provider<FloorMapQueryPresenter> floorMapQueryPresenterProvider,
                              final DocumentUserPermissionsTabProvider<FloorMapDoc> documentUserPermissionsTabProvider,
                              final DocumentAssetPresenter<FloorMapDoc> documentAssetPresenter) {
@@ -201,19 +201,19 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
 
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final FloorMapDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public FloorMapDoc onWrite(final MarkdownEditPresenter presenter,
+            public FloorMapDoc onWrite(final MarkdownEditController markdownEdit,
                                        final FloorMapDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
 

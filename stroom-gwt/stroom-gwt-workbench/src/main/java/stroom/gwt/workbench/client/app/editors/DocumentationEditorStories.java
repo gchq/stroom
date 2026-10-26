@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -54,12 +54,12 @@ public final class DocumentationEditorStories {
                     "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
             .build();
 
-    // The preview is an iframe with no title, identified by its id (MarkdownEditPresenter's
+    // The preview is an iframe with no title, identified by its id (MarkdownEditController's
     // MARKDOWN_FRAME_ID)
     private static final String PREVIEW = "iframe#markdown-frame";
 
-    // Stroom's Ace editor has a text area with the class ace_text-input too
-    private static final String ACE_INPUT = ".ace_text-input";
+    // Stroom's Ace editor (its text area, ace_text-input, is transparent, so never visible)
+    private static final String ACE_EDITOR = ".ace_editor";
     // The Help with Documentation button's name, which says that it opens a new browser tab
     private static final String HELP_BUTTON = "Help with Documentation (opens in new tab)";
 
@@ -94,11 +94,12 @@ public final class DocumentationEditorStories {
                 .withPlay(play -> {
                     final Query edit = play.findByRole("button", "Edit Documentation");
                     play.expect(play.getByRole("button", HELP_BUTTON)).toBeInTheDocument();
-                    // Loads in preview mode (non-blank body): no Ace editor, Edit not pressed
+                    // Loads in preview mode (non-blank body): the Ace editor is hidden (it is declared,
+                    // so it is in the page, but not shown or reachable), Edit not pressed
                     play.expect(edit).toHaveAttribute("aria-pressed", "false");
-                    play.expect(play.querySelector(ACE_INPUT)).toBeNull();
+                    play.expect(play.querySelector(ACE_EDITOR)).not().toBeVisible();
                     play.click(edit);
-                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
                     play.expect(edit).toHaveAttribute("aria-pressed", "true");
                     DocEditors.expectNoProblems(play);
                 })

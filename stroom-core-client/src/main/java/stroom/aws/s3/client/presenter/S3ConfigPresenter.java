@@ -23,10 +23,10 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.shared.SvgImage;
@@ -58,7 +58,7 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
     public S3ConfigPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
                              final Provider<EditorPresenter> editorPresenterProvider,
-                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<S3ConfigDoc>
                                      documentUserPermissionsTabProvider,
                              final RestFactory restFactory,
@@ -97,19 +97,19 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final S3ConfigDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public S3ConfigDoc onWrite(final MarkdownEditPresenter presenter,
+            public S3ConfigDoc onWrite(final MarkdownEditController markdownEdit,
                                        final S3ConfigDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

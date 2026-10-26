@@ -17,10 +17,10 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -44,26 +44,26 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
                               final LinkTabPanelView view,
                               final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
                               final Provider<SolrIndexFieldListPresenter> indexFieldListPresenterProvider,
-                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                              final Provider<MarkdownEditController> markdownEditProvider,
                               final DocumentUserPermissionsTabProvider<SolrIndexDoc>
                                       documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
         addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final SolrIndexDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public SolrIndexDoc onWrite(final MarkdownEditPresenter presenter,
+            public SolrIndexDoc onWrite(final MarkdownEditController markdownEdit,
                                         final SolrIndexDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

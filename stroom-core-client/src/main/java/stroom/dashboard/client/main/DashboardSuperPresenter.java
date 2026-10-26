@@ -20,11 +20,11 @@ import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.HasMultipleInstances;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -55,7 +55,7 @@ public class DashboardSuperPresenter
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
                                    final DashboardPresenter dashboardPresenter,
-                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                                   final Provider<MarkdownEditController> markdownEditProvider,
                                    final DocumentUserPermissionsTabProvider<DashboardDoc>
                                            documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -63,19 +63,19 @@ public class DashboardSuperPresenter
         this.dashboardPresenter = dashboardPresenter;
 
         addTab(DASHBOARD, new DocTabProvider<>(() -> dashboardPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final DashboardDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public DashboardDoc onWrite(final MarkdownEditPresenter presenter,
+            public DashboardDoc onWrite(final MarkdownEditController markdownEdit,
                                         final DashboardDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

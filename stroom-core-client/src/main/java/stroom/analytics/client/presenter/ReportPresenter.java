@@ -19,11 +19,11 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.client.component.ReportSettingsTabController;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -56,7 +56,7 @@ public class ReportPresenter
                            final Provider<ReportSettingsTabController> reportSettingsProvider,
                            final Provider<ReportNotificationPresenter> notificationPresenterProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
-                           final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                           final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -76,19 +76,19 @@ public class ReportPresenter
                 ReportSettingsTabController::write));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final ReportDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public ReportDoc onWrite(final MarkdownEditPresenter presenter,
+            public ReportDoc onWrite(final MarkdownEditController markdownEdit,
                                      final ReportDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

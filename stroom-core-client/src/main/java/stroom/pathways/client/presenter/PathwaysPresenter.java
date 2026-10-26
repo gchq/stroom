@@ -17,11 +17,11 @@
 package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pathways.client.component.PathwaysSettingsController;
 import stroom.pathways.shared.PathwaysDoc;
@@ -47,7 +47,7 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
                              final LinkTabPanelView view,
                              final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
                              final Provider<PathwaysSplitPresenter> pathwaysSplitPresenterProvider,
-                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<PathwaysDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view);
@@ -56,19 +56,19 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, pathwaysSettingsProvider::get,
                 PathwaysSettingsController::read,
                 PathwaysSettingsController::write));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final PathwaysDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public PathwaysDoc onWrite(final MarkdownEditPresenter presenter,
+            public PathwaysDoc onWrite(final MarkdownEditController markdownEdit,
                                        final PathwaysDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

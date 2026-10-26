@@ -17,11 +17,11 @@
 package stroom.sqlstore.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
@@ -47,26 +47,26 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
             final LinkTabPanelView view,
             final Provider<SqlTemporalStoreDataPresenter> sqlTemporalStoreDataPresenterProvider,
             final Provider<SqlTemporalStoreSettingsController> sqlStoreSettingsProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<SqlTemporalStoreDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, sqlStoreSettingsProvider::get,
                 SqlTemporalStoreSettingsController::read));
         addTab(DATA, new DocTabProvider<>(sqlTemporalStoreDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final SqlTemporalStoreDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public SqlTemporalStoreDoc onWrite(final MarkdownEditPresenter presenter,
+            public SqlTemporalStoreDoc onWrite(final MarkdownEditController markdownEdit,
                                     final SqlTemporalStoreDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

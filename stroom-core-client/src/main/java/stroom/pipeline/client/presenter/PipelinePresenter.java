@@ -20,11 +20,11 @@ import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.meta.shared.Meta;
@@ -89,7 +89,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                              final Provider<PipelineStructurePresenter> structurePresenterProvider,
                              final ProcessorPresenter processorPresenter,
                              final Provider<ProcessorTaskPresenter> taskPresenterProvider,
-                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                             final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<PipelineDoc> documentUserPermissionsTabProvider,
                              final ClientSecurityContext securityContext,
                              final Provider<SteppingPresenter> steppingPresenterProvider,
@@ -201,19 +201,19 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             defaultTab = STRUCTURE;
         }
 
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final PipelineDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public PipelineDoc onWrite(final MarkdownEditPresenter presenter,
+            public PipelineDoc onWrite(final MarkdownEditController markdownEdit,
                                        final PipelineDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

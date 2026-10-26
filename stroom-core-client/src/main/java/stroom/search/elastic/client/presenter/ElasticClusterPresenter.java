@@ -17,10 +17,10 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -43,24 +43,24 @@ public class ElasticClusterPresenter extends DocTabPresenter<LinkTabPanelView, E
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<ElasticClusterDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(clusterSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final ElasticClusterDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public ElasticClusterDoc onWrite(final MarkdownEditPresenter presenter,
+            public ElasticClusterDoc onWrite(final MarkdownEditController markdownEdit,
                                              final ElasticClusterDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

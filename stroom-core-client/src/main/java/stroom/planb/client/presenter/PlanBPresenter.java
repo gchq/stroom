@@ -17,10 +17,10 @@
 package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -48,25 +48,25 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
             final LinkTabPanelView view,
             final Provider<PlanBDataPresenter> planBDataPresenterProvider,
             final Provider<PlanBSettingsPresenter> planBSettingsPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<PlanBDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(planBSettingsPresenterProvider::get));
         addTab(DATA, new DocTabProvider<>(planBDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final PlanBDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public PlanBDoc onWrite(final MarkdownEditPresenter presenter,
+            public PlanBDoc onWrite(final MarkdownEditController markdownEdit,
                                     final PlanBDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

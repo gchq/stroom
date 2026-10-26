@@ -17,10 +17,10 @@
 package stroom.openai.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -43,24 +43,24 @@ public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, Open
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<OpenAIModelSettingsPresenter> modelSettingsPresenterProvider,
-            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+            final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<OpenAIModelDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(modelSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final OpenAIModelDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public OpenAIModelDoc onWrite(final MarkdownEditPresenter presenter,
+            public OpenAIModelDoc onWrite(final MarkdownEditController markdownEdit,
                                           final OpenAIModelDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

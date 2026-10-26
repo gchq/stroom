@@ -19,11 +19,11 @@ package stroom.datagen.client.presenter;
 import stroom.datagen.client.component.DataGenSettingsController;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -50,7 +50,7 @@ public class DataGenPresenter
                             final LinkTabPanelView view,
                             final Provider<DataGenSettingsController> dataGenSettingsProvider,
                             final Provider<DataGenProcessingPresenter> dataGenProcessingPresenterProvider,
-                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
+                            final Provider<MarkdownEditController> markdownEditProvider,
                             final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
@@ -61,19 +61,19 @@ public class DataGenPresenter
                 DataGenSettingsController::read,
                 DataGenSettingsController::write));
         addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider) {
             @Override
-            public void onRead(final MarkdownEditPresenter presenter,
+            public void onRead(final MarkdownEditController markdownEdit,
                                final DocRef docRef,
                                final DataGenDoc document) {
-                presenter.setText(document.getDescription());
-                presenter.setReadOnly(isReadOnly());
+                markdownEdit.setText(document.getDescription());
+                markdownEdit.setReadOnly(isReadOnly());
             }
 
             @Override
-            public DataGenDoc onWrite(final MarkdownEditPresenter presenter,
+            public DataGenDoc onWrite(final MarkdownEditController markdownEdit,
                                       final DataGenDoc document) {
-                return document.copy().description(presenter.getText()).build();
+                return document.copy().description(markdownEdit.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
