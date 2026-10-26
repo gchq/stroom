@@ -55,6 +55,7 @@ class TestToolPermissionMatrix {
             new Case("config_properties", null, List.of(Need.MANAGE_PROPERTIES)),
             new Case("server_tasks", null, List.of(Need.MANAGE_TASKS)),
             new Case("fetch_events", null, List.of(Need.VIEW_DATA)),
+            new Case("preview_extraction", null, List.of(Need.STEPPING, Need.VIEW_DATA, Need.VIEW)),
             new Case("stream_meta", "{\"feeds\":[\"TEST-FEED\"],\"parts\":true}", List.of(Need.VIEW_DATA)),
             new Case("processor_tasks", null, List.of(Need.MANAGE_PROCESSORS)),
             new Case("folder_contents", null, List.of(Need.VIEW)),
@@ -234,6 +235,7 @@ class TestToolPermissionMatrix {
         MANAGE_TASKS("Manage Tasks", AppPermission.MANAGE_TASKS_PERMISSION, null),
         MANAGE_PROCESSORS("Manage Processors", AppPermission.MANAGE_PROCESSORS_PERMISSION, null),
         VIEW_DATA("View Data", AppPermission.VIEW_DATA_PERMISSION, null),
+        STEPPING("Stepping", AppPermission.STEPPING_PERMISSION, null),
         VIEW("View (document)", null, DocumentPermission.VIEW),
         USE("Use (document)", null, DocumentPermission.USE);
 

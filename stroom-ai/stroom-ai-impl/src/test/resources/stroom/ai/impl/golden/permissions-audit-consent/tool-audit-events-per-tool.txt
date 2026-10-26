@@ -378,6 +378,9 @@
 ## pipeline {"steps":[]}
 (nothing recorded)
 
+## preview_extraction {"table":"Users","path":"/outputs/a.csv","fields":[{"name":"Org","xpath":"Org"}]}
+(nothing recorded)
+
 ## processor_tasks {"mode":"list"}
 - audit: documentsSearched(1, "processing tasks", [], {"Mode"="list", "Tasks"="0"}, "Processing tasks read by the processor_tasks tool (list)")
 - event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Processing tasks read by the processor_tasks tool (list)"

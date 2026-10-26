@@ -27,6 +27,7 @@
 - ls (read-only, reads untrusted content): RUN in every situation
 - memory (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}
 - pipeline (read-only, reads untrusted content): RUN in every situation
+- preview_extraction (read-only, reads untrusted content): RUN in every situation
 - processor_tasks (read-only, reads untrusted content): RUN in every situation
 - propose_code_change (read-only, reads untrusted content): RUN in every situation
 - propose_dashboard (read-only, reads untrusted content): RUN in every situation
