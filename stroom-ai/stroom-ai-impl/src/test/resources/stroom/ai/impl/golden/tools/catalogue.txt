@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 49
+Built-in tools: 50
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (49 tool(s))
+### AGENT (50 tool(s))
 ask_user
 config_properties
 current_results
@@ -29,6 +29,7 @@ list_visualisations
 ls
 memory
 pipeline
+preview_extraction
 processor_tasks
 propose_code_change
 propose_dashboard
@@ -55,7 +56,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (45 tool(s))
+### ASK (46 tool(s))
 ask_user
 config_properties
 current_results
@@ -78,6 +79,7 @@ list_data_sources
 list_visualisations
 ls
 pipeline
+preview_extraction
 processor_tasks
 propose_code_change
 propose_dashboard
@@ -102,7 +104,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (45 tool(s))
+### PLAN (46 tool(s))
 ask_user
 config_properties
 current_results
@@ -125,6 +127,7 @@ list_data_sources
 list_visualisations
 ls
 pipeline
+preview_extraction
 processor_tasks
 propose_code_change
 propose_dashboard
@@ -1097,6 +1100,64 @@ Runs data tool steps one after another, each on the file the step before wrote, 
     }
   },
   "required" : [ "steps" ],
+  "type" : "object"
+}
+
+================================================================================
+## preview_extraction
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Tries a search extraction for a dashboard table on some of its events, before one is made, to add values from the events (not indexed) to the table: give the fields to extract, each a name, the XPath of its value from the event element (unprefixed, e.g. EventSource/User/Id or @Id), and a type (text, number or date). Stroom writes the XSLT from them; it gives each event's StreamId and EventId too. Turning extraction on fills every value in the table from it, so give every field the table's columns use (their XPaths, e.g. from the XSLT that indexes them); the result says which are missing. It returns a table of the values extracted from each event, with what to check (a field the data source has too, values not found, values of the wrong type, values that differ from those the table shows now). It changes nothing. XPaths may use only plain string and number functions. It writes the XSLT to /outputs/extraction.xsl. The events are the rows of a snapshot of the table with StreamId and EventId: current_results with withEventIds first (ask the user, as it runs the search again), and give its path. Show the user the preview table, and agree the fields with them, before offering to make the extraction.
+
+### Parameters
+
+{
+  "properties" : {
+    "fields" : {
+      "description" : "The fields to extract, besides StreamId and EventId.",
+      "items" : {
+        "properties" : {
+          "name" : {
+            "description" : "The field's name, as columns name it in ${...}.",
+            "type" : "string"
+          },
+          "type" : {
+            "description" : "Its type (default text).",
+            "enum" : [ "text", "number", "date" ],
+            "type" : "string"
+          },
+          "xpath" : {
+            "description" : "The XPath of its value, from the event element, unprefixed; the first value it finds is taken.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "xpath" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "limit" : {
+      "description" : "How many events to try it on, from the first rows (default 10, at most 50).",
+      "type" : "integer"
+    },
+    "path" : {
+      "description" : "The snapshot of the table's rows with StreamId and EventId, from current_results with withEventIds.",
+      "type" : "string"
+    },
+    "table" : {
+      "description" : "The dashboard table, by its name as the user sees it.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "table", "path", "fields" ],
   "type" : "object"
 }
 

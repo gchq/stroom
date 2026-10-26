@@ -52,7 +52,9 @@ import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.pipeline.cache.SchemaPool;
+import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -154,6 +156,8 @@ class TestAgentModeTools {
             Map.entry("xslt_lookups", false),
             // Only offers the user a button: the user applies the change to the dashboard, unsaved.
             Map.entry("propose_dashboard_change", false),
+            // Only tries an extraction on events, by stepping: it changes nothing.
+            Map.entry("preview_extraction", false),
             // Only offers the user a button: the user applies the change to the Documentation tab, unsaved.
             Map.entry("propose_documentation_change", false),
             Map.entry("config_properties", false),
@@ -202,6 +206,8 @@ class TestAgentModeTools {
             bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
             bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
             bind(ScriptStore.class).toInstance(Mockito.mock(ScriptStore.class));
+            bind(XsltStore.class).toInstance(Mockito.mock(XsltStore.class));
+            bind(SteppingService.class).toInstance(Mockito.mock(SteppingService.class));
             bind(VisualisationStore.class).toInstance(Mockito.mock(VisualisationStore.class));
             bind(DocumentPermissionService.class).toInstance(Mockito.mock(DocumentPermissionService.class));
             bind(SchemaPool.class).toInstance(Mockito.mock(SchemaPool.class));

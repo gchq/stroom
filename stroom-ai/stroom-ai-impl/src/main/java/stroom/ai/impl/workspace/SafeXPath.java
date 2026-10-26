@@ -162,9 +162,16 @@ public final class SafeXPath {
         return compileWithoutFunctionCheck(expression, namespaces);
     }
 
-    /// Compiles an expression without checking the functions it names. The engine still refuses to read anything
-    /// outside the document; this is separate so that can be tested on its own.
-    static XPathExecutable compileWithoutFunctionCheck(final String expression, final Map<String, String> namespaces) {
+    /// Compiles an expression without checking the functions it names, for a caller that checks them its own way
+    /// (e.g. against a list of those allowed). The engine still refuses to read anything outside the document; this
+    /// is also separate so that can be tested on its own.
+    ///
+    /// @param expression An XPath expression.
+    /// @param namespaces Namespace prefixes to declare, and their URIs.
+    /// @return The expression, compiled.
+    /// @throws WorkspaceException if it is not valid.
+    public static XPathExecutable compileWithoutFunctionCheck(final String expression,
+                                                              final Map<String, String> namespaces) {
         final XPathCompiler compiler = PROCESSOR.newXPathCompiler();
         namespaces.forEach(compiler::declareNamespace);
         try {
