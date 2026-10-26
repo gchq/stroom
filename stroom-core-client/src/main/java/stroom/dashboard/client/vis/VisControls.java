@@ -16,12 +16,15 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /// The controls a visualisation has for the toolbar Stroom shows above it ([VisToolbar]), as it sends them with
@@ -37,15 +40,28 @@ import java.util.Map;
 /// @param zoomed     It is zoomed in: Reset zoom is enabled.
 /// @param range      It has a range tool: Select a time range is shown.
 /// @param rangeMode  Its range tool is on: dragging across it selects a time range.
-/// @param selectable A click on it selects what was clicked: Clear the selection is shown.
-/// @param selected   What is selected, as it describes it, or null if nothing is.
-/// @param note       A short note shown in the toolbar (e.g. that rows were left out), or null.
+/// @param selectable   A click on it selects what was clicked: Clear the selection is shown.
+/// @param selected     What is selected, as it describes it, or null if nothing is.
+/// @param download     It can be saved as an image, and its data as CSV: Download is shown.
+/// @param hiddenSeries Some of its series are hidden (e.g. from its legend): Show all series is shown.
+/// @param intervals    The intervals its time can be grouped by (Auto first), for the Interval choice; empty if it
+///                     isn't grouped (Auto Interval is off).
+/// @param interval     The interval chosen (Auto, or one of the intervals), or null.
+/// @param layout       Its layout moves (a network graph settling): Pause layout is shown.
+/// @param layoutPaused Its layout is paused.
+/// @param note         A short note shown in the toolbar (e.g. that rows were left out), or null.
 public record VisControls(boolean zoom,
                           boolean zoomed,
                           boolean range,
                           boolean rangeMode,
                           boolean selectable,
                           String selected,
+                          boolean download,
+                          boolean hiddenSeries,
+                          List<String> intervals,
+                          String interval,
+                          boolean layout,
+                          boolean layoutPaused,
                           String note) {
 
     /// Puts the visualisation's zoom back.
@@ -54,10 +70,26 @@ public record VisControls(boolean zoom,
     public static final String RANGE_MODE = "rangeMode";
     /// Clears what is selected on the visualisation.
     public static final String CLEAR_SELECTION = "clearSelection";
+    /// Shows every series of the visualisation again.
+    public static final String SHOW_ALL_SERIES = "showAllSeries";
+    /// Saves the visualisation as a PNG image, given the file's name.
+    public static final String DOWNLOAD_IMAGE = "downloadImage";
+    /// Saves the visualisation's data as CSV, given the file's name.
+    public static final String DOWNLOAD_DATA = "downloadData";
+    /// Zooms the visualisation in on the middle of what it shows.
+    public static final String ZOOM_IN = "zoomIn";
+    /// Zooms the visualisation out.
+    public static final String ZOOM_OUT = "zoomOut";
+    /// Groups the visualisation's time by an interval, given its name (Auto, or one of its intervals).
+    public static final String INTERVAL = "interval";
+    /// Pauses the visualisation's layout, or resumes it.
+    public static final String PAUSE_LAYOUT = "pauseLayout";
     /// No controls: the toolbar shows only the refresh button.
-    public static final VisControls NONE = new VisControls(false, false, false, false, false, null, null);
+    public static final VisControls NONE = new VisControls(false, false, false, false, false, null, false, false,
+            List.of(), null, false, false, null);
 
     static final int MAX_TEXT = 200;
+    static final int MAX_INTERVALS = 30;
 
     /// @param controls The controls a visualisation sent, or null for none.
     /// @return The controls, only what is expected kept.
@@ -74,10 +106,22 @@ public record VisControls(boolean zoom,
             final JSONString string = value == null
                     ? null
                     : value.isString();
+            final JSONArray array = value == null
+                    ? null
+                    : value.isArray();
             if (bool != null) {
                 values.put(key, bool.booleanValue());
             } else if (string != null) {
                 values.put(key, string.stringValue());
+            } else if (array != null) {
+                final List<Object> items = new ArrayList<>();
+                for (int i = 0; i < array.size(); i++) {
+                    final JSONString item = array.get(i).isString();
+                    if (item != null) {
+                        items.add(item.stringValue());
+                    }
+                }
+                values.put(key, items);
             }
         }
         return of(values);
@@ -96,7 +140,28 @@ public record VisControls(boolean zoom,
                 Boolean.TRUE.equals(controls.get("rangeMode")),
                 Boolean.TRUE.equals(controls.get("selectable")),
                 text(controls.get("selected")),
+                Boolean.TRUE.equals(controls.get("download")),
+                Boolean.TRUE.equals(controls.get("hiddenSeries")),
+                texts(controls.get("intervals")),
+                text(controls.get("interval")),
+                Boolean.TRUE.equals(controls.get("layout")),
+                Boolean.TRUE.equals(controls.get("layoutPaused")),
                 text(controls.get("note")));
+    }
+
+    // A list of short texts, as text(Object) keeps each, at most MAX_INTERVALS; empty if not a list.
+    static List<String> texts(final Object value) {
+        if (!(value instanceof final List<?> list)) {
+            return List.of();
+        }
+        final List<String> texts = new ArrayList<>();
+        for (final Object item : list) {
+            final String text = text(item);
+            if (text != null && texts.size() < MAX_INTERVALS) {
+                texts.add(text);
+            }
+        }
+        return texts;
     }
 
     // Text as shown in the toolbar: on one line, at most MAX_TEXT characters; null if blank or not text.

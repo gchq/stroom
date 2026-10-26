@@ -18,7 +18,9 @@ package stroom.dashboard.client.vis;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,10 +36,17 @@ class TestVisControls {
         sent.put("rangeMode", true);
         sent.put("selectable", true);
         sent.put("selected", "2026-10-24 → 2026-10-26");
+        sent.put("download", true);
+        sent.put("hiddenSeries", true);
+        sent.put("intervals", List.of("Auto", "1 hour", 7, "1 day"));
+        sent.put("interval", "Auto");
+        sent.put("layout", true);
+        sent.put("layoutPaused", false);
         sent.put("note", "First 1000 rows");
 
         assertThat(VisControls.of(sent)).isEqualTo(new VisControls(true, false, true, true, true,
-                "2026-10-24 → 2026-10-26", "First 1000 rows"));
+                "2026-10-24 → 2026-10-26", true, true, List.of("Auto", "1 hour", "1 day"), "Auto", true, false,
+                "First 1000 rows"));
     }
 
     @Test
@@ -61,5 +70,8 @@ class TestVisControls {
         assertThat(shortened).hasSize(VisControls.MAX_TEXT).endsWith("…");
         assertThat(VisControls.text(null)).isNull();
         assertThat(VisControls.text("")).isNull();
+        assertThat(VisControls.texts("Auto")).isEmpty();
+        assertThat(VisControls.texts(Collections.nCopies(50, "1 hour")))
+                .hasSize(VisControls.MAX_INTERVALS);
     }
 }
