@@ -523,6 +523,43 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void aChoiceAddedSinceAChartWasGeneratedIsRegeneratedFirst() {
+        // A chart keeps the adapter it was generated with, so a choice added since (clusters) would do nothing.
+        final String withVis = SETTINGS + "## Visualisation 'People' (id vis-1)\n"
+                               + "Visualisation: 'Who messages whom' (uuid graph-uuid)\n"
+                               + "Linked table: 'Events'\n"
+                               + "Vis settings: {}\n";
+        dashboardTab(false, withVis);
+        final String current = EChartsTemplate.settingsJson(ChartKind.GRAPH,
+                Map.of("source", "UserId", "target", "EventType"), Map.of(), null);
+        final String earlier = current.replace("\"group\", \"node\", \"cluster\"", "\"group\", \"node\"");
+        assertThat(earlier).isNotEqualTo(current);
+        final VisualisationDoc graph = VisualisationDoc.builder()
+                .uuid("graph-uuid")
+                .name("Who messages whom")
+                .functionName(EChartsTemplate.FUNCTION_NAME)
+                .settings(earlier)
+                .build();
+        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, "graph-uuid"), VisualisationDoc.class))
+                .thenReturn(Optional.of(graph));
+
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
+                "settings", Map.of("nodeColours", "cluster")))))
+                .contains("Change 1 (set_vis_settings): this chart's nodeColours offers group, node, not 'cluster': "
+                          + "it was generated before that was added")
+                .contains("Regenerate it first with propose_visualisation, replace (its pane's name)");
+        assertThat(takeUserActions()).isEmpty();
+
+        // A choice it offers, in any case, is fine.
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
+                "settings", Map.of("nodeColours", "Node")))))
+                .contains("- Change visualisation 'People'");
+        // A chart generated now offers it.
+        assertThat(ProposeDashboardChangeTool.newChoiceProblems(Map.of("nodeColours", "cluster"),
+                graph.copy().settings(current).build())).isEmpty();
+    }
+
+    @Test
     void aTableFilterFiltersRowsByTheChartsSelection() {
         chartTab();
 
