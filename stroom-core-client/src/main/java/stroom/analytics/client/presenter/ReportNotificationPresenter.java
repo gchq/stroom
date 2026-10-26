@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.NotificationListController;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 
@@ -25,22 +26,18 @@ import com.google.web.bindery.event.shared.EventBus;
 public class ReportNotificationPresenter
         extends AbstractNotificationPresenter<ReportDoc> {
 
-    private final ReportNotificationListPresenter notificationListPresenter;
-
-
     @Inject
     public ReportNotificationPresenter(final EventBus eventBus,
                                        final AnalyticNotificationView view,
-                                       final ReportNotificationListPresenter notificationListPresenter) {
+                                       final NotificationListController notificationListPresenter) {
         super(eventBus, view, notificationListPresenter);
-        this.notificationListPresenter = notificationListPresenter;
     }
 
     @Override
-    protected ReportDoc onWrite(ReportDoc reportDoc) {
-        reportDoc = notificationListPresenter.onWrite(reportDoc);
+    protected ReportDoc onWrite(final ReportDoc reportDoc) {
         return reportDoc
                 .copy()
+                .notifications(getNotifications())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .build();
     }

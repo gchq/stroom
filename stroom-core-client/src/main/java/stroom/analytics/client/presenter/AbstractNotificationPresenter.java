@@ -16,41 +16,49 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.NotificationListController;
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.NotificationConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
+
+import java.util.List;
 
 public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticNotificationView, D> {
 
-    private final AbstractNotificationListPresenter<D> notificationList;
+    private final NotificationListController notificationList;
 
     AbstractNotificationPresenter(final EventBus eventBus,
                                   final AnalyticNotificationView view,
-                                  final AbstractNotificationListPresenter<D> notificationList) {
+                                  final NotificationListController notificationList) {
         super(eventBus, view);
         own(notificationList);
         this.notificationList = notificationList;
-        getView().setTable(notificationList.getView());
+        getView().setTable(notificationList);
     }
 
-    /**
-     * @see AbstractNotificationListPresenter#setAnalyticProcessType(AnalyticProcessType)
-     */
+    /// @param analyticProcessType The rule's processing type, which says where its stream notifications
+    ///                            go.
+    /// @see NotificationListController#setAnalyticProcessType(AnalyticProcessType)
     public void setAnalyticProcessType(final AnalyticProcessType analyticProcessType) {
         notificationList.setAnalyticProcessType(analyticProcessType);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final D analyticRuleDoc) {
-        notificationList.read(docRef, analyticRuleDoc);
+        notificationList.read(docRef, analyticRuleDoc.getNotifications());
+    }
+
+    /// @return A copy of the notifications shown, for the document.
+    protected List<NotificationConfig> getNotifications() {
+        return notificationList.getNotifications();
     }
 
     // --------------------------------------------------------------------------------
@@ -58,6 +66,6 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
 
     public interface AnalyticNotificationView extends View {
 
-        void setTable(View view);
+        void setTable(IsWidget view);
     }
 }

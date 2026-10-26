@@ -17,11 +17,11 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,7 +44,7 @@ public class AnalyticNotificationViewImpl extends ViewImpl implements AnalyticNo
     }
 
     @Override
-    public void setTable(final View view) {
+    public void setTable(final IsWidget view) {
         this.table.setWidget(view.asWidget());
     }
 
