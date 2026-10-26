@@ -31,8 +31,8 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
+import stroom.pipeline.client.component.DocRefSelectionController;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
@@ -47,8 +47,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
@@ -73,7 +71,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private final AppRoot appRoot;
     private final Provider<PipelinePresenter> editorProvider;
     private final RestFactory restFactory;
-    private final DocRefSelectionPresenter docRefSelectionPresenter;
+    private final Provider<DocRefSelectionController> docRefSelectionProvider;
 
     @Inject
     public PipelinePlugin(final EventBus eventBus,
@@ -83,13 +81,13 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext,
                           final Provider<ExplorerPopupController> pipelineSelection,
-                          final DocRefSelectionPresenter docRefSelectionPresenter,
+                          final Provider<DocRefSelectionController> docRefSelectionProvider,
                           final AppRoot appRoot) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
-        this.docRefSelectionPresenter = docRefSelectionPresenter;
+        this.docRefSelectionProvider = docRefSelectionProvider;
         this.appRoot = appRoot;
 
         getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
@@ -118,34 +116,19 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final DocRef pipeline = pipelinePresenter.getDocRef();
 
             if (!(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
-                docRefSelectionPresenter.setMessageText(
-                        "The following documents have changed. Please select the ones you want to save:");
-                docRefSelectionPresenter.setDocRefs(dirtyDocs);
-
-                final int popupHeight = 200 + dirtyDocs.size() * 23;
-                final PopupSize popupSize = PopupSize.resizable(650, popupHeight);
-                ShowPopupEvent.builder(docRefSelectionPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .modal()
-                        .popupSize(popupSize)
-                        .caption("Save Pipeline: " + pipeline.getName())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                final AtomicInteger completedSaves = new AtomicInteger(0);
-                                final Runnable onSaved = () -> {
-                                    if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
-                                        pipelinePresenter.onChange();
-                                    }
-                                };
-                                pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
-                                if (selectedDocRefs.contains(pipeline)) {
-                                    super.save(tabData, onSaved);
+                docRefSelectionProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
+                        selectedDocRefs -> {
+                            final AtomicInteger completedSaves = new AtomicInteger(0);
+                            final Runnable onSaved = () -> {
+                                if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
+                                    pipelinePresenter.onChange();
                                 }
+                            };
+                            pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
+                            if (selectedDocRefs.contains(pipeline)) {
+                                super.save(tabData, onSaved);
                             }
-                            e.hide();
-                        })
-                        .fire();
+                        });
             } else {
                 super.save(tabData);
             }

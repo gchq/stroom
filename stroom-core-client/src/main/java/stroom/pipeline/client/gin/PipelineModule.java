@@ -20,12 +20,9 @@ import stroom.core.client.gin.PluginModule;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
-import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
-import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
@@ -74,7 +71,6 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
 
-        bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
 
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
         bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterView.class,

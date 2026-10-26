@@ -14,69 +14,95 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.client.presenter;
+package stroom.pipeline.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
-import stroom.data.client.component.RefCellsController;
+import stroom.data.client.component.DocRefCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.docref.DocRef;
-import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Selection;
+import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColSpec;
+import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
-public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionView> {
+/// The documents changed, each with a tick box to save it (all ticked at first), and one in the
+/// header for them all.
+public class DocRefSelection extends Component {
 
-    private final DataGrid<DocRef> dataGrid;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    DataGrid<DocRef> dataGrid;
+
     private final Selection<DocRef> selection = new Selection<>(true, new HashSet<>());
     private final ListDataProvider<DocRef> dataProvider = new ListDataProvider<>();
-
     private List<DocRef> docRefs = new ArrayList<>();
 
-    private final RefCellsController refCells;
-
-    @Inject
-    public DocRefSelectionPresenter(final EventBus eventBus,
-                                    final DocRefSelectionView view,
-                                    final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Document References");
+    /// Makes an empty list, with its tick boxes; the documents' column comes with
+    /// [#addDocumentColumn(DocRefCell.Builder)].
+    public DocRefSelection() {
+        initWidget(BINDER.createAndBindUi(this));
         addSelectedColumn();
-        DataGridUtil.addDocRefColumn(refCells, dataGrid, "Document Name", Function.identity(), false);
-        dataGrid.hasContextMenu(false);
-
         dataProvider.addDataDisplay(dataGrid);
-
-        view.setDataWidget(dataGrid);
     }
 
+    /// Adds the documents' column.
+    ///
+    /// @param cell The document cell's builder, configured to open its documents.
+    public void addDocumentColumn(final DocRefCell.Builder<DocRef> cell) {
+        final Column<DocRef, DocRef> column = new ColumnBuilder<DocRef, DocRef, Cell<DocRef>>(Function.identity(),
+                () -> cell
+                        .hasOpenAndCopy(false)
+                        .docRefFunction(Function.identity())
+                        .showIcon(true)
+                        .build())
+                .build();
+        dataGrid.addColumn(new ColSpec.Builder<DocRef>()
+                .column(column)
+                .resizable(true)
+                .name("Document Name")
+                .width(ColumnSizeConstants.BIG_COL)
+                .build());
+    }
 
-    void addSelectedColumn() {
-        // Select Column
+    /// @param docRefs The documents, a row each, all ticked.
+    public void setDocRefs(final List<DocRef> docRefs) {
+        this.docRefs = new ArrayList<>(docRefs);
+        dataProvider.setCompleteList(docRefs);
+        selection.setMatchAll(true);
+        dataGrid.redrawHeaders();
+    }
+
+    /// @return The documents ticked.
+    public List<DocRef> getSelectedItems() {
+        return selection.isMatchAll()
+                ? docRefs
+                : new ArrayList<>(selection.getSet());
+    }
+
+    private void addSelectedColumn() {
         final Column<DocRef, TickBoxState> column = DataGridUtil.updatableTickBoxColumnBuilder(
                         (DocRef docRef) -> TickBoxState.fromBoolean(selection.isMatch(docRef)))
                 .build();
 
-        final Header<TickBoxState> header = new Header<>(
-                TickBoxCell.create(false, false)) {
+        final Header<TickBoxState> header = new Header<>(TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 if (selection.isMatchAll() || selection.size() == docRefs.size()) {
@@ -97,7 +123,6 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
             }
         });
 
-        // Add Handlers
         column.setFieldUpdater((index, row, value) -> {
             if (value.toBoolean()) {
                 selection.add(row);
@@ -119,27 +144,11 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
         dataProvider.updateRowData(0, docRefs);
     }
 
-    public void setMessageText(final String message) {
-        getView().setMessage(message);
-    }
 
-    public void setDocRefs(final List<DocRef> docRefs) {
-        this.docRefs = new ArrayList<>(docRefs);
-        dataProvider.setCompleteList(docRefs);
-        selection.setMatchAll(true);
-        dataGrid.redrawHeaders();
-    }
+    // --------------------------------------------------------------------------------
 
-    public List<DocRef> getSelectedItems() {
-        return selection.isMatchAll()
-                ? docRefs
-                : new ArrayList<>(selection.getSet());
-    }
 
-    public interface DocRefSelectionView extends View {
+    interface Binder extends UiBinder<Widget, DocRefSelection> {
 
-        void setDataWidget(final Widget widget);
-
-        void setMessage(final String message);
     }
 }
