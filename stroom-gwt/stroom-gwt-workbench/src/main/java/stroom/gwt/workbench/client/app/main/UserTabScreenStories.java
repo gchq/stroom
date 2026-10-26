@@ -122,7 +122,7 @@ public final class UserTabScreenStories {
                     play.click(play.findByText("Dependencies", StroomDom.LINK_TAB_LABEL));
                     play.waitFor(() -> play.expect(play.getByText("created by this user")).toBeInTheDocument());
                     // The Document Name cell shows the document (it was once always blank, as
-                    // UserDependenciesListPresenter's DocRefCell had no docRefFunction)
+                    // UserDependenciesList's DocRefCell had no docRefFunction)
                     play.expect(play.within(play.getByText("created by this user").closest("tr, [role=\"row\"]"))
                             .querySelector("td, [data-col]")).toHaveTextContent("Ops Dashboard");
                     SecurityPlays.expectNoProblems(play);
