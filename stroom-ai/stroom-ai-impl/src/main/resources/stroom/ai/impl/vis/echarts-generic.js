@@ -1973,6 +1973,15 @@ if (!window.visualisations) {
             minWeight = Math.min(minWeight, links[key].value);
             maxWeight = Math.max(maxWeight, links[key].value);
         });
+        // Node Size: by its connections (how many others it links to), or by its links' total (their weights, or
+        // the rows they come from, e.g. the messages a person sent and received).
+        var sizeByTotal = String(textSetting(settings, "nodeSize") || "connections").toLowerCase() === "total";
+        var minTotal = Infinity;
+        var maxTotal = -Infinity;
+        nodeNames.forEach(function (name) {
+            minTotal = Math.min(minTotal, nodes[name].weight);
+            maxTotal = Math.max(maxTotal, nodes[name].weight);
+        });
 
         var labelSetting = String(settings.showLabels || "auto").toLowerCase();
         var labelThreshold;
@@ -2031,17 +2040,15 @@ if (!window.visualisations) {
                 formatter: function (params) {
                     if (params.dataType === "edge") {
                         var text = params.data.source + (directed ? " → " : " — ") + params.data.target;
-                        if (hasWeight) {
-                            text += ": " + formatNumber(params.data.value);
-                        }
+                        // Its weight, or how many rows it comes from (each counts once without a weight).
+                        text += ": " + formatNumber(params.data.value) + (hasWeight ? ""
+                            : (params.data.value === 1 ? " row" : " rows"));
                         return escapeHtml(text);
                     }
                     var lines = [escapeHtml(params.data.name),
                         escapeHtml("Connections: " + formatNumber(params.data.degree))];
-                    if (hasWeight) {
-                        lines.push(escapeHtml((fields.column("weight") || "Weight") + ": " +
-                            formatNumber(params.data.weight)));
-                    }
+                    lines.push(escapeHtml((hasWeight ? fields.column("weight") || "Weight" : "Rows") + ": " +
+                        formatNumber(params.data.weight)));
                     if (params.data.groupName) {
                         lines.push(escapeHtml(params.data.groupName));
                     }
@@ -2074,7 +2081,8 @@ if (!window.visualisations) {
                         value: n.degree,
                         category: colourEachNode ? groupIndex[name]
                             : (n.group !== null ? groupIndex[n.group] : undefined),
-                        symbolSize: scaleSqrt(n.degree, minDegree, maxDegree, 8, 48),
+                        symbolSize: sizeByTotal ? scaleSqrt(n.weight, minTotal, maxTotal, 8, 48)
+                            : scaleSqrt(n.degree, minDegree, maxDegree, 8, 48),
                         label: {show: labelled[name] === true}
                     };
                 }),
@@ -2084,7 +2092,9 @@ if (!window.visualisations) {
                         source: link.source,
                         target: link.target,
                         value: link.value,
-                        lineStyle: {width: hasWeight ? scaleSqrt(link.value, minWeight, maxWeight, 1, 6) : 1}
+                        // As wide as its weight, or (without one) the rows it comes from: e.g. a pair's messages.
+                        lineStyle: {width: hasWeight || maxWeight > minWeight
+                            ? scaleSqrt(link.value, minWeight, maxWeight, 1, 6) : 1}
                     };
                 })
             }]

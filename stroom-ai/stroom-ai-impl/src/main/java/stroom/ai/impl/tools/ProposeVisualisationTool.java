@@ -427,12 +427,20 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (!documentAccess.canView(target)) {
             return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
-        final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()),
-                stringArg(request, TABLE_ARG));
+        // With newTable, table is the one it is added beside; the new table's own name is taken for it when there is
+        // only one it could be beside. Seen in testing: given the new table's name, the chart was refused.
+        final String tableArg = stringArg(request, TABLE_ARG);
+        final boolean namesNewTable = tableArg != null && tableArg.strip().equalsIgnoreCase(newTableName(request));
+        final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), namesNewTable
+                ? null
+                : tableArg);
         if (table == null) {
             return ToolResult.text(NullSafe.isEmptyCollection(tab.searches())
                     ? "The tab shows no table of results to chart. Run its query first."
-                    : "Say which table to chart: " + NullSafe.list(tab.searches()).stream()
+                    : (namesNewTable
+                            ? "With " + NEW_TABLE_ARG + ", give as table the one the new table is added beside "
+                              + "(fed by the same query), not the new table: "
+                            : "Say which table to chart: ") + NullSafe.list(tab.searches()).stream()
                             .map(search -> "'" + tableName(search) + "'")
                             .collect(Collectors.joining(", ")) + ".");
         }
@@ -632,6 +640,16 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                         : changedTable != null
                                 ? changedTable.changes()
                                 : List.of(), filterChanges);
+    }
+
+    // The name newTable gives the table it adds (its add_table's), or null.
+    private static String newTableName(final ToolCall request) {
+        if (argsMap(request).get(NEW_TABLE_ARG) instanceof final List<?> changes && !changes.isEmpty()
+            && changes.getFirst() instanceof final Map<?, ?> first
+            && DashboardChanges.ADD_TABLE.equals(first.get("op")) && first.get("name") != null) {
+            return String.valueOf(first.get("name")).strip();
+        }
+        return null;
     }
 
     // A table for a chart, added by its button beside the table given: the changes that add it (as

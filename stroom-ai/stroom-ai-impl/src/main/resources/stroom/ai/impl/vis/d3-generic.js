@@ -3842,9 +3842,25 @@ if (!window.visualisations) {
         });
         var minValue = values.length ? Math.min.apply(null, values) : 0;
         var maxValue = values.length ? Math.max.apply(null, values) : 1;
-        // ECharts' node sizes: from 8 to 48 pixels across, by how many others each links to.
+        // ECharts' node sizes: from 8 to 48 pixels across, by how many others each links to, or (Node Size total)
+        // by its links' total (their weights, or the rows they come from).
+        var totals = {};
+        shownNodes.forEach(function (node) {
+            totals[node.name] = 0;
+        });
+        shownLinks.forEach(function (link) {
+            totals[link.source] += link.value;
+            totals[link.target] += link.value;
+        });
+        var totalValues = shownNodes.map(function (node) {
+            return totals[node.name];
+        });
+        var minTotal = totalValues.length ? Math.min.apply(null, totalValues) : 0;
+        var maxTotal = totalValues.length ? Math.max.apply(null, totalValues) : 1;
+        var sizeByTotal = String(textSetting(settings, "nodeSize") || "connections").toLowerCase() === "total";
         var radiusOf = function (node) {
-            return scaleSqrt(node.degree, minDegree, maxDegree, 4, 24);
+            return sizeByTotal ? scaleSqrt(totals[node.name], minTotal, maxTotal, 4, 24)
+                : scaleSqrt(node.degree, minDegree, maxDegree, 4, 24);
         };
         var colourOf = function (node, i) {
             return byGroup ? colours[groups.indexOf(node.group === null ? "(none)" : node.group) % colours.length] :
@@ -3868,7 +3884,9 @@ if (!window.visualisations) {
         shownLinks.forEach(function (link, l) {
             var from = at[link.source];
             var to = at[link.target];
-            var width = scaleSqrt(link.value, minValue, maxValue, 1, 6);
+            // As wide as its weight, or (without one) the rows it comes from, as ECharts draws it.
+            var width = fields.has("weight") || maxValue > minValue ? scaleSqrt(link.value, minValue, maxValue, 1, 6)
+                : 1;
             var colour = colourByName[link.source];
             var d;
             if (network.directed) {
@@ -3928,7 +3946,8 @@ if (!window.visualisations) {
                 .attr("r", radiusOf(node)).attr("fill", colourByName[node.name]);
             outline(circle, ctx, ctx.isSelected(selection));
             ctx.mark(circle, selection, node.name + (node.group !== null ? " (" + node.group + ")" : "") + ": " +
-                node.degree + " connections");
+                node.degree + " connections, " + (fields.column("weight") || "rows") + " " +
+                ctx.format(totals[node.name]));
             if (labelled[node.name]) {
                 svgText(nodeGroup, shorten(node.name, 24), position[0] + radiusOf(node) + 5, position[1], ctx.style,
                     {baseline: "middle", size: SMALL_FONT_SIZE});

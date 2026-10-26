@@ -48,6 +48,10 @@ public enum StyleSetting {
     NODE_COLOURS("nodeColours", "Node Colours", Control.SELECTION, "group", List.of("group", "node"), null, null,
             "group colours nodes by their sourceGroup and targetGroup columns (one colour if neither is mapped), "
             + "with a legend; node gives each node its own colour"),
+    NODE_SIZE("nodeSize", "Node Size", Control.SELECTION, "connections", List.of("connections", "total"), null,
+            null, "connections sizes each node by how many others it links to; total by its links' total: their "
+                  + "weights, or without a weight column the rows they come from (e.g. the messages a person sent "
+                  + "and received)"),
     COLOUR_SCALE("colourScale", "Colour Scale", Control.SELECTION, "blue",
             List.of("blue", "green", "red", "purple", "orange", "heat"), null, null,
             "the colours from the smallest value to the largest; heat runs from yellow to red"),
