@@ -70,7 +70,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
     @Inject
     public DictionaryEditor(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final Provider<WordsTab> wordsTabProvider,
+                            final Provider<WordsTabController> wordsTabProvider,
                             final Provider<ImportsTab> importsTabProvider,
                             final Provider<EffectiveWordsList> effectiveWordsListProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
@@ -85,7 +85,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
 
         addTab(WORDS,
                 () -> {
-                    final WordsTab wordsTab = wordsTabProvider.get();
+                    final WordsTabController wordsTab = wordsTabProvider.get();
                     wordsTab.setOnChange(this::onChange);
                     return wordsTab;
                 },

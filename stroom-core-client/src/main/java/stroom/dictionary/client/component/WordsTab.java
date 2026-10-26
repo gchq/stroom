@@ -16,49 +16,37 @@
 
 package stroom.dictionary.client.component;
 
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.widget.component.client.Controller;
-import stroom.widget.component.client.PresenterAdapter;
+import stroom.editor.client.component.CodeEditor;
+import stroom.widget.component.client.Component;
 
-import com.google.inject.Inject;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
 
-import javax.inject.Provider;
+/// A dictionary's Words tab: its words, one a line, in a code editor.
+public class WordsTab extends Component {
 
-/// A dictionary's Words tab: its words, one a line, in a plain text editor. It is read only when
-/// its document is.
-public class WordsTab extends Controller {
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final PresenterAdapter<EditorPresenter> editor;
-    private Runnable onChange = () -> {
-    };
+    @UiField
+    CodeEditor editor;
 
-    @Inject
-    public WordsTab(final Provider<EditorPresenter> editorPresenterProvider) {
-        editor = own(PresenterAdapter.of(editorPresenterProvider::get)
-                .onReadOnly(EditorPresenter::setReadOnly));
-        final EditorPresenter editorPresenter = editor.getPresenter();
-        editorPresenter.setMode(AceEditorMode.TEXT);
-        // Text only, no styling or formatting
-        editorPresenter.getStylesOption().setUnavailable();
-        editorPresenter.getFormatAction().setUnavailable();
-        own(editorPresenter.addValueChangeHandler(event -> onChange.run()));
-        own(editorPresenter.addFormatHandler(event -> onChange.run()));
-        initWidget(editor.asWidget());
+    /// Makes an empty tab.
+    public WordsTab() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    /// @param onChange What to run when the user changes the words.
-    public void setOnChange(final Runnable onChange) {
-        this.onChange = onChange;
+    /// @return The code editor, for its controller to attach to.
+    public CodeEditor getEditor() {
+        return editor;
     }
 
-    /// @param words The words, one a line.
-    public void setWords(final String words) {
-        editor.getPresenter().setText(words);
-    }
 
-    /// @return The words, one a line.
-    public String getWords() {
-        return editor.getPresenter().getText();
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, WordsTab> {
+
     }
 }
