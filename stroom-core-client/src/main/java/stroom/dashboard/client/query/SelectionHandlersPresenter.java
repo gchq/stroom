@@ -18,6 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.component.SelectionHandlerList;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
@@ -53,6 +54,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -68,7 +70,7 @@ public class SelectionHandlersPresenter
         extends AbstractSettingsTabPresenter<SelectionHandlersView>
         implements Focus {
 
-    private final SelectionHandlerListPresenter listPresenter;
+    private final SelectionHandlerList listPresenter;
     private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
     private final DynamicFieldSelectionListModel dynamicFieldSelectionListModel;
     private List<ComponentSelectionHandler> selectionHandlers = new ArrayList<>();
@@ -89,17 +91,16 @@ public class SelectionHandlersPresenter
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
                                       final SelectionHandlersView view,
-                                      final SelectionHandlerListPresenter listPresenter,
+                                      final SelectionHandlerList listPresenter,
                                       final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
                                       final DynamicFieldSelectionListModel dynamicFieldSelectionListModel) {
         super(eventBus, view);
-        own(listPresenter);
         this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.listPresenter = listPresenter;
 //        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
 
-        getView().setTableView(listPresenter.getView());
+        getView().setTableView(listPresenter);
 //        getView().setExpressionView(expressionPresenter.getView());
 
         // Stop users from selecting expression items.
@@ -126,7 +127,7 @@ public class SelectionHandlersPresenter
                 this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-        listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+        listPresenter.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
 
@@ -415,7 +416,6 @@ public class SelectionHandlersPresenter
 
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
-        listPresenter.setComponents(dashboardContext.getComponents());
         super.setDashboardContext(dashboardContext);
     }
 
@@ -456,6 +456,6 @@ public class SelectionHandlersPresenter
 
     public interface SelectionHandlersView extends View {
 
-        void setTableView(View view);
+        void setTableView(IsWidget view);
     }
 }

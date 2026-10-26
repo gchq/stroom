@@ -14,53 +14,51 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.query;
+package stroom.dashboard.client.component;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-public class SelectionHandlerListPresenter
-        extends MyPresenterWidget<PagerPanel> {
+/// A component's selection handlers, a row each (whether it is enabled and its expression); one can
+/// be selected.
+public class SelectionHandlerList extends Component {
 
-    private final DataGrid<ComponentSelectionHandler> dataGrid;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<ComponentSelectionHandler> dataGrid;
+
     private final MultiSelectionModelImpl<ComponentSelectionHandler> selectionModel;
-    private Components components;
 
-    @Inject
-    public SelectionHandlerListPresenter(final EventBus eventBus,
-                                         final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public SelectionHandlerList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ComponentSelectionHandler::getId);
-        dataGrid.setTableName("Selection Handlers");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
+        addColumns();
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    private void addColumns() {
         // Enabled.
         final Column<ComponentSelectionHandler, TickBoxState> enabledColumn =
                 DataGridUtil.readOnlyTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
@@ -84,23 +82,27 @@ public class SelectionHandlerListPresenter
         dataGrid.addResizableColumn(expressionColumn, "Expression", 500);
     }
 
+    /// @param data The selection handlers.
     public void setData(final List<ComponentSelectionHandler> data) {
         dataGrid.setRowData(0, data);
         dataGrid.setRowCount(data.size());
     }
 
+    /// @return The selection, one handler at most.
     public MultiSelectionModel<ComponentSelectionHandler> getSelectionModel() {
         return selectionModel;
     }
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
+    /// @return The toolbar beside the pager, for the screen's own buttons.
     public Toolbar getToolbar() {
-        return getView().getToolbar();
+        return pager.getToolbar();
     }
 
-    public void setComponents(final Components components) {
-        this.components = components;
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, SelectionHandlerList> {
+
     }
 }

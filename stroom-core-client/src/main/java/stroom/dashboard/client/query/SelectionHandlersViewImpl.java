@@ -17,7 +17,6 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,7 +46,7 @@ public class SelectionHandlersViewImpl extends ViewImpl implements SelectionHand
     }
 
     @Override
-    public void setTableView(final View view) {
+    public void setTableView(final IsWidget view) {
         this.table.setWidget(view.asWidget());
     }
 
