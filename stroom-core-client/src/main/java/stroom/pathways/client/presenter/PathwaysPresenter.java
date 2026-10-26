@@ -17,11 +17,13 @@
 package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.pathways.client.component.PathwaysSettingsController;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -43,7 +45,7 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
     @Inject
     public PathwaysPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final Provider<PathwaysSettingsPresenter> pathwaysSettingsPresenterProvider,
+                             final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
                              final Provider<PathwaysSplitPresenter> pathwaysSplitPresenterProvider,
                              final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                              final DocumentUserPermissionsTabProvider<PathwaysDoc> documentUserPermissionsTabProvider,
@@ -51,7 +53,9 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
         super(eventBus, view);
 
         addTab(PATHWAYS, new DocTabProvider<PathwaysDoc>(pathwaysSplitPresenterProvider::get));
-        addTab(SETTINGS, new DocTabProvider<PathwaysDoc>(pathwaysSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, pathwaysSettingsProvider::get,
+                PathwaysSettingsController::read,
+                PathwaysSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

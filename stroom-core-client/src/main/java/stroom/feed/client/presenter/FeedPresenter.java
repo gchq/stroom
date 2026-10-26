@@ -20,11 +20,12 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.feed.client.component.FeedSettingsController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -49,7 +50,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
     public FeedPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
-                         final Provider<FeedSettingsPresenter> settingsPresenterProvider,
+                         final Provider<FeedSettingsController> settingsProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider,
                          final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
@@ -98,7 +99,9 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
             });
         }
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                FeedSettingsController::read,
+                FeedSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

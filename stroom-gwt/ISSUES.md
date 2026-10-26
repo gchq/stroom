@@ -272,7 +272,8 @@ basic use:
   command (they were made with `null`, and `PathwayTree` keeps them so in wave 7). Like the
   constraints' buttons they also show the document's read-only state only once a node is chosen:
   until then New is disabled and titled "(read only)" (found 26 October 2026, in wave 7).
-* A read-only pathways document can still be edited: `PathwaysSettingsViewImpl.onReadOnly` only
+* A read-only pathways document can still be edited: `PathwaysSettings.onReadOnlyChange` (was
+  `PathwaysSettingsViewImpl.onReadOnly`) only
   disables the ordering tolerance, leaving Processing Node and the Allow tick boxes enabled (edits
   can't make the document dirty, so they are silently lost).
 
@@ -280,8 +281,8 @@ basic use:
   (`read`, and `enableButtons`)
 * `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ConstraintListPresenter.java`
   (line 283)
-* `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java`
-  (`onReadOnly`, line 138)
+* `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwaysSettings.java`
+  (`onReadOnlyChange`)
 
 ### Workbench stories that fail
 

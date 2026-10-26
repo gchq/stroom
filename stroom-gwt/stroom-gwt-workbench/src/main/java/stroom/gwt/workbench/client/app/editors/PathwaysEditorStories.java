@@ -84,7 +84,7 @@ public final class PathwaysEditorStories {
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
     // A FormGroup gives its control the group's identity as its id
-    // (PathwaysSettingsViewImpl.ui.xml and its dialogs)
+    // (PathwaysSettings.ui.xml and its dialogs)
     private static final String PROCESSING_NODE = "#pathwaysProcessingNode";
 
     private PathwaysEditorStories() {
@@ -216,7 +216,7 @@ public final class PathwaysEditorStories {
                     play.click(DocEditors.tab(play, "Settings"));
                     final Query processingNode = play.findByDisplayValue("node1");
                     // The Processing Node text box stays enabled (a Stroom bug, see ISSUES.md:
-                    // PathwaysSettingsViewImpl.onReadOnly only disables the ordering tolerance), but
+                    // PathwaysSettings.onReadOnlyChange only disables the ordering tolerance), but
                     // an edit can't make the read only document dirty, so Save stays disabled
                     play.expect(processingNode).not().toBeDisabled();
                     play.type(processingNode, "-x");

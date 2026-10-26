@@ -17,11 +17,13 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.search.elastic.client.component.ElasticIndexSettingsController;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -43,13 +45,15 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
     public ElasticIndexPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenterProvider,
+            final Provider<ElasticIndexSettingsController> indexSettingsProvider,
             final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenterProvider,
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<ElasticIndexDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
+                ElasticIndexSettingsController::read,
+                ElasticIndexSettingsController::write));
         addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(markdownEditPresenterProvider) {
             @Override

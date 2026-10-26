@@ -20,9 +20,6 @@ import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.client.view.DataUploadViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
-import stroom.feed.client.presenter.FeedSettingsPresenter;
-import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.client.view.FeedSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FeedModule`
@@ -36,9 +33,6 @@ public class FeedScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(FeedPresenter.class);
-        bindSharedView(FeedSettingsView.class,
-                FeedSettingsViewImpl.class);
-        bind(FeedSettingsPresenter.class);
         bindPresenterWidget(DataUploadPresenter.class,
                 DataUploadView.class,
                 DataUploadViewImpl.class);

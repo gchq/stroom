@@ -25,9 +25,6 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
-import stroom.feed.client.presenter.FeedSettingsPresenter;
-import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.client.view.FeedSettingsViewImpl;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
 import stroom.preferences.client.EditorPreferencesPresenter;
@@ -121,8 +118,5 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
 
         // FeedModule
         bind(FeedPresenter.class);
-        bindSharedView(FeedSettingsView.class,
-                FeedSettingsViewImpl.class);
-        bind(FeedSettingsPresenter.class);
     }
 }

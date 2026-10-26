@@ -123,7 +123,7 @@ public final class FeedEditorStories {
             .build();
 
     // A FormGroup gives its control the group's identity as its id
-    // (FeedSettingsViewImpl.ui.xml)
+    // (FeedSettings.ui.xml)
     private static final String CLASSIFICATION = "#feedSettingsClassification";
 
     private FeedEditorStories() {

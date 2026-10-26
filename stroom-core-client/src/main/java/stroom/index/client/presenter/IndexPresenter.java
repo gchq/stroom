@@ -17,11 +17,13 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.index.client.component.IndexSettingsController;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -46,7 +48,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
     @Inject
     public IndexPresenter(final EventBus eventBus,
                           final LinkTabPanelView view,
-                          final Provider<IndexSettingsPresenter> indexSettingsPresenterProvider,
+                          final Provider<IndexSettingsController> indexSettingsProvider,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
                           final Provider<IndexShardPresenter> indexShardPresenterProvider,
                           final Provider<IndexDataPresenter> indexDataPresenterProvider,
@@ -63,7 +65,9 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
         }
 
         addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
+                IndexSettingsController::read,
+                IndexSettingsController::write));
         addTab(DATA, new DocTabProvider<LuceneIndexDoc>(indexDataPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(markdownEditPresenterProvider) {
             @Override
