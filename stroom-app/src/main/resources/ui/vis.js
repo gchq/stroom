@@ -136,7 +136,7 @@ var postControls = function(controls) {
         postReport(report);
     };
 
-    // Send Stroom the controls the visualisation has, for the toolbar Stroom shows under it; a button in the
+    // Send Stroom the controls the visualisation has, for the toolbar Stroom shows above it; a button in the
     // toolbar calls the visualisation's command(name) function. Each is optional:
     //   zoom: it can zoom (shows Reset zoom, enabled while zoomed: true)
     //   range: it has a range tool (shows Select a time range, on while rangeMode: true)

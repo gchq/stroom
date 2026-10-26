@@ -517,12 +517,13 @@
     height: 100%;
 }
 
-/* The toolbar under a visualisation, as a table has one: the chart's controls and its refresh button. */
+/* The toolbar above a visualisation, under the pane's title, as a table has one: the chart's controls and its
+   refresh button. */
 .dashboardVis-toolbar {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    top: 0;
     height: var(--dashboardVis-toolbar__height);
     padding: 0 5px;
     gap: var(--control__gap--horizontal);
@@ -530,17 +531,18 @@
     white-space: nowrap;
     box-sizing: border-box;
     /* A line between it and the chart, so it reads as the pane's toolbar rather than part of the chart. */
-    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     background-color: var(--dashboard-panel__background-color);
 }
 
-/* The chart's frame is placed over its container: above the toolbar. */
+/* The chart's frame is placed over its container: below the toolbar. */
 .dashboardVis-outerLayout--toolbar {
     --dashboardVis-toolbar__height: 28px;
 }
 
 .dashboardVis-outerLayout--toolbar > .dashboardVis-innerLayout,
 .dashboardVis-outerLayout--toolbar > .queryVis-innerLayout {
+    top: var(--dashboardVis-toolbar__height);
     height: calc(100% - var(--dashboardVis-toolbar__height));
 }
 

@@ -24,7 +24,7 @@ import com.google.gwt.json.client.JSONValue;
 import java.util.HashMap;
 import java.util.Map;
 
-/// The controls a visualisation has for the toolbar Stroom shows under it ([VisToolbar]), as it sends them with
+/// The controls a visualisation has for the toolbar Stroom shows above it ([VisToolbar]), as it sends them with
 /// `stroom.controls` (see `vis.js`): whether it zooms (and is zoomed), has a range tool (and it is on), and selects
 /// what is clicked (and what is selected), with a short note. A button in the toolbar sends the visualisation a
 /// command ([#RESET_ZOOM], [#RANGE_MODE] or [#CLEAR_SELECTION]).
