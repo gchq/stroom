@@ -70,6 +70,14 @@ public enum StyleSetting {
             "cuts the value axis when a few values dwarf the rest, so the others can be read"),
     ZOOM_SLIDER("zoomSlider", "Zoom Slider", Control.BOOLEAN, "false", List.of(), null, null,
             "shows a zoom bar under the chart (the mouse wheel zooms anyway)"),
+    AUTO_INTERVAL("autoInterval", "Auto Interval", Control.BOOLEAN, "false", List.of(), null, null,
+            "groups the rows over time into an interval that suits the time shown, coarser zoomed out and finer "
+            + "zoomed in (never finer than the table's own grouping, e.g. its floorMinute() times); for a line "
+            + "chart's Date Time x, or bars of dates"),
+    INTERVAL_COMBINE("intervalCombine", "Interval Combine", Control.SELECTION, "Sum",
+            List.of("Sum", "Average", "Min", "Max"), null, null,
+            "how Auto Interval combines the values in one interval: Sum for counts and totals, Max or Min for "
+            + "peaks and lows, Average for averages (an average of the rows' values)"),
     JITTER("jitter", "Jitter", Control.BOOLEAN, "false", List.of(), null, null,
             "spreads out points that would sit on top of each other"),
     THUMBNAIL("thumbnail", "Thumbnail", Control.BOOLEAN, "false", List.of(), null, null,
