@@ -1140,6 +1140,388 @@ if (!window.visualisations) {
         };
     }
 
+    // The most nodes clustered: the most connected, if there are more.
+    var MAX_CLUSTER_NODES = 5000;
+
+    // The most clusters coloured and named each its own; the rest are one, Other clusters, in a subtle colour.
+    var MAX_NAMED_CLUSTERS = 12;
+
+    var OTHER_CLUSTERS = "Other clusters";
+
+    // The most clusters, and bridges between them, a report gives.
+    var MAX_REPORTED_CLUSTERS = 10;
+
+    var MAX_BRIDGES = 5;
+
+    // Finds a network's clusters with the Leiden method (Traag, Waltman and van Eck, 2019), which improves on Louvain
+    // by never leaving a cluster badly connected, or in pieces: each node is moved into the neighbouring cluster
+    // that most raises the modularity (how much more the clusters are linked within than chance would give); each
+    // cluster is then refined into well-connected parts, merged node by node (the best merge each time, rather than
+    // Leiden's random one, so the same network always gives the same clusters); and each part becomes one node of
+    // a smaller network, starting in its cluster, until no node moves. Links are taken either way round, weighted
+    // by their value.
+    //
+    // names: the nodes, in a fixed order; links: {source, target, value}.
+    // Returns each node's cluster (by index in names), numbered from 0 in order of first appearance.
+    function leiden(names, links) {
+        var index = {};
+        names.forEach(function (name, i) {
+            index[name] = i;
+        });
+        // The network at this level: each node's links to others (by index) and the weight within it.
+        var graph = {adjacent: names.map(function () {
+            return {};
+        }), within: names.map(function () {
+            return 0;
+        })};
+        links.forEach(function (link) {
+            var a = index[link.source];
+            var b = index[link.target];
+            var weight = link.value > 0 ? link.value : 0;
+            if (a === undefined || b === undefined || a === b || weight === 0) {
+                return;
+            }
+            graph.adjacent[a][b] = (graph.adjacent[a][b] || 0) + weight;
+            graph.adjacent[b][a] = (graph.adjacent[b][a] || 0) + weight;
+        });
+        // Each original node's node at this level, and each node's cluster.
+        var membership = names.map(function (name, i) {
+            return i;
+        });
+        var community = names.map(function (name, i) {
+            return i;
+        });
+        for (var level = 0; level < 30; level++) {
+            var degree = graph.adjacent.map(function (others, i) {
+                return Object.keys(others).reduce(function (sum, other) {
+                    return sum + others[other];
+                }, 0) + 2 * graph.within[i];
+            });
+            var twiceTotal = degree.reduce(function (sum, value) {
+                return sum + value;
+            }, 0);
+            if (twiceTotal === 0) {
+                break;
+            }
+            community = moveNodes(graph, degree, twiceTotal, community);
+            var sizes = {};
+            community.forEach(function (c) {
+                sizes[c] = (sizes[c] || 0) + 1;
+            });
+            if (Object.keys(sizes).length === community.length) {
+                break;
+            }
+            var parts = refineClusters(graph, degree, twiceTotal, community);
+            // Each part becomes a node, starting in the cluster its nodes are in.
+            var number = {};
+            var count = 0;
+            parts.forEach(function (part) {
+                if (number[part] === undefined) {
+                    number[part] = count++;
+                }
+            });
+            // Nothing merged: the next level would be this one again.
+            if (count === parts.length) {
+                break;
+            }
+            var next = {adjacent: [], within: []};
+            var nextCommunity = [];
+            for (var n = 0; n < count; n++) {
+                next.adjacent.push({});
+                next.within.push(0);
+            }
+            parts.forEach(function (part, a) {
+                var from = number[part];
+                nextCommunity[from] = community[a];
+                next.within[from] += graph.within[a];
+                Object.keys(graph.adjacent[a]).forEach(function (other) {
+                    var to = number[parts[other]];
+                    if (to === from) {
+                        // Seen from both its ends.
+                        next.within[from] += graph.adjacent[a][other] / 2;
+                    } else {
+                        next.adjacent[from][to] = (next.adjacent[from][to] || 0) + graph.adjacent[a][other];
+                    }
+                });
+            });
+            membership = membership.map(function (node) {
+                return number[parts[node]];
+            });
+            graph = next;
+            community = nextCommunity;
+        }
+        var numbered = {};
+        var total = 0;
+        return membership.map(function (node) {
+            var c = community[node];
+            if (numbered[c] === undefined) {
+                numbered[c] = total++;
+            }
+            return numbered[c];
+        });
+    }
+
+    // Leiden's fast local moving: each node in turn (from a queue) moves into the neighbouring cluster that most
+    // raises the modularity, and its neighbours outside that cluster are visited again, until none moves.
+    function moveNodes(graph, degree, twiceTotal, start) {
+        var community = start.slice();
+        var totals = {};
+        community.forEach(function (c, i) {
+            totals[c] = (totals[c] || 0) + degree[i];
+        });
+        var queue = community.map(function (c, i) {
+            return i;
+        });
+        var queued = community.map(function () {
+            return true;
+        });
+        // Read from its head, as shifting a long queue is slow.
+        for (var head = 0; head < queue.length; head++) {
+            var i = queue[head];
+            queued[i] = false;
+            var own = community[i];
+            var toCommunity = {};
+            Object.keys(graph.adjacent[i]).forEach(function (other) {
+                var c = community[other];
+                toCommunity[c] = (toCommunity[c] || 0) + graph.adjacent[i][other];
+            });
+            totals[own] -= degree[i];
+            var best = own;
+            var bestGain = (toCommunity[own] || 0) - totals[own] * degree[i] / twiceTotal;
+            Object.keys(toCommunity).map(Number).sort(function (a, b) {
+                return a - b;
+            }).forEach(function (c) {
+                var gain = toCommunity[c] - totals[c] * degree[i] / twiceTotal;
+                if (gain > bestGain + 1e-12) {
+                    best = c;
+                    bestGain = gain;
+                }
+            });
+            totals[best] = (totals[best] || 0) + degree[i];
+            if (best !== own) {
+                community[i] = best;
+                Object.keys(graph.adjacent[i]).map(Number).forEach(function (other) {
+                    if (community[other] !== best && !queued[other]) {
+                        queued[other] = true;
+                        queue.push(other);
+                    }
+                });
+            }
+        }
+        return community;
+    }
+
+    // Leiden's refinement: within each cluster, every node starts as a part of its own; each node still alone, and
+    // well connected to the rest of its cluster, merges into the well-connected part of its cluster it raises the
+    // modularity most by joining (if any), so each part is connected. Returns each node's part.
+    function refineClusters(graph, degree, twiceTotal, community) {
+        var part = community.map(function (c, i) {
+            return i;
+        });
+        var alone = community.map(function () {
+            return true;
+        });
+        var partTotal = degree.slice();
+        var clusterTotal = {};
+        var members = {};
+        community.forEach(function (c, i) {
+            clusterTotal[c] = (clusterTotal[c] || 0) + degree[i];
+            (members[c] = members[c] || []).push(i);
+        });
+        // Each part's links to the rest of its cluster.
+        var outside = community.map(function (c, i) {
+            return Object.keys(graph.adjacent[i]).reduce(function (sum, other) {
+                return sum + (community[other] === c ? graph.adjacent[i][other] : 0);
+            }, 0);
+        });
+        Object.keys(members).map(Number).sort(function (a, b) {
+            return a - b;
+        }).forEach(function (c) {
+            members[c].forEach(function (v) {
+                if (!alone[v] || outside[v] < degree[v] * (clusterTotal[c] - degree[v]) / twiceTotal) {
+                    return;
+                }
+                var toPart = {};
+                Object.keys(graph.adjacent[v]).forEach(function (other) {
+                    if (community[other] === c) {
+                        toPart[part[other]] = (toPart[part[other]] || 0) + graph.adjacent[v][other];
+                    }
+                });
+                var best = -1;
+                var bestGain = 0;
+                Object.keys(toPart).map(Number).sort(function (a, b) {
+                    return a - b;
+                }).forEach(function (p) {
+                    if (p === part[v]
+                        || outside[p] < partTotal[p] * (clusterTotal[c] - partTotal[p]) / twiceTotal) {
+                        return;
+                    }
+                    var gain = toPart[p] - partTotal[p] * degree[v] / twiceTotal;
+                    if (gain > bestGain + 1e-12 || (best < 0 && gain >= 0)) {
+                        best = p;
+                        bestGain = gain;
+                    }
+                });
+                if (best < 0) {
+                    return;
+                }
+                var own = part[v];
+                // The merged part's links to the rest of its cluster: both parts' less those between them.
+                outside[best] = outside[best] + outside[own] - 2 * toPart[best];
+                partTotal[best] += partTotal[own];
+                part[v] = best;
+                alone[v] = false;
+                alone[best] = false;
+            });
+        });
+        return part;
+    }
+
+    // A network's clusters: found by Leiden over the whole network (its most connected MAX_CLUSTER_NODES), before
+    // Max Nodes leaves any out, so leaving out more or fewer doesn't change them. Largest first, each named after
+    // its most connected member and how many others it has (e.g. "mchen +11").
+    //
+    // names: the nodes; links: {source, target, value}; nodes: each node by name, with its degree and weight.
+    // Returns {of: each node's cluster (by index in list), list: [{name, size, members}], modularity}.
+    function networkClusters(names, links, nodes) {
+        var clustered = names.slice();
+        if (clustered.length > MAX_CLUSTER_NODES) {
+            clustered.sort(function (a, b) {
+                return (nodes[b].degree - nodes[a].degree) || (nodes[b].weight - nodes[a].weight);
+            });
+            clustered = clustered.slice(0, MAX_CLUSTER_NODES);
+        }
+        // A fixed order, whatever the rows' order.
+        clustered.sort(function (a, b) {
+            return a < b ? -1 : (a > b ? 1 : 0);
+        });
+        var membership = leiden(clustered, links);
+        var strength = {};
+        links.forEach(function (link) {
+            strength[link.source] = (strength[link.source] || 0) + link.value;
+            strength[link.target] = (strength[link.target] || 0) + link.value;
+        });
+        var byId = {};
+        clustered.forEach(function (name, i) {
+            (byId[membership[i]] = byId[membership[i]] || []).push(name);
+        });
+        var list = Object.keys(byId).map(function (id) {
+            var members = byId[id];
+            var top = members.slice().sort(function (a, b) {
+                return ((strength[b] || 0) - (strength[a] || 0)) || (a < b ? -1 : (a > b ? 1 : 0));
+            })[0];
+            return {top: top, size: members.length, members: members};
+        });
+        list.sort(function (a, b) {
+            return (b.size - a.size) || (a.top < b.top ? -1 : (a.top > b.top ? 1 : 0));
+        });
+        var of = {};
+        list.forEach(function (cluster, i) {
+            cluster.name = nodeLabel(cluster.top) + (cluster.size > 1 ? " +" + (cluster.size - 1) : "");
+            cluster.members.forEach(function (member) {
+                of[member] = i;
+            });
+        });
+        // Modularity: the share of the links' weight within clusters, less the share chance would give.
+        var total = 0;
+        var inside = list.map(function () {
+            return 0;
+        });
+        var ends = list.map(function () {
+            return 0;
+        });
+        links.forEach(function (link) {
+            var a = of[link.source];
+            var b = of[link.target];
+            if (a === undefined || b === undefined || link.source === link.target || !(link.value > 0)) {
+                return;
+            }
+            total += link.value;
+            ends[a] += link.value;
+            ends[b] += link.value;
+            if (a === b) {
+                inside[a] += link.value;
+            }
+        });
+        var modularity = 0;
+        if (total > 0) {
+            list.forEach(function (cluster, i) {
+                modularity += inside[i] / total - Math.pow(ends[i] / (2 * total), 2);
+            });
+        }
+        return {of: of, list: list, modularity: modularity};
+    }
+
+    // A node's cluster as drawn: its own if one of the MAX_NAMED_CLUSTERS largest, else Other clusters.
+    function clusterNameOf(clusters, name) {
+        var index = clusters.of[name];
+        return index !== undefined && index < MAX_NAMED_CLUSTERS ? clusters.list[index].name : OTHER_CLUSTERS;
+    }
+
+    // The clusters of the nodes drawn, in the clusters' order (Other clusters last): the legend's, and the colours'.
+    function drawnClusters(clusters, names) {
+        var drawn = {};
+        names.forEach(function (name) {
+            drawn[clusterNameOf(clusters, name)] = true;
+        });
+        var order = clusters.list.slice(0, MAX_NAMED_CLUSTERS).map(function (cluster) {
+            return cluster.name;
+        }).concat([OTHER_CLUSTERS]);
+        return order.filter(function (name) {
+            return drawn[name];
+        });
+    }
+
+    // Puts a network's clusters in its report: how many, how clear-cut (modularity, from 0 to 1), the largest with
+    // their sizes (and, when the nodes have groups, the group most of each is in, with its share), and the bridges:
+    // the nodes linked to the most other clusters.
+    function reportClusters(report, clusters, links, nodes) {
+        var top = clusters.list.slice(0, MAX_REPORTED_CLUSTERS).map(function (cluster) {
+            var entry = {name: cluster.name, size: cluster.size};
+            var counts = {};
+            var grouped = 0;
+            cluster.members.forEach(function (member) {
+                var group = nodes[member] ? nodes[member].group : null;
+                if (group !== null && group !== undefined) {
+                    counts[group] = (counts[group] || 0) + 1;
+                    grouped++;
+                }
+            });
+            var main = Object.keys(counts).sort(function (a, b) {
+                return (counts[b] - counts[a]) || (a < b ? -1 : (a > b ? 1 : 0));
+            })[0];
+            if (main !== undefined) {
+                entry.group = main;
+                entry.groupShare = Math.round(100 * counts[main] / grouped);
+            }
+            return entry;
+        });
+        var others = {};
+        var across = {};
+        links.forEach(function (link) {
+            var a = clusters.of[link.source];
+            var b = clusters.of[link.target];
+            if (a === undefined || b === undefined || a === b) {
+                return;
+            }
+            [[link.source, b], [link.target, a]].forEach(function (end) {
+                others[end[0]] = others[end[0]] || {};
+                others[end[0]][end[1]] = true;
+                across[end[0]] = (across[end[0]] || 0) + link.value;
+            });
+        });
+        var bridges = Object.keys(others).map(function (name) {
+            return {name: name, clusters: Object.keys(others[name]).length};
+        }).sort(function (a, b) {
+            return (b.clusters - a.clusters) || (across[b.name] - across[a.name]) ||
+                (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0));
+        }).slice(0, MAX_BRIDGES).map(function (bridge) {
+            return {name: nodeLabel(bridge.name), otherClusters: bridge.clusters};
+        });
+        report.clusters = {count: clusters.list.length, modularity: Math.round(clusters.modularity * 100) / 100,
+            top: top, bridges: bridges};
+    }
+
     // ECharts' own palette, then as many more as are needed, spread round the colour wheel by the golden angle so
     // neighbouring ones differ, lighter on a dark theme.
     var BASE_PALETTE = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4",
@@ -3947,6 +4329,24 @@ if (!window.visualisations) {
         names.forEach(function (name) {
             nodes[name].degree = Object.keys(nodes[name].neighbours).length;
         });
+        // Clusters (Node Colours cluster), over the whole network before Max Nodes leaves any out, as the ECharts
+        // adapter finds them.
+        var clusters = null;
+        if (String(textSetting(ctx.settings, "nodeColours") || "group").toLowerCase() === "cluster") {
+            var allLinks = linkKeys.map(function (key) {
+                return links[key];
+            });
+            // Kept while the network is the same, as the chart is redrawn as it zooms and pans.
+            var clustersKey = allLinks.map(function (link) {
+                return link.source + "\u0002" + link.target + "\u0002" + link.value;
+            }).join("\u0001");
+            if (!ctx.cache.clusters || ctx.cache.clustersKey !== clustersKey) {
+                ctx.cache.clusters = networkClusters(names, allLinks, nodes);
+                ctx.cache.clustersKey = clustersKey;
+            }
+            clusters = ctx.cache.clusters;
+            reportClusters(ctx.report, clusters, allLinks, nodes);
+        }
         var maxNodes = intSetting(ctx.settings, "maxNodes", 300, 2, 5000);
         if (names.length > maxNodes) {
             names.sort(function (a, b) {
@@ -3962,6 +4362,7 @@ if (!window.visualisations) {
         return {
             directed: directed,
             nodeRoles: nodeRoles,
+            clusters: clusters,
             nodes: names.map(function (name) {
                 return nodes[name];
             }),
@@ -3981,8 +4382,10 @@ if (!window.visualisations) {
     };
 
     // Places a network's nodes with a force-directed layout (Fruchterman and Reingold's), from the same start each
-    // time, so the same data and size give the same picture (a click doesn't move the nodes).
-    function forceLayout(nodes, links, width, height, physics) {
+    // time, so the same data and size give the same picture (a click doesn't move the nodes). Given each node's
+    // cluster (clusterOf, by index, or null), each is drawn towards the middle of its cluster's, so the clusters
+    // sit apart.
+    function forceLayout(nodes, links, width, height, physics, clusterOf) {
         var n = nodes.length;
         var index = {};
         var positions = nodes.map(function (node, i) {
@@ -4029,6 +4432,20 @@ if (!window.visualisations) {
                 moves[t][0] += dx / distance * pull;
                 moves[t][1] += dy / distance * pull;
             });
+            if (clusterOf) {
+                var middles = {};
+                positions.forEach(function (position, p) {
+                    var middle = middles[clusterOf[p]] = middles[clusterOf[p]] || [0, 0, 0];
+                    middle[0] += position[0];
+                    middle[1] += position[1];
+                    middle[2]++;
+                });
+                positions.forEach(function (position, p) {
+                    var middle = middles[clusterOf[p]];
+                    moves[p][0] += (middle[0] / middle[2] - position[0]) * 0.03 * k;
+                    moves[p][1] += (middle[1] / middle[2] - position[1]) * 0.03 * k;
+                });
+            }
             for (var i = 0; i < n; i++) {
                 // A little gravity keeps unlinked nodes from drifting away.
                 moves[i][0] += (width / 2 - positions[i][0]) * 0.02 * k;
@@ -4088,23 +4505,30 @@ if (!window.visualisations) {
         var settings = ctx.settings;
         requireFields(fields, ["source", "target"]);
         var network = networkOf(ctx);
-        // By group, unless each node its own (nodeColours node) or there are no groups (no sourceGroup or
-        // targetGroup column), as the ECharts adapter colours them.
-        var byGroup = String(textSetting(settings, "nodeColours") || "group").toLowerCase() !== "node"
-            && (fields.has("sourceGroup") || fields.has("targetGroup"));
-        var groups = [];
+        var clusters = network.clusters;
+        // By cluster (nodeColours cluster), or by group, unless each node its own (nodeColours node) or there are
+        // no groups (no sourceGroup or targetGroup column), as the ECharts adapter colours them.
+        var hasGroups = fields.has("sourceGroup") || fields.has("targetGroup");
+        var byGroup = !!clusters || (String(textSetting(settings, "nodeColours") || "group").toLowerCase() !== "node"
+            && hasGroups);
+        var groupOf = function (node) {
+            return clusters ? clusterNameOf(clusters, node.name) : (node.group === null ? "(none)" : node.group);
+        };
+        var groups = clusters ? drawnClusters(clusters, network.nodes.map(function (node) {
+            return node.name;
+        })) : [];
         network.nodes.forEach(function (node) {
-            var group = node.group === null ? "(none)" : node.group;
-            if (groups.indexOf(group) < 0) {
-                groups.push(group);
+            if (groups.indexOf(groupOf(node)) < 0) {
+                groups.push(groupOf(node));
             }
         });
-        var hasGroups = fields.has("sourceGroup") || fields.has("targetGroup");
         var colours = paletteOf(ctx.options, byGroup ? Math.max(1, groups.length) : network.nodes.length,
-            ctx.style);
-        var legend = legendOf(ctx, byGroup && hasGroups ? groups : [], colours, "rect");
+            ctx.style).map(function (colour, i) {
+            return clusters && groups[i] === OTHER_CLUSTERS ? ctx.style.subtleText : colour;
+        });
+        var legend = legendOf(ctx, byGroup && (hasGroups || clusters) ? groups : [], colours, "rect");
         var shownNodes = network.nodes.filter(function (node) {
-            return !ctx.hidden[node.group === null ? "(none)" : node.group];
+            return !ctx.hidden[groupOf(node)];
         });
         var shown = {};
         shownNodes.forEach(function (node) {
@@ -4116,13 +4540,17 @@ if (!window.visualisations) {
         var plot = plotArea(ctx, legend, 4, -22);
         var physics = PHYSICS[String(textSetting(settings, "physics") || "settled").toLowerCase()] ||
             PHYSICS.settled;
-        var cacheKey = [plot.width, plot.height, textSetting(settings, "physics"), shownNodes.map(function (node) {
+        var cacheKey = [plot.width, plot.height, textSetting(settings, "physics"), !!clusters,
+            shownNodes.map(function (node) {
             return node.name;
         }).join("\u0001"), shownLinks.map(function (link) {
             return link.source + "\u0002" + link.target + "\u0002" + link.value;
         }).join("\u0001")].join("\u0003");
         if (!ctx.cache.layout || ctx.cache.layoutKey !== cacheKey) {
-            ctx.cache.layout = forceLayout(shownNodes, shownLinks, plot.width, plot.height, physics);
+            ctx.cache.layout = forceLayout(shownNodes, shownLinks, plot.width, plot.height, physics, clusters
+                ? shownNodes.map(function (node) {
+                    return clusters.of[node.name] === undefined ? -1 : clusters.of[node.name];
+                }) : null);
             ctx.cache.layoutKey = cacheKey;
         }
         var positions = ctx.cache.layout;
@@ -4161,8 +4589,7 @@ if (!window.visualisations) {
                 : scaleSqrt(node.degree, minDegree, maxDegree, 4, 24);
         };
         var colourOf = function (node, i) {
-            return byGroup ? colours[groups.indexOf(node.group === null ? "(none)" : node.group) % colours.length] :
-                colours[i % colours.length];
+            return byGroup ? colours[groups.indexOf(groupOf(node)) % colours.length] : colours[i % colours.length];
         };
         var g = ctx.svg.append("g").attr("transform", "translate(" + plot.left + "," + plot.top + ")");
         var content = g.append("g");
@@ -4185,7 +4612,13 @@ if (!window.visualisations) {
             // As wide as its weight, or (without one) the rows it comes from, as ECharts draws it.
             var width = fields.has("weight") || maxValue > minValue ? scaleSqrt(link.value, minValue, maxValue, 1, 6)
                 : 1;
-            var colour = colourByName[link.source];
+            // Links between clusters grey and thinner (Cluster Links), so the clusters stand out.
+            var across = clusters && boolSetting(settings, "clusterLinks", true) &&
+                clusters.of[link.source] !== clusters.of[link.target];
+            if (across) {
+                width = Math.max(1, width * 0.6);
+            }
+            var colour = across ? ctx.style.subtleText : colourByName[link.source];
             var d;
             if (network.directed) {
                 // Curved, and stopping at the target node's edge, so the arrow shows.
@@ -4215,7 +4648,7 @@ if (!window.visualisations) {
                     .attr("stroke-linecap", "round");
             }
             var line = content.append("path").attr("d", d).attr("fill", "none").attr("stroke", colour)
-                .attr("stroke-opacity", 0.5).attr("stroke-width", width);
+                .attr("stroke-opacity", across ? 0.3 : 0.5).attr("stroke-width", width);
             if (network.directed) {
                 line.attr("marker-end", "url(#stroom-d3-arrow-" + ctx.id + "-" + l + ")");
             }
@@ -4245,7 +4678,8 @@ if (!window.visualisations) {
             outline(circle, ctx, ctx.isSelected(selection));
             ctx.mark(circle, selection, node.name + (node.group !== null ? " (" + node.group + ")" : "") + ": " +
                 node.degree + " connections, " + (fields.column("weight") || "rows") + " " +
-                ctx.format(totals[node.name]));
+                ctx.format(totals[node.name]) + (clusters && clusters.of[node.name] !== undefined
+                ? "; cluster " + clusters.list[clusters.of[node.name]].name : ""));
             if (labelled[node.name]) {
                 svgText(nodeGroup, shorten(node.name, 24), position[0] + radiusOf(node) + 5, position[1], ctx.style,
                     {baseline: "middle", size: SMALL_FONT_SIZE});
