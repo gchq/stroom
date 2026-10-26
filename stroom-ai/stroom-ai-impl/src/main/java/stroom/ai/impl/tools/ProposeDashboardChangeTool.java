@@ -426,10 +426,10 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .toList());
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
-        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withQueryExpressions(
-                        checked.changes(), table, problems), settings.text(), tableName, problems), checked,
-                settings.text(), NullSafe.list(tab.searches()), tableName, problems), checked, settings.text(),
-                NullSafe.list(tab.searches()), problems);
+        final List<Change> withExpressions = withQueryExpressions(checked.changes(), table, settings.text(), problems);
+        final List<Change> built = withSelectionFilters(withVisualisations(withComponents(withExpressions,
+                        settings.text(), tableName, problems), checked, settings.text(), NullSafe.list(tab.searches()),
+                tableName, problems), checked, settings.text(), NullSafe.list(tab.searches()), problems);
         if (!problems.isEmpty()) {
             return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
                                    + "\nCorrect it and propose it again.");
@@ -726,6 +726,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     // source, adding why to the problems if it can't be.
     private List<Change> withQueryExpressions(final List<Change> changes,
                                               final AiTabSearch table,
+                                              final String dashboardText,
                                               final List<String> problems) {
         final List<Change> built = new ArrayList<>();
         for (int i = 0; i < changes.size(); i++) {
@@ -744,8 +745,16 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 built.add(change);
                 continue;
             }
+            // The expression it replaces, as its hash (ref), so it isn't applied over the expression if the user has
+            // changed it since: everything else the user changes since is kept, as the change is applied on top.
+            final String replaced = DashboardComponents.queryExpression(dashboardText, table.getComponentId())
+                    .map(AiTabSnapshotPart::hashLines)
+                    .orElse(null);
             try {
-                built.add(change.withQuery(dashboardBuilder.whereExpression(dataSource, change.where())));
+                built.add(change.withQuery(dashboardBuilder.whereExpression(dataSource, change.where()))
+                        .toBuilder()
+                        .ref(replaced)
+                        .build());
             } catch (final IllegalArgumentException e) {
                 problems.add("Change " + (i + 1) + " (set_expression): " + e.getMessage());
                 built.add(change);

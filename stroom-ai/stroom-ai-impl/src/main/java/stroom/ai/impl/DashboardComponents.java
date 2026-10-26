@@ -64,6 +64,10 @@ public final class DashboardComponents {
     private static final Pattern REFERENCED_QUERY = Pattern.compile("^Query: Query '(.*)' \\(uuid ([^)]+)\\) by "
                                                                     + "reference$");
     private static final String STROOM_QL = "StroomQL:";
+    // What starts a table's line naming the query that feeds it, e.g. "Query: query-1".
+    private static final String TABLE_QUERY = "Query: ";
+    // The line above a classic query's expression.
+    private static final String EXPRESSION = "Expression:";
     private static final String FENCE = "```";
 
     private DashboardComponents() {
@@ -188,6 +192,47 @@ public final class DashboardComponents {
             }
         }
         return Optional.empty();
+    }
+
+    /// Reads the expression of the classic query that feeds a table from the dashboard's description: the line
+    /// after the query's `Expression:` line, and the indented lines below it (one condition a line).
+    ///
+    /// @param text    The dashboard's description, as the browser gives it.
+    /// @param tableId The table's component id.
+    /// @return The expression's lines, if the table is fed by a classic query on the dashboard.
+    public static Optional<String> queryExpression(final String text, final String tableId) {
+        final String[] lines = NullSafe.string(text).split("\n", -1);
+        String queryId = null;
+        String section = null;
+        for (final String line : lines) {
+            final Matcher heading = HEADING.matcher(line);
+            if (heading.matches()) {
+                section = TABLE.equals(heading.group(1))
+                        ? heading.group(3)
+                        : null;
+            } else if (tableId.equals(section) && line.startsWith(TABLE_QUERY)) {
+                queryId = line.substring(TABLE_QUERY.length()).strip();
+            }
+        }
+        if (queryId == null) {
+            return Optional.empty();
+        }
+        boolean inQuery = false;
+        StringBuilder expression = null;
+        for (final String line : lines) {
+            final Matcher heading = HEADING.matcher(line);
+            if (expression != null) {
+                if (heading.matches() || (!expression.isEmpty() && !line.startsWith(" "))) {
+                    break;
+                }
+                expression.append(line).append('\n');
+            } else if (heading.matches()) {
+                inQuery = QUERY.equals(heading.group(1)) && heading.group(3).equals(queryId);
+            } else if (inQuery && EXPRESSION.equals(line)) {
+                expression = new StringBuilder();
+            }
+        }
+        return Optional.ofNullable(expression).map(StringBuilder::toString);
     }
 
     /// @param components A dashboard's components.
