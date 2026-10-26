@@ -105,13 +105,15 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
 
     // The column ids a click on a generated chart selects.
     static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
-            "target", "date");
+            "target", "date", "level3", "level4", "level5", "level6");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
     /// The selection key of a time range dragged on a time-series chart: its terms keep what is within the
     /// selection's from and to.
     static final String RANGE_SELECTION = "range";
-    // The selection keys of a clicked link's two ends.
-    private static final Set<String> LINK_ENDS = Set.of("source", "target");
+    // The selection keys of a clicked link's two ends: its source and target, or two neighbouring levels of a flow
+    // with more (a link selects only its own two ends, so the rest drop out).
+    private static final Set<String> LINK_ENDS = Set.of("source", "target", "level3", "level4", "level5",
+            "level6");
     // A selection filter's id, as the dashboard file gives it.
     private static final Pattern SELECTION_FILTER_ID = Pattern.compile("\\[id ([^\\]\\s]+)]");
     // A component's heading in the dashboard file, e.g. "## Table 'Events' (id table-1)".
