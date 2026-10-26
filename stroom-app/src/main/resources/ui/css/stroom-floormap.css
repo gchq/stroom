@@ -966,7 +966,7 @@
    reorder; the whole row is the drag source, and focusing the grip lets the
    arrow keys do the same job without a pointer.
 
-   It is a real <button> (see FloorMapLayersPresenter), so the first block
+   It is a real <button> (a LinkButton, see FloorMapLayers), so the first block
    strips the UA button chrome — border, background, font — that would
    otherwise draw a box around the dots.
 
@@ -1009,7 +1009,7 @@
 }
 
 /* Appearance swatch (Editor): previews the layer's shape in its colour and
-   opens the style dialog. A real <button> (see FloorMapLayersPresenter), so it
+   opens the style dialog. A real <button> (a LinkButton, see FloorMapLayers), so it
    is focusable and Enter/Space-activatable; these rules strip the UA button
    chrome that would otherwise box the preview in.
 

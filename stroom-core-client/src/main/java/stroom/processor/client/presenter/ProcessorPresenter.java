@@ -73,7 +73,7 @@ public class ProcessorPresenter
 
     private final ProcessorListPresenter processorListPresenter;
     private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private final Provider<ExpressionPresenter> filterPresenterProvider;
@@ -103,7 +103,7 @@ public class ProcessorPresenter
                               final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter,
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
-                              final ExpressionTreeController expressionPresenter,
+                              final ExpressionTreeController expressionTree,
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
                               final Provider<ExpressionPresenter> filterPresenterProvider,
@@ -111,20 +111,20 @@ public class ProcessorPresenter
                                       batchProcessorFilterEditPresenterProvider) {
         super(eventBus, view);
         own(processorListPresenter);
-        own(expressionPresenter);
+        own(expressionTree);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
         this.filterPresenterProvider = filterPresenterProvider;
         this.batchProcessorFilterEditPresenterProvider = batchProcessorFilterEditPresenterProvider;
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
         view.setProcessorList(processorListPresenter.getView());
-        view.setDetailsView(expressionPresenter);
+        view.setDetailsView(expressionTree);
 
         own(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
             updateData();
@@ -344,7 +344,7 @@ public class ProcessorPresenter
                 expression = queryData.getExpression();
             }
         }
-        expressionPresenter.read(expression);
+        expressionTree.read(expression);
     }
 
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {

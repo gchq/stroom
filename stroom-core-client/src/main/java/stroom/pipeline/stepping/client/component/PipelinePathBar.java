@@ -37,7 +37,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.CssProperties;
-import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -79,12 +78,12 @@ import java.util.Set;
 /// Home and End move between its controls; Enter or Space presses one; Down or Alt+Down opens a
 /// chevron's list (from its button too); the context menu key or Shift+F10 opens the element's
 /// context menu. A control's states are its ARIA attributes (`aria-current`, `aria-disabled`,
-/// `aria-expanded`), which pipeline-path.css styles.
+/// `aria-expanded`), which pipeline-path-bar.css styles.
 public class PipelinePathBar extends AbstractPipelineTree {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private static final String BASE_CLASS = "pipeline-path";
+    private static final String BASE_CLASS = "pipeline-path-bar";
     private static final String SEGMENT_CLASS = BASE_CLASS + "__segment";
     private static final String FIRST_CLASS = SEGMENT_CLASS + "--first";
     private static final String LAST_CLASS = SEGMENT_CLASS + "--last";
@@ -128,10 +127,10 @@ public class PipelinePathBar extends AbstractPipelineTree {
     // chevron's icon
     private static final int MENU_ICON_INSET = 8;
     // How long an element pulses when a step gives it an error: three pulses of 1.4s, as the
-    // pulse animations in pipeline-path.css
+    // pulse animations in pipeline-path-bar.css
     private static final double PULSE_MILLIS = 3 * 1400;
-    // How far into its pulse a redrawn element is, as a negative delay (pipeline-path.css)
-    private static final String PULSE_DELAY = "--pipeline-path__pulse-delay";
+    // How far into its pulse a redrawn element is, as a negative delay (pipeline-path-bar.css)
+    private static final String PULSE_DELAY = "--pipeline-path-bar__pulse-delay";
 
     @UiField
     DivElement bar;
@@ -149,7 +148,6 @@ public class PipelinePathBar extends AbstractPipelineTree {
     private final Map<Element, List<Integer>> ellipses = new HashMap<>();
 
     private PipelineModel pipelineModel;
-    private MySingleSelectionModel<PipelineElement> selectionModel;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private Map<String, Severity> severities = Collections.emptyMap();
     private List<PipelineElement> disabledElements = Collections.emptyList();
@@ -180,7 +178,6 @@ public class PipelinePathBar extends AbstractPipelineTree {
                 GlobalResizeObserver.removeListener(bar);
             }
         });
-        initSelection(getSelectionModel());
     }
 
     /// Sets what shows the bar's drop down menus, e.g. the branches at a fork: the bar's
@@ -189,11 +186,6 @@ public class PipelinePathBar extends AbstractPipelineTree {
     /// @param onShowMenu Shows a menu.
     public void setOnShowMenu(final ShowMenu onShowMenu) {
         this.onShowMenu = onShowMenu;
-    }
-
-    @Override
-    protected void initSelection(final MySingleSelectionModel<PipelineElement> selectionModel) {
-        this.selectionModel = selectionModel;
     }
 
     @Override
@@ -459,7 +451,7 @@ public class PipelinePathBar extends AbstractPipelineTree {
     }
 
     // A chevron's name. It holds its text in data-text too, so that it can keep room for its text
-    // in bold (see pipeline-path.css)
+    // in bold (see pipeline-path-bar.css)
     private static Element createLabel(final String text) {
         final Element label = Document.get().createSpanElement();
         label.setClassName(LABEL_CLASS);
@@ -472,7 +464,7 @@ public class PipelinePathBar extends AbstractPipelineTree {
     }
 
     // The chevron's shape, under its content: its border, and its fill (its ::before, see
-    // pipeline-path.css)
+    // pipeline-path-bar.css)
     private static Element createShape() {
         final Element shape = Document.get().createSpanElement();
         shape.setClassName(SHAPE_CLASS);
@@ -983,14 +975,14 @@ public class PipelinePathBar extends AbstractPipelineTree {
     private void follow(final PipelineElement parent, final PipelineElement alternative) {
         choices.put(parent.getId(), alternative.getId());
         if (!isDisabled(alternative)) {
-            selectionModel.setSelected(alternative, true);
+            getSelectionModel().setSelected(alternative, true);
         } else {
             final PipelineElement selectable = findSelectable(alternative);
             final boolean selectionElsewhere = path.follow(selected, choices).stream()
                     .noneMatch(step -> step.element().equals(alternative));
             if (selectable != null && selectionElsewhere) {
                 choices.remove(parent.getId());
-                selectionModel.setSelected(selectable, true);
+                getSelectionModel().setSelected(selectable, true);
             }
         }
         render();
@@ -1011,8 +1003,8 @@ public class PipelinePathBar extends AbstractPipelineTree {
     }
 
     private void select(final Step step) {
-        if (step != null && selectionModel != null && !isDisabled(step.element())) {
-            selectionModel.setSelected(step.element(), true);
+        if (step != null && !isDisabled(step.element())) {
+            getSelectionModel().setSelected(step.element(), true);
         }
     }
 
@@ -1195,9 +1187,7 @@ public class PipelinePathBar extends AbstractPipelineTree {
     }
 
     private PipelineElement getSelected() {
-        return selectionModel != null
-                ? selectionModel.getSelectedObject()
-                : null;
+        return getSelectionModel().getSelectedObject();
     }
 
     private List<PipelineElement> getChildren(final PipelineElement element) {

@@ -51,7 +51,7 @@ public class RuleSetSettingsController extends Controller {
 
     private final RuleSetSettings view;
     private final RuleSetListPresenter listPresenter;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final Provider<RuleEditorController> ruleEditorProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
     private final List<ReceiveDataRule> rules = new ArrayList<>();
@@ -65,21 +65,21 @@ public class RuleSetSettingsController extends Controller {
     public RuleSetSettingsController(final EventBus eventBus,
                                      final RuleSetSettings view,
                                      final RuleSetListPresenter listPresenter,
-                                     final ExpressionTreeController expressionPresenter,
+                                     final ExpressionTreeController expressionTree,
                                      final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
         this.view = view;
         this.listPresenter = own(listPresenter);
-        this.expressionPresenter = own(expressionPresenter);
+        this.expressionTree = own(expressionTree);
         this.ruleEditorProvider = ruleEditorProvider;
 
         initWidget(view);
         view.setRuleList(listPresenter.getWidget(), listPresenter.getToolbar());
-        view.setExpression(expressionPresenter.asWidget());
+        view.setExpression(expressionTree.asWidget());
         view.setOnAction(this::onAction);
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
         own(getSelectionModel().addSelectionHandler(this::onSelection));
 
@@ -255,12 +255,12 @@ public class RuleSetSettingsController extends Controller {
     private void onSelection(final MultiSelectEvent selectEvent) {
         final ReceiveDataRule rule = getSelectionModel().getSelected();
         if (rule != null) {
-            expressionPresenter.read(rule.getExpression());
+            expressionTree.read(rule.getExpression());
             if (selectEvent.getSelectionType().isDoubleSelect() && !readOnly) {
                 edit(rule);
             }
         } else {
-            expressionPresenter.read(null);
+            expressionTree.read(null);
         }
         updateButtons();
     }

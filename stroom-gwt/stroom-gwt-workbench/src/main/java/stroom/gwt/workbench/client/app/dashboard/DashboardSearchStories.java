@@ -132,6 +132,27 @@ public final class DashboardSearchStories {
                             RequestMatcher.post("/dataSource/v1/findFields").toSpyMatcher());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Enter in a term's value runs the query, which gives the table its result
+                .story("EnterInTermRunsQuery", DashboardSupport.story(DashboardDocs.QUERY_FIELDS_DASHBOARD,
+                        // The data source's fields, for the term's field list: its Name
+                        routes -> routes.route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                "{\"values\": [{\"fldName\": \"Name\", \"fldType\": \"TEXT\"}], "
+                                + "\"pageResponse\": {\"offset\": 0, \"length\": 1, \"total\": 1, "
+                                + "\"exact\": true}}"))
+                                // The value's suggestions: none
+                                .route(RequestMatcher.post("/suggest/v1"),
+                                        RestReply.json("{\"list\": [], \"cacheable\": false}"))))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    play.click(play.findByText("Name = alpha"));
+                    final Query value = play.querySelector(".termEditor-item[aria-label='Value']");
+                    play.waitFor(() -> play.expect(value).toBeVisible());
+                    play.click(value);
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.getByText("alpha", StroomDom.GRID_CELL_TEXT))
+                            .toBeInTheDocument());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The dashboard toolbar's Execute Query runs every query
                 .story("RunAllQueries", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))

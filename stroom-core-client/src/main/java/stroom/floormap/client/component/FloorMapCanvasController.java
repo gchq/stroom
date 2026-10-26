@@ -45,7 +45,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,7 +58,7 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/// Presenter for the interactive SVG map canvas.
+/// Controller for the interactive SVG map canvas.
 ///
 /// Manages zoom, pan, object selection and drag-move in edit mode, and
 /// smooth entity-movement animations with fading trails during timeline
@@ -71,7 +70,7 @@ import java.util.function.Function;
 ///
 /// The canvas view renders the z-ordered facts plus the event draw list
 /// produced by [#buildAnimatedDrawList(double)] via its
-/// [draw()][FloorMapCanvasView#draw] method.
+/// [draw()][FloorMapCanvas#draw] method.
 public class FloorMapCanvasController extends Controller {
 
     private final FloorMapCanvas view;
@@ -174,12 +173,6 @@ public class FloorMapCanvasController extends Controller {
     private double dragDxMap;
     private double dragDyMap;
 
-    /// The kind of pointer gesture currently in progress.
-    private enum Gesture {
-        NONE, PANNING, MOVING, MARQUEE, SCALING, ROTATING, DRAWING_AREA, MOVING_VERTEX,
-        MEASURING_SCALE
-    }
-
     private Gesture gesture = Gesture.NONE;
 
     // Area vertex-edit state (valid while gesture == MOVING_VERTEX).
@@ -209,7 +202,7 @@ public class FloorMapCanvasController extends Controller {
 
     /// Screen-pixel radius around vertex 0 within which a click closes the
     /// polygon, and the radius of the close-target ring the view draws. Public
-    /// so `FloorMapCanvasViewImpl` shares this single value (the hit test
+    /// so `FloorMapCanvas` shares this single value (the hit test
     /// and the drawn ring must match).
     public static final double AREA_CLOSE_RADIUS_PX = 10;
 
@@ -412,8 +405,11 @@ public class FloorMapCanvasController extends Controller {
     /// per-entity bookkeeping lives in the shared, unit-tested animator.
     private final FloorMapEntityAnimator animator = new FloorMapEntityAnimator();
 
-    /// `true` while the [#animationCallback] loop is scheduled.
+    /// `true` while the [#onAnimationFrame(double)] loop is scheduled.
     private boolean animationLoopRunning = false;
+
+    /// The animation loop's next frame, cancelled when the controller is disposed.
+    private AnimationScheduler.AnimationHandle animationFrame;
 
     /// The `AnimationScheduler` timestamp of the most recently executed animation
     /// frame.  Used to compute the per-frame delta for advancing animation progress.
@@ -448,22 +444,28 @@ public class FloorMapCanvasController extends Controller {
 
     /// Made by GIN, with the canvas it draws on.
     ///
-    /// @param eventBus The application's event bus.
-    /// @param view     The canvas.
+    /// @param view The canvas.
     @Inject
-    public FloorMapCanvasController(final EventBus eventBus,
-                                    final FloorMapCanvas view) {
-        super(eventBus);
+    public FloorMapCanvasController(final FloorMapCanvas view) {
         this.view = view;
         initWidget(view);
 
         handleMouseEvents();
 
-        view.setRedrawListener(this::redraw);
+        view.setOnRedraw(this::redraw);
         // Apply the bottom-left default view as soon as the canvas has a
         // real size. onResize() self-defers until layout completes, then
         // fires this back.
-        view.setResizeListener(this::maybeApplyInitialView);
+        view.setOnSized(this::maybeApplyInitialView);
+        // Nothing is drawn once the controller has gone: the animation loop stops, and a late
+        // image load or resize does nothing
+        onDispose(() -> {
+            if (animationFrame != null) {
+                animationFrame.cancel();
+            }
+            view.setOnRedraw(null);
+            view.setOnSized(null);
+        });
         view.onResize();
 
         // Perform initial draw
@@ -2393,71 +2395,69 @@ public class FloorMapCanvasController extends Controller {
     // Animation loop
     // =========================================================================
 
-    private final AnimationScheduler.AnimationCallback animationCallback =
-            new AnimationScheduler.AnimationCallback() {
-                @Override
-                public void execute(final double timestamp) {
-                    // Compute the time elapsed since the previous frame.  On the very first
-                    // frame after the loop starts, lastAnimationTimestamp is 0 so we use a
-                    // nominal 16 ms (one 60 fps frame) to avoid a stalled first step.
-                    final double deltaMs = lastAnimationTimestamp > 0
-                            ? timestamp - lastAnimationTimestamp
-                            : 16.0;
-                    lastAnimationTimestamp = timestamp;
+    // One frame of the animation loop: advances the animations and draws them, and asks for the
+    // next frame until nothing is left to animate
+    private void onAnimationFrame(final double timestamp) {
+        // Compute the time elapsed since the previous frame.  On the very first
+        // frame after the loop starts, lastAnimationTimestamp is 0 so we use a
+        // nominal 16 ms (one 60 fps frame) to avoid a stalled first step.
+        final double deltaMs = lastAnimationTimestamp > 0
+                ? timestamp - lastAnimationTimestamp
+                : 16.0;
+        lastAnimationTimestamp = timestamp;
 
-                    // Advance entity animations + trail fades (shared animator),
-                    // then glide the damped camera-follow (controller-owned).
-                    final boolean animActive = animator.advanceFrame(timestamp, deltaMs);
-                    final boolean cameraMoved = followStep(deltaMs);
+        // Advance entity animations + trail fades (shared animator),
+        // then glide the damped camera-follow (controller-owned).
+        final boolean animActive = animator.advanceFrame(timestamp, deltaMs);
+        final boolean cameraMoved = followStep(deltaMs);
 
-                    if (!cameraMoved && !animActive) {
-                        // Nothing left to animate, fade, or glide — let the loop terminate.
-                        animationLoopRunning = false;
-                        lastAnimationTimestamp = 0;
-                        return;
-                    }
+        if (!cameraMoved && !animActive) {
+            // Nothing left to animate, fade, or glide — let the loop terminate.
+            animationLoopRunning = false;
+            lastAnimationTimestamp = 0;
+            return;
+        }
 
-                    // Draw the current frame. No marquee/handles/draft during playback.
-                    final List<FloorMapObject> overlay = buildAnimatedDrawList(timestamp);
-                    final List<Fact> drawFacts = FloorMapZOrder.sort(
-                            visibleFacts(factsExcludingOverlay(overlay)), typeStyles);
-                    final List<FloorMapObject> drawEvents = visibleEvents(overlay);
-                    final FloorMapAreaOverlay areas = areaOverlay();
-                    view.draw(scale, offsetX, offsetY,
-                            drawFacts,
-                            drawEvents, selectedObjectIds, typeStyles, showGrid, dimmedTypes,
-                            null, false, false, null, areas,
-                            // Recomputed per frame, like everything else here: as
-                            // entities move they cross the merge distance, so a
-                            // cluster computed once would be wrong the moment
-                            // anything moved — which is exactly when it matters.
-                            clusterOverlay(drawFacts, drawEvents),
-                            // Group highlight has to be resolved on animated frames
-                            // too, or a highlighted entity would lose its ring for
-                            // exactly as long as it is moving.
-                            FloorMapHighlight.of(groupOverlay, areas),
-                            // Likewise the measuring line: playback can be running
-                            // while the user measures, and a decoration passed on
-                            // only one of the two draw paths flickers out for
-                            // exactly as long as anything is moving.
-                            currentMeasureLinePx());
+        // Draw the current frame. No marquee/handles/draft during playback.
+        final List<FloorMapObject> overlay = buildAnimatedDrawList(timestamp);
+        final List<Fact> drawFacts = FloorMapZOrder.sort(
+                visibleFacts(factsExcludingOverlay(overlay)), typeStyles);
+        final List<FloorMapObject> drawEvents = visibleEvents(overlay);
+        final FloorMapAreaOverlay areas = areaOverlay();
+        view.draw(scale, offsetX, offsetY,
+                drawFacts,
+                drawEvents, selectedObjectIds, typeStyles, showGrid, dimmedTypes,
+                null, false, false, null, areas,
+                // Recomputed per frame, like everything else here: as
+                // entities move they cross the merge distance, so a
+                // cluster computed once would be wrong the moment
+                // anything moved — which is exactly when it matters.
+                clusterOverlay(drawFacts, drawEvents),
+                // Group highlight has to be resolved on animated frames
+                // too, or a highlighted entity would lose its ring for
+                // exactly as long as it is moving.
+                FloorMapHighlight.of(groupOverlay, areas),
+                // Likewise the measuring line: playback can be running
+                // while the user measures, and a decoration passed on
+                // only one of the two draw paths flickers out for
+                // exactly as long as anything is moving.
+                currentMeasureLinePx());
 
-                    // A tooltip is anchored to a glyph and only re-anchored when
-                    // the pointer moves, so anything that moves the scene — entity
-                    // playback or a camera glide — would strand it beside a glyph
-                    // that is no longer there.
-                    hideHoverTooltip();
+        // A tooltip is anchored to a glyph and only re-anchored when
+        // the pointer moves, so anything that moves the scene — entity
+        // playback or a camera glide — would strand it beside a glyph
+        // that is no longer there.
+        hideHoverTooltip();
 
-                    // Keep looping.
-                    AnimationScheduler.get().requestAnimationFrame(this);
-                }
-            };
+        // Keep looping.
+        animationFrame = AnimationScheduler.get().requestAnimationFrame(this::onAnimationFrame);
+    }
 
     /// Starts the animation loop if it is not already running.
     private void ensureAnimationLoop() {
         if (!animationLoopRunning) {
             animationLoopRunning = true;
-            AnimationScheduler.get().requestAnimationFrame(animationCallback);
+            animationFrame = AnimationScheduler.get().requestAnimationFrame(this::onAnimationFrame);
         }
     }
 
@@ -3087,7 +3087,7 @@ public class FloorMapCanvasController extends Controller {
     /// Sets or clears the line explaining why the map is empty, and folds it into the accessible
     /// summary.
     ///
-    /// Announced only when the text *changes*, which [FloorMapCanvasView#announce]
+    /// Announced only when the text *changes*, which [FloorMapCanvas#announce(String)]
     /// enforces anyway by dropping repeats — a line that re-announced on every tick while the map
     /// stayed legitimately empty would be worse than not saying it at all.
     ///
@@ -3432,5 +3432,11 @@ public class FloorMapCanvasController extends Controller {
         /// @param keys    the full selection in selection order
         /// @param primary the first-selected id (the "primary"), or `null`
         void onSelectionChanged(Collection<String> keys, String primary);
+    }
+
+    /// The kind of pointer gesture currently in progress.
+    private enum Gesture {
+        NONE, PANNING, MOVING, MARQUEE, SCALING, ROTATING, DRAWING_AREA, MOVING_VERTEX,
+        MEASURING_SCALE
     }
 }

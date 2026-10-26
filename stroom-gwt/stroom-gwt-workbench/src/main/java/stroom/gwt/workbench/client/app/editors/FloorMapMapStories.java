@@ -227,6 +227,23 @@ public final class FloorMapMapStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Group — Engineers")).toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
+                // Pressing a group's eye highlights it without selecting the group, as the eye is a
+                // button of its own
+                .story("HighlightDoesNotSelect", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    eventsShown(play);
+                    play.click(play.getByText("Groups", TAB_LABEL));
+                    final Query engineers = play.findByText("Engineers").closest(ROW);
+                    final Query eye = play.within(engineers).querySelector(".icon-cell--button");
+                    play.click(eye);
+                    play.waitFor(() -> play.expect(play.within(engineers)
+                            .querySelector(".icon-cell--button")).toHaveAttribute("title",
+                            "Highlighted on the map — click to stop highlighting"));
+                    play.expect(engineers).not().toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(play.getByRole("button", "Edit Group (name, colour and members)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    DocEditors.expectNoProblems(play);
+                })
                 // A new group is named 'Group' until renamed; OK adds it to the panel
                 .story("NewGroup", FloorMapMapStories::render)
                 .withPlay(play -> {

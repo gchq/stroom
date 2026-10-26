@@ -54,7 +54,7 @@ public class QueryFavouritesPresenter
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
     private final RestFactory restFactory;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private static final String NAME = "Favourite queries";
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
@@ -71,21 +71,21 @@ public class QueryFavouritesPresenter
     @Inject
     public QueryFavouritesPresenter(final EventBus eventBus,
                                     final QueryFavouritesView view,
-                                    final ExpressionTreeController expressionPresenter,
+                                    final ExpressionTreeController expressionTree,
                                     final NamePresenter namePresenter,
                                     final RestFactory restFactory,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(expressionPresenter);
+        own(expressionTree);
         own(namePresenter);
         this.restFactory = restFactory;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
         this.namePresenter = namePresenter;
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
-        view.setExpressionView(expressionPresenter);
+        view.setExpressionView(expressionTree);
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
@@ -110,11 +110,11 @@ public class QueryFavouritesPresenter
             final StoredQuery query = selectionModel.getSelected();
 
             if (query == null || query.getQuery() == null) {
-                expressionPresenter.read(null);
+                expressionTree.read(null);
                 editButton.setEnabled(false);
                 deleteButton.setEnabled(false);
             } else {
-                expressionPresenter.read(query.getQuery().getExpression());
+                expressionTree.read(query.getQuery().getExpression());
                 editButton.setEnabled(true);
                 deleteButton.setEnabled(true);
             }

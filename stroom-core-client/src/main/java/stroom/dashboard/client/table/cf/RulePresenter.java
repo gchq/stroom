@@ -39,7 +39,7 @@ public class RulePresenter
         extends MyPresenterWidget<RulePresenter.RuleView>
         implements RuleUiHandlers, Focus {
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final Provider<CustomRowStylePresenter> customRowStylePresenterProvider;
     private CustomConditionalFormattingStyle customConditionalFormattingStyle;
     private ConditionalFormattingRule originalRule;
@@ -47,15 +47,15 @@ public class RulePresenter
     @Inject
     public RulePresenter(final EventBus eventBus,
                          final RuleView view,
-                         final ExpressionEditorController editExpressionPresenter,
+                         final ExpressionEditorController expressionEditor,
                          final Provider<CustomRowStylePresenter> customRowStylePresenterProvider) {
         super(eventBus, view);
-        own(editExpressionPresenter);
-        this.editExpressionPresenter = editExpressionPresenter;
+        own(expressionEditor);
+        this.expressionEditor = expressionEditor;
         this.customRowStylePresenterProvider = customRowStylePresenterProvider;
         // The rule's form frames the expression's editor itself
-        editExpressionPresenter.setFramed(false);
-        view.setExpressionView(editExpressionPresenter);
+        expressionEditor.setFramed(false);
+        view.setExpressionView(expressionEditor);
         view.setUiHandlers(this);
     }
 
@@ -76,12 +76,12 @@ public class RulePresenter
     void read(final ConditionalFormattingRule rule,
               final FieldSelectionListModel fieldSelectionListModel) {
         this.originalRule = rule;
-        editExpressionPresenter.init(null, fieldSelectionListModel);
+        expressionEditor.init(null, fieldSelectionListModel);
         this.originalRule = rule;
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
+            expressionEditor.read(ExpressionOperator.builder().build());
         } else {
-            editExpressionPresenter.read(rule.getExpression());
+            expressionEditor.read(rule.getExpression());
         }
         getView().setHide(rule.isHide());
         getView().setFormattingType(rule.getFormattingType() == null
@@ -108,7 +108,7 @@ public class RulePresenter
         }
 
         final TextAttributes textAttributes = writeTextAttributes();
-        final ExpressionOperator expression = editExpressionPresenter.write();
+        final ExpressionOperator expression = expressionEditor.write();
         return ConditionalFormattingRule
                 .builder()
                 .id(id)
@@ -136,7 +136,7 @@ public class RulePresenter
 
     @Override
     public void focus() {
-        editExpressionPresenter.focus();
+        expressionEditor.focus();
     }
 
     public interface RuleView extends View, HasUiHandlers<RuleUiHandlers> {

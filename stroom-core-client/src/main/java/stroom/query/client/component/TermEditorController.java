@@ -100,6 +100,7 @@ public class TermEditorController extends Controller implements TermEditor.Picke
         }
         editor.setPickers(this);
         editor.setSuggestionFetcher(this::fetchSuggestions);
+        onDispose(editor::cancelSuggestions);
         uiConfigCache.get(uiConfig ->
                 NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, editor::setFieldFilterHelpUrl));
         return this;

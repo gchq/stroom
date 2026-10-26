@@ -35,7 +35,7 @@ public class SelectionHandlerPresenter
         extends MyPresenterWidget<SelectionHandlerView>
         implements Focus {
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final CurrentSelectionPresenter currentSelectionPresenter;
     private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
@@ -43,19 +43,19 @@ public class SelectionHandlerPresenter
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
-                                     final ExpressionEditorController editExpressionPresenter,
+                                     final ExpressionEditorController expressionEditor,
                                      final CurrentSelectionPresenter currentSelectionPresenter) {
         super(eventBus, view);
-        own(editExpressionPresenter);
+        own(expressionEditor);
         own(currentSelectionPresenter);
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.expressionEditor = expressionEditor;
         this.currentSelectionPresenter = currentSelectionPresenter;
         // Its slot frames the expression's editor itself
-        editExpressionPresenter.setFramed(false);
-        view.setExpressionView(editExpressionPresenter);
+        expressionEditor.setFramed(false);
+        view.setExpressionView(expressionEditor);
         view.setCurrentSelection(currentSelectionPresenter.getView());
 
-        currentSelectionPresenter.setInsertHandler(editExpressionPresenter::insertValue);
+        currentSelectionPresenter.setInsertHandler(expressionEditor::insertValue);
     }
 
     @Override
@@ -69,12 +69,12 @@ public class SelectionHandlerPresenter
 
         this.originalHandler = componentSelectionHandler;
         fieldSelectionListModel.setTaskMonitorFactory(this);
-        editExpressionPresenter.init(null, fieldSelectionListModel);
+        expressionEditor.init(null, fieldSelectionListModel);
         this.originalHandler = componentSelectionHandler;
         if (componentSelectionHandler.getExpression() == null) {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
+            expressionEditor.read(ExpressionOperator.builder().build());
         } else {
-            editExpressionPresenter.read(componentSelectionHandler.getExpression());
+            expressionEditor.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
     }
@@ -91,7 +91,7 @@ public class SelectionHandlerPresenter
             id = RandomId.createId(5);
         }
 
-        final ExpressionOperator expression = editExpressionPresenter.write();
+        final ExpressionOperator expression = expressionEditor.write();
         return ComponentSelectionHandler
                 .builder()
                 .id(id)

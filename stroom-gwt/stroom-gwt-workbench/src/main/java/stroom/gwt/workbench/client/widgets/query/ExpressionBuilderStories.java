@@ -921,12 +921,11 @@ public final class ExpressionBuilderStories {
                                  final boolean dynamicFields,
                                  final RestHandler decorate) {
         final ScreenHarness harness = harness(context, decorate);
-        final ExpressionTreeController treePresenter = treeController(harness);
+        final ExpressionTreeController tree = treeController(harness);
         final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
                 new ExpressionEditor(),
-                treePresenter);
+                tree);
         harness.own(presenter);
-        harness.own(treePresenter);
         presenter.init(DATA_SOURCE, fieldModel(harness, dynamicFields));
         presenter.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
@@ -937,13 +936,13 @@ public final class ExpressionBuilderStories {
 
     private static Widget readOnly(final StoryContext context) {
         final ScreenHarness harness = harness(context);
-        final ExpressionTreeController treePresenter = treeController(harness);
-        harness.own(treePresenter);
+        final ExpressionTreeController tree = treeController(harness);
+        harness.own(tree);
         // As Stroom's read only views of an expression (e.g. ProcessorPresenter) do
-        treePresenter.setSelectionModel(null);
-        treePresenter.init(DATA_SOURCE, fieldModel(harness, false));
-        treePresenter.read(populatedExpression());
-        harness.add(frame(treePresenter.asWidget()));
+        tree.setSelectionModel(null);
+        tree.init(DATA_SOURCE, fieldModel(harness, false));
+        tree.read(populatedExpression());
+        harness.add(frame(tree.asWidget()));
         return harness.asWidget();
     }
 
@@ -955,12 +954,11 @@ public final class ExpressionBuilderStories {
     /// @param readOnly Whether the expression is read only.
     /// @return The editor's widget.
     public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
-        final ExpressionTreeController treePresenter = treeController(harness);
+        final ExpressionTreeController tree = treeController(harness);
         final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
                 new ExpressionEditor(),
-                treePresenter);
+                tree);
         harness.own(presenter);
-        harness.own(treePresenter);
         presenter.init(DATA_SOURCE, fieldModel(harness, false));
         presenter.setReadOnly(readOnly);
         presenter.read(populatedExpression());

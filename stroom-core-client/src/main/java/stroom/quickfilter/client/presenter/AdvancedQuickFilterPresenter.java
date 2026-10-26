@@ -69,19 +69,19 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final ExpressionOperator EMPTY = ExpressionOperator.builder().build();
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final RestFactory restFactory;
 
     @Inject
     public AdvancedQuickFilterPresenter(final EventBus eventBus,
                                         final AdvancedQuickFilterView view,
-                                        final ExpressionEditorController editExpressionPresenter,
+                                        final ExpressionEditorController expressionEditor,
                                         final RestFactory restFactory) {
         super(eventBus, view);
-        own(editExpressionPresenter);
-        this.editExpressionPresenter = editExpressionPresenter;
+        own(expressionEditor);
+        this.expressionEditor = expressionEditor;
         this.restFactory = restFactory;
-        view.setExpressionView(editExpressionPresenter);
+        view.setExpressionView(expressionEditor);
     }
 
     /**
@@ -117,13 +117,13 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
         fields.addItems(context.getQualifiedFields());
         // No data source: these surfaces are not datasources, and TermEditor only uses it for
         // the doc-ref and dictionary pickers, which the condition filter removes anyway.
-        editExpressionPresenter.init(null, fields);
-        editExpressionPresenter.setConditionFilter(QuickFilterFields::isQuickFilterCondition);
+        expressionEditor.init(null, fields);
+        expressionEditor.setConditionFilter(QuickFilterFields::isQuickFilterCondition);
 
         final ExpressionOperator original = parsed.isOk()
                 ? Objects.requireNonNullElse(parsed.getExpression(), EMPTY)
                 : EMPTY;
-        editExpressionPresenter.read(original);
+        expressionEditor.read(original);
 
         if (parsed.isOk()) {
             getView().setMessage(null);
@@ -169,13 +169,13 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(800, 600))
                 .caption("Advanced Query")
-                .onShow(e -> editExpressionPresenter.focus())
+                .onShow(e -> expressionEditor.focus())
                 .onHideRequest(e -> {
                     if (!e.isOk()) {
                         e.hide();
                         return;
                     }
-                    final ExpressionOperator written = editExpressionPresenter.write();
+                    final ExpressionOperator written = expressionEditor.write();
                     restFactory
                             .create(EXPRESSION_RESOURCE)
                             .method(res -> res.formatQuickFilter(new FormatQuickFilterRequest(

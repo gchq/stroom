@@ -95,6 +95,22 @@ public final class CredentialsScreenStories {
             .build()
             .followedBy(FIXTURES);
 
+    // The fixtures with a key store's upload refused by the server
+    private static final RestFixtures UPLOAD_FAILS = RestFixtures.builder()
+            .upload(UploadReply.failure("The file is not a key store"))
+            .build()
+            .followedBy(FIXTURES);
+
+    // The fixtures with a key store credential in the list
+    private static final RestFixtures KEY_STORE_LIST = RestFixtures.builder()
+            .post(FIND_CREDENTIALS, RestReply.json("""
+                    {"values": [{"credential": {"uuid": "c-4", "name": "TLS Store",
+                                                "credentialType": "KEY_STORE", "keyStoreType": "JKS"},
+                                 "edit": true, "delete": true}],
+                     "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}"""))
+            .build()
+            .followedBy(FIXTURES);
+
     private static final String REPLACE_SECRET_TITLE = "Replace Selected Credential's Secret";
     private static final String SECRET_HIDDEN =
             "The secret is set but cannot be shown. Use Replace Secret to set a new one.";
@@ -236,6 +252,88 @@ public final class CredentialsScreenStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/credentials/store").toSpyMatcher());
                 })
+                // Access Token: the token is stored in an accessToken secret
+                .story("AccessToken", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Git Token");
+                    chooseType(play, dialog, "Access Token");
+                    play.type(dialog.findByLabelText("Access Token"), "ghp_abc");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store")
+                                    .withJsonBodyContaining("""
+                                            {"credential": {"name": "Git Token"},
+                                             "secret": {"type": "accessToken", "accessToken": "ghp_abc"}}""")
+                                    .toSpyMatcher()));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Access Token with no token: OK says so, and stores nothing
+                .story("AccessTokenRequired", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Git Token");
+                    chooseType(play, dialog, "Access Token");
+                    dialog.findByLabelText("Access Token");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: Access token must not be empty"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // SSH Key: the private key is stored in an sshKey secret, verifying hosts by default
+                .story("SshKey", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Deploy Key");
+                    chooseType(play, dialog, "SSH Key");
+                    play.type(dialog.findByLabelText("Private Key"), "KEY");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store")
+                                    .withJsonBodyContaining("""
+                                            {"credential": {"name": "Deploy Key"},
+                                             "secret": {"type": "sshKey", "privateKey": "KEY",
+                                                        "verifyHosts": true}}""")
+                                    .toSpyMatcher()));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // SSH Key with no private key: OK says so, and stores nothing
+                .story("SshKeyRequired", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Deploy Key");
+                    chooseType(play, dialog, "SSH Key");
+                    dialog.findByLabelText("Private Key");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: Private key must not be empty"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A key store whose upload the server refuses: its reason is shown, nothing is stored
+                // and the dialog stays open
+                .story("KeyStoreUploadFails", context -> render(context, UPLOAD_FAILS, false))
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "TLS Store");
+                    chooseType(play, dialog, "Key Store");
+                    play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).not().toBeNull());
+                    play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "ks.p12", "x", "application/octet-stream");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: The file is not a key store"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                    play.expect(play.screen().queryByText("New Credentials")).not().toBeNull();
+                })
                 // Replace Secret is live only for a selected credential the user can edit; it asks for
                 // a whole new secret of the credential's type and sends it with the credential's uuid
                 .story("ReplaceSecret", context -> render(context, SLOW_LIST, false))
@@ -263,6 +361,8 @@ public final class CredentialsScreenStories {
                             .closest(StroomDom.DIALOG));
                     play.expect(dialog.getByText(TextMatch.startingWith(
                             "The current secret of 'My Creds' will be discarded"))).toBeInTheDocument();
+                    // The secret's first field has the focus
+                    play.waitFor(() -> play.expect(dialog.getByLabelText("User Name")).toHaveFocus());
                     play.type(dialog.getByLabelText("User Name"), "alice");
                     play.type(dialog.getByLabelText("Password"), "n3w");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -301,6 +401,34 @@ public final class CredentialsScreenStories {
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.queryByText("Replace Key Store File Secret"))
                             .toBeNull());
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Replacing a Key Store's secret starts from its type, uploads the new file and sends
+                // the upload's resource key
+                .story("ReplaceKeyStoreSecret", context -> render(context, KEY_STORE_LIST, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("TLS Store").closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    final Query replace = play.getByRole("button", TextMatch.containing(REPLACE_SECRET_TITLE));
+                    play.waitFor(() -> play.expect(replace).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(replace);
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Replace Key Store Secret")
+                            .closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByLabelText("Key Store Type")).toHaveValue("JKS");
+                    play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).not().toBeNull());
+                    play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "new.jks", "y", "application/octet-stream");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
+                            .toHaveBeenCalledWith("importfile.rpc", "new.jks", "y"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/replaceSecret")
+                                    .withJsonBodyContaining("""
+                                            {"uuid": "c-4",
+                                             "secret": {"type": "keyStore", "keyStoreType": "JKS",
+                                                        "resourceKey": {"key": "rk-1"}}}""")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Replace Key Store Secret")).toBeNull());
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Editing an existing credential never shows its secret: the type is fixed, the secret

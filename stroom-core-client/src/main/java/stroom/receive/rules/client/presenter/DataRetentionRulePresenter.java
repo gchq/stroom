@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionEditorController;
@@ -34,40 +33,39 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private DataRetentionRule originalRule;
 
     @Inject
     public DataRetentionRulePresenter(final EventBus eventBus,
                                       final DataRetentionRuleView view,
-                                      final ExpressionEditorController editExpressionPresenter,
-                                      final RestFactory restFactory,
+                                      final ExpressionEditorController expressionEditor,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
-        own(editExpressionPresenter);
+        own(expressionEditor);
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         // Shows its requests' progress as this presenter does (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
-        this.editExpressionPresenter = editExpressionPresenter;
-        view.setExpressionView(editExpressionPresenter);
+        this.expressionEditor = expressionEditor;
+        view.setExpressionView(expressionEditor);
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(MetaFields.STREAM_STORE_DOC_REF));
-        editExpressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        expressionEditor.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
     }
 
     @Override
     public void focus() {
-        editExpressionPresenter.focus();
+        expressionEditor.focus();
     }
 
     void read(final DataRetentionRule rule) {
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
+            expressionEditor.read(ExpressionOperator.builder().build());
         } else {
-            editExpressionPresenter.read(rule.getExpression());
+            expressionEditor.read(rule.getExpression());
         }
         getView().setForever(rule.isForever());
         getView().setAge(rule.getAge());
@@ -75,7 +73,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
     }
 
     DataRetentionRule write() {
-        final ExpressionOperator expression = editExpressionPresenter.write();
+        final ExpressionOperator expression = expressionEditor.write();
         return new DataRetentionRule(
                 originalRule.getRuleNumber(),
                 originalRule.getCreationTime(),

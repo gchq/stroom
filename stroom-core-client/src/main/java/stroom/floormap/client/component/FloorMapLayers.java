@@ -138,8 +138,6 @@ public class FloorMapLayers extends Component {
     public FloorMapLayers() {
         initWidget(BINDER.createAndBindUi(this));
         discover.setOnClick(this::discover);
-        // GWT's Label has no aria-hidden setter for the template (see FloorMapLayers.ui.xml)
-        discoverLabel.getElement().setAttribute("aria-hidden", "true");
         //noinspection unused e
         discoverLabel.addClickHandler(e -> discover());
         rebuild();
@@ -609,6 +607,8 @@ public class FloorMapLayers extends Component {
                         + (ts.hasGraphic()
                 ? "image & colour)"
                 : "shape & colour)"));
+        // It opens the layer's appearance dialog
+        swatch.setOpensDialog(true);
         swatch.setOnClick(() -> {
             if (onEditStyle != null) {
                 onEditStyle.accept(ts, this::applyStyle);

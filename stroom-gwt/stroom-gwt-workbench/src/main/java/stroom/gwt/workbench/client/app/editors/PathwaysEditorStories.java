@@ -106,7 +106,7 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
                     play.expect(play.getByText("checkout")).toBeInTheDocument();
                     // The graph pane shows no nodes until a pathway is selected
-                    play.expect(play.querySelector(".pathway-nodeName")).toBeNull();
+                    play.expect(play.querySelector(".pathway-tree__node-name")).toBeNull();
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -118,7 +118,8 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Start")).toBeInTheDocument());
                     play.expect(play.getByText("Auth")).toBeInTheDocument();
                     play.click(play.getByText("Auth"));
-                    play.waitFor(() -> play.expect(play.getByText("Auth")).toHaveClass("pathway-nodeName--selected"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth"))
+                            .toHaveClass("pathway-tree__node-name--selected"));
                     // The main graph has no node detail panel; a node's constraints are shown, as a
                     // grid (ConstraintListPresenter), in the Edit Pathway dialog (opened by Edit
                     // Selected Pathway), so the play opens it and selects the node there
@@ -190,6 +191,23 @@ public final class PathwaysEditorStories {
                     // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
+                // Read only, a pathway's node can still be chosen and its traces viewed, but not
+                // changed
+                .story("GraphReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))
+                .withPlay(play -> {
+                    play.click(play.findByText("login-flow"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth")).toBeInTheDocument());
+                    play.click(play.getByText("Auth"));
+                    play.waitFor(() -> play.expect(play.getByText("Auth"))
+                            .toHaveClass("pathway-tree__node-name--selected"));
+                    play.expect(play.getByTitle("New Path (read only)")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Edit Selected Path (read only)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Delete Selected Path (read only)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("View Matching Traces")).not().toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 .story("ReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))

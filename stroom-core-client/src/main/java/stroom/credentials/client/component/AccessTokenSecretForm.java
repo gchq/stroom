@@ -19,11 +19,11 @@ package stroom.credentials.client.component;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Secret;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The secret of an access token credential, e.g. a Git personal access token: the token, which is
@@ -33,7 +33,7 @@ public final class AccessTokenSecretForm extends Component implements SecretForm
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox accessToken;
+    TextInput accessToken;
 
     /// Makes an empty form.
     public AccessTokenSecretForm() {

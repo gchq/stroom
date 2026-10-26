@@ -40,13 +40,13 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /// An expression's editor ([ExpressionEditor]): its toolbar's and context menu's actions on the
-/// expression's tree ([ExpressionTreeController]), which it owns, and whether the expression can
-/// be changed. Used wherever an expression is edited: a processor's filter, a data retention or
-/// receipt rule, a dashboard table's conditional formatting rule and selection handler, and more.
+/// expression's tree ([ExpressionTreeController]), which it owns. Used wherever an expression is
+/// edited: a processor's filter, a data retention or receipt rule, a dashboard table's conditional
+/// formatting rule and selection handler, and more.
 public class ExpressionEditorController extends Controller implements Focus {
 
     private final ExpressionEditor view;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
     private boolean readOnly;
 
@@ -57,20 +57,20 @@ public class ExpressionEditorController extends Controller implements Focus {
     ///
     /// @param eventBus            The application's event bus, which the context menu is shown on.
     /// @param view                The editor.
-    /// @param expressionPresenter The expression's tree.
+    /// @param expressionTree The expression's tree.
     @Inject
     public ExpressionEditorController(final EventBus eventBus,
                                       final ExpressionEditor view,
-                                      final ExpressionTreeController expressionPresenter) {
+                                      final ExpressionTreeController expressionTree) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.expressionPresenter = own(expressionPresenter);
-        this.selectionModel = expressionPresenter.getSelectionModel();
+        this.expressionTree = own(expressionTree);
+        this.selectionModel = expressionTree.getSelectionModel();
 
-        view.setExpressionTree(expressionPresenter);
+        view.setExpressionTree(expressionTree);
 
-        expressionPresenter.setOnChange(this::onChange);
+        expressionTree.setOnChange(this::onChange);
 
         view.setOnAddTerm(this::addTerm);
         view.setOnAddOperator(this::addOperator);
@@ -78,8 +78,8 @@ public class ExpressionEditorController extends Controller implements Focus {
         view.setOnDisable(this::disable);
         view.setOnDelete(this::delete);
 
-        own(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
-        own(expressionPresenter.addContextMenuHandler(event -> {
+        own(expressionTree.addSelectionListener(event -> setButtonsEnabled()));
+        own(expressionTree.addContextMenuHandler(event -> {
             // On a term's field, the field's edit items come first; a read-only expression has
             // no actions of its own, but its fields can still be copied from
             final List<Item> actions = readOnly
@@ -103,23 +103,26 @@ public class ExpressionEditorController extends Controller implements Focus {
     /// @param fieldSelectionListModel The fields.
     public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        expressionPresenter.init(dataSource, fieldSelectionListModel);
+        expressionTree.init(dataSource, fieldSelectionListModel);
     }
 
     /// Stops the expression being changed, for a document the user can't change: terms can't be
     /// selected, edited or dragged, and the add, copy, disable and delete buttons and the
-    /// context menu do nothing.
+    /// context menu do nothing. Set by its owner rather than watched
+    /// ([stroom.widget.component.client.Contexts#READ_ONLY]), as an expression that is a search (a
+    /// filter) is changed even in a document the user can't change, and that context only ever
+    /// narrows.
     ///
     /// @param readOnly Whether the expression can't be changed.
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        expressionPresenter.setSelectionModel(readOnly
+        expressionTree.setSelectionModel(readOnly
                 ? null
                 : selectionModel);
         view.setCanAdd(!readOnly);
         setButtonsEnabled();
         // The read-only look: the terms greyed, as a read-only field's value is
-        expressionPresenter.setReadOnlyLook(readOnly);
+        expressionTree.setReadOnlyLook(readOnly);
     }
 
     /// @param framed Whether the editor is framed as a control is, as it is unless its owner frames
@@ -133,24 +136,24 @@ public class ExpressionEditorController extends Controller implements Focus {
     ///
     /// @param conditionFilter Which conditions are offered.
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
-        expressionPresenter.setConditionFilter(conditionFilter);
+        expressionTree.setConditionFilter(conditionFilter);
     }
 
     /// Sets the selected term's value, e.g. one chosen from a list.
     ///
     /// @param value The value.
     public void insertValue(final String value) {
-        expressionPresenter.insertValue(value);
+        expressionTree.insertValue(value);
     }
 
     /// @param expressionOperator The expression to edit.
     public void read(final ExpressionOperator expressionOperator) {
-        expressionPresenter.read(expressionOperator);
+        expressionTree.read(expressionOperator);
     }
 
     /// @return The expression as edited.
     public ExpressionOperator write() {
-        return expressionPresenter.write();
+        return expressionTree.write();
     }
 
     /// @param onChange What to run when the user changes the expression.
@@ -165,24 +168,24 @@ public class ExpressionEditorController extends Controller implements Focus {
     }
 
     private void addOperator() {
-        expressionPresenter.addOperator();
+        expressionTree.addOperator();
     }
 
     private void addTerm() {
-        expressionPresenter.addTerm();
+        expressionTree.addTerm();
     }
 
     private void copy() {
-        expressionPresenter.copy();
+        expressionTree.copy();
     }
 
     private void disable() {
-        expressionPresenter.disable();
+        expressionTree.disable();
         setButtonsEnabled();
     }
 
     private void delete() {
-        expressionPresenter.delete();
+        expressionTree.delete();
     }
 
     private List<Item> addExpressionActionsToMenu() {
@@ -216,7 +219,7 @@ public class ExpressionEditorController extends Controller implements Focus {
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
-        menuItems.addAll(expressionPresenter.getMoveMenuItems(5));
+        menuItems.addAll(expressionTree.getMoveMenuItems(5));
 
         return menuItems;
     }
@@ -230,8 +233,8 @@ public class ExpressionEditorController extends Controller implements Focus {
     }
 
     private stroom.query.client.Item getSelectedItem() {
-        if (expressionPresenter.getSelectionModel() != null) {
-            return expressionPresenter.getSelectionModel().getSelectedObject();
+        if (expressionTree.getSelectionModel() != null) {
+            return expressionTree.getSelectionModel().getSelectedObject();
         }
         return null;
     }

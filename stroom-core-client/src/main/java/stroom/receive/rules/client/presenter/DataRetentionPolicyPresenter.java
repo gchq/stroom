@@ -70,7 +70,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     protected static final CellIcon MOVE_RULE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move rule down", false);
 
     private final DataRetentionPolicyListPresenter listPresenter;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
     private final RestFactory restFactory;
 
@@ -92,22 +92,22 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     public DataRetentionPolicyPresenter(final EventBus eventBus,
                                         final DataRetentionPolicyView view,
                                         final DataRetentionPolicyListPresenter listPresenter,
-                                        final ExpressionTreeController expressionPresenter,
+                                        final ExpressionTreeController expressionTree,
                                         final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
                                         final RestFactory restFactory) {
         super(eventBus, view);
         own(listPresenter);
-        own(expressionPresenter);
+        own(expressionTree);
         this.listPresenter = listPresenter;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
         this.editRulePresenterProvider = editRulePresenterProvider;
         this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
-        getView().setExpressionView(expressionPresenter);
+        getView().setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Retention rule actions");
         saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Rules", this::onSave);
@@ -344,12 +344,12 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                expressionPresenter.read(rule.getExpression());
+                expressionTree.read(rule.getExpression());
                 if (event.getSelectionType().isDoubleSelect() && !isDefaultRule(rule)) {
                     edit(rule);
                 }
             } else {
-                expressionPresenter.read(null);
+                expressionTree.read(null);
             }
             updateButtons();
         }));

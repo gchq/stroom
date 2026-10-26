@@ -263,7 +263,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);
 
         getView().setName(pathway.getName());
-//        getView().setDetails(new PathwayTreeController().build(pathway));
+//        getView().setDetails(new PathwayTreePresenter().build(pathway));
 //
 //        addNode(pathway.getRoot());
     }

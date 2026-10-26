@@ -77,6 +77,9 @@ public class SharedFileStoreSettingsWidget extends Component {
         updateStates();
     }
 
+    /// Fixes the path and shard count, for a store that already holds data at that location.
+    ///
+    /// @param locked Whether the path and shard count can't be changed.
     public void setSharedFileStoreLocked(final boolean locked) {
         this.locked = locked;
         updateStates();

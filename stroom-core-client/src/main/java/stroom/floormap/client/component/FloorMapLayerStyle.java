@@ -133,11 +133,6 @@ public class FloorMapLayerStyle extends Component {
         // The picker is a button named by the value it shows, so the row's name hangs off its
         // container as a group
         FloorMapAria.group(assetPickerPanel, "Image");
-        // "Upload" alone does not say what is being uploaded or where it goes; Button has no
-        // aria-label setter for the template
-        uploadButton.getElement().setAttribute("aria-label",
-                "Upload a new image into this document's assets");
-
         uploadButton.setOnClick(() -> onUpload.run());
         //noinspection unused e
         shapeBox.addValueChangeHandler(e -> onChange.run());

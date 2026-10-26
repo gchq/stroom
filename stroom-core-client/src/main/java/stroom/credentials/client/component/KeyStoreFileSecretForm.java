@@ -23,11 +23,11 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -42,7 +42,7 @@ public final class KeyStoreFileSecretForm extends Component implements SecretFor
     @UiField
     SelectionBox<KeyStoreType> type;
     @UiField
-    TextBox path;
+    TextInput path;
     @UiField
     PasswordBox password;
 
@@ -51,8 +51,6 @@ public final class KeyStoreFileSecretForm extends Component implements SecretFor
         initWidget(BINDER.createAndBindUi(this));
         type.addItems(Arrays.stream(KeyStoreType.values()).sorted().collect(Collectors.toList()));
         type.setValue(KeyStoreType.PKCS12);
-        // GWT's TextBox has no placeholder setter for its template
-        path.getElement().setAttribute("placeholder", "/etc/stroom/certs/client.p12");
     }
 
     /// @param type The key store's type, e.g. that of the secret being replaced.

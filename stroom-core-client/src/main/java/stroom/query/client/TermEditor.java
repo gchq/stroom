@@ -130,6 +130,9 @@ public class TermEditor extends Component {
     }
 
     @UiFactory
+    /// Makes the value's box, which suggests values as they are typed.
+    ///
+    /// @return The box.
     SuggestBox createSuggestBox() {
         return new SuggestBox(suggestOracle);
     }
@@ -137,6 +140,12 @@ public class TermEditor extends Component {
     /// @param pickers The document and user pickers, which its controller attached to the boxes.
     public void setPickers(final Pickers pickers) {
         this.pickers = pickers;
+    }
+
+    /// Cancels a request for suggestions still waiting for what is typed to settle, so nothing is
+    /// fetched once the editor's controller has gone.
+    public void cancelSuggestions() {
+        suggestOracle.cancel();
     }
 
     /// @param fetcher Fetches the values to suggest for what is typed (see [AsyncSuggestOracle]).

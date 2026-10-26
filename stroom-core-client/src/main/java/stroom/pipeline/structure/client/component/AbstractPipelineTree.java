@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public abstract class AbstractPipelineTree extends Component implements HasConte
     private PipelineTreeBuilder pipelineTreeBuilder;
     private List<PipelineElement> disabledElements = new ArrayList<>();
 
-    /// Makes the selection, which a subclass gives its drawing in [#initSelection].
+    /// Makes the selection, which a subclass gives its drawing ([#getSelectionModel()]).
     protected AbstractPipelineTree() {
         selectionModel = new MySingleSelectionModel<>() {
             @Override
@@ -59,11 +59,6 @@ public abstract class AbstractPipelineTree extends Component implements HasConte
         //noinspection unused e
         selectionModel.addSelectionChangeHandler(e -> redraw());
     }
-
-    /// Gives the drawing the selection; a subclass calls it once its widgets are made.
-    ///
-    /// @param selectionModel The selection.
-    protected abstract void initSelection(MySingleSelectionModel<PipelineElement> selectionModel);
 
     /// Shows a pipeline's model, which says each element's type.
     ///

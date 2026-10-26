@@ -31,9 +31,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// Shows a controller as a dialog, for one use: the dialog is owned by its opener while it is shown,
-/// so it sees the opener's context (e.g. [Contexts#READ_ONLY]), and disposed once it is hidden, or
-/// with its opener if that is disposed first.
+/// Shows a controller as a dialog. Shown for one use ([#showOnce]), the dialog is owned by its
+/// opener while it is shown, so it sees the opener's context (e.g. [Contexts#READ_ONLY]), and
+/// disposed once it is hidden, or with its opener if that is disposed first. Shown again and again
+/// ([#show]), it stays with what owns it, and isn't disposed when it is hidden.
 ///
 /// ```java
 /// // In FieldEditorController, whose widget is its component, the dialog's content
@@ -114,7 +115,8 @@ public final class ControllerDialog {
     /// Enables or disables one of a dialog's buttons, e.g. OK until something is chosen, as
     /// `EnablePopupEvent` and `DisablePopupEvent` do for a presenter's.
     ///
-    /// @param dialog  The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param dialog  The controller shown with [#showOnce] or [#show]; nothing happens once a
+    ///                dialog shown once is hidden.
     /// @param action  The button's action, e.g. `DialogAction.OK`.
     /// @param enabled Whether the button can be pressed.
     public static void setActionEnabled(final Controller dialog, final DialogAction action, final boolean enabled) {
@@ -131,7 +133,8 @@ public final class ControllerDialog {
     /// Presses one of a dialog's buttons as the user would, e.g. OK on a double click on what is
     /// chosen: its hide request handler is told, as for any dialog.
     ///
-    /// @param dialog The controller shown with [#showOnce]; nothing happens once it is hidden.
+    /// @param dialog The controller shown with [#showOnce] or [#show]; nothing happens once a
+    ///               dialog shown once is hidden.
     /// @param action The button's action, e.g. `DialogAction.OK`.
     public static void pressAction(final Controller dialog, final DialogAction action) {
         final DialogHost host = HOSTS.get(dialog);
@@ -141,10 +144,12 @@ public final class ControllerDialog {
     }
 
     /// Hides a dialog at once, without asking its hide request handler, as `HidePopupEvent` does
-    /// for a presenter's, e.g. a sub menu closed with its menu. It is then disposed.
+    /// for a presenter's, e.g. a sub menu closed with its menu. One shown with [#showOnce] is then
+    /// disposed.
     ///
-    /// @param dialog    The controller shown with [#showOnce]. Hiding it again does nothing (the popup
-    ///                  manager no longer has it), and once it is disposed nothing is fired.
+    /// @param dialog    The controller shown with [#showOnce] or [#show]. Hiding it again does
+    ///                  nothing (the popup manager no longer has it), and once a dialog shown once is
+    ///                  disposed nothing is fired.
     /// @param autoClose Whether it is hidden by a click outside it, as its hide handler is told.
     /// @param ok        Whether it is hidden by its OK action, as its hide handler is told.
     public static void hide(final Controller dialog, final boolean autoClose, final boolean ok) {

@@ -127,8 +127,8 @@
     --pipeline-element__text-color--pressed: var(--text-color--selected);
     --pipeline-element__border-color: #777;
     /* The warning and error icons' own yellow and red */
-    --pipeline-path__warn: var(--icon-colour__safety-yellow);
-    --pipeline-path__error: var(--icon-colour__red);
+    --pipeline-path-bar__warn: var(--icon-colour__safety-yellow);
+    --pipeline-path-bar__error: var(--icon-colour__red);
     --pipeline-connector__raw: var(--orange-400);
     --pipeline-connector__xml: var(--purple-200);
     --pipeline-connector__bytes: var(--blue-300);
@@ -137,7 +137,7 @@
     --pipeline-element__background-color--selected: var(--row__background-color--selected);
     --pipeline-element__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element__text-color--selected: var(--text-color--selected);
-    --pipeline-path__filter: var(--icon-colour__green);
+    --pipeline-path-bar__filter: var(--icon-colour__green);
 
     --link__text-color: #3aaaff;
 

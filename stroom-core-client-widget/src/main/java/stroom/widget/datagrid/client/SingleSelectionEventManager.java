@@ -20,39 +20,57 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 /// Turns presses and keys on a [DataGrid]'s rows into a single selection, for a grid whose
-/// selection model is one of GWT's (e.g. a `SingleSelectionModel`) rather than Stroom's
-/// `MultiSelectionModel`, which [DataGridSelectionEventManager] serves. A press on a row, or Space
-/// or Enter on it, selects it, and the selection follows the focus as Up and Down move it, unless
-/// Ctrl is held. A right-click leaves the selection alone, so a context menu acts on it.
+/// selection model is GWT's `SingleSelectionModel` rather than Stroom's `MultiSelectionModel`,
+/// which [DataGridSelectionEventManager] serves. A press on a row, or Space or Enter on it, selects
+/// it, and the selection follows the focus as Up and Down move it, unless Ctrl is held. A press
+/// also moves the grid's keyboard row there and focuses it. A right-click leaves the selection
+/// alone, so a context menu acts on it, and so does a press on a control in a cell (e.g. a button
+/// cell) or on a part of the row marked `data-dg-no-select`.
 ///
-/// Give it to the grid with its selection model:
-/// `dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel))`.
+/// Give it to the grid with its selection model: `dataGrid.setSelectionModel(selectionModel,
+/// new SingleSelectionEventManager<>(dataGrid, selectionModel))`.
 ///
 /// @param <T> The row type.
 public class SingleSelectionEventManager<T>
         implements CellPreviewEvent.Handler<T>, DataGridKeyboard.Selector<T> {
 
-    private final SelectionModel<? super T> selectionModel;
+    private final DataGrid<T> dataGrid;
+    private final SingleSelectionModel<? super T> selectionModel;
 
+    /// @param dataGrid       The grid whose rows are pressed.
     /// @param selectionModel The selection model to update.
-    public SingleSelectionEventManager(final SelectionModel<? super T> selectionModel) {
+    public SingleSelectionEventManager(final DataGrid<T> dataGrid,
+                                       final SingleSelectionModel<? super T> selectionModel) {
+        this.dataGrid = dataGrid;
         this.selectionModel = selectionModel;
     }
 
     @Override
     public void onCellPreview(final CellPreviewEvent<T> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType())
-            && MouseUtil.isPrimary(nativeEvent)
-            && !isNoSelect(nativeEvent.getEventTarget())) {
-            select(event.getValue());
+        if (!BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType())
+            || !MouseUtil.isPrimary(nativeEvent)
+            || !Element.is(nativeEvent.getEventTarget())) {
+            return;
         }
+        final Element target = Element.as(nativeEvent.getEventTarget());
+        if (DataGridSelectionEventManager.isConsumedByCell(dataGrid, event, target)) {
+            return;
+        }
+        final T item = event.getValue();
+        final int index = item == null
+                ? -1
+                : dataGrid.getVisibleItems().indexOf(item);
+        if (index != -1) {
+            // Take the focus, so the keyboard can be used next
+            dataGrid.setKeyboardSelectedRow(index, true);
+        }
+        select(item);
     }
 
     /// The selection follows the focus, unless Ctrl is held (move without choosing).
@@ -84,20 +102,5 @@ public class SingleSelectionEventManager<T>
         if (item != null) {
             selectionModel.setSelected(item, true);
         }
-    }
-
-    // A press in a part of a row marked as not selecting it (data-dg-no-select), e.g. a control
-    private static boolean isNoSelect(final EventTarget eventTarget) {
-        if (!Element.is(eventTarget)) {
-            return true;
-        }
-        Element element = Element.as(eventTarget);
-        while (element != null) {
-            if (element.hasAttribute("data-dg-no-select")) {
-                return true;
-            }
-            element = element.getParentElement();
-        }
-        return false;
     }
 }

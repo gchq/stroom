@@ -16,7 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
@@ -37,24 +36,21 @@ public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements Focus {
 
-    private final ExpressionEditorController editExpressionPresenter;
-    private final RestFactory restFactory;
+    private final ExpressionEditorController expressionEditor;
 
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
-                               final ExpressionEditorController editExpressionPresenter,
-                               final RestFactory restFactory) {
+                               final ExpressionEditorController expressionEditor) {
         super(eventBus, view);
-        own(editExpressionPresenter);
-        this.editExpressionPresenter = editExpressionPresenter;
-        this.restFactory = restFactory;
-        view.setExpressionView(editExpressionPresenter);
+        own(expressionEditor);
+        this.expressionEditor = expressionEditor;
+        view.setExpressionView(expressionEditor);
     }
 
     @Override
     public void focus() {
-        editExpressionPresenter.focus();
+        expressionEditor.focus();
     }
 
     public void read(final ExpressionOperator expression,
@@ -63,14 +59,14 @@ public class ExpressionPresenter
 
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(fields);
-        editExpressionPresenter.init(dataSource, fieldSelectionBoxModel);
+        expressionEditor.init(dataSource, fieldSelectionBoxModel);
 
-        editExpressionPresenter.read(Objects.requireNonNullElseGet(expression,
+        expressionEditor.read(Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build()));
     }
 
     public ExpressionOperator write() {
-        return editExpressionPresenter.write();
+        return expressionEditor.write();
     }
 
 

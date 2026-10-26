@@ -6,12 +6,82 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert the regular stacks in one pass each: the 17 Plan B leaf settings widgets and their 8 type-settings presenters become dumb components (no controller); the floor map leaf panels are converted together with their ViewImpls; the five credential secret forms move behind a shared SecretForm; the pipeline and pathway trees; and the expression tree (TermEditor, then ExpressionTreePanel, then ExpressionTreePresenter, then both EditExpressionPresenters).
 
+## Audited (26 October 2026)
+
+Seven reviewers read the wave against this plan, "Done means" and AGENTS.md (Plan B, the secrets,
+the floor map's dialogs and panels, its canvas, the pipeline and pathway trees, the expression
+editor with all its owners, and the records). Fixed:
+
+- **Two regressions on this branch.**
+  - A press on a group's highlight eye selected the group too: `SingleSelectionEventManager`
+    didn't skip a press a cell takes, as `DataGridSelectionEventManager` does. It now uses the
+    same check (`isConsumedByCell`), takes the grid and a `SingleSelectionModel`, and moves the
+    grid's keyboard row to the row pressed (story `FloorMapMap.HighlightDoesNotSelect`).
+  - A term's document picker sat 1px low: its inline `margin: 0` had become a
+    `termEditor-item--doc` class with no rule. `TermEditor.css` has it now.
+- **A bug master has too.** View Matching Traces on a pathway's node after two forks matched the
+  nearer fork's other branch: `PathwayTreeController.pathTo` kept each sequence leading on as it
+  was, not as already cut down. JUnit `aNodeAfterTwoForksKeepsOnlyItsBranchAtEach`, which failed
+  before, and a changelog entry.
+- **Read-only.** `PipelineTree` applies read-only itself (`onReadOnlyChange`), as well as through
+  `setAllowDragging`. `ExpressionEditorController` keeps its `setReadOnly`, which its document
+  owners call, rather than watching `Contexts.READ_ONLY` as a reviewer asked: the context only
+  ever narrows (true when nothing provides it), and an expression that is a search (the data
+  browser's filter, the quick filter, a processor's filter, the retention impact's filter) has to
+  stay editable inside a document the user can only view. Tried, it made every unowned editor
+  read only; its javadoc says why now.
+- **Rules 2 and 3.** The secret forms' text boxes, the group edit's filter and Set Scale's distance
+  are `TextInput`s with their placeholders (and the filter's name) in their templates;
+  `Button.setAriaLabel` is new, for the layer appearance's Upload; the Layers panel's Discover
+  label is hidden from assistive technology by an `AriaPanel` in its template. The Plan B shared
+  file store's path lost its `width="400px"`.
+- **Rule 6.** The secret forms have `secret-form.css` (`secret-form__field`,
+  `secret-form__text-area`), in place of the dialog's descendant rules in `components.css` (the
+  expiry box's `wide-control` stays there until its dialogs convert); the shared file store
+  settings have `shared-file-store-settings.css`; the pathway tree's rules moved from
+  `pathways.css` to `pathway-tree.css`, BEM (`pathway-tree__node-name--selected` and the rest);
+  the stepping bar's block is `pipeline-path-bar`, as its class is named, in
+  `pipeline-path-bar.css`, with its custom properties and keyframes.
+- **The canvas.** `FloorMapCanvasController` cancels its animation frame when disposed, and clears
+  the canvas's callbacks, so a late image load or resize does nothing; the callbacks are
+  `setOnRedraw` and `setOnSized`; the controller takes no bus; the gesture enum and
+  `PendingCaption` are at the bottom of their classes, and the animation loop is a method.
+- **Smaller things.** `AsyncSuggestOracle.cancel`, called when a term editor's controller goes, so
+  a pending suggestion request isn't sent; `AbstractPipelineTree`'s `initSelection` and its
+  subclasses' copies of the selection gone; the floor map's swatches announce the dialog they
+  open; three unused `RestFactory` parameters gone; javadoc on `ExpressionTreeController`,
+  `TermEditor.createSuggestBox` and `setSharedFileStoreLocked`; `ControllerDialog`'s docs cover
+  `show`; the fields that hold an `ExpressionEditorController` are `expressionEditor`, and an
+  `ExpressionTreeController` `expressionTree`; `AbstractPipelineTree`'s header is 2026; stale
+  comments, a final local, a double blank line, the canvas's links to its deleted view, and
+  `PathwayEditPresenter`'s commented-out line put back as it was.
+- **Stories.** The credentials' Access Token, SSH key, their required fields, a refused key store
+  upload, Replace Secret for a key store, and the focus on Replace Secret's first field; Plan B's
+  temporal state and histogram read only, retention kept across a type change, and Range State in
+  `OtherTypes`; Set Scale's OK, Cancel and a missing distance; the Layers panel's keyboard
+  reorder; a read-only pipeline refusing Ctrl+X; a read-only pathway graph; Enter in a dashboard
+  term running the query.
+- **The records.** The Done section's claims that weren't so (the bug "on master too" meant master
+  has it; the Layers panel's state classes; the measuring line's colours;
+  `ExpressionUiHandlers`), the order's rows marked done, the later plans' names
+  (`SecretForms`, `FloorMapGroupEditController`, `FloorMapLayerStyleController`, `FloorMapDock`,
+  `ExpressionEditorController`), `COMPONENTS.md`, `A11Y.md`, `ISSUES.md`, the coverage plan and the
+  suite's scripts (whose expression term selector matched nothing).
+
+Left, in ISSUES.md: the Layers panel's stale drag index after a drop (master too; the workbench
+can't fire HTML drag and drop events for its story), the floor map following no read-only state
+(master too), `FloorMapDock` handing out its tab bar, no story hovering on the canvas, and the
+dashboard's unused `ExpressionUiHandlers`. `ExpressionEditor` keeps `EditExpressionViewImpl`'s
+2016, as a file renamed (git sees it as new, as it changed so much).
+
+All 1,649 stories passed with the leak check after the fixes (one, `Force3D` `ViewKeys`, on its second attempt); the 41 screenshots that differed are the noise named in Done, below, and the 17 new stories have baselines. The app and the standalone dashboard GWT compile.
+
 ## Done (26 October 2026)
 
 All 52 units, in 13 commits, and wave 11's `FloorMapLayerStylePresenter` with its view, which the
 layer style unit here needed. Each commit ran its stories with the leak check and the screenshot
 diff; the last ran all of them (1,632 passed; the 41 screenshots that differed are the force graphs' (39), the data grid's spinner column and, once, the query editor's `AddToAnnotation`, unchanged in 4 runs alone; all recorded as noise in ISSUES.md), and the app and the standalone dashboard GWT
-compile. One bug fixed on the way, on master too, with a changelog entry and a story: a press on
+compile. One bug fixed on the way (master has it too), with a changelog entry and a story: a press on
 a row in the floor map's Groups, Tracking, cluster and fact time lists selected nothing, so a
 group could never be edited (`FloorMapMap.EditGroup`; see ISSUES.md). What was decided on the
 way, where it differs from the plans below:
@@ -41,13 +111,15 @@ way, where it differs from the plans below:
   - Set Scale and the group edit are one-use (`showOnce`), with their parsing and the members'
     roster merge as static methods with JUnit tests.
   - `FloorMapDockController.addTab` takes any `IsWidget` (a `ControllerLayer` for one that isn't
-    a `Layer`). `FloorMapLayers` is one component with no controller, its rows' states classes
-    (`--dragging`, `--drop-above`, `--drop-below`, `--locked`, `--off`, `--dim`) and its grips
-    and swatches `LinkButton`s with their own classes in place of GWT's `Button`.
+    a `Layer`). `FloorMapLayers` is one component with no controller, its rows' state classes
+    (`floormap-layer-row--dragging`, `--drop-above`, `--drop-below`) and its lock's, eye's and
+    name's (`--locked`, `--off`, `--dim`), and its grips and swatches `LinkButton`s with their own
+    classes in place of GWT's `Button`.
   - The canvas is `FloorMapCanvas` with `FloorMapCanvasController`, its gesture code unchanged:
     the component offers `add...Handler`, `getSurfaceElement`, `focus` and `setCrosshair` in
     place of `getFocusPanel()`, its readout, tooltip and scale bar are placed by custom
-    properties, and the grid's and the measuring line's colours are classes.
+    properties, and the grid's colours and the measuring readout's halo are classes (the
+    measuring line, its ticks and its text keep their literal blue).
     `FloorMapImageSizeCache` moved with it.
   - The new classes stay in `stroom-floormap.css`, as the notes below say; its older names
     (`floormap-group-edit-fields`, `floormap-layer-row`, `stroom-floormap-*`) aren't BEM yet.
@@ -79,7 +151,7 @@ way, where it differs from the plans below:
     the browser has one; its items are placed by `--expression-item__left` and `__top`.
   - `ExpressionTreeController` attaches a `TermEditorController` to each of the tree's two term
     editors; `init` takes no `RestFactory`, and `setOnChange` and `setOnSearch` replace
-    `ExpressionUiHandlers`, which is gone.
+    `stroom.query.client.ExpressionUiHandlers`, which is gone.
   - The two `EditExpressionPresenter`s are one `ExpressionEditor`, framed as a control
     (`stroom-control`) unless its owner frames it (`setFramed(false)`: the dashboard's rule and
     selection handler, whose slots do; their `dock-max` did nothing in a `SimplePanel`). Its focus

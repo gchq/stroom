@@ -52,7 +52,7 @@ public class SolrIndexSettingsPresenter
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -60,16 +60,16 @@ public class SolrIndexSettingsPresenter
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
-                                      final ExpressionEditorController editExpressionPresenter,
+                                      final ExpressionEditorController expressionEditor,
                                       final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
-        own(editExpressionPresenter);
+        own(expressionEditor);
         own(pipelinePresenter);
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.expressionEditor = expressionEditor;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
@@ -81,9 +81,9 @@ public class SolrIndexSettingsPresenter
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
-        view.setRetentionExpressionView(editExpressionPresenter);
+        view.setRetentionExpressionView(expressionEditor);
 
-        editExpressionPresenter.setOnChange(this::onChange);
+        expressionEditor.setOnChange(this::onChange);
         own(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
@@ -128,9 +128,9 @@ public class SolrIndexSettingsPresenter
         }
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
-        editExpressionPresenter.init(docRef, fieldSelectionBoxModel);
-        editExpressionPresenter.read(retentionExpression);
-        editExpressionPresenter.setReadOnly(isReadOnly());
+        expressionEditor.init(docRef, fieldSelectionBoxModel);
+        expressionEditor.read(retentionExpression);
+        expressionEditor.setReadOnly(isReadOnly());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
         pipelinePresenter.setReadOnly(isReadOnly());
     }
@@ -156,7 +156,7 @@ public class SolrIndexSettingsPresenter
                 .collection(collection)
                 .timeField(getView().getTimeField())
                 .solrConnectionConfig(connectionConfig)
-                .retentionExpression(editExpressionPresenter.write())
+                .retentionExpression(expressionEditor.write())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
                 .build();
     }

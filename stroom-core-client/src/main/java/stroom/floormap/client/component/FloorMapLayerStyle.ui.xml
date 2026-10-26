@@ -36,7 +36,8 @@
                             </g:SimplePanel>
                             <b:Button ui:field="uploadButton"
                                       text="Upload"
-                                      title="Upload a new image into this document's assets"/>
+                                      title="Upload a new image into this document's assets"
+                                      ariaLabel="Upload a new image into this document's assets"/>
                         </g:FlowPanel>
                     </td>
                 </tr>

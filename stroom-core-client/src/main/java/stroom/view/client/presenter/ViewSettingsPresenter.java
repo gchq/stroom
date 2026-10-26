@@ -16,7 +16,6 @@
 
 package stroom.view.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -41,31 +40,28 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDoc> {
 
-    private final RestFactory restFactory;
     private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
-    private final ExpressionEditorController expressionPresenter;
+    private final ExpressionEditorController expressionEditor;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
-                                 final RestFactory restFactory,
                                  final DocSelectionBoxPresenter dataSourceSelectionPresenter,
                                  final DocSelectionBoxPresenter pipelineSelectionPresenter,
-                                 final ExpressionEditorController expressionPresenter,
+                                 final ExpressionEditorController expressionEditor,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         own(dataSourceSelectionPresenter);
         own(pipelineSelectionPresenter);
-        own(expressionPresenter);
-        this.restFactory = restFactory;
+        own(expressionEditor);
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionEditor = expressionEditor;
 
         view.setDataSourceSelectionView(dataSourceSelectionPresenter.getView());
         view.setPipelineSelectionView(pipelineSelectionPresenter.getView());
-        view.setExpressionView(expressionPresenter);
+        view.setExpressionView(expressionEditor);
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -91,26 +87,26 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
     private void registerHandlers() {
         own(dataSourceSelectionPresenter.addSelectionListener(event -> onChange()));
         own(pipelineSelectionPresenter.addSelectionListener(event -> onChange()));
-        expressionPresenter.setOnChange(this::onChange);
+        expressionEditor.setOnChange(this::onChange);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity) {
         dataSourceSelectionPresenter.setReadOnly(isReadOnly());
         pipelineSelectionPresenter.setReadOnly(isReadOnly());
-        expressionPresenter.setReadOnly(isReadOnly());
+        expressionEditor.setReadOnly(isReadOnly());
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource(), true);
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline(), true);
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
-        expressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        expressionEditor.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         // Read expression.
         ExpressionOperator root = entity.getFilter();
         if (root == null) {
             root = ExpressionOperator.builder().build();
         }
-        expressionPresenter.read(root);
+        expressionEditor.read(root);
     }
 
     @Override
@@ -119,7 +115,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
                 .copy()
                 .dataSource(dataSourceSelectionPresenter.getSelectedEntityReference())
                 .pipeline(pipelineSelectionPresenter.getSelectedEntityReference())
-                .filter(expressionPresenter.write())
+                .filter(expressionEditor.write())
                 .build();
     }
 

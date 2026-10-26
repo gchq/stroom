@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 /// The fields of a key store credential's secret: the key store's type, its pass phrase and the
 /// file to upload. Its [KeyStoreSecretFormController] uploads the file.
-public class KeyStoreSecretForm extends Component {
+public final class KeyStoreSecretForm extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 

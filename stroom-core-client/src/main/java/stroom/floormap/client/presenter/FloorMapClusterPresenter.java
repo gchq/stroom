@@ -121,7 +121,7 @@ public class FloorMapClusterPresenter
         dataGrid.setTableName("Cluster Members");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapClusterMember::getId);
-        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(dataGrid, selectionModel));
         // Says which of the two empty states this is: a filter that matched
         // nothing looks exactly like a broken dialog otherwise.
         dataGrid.setEmptyText("No members match the search and filters");

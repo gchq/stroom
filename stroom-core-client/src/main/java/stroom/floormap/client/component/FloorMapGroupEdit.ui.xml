@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:colour="urn:import:stroom.widget.colour.client">
     <!--
       The group edit dialog's content (stroom-floormap.css): the group's name and colour, and a
@@ -21,7 +22,11 @@
             </tbody>
         </table>
         <g:Label ui:field="membersLabel" addStyleNames="floormap-group-edit-label" text="Members"/>
-        <g:TextBox ui:field="filterBox" addStyleNames="floormap-group-edit-filter"/>
+        <!-- A placeholder is not an accessible name: it is not exposed by every screen reader
+             and it disappears as soon as anything is typed -->
+        <form:TextInput ui:field="filterBox" addStyleNames="floormap-group-edit-filter"
+                        placeholder="Filter by name, type or id"
+                        ariaLabel="Filter members by name, type or id"/>
         <g:ScrollPanel ui:field="memberScroll" addStyleNames="floormap-group-edit-scroll">
             <g:FlowPanel ui:field="memberList" addStyleNames="floormap-group-edit-members">
                 <g:Label ui:field="empty"

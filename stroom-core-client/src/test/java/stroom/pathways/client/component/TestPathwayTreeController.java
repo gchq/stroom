@@ -29,10 +29,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPathwayTreeController {
 
-    // Start → [A → C, B]: Start has two sequences, one holding A (which leads on to C), one B
+    // Start → [A → [C, D], B]: Start has two sequences, one holding A (which forks to C and D),
+    // one B
     private static final PathNode C = node("c", "C");
+    private static final PathNode D = node("d", "D");
     private static final PathNodeSequence TO_C = sequence("to-c", C);
-    private static final PathNode A = node("a", "A", TO_C);
+    private static final PathNodeSequence TO_D = sequence("to-d", D);
+    private static final PathNode A = node("a", "A", TO_C, TO_D);
     private static final PathNode B = node("b", "B");
     private static final PathNodeSequence TO_A = sequence("to-a", A);
     private static final PathNodeSequence TO_B = sequence("to-b", B);
@@ -66,7 +69,19 @@ class TestPathwayTreeController {
         final Pathway path = PathwayTreeController.pathTo(PATHWAY, C);
 
         assertThat(path.getRoot().getUuid()).isEqualTo("start");
-        assertThat(path.getRoot().getTargets()).containsExactly(TO_A);
+        assertThat(path.getRoot().getTargets()).extracting(PathNodeSequence::getUuid).containsExactly("to-a");
+    }
+
+    @Test
+    void aNodeAfterTwoForksKeepsOnlyItsBranchAtEach() {
+        final Pathway path = PathwayTreeController.pathTo(PATHWAY, C);
+
+        // Start keeps only the sequence to A, and A only the sequence to C, not D's
+        final PathNodeSequence toA = path.getRoot().getTargets().getFirst();
+        assertThat(path.getRoot().getTargets()).hasSize(1);
+        assertThat(toA.getUuid()).isEqualTo("to-a");
+        assertThat(toA.getNodes()).extracting(PathNode::getUuid).containsExactly("a");
+        assertThat(toA.getNodes().getFirst().getTargets()).containsExactly(TO_C);
     }
 
     private static PathNode node(final String uuid, final String name, final PathNodeSequence... targets) {

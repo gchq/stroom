@@ -2563,7 +2563,7 @@ async function walk(node, state, arrivedAt) {
   // Documentation, Data Retention is Rules / Impact Summary, a dashboard component's Settings is
   // Basic / Conditional Formatting / Selection Filter. The survey reads the selected pane only, so a
   // tab never clicked is a surface never seen — `New Field` (FieldEditPresenter), the impact
-  // summary's `Filter` (EditExpressionPresenter) and Selection Filter's Add (SelectionHandler-
+  // summary's `Filter` (ExpressionEditorController) and Selection Filter's Add (SelectionHandler-
   // Presenter) all sat one tab across from where every walk had stood.
   if (['editor', 'screen', 'dialog'].includes(node.kind) && !rec.blockedByAlert) {
     const tabs = await readSubTabs({ inDialog: node.kind === 'dialog' }).catch(() => []);

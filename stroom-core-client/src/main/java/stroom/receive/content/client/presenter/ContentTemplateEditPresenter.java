@@ -47,7 +47,7 @@ public class ContentTemplateEditPresenter
     private static final ContentTemplateResource CONTENT_TEMPLATE_RESOURCE = GWT.create(
             ContentTemplateResource.class);
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private ContentTemplate originalTemplate;
@@ -56,17 +56,17 @@ public class ContentTemplateEditPresenter
     public ContentTemplateEditPresenter(final EventBus eventBus,
                                         final ContentTemplateEditView view,
                                         final DocSelectionBoxPresenter pipelineSelectionPresenter,
-                                        final ExpressionEditorController editExpressionPresenter,
+                                        final ExpressionEditorController expressionEditor,
                                         final RestFactory restFactory) {
         super(eventBus, view);
         own(pipelineSelectionPresenter);
-        own(editExpressionPresenter);
+        own(expressionEditor);
         this.fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         // Shows its requests' progress as this presenter does (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.expressionEditor = expressionEditor;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
-        view.setExpressionView(editExpressionPresenter);
+        view.setExpressionView(expressionEditor);
 
         restFactory
                 .create(CONTENT_TEMPLATE_RESOURCE)
@@ -78,7 +78,7 @@ public class ContentTemplateEditPresenter
                 .taskMonitorFactory(this)
                 .exec();
 
-        editExpressionPresenter.init(
+        expressionEditor.init(
                 MetaFields.STREAM_STORE_DOC_REF,
                 fieldSelectionBoxModel);
 
@@ -99,7 +99,7 @@ public class ContentTemplateEditPresenter
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(Objects.requireNonNullElseGet(contentTemplate.getExpression(),
+        expressionEditor.read(Objects.requireNonNullElseGet(contentTemplate.getExpression(),
                 () -> ExpressionOperator.builder().build()));
 
         final ContentTemplateEditView view = getView();
@@ -113,7 +113,7 @@ public class ContentTemplateEditPresenter
     }
 
     ContentTemplate write() {
-        final ExpressionOperator expression = editExpressionPresenter.write();
+        final ExpressionOperator expression = expressionEditor.write();
         final ContentTemplateEditView view = getView();
         return ContentTemplate.copy(originalTemplate)
                 .withName(view.getName())

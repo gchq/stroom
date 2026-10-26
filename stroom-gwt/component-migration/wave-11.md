@@ -369,7 +369,7 @@ plugin-or-infrastructure, not UI; complexity 2, effort S; used by 1.
 - **Controller:** `stroom.document.asset.client.component.DocumentAssetQuickUploadController`
 - **Template:** `none` → `none (built in Java because it has no view)`
 - **Goes:** `stroom-core-client/src/main/java/stroom/document/asset/client/presenter/DocumentAssetQuickUploadPresenter.java (becomes the controller)`; AppRoot injection (DocumentAssetQuickUploadPresenter.java:83,96): owned by its caller via make() and opens the dialog with its own makeDialog
-- **Names:** Not a presenter despite its name; DocumentAssetQuickUploadController (no clash). Only caller: FloorMapLayerStylePresenter (unit 7).
+- **Names:** Not a presenter despite its name; DocumentAssetQuickUploadController (no clash). Only caller: FloorMapLayerStyleController (wave 7).
 
 **Stays in Java:** REST fetchDraftAssets / upload (needs .owner(this)), name clash suffixing, error alerts.
 
@@ -1174,7 +1174,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | ReplaceSecretViewImpl.ui.xml:21 | component-declaration | <datetimebox:DateTimeBox ui:field="expiryTime"/> already declared; its popup provider (ReplaceSecretPresenter.java:61 setPopupProvider) is replaced by make(dateTimeBoxControllerProvider).attach(view.getExpiryTime()) (DateTimeBox, wave 4) |
 | ReplaceSecretViewImpl.ui.xml:15 | component-declaration | <chk:TickBox ui:field="credsExpire"/> already declared (wave 2); FormGroup (wave 1) already declared |
 
-**Stays in Java:** warning text (ReplaceSecretViewImpl.java:68): built from the credential's name; secret slot <g:SimplePanel ui:field="secret"> (ReplaceSecretViewImpl.ui.xml:10): which secret component (KeyStoreSecret, KeyStoreFileSecret, AccessToken, SshKey, UsernamePassword, wave 7) is chosen at runtime by credential type through SecretPresenters, so it cannot be declared statically; expiry enabled/disabled state (ReplaceSecretViewImpl.java:103-106); caption "Replace <type> Secret" (ReplaceSecretPresenter.java:100): built from data.
+**Stays in Java:** warning text (ReplaceSecretViewImpl.java:68): built from the credential's name; secret slot <g:SimplePanel ui:field="secret"> (ReplaceSecretViewImpl.ui.xml:10): which secret component (KeyStoreSecret, KeyStoreFileSecret, AccessToken, SshKey, UsernamePassword, wave 7) is chosen at runtime by credential type through `SecretForms` (wave 7), so it cannot be declared statically; expiry enabled/disabled state (ReplaceSecretViewImpl.java:103-106); caption "Replace <type> Secret" (ReplaceSecretPresenter.java:100): built from data.
 
 ## `FloorMapObjectEditPresenter`
 

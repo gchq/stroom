@@ -16,7 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
-import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,26 +30,28 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TestSingleSelectionEventManager {
 
+    // The keys don't use the grid (only a press does, which needs a browser), so it is null here
+
     @Mock
-    private SelectionModel<String> selectionModel;
+    private SingleSelectionModel<String> selectionModel;
 
     @Test
     void theSelectionFollowsTheFocus() {
-        new SingleSelectionEventManager<>(selectionModel).onFocusRow("b", false, false);
+        new SingleSelectionEventManager<>(null, selectionModel).onFocusRow("b", false, false);
 
         verify(selectionModel).setSelected("b", true);
     }
 
     @Test
     void ctrlMovesTheFocusWithoutSelecting() {
-        new SingleSelectionEventManager<>(selectionModel).onFocusRow("b", false, true);
+        new SingleSelectionEventManager<>(null, selectionModel).onFocusRow("b", false, true);
 
         verify(selectionModel, never()).setSelected(any(), anyBoolean());
     }
 
     @Test
     void spaceAndEnterSelectTheRow() {
-        final SingleSelectionEventManager<String> manager = new SingleSelectionEventManager<>(selectionModel);
+        final SingleSelectionEventManager<String> manager = new SingleSelectionEventManager<>(null, selectionModel);
 
         manager.onSpace("a", false, false);
         manager.onEnter("c");
@@ -60,7 +62,7 @@ class TestSingleSelectionEventManager {
 
     @Test
     void noRowSelectsNothing() {
-        final SingleSelectionEventManager<String> manager = new SingleSelectionEventManager<>(selectionModel);
+        final SingleSelectionEventManager<String> manager = new SingleSelectionEventManager<>(null, selectionModel);
 
         manager.onFocusRow(null, false, false);
         manager.onSpace(null, false, false);

@@ -56,8 +56,7 @@ public class FloorMapTimelineSettingsController extends Controller {
     ///
     /// @param anchor The widget it is shown above.
     public void show(final Widget anchor) {
-        Rect relativeRect = new Rect(anchor.getElement());
-        relativeRect = relativeRect.grow(3);
+        final Rect relativeRect = new Rect(anchor.getElement()).grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.ABOVE);
         ControllerDialog.show(this)
                 .popupType(PopupType.POPUP)

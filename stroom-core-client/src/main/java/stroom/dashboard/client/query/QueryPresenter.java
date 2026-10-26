@@ -102,7 +102,7 @@ public class QueryPresenter
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
 
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<DocSelectionPopup> pipelineSelection;
@@ -133,7 +133,7 @@ public class QueryPresenter
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                          final ExpressionTreeController expressionPresenter,
+                          final ExpressionTreeController expressionTree,
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<DocSelectionPopup> pipelineSelection,
@@ -147,11 +147,11 @@ public class QueryPresenter
                           final ResultStoreModel resultStoreModel,
                           final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view, settingsPresenterProvider);
-        own(expressionPresenter);
+        own(expressionTree);
         own(historyPresenter);
         own(favouritesPresenter);
         own(processorLimitsPresenter);
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
@@ -164,11 +164,11 @@ public class QueryPresenter
         // Shows its requests' progress as this presenter does (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
 
-        view.setExpressionView(expressionPresenter);
+        view.setExpressionView(expressionTree);
         view.getQueryButtons().setOnStart(this::onRunPressed);
 
-        expressionPresenter.setOnChange(this::onChange);
-        expressionPresenter.setOnSearch(this::promptAndStart);
+        expressionTree.setOnChange(this::onChange);
+        expressionTree.setOnSearch(this::promptAndStart);
 
         addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
@@ -210,8 +210,8 @@ public class QueryPresenter
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
 
-        own(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
-        own(expressionPresenter.addContextMenuHandler(event -> {
+        own(expressionTree.addSelectionListener(event -> setButtonsEnabled()));
+        own(expressionTree.addContextMenuHandler(event -> {
             // On a term's field, the field's edit items come first
             final List<Item> menuItems = ContextMenuManager.withEditItems(
                     event.getEditTarget(), addExpressionActionsToMenu());
@@ -234,7 +234,7 @@ public class QueryPresenter
     }
 
     private void onFavourite() {
-        final ExpressionOperator root = expressionPresenter.write();
+        final ExpressionOperator root = expressionTree.write();
         favouritesPresenter.show(
                 QueryPresenter.this,
                 getDashboardContext().getDashboardDocRef().getUuid(),
@@ -382,7 +382,7 @@ public class QueryPresenter
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(dataSourceRef));
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
-        expressionPresenter.init(dataSourceRef, fieldSelectionBoxModel);
+        expressionTree.init(dataSourceRef, fieldSelectionBoxModel);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
@@ -402,11 +402,11 @@ public class QueryPresenter
     }
 
     private void addOperator() {
-        expressionPresenter.addOperator();
+        expressionTree.addOperator();
     }
 
     private void copy() {
-        expressionPresenter.copy();
+        expressionTree.copy();
     }
 
     private void addTerm() {
@@ -415,7 +415,7 @@ public class QueryPresenter
         if (dataSourceRef == null) {
             warnNoDataSource();
         } else {
-            expressionPresenter.addTerm();
+            expressionTree.addTerm();
         }
     }
 
@@ -424,18 +424,18 @@ public class QueryPresenter
     }
 
     private void disable() {
-        expressionPresenter.disable();
+        expressionTree.disable();
         setButtonsEnabled();
     }
 
     private void delete() {
-        expressionPresenter.delete();
+        expressionTree.delete();
     }
 
     private void choosePipeline() {
-        expressionPresenter.clearSelection();
+        expressionTree.clearSelection();
         // Write expression.
-        final ExpressionOperator root = expressionPresenter.write();
+        final ExpressionOperator root = expressionTree.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
         final QueryData queryData = QueryData
@@ -603,12 +603,12 @@ public class QueryPresenter
             warnNoDataSource();
         } else {
             currentErrors = null;
-            expressionPresenter.clearSelection();
+            expressionTree.clearSelection();
 
             setErrorsVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = expressionPresenter.write();
+            final ExpressionOperator root = expressionTree.write();
             ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
 
             final DashboardContext dashboardContext = getDashboardContext();
@@ -635,12 +635,12 @@ public class QueryPresenter
             warnNoDataSource();
         } else {
             currentErrors = null;
-            expressionPresenter.clearSelection();
+            expressionTree.clearSelection();
 
             setErrorsVisible(false);
 
             // Write expression.
-            ExpressionOperator root = expressionPresenter.write();
+            ExpressionOperator root = expressionTree.write();
             final DashboardContext dashboardContext = getDashboardContext();
             root = dashboardContext.replaceExpression(root, true);
 
@@ -700,7 +700,7 @@ public class QueryPresenter
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(getQuerySettings().copy().expression(expressionPresenter.write()).build());
+        setSettings(getQuerySettings().copy().expression(expressionTree.write()).build());
         return super.write();
     }
 
@@ -769,7 +769,7 @@ public class QueryPresenter
     }
 
     public void setExpression(final ExpressionOperator root) {
-        expressionPresenter.read(root);
+        expressionTree.read(root);
     }
 
     @Override
@@ -820,7 +820,7 @@ public class QueryPresenter
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
-        menuItems.addAll(expressionPresenter.getMoveMenuItems(6));
+        menuItems.addAll(expressionTree.getMoveMenuItems(6));
 
         return menuItems;
     }
@@ -834,8 +834,8 @@ public class QueryPresenter
     }
 
     private stroom.query.client.Item getSelectedItem() {
-        if (expressionPresenter.getSelectionModel() != null) {
-            return expressionPresenter.getSelectionModel().getSelectedObject();
+        if (expressionTree.getSelectionModel() != null) {
+            return expressionTree.getSelectionModel().getSelectedObject();
         }
         return null;
     }
@@ -871,7 +871,7 @@ public class QueryPresenter
 
             final DashboardContext dashboardContext = getDashboardContext();
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
-                    expressionPresenter.write(),
+                    expressionTree.write(),
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange());
 

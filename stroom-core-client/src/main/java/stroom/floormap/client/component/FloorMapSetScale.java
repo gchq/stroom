@@ -21,13 +21,13 @@ import stroom.floormap.shared.FloorMapMeasurementUnits.Family;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Set Scale dialog's content, which its [FloorMapSetScaleController] shows.
@@ -53,7 +53,7 @@ public class FloorMapSetScale extends Component {
     @UiField
     TableCellElement distanceLabel;
     @UiField
-    TextBox distanceBox;
+    TextInput distanceBox;
     @UiField
     SelectionBox<Unit> unitListBox;
 
@@ -66,8 +66,6 @@ public class FloorMapSetScale extends Component {
             }
         }
         unitListBox.setDisplayValueFunction(Unit::getLabel);
-        // GWT's TextBox has no placeholder setter for its template
-        distanceBox.getElement().setPropertyString("placeholder", "e.g. 2.4");
 
         // The label text lives in a <td>, which names nothing on its own. Without this the dialog's
         // only input is announced as an unnamed edit box

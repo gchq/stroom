@@ -178,7 +178,7 @@ list, presenter; complexity 3, effort M; used by 3.
 - **Controller:** `stroom.floormap.client.component.FloorMapGroupsController`
 - **Template:** `none (layout built in Java in FloorMapGroupsViewImpl, unit 82)` → `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapGroups.ui.xml`
 - **Goes:** `FloorMapGroupsPresenter.java; inner FloorMapGroupsView (:541-)`; `stroom-core-client/src/main/java/stroom/floormap/client/view/FloorMapGroupsViewImpl.java (unit 82, same commit)`; `FloorMapModule.java:169-171`; `FloorMapScreenModule.java:133-135`
-- **Names:** FloorMapGroups: no clash (FloorMapGroup, the shared model, is a different name). FloorMapGroupEditPresenter in its declares list is a dialog it opens: makeDialog, not declared.
+- **Names:** FloorMapGroups: no clash (FloorMapGroup, the shared model, is a different name). FloorMapGroupEditPresenter in its declares list is a dialog it opens: since wave 7 a one-use `FloorMapGroupEditController` it shows (`show`, with `ControllerDialog.showOnce`), not declared.
 
 | Inline style | Code | Kind | Replacement |
 | --- | --- | --- | --- |

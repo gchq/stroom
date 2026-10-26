@@ -141,18 +141,18 @@
     --expression-item__drop-refused: var(--icon-colour__red);
 
     /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
-       screen's pipeline bar (pipeline-path.css) */
+       screen's pipeline bar (pipeline-path-bar.css) */
     --pipeline-element__background-color: #f5f9fd;
     --pipeline-element__text-color: #444;
     /* The names of pipeline elements held down with the mouse (pipeline-element.css,
-       pipeline-path.css), at least 4.5:1 against the pressed fill */
+       pipeline-path-bar.css), at least 4.5:1 against the pressed fill */
     --pipeline-element__text-color--pressed: var(--pipeline-element__text-color);
     --pipeline-element__border-color: #918e8c;
-    /* The pipeline bar's borders for a warning and an error (pipeline-path.css), at least 3:1
+    /* The pipeline bar's borders for a warning and an error (pipeline-path-bar.css), at least 3:1
        against the page for a meaningful graphic (WCAG 1.4.11): the error icon's red, and for a
        warning orange, as the warning icon's yellow is 1.5:1 */
-    --pipeline-path__warn: var(--orange-900);
-    --pipeline-path__error: var(--icon-colour__red);
+    --pipeline-path-bar__warn: var(--orange-900);
+    --pipeline-path-bar__error: var(--icon-colour__red);
     /* The pipeline tree's connectors (PipelineConnectorRenderer), by what flows along them, each
        at least 3:1 against the page */
     --pipeline-connector__raw: var(--orange-900);
@@ -162,13 +162,13 @@
        that refuses what is dropped, at least 3:1 against the page as the bar's */
     --pipeline-element__drop-target: var(--icon-colour__dark-green);
     --pipeline-element__drop-refused: var(--icon-colour__red);
-    /* A selected pipeline element (pipeline-element.css, pipeline-path.css), as a selected row */
+    /* A selected pipeline element (pipeline-element.css, pipeline-path-bar.css), as a selected row */
     --pipeline-element__background-color--selected: var(--row__background-color--selected);
     --pipeline-element__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element__text-color--selected: var(--text-color--selected);
     /* The pipeline bar's filter icons: a darker green than the usual, which is under 3:1 against
        white for a meaningful graphic (WCAG 1.4.11) */
-    --pipeline-path__filter: var(--icon-colour__dark-green);
+    --pipeline-path-bar__filter: var(--icon-colour__dark-green);
 
     --link__text-color: #0000AA;
 

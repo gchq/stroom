@@ -43,7 +43,6 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.Range;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -269,7 +268,7 @@ public class DataGridSelectionEventManager<T>
         }
         final Element target = Element.as(eventTarget);
 
-        if (fireHyperlink(target) || isConsumedByCell(event, target)) {
+        if (fireHyperlink(target) || isConsumedByCell(dataGrid, event, target)) {
             return;
         }
 
@@ -313,7 +312,17 @@ public class DataGridSelectionEventManager<T>
         return false;
     }
 
-    private boolean isConsumedByCell(final CellPreviewEvent<T> event, final Element target) {
+    /// Whether a press on `target` is the cell's own (a control in it, e.g. a button cell), or in
+    /// a part of the row marked as not selecting it (`data-dg-no-select`), so it doesn't select
+    /// the row.
+    ///
+    /// @param dataGrid The grid pressed on.
+    /// @param event    The press.
+    /// @param target   The element pressed.
+    /// @return Whether the press doesn't select the row.
+    static boolean isConsumedByCell(final DataGrid<?> dataGrid,
+                                    final CellPreviewEvent<?> event,
+                                    final Element target) {
         if (target.hasAttribute("data-dg-no-select")
             || findNoSelectAncestor(target)) {
             return true;
@@ -344,7 +353,7 @@ public class DataGridSelectionEventManager<T>
         return false;
     }
 
-    private boolean findNoSelectAncestor(final Element target) {
+    private static boolean findNoSelectAncestor(final Element target) {
         Element element = target;
         while (element != null && !isCell(element)) {
             if (element.hasAttribute("data-dg-no-select")) {

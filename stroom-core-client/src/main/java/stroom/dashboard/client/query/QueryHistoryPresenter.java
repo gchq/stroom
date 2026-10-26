@@ -52,7 +52,7 @@ public class QueryHistoryPresenter
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
     private final RestFactory restFactory;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private static final String NAME = "Query history";
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
@@ -63,19 +63,19 @@ public class QueryHistoryPresenter
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus,
                                  final QueryHistoryView view,
-                                 final ExpressionTreeController expressionPresenter,
+                                 final ExpressionTreeController expressionTree,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(expressionPresenter);
+        own(expressionTree);
 
         this.restFactory = restFactory;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
-        view.setExpressionView(expressionPresenter);
+        view.setExpressionView(expressionTree);
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
@@ -94,9 +94,9 @@ public class QueryHistoryPresenter
             final StoredQuery query = selectionModel.getSelected();
 
             if (query == null || query.getQuery() == null) {
-                expressionPresenter.read(null);
+                expressionTree.read(null);
             } else {
-                expressionPresenter.read(query.getQuery().getExpression());
+                expressionTree.read(query.getQuery().getExpression());
             }
         }));
         own(selectionModel.addSelectionHandler(event -> {

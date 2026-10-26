@@ -77,6 +77,8 @@
 @import url("expression-tree.css");
 @import url("expression-item.css");
 @import url("expression-editor.css");
+@import url("secret-form.css");
+@import url("shared-file-store-settings.css");
 @import url("CommandLinkCell.css");
 @import url("TermEditor.css");
 @import url("alert.css");
@@ -85,7 +87,7 @@
 @import url("draggable-tree.css");
 @import url("pipeline-tree.css");
 @import url("pipeline-element.css");
-@import url("pipeline-path.css");
+@import url("pipeline-path-bar.css");
 @import url("stepping-screen.css");
 @import url("value-spinner.css");
 @import url("duration-picker.css");
@@ -130,6 +132,7 @@
 @import url("red-green-text-cell.css");
 @import url("conditional-formatting.css");
 @import url("pathways.css");
+@import url("pathway-tree.css");
 @import url("trace-histogram-chart.css");
 @import url("ask-stroom-ai.css");
 @import url("ai-chat-cell.css");

@@ -120,6 +120,15 @@ public class AsyncSuggestOracle extends SuggestOracle {
         }
     }
 
+    /// Cancels a request for suggestions still waiting for what is typed to settle, e.g. when the
+    /// editor goes, so nothing is fetched after.
+    public void cancel() {
+        if (requestTimer != null) {
+            requestTimer.cancel();
+            requestTimer = null;
+        }
+    }
+
     private void returnSuggestions(final Request request,
                                    final Callback callback,
                                    final List<String> list) {

@@ -25,5 +25,5 @@
 	position: absolute;
 }
 
-/* --read-only: an expression the user can't change (EditExpressionPresenter.setReadOnly), whose
+/* --read-only: an expression the user can't change (ExpressionEditorController, from its read only context), whose
    items are greyed (expression-item.css) */

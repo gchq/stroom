@@ -22,7 +22,7 @@
  * As with toolbar.css, its states come from its ARIA attributes where it has them (aria-selected,
  * aria-disabled, and the focus), and from modifiers for those of moving elements (--target,
  * --refused, --detached).
- * Its colours are those of the stepping screen's pipeline bar (pipeline-path.css): its border, a
+ * Its colours are those of the stepping screen's pipeline bar (pipeline-path-bar.css): its border, a
  * fill over the elements' background in the toolbar buttons' states, and its selected colours.
  */
 

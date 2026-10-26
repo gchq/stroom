@@ -31,7 +31,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /// Shows a pathway's graph ([PathwayTree]), read only as its document is, and shows the traces
 /// that match the path to the chosen node.
@@ -103,7 +105,17 @@ public class PathwayTreeController extends Controller {
                 final String parentNodeUuid = parentMap.get(pathNodeSequence.getUuid());
                 pathNode = pathNodeMap.get(parentNodeUuid);
 
-                root = pathNode.copy().targets(Collections.singletonList(pathNodeSequence)).build();
+                // The sequence holds the path cut down so far in place of the node it was cut from
+                final String childUuid = root.getUuid();
+                final PathNode child = root;
+                final List<PathNode> nodes = NullSafe.list(pathNodeSequence.getNodes())
+                        .stream()
+                        .map(sequenceNode -> sequenceNode.getUuid().equals(childUuid)
+                                ? child
+                                : sequenceNode)
+                        .collect(Collectors.toList());
+                final PathNodeSequence leadingOn = pathNodeSequence.copy().nodes(nodes).build();
+                root = pathNode.copy().targets(Collections.singletonList(leadingOn)).build();
             } else {
                 pathNode = null;
             }

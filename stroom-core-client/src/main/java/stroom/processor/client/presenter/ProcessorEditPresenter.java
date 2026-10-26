@@ -70,7 +70,7 @@ public class ProcessorEditPresenter
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
 
-    private final ExpressionEditorController editExpressionPresenter;
+    private final ExpressionEditorController expressionEditor;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
@@ -85,7 +85,7 @@ public class ProcessorEditPresenter
     @Inject
     public ProcessorEditPresenter(final EventBus eventBus,
                                   final ProcessorEditView view,
-                                  final ExpressionEditorController editExpressionPresenter,
+                                  final ExpressionEditorController expressionEditor,
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
@@ -94,19 +94,19 @@ public class ProcessorEditPresenter
                                   final ProcessorProfileClient processorProfileClient,
                                   final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, view);
-        own(editExpressionPresenter);
+        own(expressionEditor);
         own(userRefSelectionBoxPresenter);
         make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
         make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
         view.setUiHandlers(this);
 
-        this.editExpressionPresenter = editExpressionPresenter;
+        this.expressionEditor = expressionEditor;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.feedDependencyPresenterProvider = feedDependencyPresenterProvider;
-        view.setExpressionView(editExpressionPresenter);
+        view.setExpressionView(expressionEditor);
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
 
@@ -128,8 +128,8 @@ public class ProcessorEditPresenter
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
-        editExpressionPresenter.init(dataSource, selectionBoxModel);
-        editExpressionPresenter.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
+        expressionEditor.init(dataSource, selectionBoxModel);
+        expressionEditor.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
@@ -215,10 +215,10 @@ public class ProcessorEditPresenter
                 .caption(existingFilter
                         ? "Edit Filter"
                         : "Add Filter")
-                .onShow(e -> editExpressionPresenter.focus())
+                .onShow(e -> expressionEditor.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ExpressionOperator expression = editExpressionPresenter.write();
+                        final ExpressionOperator expression = expressionEditor.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
                         final Integer maxTasks = getView().getMaxProcessingTasks();

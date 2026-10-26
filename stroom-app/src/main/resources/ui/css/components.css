@@ -1610,7 +1610,6 @@
 }
 
 /* Credentials Manager */
-/* Text area needs to be big enough to display certificates */
 /* Space the groups out as a form does (also used by the processor profile's Edit Period) */
 .credentials-details-dialog {
     display: flex;
@@ -1618,11 +1617,7 @@
     gap: var(--control__gap--vertical);
 }
 
-.credentials-details-dialog textarea {
-    width: 650px;
-    height: 150px;
-}
-/* Width of access token and passphrase */
+/* Width of the expiry time's box (the secret's fields are secret-form.css's) */
 .credentials-details-dialog .wide-control {
     width: 650px;
 }

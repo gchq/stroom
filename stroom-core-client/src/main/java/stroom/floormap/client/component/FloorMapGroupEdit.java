@@ -19,6 +19,7 @@ package stroom.floormap.client.component;
 import stroom.floormap.client.FloorMapAria;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -72,7 +73,7 @@ public class FloorMapGroupEdit extends Component {
     @UiField
     Label membersLabel;
     @UiField
-    TextBox filterBox;
+    TextInput filterBox;
     @UiField
     ScrollPanel memberScroll;
     @UiField
@@ -101,11 +102,6 @@ public class FloorMapGroupEdit extends Component {
         colourLabel.setId(FloorMapAria.uniqueId("floormap-label"));
         FloorMapAria.labelledBy(colourBox, colourLabel.getId());
 
-        // GWT's TextBox has no placeholder setter for its template. A placeholder is not an
-        // accessible name: it is not exposed by every screen reader and it disappears as soon as
-        // anything is typed
-        filterBox.getElement().setPropertyString("placeholder", "Filter by name, type or id");
-        FloorMapAria.label(filterBox, "Filter members by name, type or id");
         //noinspection unused e
         filterBox.addKeyUpHandler(e -> onFilterChanged());
 

@@ -577,7 +577,7 @@ tab, presenter; complexity 3, effort M; used by 1.
 | DataRetentionImpactPresenter.java:110,117 | component-declaration | new template: root <dg:PagerPanel ui:field="pager"> (wave 5, stroom.widget.datagrid.client; wave 5 proposes renaming it PagerPanel) holding <dg:DataGrid ui:field="dataGrid" tableName="Data Retention Impact"/> (once DataGrid has its no-arg constructor) instead of new DataGrid<>(this) and view.setDataWidget |
 | DataRetentionImpactPresenter.java:122-132 | aria | toolbar name "Retention impact actions" and Run Query/Stop Query/Set Query Filter/Nested Results (toggle)/Expand All/Collapse All with icons and titles: ToolbarButton children of the pager's toolbar in the template if the wave-5 pager takes them, else one ImpactAction enum with setOnAction/setAvailableActions |
 
-**Stays in Java:** Grid columns and ExpanderCell rendering (data); Button enabled/toggle state (updateButtonStates, DataRetentionImpactPresenter.java:236-248); Query, cancel and sort logic and the rows (controller and model); EditExpressionPresenter is the filter dialog, opened by the controller, so not declared.
+**Stays in Java:** Grid columns and ExpanderCell rendering (data); Button enabled/toggle state (updateButtonStates, DataRetentionImpactPresenter.java:236-248); Query, cancel and sort logic and the rows (controller and model); the filter dialog (since wave 7 an `ExpressionEditorController`, shown with `ControllerDialog.showOnce`) is opened by the controller, so not declared.
 
 ## `ProcessorPresenter`
 

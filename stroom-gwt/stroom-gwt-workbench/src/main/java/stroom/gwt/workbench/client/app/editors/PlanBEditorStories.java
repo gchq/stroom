@@ -71,6 +71,9 @@ public final class PlanBEditorStories {
             .get("/planB/v1/planb-METRIC", RestReply.json(doc("METRIC", "metric", MAX_STORE_SIZE, "")))
             .get("/planB/v1/planb-SESSION", RestReply.json(doc("SESSION", "session", MAX_STORE_SIZE, "")))
             .get("/planB/v1/planb-TRACE", RestReply.json(doc("TRACE", "trace", MAX_STORE_SIZE, "")))
+            .get("/planB/v1/planb-TEMPORAL_STATE", RestReply.json(doc("TEMPORAL_STATE", "temporalState",
+                    MAX_STORE_SIZE, "")))
+            .get("/planB/v1/planb-HISTOGRAM", RestReply.json(doc("HISTOGRAM", "histogram", MAX_STORE_SIZE, "")))
             // MetricTimeZoneOffset: the key schema's time zone is an offset
             .get("/planB/v1/planb-METRIC-OFFSET", RestReply.json(doc("METRIC", "metric", MAX_STORE_SIZE,
                     ", \"keySchema\": {\"timeZone\": {\"use\": \"OFFSET\", \"offsetHours\": -1, "
@@ -207,6 +210,10 @@ public final class PlanBEditorStories {
                 .story("OtherTypes", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
+                    play.click(stateType(play));
+                    play.click(play.screen().findByText("Range State", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull());
+                    play.expect(play.getByText("Value Schema", GROUP_LABEL)).toBeInTheDocument();
                     for (final String type : List.of("Temporal State", "Temporal Range State")) {
                         play.click(stateType(play));
                         play.click(play.screen().findByText(type, ".selection-popup *"));
@@ -218,6 +225,19 @@ public final class PlanBEditorStories {
                     play.click(play.screen().findByText("Histogram", ".selection-popup *"));
                     play.waitFor(() -> play.expect(play.queryByText("Condense Data", GROUP_LABEL)).toBeNull());
                     play.expect(selection(play, "Key Schema", "Temporal Resolution")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Changing the type keeps the data retention settings too
+                .story("ChangingTypeKeepsRetention", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(retentionEnabled(play)).not().toBeChecked());
+                    play.click(retentionEnabled(play));
+                    play.waitFor(() -> play.expect(retentionEnabled(play)).toBeChecked());
+                    for (final String type : List.of("Temporal State", "Histogram")) {
+                        play.click(stateType(play));
+                        play.click(play.screen().findByText(type, ".selection-popup *"));
+                        play.waitFor(() -> play.expect(retentionEnabled(play)).toBeChecked());
+                    }
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Editing a setting makes the document dirty, so Save is enabled
@@ -280,6 +300,25 @@ public final class PlanBEditorStories {
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // TEMPORAL_STATE read only: its condense settings can't be changed either
+                .story("TemporalStateReadOnly", context -> render(context, "planb-TEMPORAL_STATE", true))
+                .withPlay(play -> {
+                    final Play condense = play.within(play.findByText("Condense Data", GROUP_LABEL).closest(GROUP));
+                    play.expect(condense.getByRole("checkbox", "Enabled")).toHaveAttribute("aria-readonly", "true");
+                    play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // HISTOGRAM read only: its settings can't be changed
+                .story("HistogramReadOnly", context -> render(context, "planb-HISTOGRAM", true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(selection(play, "Key Schema", "Temporal Resolution"))
+                            .toBeInTheDocument());
+                    play.expect(maxStoreSize(play)).toHaveAttribute("readonly");
+                    play.expect(retentionEnabled(play)).toHaveAttribute("aria-readonly", "true");
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Unset schema fields show the Java defaults of their schemas
                 .story("UnsetSchemaFieldsShowTheirJavaDefaults", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
@@ -326,6 +365,12 @@ public final class PlanBEditorStories {
 
     private static Query maxStoreSize(final Play play) {
         return play.within(play.getByText("Max Store Size", "label").closest(FORM_GROUP)).querySelector("input");
+    }
+
+    // The Data Retention group's Enabled tick box
+    private static Query retentionEnabled(final Play play) {
+        return play.within(play.getByText("Data Retention", GROUP_LABEL).closest(GROUP))
+                .getByRole("checkbox", "Enabled");
     }
 
     // The text box of the selection box labelled `label` in the settings group `group`

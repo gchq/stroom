@@ -86,7 +86,7 @@ public class DataRetentionImpactPresenter
     private final MultiSelectionModelImpl<DataRetentionImpactRow> selectionModel;
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
-    private final Provider<ExpressionEditorController> editExpressionPresenterProvider;
+    private final Provider<ExpressionEditorController> expressionEditorProvider;
 
     private final ButtonView runButton;
     private final ButtonView stopButton;
@@ -108,7 +108,7 @@ public class DataRetentionImpactPresenter
     public DataRetentionImpactPresenter(final EventBus eventBus,
                                         final PagerPanel view,
                                         final RestFactory restFactory,
-                                        final Provider<ExpressionEditorController> editExpressionPresenterProvider) {
+                                        final Provider<ExpressionEditorController> expressionEditorProvider) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();
@@ -117,7 +117,7 @@ public class DataRetentionImpactPresenter
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
-        this.editExpressionPresenterProvider = editExpressionPresenterProvider;
+        this.expressionEditorProvider = expressionEditorProvider;
 
         view.getToolbar().setName("Retention impact actions");
         runButton = view.getToolbar().button(SvgImage.PLAY, BTN_TITLE_RUN_QUERY,
@@ -281,21 +281,21 @@ public class DataRetentionImpactPresenter
     }
 
     private void openFilterPresenter() {
-        final ExpressionEditorController editExpressionPresenter = editExpressionPresenterProvider.get();
-        editExpressionPresenter.read(criteria.getExpression());
+        final ExpressionEditorController expressionEditor = expressionEditorProvider.get();
+        expressionEditor.read(criteria.getExpression());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(FILTERABLE_FIELDS);
-        editExpressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        expressionEditor.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ControllerDialog.showOnce(this, editExpressionPresenter)
+        ControllerDialog.showOnce(this, expressionEditor)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Query Filter")
-                .onShow(e -> editExpressionPresenter.focus())
+                .onShow(e -> expressionEditor.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        criteria.setExpression(editExpressionPresenter.write());
+                        criteria.setExpression(expressionEditor.write());
                     }
                     e.hide();
                 })

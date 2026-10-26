@@ -23,7 +23,7 @@
 //   EditorPresenter               view's context menu                     an ACE editor
 //   ExpressionTreeController      addContextMenuHandler(…)                an expression term
 //   PipelineTree                  addContextMenuHandler(…)                a pipeline element
-//   QueryPresenter / EditExpressionPresenter / SteppingPresenter / PipelineStructurePresenter
+//   QueryPresenter / ExpressionEditorController / SteppingPresenter / PipelineStructurePresenter
 //
 // The oracle is the same for all of them and needs no source reading beyond the registration: a
 // context handler that runs puts a MENU on the screen. GWT's menus are `.menu__item` (the same
@@ -44,7 +44,7 @@
  */
 export const TARGETS = [
   { sel: '.explorer-cell', what: 'an explorer row', skip: /^(Favourites|System)$/ },
-  { sel: '.ExpressionTreeViewImpl-layoutPanel .expressionItem, .expressionItem', what: 'an expression term' },
+  { sel: '.expression-item', what: 'an expression term' },
   { sel: '.pipeline-element', what: 'a pipeline element' },
   { sel: '.ace_content', what: 'the editor' },
   { sel: '.data-grid [role=row][data-row]', what: 'a grid row' },

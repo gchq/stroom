@@ -133,7 +133,7 @@ so it resets when Stroom restarts. With Resume Notifications After blank, sendin
 server stops expired credentials being used. A key store file must also be uploaded again every time
 the credentials are saved, including edits that don't change it.
 
-* `stroom-core-client/src/main/resources/stroom/credentials/client/view/KeyStoreSecretViewImpl.ui.xml`
+* `stroom-core-client/src/main/java/stroom/credentials/client/component/KeyStoreSecretForm.ui.xml`
 
 ### Annotation status and assignee dialogs act on what they start with
 
@@ -511,7 +511,8 @@ each story re-run against both builds with the same runner options):
 * `App/Editors/QueryEditor` `AddToAnnotation`: in a full run the Annotate Selected Rows button,
   which gets the focus back once the chooser closes, can show its focus ring; run on its own it
   doesn't. Like TopBar `Keyboard`, whether a focus put back by code draws the ring depends on
-  what the browser last saw.
+  what the browser last saw. Seen again in wave 7's full run (26 October 2026), and unchanged in
+  4 runs of it alone.
 * `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`: the Polled column counts the polls, so its
   number depends on how long the story ran. A fix: the screenshot is taken with polling stopped,
   or the column shows something that doesn't count.
@@ -1347,7 +1348,7 @@ build info names are row headers; and content pack icons have an empty `alt`.
 
 Still to do:
 
-* The Pathways editor's paths (`PathwayTreePresenter`) are an `HTML` widget whose nodes are chosen
+* The Pathways editor's paths (`PathwayTree`) are an `HTML` widget whose nodes are chosen
   by a click, with no roles and no keys, so they can't be used without a mouse. The grid's tree
   profile (`DataGridProfile.TREE`) would fix both, but changes its look to the explorer tree's.
   Left until the Pathways editor itself is fixed (see "The Pathways editor can't create a pathway
@@ -1604,9 +1605,6 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   never shown: the overview bar (`RightBar`) shows one of its own, which hides itself on a click
   (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,
   does nothing. Unused code, kept until removals are allowed.
-* `App/Editors/QueryEditor` `AddToAnnotation`'s screenshot differed once in wave 7's full run
-  (26 October 2026): the table's Add to Annotation button kept a focus ring when the shot was
-  taken. Unchanged in 4 runs of it alone, and nothing in wave 7 touches it: timing, a guess.
 * `Widgets/Editors & Viewers/AceEditorFeatures` `Snippet` failed its first attempt in a 70 story
   run (found 25 October 2026, in wave 6's editor unit): `apply ` hadn't become
   `xsl:apply-templates`. It passed its second, and 4 runs of 4 alone; Ace's completion timing under
@@ -1620,6 +1618,26 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   form; the floor map's dialogs are templates with `<table role="presentation">` now, and name
   their controls with `labelledBy` and `labelledByInnerControl`. Delete them once removals are
   allowed.
+* Unused code met in wave 7's audit (26 October 2026): `stroom.dashboard.client.table.ExpressionUiHandlers`,
+  unused since before wave 7 (wave 7 deleted `stroom.query.client.ExpressionUiHandlers`, its
+  twin). Delete it once removals are allowed.
+* The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
+  wave 7's audit; master has it too). A drop that moves a layer rebuilds the list before the
+  dragged row's `dragend`, so its handler, which forgets the row dragged (`dragFromIndex`), never
+  runs; a later drop of something dragged in from elsewhere then moves that layer again. The fix is
+  to forget it in the drop handler (`FloorMapLayers.buildRow`). Not fixed yet: the workbench has
+  no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.
+* The floor map follows no read-only state (found 26 October 2026, in wave 7's audit; master has it
+  too): nothing under `stroom.floormap.client` watches `Contexts.READ_ONLY`, and `FloorMapLayers`
+  has no `onReadOnlyChange`, so a floor map the user can only view can still have its layers
+  reordered and restyled on the Editor tab (though it can't be saved).
+* The floor map's dock (`FloorMapDock`) hands out its tab bar and layer container, and its controller
+  adds its handlers to the tab bar, rather than the dock having a callback for each (decided in
+  wave 7, as the plan accepted the controller relaying the tab bar's menu). Revisit with
+  `TabbedController` in wave 14.
+* No story hovers or drags on the floor map canvas but Set Scale's (wave 7's audit, 26 October
+  2026): the hover tooltip's and the gesture readout's positions, custom properties since wave 7,
+  are checked only by the screenshots, and neither shows in one.
 * ~~The item selection dialog's spinner (a data viewer's "Select Record") had no accessible name:
   its name label was never given text (found 25 October 2026 in wave 4).~~ Fixed: the spinner is
   named "Item number" in `ItemSelection.ui.xml`; story `Widgets/Editors & Viewers/ItemNavigator`
@@ -1719,7 +1737,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
   as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
   until both are entered again, even to change only the name. Nothing in the dialog says the
-  secret is write-only (`CredentialSettingsPresenter.read`, `UsernamePasswordSecretPresenter`).
+  secret is write-only (`CredentialSettingsPresenter.read`, `UsernamePasswordSecretForm`).
   Found by the credentials write cycle.
 * Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
   pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
@@ -1741,6 +1759,20 @@ These were found by the review and fixed in the same change:
   `SingleSelectionEventManager` (press, Space or Enter selects; the selection follows the focus).
   Master has it too. Story `FloorMapMap.EditGroup`. A grid given a selection model with one
   argument still selects nothing on a press; a caller that wants that passes a manager.
+  Wave 7's audit (2026-10-26) found the manager selected a group on a press of its highlight eye
+  too, a button cell of its own (this branch only): it now skips a press a cell takes, as the
+  multi-select manager does, and moves the grid's keyboard row to the row pressed. Story
+  `FloorMapMap.HighlightDoesNotSelect`.
+
+* **View Matching Traces on a pathway's node after two forks matched the nearer fork's other
+  branch too** (2026-10-26, wave 7's audit): the pathway cut down to the node kept, at each node
+  on the way, the sequence leading on, but the original one rather than the one already cut
+  down, so only the last fork was cut. Master has it too, with a changelog entry. JUnit
+  `TestPathwayTreeController.aNodeAfterTwoForksKeepsOnlyItsBranchAtEach`, which failed before.
+
+* **A term's document picker sat 1px low** (2026-10-26, wave 7's audit, this branch only): wave 7
+  replaced its inline `margin: 0` with a `termEditor-item--doc` class that had no rule, so
+  `.termEditor-item.docRef`'s `margin-top: 1px` applied. `TermEditor.css` now has the rule.
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
   * Required fields (#5410, batch 6 of `A11Y.md`): a required field's label ends with an asterisk

@@ -72,8 +72,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
-        // QueryModule, PolicyModule and TableModule
-
         // DashboardModule
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
     }

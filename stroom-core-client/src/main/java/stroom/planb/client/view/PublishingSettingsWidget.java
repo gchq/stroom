@@ -62,7 +62,6 @@ public class PublishingSettingsWidget extends Component {
         granularity.addItem(BucketGranularity.WEEK);
         granularity.setValue(BucketGranularity.DAY);
 
-
         maxWaitForDataTimeUnit.addItem(TimeUnit.MINUTES);
         maxWaitForDataTimeUnit.addItem(TimeUnit.HOURS);
         maxWaitForDataTimeUnit.addItem(TimeUnit.DAYS);

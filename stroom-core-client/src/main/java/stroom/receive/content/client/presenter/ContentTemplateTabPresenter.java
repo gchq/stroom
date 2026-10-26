@@ -75,7 +75,7 @@ public class ContentTemplateTabPresenter
     protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
     private final ContentTemplateListPresenter listPresenter;
-    private final ExpressionTreeController expressionPresenter;
+    private final ExpressionTreeController expressionTree;
     private final Provider<ContentTemplateEditPresenter> editPresenterProvider;
     private final RestFactory restFactory;
 
@@ -101,22 +101,22 @@ public class ContentTemplateTabPresenter
     public ContentTemplateTabPresenter(final EventBus eventBus,
                                        final ContentTemplateTabView view,
                                        final ContentTemplateListPresenter listPresenter,
-                                       final ExpressionTreeController expressionPresenter,
+                                       final ExpressionTreeController expressionTree,
                                        final Provider<ContentTemplateEditPresenter> editPresenterProvider,
                                        final RestFactory restFactory) {
         super(eventBus, view);
         own(listPresenter);
-        own(expressionPresenter);
+        own(expressionTree);
         this.listPresenter = listPresenter;
-        this.expressionPresenter = expressionPresenter;
+        this.expressionTree = expressionTree;
         this.editPresenterProvider = editPresenterProvider;
         this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
-//        getView().setExpressionView(expressionPresenter);
+//        getView().setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
-        expressionPresenter.setSelectionModel(null);
+        expressionTree.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Content template actions");
         saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
@@ -339,15 +339,15 @@ public class ContentTemplateTabPresenter
             final String description;
             if (contentTemplate != null) {
                 description = contentTemplate.getDescription();
-                getView().setExpressionView(expressionPresenter);
-                expressionPresenter.read(contentTemplate.getExpression());
+                getView().setExpressionView(expressionTree);
+                expressionTree.read(contentTemplate.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
                     edit(contentTemplate);
                 }
             } else {
                 description = null;
                 getView().setExpressionView(null);
-                expressionPresenter.read(null);
+                expressionTree.read(null);
             }
             getView().setDescription(description);
             updateButtons();

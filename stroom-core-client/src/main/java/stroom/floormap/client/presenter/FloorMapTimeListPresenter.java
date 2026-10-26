@@ -87,7 +87,7 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         dataGrid.setTableName("Fact Times");
         // The list holds one fact's entries, one per time
         dataGrid.setKeyProvider(TemporalEntry::getEffectiveTimeMs);
-        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(selectionModel));
+        dataGrid.setSelectionModel(selectionModel, new SingleSelectionEventManager<>(dataGrid, selectionModel));
         view.setGridView(dataGrid);
         initGridColumns();
         dataProvider.addDataDisplay(dataGrid);

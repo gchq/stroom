@@ -1003,6 +1003,19 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
                     expectNoProblems(play);
                 })
+                // Read only, Ctrl+X detaches nothing, as nothing can be moved
+                .story("KeyboardMoveReadOnly", context -> render(context, COMPLEX_FIXTURES, true))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    play.click(elementBox(tree, "rawWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+                    play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
+                    expectNoProblems(play);
+                })
                 // The Structure tab, nothing selected, as an editable partner for StructureReadOnly
                 .story("StructureEditable", context -> render(context, FIXTURES, false))
                 .withPlay(play -> {

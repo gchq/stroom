@@ -93,6 +93,10 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         }
     }
 
+    /// Listens for the selection changing, e.g. to enable the buttons that act on it.
+    ///
+    /// @param handler Told when the selection changes.
+    /// @return The registration, or null if the tree has no selection (it is read only).
     public HandlerRegistration addSelectionChangeHandler(final SelectionChangeEvent.Handler handler) {
         if (selectionModel == null) {
             return null;
@@ -118,6 +122,9 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         view.setConditionFilter(conditionFilter);
     }
 
+    /// Shows an expression, with nothing selected.
+    ///
+    /// @param root The expression.
     public void read(final ExpressionOperator root) {
         clearSelection();
 
@@ -126,6 +133,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         view.refresh();
     }
 
+    /// @return The expression as edited, with any term still being edited written to it.
     public ExpressionOperator write() {
         // Write any current editing values.
         view.write();
@@ -133,14 +141,19 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         return new ExpressionModel().getExpressionFromTree(tree);
     }
 
+    /// Adds an operator to the selected operator (or to the selected term's), or to the root.
     public void addOperator() {
         addNewItem(new Operator());
     }
 
+    /// Adds a term to the selected operator (or to the selected term's), or to the root.
     public void addTerm() {
         addNewItem(new Term());
     }
 
+    /// Sets the selected term's value, e.g. one chosen from a list.
+    ///
+    /// @param value The value.
     public void insertValue(final String value) {
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
@@ -152,6 +165,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         }
     }
 
+    /// Copies the selected item (and the items in it), adding the copy to the same operator.
     public void copy() {
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
@@ -199,6 +213,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         }
     }
 
+    /// Disables the selected item, or enables it if it is disabled.
     public void disable() {
         view.endEditing();
         if (selectionModel != null) {
@@ -213,6 +228,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         }
     }
 
+    /// Deletes the selected item (and the items in it).
     public void delete() {
         view.endEditing();
         view.cancelDetach();
@@ -292,6 +308,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         }
     }
 
+    /// Ends any editing and selects nothing.
     public void clearSelection() {
         view.endEditing();
         if (selectionModel != null) {
@@ -323,10 +340,13 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         view.setOnSearch(onSearch);
     }
 
+    /// @return The selection, or null if items can't be selected (the tree is read only).
     public MySingleSelectionModel<Item> getSelectionModel() {
         return selectionModel;
     }
 
+    /// @param selectionModel The selection, or null for none, so that items can't be selected (for
+    ///                       an expression that can't be changed).
     public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         view.setSelectionModel(selectionModel);

@@ -56,7 +56,7 @@ public class PathwayTree extends Component {
     private static final String EDIT_TITLE = "Edit Selected Path";
     private static final String DELETE_TITLE = "Delete Selected Path";
     private static final String READ_ONLY_SUFFIX = " (read only)";
-    private static final String SELECTED_CLASS = "pathway-nodeName--selected";
+    private static final String SELECTED_CLASS = "pathway-tree__node-name--selected";
 
     @UiField
     ToolbarButton newButton;
@@ -150,10 +150,10 @@ public class PathwayTree extends Component {
                             new Attribute("width", String.valueOf(width.get() + 10)),
                             new Attribute("height", String.valueOf(height.get() + 10)),
                             new Attribute("xmlns", "http://www.w3.org/2000/svg"));
-                }, Attribute.className("pathway-curves"));
-                div.div(d -> d.append(nodeBuilder.toSafeHtml()), Attribute.className("pathway-nodes"));
+                }, Attribute.className("pathway-tree__curves"));
+                div.div(d -> d.append(nodeBuilder.toSafeHtml()), Attribute.className("pathway-tree__nodes"));
             }
-        }, Attribute.className("pathway"));
+        }, Attribute.className("pathway-tree"));
         tree.setHTML(hb.toSafeHtml());
     }
 
@@ -182,11 +182,11 @@ public class PathwayTree extends Component {
         hb.div(nodeDiv -> {
             nodeDiv.div(icon ->
                             icon.appendTrustedString(SvgImage.PATHWAYS_NODE.getSvg()),
-                    Attribute.className("pathway-nodeIcon svgIcon " +
+                    Attribute.className("pathway-tree__node-icon svgIcon " +
                                         SvgImage.PATHWAYS_NODE.getClassName()));
             nodeDiv.div(n -> n.append(node.getName()),
-                    Attribute.className("pathway-nodeName"), new Attribute("uuid", node.getUuid()));
-        }, Attribute.className("pathway-node"));
+                    Attribute.className("pathway-tree__node-name"), new Attribute("uuid", node.getUuid()));
+        }, Attribute.className("pathway-tree__node"));
 
         // Add child node targets.
         final List<PathNodeSequence> targets = NullSafe.list(node.getTargets());
@@ -195,7 +195,7 @@ public class PathwayTree extends Component {
             appendBezier(svg, nodeDepth, sourceRowNum, rowNum.get(), width, height);
 
             // Add target set.
-            final String choiceCss = "pathway-nodeIcon svgIcon " +
+            final String choiceCss = "pathway-tree__node-icon svgIcon " +
                                      SvgImage.PATHWAYS_CHOICE.getClassName();
 
             hb.div(targetsOuterDiv -> {
@@ -210,10 +210,10 @@ public class PathwayTree extends Component {
 
                         addTargets(inner, target, svg, nodeDepth + 3, rowNum, width, height);
                     });
-                }, Attribute.className("pathway-targets-inner"));
+                }, Attribute.className("pathway-tree__targets-inner"));
 
 
-            }, Attribute.className("pathway-targets-outer"));
+            }, Attribute.className("pathway-tree__targets-outer"));
 
         } else if (!targets.isEmpty()) {
             final PathNodeSequence target = targets.get(0);
@@ -237,7 +237,7 @@ public class PathwayTree extends Component {
             final int sourceRowNum = rowNum.get();
 
             // Add target set.
-            final String choiceCss = "pathway-nodeIcon svgIcon " +
+            final String choiceCss = "pathway-tree__node-icon svgIcon " +
                                      SvgImage.PATHWAYS_SEQUENCE.getClassName();
 
             hb.div(targetDiv -> {
@@ -260,11 +260,11 @@ public class PathwayTree extends Component {
                                     width,
                                     height);
                         });
-                    }, Attribute.className("pathway-target-inner"));
-                }, Attribute.className("pathway-targets-inner"));
+                    }, Attribute.className("pathway-tree__target-inner"));
+                }, Attribute.className("pathway-tree__targets-inner"));
 
 
-            }, Attribute.className("pathway-target"));
+            }, Attribute.className("pathway-tree__target"));
         }
     }
 

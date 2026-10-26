@@ -27,7 +27,6 @@ import stroom.pipeline.structure.client.view.TreeKeyboard;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -57,8 +56,8 @@ public class PipelineTree extends AbstractPipelineTree {
     private final PipelineTreePanel treePanel = new PipelineTreePanel();
     private final PipelineTreePanel subTreePanel = new PipelineTreePanel();
     private final TreeKeyboard<PipelineElement> keyboard;
-    private MySingleSelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
+    private boolean allowDragging;
     private BiConsumer<PipelineElement, PipelineElement> onMove = (parent, child) -> {
     };
     private Consumer<PipelineElement> onRemove = element -> {
@@ -84,12 +83,13 @@ public class PipelineTree extends AbstractPipelineTree {
                 // A clicked element has the focus too, so that the keyboard carries on from it
                 keyboard.moveTo(item);
             } else if (allowNullSelection) {
-                selectionModel.setSelected(null, true);
+                getSelectionModel().setSelected(null, true);
             }
         });
         // A detached element and those after it are faded, with the connectors into them
         treePanel.setFaded(keyboard::isDetached);
-        initSelection(getSelectionModel());
+        treePanel.setSelectionModel(getSelectionModel());
+        keyboard.setSelectionModel(getSelectionModel());
     }
 
     /// Sets what is done when an element is moved to another parent, by dragging or with the
@@ -107,10 +107,22 @@ public class PipelineTree extends AbstractPipelineTree {
         this.onRemove = onRemove;
     }
 
-    /// @param allowDragging Whether elements can be moved, by dragging or with the keyboard.
+    /// @param allowDragging Whether elements can be moved, by dragging or with the keyboard, unless
+    ///                      the tree is read only.
     public void setAllowDragging(final boolean allowDragging) {
-        layoutPanel.setAllowDragging(allowDragging);
-        keyboard.setAllowMoving(allowDragging);
+        this.allowDragging = allowDragging;
+        applyAllowDragging();
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        applyAllowDragging();
+    }
+
+    private void applyAllowDragging() {
+        final boolean canMove = allowDragging && !isReadOnly();
+        layoutPanel.setAllowDragging(canMove);
+        keyboard.setAllowMoving(canMove);
     }
 
     @Override
@@ -167,13 +179,6 @@ public class PipelineTree extends AbstractPipelineTree {
     /// Puts the detached element back where it was.
     public void cancelDetach() {
         keyboard.cancelDetach();
-    }
-
-    @Override
-    protected void initSelection(final MySingleSelectionModel<PipelineElement> selectionModel) {
-        this.selectionModel = selectionModel;
-        treePanel.setSelectionModel(selectionModel);
-        keyboard.setSelectionModel(selectionModel);
     }
 
     @Override

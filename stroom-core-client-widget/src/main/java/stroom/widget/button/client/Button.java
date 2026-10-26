@@ -175,6 +175,14 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         getElement().setAttribute("role", role);
     }
 
+    /// Names the button for assistive technology, where its text alone doesn't say enough (e.g.
+    /// what "Upload" uploads).
+    ///
+    /// @param ariaLabel The button's accessible name.
+    public void setAriaLabel(final String ariaLabel) {
+        getElement().setAttribute("aria-label", ariaLabel);
+    }
+
     /// Marks the button as one that opens a dialog, which screen readers announce.
     ///
     /// @param opensDialog Whether pressing the button opens a dialog.

@@ -67,9 +67,6 @@ public class TraceGeneralSettingsWidget extends Component {
                 : maxSpansPerTrace));
     }
 
-    /// Shows whether the user may change the settings.
-    ///
-    /// @param readOnly Whether they may not be changed.
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
         maxSpansPerTrace.setReadOnly(readOnly);

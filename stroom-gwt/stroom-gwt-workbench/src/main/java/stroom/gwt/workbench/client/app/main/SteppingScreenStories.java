@@ -292,16 +292,16 @@ public final class SteppingScreenStories {
                     play.findByRole("button", TextMatch.startingWith("appenderT2, Stream Appender, has errors"));
                     // The step's new problems are told to screen readers, in pipeline order; the new
                     // error pulses and the warning glows
-                    final Query status = play.querySelector(".pipeline-path ~ [role='status']");
+                    final Query status = play.querySelector(".pipeline-path-bar ~ [role='status']");
                     play.waitFor(() -> play.expect(status)
                             .toHaveTextContent("jsonWriter has warnings. appenderT2 has errors."));
                     play.expect(play.getByRole("button", TextMatch.startingWith("appenderT2"))
-                                    .closest(".pipeline-path__segment"))
-                            .toHaveClass("pipeline-path__segment--error", "pipeline-path__segment--pulse");
+                                    .closest(".pipeline-path-bar__segment"))
+                            .toHaveClass("pipeline-path-bar__segment--error", "pipeline-path-bar__segment--pulse");
                     // jsonWriter's warning, in a branch not shown, is a warning icon by textWriter's drop
                     // down chevron
-                    play.expect(play.querySelector(".pipeline-path__segment[data-element-id='textWriter'] "
-                                                   + ".pipeline-path__branch-severity")).toBeInTheDocument();
+                    play.expect(play.querySelector(".pipeline-path-bar__segment[data-element-id='textWriter'] "
+                                                   + ".pipeline-path-bar__branch-severity")).toBeInTheDocument();
                     // textWriter's drop down chevron is a menu button of its own (its chevron's button
                     // selects it), whose name says jsonWriter's branch, not shown, has a warning
                     play.expect(play.getByRole("button", TextMatch.startingWith("textWriter")))
@@ -348,7 +348,7 @@ public final class SteppingScreenStories {
                     // says to screen readers that it is the branch (not textWriter itself) that has it
                     play.expect(screen.getByText("textWriter", StroomDom.MENU_ITEM_TEXT))
                             .toHaveTextContent(TextMatch.containing(", branch has errors"));
-                    play.expect(screen.querySelectorAll(".pipeline-path__menu-severity")).toHaveLength(2);
+                    play.expect(screen.querySelectorAll(".pipeline-path-bar__menu-severity")).toHaveLength(2);
                     play.expect(play.getByRole("button", TextMatch.startingWith("Choose branch, jsonWriter")))
                             .toHaveAttribute("aria-expanded", "true");
                     play.keyboard("{Escape}");
@@ -369,7 +369,7 @@ public final class SteppingScreenStories {
 
                     // The bar is one tab stop
                     play.expect(play.getByRole("toolbar", "Pipeline")).toBeInTheDocument();
-                    play.expect(play.querySelectorAll(".pipeline-path [tabindex='0']")).toHaveLength(1);
+                    play.expect(play.querySelectorAll(".pipeline-path-bar [tabindex='0']")).toHaveLength(1);
 
                     // Shift+F10 opens the element's context menu
                     play.keyboard("{Shift>}{F10}{/Shift}");
@@ -395,7 +395,7 @@ public final class SteppingScreenStories {
                     // The bar doesn't overflow its pane
                     final Value<Double> lastRight = play.getByRole("button", TextMatch.startingWith("xmlWriter"))
                             .right();
-                    final Value<Double> barRight = play.querySelector(".pipeline-path").right();
+                    final Value<Double> barRight = play.querySelector(".pipeline-path-bar").right();
                     play.expect("the last chevron's right beyond the bar's",
                             () -> lastRight.get() - barRight.get()).toBeLessThanOrEqual(0);
                     // Choosing a collapsed element from the … list selects and shows it

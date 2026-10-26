@@ -74,7 +74,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-/// GWT view implementation for the interactive SVG floor-map canvas.
+/// The interactive SVG floor map canvas, which its [FloorMapCanvasController] drives.
 ///
 /// Renders the map from a list of [Fact]s — each fact placed by its own
 /// `world-to-map` matrix — plus an event entity overlay:
@@ -219,8 +219,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     private final Set<String> loadingImages = new HashSet<>();
     /// Keys of facts already reported as unplaceable, so the warning is not repeated every frame.
     private final Set<String> unplaceableFactsReported = new HashSet<>();
-    private Runnable redrawListener;
-    private Runnable resizeListener;
+    private Runnable onRedraw;
+    private Runnable onSized;
 
     // Geometry of the last draw(), captured so hitTestScreenRect() can project
     // fact bounds to screen after the fact (map→screen uses these + pan/zoom).
@@ -378,7 +378,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
 
         // The focus panel needs a name of its own. A screen reader announces the
         // element that has focus, and focus lands here rather than on svgContainer, so
-        // the name and role above are never reached: GWT's FocusPanel is a bare
+        // the name and role on svgContainer (in the template) are never reached: GWT's FocusPanel is a bare
         // div[tabindex="0"], which computes to `generic`, and ARIA 1.2 prohibits naming a
         // generic element. Browsers vary in how strictly they enforce that — Chromium has
         // historically exposed such labels anyway — so "the label is dropped" is the spec
@@ -536,9 +536,9 @@ public class FloorMapCanvas extends Component implements RequiresResize {
 
         // SVG handles its own responsiveness via 100% width/height. Notify the
         // controller that the canvas now has a real size so it can apply its
-        // size-dependent default view (see setResizeListener).
-        if (resizeListener != null) {
-            resizeListener.run();
+        // size-dependent default view (see setOnSized).
+        if (onSized != null) {
+            onSized.run();
         }
     }
 
@@ -2352,34 +2352,6 @@ public class FloorMapCanvas extends Component implements RequiresResize {
         return dimmedTypes != null && dimmedTypes.contains(caption.type);
     }
 
-    /// One queued caption, before it is known whether it fits.
-    private static final class PendingCaption {
-
-        private final String key;
-        private final String text;
-        private final String type;
-        private final double mapX;
-        private final double mapY;
-        private final double halfHeightPx;
-        private final int priority;
-
-        private PendingCaption(final String key,
-                               final String text,
-                               final String type,
-                               final double mapX,
-                               final double mapY,
-                               final double halfHeightPx,
-                               final int priority) {
-            this.key = key;
-            this.text = text;
-            this.type = type;
-            this.mapX = mapX;
-            this.mapY = mapY;
-            this.halfHeightPx = halfHeightPx;
-            this.priority = priority;
-        }
-    }
-
     /// Draws a caption centred under a fixed-size glyph, in the theme-aware style
     /// shared by entity names and cluster captions.
     ///
@@ -2636,23 +2608,18 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                 : natural[0] / natural[1]);
     }
 
-    /// Registers a callback that is invoked whenever the canvas needs to be redrawn
-    /// (e.g. after an asynchronous image aspect-ratio resolution completes).
-    ///
-    /// @param redrawListener the callback, or `null` to clear
-    public void setRedrawListener(final Runnable redrawListener) {
-        this.redrawListener = redrawListener;
+    /// @param onRedraw What to run whenever the canvas needs to be redrawn (e.g. after an
+    ///                 asynchronous image aspect-ratio resolution completes), or `null` for nothing.
+    public void setOnRedraw(final Runnable onRedraw) {
+        this.onRedraw = onRedraw;
     }
 
-    /// Registers a listener that is called once the canvas has a real
-    /// (non-zero) on-screen size — i.e. after layout completes. The
-    /// controller uses this to apply its size-dependent initial view (which
-    /// needs the canvas dimensions to fit or place the content).
-    ///
-    /// @param resizeListener the callback to invoke, typically
-    ///         `FloorMapCanvasController::maybeApplyInitialView`
-    public void setResizeListener(final Runnable resizeListener) {
-        this.resizeListener = resizeListener;
+    /// @param onSized What to run once the canvas has a real (non-zero) on-screen size, i.e.
+    ///                after layout completes, or `null` for nothing. The controller applies its
+    ///                size-dependent initial view (which needs the canvas dimensions to fit or
+    ///                place the content).
+    public void setOnSized(final Runnable onSized) {
+        this.onSized = onSized;
     }
 
     /// Callback invoked (via JSNI) when the browser has finished loading an image and
@@ -2668,8 +2635,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                              final double naturalHeight) {
         imageNaturalSizeCache.put(url, new double[]{naturalWidth, naturalHeight});
         loadingImages.remove(url);
-        if (redrawListener != null) {
-            redrawListener.run();
+        if (onRedraw != null) {
+            onRedraw.run();
         }
     }
 
@@ -2733,6 +2700,34 @@ public class FloorMapCanvas extends Component implements RequiresResize {
         };
         img.src = url;
     }-*/;
+
+    /// One queued caption, before it is known whether it fits.
+    private static final class PendingCaption {
+
+        private final String key;
+        private final String text;
+        private final String type;
+        private final double mapX;
+        private final double mapY;
+        private final double halfHeightPx;
+        private final int priority;
+
+        private PendingCaption(final String key,
+                               final String text,
+                               final String type,
+                               final double mapX,
+                               final double mapY,
+                               final double halfHeightPx,
+                               final int priority) {
+            this.key = key;
+            this.text = text;
+            this.type = type;
+            this.mapX = mapX;
+            this.mapY = mapY;
+            this.halfHeightPx = halfHeightPx;
+            this.priority = priority;
+        }
+    }
 
     interface Binder extends UiBinder<Widget, FloorMapCanvas> {
 

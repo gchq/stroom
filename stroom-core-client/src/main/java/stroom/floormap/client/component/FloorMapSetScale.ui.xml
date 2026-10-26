@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <!--
       The Set Scale dialog's content (stroom-floormap.css): what the line measured comes to now, and
@@ -18,7 +19,8 @@
                     <td ui:field="distanceLabel">It is really</td>
                     <td>
                         <g:FlowPanel styleName="floormap-set-scale-row">
-                            <g:TextBox ui:field="distanceBox" addStyleNames="stroom-control floormap-set-scale-distance"/>
+                            <form:TextInput ui:field="distanceBox" addStyleNames="stroom-control floormap-set-scale-distance"
+                                            placeholder="e.g. 2.4"/>
                             <i:SelectionBox ui:field="unitListBox"/>
                         </g:FlowPanel>
                     </td>
