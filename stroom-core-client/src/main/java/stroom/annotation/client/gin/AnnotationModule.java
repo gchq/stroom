@@ -16,9 +16,6 @@
 
 package stroom.annotation.client.gin;
 
-import stroom.annotation.client.AddEventLinkPresenter;
-import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
-import stroom.annotation.client.AddEventLinkViewImpl;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
 import stroom.annotation.client.AnnotationCommentPlugin;
@@ -71,7 +68,6 @@ public class AnnotationModule extends PluginModule {
                 AnnotationTagEditView.class,
                 AnnotationTagEditViewImpl.class);
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
-        bindPresenterWidget(AddEventLinkPresenter.class, AddEventLinkView.class, AddEventLinkViewImpl.class);
         bindPresenterWidget(ChangeStatusPresenter.class, ChangeStatusView.class, ChangeStatusViewImpl.class);
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,

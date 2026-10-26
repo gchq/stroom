@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.structure.client.component.NewElementController;
 import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
@@ -84,7 +85,7 @@ public class PipelineStructurePresenter
 
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
-    private final NewElementPresenter newElementPresenter;
+    private final Provider<NewElementController> newElementProvider;
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
     private final Provider<EditorPresenter> jsonEditorProvider;
@@ -105,19 +106,18 @@ public class PipelineStructurePresenter
                                       final PipelineTree pipelineTree,
                                       final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
-                                      final NewElementPresenter newElementPresenter,
+                                      final Provider<NewElementController> newElementProvider,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
                                       final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
         own(pipelinePresenter);
-        own(newElementPresenter);
         own(propertyListPresenter);
         own(pipelineReferenceListPresenter);
         this.pipelineTree = pipelineTree;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
-        this.newElementPresenter = newElementPresenter;
+        this.newElementProvider = newElementProvider;
         this.propertyListPresenter = propertyListPresenter;
         this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
         this.jsonEditorProvider = jsonEditorProvider;
@@ -327,44 +327,52 @@ public class PipelineStructurePresenter
 
     @Override
     public void onEdit(final ClickEvent event) {
-        final PipelineElement selected = pipelineTree.getSelectionModel().getSelectedObject();
+        final PipelineElement selected = current(pipelineTree.getSelectionModel().getSelectedObject());
         if (selected != null) {
             final String currentName = selected.getName();
             final String currentDescription = selected.getDescription();
 
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    String newName = newElementPresenter.getElementName();
-                    String newDescription = newElementPresenter.getElementDescription();
-                    if (NullSafe.isNonBlankString(newName)) {
-                        newName = newName.trim();
-                        newDescription = NullSafe.isBlankString(newDescription)
-                                ? null
-                                : newDescription;
-
-                        try {
-                            PipelineElement renamedElement = selected;
-                            if (!Objects.equals(currentName, newName)) {
-                                renamedElement = pipelineModel.renameElement(selected, newName.trim());
-                            }
-                            if (!Objects.equals(currentDescription, newDescription)) {
-                                renamedElement = pipelineModel.changeElementDescription(renamedElement, newDescription);
-                            }
-                            pipelineTree.getSelectionModel().setSelected(renamedElement, true);
-                        } catch (final RuntimeException ex) {
-                            AlertEvent.fireError(this, ex.getMessage(), null);
-                        }
-                    }
-                }
-                e.hide();
-            };
-            newElementPresenter.show(
-                    pipelineModel.getElementType(selected),
-                    handler,
+            // The current description is shown, so OK without changing it keeps it
+            newElementProvider.get().edit(this,
+                    "Edit Element",
                     selected.getDisplayName(),
-                    "Edit Element"
-            );
+                    currentDescription,
+                    (enteredName, enteredDescription) -> {
+                        if (NullSafe.isNonBlankString(enteredName)) {
+                            final String newName = enteredName.trim();
+                            final String newDescription = NullSafe.isBlankString(enteredDescription)
+                                    ? null
+                                    : enteredDescription;
+                            try {
+                                PipelineElement renamedElement = selected;
+                                if (!Objects.equals(currentName, newName)) {
+                                    renamedElement = pipelineModel.renameElement(selected, newName);
+                                }
+                                if (!Objects.equals(currentDescription, newDescription)) {
+                                    renamedElement = pipelineModel.changeElementDescription(renamedElement,
+                                            newDescription);
+                                }
+                                pipelineTree.getSelectionModel().setSelected(renamedElement, true);
+                            } catch (final RuntimeException ex) {
+                                AlertEvent.fireError(this, ex.getMessage(), null);
+                            }
+                        }
+                    });
         }
+    }
+
+    // The element as the pipeline now has it: the tree's selection keeps the element it was given,
+    // which an element equal to it (the same id) with a new description doesn't replace
+    private PipelineElement current(final PipelineElement element) {
+        if (element == null) {
+            return null;
+        }
+        return pipelineModel.getPipelineData()
+                .getAddedElements()
+                .stream()
+                .filter(element::equals)
+                .findFirst()
+                .orElse(element);
     }
 
     private List<Item> addPipelineActionsToMenu() {
@@ -762,34 +770,6 @@ public class PipelineStructurePresenter
         public void execute() {
             final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final HidePopupRequestEvent.Handler handler = e -> {
-                    if (e.isOk()) {
-                        final String id = UUID.randomUUID().toString();
-                        final String name = newElementPresenter.getElementName().trim();
-                        String description = newElementPresenter.getElementDescription();
-                        description = NullSafe.isBlankString(description)
-                                ? null
-                                : description;
-
-                        final PipelineElementType elementType = newElementPresenter.getElementInfo();
-                        try {
-                            final PipelineElement newElement = pipelineModel.addElement(
-                                    selectedElement,
-                                    elementType,
-                                    id,
-                                    name,
-                                    description);
-                            pipelineTree.getSelectionModel().setSelected(newElement, true);
-                        } catch (final RuntimeException ex) {
-                            AlertEvent.fireError(
-                                    PipelineStructurePresenter.this,
-                                    ex.getMessage(),
-                                    e::reset);
-                        }
-                    }
-                    e.hide();
-                };
-
                 // We need to suggest a unique name for the element
                 final Set<String> existingNames = pipelineTree.getNames();
                 final String suggestedNameBase = elementType.getDisplayValue();
@@ -802,7 +782,28 @@ public class PipelineStructurePresenter
                     } while (existingNames.contains(suggestedName));
                 }
 
-                newElementPresenter.show(elementType, handler, suggestedName, "Create Element");
+                newElementProvider.get().edit(PipelineStructurePresenter.this,
+                        "Create Element",
+                        suggestedName,
+                        null,
+                        (enteredName, enteredDescription) -> {
+                            final String id = UUID.randomUUID().toString();
+                            final String name = enteredName.trim();
+                            final String description = NullSafe.isBlankString(enteredDescription)
+                                    ? null
+                                    : enteredDescription;
+                            try {
+                                final PipelineElement newElement = pipelineModel.addElement(
+                                        selectedElement,
+                                        elementType,
+                                        id,
+                                        name,
+                                        description);
+                                pipelineTree.getSelectionModel().setSelected(newElement, true);
+                            } catch (final RuntimeException ex) {
+                                AlertEvent.fireError(PipelineStructurePresenter.this, ex.getMessage(), null);
+                            }
+                        });
             }
         }
     }

@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
+import stroom.annotation.client.component.AddEventLinkController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.LinkEvents;
@@ -36,6 +37,7 @@ import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
@@ -55,7 +57,7 @@ public class LinkedEventPresenter
     private final ButtonView removeEventButton;
 
     private final DataPresenter dataPresenter;
-    private final AddEventLinkPresenter addEventLinkPresenter;
+    private final Provider<AddEventLinkController> addEventLinkProvider;
 
     private DocRef annotationRef;
 
@@ -69,10 +71,9 @@ public class LinkedEventPresenter
                                 final PagerPanel pagerView,
                                 final AnnotationResourceClient annotationResourceClient,
                                 final DataPresenter dataPresenter,
-                                final AddEventLinkPresenter addEventLinkPresenter) {
+                                final Provider<AddEventLinkController> addEventLinkProvider) {
         super(eventBus, view);
         own(dataPresenter);
-        own(addEventLinkPresenter);
 
         dataGrid = new DataGrid<>();
         dataGrid.setTableName("Linked Events");
@@ -86,7 +87,7 @@ public class LinkedEventPresenter
         // source view is opened if the user clicks that
         dataPresenter.setDisplayMode(DisplayMode.DIALOG);
 
-        this.addEventLinkPresenter = addEventLinkPresenter;
+        this.addEventLinkProvider = addEventLinkProvider;
 
         pagerView.getToolbar().setName("Linked event actions");
         addEventButton = pagerView.getToolbar().button(SvgImage.ADD, "Add Event Link", this::onAddEvent);
@@ -140,7 +141,7 @@ public class LinkedEventPresenter
     }
 
     private void onAddEvent() {
-        addEventLinkPresenter.show(eventId -> {
+        addEventLinkProvider.get().show(this, eventId -> {
             if (eventId != null) {
                 linkEvent(eventId);
             }

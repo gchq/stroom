@@ -41,15 +41,12 @@ import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.pipeline.stepping.client.view.XPathFilterViewImpl;
-import stroom.pipeline.structure.client.presenter.NewElementPresenter;
-import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
 import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter;
 import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
-import stroom.pipeline.structure.client.view.NewElementViewImpl;
 import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
@@ -98,7 +95,6 @@ public class PipelineModule extends PluginModule {
 
         bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
 
-        bindPresenterWidget(NewElementPresenter.class, NewElementView.class, NewElementViewImpl.class);
         bindPresenterWidget(NewPropertyPresenter.class, NewPropertyView.class, NewPropertyViewImpl.class);
         bindPresenterWidget(NewPipelineReferencePresenter.class, NewPipelineReferenceView.class,
                 NewPipelineReferenceViewImpl.class);

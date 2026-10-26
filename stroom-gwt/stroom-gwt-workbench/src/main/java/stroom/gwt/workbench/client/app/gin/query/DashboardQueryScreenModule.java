@@ -21,9 +21,6 @@ import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySetti
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
 import stroom.dashboard.client.query.CurrentSelectionPresenter;
 import stroom.dashboard.client.query.CurrentSelectionViewImpl;
-import stroom.dashboard.client.query.NamePresenter;
-import stroom.dashboard.client.query.NamePresenter.NameView;
-import stroom.dashboard.client.query.NameViewImpl;
 import stroom.dashboard.client.query.QueryFavouritesPresenter;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.client.query.QueryFavouritesViewImpl;
@@ -57,9 +54,6 @@ public class DashboardQueryScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(QueryFavouritesPresenter.class,
                 QueryFavouritesView.class,
                 QueryFavouritesViewImpl.class);
-        bindPresenterWidget(NamePresenter.class,
-                NameView.class,
-                NameViewImpl.class);
         bindPresenterWidget(QueryInfoPresenter.class,
                 QueryInfoView.class,
                 QueryInfoViewImpl.class);

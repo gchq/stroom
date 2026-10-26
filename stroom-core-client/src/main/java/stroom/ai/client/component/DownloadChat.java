@@ -14,45 +14,45 @@
  * limitations under the License.
  */
 
-package stroom.ai.client;
+package stroom.ai.client.component;
 
-import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class DownloadChatViewImpl extends ViewImpl implements DownloadChatView {
+/// The Download Options dialog's content, for an Ask Stroom AI conversation: whether the data
+/// attached to it goes in the download.
+public class DownloadChat extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TickBox includeDataContexts;
 
-    @Inject
-    public DownloadChatViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the content, not ticked.
+    public DownloadChat() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the tick box.
     public void focus() {
         includeDataContexts.setFocus(true);
     }
 
-    @Override
+    /// @return Whether the data attached to the conversation goes in the download.
     public boolean isIncludeDataContexts() {
         return includeDataContexts.getValue();
     }
 
-    public interface Binder extends UiBinder<Widget, DownloadChatViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DownloadChat> {
 
     }
 }

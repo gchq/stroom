@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.annotation.client.AddEventLinkPresenter;
-import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
-import stroom.annotation.client.AddEventLinkViewImpl;
 import stroom.annotation.client.AnnotationEditPresenter;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.AnnotationEditViewImpl;
@@ -66,9 +63,6 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(LinkedEventPresenter.class,
                 LinkedEventView.class,
                 LinkedEventViewImpl.class);
-        bindPresenterWidget(AddEventLinkPresenter.class,
-                AddEventLinkView.class,
-                AddEventLinkViewImpl.class);
         bindPresenterWidget(ChangeStatusPresenter.class,
                 ChangeStatusView.class,
                 ChangeStatusViewImpl.class);

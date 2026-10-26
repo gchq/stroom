@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.component.FavouriteNameController;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
@@ -46,6 +47,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class QueryFavouritesPresenter
@@ -59,7 +61,7 @@ public class QueryFavouritesPresenter
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
     private final DataGrid<StoredQuery> list;
-    private final NamePresenter namePresenter;
+    private final Provider<FavouriteNameController> favouriteNameProvider;
     private final ButtonView createButton;
     private final ButtonView editButton;
     private final ButtonView deleteButton;
@@ -72,15 +74,14 @@ public class QueryFavouritesPresenter
     public QueryFavouritesPresenter(final EventBus eventBus,
                                     final QueryFavouritesView view,
                                     final ExpressionTreeController expressionTree,
-                                    final NamePresenter namePresenter,
+                                    final Provider<FavouriteNameController> favouriteNameProvider,
                                     final RestFactory restFactory,
                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         own(expressionTree);
-        own(namePresenter);
         this.restFactory = restFactory;
         this.expressionTree = expressionTree;
-        this.namePresenter = namePresenter;
+        this.favouriteNameProvider = favouriteNameProvider;
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
@@ -139,13 +140,13 @@ public class QueryFavouritesPresenter
                 .name("")
                 .favourite(true)
                 .build();
-        namePresenter.show(queryEntity, result -> refresh(false));
+        favouriteNameProvider.get().show(this, queryEntity, result -> refresh(false));
     }
 
     private void onEdit() {
         final StoredQuery query = selectionModel.getSelected();
         if (query != null) {
-            namePresenter.show(query, result -> refresh(false));
+            favouriteNameProvider.get().show(this, query, result -> refresh(false));
         }
     }
 

@@ -988,6 +988,34 @@ public final class PipelineEditorStories {
                     expectNoProblems(play);
                 })
                 // A structure edit dirties the document
+                // Edit Element shows the element's own description: one typed and cancelled isn't
+                // shown again (the dialog kept it, and OK then gave it to whichever element was
+                // edited), and one saved is
+                .story("EditElementDescription", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.click(play.findByText("xslt"));
+                    play.click(play.getByTitle("Edit Pipeline Element"));
+                    final Play edit = dialog(screen, "Edit Element");
+                    final Query description = edit.getByLabelText("Description (optional)");
+                    play.expect(description).toHaveValue("");
+                    play.type(description, "Typed then cancelled");
+                    play.click(edit.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Element", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.click(play.getByTitle("Edit Pipeline Element"));
+                    final Play editAgain = dialog(screen, "Edit Element");
+                    final Query again = editAgain.getByLabelText("Description (optional)");
+                    play.expect(again).toHaveValue("");
+                    play.type(again, "Turns XML into events");
+                    play.click(editAgain.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
+                    play.click(play.getByTitle("Edit Pipeline Element"));
+                    play.expect(dialog(screen, "Edit Element").getByLabelText("Description (optional)"))
+                            .toHaveValue("Turns XML into events");
+                    expectNoProblems(play);
+                })
                 .story("StructureEditDirtiesTheDocument", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
