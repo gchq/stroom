@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.item.client.SelectionBox;
+import stroom.security.client.component.AppPermissionsEditController;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.PermissionShowLevel;
@@ -27,6 +28,7 @@ import stroom.util.shared.UserRef;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
@@ -37,7 +39,7 @@ public class AppPermissionsPresenter
     public static final String TAB_TYPE = "ApplicationPermissions";
 
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
-    private final AppPermissionsEditPresenter appPermissionsEditPresenter;
+    private final AppPermissionsEditController appPermissionsEdit;
 
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
 
@@ -46,15 +48,15 @@ public class AppPermissionsPresenter
             final EventBus eventBus,
             final AppPermissionsView view,
             final AppUserPermissionsListPresenter appUserPermissionsListPresenter,
-            final AppPermissionsEditPresenter appPermissionsEditPresenter) {
+            final AppPermissionsEditController appPermissionsEdit) {
 
         super(eventBus, view);
         own(appUserPermissionsListPresenter);
-        own(appPermissionsEditPresenter);
+        own(appPermissionsEdit);
         this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
-        this.appPermissionsEditPresenter = appPermissionsEditPresenter;
+        this.appPermissionsEdit = appPermissionsEdit;
         view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());
-        view.setAppPermissionsEditView(appPermissionsEditPresenter.getView());
+        view.setAppPermissionsEditView(appPermissionsEdit);
 
         permissionVisibility = getView().getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
@@ -68,17 +70,15 @@ public class AppPermissionsPresenter
             appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             appUserPermissionsListPresenter.refresh();
         }));
-        own(appPermissionsEditPresenter.getSelectionModel()
-                .addSelectionHandler(e -> appPermissionsEditPresenter.updateDetails()));
 
-        appPermissionsEditPresenter.setOnChange(change -> {
+        appPermissionsEdit.setOnChange(change -> {
             GWT.log("valueChange, isRefreshUsers: " + change.isRefreshUsers()
                     + ", isRefreshDetails: " + change.isRefreshDetails());
             if (change.isRefreshUsers()) {
                 refresh();
             }
             if (change.isRefreshDetails()) {
-                appPermissionsEditPresenter.updateDetails();
+                appPermissionsEdit.updateDetails();
             }
         });
     }
@@ -95,7 +95,7 @@ public class AppPermissionsPresenter
         final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
                 .getSelected();
         final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
-        appPermissionsEditPresenter.setUserRef(userRef);
+        appPermissionsEdit.setUserRef(userRef);
     }
 
     public void refresh() {
@@ -127,6 +127,6 @@ public class AppPermissionsPresenter
 
         void setAppUserPermissionListView(View view);
 
-        void setAppPermissionsEditView(View view);
+        void setAppPermissionsEditView(IsWidget view);
     }
 }

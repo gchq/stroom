@@ -32,8 +32,6 @@ import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
-import stroom.security.client.presenter.AppPermissionsEditPresenter;
-import stroom.security.client.presenter.AppPermissionsEditPresenter.AppPermissionsEditView;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter;
@@ -65,7 +63,6 @@ import stroom.security.client.presenter.UserTabPresenter;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.client.view.ApiKeysViewImpl;
-import stroom.security.client.view.AppPermissionsEditViewImpl;
 import stroom.security.client.view.AppPermissionsViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsEditViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsViewImpl;
@@ -138,10 +135,6 @@ public class SecurityModule extends PluginModule {
                 AppPermissionsPresenter.class,
                 AppPermissionsView.class,
                 AppPermissionsViewImpl.class);
-        bindPresenterWidget(
-                AppPermissionsEditPresenter.class,
-                AppPermissionsEditView.class,
-                AppPermissionsEditViewImpl.class);
 
         bindPresenterWidget(
                 DocumentUserPermissionsPresenter.class,

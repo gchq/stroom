@@ -17,20 +17,19 @@
 package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.AppPermissionsEditController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
@@ -42,6 +41,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class UserTabPresenter
         extends ContentTabPresenter<LinkTabPanelView> {
@@ -78,13 +79,14 @@ public class UserTabPresenter
     private final LazyValue<UserPermissionReportPresenter> userPermsReportPresenterLazyValue;
     private final LazyValue<UserDependenciesListPresenter> userDependenciesListPresenterLazyValue;
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
-    private final LazyValue<AppPermissionsEditPresenter> appPermissionsEditPresenterLazyValue;
+    private final LazyValue<AppPermissionsEditController> appPermissionsEditLazyValue;
+    private ControllerLayer appPermissionsEditLayer;
     private final LazyValue<UserAndGroupsPresenter> userAndGroupsPresenterLazyValue;
     private final List<TabData> tabs = new ArrayList<>();
 
     private UserRef userRef;
     private String label;
-    private MyPresenterWidget<?> currentContent;
+    private Layer currentContent;
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
@@ -94,7 +96,7 @@ public class UserTabPresenter
                             final Provider<UserPermissionReportPresenter> userPermsReportPresenterProvider,
                             final Provider<UserDependenciesListPresenter> userDependenciesListPresenterProvider,
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
-                            final Provider<AppPermissionsEditPresenter> appPermissionsEditPresenterProvider,
+                            final Provider<AppPermissionsEditController> appPermissionsEditProvider,
                             final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
         super(eventBus, view);
         own(userInfoPresenter);
@@ -114,10 +116,11 @@ public class UserTabPresenter
                 apiKeysListPresenter -> {
                     apiKeysListPresenter.setOwner(getUserRef());
                 });
-        this.appPermissionsEditPresenterLazyValue = new LazyValue<>(
-                appPermissionsEditPresenterProvider,
-                appPermissionsEditPresenter -> {
-                    appPermissionsEditPresenter.setUserRef(getUserRef());
+        this.appPermissionsEditLazyValue = new LazyValue<AppPermissionsEditController>(
+                (Supplier<AppPermissionsEditController>) () -> make(appPermissionsEditProvider),
+                appPermissionsEdit -> {
+                    appPermissionsEditLayer = new ControllerLayer(appPermissionsEdit);
+                    appPermissionsEdit.setUserRef(getUserRef());
                 });
         this.userAndGroupsPresenterLazyValue = new LazyValue<>(
                 userAndGroupsPresenterProvider,
@@ -158,10 +161,9 @@ public class UserTabPresenter
                     if (content != null) {
                         currentContent = content;
                         // Set the content.
-                        getView().getLayerContainer().show((Layer) currentContent);
+                        getView().getLayerContainer().show(currentContent);
                         // Update the selected tab.
                         getView().getTabBar().selectTab(tab);
-                        afterSelectTab(content);
                     }
                 });
             }
@@ -169,37 +171,33 @@ public class UserTabPresenter
         });
     }
 
-    protected void getContent(final TabData tab, final ContentCallback callback) {
+    private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (INFO_TAB.equals(tab)) {
             userInfoPresenter.setUserRef(userRef);
-            callback.onReady(userInfoPresenter);
+            callback.accept(userInfoPresenter);
         } else if (USER_GROUPS_TAB.equals(tab)) {
             final UserAndGroupsPresenter userAndGroupsPresenter
                     = userAndGroupsPresenterLazyValue.getValue();
             userAndGroupsPresenter.setUserRef(userRef);
-            callback.onReady(userAndGroupsPresenter);
+            callback.accept(userAndGroupsPresenter);
         } else if (APP_PERMS_TAB.equals(tab)) {
-            final AppPermissionsEditPresenter appPermissionsEditPresenter
-                    = appPermissionsEditPresenterLazyValue.getValue();
-            appPermissionsEditPresenter.setUserRef(userRef);
-            callback.onReady(appPermissionsEditPresenter);
+            final AppPermissionsEditController appPermissionsEdit = appPermissionsEditLazyValue.getValue();
+            appPermissionsEdit.setUserRef(userRef);
+            callback.accept(appPermissionsEditLayer);
         } else if (DOC_PERMS_TAB.equals(tab)) {
             final UserPermissionReportPresenter userPermsReportPresenter = userPermsReportPresenterLazyValue.getValue();
             userPermsReportPresenter.setUserRef(userRef);
-            callback.onReady(userPermsReportPresenter);
+            callback.accept(userPermsReportPresenter);
         } else if (DEPENDENCIES_TAB.equals(tab)) {
             final UserDependenciesListPresenter userDependenciesListPresenter
                     = userDependenciesListPresenterLazyValue.getValue();
             userDependenciesListPresenter.setUserRef(userRef);
-            callback.onReady(userDependenciesListPresenter);
+            callback.accept(userDependenciesListPresenter);
         } else if (API_KEYS_TAB.equals(tab)) {
-            callback.onReady(apiKeysListPresenterLazyValue.getValue());
+            callback.accept(apiKeysListPresenterLazyValue.getValue());
         } else {
-            callback.onReady(null);
+            callback.accept(null);
         }
-    }
-
-    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     private void addTab(final TabData tab) {
@@ -240,8 +238,8 @@ public class UserTabPresenter
         this.userRef = userRef;
         this.label = getLabel(userRef);
         userInfoPresenter.setUserRef(userRef);
-        appPermissionsEditPresenterLazyValue.consumeIfInitialised(appPermissionsEditPresenter ->
-                appPermissionsEditPresenter.setUserRef(userRef));
+        appPermissionsEditLazyValue.consumeIfInitialised(appPermissionsEdit ->
+                appPermissionsEdit.setUserRef(userRef));
         userPermsReportPresenterLazyValue.consumeIfInitialised(userPermissionReportPresenter ->
                 userPermissionReportPresenter.setUserRef(userRef));
         userDependenciesListPresenterLazyValue.consumeIfInitialised(userDependenciesListPresenter ->
