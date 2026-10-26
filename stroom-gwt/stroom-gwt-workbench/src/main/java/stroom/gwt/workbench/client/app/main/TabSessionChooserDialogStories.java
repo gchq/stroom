@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.component.TabSessionChooserController;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.event.OpenTabSessionEvent;
 import stroom.explorer.client.presenter.TabSessionManager;
@@ -37,7 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Collections;
 
 /// Stories of `App/Main/TabSessionChooserDialog`, showing Stroom's real
-/// `TabSessionChooserPresenter`, as Stroom's [TabSessionManager] shows it for 'Open Tab Session',
+/// [TabSessionChooserController], as Stroom's [TabSessionManager] shows it for 'Open Tab Session',
 /// with fake REST replies.
 ///
 /// The sessions come from `GET /tabSession/v1` (`TabSessionResource.getForCurrentUser`), and the

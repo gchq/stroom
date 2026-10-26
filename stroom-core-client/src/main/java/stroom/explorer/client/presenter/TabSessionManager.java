@@ -24,6 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.component.TabSessionChooserController;
 import stroom.explorer.client.event.DeleteTabSessionEvent;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.event.OpenTabSessionEvent;
@@ -38,13 +39,9 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.component.NameDialogController;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -52,7 +49,6 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -64,7 +60,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
     private static final TabSessionResource TAB_SESSION_RESOURCE = GWT.create(TabSessionResource.class);
 
     private final RestFactory restFactory;
-    private final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter;
+    private final Provider<TabSessionChooserController> tabSessionChooserProvider;
     private final Provider<NameDialogController> nameDialogProvider;
     private List<TabSession> userTabSessions;
 
@@ -73,13 +69,13 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
     @Inject
     public TabSessionManager(final EventBus eventBus,
                              final RestFactory restFactory,
-                             final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter,
+                             final Provider<TabSessionChooserController> tabSessionChooserProvider,
                              final Provider<NameDialogController> nameDialogProvider,
                              final AppRoot appRoot) {
         super(eventBus);
         this.appRoot = appRoot;
         this.restFactory = restFactory;
-        this.tabSessionChooserPresenter = tabSessionChooserPresenter;
+        this.tabSessionChooserProvider = tabSessionChooserProvider;
         this.nameDialogProvider = nameDialogProvider;
 
         getEventBus().addHandler(OpenTabSessionEvent.getType(),
@@ -138,23 +134,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
                 return;
             }
 
-            tabSessionChooserPresenter.setSelectionList(sessions);
-            tabSessionChooserPresenter.setDisplayValueFunction(s -> SafeHtmlUtils.fromString(
-                    s.getName()));
-
-            final PopupSize popupSize = PopupSize.resizable(650, 340);
-            ShowPopupEvent.builder(tabSessionChooserPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(caption)
-                    .onHideRequest(e -> {
-                        final Optional<TabSession> tabSession = tabSessionChooserPresenter.getSelected();
-                        if (e.isOk() && tabSession.isPresent()) {
-                            consumer.accept(tabSession.get());
-                        }
-                        e.hide();
-                    })
-                    .fire();
+            tabSessionChooserProvider.get().choose(appRoot, caption, sessions, consumer);
         });
     }
 

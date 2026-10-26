@@ -22,10 +22,7 @@ import stroom.core.client.ContentManager;
 import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.explorer.client.view.FindInContentViewImpl;
-import stroom.explorer.client.view.TabSessionChooserViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
@@ -46,8 +43,5 @@ public class ContentAppScreenModule extends AbstractPresenterModule {
                 FindInContentView.class,
                 FindInContentViewImpl.class);
         bind(FindPresenter.class);
-        bind(TabSessionChooserPresenter.class);
-        bindSharedView(TabSessionChooserView.class,
-                TabSessionChooserViewImpl.class);
     }
 }

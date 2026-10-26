@@ -40,13 +40,10 @@ import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter;
-import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
-import stroom.explorer.client.view.TabSessionChooserViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
@@ -124,7 +121,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(
                 RecentItemsPresenter.class);
 
-        bind(TabSessionChooserPresenter.class);
 
         // Menu
         bind(MenuManager.class).asEagerSingleton();
@@ -136,6 +132,5 @@ public class AppModule extends AbstractPresenterModule {
         // Widgets
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
-        bindSharedView(TabSessionChooserView.class, TabSessionChooserViewImpl.class);
     }
 }
