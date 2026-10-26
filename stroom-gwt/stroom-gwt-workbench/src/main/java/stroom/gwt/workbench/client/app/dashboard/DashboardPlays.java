@@ -87,7 +87,7 @@ final class DashboardPlays {
     ///              `Execute Query`.
     /// @return A button of the dashboard's own query toolbar.
     static Query toolbarButton(final Play play, final String title) {
-        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByRole("button", title);
+        return play.within(play.querySelector(".query-toolbar__inner")).getByRole("button", title);
     }
 
     /// Clicks a Query component's own Execute Query button.

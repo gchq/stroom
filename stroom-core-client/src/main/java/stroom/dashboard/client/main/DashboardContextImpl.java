@@ -32,7 +32,7 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
-import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.component.QueryToolbarController;
 import stroom.util.shared.NullSafe;
 import stroom.visualisation.shared.VisColourList;
 import stroom.widget.component.client.Listeners;
@@ -65,7 +65,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     private final EventBus eventBus;
     private final Components components;
-    private final QueryToolbarPresenter queryToolbarPresenter;
+    private final QueryToolbarController queryToolbar;
     // The colours of the values the visualisations colour by
     private final VisColourList visColourList = new VisColourList();
     private List<ComponentState> parentComponentStates = new ArrayList<>();
@@ -78,10 +78,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     public DashboardContextImpl(final EventBus eventBus,
                                 final Components components,
-                                final QueryToolbarPresenter queryToolbarPresenter) {
+                                final QueryToolbarController queryToolbar) {
         this.eventBus = eventBus;
         this.components = components;
-        this.queryToolbarPresenter = queryToolbarPresenter;
+        this.queryToolbar = queryToolbar;
     }
 
     public void setParent(final DashboardContext parent) {
@@ -94,7 +94,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     @Override
     public TimeRange getRawTimeRange() {
-        return queryToolbarPresenter.getTimeRange();
+        return queryToolbar.getTimeRange();
     }
 
     @Override

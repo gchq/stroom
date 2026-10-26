@@ -151,6 +151,12 @@ public final class QueryEditorStories {
             RestReply.json(QueryFixtures.response(false, TABLE)),
             RestReply.json("null"));
 
+    // SearchWarnings: the search completes with a warning from a node
+    private static final RestFixtures WARNING_FIXTURES = fixtures(RestFixtures.builder(), RestReply.json(
+            COMPLETE.replace("\"errorMessages\": []",
+                    "\"errorMessages\": [{\"severity\": \"WARNING\", \"message\": \"Shard 3 is corrupt\","
+                    + " \"node\": \"node1\"}]")));
+
     // Download: the download's resource
     private static final RestFixtures DOWNLOAD_FIXTURES = fixtures(RestFixtures.builder()
                     .route(RequestMatcher.post("/query/v1/downloadSearchResults/" + RequestMatcher.PATH_WILDCARD),
@@ -487,6 +493,19 @@ public final class QueryEditorStories {
                     // is hidden: it can't be seen, reached or read (it was once only transparent)
                     play.expect(play.queryByRole("button", "Show Errors")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
+                })
+                // A search with a warning shows the toolbar's button as Show Warnings, which shows
+                // the warning in an alert
+                .story("SearchWarnings", context -> render(context, WARNING_FIXTURES))
+                .withPlay(play -> {
+                    execute(play);
+                    play.findByText("alpha");
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Show Warnings")).toBeVisible());
+                    play.expect(play.queryByRole("button", "Show Errors")).toBeNull();
+                    play.click(play.getByRole("button", "Show Warnings"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            "WARN: The following message has been created while running this search:"));
+                    DocEditors.expectNoUnhandledRequests(play);
                 })
                 // Download: the Download Options dialog asks for the current search's results
                 .story("Download", context -> render(context, DOWNLOAD_FIXTURES))

@@ -52,7 +52,7 @@ import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
-import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.component.QueryToolbarController;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.security.shared.DocumentPermission;
@@ -110,7 +110,7 @@ public class DashboardPresenter
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
     private final Components components;
-    private final QueryToolbarPresenter queryToolbarPresenter;
+    private final QueryToolbarController queryToolbar;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
@@ -145,7 +145,7 @@ public class DashboardPresenter
                               final DashboardView view,
                               final FlexLayout flexLayout,
                               final Components components,
-                              final QueryToolbarPresenter queryToolbarPresenter,
+                              final QueryToolbarController queryToolbar,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final QueryInfo queryInfo,
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
@@ -153,8 +153,8 @@ public class DashboardPresenter
                               final UrlParameters urlParameters,
                               final Provider<ExplorerPopupController> dashboardSelection) {
         super(eventBus, view);
-        own(queryToolbarPresenter);
-        this.queryToolbarPresenter = queryToolbarPresenter;
+        own(queryToolbar);
+        this.queryToolbar = queryToolbar;
         this.layoutPresenter = flexLayout;
         this.components = components;
         components.setOwner(this);
@@ -163,8 +163,8 @@ public class DashboardPresenter
         this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;
         this.dashboardSelection = dashboardSelection;
 
-        dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
-        queryToolbarPresenter.setParamValues(dashboardContext);
+        dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbar);
+        queryToolbar.setParamValues(dashboardContext);
 
         // Its rename dialog is this one's, made for one use
         final TabManager tabManager = new TabManager(components, () -> makeDialog(renameTabPresenterProvider), this);
@@ -217,8 +217,8 @@ public class DashboardPresenter
 //        dashboardPresenter.setEmbedded(embedded);
 //        dashboardPresenter.setQueryOnOpen(queryOnOpen);
 
-        queryToolbarPresenter.setOnStart(this::toggleStart);
-        queryToolbarPresenter.setOnTimeRangeChange(() -> {
+        queryToolbar.setOnStart(this::toggleStart);
+        queryToolbar.setOnTimeRangeChange(() -> {
             onChange();
             dashboardContext.fireContextChangeEvent();
             start();
@@ -238,7 +238,7 @@ public class DashboardPresenter
 
     @Override
     public List<Widget> getToolbars() {
-        return Collections.singletonList(queryToolbarPresenter.getWidget());
+        return Collections.singletonList(queryToolbar.asWidget());
     }
 
     private void onMaximiseTabs() {
@@ -387,7 +387,7 @@ public class DashboardPresenter
 
             DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                queryToolbarPresenter.setTimeRange(dashboardConfig.getTimeRange());
+                queryToolbar.setTimeRange(dashboardConfig.getTimeRange());
 
                 layoutConfig = MutableConfigUtil.fromLayoutConfig(dashboardConfig.getLayout());
                 layoutConstraints = dashboardConfig.getLayoutConstraints();
@@ -580,8 +580,8 @@ public class DashboardPresenter
     }
 
     private void enableQueryButtons() {
-        queryToolbarPresenter.setEnabled(!getQueryableComponents().isEmpty());
-        queryToolbarPresenter.onSearching(getCombinedSearchState());
+        queryToolbar.setEnabled(!getQueryableComponents().isEmpty());
+        queryToolbar.onSearching(getCombinedSearchState());
     }
 
     private boolean getCombinedSearchState() {
@@ -616,7 +616,7 @@ public class DashboardPresenter
 
         final DashboardConfig dashboardConfig = DashboardConfig
                 .builder()
-                .timeRange(queryToolbarPresenter.getTimeRange())
+                .timeRange(queryToolbar.getTimeRange())
                 .components(componentDataList)
                 .layout(MutableConfigUtil.toLayoutConfig(layoutPresenter.getLayoutConfig()))
                 .layoutConstraints(layoutConstraints)
@@ -1020,12 +1020,12 @@ public class DashboardPresenter
 
     @Override
     public void onSearching(final boolean searching) {
-        queryToolbarPresenter.onSearching(getCombinedSearchState());
+        queryToolbar.onSearching(getCombinedSearchState());
     }
 
     @Override
     public void onError(final List<ErrorMessage> errors) {
-        queryToolbarPresenter.onError(getCombinedErrors());
+        queryToolbar.onError(getCombinedErrors());
     }
 
     @Override

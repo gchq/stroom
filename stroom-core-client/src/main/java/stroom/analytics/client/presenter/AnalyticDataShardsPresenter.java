@@ -25,9 +25,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.query.client.component.QueryToolbarController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
-import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
@@ -48,7 +48,7 @@ public class AnalyticDataShardsPresenter
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =
             GWT.create(AnalyticDataShardResource.class);
 
-    private final QueryToolbarPresenter queryToolbarPresenter;
+    private final QueryToolbarController queryToolbar;
     private final AnalyticDataShardListPresenter analyticDataShardListPresenter;
     private final QueryResultTablePresenter tablePresenter;
     private final RestFactory restFactory;
@@ -60,16 +60,16 @@ public class AnalyticDataShardsPresenter
     @Inject
     public AnalyticDataShardsPresenter(final EventBus eventBus,
                                        final AnalyticDataShardsView view,
-                                       final QueryToolbarPresenter queryToolbarPresenter,
+                                       final QueryToolbarController queryToolbar,
                                        final AnalyticDataShardListPresenter analyticDataShardListPresenter,
                                        final QueryResultTablePresenter tablePresenter,
                                        final RestFactory restFactory,
                                        final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view);
-        own(queryToolbarPresenter);
+        own(queryToolbar);
         own(analyticDataShardListPresenter);
         own(tablePresenter);
-        this.queryToolbarPresenter = queryToolbarPresenter;
+        this.queryToolbar = queryToolbar;
         this.analyticDataShardListPresenter = analyticDataShardListPresenter;
         this.tablePresenter = tablePresenter;
         this.restFactory = restFactory;
@@ -79,20 +79,20 @@ public class AnalyticDataShardsPresenter
         tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
         tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
 
-        queryToolbarPresenter.setOnStart(this::update);
-        queryToolbarPresenter.setOnTimeRangeChange(this::update);
+        queryToolbar.setOnStart(this::update);
+        queryToolbar.setOnTimeRangeChange(this::update);
         own(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
         tablePresenter.setOnRefreshRequest(this::update);
     }
 
     @Override
     public List<Widget> getToolbars() {
-        return Collections.singletonList(queryToolbarPresenter.getWidget());
+        return Collections.singletonList(queryToolbar.asWidget());
     }
 
     private void update() {
-        queryToolbarPresenter.setEnabled(true);
-        queryToolbarPresenter.onSearching(false);
+        queryToolbar.setEnabled(true);
+        queryToolbar.onSearching(false);
         final AnalyticDataShard selected = analyticDataShardListPresenter.getSelectionModel().getSelected();
         if (selected == null) {
             tablePresenter.reset();
@@ -100,23 +100,23 @@ public class AnalyticDataShardsPresenter
             final GetAnalyticShardDataRequest request =
                     new GetAnalyticShardDataRequest(
                             tablePresenter.getRequestedRange(),
-                            queryToolbarPresenter.getTimeRange(),
+                            queryToolbar.getTimeRange(),
                             analyticRuleUuid,
                             selected.getPath(),
                             dateTimeSettingsFactory.getDateTimeSettings());
 
-            queryToolbarPresenter.onSearching(true);
+            queryToolbar.onSearching(true);
             restFactory
                     .create(ANALYTIC_DATA_SHARD_RESOURCE)
                     .method(res -> res.getData(selected.getNode(), request))
                     .onSuccess(result -> {
                         tablePresenter.setData(result);
-                        queryToolbarPresenter.onSearching(false);
+                        queryToolbar.onSearching(false);
                     })
                     .onFailure(t -> {
-                        queryToolbarPresenter.onError(
+                        queryToolbar.onError(
                                 Collections.singletonList(new ErrorMessage(Severity.ERROR, t.getMessage())));
-                        queryToolbarPresenter.onSearching(false);
+                        queryToolbar.onSearching(false);
                     })
                     // Nothing is run if this is disposed (e.g. its tab closed) before the reply
                     .owner(this)

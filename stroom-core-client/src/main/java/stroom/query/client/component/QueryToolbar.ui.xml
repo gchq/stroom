@@ -3,11 +3,12 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:q="urn:import:stroom.query.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:SimplePanel styleName="QueryToolbarViewImpl-outer">
-        <g:FlowPanel styleName="QueryToolbarViewImpl-inner">
+    <g:SimplePanel styleName="query-toolbar">
+        <g:FlowPanel styleName="query-toolbar__inner">
             <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
-            <b:Toolbar name="Query errors" addStyleNames="QueryToolbarViewImpl-errors">
-                <b:ToolbarButton ui:field="errors" title="Show Errors"/>
+            <b:Toolbar ui:field="errorsToolbar" name="Query errors"
+                       addStyleNames="query-toolbar__errors query-toolbar__errors--hidden">
+                <b:ToolbarButton ui:field="errors" svg="ERROR" title="Show Errors"/>
             </b:Toolbar>
             <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>

@@ -32,10 +32,10 @@ import stroom.query.api.Param;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
+import stroom.query.client.component.QueryToolbarController;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
@@ -78,7 +78,7 @@ public class QueryEditPresenter
     private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
 
     private final QueryHelpPresenter queryHelpPresenter;
-    private final QueryToolbarPresenter queryToolbarPresenter;
+    private final QueryToolbarController queryToolbar;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
     private final QueryModel queryModel;
@@ -100,7 +100,7 @@ public class QueryEditPresenter
     public QueryEditPresenter(final EventBus eventBus,
                               final QueryEditView view,
                               final QueryHelpPresenter queryHelpPresenter,
-                              final QueryToolbarPresenter queryToolbarPresenter,
+                              final QueryToolbarController queryToolbar,
                               final EditorPresenter editorPresenter,
                               final QueryResultTableSplitPresenter queryResultPresenter,
                               final Provider<QueryResultVisPresenter> visPresenterProvider,
@@ -111,11 +111,11 @@ public class QueryEditPresenter
                               final QueryInfo queryInfo) {
         super(eventBus, view);
         own(queryHelpPresenter);
-        own(queryToolbarPresenter);
+        own(queryToolbar);
         own(editorPresenter);
         own(queryResultPresenter);
         this.queryHelpPresenter = queryHelpPresenter;
-        this.queryToolbarPresenter = queryToolbarPresenter;
+        this.queryToolbar = queryToolbar;
         this.queryResultPresenter = queryResultPresenter;
         this.visPresenterProvider = visPresenterProvider;
         this.linkTabsLayoutView = linkTabsLayoutView;
@@ -209,7 +209,7 @@ public class QueryEditPresenter
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
 
-        queryModel.addSearchErrorListener(queryToolbarPresenter);
+        queryModel.addSearchErrorListener(queryToolbar);
         queryModel.addTokenErrorListener(e -> {
             final Indicators indicators = new Indicators();
             final DefaultLocation from = e.getFrom();
@@ -225,7 +225,7 @@ public class QueryEditPresenter
             editorPresenter.setIndicators(indicatorLines);
             editorPresenter.setMarkers(Collections.singletonList(marker));
         });
-        queryModel.addSearchStateListener(queryToolbarPresenter);
+        queryModel.addSearchStateListener(queryToolbar);
 
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -245,8 +245,8 @@ public class QueryEditPresenter
         linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
         setVisHidden(true);
 
-        queryToolbarPresenter.setEnabled(true);
-        queryToolbarPresenter.onSearching(false);
+        queryToolbar.setEnabled(true);
+        queryToolbar.onSearching(false);
 
         //noinspection unused event
         own(editorPresenter.addValueChangeHandler(event -> {
@@ -256,8 +256,8 @@ public class QueryEditPresenter
         }));
         //noinspection unused event
         own(editorPresenter.addFormatHandler(event -> onChange()));
-        queryToolbarPresenter.setOnStart(this::toggleStart);
-        queryToolbarPresenter.setOnTimeRangeChange(() -> {
+        queryToolbar.setOnStart(this::toggleStart);
+        queryToolbar.setOnTimeRangeChange(() -> {
             run();
             onChange();
         });
@@ -329,7 +329,7 @@ public class QueryEditPresenter
 
     @Override
     public List<Widget> getToolbars() {
-        return Collections.singletonList(queryToolbarPresenter.getWidget());
+        return Collections.singletonList(queryToolbar.asWidget());
     }
 
     public void updateQuery(final String query) {
@@ -447,7 +447,7 @@ public class QueryEditPresenter
                 null,
                 editorPresenter.getText(),
                 params,
-                queryToolbarPresenter.getTimeRange(),
+                queryToolbar.getTimeRange(),
                 true,
                 true,
                 queryInfo.getMessage(),
@@ -455,11 +455,11 @@ public class QueryEditPresenter
     }
 
     public TimeRange getTimeRange() {
-        return queryToolbarPresenter.getTimeRange();
+        return queryToolbar.getTimeRange();
     }
 
     public void setTimeRange(final TimeRange timeRange) {
-        queryToolbarPresenter.setTimeRange(timeRange);
+        queryToolbar.setTimeRange(timeRange);
     }
 
     /**

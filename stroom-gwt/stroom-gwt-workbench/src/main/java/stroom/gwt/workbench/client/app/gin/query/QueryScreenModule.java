@@ -27,8 +27,6 @@ import stroom.query.client.presenter.QueryResultTableSplitPresenter;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.client.presenter.QueryResultVisPresenter;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
-import stroom.query.client.presenter.QueryToolbarPresenter;
-import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter;
@@ -42,7 +40,6 @@ import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.client.view.QueryResultTabsViewImpl;
 import stroom.query.client.view.QueryResultVisViewImpl;
-import stroom.query.client.view.QueryToolbarViewImpl;
 import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
 import stroom.query.client.view.TextViewImpl;
@@ -58,9 +55,6 @@ public class QueryScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(QueryDocPresenter.class);
-        bindPresenterWidget(QueryToolbarPresenter.class,
-                QueryToolbarView.class,
-                QueryToolbarViewImpl.class);
         bindPresenterWidget(QueryHelpPresenter.class,
                 QueryHelpView.class,
                 QueryHelpViewImpl.class);

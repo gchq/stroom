@@ -63,24 +63,6 @@
 }
 */
 
-.QueryToolbarViewImpl-outer {
-    display: flex;
-    flex-direction: row-reverse;
-    flex-grow: 1;
-}
-
-.QueryToolbarViewImpl-inner {
-    display: flex;
-    gap: 2px;
-    align-items: center;
-    justify-content: space-between;
-}
-
-/* Holds the errors button, which sits in the row as if on its own */
-.QueryToolbarViewImpl-errors {
-    margin: 0;
-}
-
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -138,8 +120,7 @@
 }
 
 .TableViewImpl .pager,
-.QueryViewImpl--buttons,
-.QueryToolbarViewImpl-outer {
+.QueryViewImpl--buttons {
     padding: 0 5px;
 }
 
