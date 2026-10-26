@@ -1072,6 +1072,24 @@ class TestProposeVisualisationTool {
     }
 
     @Test
+    void aNewTableNamedAsTheTableIsAddedBesideTheOnlyOne() {
+        // Seen in testing: given the new table's name as table, the chart was refused ("Say which table to chart:
+        // 'Links'"), costing a turn.
+        final Map<String, Object> args = mapOf(
+                ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.ECHARTS,
+                ProposeVisualisationTool.KIND_ARG, "line",
+                ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Day", "y", "Messages"),
+                ProposeVisualisationTool.NAME_ARG, "Messages by day",
+                ProposeVisualisationTool.TABLE_ARG, "Daily",
+                ProposeVisualisationTool.NEW_TABLE_ARG, newTableChanges());
+
+        assertThat(call(args)).contains("'Create visualisation' button for a line chart of table 'Daily'");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(VisualisationPlan.fromJson((String) action.get("plan")).componentId())
+                        .isEqualTo("table-1"));
+    }
+
+    @Test
     void aNewTablesGroupingIsCheckedAtTheLevelsGiven() {
         // Seen in testing: a column grouped at level 2 was said to be at level 3, and to be regrouped at level 2.
         final List<Map<String, Object>> nested = newTableChanges();
