@@ -213,7 +213,7 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
             checkText("the column for " + entry.getKey(), entry.getValue());
         }
         final ChartLibrary chartLibrary = chartLibrary();
-        normaliseStyle(chartKind, style, chartLibrary);
+        normaliseStyle(chartKind, style);
         normaliseOptions(options, chartLibrary);
         checkText("the table's name", table);
         checkText("the component's name", componentName);
@@ -259,29 +259,6 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     /// @return The settings, normalised.
     /// @throws IllegalArgumentException naming a setting the kind doesn't have or a value it doesn't take.
     public static Map<String, String> normaliseStyle(final ChartKind kind, final Map<String, String> style) {
-        return normaliseStyle(kind, style, ChartLibrary.ECHARTS);
-    }
-
-    /// Checks style settings for a chart drawn with a library, and puts their values in the form the
-    /// visualisation takes.
-    ///
-    /// @param kind    The chart kind.
-    /// @param style   The settings chosen, by setting id.
-    /// @param library The library it is drawn with.
-    /// @return The settings, normalised.
-    /// @throws IllegalArgumentException naming a setting the kind (or the library) doesn't have, or a value it
-    /// doesn't take.
-    public static Map<String, String> normaliseStyle(final ChartKind kind,
-                                                     final Map<String, String> style,
-                                                     final ChartLibrary library) {
-        for (final String id : NullSafe.map(style).keySet()) {
-            kind.styleSetting(id)
-                    .filter(setting -> !library.supports(setting))
-                    .ifPresent(setting -> {
-                        throw new IllegalArgumentException(setting.id() + " is drawn only with ECharts, not "
-                                                           + library.displayName() + ".");
-                    });
-        }
         final Map<String, String> normalised = new LinkedHashMap<>();
         for (final Entry<String, String> entry : NullSafe.map(style).entrySet()) {
             final StyleSetting setting = kind.styleSetting(entry.getKey())
