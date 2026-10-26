@@ -138,6 +138,15 @@ public final class FloorMapEditorStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Editors/FloorMapEditor", FloorMapEditorStories.class)
                 .layout(StoryLayout.FULLSCREEN)
+                // The Editor tab's timeline has a help button, which shows the timeline's help
+                .story("TimelineHelp", FloorMapEditorStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.querySelector(CANVAS)).toHaveAttribute("role", "group"));
+                    play.click(play.getByRole("button", "Timeline help"));
+                    play.expect(screen.findByText("Timeline", "h4")).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
                 // Shift+F10 and the context menu key, the standard keys for a context menu, open the
                 // focused canvas's menu, as Enter and Space do. The menu is named for what it acts
                 // on and takes the focus, and the browser's own contextmenu event for the key

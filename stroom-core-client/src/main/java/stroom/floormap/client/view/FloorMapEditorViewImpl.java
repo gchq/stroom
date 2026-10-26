@@ -175,8 +175,8 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
     }
 
     @Override
-    public void setTimelineView(final View view) {
-        timelinePanel.setWidget(view.asWidget());
+    public void setTimelineView(final IsWidget timeline) {
+        timelinePanel.setWidget(timeline.asWidget());
     }
 
     @Override

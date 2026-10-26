@@ -263,6 +263,8 @@
 .stroom-floormap-timeline-inner-bar {
     position: absolute;
     background-color: #1e88e5; /* Stroom Blue */
+    /* As far as the handle: the timeline's progress, set on the bar */
+    width: var(--stroom-floormap-timeline__progress, 0%);
     height: 100%;
     border-radius: 3px 0 0 3px;
     pointer-events: none;
@@ -272,6 +274,7 @@
 .stroom-floormap-timeline-handle {
     position: absolute;
     top: 50%;
+    left: var(--stroom-floormap-timeline__progress, 0%);
     transform: translate(-50%, -50%);
     width: 14px;
     height: 14px;
@@ -287,7 +290,7 @@
 .stroom-floormap-timeline-scrub-tooltip {
     position: absolute;
     bottom: calc(100% + 12px); /* sit above the handle (bar height / 2 + handle radius + gap) */
-    left: 0;
+    left: var(--stroom-floormap-timeline__progress, 0%);
     transform: translateX(-50%);
     background-color: var(--page__background-color);
     color: var(--floormap-accent__color);

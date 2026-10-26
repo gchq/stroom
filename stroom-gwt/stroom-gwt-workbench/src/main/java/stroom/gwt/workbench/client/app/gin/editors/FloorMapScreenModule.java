@@ -34,8 +34,6 @@ import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
-import stroom.floormap.client.presenter.FloorMapTimelinePresenter;
-import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
 import stroom.floormap.client.presenter.FloorMapTrackingPresenter;
 import stroom.floormap.client.presenter.FloorMapTrackingPresenter.FloorMapTrackingView;
 import stroom.floormap.client.view.FloorMapClusterViewImpl;
@@ -47,7 +45,6 @@ import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimeListViewImpl;
-import stroom.floormap.client.view.FloorMapTimelineViewImpl;
 import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -67,9 +64,6 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapEditorPresenter.class,
                 FloorMapEditorView.class,
                 FloorMapEditorViewImpl.class);
-        bindPresenterWidget(FloorMapTimelinePresenter.class,
-                FloorMapTimelineView.class,
-                FloorMapTimelineViewImpl.class);
         bindPresenterWidget(FloorMapFactListPresenter.class,
                 FloorMapFactListView.class,
                 FloorMapFactListViewImpl.class);

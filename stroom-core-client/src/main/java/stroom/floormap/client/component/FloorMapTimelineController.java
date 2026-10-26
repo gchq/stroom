@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
@@ -22,23 +22,19 @@ import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.component.FloorMapTimelineSettingsController;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
-import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Controller;
 import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -47,23 +43,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// Presenter for the floor map timeline control. Handles time range selection and fires events when the time changes.
+/// The floor map's timeline ([FloorMapTimeline]): plays and steps through the time range, which it
+/// tells its owner of as it changes.
 /// Provides a timeline bar with step-back/play-pause/step-forward buttons, a progress scrubber, date labels,
 /// a speed badge that opens a playback-speed menu when clicked, and a settings icon that opens a popup
 /// for date range and loop options.
-public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelineView> {
-
-    /// Indicates whether the selected time falls outside the visible timeline range.
-    /// Used to show a directional warning indicator so the user knows they need to
-    /// extend the range to see the selected object.
-    public enum OutOfRange {
-        /// The selected time is within the visible range.
-        NONE,
-        /// The selected time is before the timeline start.
-        BEFORE,
-        /// The selected time is after the timeline end.
-        AFTER
-    }
+public class FloorMapTimelineController extends Controller {
 
     private static final double SPEED_MULTIPLIER = 1000.0;
 
@@ -76,6 +61,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// so the server is not overwhelmed at high playback speeds.
     private static final double PLAYBACK_QUERY_INTERVAL_MS = 300.0;
 
+    private final FloorMapTimeline view;
     private final FloorMapTimelineSettingsController settings;
 
     private long startTime;
@@ -151,16 +137,24 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         this.onTimeChange = onTimeChange;
     }
 
+    /// Made by GIN, with its timeline.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The timeline.
+    /// @param settings          The playback settings' popup.
+    /// @param dateTimeFormatter Formats the times shown.
     @Inject
-    public FloorMapTimelinePresenter(final EventBus eventBus,
-                                     final FloorMapTimelineView view,
-                                     final FloorMapTimelineSettingsController settings,
-                                     final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view);
+    public FloorMapTimelineController(final EventBus eventBus,
+                                      final FloorMapTimeline view,
+                                      final FloorMapTimelineSettingsController settings,
+                                      final DateTimeFormatter dateTimeFormatter) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         this.settings = own(settings);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setScrubHandler(percentage -> {
+        view.setOnScrub(percentage -> {
             // Visual-only update during drag — no data query fired.
             // Manual scrub is always in-range, so clear any out-of-range indicator.
             final long duration = endTime - startTime;
@@ -171,7 +165,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             setCurrentTime(newTime);
         });
 
-        view.setCommitHandler(percentage -> {
+        view.setOnCommit(percentage -> {
             // User released the scrubber: commit the position and fire a data query.
             // Clear any in-flight animations since the time has jumped discontinuously.
             if (clearAnimationStateHandler != null) {
@@ -191,7 +185,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         // repaints them. Same pattern the dashboard's visualisations use.
         //noinspection unused e
         listen(ChangeCurrentPreferencesEvent.getType(), e -> {
-            getView().redrawHistogram();
+            view.redrawHistogram();
             // Every time on the strip is rendered from the user's date/time
             // preference, so a change to it has to be re-applied to the ones
             // already on screen — the axis labels and the scrubber pill — rather
@@ -204,7 +198,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         settings.setOnStartChange(() -> applyRange(settings.getStartTime(), this.endTime));
         settings.setOnEndChange(() -> applyRange(this.startTime, settings.getEndTime()));
 
-        getView().setPlayPauseHandler(() -> {
+        view.setOnPlayPause(() -> {
             // applyRange and setTimeRange both refuse an unusable range, so one can
             // normally never be in force here. The exception is a timeline that has
             // never been given a usable one — both boundaries still 0 — where play
@@ -219,10 +213,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             }
             playing = !playing;
             if (playing) {
-                getView().setPlayPauseIcon(SvgImage.PAUSE, "Pause");
+                view.setPlayPauseIcon(SvgImage.PAUSE, "Pause");
                 startPlayback();
             } else {
-                getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
+                view.setPlayPauseIcon(SvgImage.PLAY, "Play");
                 cancelPlayback();
             }
             if (playStateChangeHandler != null) {
@@ -231,7 +225,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         });
 
         // Step-back: jump one histogram bin backward.
-        getView().setStepBackHandler(() -> {
+        view.setOnStepBack(() -> {
             if (clearAnimationStateHandler != null) {
                 clearAnimationStateHandler.run();
             }
@@ -241,7 +235,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         // Keyboard scrubbing on the focused bar. Same path as the step buttons —
         // arrow keys and the buttons are the same operation, so they must not be
         // able to disagree about where "one step" lands.
-        getView().setNudgeHandler(bins -> {
+        view.setOnNudge(bins -> {
             if (clearAnimationStateHandler != null) {
                 clearAnimationStateHandler.run();
             }
@@ -250,7 +244,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         });
 
         // Step-forward: jump one histogram bin forward.
-        getView().setStepForwardHandler(() -> {
+        view.setOnStepForward(() -> {
             if (clearAnimationStateHandler != null) {
                 clearAnimationStateHandler.run();
             }
@@ -258,10 +252,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         });
 
         // Settings button opens the popup anchored above the settings icon.
-        getView().setSettingsHandler(() -> settings.show(getView().getSettingsButtonWidget()));
+        view.setOnSettings(() -> settings.show(view.getSettingsButton()));
 
         // Speed badge opens a menu of playback speeds anchored above the badge.
-        getView().setSpeedBadgeHandler(this::showSpeedMenu);
+        view.setOnSpeedBadge(this::showSpeedMenu);
 
         // Loop/stop-at-end toggle: default to looping.
         settings.setLoopPlayback(true);
@@ -286,11 +280,6 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             }
         });
 
-        getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
-        getView().setStepBackIcon(SvgImage.STEP_BACKWARD, "Step Back");
-        getView().setStepForwardIcon(SvgImage.STEP_FORWARD, "Step Forward");
-        getView().setSettingsIcon(SvgImage.SETTINGS, "Playback Settings");
-
         setPlaybackSpeed(1.0);
     }
 
@@ -310,7 +299,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             }
             items.add(builder.build());
         }
-        final Rect relativeRect = new Rect(getView().getSpeedBadgeWidget().getElement()).grow(3);
+        final Rect relativeRect = new Rect(view.getSpeedBadge().getElement()).grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.ABOVE);
         ShowMenuEvent.builder()
                 .name("Playback Speed")
@@ -322,7 +311,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// Applies a new playback speed and updates the badge label to match.
     private void setPlaybackSpeed(final double speed) {
         this.playbackSpeed = speed;
-        getView().setSpeedBadge(formatSpeed(speed));
+        view.setSpeedBadge(formatSpeed(speed));
     }
 
     /// Applies a range edited in the settings popup, rejecting one that cannot be used.
@@ -452,7 +441,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         if (playing) {
             playing = false;
             cancelPlayback();
-            getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
+            view.setPlayPauseIcon(SvgImage.PLAY, "Play");
             if (playStateChangeHandler != null) {
                 playStateChangeHandler.accept(false);
             }
@@ -521,20 +510,20 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             final double percentage = ((double) (currentTime - startTime) / (endTime - startTime)) * 100;
             // Defence-in-depth clamp — setCurrentTime should already keep us in bounds,
             // but guard against any future caller that bypasses it.
-            getView().setProgressPct(Math.max(0.0, Math.min(100.0, percentage)));
+            view.setProgressPct(Math.max(0.0, Math.min(100.0, percentage)));
             // The scrub text is also the bar's aria-valuetext, so it has to be
             // refreshed on *every* path that moves the time — keyboard, playback
             // and external seeks, not just a mouse drag. Setting it only while
             // dragging left a screen reader announcing the position from the last
             // drag, or "0" on a bar that had never been dragged, while reporting a
             // correct aria-valuenow beside it.
-            getView().setScrubTooltip(formatTime(currentTime));
+            view.setScrubTooltip(formatTime(currentTime));
         }
     }
 
     private void updateDateLabels() {
-        getView().setStartDateLabel(formatTime(startTime));
-        getView().setEndDateLabel(formatTime(endTime));
+        view.setStartDateLabel(formatTime(startTime));
+        view.setEndDateLabel(formatTime(endTime));
     }
 
     /// Sets the out-of-range state and notifies the view to show the indicator.
@@ -542,7 +531,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private void setOutOfRange(final OutOfRange direction) {
         if (this.outOfRange != direction) {
             this.outOfRange = direction;
-            getView().setOutOfRangeIndicator(direction);
+            view.setOutOfRange(direction == OutOfRange.BEFORE, direction == OutOfRange.AFTER);
         }
     }
 
@@ -550,7 +539,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private void clearOutOfRange() {
         if (this.outOfRange != OutOfRange.NONE) {
             this.outOfRange = OutOfRange.NONE;
-            getView().setOutOfRangeIndicator(OutOfRange.NONE);
+            view.setOutOfRange(false, false);
         }
     }
 
@@ -667,7 +656,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                             if (playStateChangeHandler != null) {
                                 playStateChangeHandler.accept(false);
                             }
-                            getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
+                            view.setPlayPauseIcon(SvgImage.PLAY, "Play");
                             setCurrentTime(newTime);
                             lastFrameTime = 0;
                             queryThrottle.reset();
@@ -714,7 +703,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         histogramBucketWidthMs = layout == null
                 ? 0
                 : layout.getBucketWidthMs();
-        getView().setHistogramData(binCounts, layout);
+        view.setHistogramData(binCounts, layout);
     }
 
     /// Records the earliest and latest event times in the data, which is the range "Show All"
@@ -765,104 +754,23 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     ///
     /// @param helpContent the HTML help body to show in the popup
     public void setHelpContent(final SafeHtml helpContent) {
-        final Toolbar toolbar = new Toolbar("Timeline help");
-        FloorMapEditorHelp.addHelpButton(toolbar, "Timeline help", "Timeline", helpContent);
-        getView().addRightControl(toolbar);
+        FloorMapEditorHelp.addHelpButton(view.getHelpToolbar(), "Timeline help", "Timeline", helpContent);
+        view.setHelpVisible(true);
     }
 
-    public interface FloorMapTimelineView extends View {
 
-        void setProgressPct(double pct);
+    // --------------------------------------------------------------------------------
 
-        /// Sets the handler called on every mouse-move during a drag.
-        /// Should update the visual position only — must NOT trigger a data query.
-        void setScrubHandler(Consumer<Double> scrubHandler);
 
-        /// Sets the handler called when the user releases the scrubber (mouse-up) or
-        /// clicks directly on the histogram to seek.
-        /// This is the point at which a data query should be fired.
-        void setCommitHandler(Consumer<Double> commitHandler);
-
-        /// Sets the handler called when the bar is scrubbed from the keyboard, with
-        /// a signed number of histogram bins to move by.
-        ///
-        /// Stated in bins rather than as a percentage so a keypress lands on the
-        /// same instants the step buttons reach; the view does not know the bin
-        /// width, and a percentage step would drift off the bin grid.
-        void setNudgeHandler(Consumer<Integer> nudgeHandler);
-
-        /// Repaints the histogram with the data it already has.
-        ///
-        /// Needed on a theme change: the bars are canvas pixels, so unlike the
-        /// CSS-styled parts of the strip they keep the colour they were painted with
-        /// until something repaints them.
-        void redrawHistogram();
-
-        /// Updates the text of the scrub tooltip shown above the handle during dragging.
-        void setScrubTooltip(String text);
-
-        /// Set the text label shown at the left end of the timeline bar (start date).
-        void setStartDateLabel(String text);
-
-        /// Set the text label shown at the right end of the timeline bar (end date).
-        void setEndDateLabel(String text);
-
-        /// Set the icon and title of the play/pause button.
-        void setPlayPauseIcon(SvgImage icon, String title);
-
-        void setPlayPauseHandler(Runnable handler);
-
-        /// Set the icon and title of the step-back button.
-        void setStepBackIcon(SvgImage icon, String title);
-
-        /// Set the icon and title of the step-forward button.
-        void setStepForwardIcon(SvgImage icon, String title);
-
-        /// Set the click handler for the step-back button.
-        void setStepBackHandler(Runnable handler);
-
-        /// Set the click handler for the step-forward button.
-        void setStepForwardHandler(Runnable handler);
-
-        /// Set the icon and title of the settings gear button.
-        void setSettingsIcon(SvgImage icon, String title);
-
-        /// Set the click handler for the settings gear button.
-        void setSettingsHandler(Runnable handler);
-
-        /// Returns the settings button widget so the popup can be anchored to it.
-        Widget getSettingsButtonWidget();
-
-        /// Appends a widget to the right-hand controls (beside the settings gear).
-        /// Used by the Editor tab to add a help button.
-        ///
-        /// @param widget the widget to append
-        void addRightControl(Widget widget);
-
-        /// Updates the speed badge label shown beside the settings button (e.g. "x1").
-        void setSpeedBadge(String text);
-
-        /// Set the handler called when the speed badge is clicked (or activated from
-        /// the keyboard). Opens the playback-speed menu.
-        void setSpeedBadgeHandler(Runnable handler);
-
-        /// Returns the speed badge widget so the speed menu can be anchored to it.
-        Widget getSpeedBadgeWidget();
-
-        /// Provides histogram data (event counts per bin) for display above the scrubber.
-        /// An empty or null array clears the histogram.
-        ///
-        /// @param binCounts the event count in each bin
-        /// @param layout    where each bin belongs across the visible range, or `null` for an
-        ///                  even division of it
-        void setHistogramData(int[] binCounts, HistogramLayout layout);
-
-        /// Shows or hides the out-of-range indicator at the appropriate end of the
-        /// timeline bar.
-        ///
-        /// @param direction [OutOfRange#BEFORE] to show a left indicator,
-        ///         [OutOfRange#AFTER] to show a right indicator,
-        ///         or [OutOfRange#NONE] to hide both.
-        void setOutOfRangeIndicator(OutOfRange direction);
+    /// Indicates whether the selected time falls outside the visible timeline range.
+    /// Used to show a directional warning indicator so the user knows they need to
+    /// extend the range to see the selected object.
+    private enum OutOfRange {
+        /// The selected time is within the visible range.
+        NONE,
+        /// The selected time is before the timeline start.
+        BEFORE,
+        /// The selected time is after the timeline end.
+        AFTER
     }
 }

@@ -181,6 +181,23 @@ public final class FloorMapMapStories {
                     play.waitFor(() -> play.expect(screen.queryByRole("checkbox", "Loop Playback")).toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
+                // The timeline's bar is a slider from 0 to 100; its speed badge is a button named for
+                // what it is and its speed, whose menu changes the speed. The Map tab's timeline has
+                // no help button (only the Editor tab's has)
+                .story("TimelineSpeed", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Play screen = play.screen();
+                    final Query slider = play.getByRole("slider");
+                    play.expect(slider).toHaveAttribute("aria-valuemin", "0");
+                    play.expect(slider).toHaveAttribute("aria-valuemax", "100");
+                    play.click(play.getByRole("button", "Playback speed x1, opens the speed menu"));
+                    play.click(screen.findByRole("menuitem", "x10"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Playback speed x10, opens the speed menu"))
+                            .toBeInTheDocument());
+                    play.expect(play.queryByRole("button", "Timeline help")).toBeNull();
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Groups panel lists the document's groups, each with its number of members
                 // and how many of them have a position on the map at this time
                 .story("Groups", FloorMapMapStories::render)

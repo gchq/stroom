@@ -77,6 +77,21 @@ public class AriaPanel extends FlowPanel {
         setAttribute("aria-live", ariaLive);
     }
 
+    /// @param ariaValueMin The least value of what the panel (e.g. a slider) sets.
+    public void setAriaValueMin(final int ariaValueMin) {
+        getElement().setAttribute("aria-valuemin", String.valueOf(ariaValueMin));
+    }
+
+    /// @param ariaValueMax The greatest value of what the panel (e.g. a slider) sets.
+    public void setAriaValueMax(final int ariaValueMax) {
+        getElement().setAttribute("aria-valuemax", String.valueOf(ariaValueMax));
+    }
+
+    /// @param ariaValueNow The value the panel (e.g. a slider) is at now.
+    public void setAriaValueNow(final int ariaValueNow) {
+        getElement().setAttribute("aria-valuenow", String.valueOf(ariaValueNow));
+    }
+
     private void setAttribute(final String name, final String value) {
         if (NullSafe.isBlankString(value)) {
             getElement().removeAttribute(name);

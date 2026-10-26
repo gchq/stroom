@@ -29,6 +29,7 @@ import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayerStyleController;
 import stroom.floormap.client.component.FloorMapLayers;
 import stroom.floormap.client.component.FloorMapSetScaleController;
+import stroom.floormap.client.component.FloorMapTimelineController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.editor.FloorMapFactEndMessages;
@@ -152,7 +153,7 @@ public class FloorMapEditorPresenter
 
     private final RestFactory restFactory;
     private final FloorMapCanvasController canvas;
-    private final FloorMapTimelinePresenter floorMapTimelinePresenter;
+    private final FloorMapTimelineController floorMapTimeline;
     private final FloorMapFactListPresenter floorMapFactListPresenter;
     private final FloorMapTimeListPresenter floorMapTimeListPresenter;
     private final FloorMapObjectEditPresenter floorMapObjectEditPresenter;
@@ -218,7 +219,7 @@ public class FloorMapEditorPresenter
                                    final FloorMapEditorView view,
                                    final RestFactory restFactory,
                                    final Provider<FloorMapCanvasController> canvasProvider,
-                                   final Provider<FloorMapTimelinePresenter> timelineProvider,
+                                   final Provider<FloorMapTimelineController> timelineProvider,
                                    final Provider<FloorMapFactListPresenter> factListProvider,
                                    final Provider<FloorMapTimeListPresenter> timeListProvider,
                                    final Provider<FloorMapObjectEditPresenter> propertiesProvider,
@@ -234,7 +235,7 @@ public class FloorMapEditorPresenter
         // Each child is obtained via Provider so GIN creates a fresh instance
         // for this presenter rather than sharing singletons used elsewhere.
         this.canvas = make(canvasProvider);
-        this.floorMapTimelinePresenter = make(timelineProvider);
+        this.floorMapTimeline = make(timelineProvider);
         this.floorMapFactListPresenter = make(factListProvider);
         this.floorMapTimeListPresenter = make(timeListProvider);
         this.floorMapObjectEditPresenter = make(propertiesProvider);
@@ -279,7 +280,7 @@ public class FloorMapEditorPresenter
         // reuses the canvas and timeline but is not a HasToolbar for this
         // presenter, so no map-help button appears there.)
         helpToolbar = createHelpToolbar();
-        floorMapTimelinePresenter.setHelpContent(FloorMapEditorHelp.timeline());
+        floorMapTimeline.setHelpContent(FloorMapEditorHelp.timeline());
 
         // The Layers panel is the Editor dock's tab.
         dock.addTab("Layers", layersPanel);
@@ -299,7 +300,7 @@ public class FloorMapEditorPresenter
 
         getView().setCanvasView(canvas);
         getView().setDockView(dock);
-        getView().setTimelineView(floorMapTimelinePresenter.getView());
+        getView().setTimelineView(floorMapTimeline);
         getView().setFactListView(floorMapFactListPresenter.getView());
         getView().setTimeListView(floorMapTimeListPresenter.getView());
 
@@ -311,7 +312,7 @@ public class FloorMapEditorPresenter
         // Properties are shown as a modal dialog — no slot needed.
 
         // ---- Timeline events ------------------------------------------------
-        floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
+        floorMapTimeline.setOnTimeChange(this::onTimeChange);
 
         // ---- Canvas context menu --------------------------------------------
         canvas.setOnContextMenu(this::onCanvasContextMenu);
@@ -588,7 +589,7 @@ public class FloorMapEditorPresenter
     /// the Editor tab, so that background queries are not issued while the tab
     /// is hidden.
     public void pauseTimeline() {
-        floorMapTimelinePresenter.pause();
+        floorMapTimeline.pause();
     }
 
     /// Stops the clock when the document is closed.
@@ -599,7 +600,7 @@ public class FloorMapEditorPresenter
     @Override
     public void onClose() {
         super.onClose();
-        floorMapTimelinePresenter.pause();
+        floorMapTimeline.pause();
     }
 
     /// Flushes pending changes to the server as part of the Stroom save chain.
@@ -694,7 +695,7 @@ public class FloorMapEditorPresenter
     ///   breaks playback.
     ///
     /// A real range is also handed to
-    /// [FloorMapTimelinePresenter#setDataRange(long, long)], which is what enables the
+    /// [FloorMapTimelineController#setDataRange(long, long)], which is what enables the
     /// **Show All** button. That is the only thing that enables it, and on the Map tab it comes
     /// from the events histogram — which this tab has none of, and needs none of: the store's own
     /// min and max already are the extent Show All should fit to. Without this the button sits
@@ -710,26 +711,26 @@ public class FloorMapEditorPresenter
         final long now = System.currentTimeMillis();
 
         if (range.getMinEffectiveTimeMs() == null || range.getMaxEffectiveTimeMs() == null) {
-            floorMapTimelinePresenter.setTimeRange(now - ONE_DAY_MS, now + ONE_DAY_MS);
-            floorMapTimelinePresenter.clearDataRange();
-            floorMapTimelinePresenter.setCurrentTime(now);
+            floorMapTimeline.setTimeRange(now - ONE_DAY_MS, now + ONE_DAY_MS);
+            floorMapTimeline.clearDataRange();
+            floorMapTimeline.setCurrentTime(now);
             model.setSelectedTime(now);
         } else {
             final long min = range.getMinEffectiveTimeMs();
             final long max = range.getMaxEffectiveTimeMs();
             if (min < max) {
-                floorMapTimelinePresenter.setTimeRange(min, max);
-                floorMapTimelinePresenter.setDataRange(min, max);
+                floorMapTimeline.setTimeRange(min, max);
+                floorMapTimeline.setDataRange(min, max);
             } else {
                 // A store holding a single effective time reports min == max, which is not
                 // a usable playback range — a zero-length range leaves the step buttons and
                 // the progress bar with nowhere to move, and makes playback wrap on every
                 // frame. Show a window around that instant instead, matching what the
                 // no-data branch above does.
-                floorMapTimelinePresenter.setTimeRange(min - ONE_DAY_MS, max + ONE_DAY_MS);
-                floorMapTimelinePresenter.clearDataRange();
+                floorMapTimeline.setTimeRange(min - ONE_DAY_MS, max + ONE_DAY_MS);
+                floorMapTimeline.clearDataRange();
             }
-            floorMapTimelinePresenter.setCurrentTime(max);
+            floorMapTimeline.setCurrentTime(max);
             model.setSelectedTime(max);
         }
     }
@@ -764,7 +765,7 @@ public class FloorMapEditorPresenter
         // as its timeline's labels. The Editor tab has its own canvas and timeline
         // pair, so it needs this wiring independently of the Map tab's.
         canvas.setCurrentTimeText(
-                floorMapTimelinePresenter.formatTime(timeMs));
+                floorMapTimeline.formatTime(timeMs));
         loadAtTime(timeMs);
         if (model.getSelectedFactKey() != null) {
             refreshTimeListAtTime(timeMs);
@@ -1098,7 +1099,7 @@ public class FloorMapEditorPresenter
     /// Called when a row in the Time List is selected.
     ///
     /// Moves the timeline scrubber to the entry's effective time and reloads
-    /// the canvas so all panels stay in sync. [FloorMapTimelinePresenter#setCurrentTime]
+    /// the canvas so all panels stay in sync. [FloorMapTimelineController#setCurrentTime]
     /// only repositions the scrubber — it does *not* tell the timeline's
     /// time change callback — so there is no
     /// feedback loop back into [#onTimeChange].
@@ -1113,9 +1114,9 @@ public class FloorMapEditorPresenter
         if (entry != null) {
             // Stop auto-advance before repositioning, so playback can't race the
             // selection and move the scrubber off the chosen shard.
-            floorMapTimelinePresenter.pause();
+            floorMapTimeline.pause();
             model.setSelectedTime(entry.getEffectiveTimeMs());
-            floorMapTimelinePresenter.setCurrentTime(model.getSelectedTime());
+            floorMapTimeline.setCurrentTime(model.getSelectedTime());
             loadAtTime(model.getSelectedTime());
         }
     }
@@ -2193,7 +2194,7 @@ public class FloorMapEditorPresenter
         /// Shows the timeline scrubber, a fixed-height strip above the lists.
         ///
         /// @param view Its view.
-        void setTimelineView(View view);
+        void setTimelineView(IsWidget timeline);
 
         /// Shows the Fact List, the bottom-left column.
         ///

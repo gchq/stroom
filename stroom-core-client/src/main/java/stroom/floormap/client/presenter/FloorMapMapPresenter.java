@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.component.FloorMapCanvasController;
 import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapLayers;
+import stroom.floormap.client.component.FloorMapTimelineController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
@@ -98,7 +99,7 @@ import java.util.function.Consumer;
 /// - [#DOCK] – the [FloorMapDockController] (right-hand dock; hosts the
 ///   [FloorMapTrackingPresenter] tracking panel as its first tab, then
 ///   [FloorMapLayers] and [FloorMapGroupsPresenter])
-/// - [#TIMELINE] – the [FloorMapTimelinePresenter] (timeline scrubber)
+/// - [#TIMELINE] – the [FloorMapTimelineController] (timeline scrubber)
 ///
 /// Three [QueryModel]-based searches are maintained: the facts query playback,
 /// the events query playback (the entity overlay the canvas animates), and the histogram
@@ -110,7 +111,7 @@ public class FloorMapMapPresenter
     private static final int HISTOGRAM_BINS = 100;
 
     private final FloorMapCanvasController canvas;
-    private final FloorMapTimelinePresenter floorMapTimelinePresenter;
+    private final FloorMapTimelineController floorMapTimeline;
     private final FloorMapTrackingPresenter floorMapTrackingPresenter;
     private final FloorMapLayers layersPanel;
     private final FloorMapGroupsPresenter floorMapGroupsPresenter;
@@ -387,7 +388,7 @@ public class FloorMapMapPresenter
                                 final DateTimeSettingsFactory dateTimeSettingsFactory,
                                 final ResultStoreModel resultStoreModel,
                                 final Provider<FloorMapCanvasController> canvasProvider,
-                                final Provider<FloorMapTimelinePresenter> floorMapTimelinePresenterProvider,
+                                final Provider<FloorMapTimelineController> floorMapTimelineProvider,
                                 final Provider<FloorMapTrackingPresenter> floorMapEntityListPresenterProvider,
                                 final FloorMapLayers layersPanel,
                                 final Provider<FloorMapGroupsPresenter> floorMapGroupsPresenterProvider,
@@ -397,7 +398,7 @@ public class FloorMapMapPresenter
 
         this.floorMapClusterPresenter = floorMapClusterPresenter;
         this.canvas = make(canvasProvider);
-        this.floorMapTimelinePresenter = make(floorMapTimelinePresenterProvider);
+        this.floorMapTimeline = make(floorMapTimelineProvider);
         this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
         this.layersPanel = layersPanel;
         this.floorMapGroupsPresenter = make(floorMapGroupsPresenterProvider);
@@ -432,7 +433,7 @@ public class FloorMapMapPresenter
 
         getView().setMapView(canvas);
         getView().setDockView(dock);
-        getView().setTimelineView(floorMapTimelinePresenter.getView());
+        getView().setTimelineView(floorMapTimeline);
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
@@ -495,14 +496,14 @@ public class FloorMapMapPresenter
                 this::applyFactsHistoryOutcome);
 
         // This tab's own timeline: the Editor tab has its own, and the tabs must not time-sync
-        floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
+        floorMapTimeline.setOnTimeChange(this::onTimeChange);
 
 
 
         // Re-run the histogram whenever the user changes the visible date range via the settings popup.
-        floorMapTimelinePresenter.setTimeRangeChangeHandler(() ->
-                runHistogramQuery(floorMapTimelinePresenter.getStartTime(),
-                        floorMapTimelinePresenter.getEndTime()));
+        floorMapTimeline.setTimeRangeChangeHandler(() ->
+                runHistogramQuery(floorMapTimeline.getStartTime(),
+                        floorMapTimeline.getEndTime()));
 
         // Clicking an entity on this tab's canvas selects it in the tracking
         // panel and starts (or resumes) following it. The roster holds both
@@ -555,19 +556,19 @@ public class FloorMapMapPresenter
 
         // Keep the canvas informed of play/pause transitions so it can switch
         // between animate-on-move and teleport behaviour.
-        floorMapTimelinePresenter.setPlayStateChangeHandler(
+        floorMapTimeline.setPlayStateChangeHandler(
                 canvas::setPlaying);
 
         // Discard stale animation state whenever the timeline jumps non-continuously
         // (scrub, step-back/forward, loop-around, stop-at-end).
-        floorMapTimelinePresenter.setClearAnimationStateHandler(
+        floorMapTimeline.setClearAnimationStateHandler(
                 canvas::clearAnimationState);
 
         // The discrete jumps. Every read is now a snapshot at the selected time, so a jump needs
         // no different query — but it does need the read in flight abandoned rather than waited
         // for, and the canvas told to teleport rather than animate across it. Deliberately not
         // wired to the handler above, which fires per frame while looping.
-        floorMapTimelinePresenter.setDiscontinuityHandler(() -> {
+        floorMapTimeline.setDiscontinuityHandler(() -> {
             pendingDiscontinuity = true;
             // A jump is new evidence, and the emptiness of the instant we left says nothing about
             // the one we arrived at. Without this, scrubbing through a sparse stretch would
@@ -680,15 +681,15 @@ public class FloorMapMapPresenter
         // so the answer does not depend on what is currently shown — which is exactly why "Show All"
         // cannot be served from the bars. The previous read's extent is forgotten first, because
         // the store behind it may have changed.
-        floorMapTimelinePresenter.clearDataRange();
+        floorMapTimeline.clearDataRange();
         runExtentQuery();
 
         if (!timelineInitialised) {
             timelineInitialised = true;
             updateTimelineRange();
         } else {
-            runHistogramQuery(floorMapTimelinePresenter.getStartTime(),
-                    floorMapTimelinePresenter.getEndTime());
+            runHistogramQuery(floorMapTimeline.getStartTime(),
+                    floorMapTimeline.getEndTime());
         }
         onTimeChange(selectedTime);
         // The Map may already be the tab on screen, in which case no visibility change is coming
@@ -799,7 +800,7 @@ public class FloorMapMapPresenter
         // rather than a second one here. The canvas suppresses the announcement
         // itself while playing.
         canvas.setCurrentTimeText(
-                floorMapTimelinePresenter.formatTime(time));
+                floorMapTimeline.formatTime(time));
         // Facts: no query. The history is held and the snapshot at T derived from it, so playback,
         // scrub and step are zero-query for facts. The read below fires only when the cadence is
         // due or the Map has just become visible.
@@ -1557,8 +1558,8 @@ public class FloorMapMapPresenter
         final long start = selectedTime - ONE_DAY_MS;
         final long end = selectedTime + ONE_DAY_MS;
 
-        floorMapTimelinePresenter.setTimeRange(start, end);
-        floorMapTimelinePresenter.setCurrentTime(selectedTime);
+        floorMapTimeline.setTimeRange(start, end);
+        floorMapTimeline.setCurrentTime(selectedTime);
 
         runHistogramQuery(start, end);
     }
@@ -1638,7 +1639,7 @@ public class FloorMapMapPresenter
     /// for the same full-store scan twice — which is what a save would otherwise do, as it both
     /// re-reads the document (starting one) and refreshes this tab.
     private void runExtentQueryIfUnknown() {
-        if (extentAnswered && !floorMapTimelinePresenter.hasDataRange()) {
+        if (extentAnswered && !floorMapTimeline.hasDataRange()) {
             runExtentQuery();
         }
     }
@@ -1649,7 +1650,7 @@ public class FloorMapMapPresenter
     /// @param binCounts the event count in each bar
     /// @param layout    where each bar belongs across the range the counts were taken over
     private void applyHistogramData(final int[] binCounts, final HistogramLayout layout) {
-        floorMapTimelinePresenter.setHistogramData(binCounts, layout);
+        floorMapTimeline.setHistogramData(binCounts, layout);
         if (hasAnyCount(binCounts)) {
             runExtentQueryIfUnknown();
         }
@@ -1695,7 +1696,7 @@ public class FloorMapMapPresenter
         extentAnswered = true;
         final long[] extent = HistogramDataModel.extentOf(result);
         if (extent != null) {
-            floorMapTimelinePresenter.setDataRange(extent[0], extent[1]);
+            floorMapTimeline.setDataRange(extent[0], extent[1]);
         }
     }
 
@@ -1705,7 +1706,7 @@ public class FloorMapMapPresenter
     /// the Map tab, so that background queries are not issued while the tab
     /// is hidden.
     public void pauseTimeline() {
-        floorMapTimelinePresenter.pause();
+        floorMapTimeline.pause();
     }
 
     /// Stops the clock and every search this tab owns when the document is closed.
@@ -1720,7 +1721,7 @@ public class FloorMapMapPresenter
     public void onClose() {
         super.onClose();
         closed = true;
-        floorMapTimelinePresenter.pause();
+        floorMapTimeline.pause();
         factsCadenceTimer.cancel();
         factsHistoryQueryHelper.reset();
         eventsQueryHelper.reset();
@@ -1800,7 +1801,7 @@ public class FloorMapMapPresenter
         /// Shows the timeline below the map.
         ///
         /// @param view Its view.
-        void setTimelineView(View view);
+        void setTimelineView(IsWidget timeline);
 
         /// Shows or hides the right-hand dock, preserving its dragged width.
         ///
