@@ -42,7 +42,7 @@ import java.util.Set;
 /// `TickBox`, is in `Widgets/Inputs/TickBox`).
 ///
 /// Each row's tick box is ticked or not, and the header's is half-ticked when some of the rows are
-/// ticked but not all, as `ColumnSelectionPresenter` builds them. Clicking the header ticks all the
+/// ticked but not all, as `ColumnSelection` builds them. Clicking the header ticks all the
 /// rows, or unticks them if they all are. A grid the user can't change has tick boxes with no border
 /// that can't be clicked, and no header tick box, as `DataGridUtil.updatableTickBoxColumnBuilder`
 /// and `DocumentCreatePermissionsList` build them.

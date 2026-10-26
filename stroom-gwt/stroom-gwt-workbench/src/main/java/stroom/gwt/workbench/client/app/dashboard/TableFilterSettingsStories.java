@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /// The `App/Dashboard/TableFilterSettings` stories: the settings of a dashboard's Table Filter
-/// (`BasicTableFilterSettingsPresenter` with its `ColumnSelectionPresenter`), which list the
+/// (`BasicTableFilterSettingsPresenter` with its `ColumnSelection`), which list the
 /// columns of the table it filters as tick boxes.
 ///
 /// The settings read the table from the dashboard's components, so the story opens a dashboard with

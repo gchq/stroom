@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.component.ColumnSelection;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
@@ -27,9 +28,9 @@ import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -45,21 +46,19 @@ public class BasicTableFilterSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableFilterSettingsPresenter.BasicTableFilterSettingsView>
         implements BasicTableFilterSettingsUiHandlers, Focus {
 
-    private final ColumnSelectionPresenter columnSelectionPresenter;
+    private final ColumnSelection columnSelectionPresenter;
     private MultiRulesPresenter multiRulesPresenter;
 
     @Inject
     public BasicTableFilterSettingsPresenter(final EventBus eventBus,
                                              final BasicTableFilterSettingsView view,
-                                             final ColumnSelectionPresenter columnSelectionPresenter) {
+                                             final ColumnSelection columnSelectionPresenter) {
         super(eventBus, view);
-        own(columnSelectionPresenter);
         this.columnSelectionPresenter = columnSelectionPresenter;
-        view.setColumnList(columnSelectionPresenter.getView());
+        view.setColumnList(columnSelectionPresenter);
         view.setUiHandlers(this);
 
-        own(columnSelectionPresenter.addValueChangeHandler(e ->
-                multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns())));
+        columnSelectionPresenter.setOnChange(selected -> multiRulesPresenter.setSelectedColumns(selected));
     }
 
     @Override
@@ -166,6 +165,6 @@ public class BasicTableFilterSettingsPresenter
 
         void setTable(Component table);
 
-        void setColumnList(View view);
+        void setColumnList(IsWidget view);
     }
 }

@@ -20,13 +20,13 @@ import stroom.dashboard.client.input.BasicTableFilterSettingsPresenter.BasicTabl
 import stroom.dashboard.client.main.Component;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -101,7 +101,7 @@ public class BasicTableFilterSettingsViewImpl
     }
 
     @Override
-    public void setColumnList(final View view) {
+    public void setColumnList(final IsWidget view) {
         columns.setWidget(view.asWidget());
     }
 

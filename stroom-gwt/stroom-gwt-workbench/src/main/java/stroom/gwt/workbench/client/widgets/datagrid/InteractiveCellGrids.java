@@ -87,7 +87,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Tick box column with a select-all header, as ColumnSelectionPresenter builds them
+    // Tick box column with a select-all header, as ColumnSelection builds them
 
     static Widget tickBoxGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
