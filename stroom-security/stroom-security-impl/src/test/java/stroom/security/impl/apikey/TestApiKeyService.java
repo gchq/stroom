@@ -63,7 +63,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.core.type.TypeReference;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -194,7 +193,6 @@ class TestApiKeyService {
 
     private final SecurityContext securityContext = new MockSecurityContext();
     private final ApiKeyGenerator apiKeyGenerator = new ApiKeyGenerator();
-    private final SecureRandom secureRandom = new SecureRandom();
 
     @Mock
     private ApiKeyDao mockApiKeyDao;
@@ -963,6 +961,7 @@ class TestApiKeyService {
     @Test
     void createTestData() {
         final int iterations = 5;
+
         final List<HashOutput> hashOutputs = new ArrayList<>(iterations * HashAlgorithm.values().length);
         for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
             for (int i = 0; i < iterations; i++) {
