@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.config.global.client.presenter;
+package stroom.config.global.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.config.global.client.presenter.NodeSource;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,25 +40,25 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ConfigPropertyClusterValuesListPresenter
-        extends MyPresenterWidget<PagerPanel> {
+/// A property's values across the cluster: a row for each value, which expands to the nodes that
+/// have it, with where each node's value comes from.
+public class ConfigPropertyClusterValuesList extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    DataGrid<ClusterValuesRow> dataGrid;
+
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private final ListDataProvider<ClusterValuesRow> dataProvider;
     private final ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
-    private final DataGrid<ClusterValuesRow> dataGrid;
 
     private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
-    @Inject
-    public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus,
-                                                    final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>(1000);
-        dataGrid.setTableName("Cluster Property Values");
-        dataGrid.setMultiLine(true);
-        view.setDataWidget(dataGrid);
+    /// Makes an empty list.
+    public ConfigPropertyClusterValuesList() {
+        initWidget(BINDER.createAndBindUi(this));
 
         dataProvider = new ListDataProvider<>();
         initTableColumns();
@@ -85,10 +88,14 @@ public class ConfigPropertyClusterValuesListPresenter
         return demoMap;
     }
 
+    /// Puts the focus on the list.
     public void focus() {
         dataGrid.setFocus(true);
     }
 
+    /// Shows a property's values.
+    ///
+    /// @param effectiveValueToNodesMap Each value, with the nodes that have it and where it comes from.
     public void setData(final Map<String, Set<NodeSource>> effectiveValueToNodesMap) {
 
         // For DEV testing only, when you don't have two nodes
@@ -153,9 +160,18 @@ public class ConfigPropertyClusterValuesListPresenter
         return row.getExpander();
     }
 
+    /// Shows the values again, as expanded.
     public void refresh() {
         final List<ClusterValuesRow> rows = ClusterValuesRow.buildTree(effectiveValueToNodeSourcesMap, treeAction);
         dataProvider.setCompleteList(rows);
         dataProvider.refresh(true);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ConfigPropertyClusterValuesList> {
+
     }
 }

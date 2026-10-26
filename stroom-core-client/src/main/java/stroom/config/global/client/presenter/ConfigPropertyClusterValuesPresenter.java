@@ -16,6 +16,7 @@
 
 package stroom.config.global.client.presenter;
 
+import stroom.config.global.client.component.ConfigPropertyClusterValuesList;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -37,29 +38,28 @@ public class ConfigPropertyClusterValuesPresenter
         extends MyPresenterWidget<ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView>
         implements ConfigPropertyClusterValuesUiHandlers, Refreshable {
 
-    private final ConfigPropertyClusterValuesListPresenter listPresenter;
+    private final ConfigPropertyClusterValuesList list;
 
     @Inject
     public ConfigPropertyClusterValuesPresenter(final EventBus eventBus,
                                                 final ConfigPropertyClusterValuesView view,
-                                                final ConfigPropertyClusterValuesListPresenter listPresenter) {
+                                                final ConfigPropertyClusterValuesList list) {
         super(eventBus, view);
-        own(listPresenter);
-        this.listPresenter = listPresenter;
-        view.setList(listPresenter.getWidget());
+        this.list = list;
+        view.setList(list);
         view.setUiHandlers(this);
     }
 
     @Override
     public void refresh() {
-        listPresenter.refresh();
+        list.refresh();
     }
 
     void show(final ConfigProperty configProperty,
               final Map<String, Set<NodeSource>> effectiveValueToNodesMap,
               final PopupPosition popupPosition) {
 
-        this.listPresenter.setData(effectiveValueToNodesMap);
+        this.list.setData(effectiveValueToNodesMap);
 
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupType popupType = PopupType.CLOSE_DIALOG;
@@ -69,7 +69,7 @@ public class ConfigPropertyClusterValuesPresenter
                 .popupSize(getPopupSize())
                 .popupPosition(popupPosition)
                 .caption(caption)
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> list.focus())
                 .fire();
     }
 

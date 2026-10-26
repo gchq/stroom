@@ -16,7 +16,6 @@
 
 package stroom.monitoring.client.gin;
 
-import stroom.config.global.client.presenter.ConfigPropertyClusterValuesListPresenter;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
@@ -91,7 +90,6 @@ public class MonitoringModule extends PluginModule {
         // Global properties.
         bind(ManageGlobalPropertyListPresenter.class);
 
-        bind(ConfigPropertyClusterValuesListPresenter.class);
 
         bindPresenterWidget(
                 GlobalPropertyTabPresenter.class,
