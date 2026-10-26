@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.TableBuilderProcessingController;
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
@@ -23,15 +24,14 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -41,7 +41,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         implements AnalyticProcessingUiHandlers {
 
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
-    private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
+    private final TableBuilderProcessingController tableBuilderProcessing;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
     private final UiConfigCache uiConfigCache;
 
@@ -52,22 +52,22 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     public AbstractProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
                                        final ScheduledProcessingPresenter scheduledProcessingPresenter,
-                                       final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
+                                       final TableBuilderProcessingController tableBuilderProcessing,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(scheduledProcessingPresenter);
-        own(tableBuilderProcessingPresenter);
+        own(tableBuilderProcessing);
         own(streamingProcessingPresenter);
         this.uiConfigCache = uiConfigCache;
         this.scheduledProcessingPresenter = scheduledProcessingPresenter;
-        this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
+        this.tableBuilderProcessing = tableBuilderProcessing;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
 
-        tableBuilderProcessingPresenter.setOnChange(this::onChange);
+        tableBuilderProcessing.setOnChange(this::onChange);
     }
 
     public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
@@ -107,7 +107,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                     //noinspection PatternVariableCanBeUsed // Not in GWT
                     final TableBuilderAnalyticProcessConfig ac =
                             (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                    tableBuilderProcessingPresenter.read(docRef, ac);
+                    tableBuilderProcessing.read(docRef, ac);
 
                 }
             }
@@ -127,7 +127,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                 break;
             }
             case TABLE_BUILDER: {
-                getView().setProcessSettings(tableBuilderProcessingPresenter.getView());
+                getView().setProcessSettings(tableBuilderProcessing);
                 break;
             }
         }
@@ -141,7 +141,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
             case STREAMING:
                 break;
             case TABLE_BUILDER:
-                analyticProcessConfig = tableBuilderProcessingPresenter.write();
+                analyticProcessConfig = tableBuilderProcessing.write();
                 break;
             case SCHEDULED_QUERY:
                 break;
@@ -166,6 +166,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
         void setProcessingType(AnalyticProcessType analyticProcessType);
 
-        void setProcessSettings(View view);
+        void setProcessSettings(IsWidget settings);
     }
 }

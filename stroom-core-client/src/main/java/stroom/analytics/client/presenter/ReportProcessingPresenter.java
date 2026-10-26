@@ -16,10 +16,10 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.TableBuilderProcessingController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
@@ -33,13 +33,13 @@ public class ReportProcessingPresenter
     public ReportProcessingPresenter(final EventBus eventBus,
                                      final AnalyticProcessingView view,
                                      final ScheduledProcessingPresenter scheduledProcessingPresenter,
-                                     final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
+                                     final TableBuilderProcessingController tableBuilderProcessing,
                                      final StreamingProcessingPresenter streamingProcessingPresenter,
                                      final UiConfigCache uiConfigCache) {
         super(eventBus,
                 view,
                 scheduledProcessingPresenter,
-                tableBuilderProcessingPresenter,
+                tableBuilderProcessing,
                 streamingProcessingPresenter,
                 uiConfigCache);
         getView().addProcessingType(AnalyticProcessType.SCHEDULED_QUERY);

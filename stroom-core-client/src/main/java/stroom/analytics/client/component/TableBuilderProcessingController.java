@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticProcessResource;
@@ -26,13 +26,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.shared.time.SimpleDuration;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.component.client.Controller;
 import stroom.widget.datepicker.client.DateTimeBoxController;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -44,53 +42,57 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.List;
-
-public class TableBuilderProcessingPresenter
-        extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
-        implements ProcessingStatusUiHandlers {
+/// A rule's table builder processing settings ([TableBuilderProcessing]): offers the nodes, and
+/// fetches and shows the table builder's progress.
+public class TableBuilderProcessingController extends Controller {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
+    private final TableBuilderProcessing view;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
 
     private DocRef ruleDocRef;
 
-    private Runnable onChange = () -> {
-    };
-
+    /// Made by GIN, with its settings.
+    ///
+    /// @param eventBus                      The application's event bus.
+    /// @param view                          The settings.
+    /// @param dateTimeFormatter             Formats the progress' times.
+    /// @param restFactory                   Fetches the progress.
+    /// @param nodeClient                    Lists the nodes.
+    /// @param dateTimeBoxControllerProvider Makes the stream create times' controllers.
     @Inject
-    public TableBuilderProcessingPresenter(final EventBus eventBus,
-                                           final TableBuilderProcessingView view,
-                                           final DateTimeFormatter dateTimeFormatter,
-                                           final RestFactory restFactory,
-                                           final NodeClient nodeClient,
-                                           final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
-        super(eventBus, view);
+    public TableBuilderProcessingController(final EventBus eventBus,
+                                            final TableBuilderProcessing view,
+                                            final DateTimeFormatter dateTimeFormatter,
+                                            final RestFactory restFactory,
+                                            final NodeClient nodeClient,
+                                            final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+        super(eventBus);
+        this.view = view;
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
+        initWidget(view);
         make(dateTimeBoxControllerProvider).attach(view.getMinMetaCreateTimeBox());
         make(dateTimeBoxControllerProvider).attach(view.getMaxMetaCreateTimeBox());
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, view::setReadOnly);
+        view.setOnRefresh(this::refreshTracker);
     }
 
-    /// Shows the table builder processing settings of a rule.
+    /// Shows the table builder processing settings of a rule, and its progress.
     ///
-    /// @param ruleDocRef                        The rule the settings belong to.
-    /// @param tableBuilderAnalyticProcessConfig The settings to show.
-    public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-        // Read only as its document is
-        final boolean readOnly = context(Contexts.READ_ONLY);
-        getView().setReadOnly(readOnly);
+    /// @param ruleDocRef The rule the settings belong to.
+    /// @param config     The settings to show.
+    public void read(final DocRef ruleDocRef, final TableBuilderAnalyticProcessConfig config) {
         nodeClient.listAllNodes(
                 list -> {
-                    //noinspection SizeReplaceableByIsEmpty
-                    if (list != null && list.size() > 0) {
-                        getView().setNodes(list);
+                    if (!isDisposed() && list != null && !list.isEmpty()) {
+                        view.setNodes(list);
                     }
                 },
                 throwable -> AlertEvent
@@ -98,34 +100,21 @@ public class TableBuilderProcessingPresenter
                                 "Error",
                                 throwable.getMessage(),
                                 null),
-                this);
+                taskMonitor());
 
         this.ruleDocRef = ruleDocRef;
-        getView().setEnabled(tableBuilderAnalyticProcessConfig.isEnabled());
-        getView().setNode(tableBuilderAnalyticProcessConfig.getNode());
-        getView().setMinMetaCreateTimeMs(tableBuilderAnalyticProcessConfig.getMinMetaCreateTimeMs());
-        getView().setMaxMetaCreateTimeMs(tableBuilderAnalyticProcessConfig.getMaxMetaCreateTimeMs());
-        getView().setTimeToWaitForData(tableBuilderAnalyticProcessConfig.getTimeToWaitForData());
-        getView().setDataRetention(tableBuilderAnalyticProcessConfig.getDataRetention());
-
+        view.read(config);
         refreshTracker();
     }
 
+    /// @return The settings shown.
     public TableBuilderAnalyticProcessConfig write() {
-        return TableBuilderAnalyticProcessConfig
-                .builder()
-                .enabled(getView().isEnabled())
-                .node(getView().getNode())
-                .minMetaCreateTimeMs(getView().getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(getView().getMaxMetaCreateTimeMs())
-                .timeToWaitForData(getView().getTimeToWaitForData())
-                .dataRetention(getView().getDataRetention())
-                .build();
+        return view.write();
     }
 
-    @Override
-    public void onRefreshProcessingStatus() {
-        refreshTracker();
+    /// @param onChange What to run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        view.setOnChange(onChange);
     }
 
     private void refreshTracker() {
@@ -133,16 +122,22 @@ public class TableBuilderProcessingPresenter
             restFactory
                     .create(ANALYTIC_PROCESS_RESOURCE)
                     .method(res -> res.getTracker(ruleDocRef.getUuid()))
-                    .onSuccess(result -> {
-                        final SafeHtml safeHtml = getInfo(result);
-                        getView().setInfo(safeHtml);
-                    })
-                    .taskMonitorFactory(this)
+                    .onSuccess(result -> view.setInfo(getInfo(result)))
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }
 
-    public SafeHtml getInfo(final AnalyticTracker tracker) {
+    // The task monitor its owner gives it, else its own spinner
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null
+                ? provided
+                : new DefaultTaskMonitorFactory(this);
+    }
+
+    private SafeHtml getInfo(final AnalyticTracker tracker) {
         final TableBuilder tb = new TableBuilder();
 
         if (tracker != null) {
@@ -162,7 +157,6 @@ public class TableBuilderProcessingPresenter
                 if (td.getMessage() != null && td.getMessage().length() > 0) {
                     tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
                 }
-
             }
         }
 
@@ -179,57 +173,5 @@ public class TableBuilderProcessingPresenter
                 tb.row(label, dateTimeFormatter.formatWithDuration(ms));
             }
         }
-    }
-
-    @Override
-    public void onChange() {
-        onChange.run();
-    }
-
-    /// @param onChange What to run when the user changes a setting.
-    public void setOnChange(final Runnable onChange) {
-        this.onChange = onChange;
-    }
-
-    public interface TableBuilderProcessingView extends View, HasUiHandlers<ProcessingStatusUiHandlers> {
-
-        /// @return The minimum stream create time box, for a controller to open its dialog.
-        DateTimeBox getMinMetaCreateTimeBox();
-
-        /// @return The maximum stream create time box, for a controller to open its dialog.
-        DateTimeBox getMaxMetaCreateTimeBox();
-
-        boolean isEnabled();
-
-        void setEnabled(final boolean enabled);
-
-        void setNodes(List<String> nodes);
-
-        String getNode();
-
-        void setNode(String node);
-
-        Long getMinMetaCreateTimeMs();
-
-        void setMinMetaCreateTimeMs(Long minMetaCreateTimeMs);
-
-        Long getMaxMetaCreateTimeMs();
-
-        void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
-
-        SimpleDuration getTimeToWaitForData();
-
-        void setTimeToWaitForData(SimpleDuration timeToWaitForData);
-
-        SimpleDuration getDataRetention();
-
-        void setDataRetention(SimpleDuration dataRetention);
-
-        void setInfo(SafeHtml info);
-
-        /// Sets whether the settings fields are read only.
-        ///
-        /// @param readOnly True if the settings can be seen but not changed.
-        void setReadOnly(boolean readOnly);
     }
 }

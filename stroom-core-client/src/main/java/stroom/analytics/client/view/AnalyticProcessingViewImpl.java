@@ -20,13 +20,13 @@ import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.item.client.SelectionBox;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -73,8 +73,8 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public void setProcessSettings(final View view) {
-        this.processSettings.setWidget(view.asWidget());
+    public void setProcessSettings(final IsWidget settings) {
+        this.processSettings.setWidget(settings);
     }
 
     @UiHandler("processingType")

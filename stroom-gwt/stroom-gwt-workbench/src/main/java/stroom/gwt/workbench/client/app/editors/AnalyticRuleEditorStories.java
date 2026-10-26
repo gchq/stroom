@@ -75,6 +75,16 @@ public final class AnalyticRuleEditorStories {
 
     private static final String SCHEDULED = "\"analyticProcessType\": \"SCHEDULED_QUERY\", ";
 
+    // A table builder rule that runs on node9
+    private static final String TABLE_BUILDER = """
+            "analyticProcessType": "TABLE_BUILDER",
+              "analyticProcessConfig": {"type": "table_builder", "enabled": true, "node": "node9"},\s""";
+
+    // AnalyticProcessResource.getTracker(): the table builder's progress
+    private static final String TRACKER = """
+            {"analyticUuid": "rule-1", "analyticTrackerData": {"type": "table_builder",
+              "lastStreamCount": 3, "lastStreamId": 77, "totalStreamCount": 12, "totalEventCount": 4321}}""";
+
     // The duplicate rows: two columns and two rows
     private static final String DUPLICATES = """
             {"columnNames": ["host", "user"],
@@ -82,6 +92,19 @@ public final class AnalyticRuleEditorStories {
                 "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}}""";
 
     private static final RestFixtures FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", SCHEDULED));
+
+    // The table builder's progress requests so far: the first is answered with TRACKER, the
+    // next (Refresh) with more events processed
+    private static int trackerRequests;
+
+    private static final RestFixtures TABLE_BUILDER_FIXTURES = analyticRoutes(RestFixtures.builder()
+            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", TABLE_BUILDER)))
+            .route(RequestMatcher.post("/analyticProcess/v1/tracker"), request -> {
+                trackerRequests++;
+                return RestReply.json(trackerRequests == 1
+                        ? TRACKER
+                        : TRACKER.replace("4321", "5000"));
+            })).build();
 
     // NewRuleHidesTypeTabs: no process type
     private static final RestFixtures NEW_RULE_FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", ""));
@@ -274,6 +297,14 @@ public final class AnalyticRuleEditorStories {
                 // Execution (a scheduled query), read only: the partner of ExecutionEditable
                 .story("ExecutionReadOnly", context -> render(context, FIXTURES, UI_CONFIG, DocumentPermission.VIEW))
                 .withPlay(play -> showExecution(play, true))
+                // Execution (a table builder), editable: its settings and progress are shown, and
+                // Refresh fetches the progress again; the partner of TableBuilderReadOnly
+                .story("TableBuilderEditable", context -> render(context, TABLE_BUILDER_FIXTURES, UI_CONFIG))
+                .withPlay(play -> showTableBuilder(play, false))
+                // Execution (a table builder), read only: the partner of TableBuilderEditable
+                .story("TableBuilderReadOnly", context -> render(context, TABLE_BUILDER_FIXTURES, UI_CONFIG,
+                        DocumentPermission.VIEW))
+                .withPlay(play -> showTableBuilder(play, true))
                 // Duplicate Management, read only: the partner of DuplicateManagement
                 .story("DuplicateManagementReadOnly", context -> render(context, FIXTURES, UI_CONFIG,
                         DocumentPermission.VIEW))
@@ -395,6 +426,26 @@ public final class AnalyticRuleEditorStories {
     }
 
     // A read-only document's tab says so
+    // The Execution tab of a table builder rule: its node, its tick and its progress, and Refresh
+    private static void showTableBuilder(final Play play, final boolean readOnly) {
+        final Play screen = play.screen();
+        openTab(play, "Execution");
+        play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByText("4321")).toBeInTheDocument());
+        play.expect(play.getByText("Total Streams Processed")).toBeInTheDocument();
+        final Query enabled = play.getByRole("checkbox", "Enabled");
+        play.expect(enabled).toBeChecked();
+        if (readOnly) {
+            play.expect(enabled).toHaveAttribute("aria-readonly", "true");
+        } else {
+            play.expect(enabled).not().toHaveAttribute("aria-readonly", "true");
+        }
+        play.click(play.getByRole("button", "Refresh"));
+        play.waitFor(() -> play.expect(play.getByText("5000")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        expectNoProblems(play);
+    }
+
     private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
         if (readOnly) {
             play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();

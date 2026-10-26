@@ -36,8 +36,6 @@ import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter;
 import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
-import stroom.analytics.client.presenter.TableBuilderProcessingPresenter;
-import stroom.analytics.client.presenter.TableBuilderProcessingPresenter.TableBuilderProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
@@ -49,7 +47,6 @@ import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
-import stroom.analytics.client.view.TableBuilderProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AnalyticsModule`
@@ -74,9 +71,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ScheduledProcessEditPresenter.class,
                 ScheduledProcessEditView.class,
                 ScheduledProcessEditViewImpl.class);
-        bindPresenterWidget(TableBuilderProcessingPresenter.class,
-                TableBuilderProcessingView.class,
-                TableBuilderProcessingViewImpl.class);
         bindPresenterWidget(StreamingProcessingPresenter.class,
                 StreamingProcessingView.class,
                 StreamingProcessingViewImpl.class);
