@@ -18,6 +18,7 @@ package stroom.dashboard.client.vis;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,5 +196,32 @@ class TestVisRenderReports {
                 .containsEntry("source", "dom")
                 .containsEntry("svgCount", 1L)
                 .containsEntry("elementCount", 250L);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void keepsEachSeriesTrend() {
+        final Map<String, Object> rising = new HashMap<>();
+        rising.put("series", "web");
+        rising.put("method", "linear");
+        rising.put("direction", "rising");
+        rising.put("slope", "+12/day");
+        rising.put("r2", 0.6449);
+        rising.put("script", "<script>");
+        final Map<String, Object> unknown = Map.of("method", "spline", "direction", "rising");
+        final Map<String, Object> outOfRange = Map.of("method", "moving average", "direction", "flat", "r2", 7.0);
+        final Map<String, Object> report = new HashMap<>();
+        report.put("status", "ok");
+        report.put("trends", List.of(rising, unknown, outOfRange, "not a trend"));
+
+        final List<Map<String, Object>> trends = (List<Map<String, Object>>) VisRenderReports.sanitise(report)
+                .get("trends");
+
+        assertThat(trends).containsExactly(
+                Map.of("series", "web", "method", "linear", "direction", "rising", "slope", "+12/day", "r2", 0.64),
+                Map.of("method", "moving average", "direction", "flat"));
+        final List<Object> many = Collections.nCopies(30, rising);
+        assertThat((List<Object>) VisRenderReports.sanitise(Map.of("status", "ok", "trends", many)).get("trends"))
+                .hasSize(VisRenderReports.MAX_TRENDS);
     }
 }

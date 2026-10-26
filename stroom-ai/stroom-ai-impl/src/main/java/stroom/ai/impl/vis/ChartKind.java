@@ -38,9 +38,9 @@ public enum ChartKind {
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.SORT, StyleSetting.HORIZONTAL, StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF,
                     StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
-                    StyleSetting.AVERAGE_LINE, StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER,
-                    StyleSetting.AUTO_INTERVAL, StyleSetting.INTERVAL_COMBINE, StyleSetting.MAX_SERIES,
-                    StyleSetting.MAX_VALUES)),
+                    StyleSetting.AVERAGE_LINE, StyleSetting.TREND_LINE, StyleSetting.BREAK_OUTLIERS,
+                    StyleSetting.ZOOM_SLIDER, StyleSetting.AUTO_INTERVAL, StyleSetting.INTERVAL_COMBINE,
+                    StyleSetting.TREND_WINDOW, StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     LINE("line", "Line chart", "one line per series over x; a time axis when x is a date",
             List.of(
@@ -53,9 +53,9 @@ public enum ChartKind {
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.SMOOTH, StyleSetting.AREA, StyleSetting.STACK, StyleSetting.SHOW_LABELS_OFF,
                     StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
-                    StyleSetting.AVERAGE_LINE, StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER,
-                    StyleSetting.AUTO_INTERVAL, StyleSetting.INTERVAL_COMBINE, StyleSetting.MAX_SERIES,
-                    StyleSetting.MAX_VALUES)),
+                    StyleSetting.AVERAGE_LINE, StyleSetting.TREND_LINE, StyleSetting.BREAK_OUTLIERS,
+                    StyleSetting.ZOOM_SLIDER, StyleSetting.AUTO_INTERVAL, StyleSetting.INTERVAL_COMBINE,
+                    StyleSetting.TREND_WINDOW, StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     PIE("pie", "Pie chart", "slices of a whole; a doughnut as an option",
             List.of(
@@ -78,8 +78,8 @@ public enum ChartKind {
                             "colours points by this column, shown in the legend")),
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.UNITS, StyleSetting.LOG_SCALE, StyleSetting.THRESHOLD, StyleSetting.THRESHOLD_LABEL,
-                    StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER, StyleSetting.JITTER,
-                    StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
+                    StyleSetting.TREND_LINE, StyleSetting.BREAK_OUTLIERS, StyleSetting.ZOOM_SLIDER,
+                    StyleSetting.JITTER, StyleSetting.TREND_WINDOW, StyleSetting.MAX_SERIES, StyleSetting.MAX_VALUES)),
 
     GRAPH("graph", "Network graph", "a force-directed graph of links between things; each node is sized by its "
                                     + "number of connections, or its links' total (nodeSize); each link is as "
