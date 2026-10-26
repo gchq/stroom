@@ -20,6 +20,8 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.vis.AdapterScripts;
+import stroom.dashboard.impl.script.ScriptContentProvider;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -68,6 +70,10 @@ public class AiModule extends AbstractModule {
                                      + "retention age, sample upload commands that have run out, and the "
                                      + "chats, memory and sample upload commands of deleted users")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
+
+        // Serves this release's chart adapters for the adapter Script docs, whatever they hold.
+        GuiceUtil.buildMultiBinder(binder(), ScriptContentProvider.class)
+                .addBinding(AdapterScripts.class);
 
         // Stops agent runs when the session that started them ends.
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
