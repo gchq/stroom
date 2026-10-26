@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,197 +14,90 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
-import stroom.data.client.component.RefCellsController;
+import stroom.data.client.component.UserRefCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.shared.DocumentTypes;
-import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.shared.DocPermissionResource;
+import stroom.security.client.presenter.UserAndGroupHelper;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
-import stroom.security.shared.FetchDocumentUserPermissionsRequest;
-import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.cellview.client.ColumnSortList;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class DocumentUserPermissionsListPresenter
-        extends MyPresenterWidget<QuickFilterPageView>
-        implements QuickFilterUiHandlers {
+/// The users and groups with permissions on a document, a row each (whether it is a user or a group,
+/// its name, its explicit and effective permissions and, for a folder, the document types it may
+/// create), sorted by a column; one can be selected. A quick filter above them, and a pager with a
+/// toolbar for the screen's own buttons.
+public class DocumentUserPermissionsList extends Component {
 
-    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final RestFactory restFactory;
-    private final FetchDocumentUserPermissionsRequest.Builder criteriaBuilder =
-            new FetchDocumentUserPermissionsRequest.Builder();
-    private final DataGrid<DocumentUserPermissions> dataGrid;
+    @UiField
+    QuickFilterPage page;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<DocumentUserPermissions> dataGrid;
+
     private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
-    private final PagerPanel pagerView;
-    private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
-    private DocRef docRef;
+    private Runnable onSortChange = () -> {
+    };
 
-    private final RefCellsController refCells;
-
-    @Inject
-    public DocumentUserPermissionsListPresenter(final EventBus eventBus,
-                                                final QuickFilterPageView userListView,
-                                                final PagerPanel pagerView,
-                                                final RestFactory restFactory,
-                                                final UiConfigCache uiConfigCache,
-                                                final DocumentTypeCache documentTypeCache,
-                                                final QuickFilterContextHandlerFactory
-                                                        quickFilterContextHandlerFactory,
-                                                final RefCellsController refCells) {
-        super(eventBus, userListView);
-        this.refCells = own(refCells);
-        getView().setAccessibleName("Filter users");
-        this.restFactory = restFactory;
-        this.pagerView = pagerView;
-        documentTypeCache.fetch(this::setupColumns, this);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Document User Permissions");
-        dataGrid.setMultiLine(true);
+    /// Makes an empty list, with no columns until [#addColumns].
+    public DocumentUserPermissionsList() {
+        initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        pagerView.setDataWidget(dataGrid);
-        // In a dialog, the table and its toolbar are framed as a control (see components.css)
-        pagerView.asWidget().addStyleName("documentUserPermissions-table");
-
-        // Not easy to determine if we are dealing in users or groups at this point so just
-        // call it Quick Filter
-        uiConfigCache.get(uiConfig -> {
-            if (uiConfig != null) {
-                userListView.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                        "Quick Filter",
-                        UserFields.FILTER_FIELD_DEFINITIONS,
-                        uiConfig.getHelpUrlQuickFilter()));
-            }
-        }, this);
-
-        userListView.setDataView(pagerView);
-        userListView.setUiHandlers(this);
-        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
-                UserFields.QUICK_FILTER_CONTEXT, this, this));
-
-//        criteriaBuilder.sortList(List.of(
-//                new CriteriaFieldSort(
-//                        UserFields.DISPLAY_NAME.getFldName(),
-//                        false,
-//                        true),
-//                new CriteriaFieldSort(
-//                        UserFields.UNIQUE_ID.getFldName(),
-//                        false,
-//                        true)));
-
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }
 
-    @Override
-    public void onFilterChange(String text) {
-        text = NullSafe.trim(text);
-        if (text.isEmpty()) {
-            text = null;
-        }
-        // Clear to ensure we go back to page one
-        clear();
-        // The filter text goes to the server verbatim - see FindUserCriteria.
-        criteriaBuilder.quickFilter(text);
-        refresh();
-    }
-
-    public void refresh() {
-        if (dataProvider == null) {
-            dataProvider =
-                    new RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>>(
-                            getEventBus()) {
-                        @Override
-                        protected void exec(final Range range,
-                                            final Consumer<ResultPage<DocumentUserPermissions>> dataConsumer,
-                                            final RestErrorHandler errorHandler) {
-                            criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
-                            criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
-                            final FetchDocumentUserPermissionsRequest request = criteriaBuilder.build();
-                            restFactory
-                                    .create(DOC_PERMISSION_RESOURCE)
-                                    .method(res -> res.fetchDocumentUserPermissions(request))
-                                    .onSuccess(response -> {
-                                        getView().setFilterError(NullSafe.get(
-                                                response.getFilterError(), TokenError::getText));
-                                        GWT.log("Fetched " + response.size() + " records");
-                                        dataConsumer.accept(response);
-                                    })
-                                    .onFailure(errorHandler)
-                                    .taskMonitorFactory(pagerView)
-                                    .exec();
-                        }
-                    };
-            dataProvider.addDataDisplay(dataGrid);
-        } else {
-            dataProvider.refresh();
-        }
-    }
-
-    public void clear() {
-//        GWT.log(name + " - clear");
-        selectionModel.clear();
-        if (dataProvider != null) {
-            dataProvider.getDataDisplays().forEach(hasData -> {
-                hasData.setRowData(0, Collections.emptyList());
-                hasData.setRowCount(0, true);
-            });
-        }
-    }
-
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-        criteriaBuilder.docRef(docRef);
-    }
-
-    private void setupColumns(final DocumentTypes documentTypes) {
+    /// Adds the columns.
+    ///
+    /// @param userCell        The user cell's builder, configured to open its users.
+    /// @param showCreateTypes Whether to show the document types each may create (for a folder).
+    /// @param docTypeCount    How many document types there are, to show 'ALL' for all of them.
+    public void addColumns(final UserRefCell.Builder<DocumentUserPermissions> userCell,
+                           final boolean showCreateTypes,
+                           final int docTypeCount) {
         // Icon
         dataGrid.addColumn(
                 DataGridUtil.cellIconColumnBuilder(false, (DocumentUserPermissions row) ->
@@ -222,11 +115,13 @@ public class DocumentUserPermissionsListPresenter
 
         // User Or Group Name
         final Column<DocumentUserPermissions, DocumentUserPermissions> displayNameCol =
-                DataGridUtil.userRefColumnBuilder(
-                                DocumentUserPermissions::getUserRef,
-                                refCells,
-                                false,
-                                DisplayType.DISPLAY_NAME)
+                new ColumnBuilder<DocumentUserPermissions, DocumentUserPermissions, Cell<DocumentUserPermissions>>(
+                        Function.identity(),
+                        () -> userCell
+                                .showIcon(false)
+                                .displayType(DisplayType.DISPLAY_NAME)
+                                .userRefFunction(DocumentUserPermissions::getUserRef)
+                                .build())
                         .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                         .enabledWhen(this::isUserEnabled)
                         .build();
@@ -271,9 +166,7 @@ public class DocumentUserPermissionsListPresenter
                         .build(),
                 160);
 
-        if (docRef != null && DocumentTypes.isFolder(docRef)) {
-            final int docTypeCount = documentTypes.getTypes().size();
-
+        if (showCreateTypes) {
             // Explicit doc create types
             dataGrid.addResizableColumn(
                     DataGridUtil.safeHtmlColumn((DocumentUserPermissions row) ->
@@ -302,14 +195,14 @@ public class DocumentUserPermissionsListPresenter
         return NullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
-    public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
+    private static SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
                                                    final int docTypeCount) {
         final Set<String> explicit = row
                 .getDocumentCreatePermissions();
         return permissionsToTypeIcons(explicit, docTypeCount);
     }
 
-    public SafeHtml permissionsToEffectiveTypeIcons(final DocumentUserPermissions row,
+    private static SafeHtml permissionsToEffectiveTypeIcons(final DocumentUserPermissions row,
                                                     final int docTypeCount) {
         final Set<String> effective = new HashSet<>(NullSafe.set(row
                 .getDocumentCreatePermissions()));
@@ -318,7 +211,7 @@ public class DocumentUserPermissionsListPresenter
         return permissionsToTypeIcons(effective, docTypeCount);
     }
 
-    public SafeHtml permissionsToTypeIcons(final Set<String> createTypes,
+    private static SafeHtml permissionsToTypeIcons(final Set<String> createTypes,
                                            final int docTypeCount) {
         if ((NullSafe.hasItems(createTypes))) {
             if (NullSafe.size(createTypes) == docTypeCount) {
@@ -353,26 +246,67 @@ public class DocumentUserPermissionsListPresenter
         }
     }
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return pagerView.getToolbar();
+    /// @param dataProvider Gives the list its rows, a page at a time.
+    public void setDataProvider(final AbstractDataProvider<DocumentUserPermissions> dataProvider) {
+        dataProvider.addDataDisplay(dataGrid);
     }
 
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @return The selection, one row at most.
     public MultiSelectionModel<DocumentUserPermissions> getSelectionModel() {
         return selectionModel;
     }
 
-    public PagerPanel getPagerView() {
-        return pagerView;
+    /// @return How the rows are sorted, for the request for them.
+    public ColumnSortList getSortList() {
+        return dataGrid.getColumnSortList();
     }
 
-    public void setShowLevel(final PermissionShowLevel showLevel) {
-        if (!Objects.equals(showLevel, criteriaBuilder.getShowLevel())) {
-            criteriaBuilder.showLevel(showLevel);
-            // We may be on page two so clear everything, so we go back to page one
-            clear();
-        }
+    /// Empties the list.
+    public void clearRows() {
+        dataGrid.setRowData(0, Collections.emptyList());
+        dataGrid.setRowCount(0, true);
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
+    }
+
+    /// @param filterError Why the server rejected the filter, or `null` to clear it.
+    public void setFilterError(final String filterError) {
+        page.setFilterError(filterError);
+    }
+
+    /// @param popupTextSupplier Gives the filter's help popup its text.
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        page.registerPopupTextProvider(popupTextSupplier);
+    }
+
+    /// @param contextHandler Gives the filter its recent filters and remembers the ones used.
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        page.setQuickFilterContextHandler(contextHandler);
+    }
+
+    /// @param onFilterChange Given the filter's text when it changes.
+    public void setOnFilterChange(final Consumer<String> onFilterChange) {
+        page.setOnFilterChange(onFilterChange);
+    }
+
+    /// @param onSortChange Run when the user sorts by another column.
+    public void setOnSortChange(final Runnable onSortChange) {
+        this.onSortChange = onSortChange;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DocumentUserPermissionsList> {
+
     }
 }

@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.item.client.SelectionBox;
+import stroom.security.client.component.DocumentUserPermissionsListController;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
@@ -36,6 +37,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -51,7 +53,7 @@ import javax.inject.Inject;
 public class DocumentUserPermissionsPresenter
         extends ContentTabPresenter<DocumentUserPermissionsView> {
 
-    private final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter;
+    private final DocumentUserPermissionsListController documentUserPermissionsList;
     private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
@@ -63,18 +65,18 @@ public class DocumentUserPermissionsPresenter
             final EventBus eventBus,
             final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsView view,
-            final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
+            final DocumentUserPermissionsListController documentUserPermissionsList,
             final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
 
         super(eventBus, view);
-        own(documentUserPermissionsListPresenter);
-        this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
+        own(documentUserPermissionsList);
+        this.documentUserPermissionsList = documentUserPermissionsList;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.docPermissionClient = docPermissionClient;
-        view.setDocUserPermissionListView(documentUserPermissionsListPresenter.getView());
+        view.setDocUserPermissionListView(documentUserPermissionsList);
 
-        documentUserPermissionsListPresenter.getToolbar().setName("Permission actions");
-        docEdit = documentUserPermissionsListPresenter.getToolbar().button(
+        documentUserPermissionsList.getToolbar().setName("Permission actions");
+        docEdit = documentUserPermissionsList.getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected User",
                 this::onEdit);
@@ -83,11 +85,11 @@ public class DocumentUserPermissionsPresenter
         permissionVisibility = getView().getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
-        documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
+        documentUserPermissionsList.setShowLevel(permissionVisibility.getValue());
 
-        own(documentUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(documentUserPermissionsList.getSelectionModel().addSelectionHandler(e -> {
             final DocumentUserPermissions selected =
-                    documentUserPermissionsListPresenter.getSelectionModel().getSelected();
+                    documentUserPermissionsList.getSelectionModel().getSelected();
             updateDetails();
             docEdit.setEnabled(selected != null);
             if (e.getSelectionType().isDoubleSelect()) {
@@ -95,24 +97,24 @@ public class DocumentUserPermissionsPresenter
             }
         }));
         own(permissionVisibility.addValueChangeHandler(e -> {
-            documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
-            documentUserPermissionsListPresenter.refresh();
+            documentUserPermissionsList.setShowLevel(permissionVisibility.getValue());
+            documentUserPermissionsList.refresh();
         }));
     }
 
     private void onEdit() {
         final DocumentUserPermissions selected =
-                documentUserPermissionsListPresenter.getSelectionModel().getSelected();
+                documentUserPermissionsList.getSelectionModel().getSelected();
         if (selected != null) {
             makeDialog(documentUserPermissionsEditPresenterProvider).show(
-                    docRef, selected, documentUserPermissionsListPresenter::refresh, this);
+                    docRef, selected, documentUserPermissionsList::refresh, this);
         }
     }
 
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
-        documentUserPermissionsListPresenter.setDocRef(docRef);
-        documentUserPermissionsListPresenter.refresh();
+        documentUserPermissionsList.setDocRef(docRef);
+        documentUserPermissionsList.refresh();
     }
 
 //    public void show(final DocRef docRef) {
@@ -142,7 +144,7 @@ public class DocumentUserPermissionsPresenter
 //    }
 
     private void updateDetails() {
-        final DocumentUserPermissions selection = documentUserPermissionsListPresenter
+        final DocumentUserPermissions selection = documentUserPermissionsList
                 .getSelectionModel()
                 .getSelected();
         // Fetch detailed permissions report.
@@ -313,7 +315,7 @@ public class DocumentUserPermissionsPresenter
 
         SelectionBox<PermissionShowLevel> getPermissionVisibility();
 
-        void setDocUserPermissionListView(View view);
+        void setDocUserPermissionListView(IsWidget view);
 
         void setDetails(SafeHtml details);
 
