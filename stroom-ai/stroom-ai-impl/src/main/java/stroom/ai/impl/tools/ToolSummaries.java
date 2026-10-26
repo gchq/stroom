@@ -78,6 +78,8 @@ public final class ToolSummaries {
             Map.entry("ls", "Lists the files in the chat's workspace."),
             Map.entry("memory", "Lists, reads and changes the agent's memory of the user and of the chat."),
             Map.entry("pipeline", "Runs data tool steps one after another on workspace files."),
+            Map.entry("preview_extraction",
+                    "Tries a search extraction for a dashboard table on some of its events, changing nothing."),
             Map.entry("processing_status", "Shows a pipeline's processor filters and their progress."),
             Map.entry("processor_tasks", "Shows processing failures, backlogs and tasks across the cluster."),
             Map.entry("profile_sample", "Profiles raw sample data: its format, fields and timestamps."),

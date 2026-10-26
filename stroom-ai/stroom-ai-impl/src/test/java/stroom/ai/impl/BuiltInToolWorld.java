@@ -80,7 +80,9 @@ import stroom.node.api.NodeService;
 import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.datasource.QueryField;
@@ -200,6 +202,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("ask_user", "{\"intro\":\"Which feed?\",\"questions\":[{\"id\":\"feed\",\"question\":\"Feed?\","
                                   + "\"type\":\"text\"}]}"),
             Map.entry("fetch_events", "{\"path\":\"/outputs/a.csv\"}"),
+            Map.entry("preview_extraction", "{\"table\":\"Users\",\"path\":\"/outputs/a.csv\",\"fields\":"
+                                            + "[{\"name\":\"Org\",\"xpath\":\"Org\"}]}"),
             Map.entry("search_events", "{\"path\":\"/outputs/a.xml\",\"text\":\"a\"}"),
             Map.entry("table", "{\"help\":true}"),
             Map.entry("pipeline", "{\"steps\":[]}"),
@@ -362,7 +366,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             case "propose_query_change" -> openTab(QUERY, AiTabSnapshotPart.QUERY, STROOMQL);
             case "propose_code_change" -> openStepping();
             case "current_results" -> openQueryResults();
-            case "propose_dashboard_change" -> openTab(DASHBOARD, AiTabSnapshotPart.QUERY, STROOMQL);
+            case "propose_dashboard_change", "preview_extraction" -> openTab(DASHBOARD, AiTabSnapshotPart.QUERY,
+                    STROOMQL);
             default -> {
                 // Nothing to open.
             }
@@ -537,6 +542,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(DocFinder.class).toInstance(docFinder);
                 bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
                 bind(ScriptStore.class).toInstance(Mockito.mock(ScriptStore.class));
+                bind(XsltStore.class).toInstance(Mockito.mock(XsltStore.class));
+                bind(SteppingService.class).toInstance(Mockito.mock(SteppingService.class));
                 bind(VisualisationStore.class).toInstance(Mockito.mock(VisualisationStore.class));
                 bind(DocumentPermissionService.class)
                         .toInstance(Mockito.mock(DocumentPermissionService.class));
