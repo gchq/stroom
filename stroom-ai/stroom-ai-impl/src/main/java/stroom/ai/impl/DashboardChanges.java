@@ -1234,7 +1234,8 @@ public final class DashboardChanges {
                         : " and ", NullSafe.map(settings).entrySet().stream()
                         .flatMap(term -> selectionsOf(term.getValue()).stream()
                                 .map(selection -> "range".equals(selection)
-                                        ? term.getKey() + " within its time range"
+                                        ? term.getKey() + " within its selected time (a range dragged along "
+                                          + "its time axis, or the time a clicked point stands for)"
                                         : term.getKey() + " = its " + selection))
                         .toList());
                 case REMOVE_SELECTION_FILTER -> "Remove the selection filter " + filter + " from '" + target + "'";
