@@ -38,7 +38,7 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
     private final SimplePanel visContainer;
     private final MessagePanelImpl messagePanel;
     private final RefreshButton refreshButton;
-    // The chart's controls, under it.
+    // The chart's controls, above it.
     private final VisToolbar toolbar;
 
     private VisFrame visFrame;
@@ -83,9 +83,10 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         widget.add(visContainer);
         widget.add(messagePanel);
         widget.add(toolbar);
-        // The chart's frame is placed over its container, which leaves room for the toolbar under it (set here as
+        // The chart's frame is placed over its container, which leaves room for the toolbar above it (set here as
         // well as by the style, as for the toolbar itself).
         widget.addStyleName("dashboardVis-outerLayout--toolbar");
+        visContainer.getElement().getStyle().setProperty("top", VisToolbar.HEIGHT + "px");
         visContainer.getElement().getStyle().setProperty("height", "calc(100% - " + VisToolbar.HEIGHT + "px)");
     }
 
