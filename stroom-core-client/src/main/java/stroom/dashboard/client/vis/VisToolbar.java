@@ -23,6 +23,7 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -105,6 +106,25 @@ public class VisToolbar extends Composite {
     public void setVisFrame(final VisFrame visFrame) {
         this.visFrame = visFrame;
         visFrame.setControlsHandler(this::update);
+    }
+
+    /// Places the toolbar at the top of the pane's content, under its title, and the chart's container below it.
+    /// The pane's layer starts at the top of its whole tab, title bar included (seen in testing: the toolbar sat
+    /// behind the title bar), so the title bar's height is measured, as the pane is laid out.
+    ///
+    /// @param pane           The pane's element, the toolbar's parent.
+    /// @param chartContainer The element the chart's frame is placed over.
+    public void layOut(final Element pane, final Element chartContainer) {
+        Element content = pane;
+        while (content != null && !content.hasClassName("tabLayout-content")) {
+            content = content.getParentElement();
+        }
+        final int top = content == null
+                ? 0
+                : Math.max(0, content.getAbsoluteTop() - pane.getAbsoluteTop());
+        toolbar.getElement().getStyle().setTop(top, Unit.PX);
+        chartContainer.getStyle().setTop(top + HEIGHT, Unit.PX);
+        chartContainer.getStyle().setProperty("height", "calc(100% - " + (top + HEIGHT) + "px)");
     }
 
     // Shows the controls the visualisation has, as they now are.
