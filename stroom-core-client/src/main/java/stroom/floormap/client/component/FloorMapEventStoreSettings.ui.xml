@@ -31,19 +31,33 @@
     <g:FlowPanel styleName="max form">
         <sg:SettingsGroup label="Map Display">
             <form:FormGroup
+                    identity="floorMapEventExpiry"
                     label="Event Expiry"
+                    controlNames="Amount, Unit"
                     helpText="How long an entity stays on the map after its last event. Measured from the position of the timeline scrubber rather than from now, so scrubbing back in time shows what was current then. This cannot be turned off - an entity that stopped emitting would otherwise be drawn for ever. It must not be longer than the data retention period below, because the data needed to show the entity would by then have been deleted.">
                 <g:FlowPanel styleName="durationSetting">
-                    <valuespinner:ValueSpinner ui:field="expiryTime"/>
+                    <valuespinner:ValueSpinner ui:field="expiryTime" minValue="1" maxValue="9999"/>
                     <i:SelectionBox ui:field="expiryTimeUnit" addStyleNames="allow-focus"/>
                 </g:FlowPanel>
             </form:FormGroup>
         </sg:SettingsGroup>
-        <sg:SettingsGroup label="General"
-                          ui:field="generalPanel"/>
-        <sg:SettingsGroup label="Condense Data"
-                          ui:field="condensePanel"/>
-        <sg:SettingsGroup label="Data Retention"
-                          ui:field="retentionPanel"/>
+        <sg:SettingsGroup label="General">
+            <sg:GeneralSettingsWidget ui:field="generalSettings"/>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="Condense Data">
+            <!-- What turning condense on costs, in the one place a user can turn it on: condense
+                 collapses a run of identical values to the earliest row of the run, so a
+                 stationary entity's latest effective time stops advancing and it expires while
+                 still emitting. That is a surprising interaction, and it is not visible from either
+                 setting alone -->
+            <g:FlowPanel>
+                <g:Label addStyleNames="floorMapEventStoreCondenseWarning"
+                         text="This will cause repeating events to disappear from the map."/>
+                <sg:CondenseSettingsWidget ui:field="condenseSettings"/>
+            </g:FlowPanel>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="Data Retention">
+            <sg:RetentionSettingsWidget ui:field="retentionSettings"/>
+        </sg:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

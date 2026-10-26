@@ -39,6 +39,7 @@ import stroom.gwt.workbench.client.app.editors.DataGenEditorStories;
 import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapEventStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapInitStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapMapStories;
@@ -397,6 +398,8 @@ public final class AppStories {
         IndexEditorStories.addTo(registry);
         // App/Editors/SqlTemporalStoreSettings
         SqlTemporalStoreSettingsStories.addTo(registry);
+        // App/Editors/FloorMapEventStoreSettings
+        FloorMapEventStoreSettingsStories.addTo(registry);
         // App/Index/SolrIndexEditor
         SolrIndexEditorStories.addTo(registry);
         // App/Feed/FeedEditor

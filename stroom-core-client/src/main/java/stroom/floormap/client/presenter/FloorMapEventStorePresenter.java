@@ -17,11 +17,13 @@
 package stroom.floormap.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.floormap.client.component.FloorMapEventStoreSettingsController;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -47,13 +49,15 @@ public class FloorMapEventStorePresenter
     public FloorMapEventStorePresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<FloorMapEventStoreSettingsPresenter> settingsPresenterProvider,
+            final Provider<FloorMapEventStoreSettingsController> settingsProvider,
             final Provider<FloorMapEventStoreDataPresenter> dataPresenterProvider,
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<FloorMapEventStoreDoc> permissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                FloorMapEventStoreSettingsController::read,
+                FloorMapEventStoreSettingsController::write));
         addTab(DATA, new DocTabProvider<>(dataPresenterProvider::get));
         addTab(DOCUMENTATION,
                 new MarkdownTabProvider<>(markdownEditPresenterProvider) {
