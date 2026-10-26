@@ -27,7 +27,6 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -87,11 +86,12 @@ public final class FolderEditorStories {
                     // stream list's Feed column
                     play.waitFor(() -> play.expect(play.getAllByText("Feed").nth(0)).toBeVisible());
                     // Processors: an administrator may edit but not add or duplicate (a folder has
-                    // no single pipeline)
+                    // no single pipeline). The list declares every button, and hides those that
+                    // aren't available
                     play.click(DocEditors.tab(play, "Processors"));
-                    play.expect(play.findByTitle("Edit Selected Processor")).toBeInTheDocument();
-                    play.expect(play.queryByTitle("New Processor")).toBeNull();
-                    play.expect(play.queryByTitle("Duplicate Selected Processor")).toBeNull();
+                    play.expect(play.findByTitle("Edit Selected Processor")).toBeVisible();
+                    play.expect(play.queryByTitle("New Processor")).not().toBeVisible();
+                    play.expect(play.queryByTitle("Duplicate Selected Processor")).not().toBeVisible();
                     play.click(DocEditors.tab(play, "Permissions"));
                     DocEditors.expectNoProblems(play);
                 })
