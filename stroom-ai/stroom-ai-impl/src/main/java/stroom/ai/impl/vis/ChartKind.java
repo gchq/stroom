@@ -100,9 +100,9 @@ public enum ChartKind {
                     level(4, "a further node level 3 links to"),
                     level(5, "a further node level 4 links to"),
                     level(6, "a further node level 5 links to")),
-            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS, StyleSetting.NODE_SIZE,
-                    StyleSetting.SHOW_LABELS_AUTO, StyleSetting.PHYSICS, StyleSetting.THUMBNAIL,
-                    StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
+            List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS, StyleSetting.CLUSTER_LINKS,
+                    StyleSetting.NODE_SIZE, StyleSetting.SHOW_LABELS_AUTO, StyleSetting.PHYSICS,
+                    StyleSetting.THUMBNAIL, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
 
     HEATMAP("heatmap", "Heatmap", "a grid with a cell for each x and y pair, coloured by its value",
             List.of(

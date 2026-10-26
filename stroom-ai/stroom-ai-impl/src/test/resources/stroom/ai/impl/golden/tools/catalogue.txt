@@ -1876,6 +1876,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for breakOutliers, as text.",
           "type" : "string"
         },
+        "clusterLinks" : {
+          "description" : "The value for clusterLinks, as text.",
+          "type" : "string"
+        },
         "colourScale" : {
           "description" : "The value for colourScale, as text.",
           "type" : "string"
