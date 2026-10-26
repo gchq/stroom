@@ -21,6 +21,7 @@ import stroom.query.api.LifespanInfo;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchTaskProgress;
+import stroom.query.client.component.ResultStoreListController;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -36,29 +37,30 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
 
-    private final ResultStoreListPresenter resultStoreListPresenter;
+    private final ResultStoreListController resultStoreList;
     private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
     public ResultStorePresenter(final EventBus eventBus,
                                 final ResultStoreView view,
-                                final ResultStoreListPresenter resultStoreListPresenter,
+                                final ResultStoreListController resultStoreList,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
-        own(resultStoreListPresenter);
-        this.resultStoreListPresenter = resultStoreListPresenter;
+        own(resultStoreList);
+        this.resultStoreList = resultStoreList;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setListView(resultStoreListPresenter.getView());
+        view.setListView(resultStoreList);
 
-        own(resultStoreListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(resultStoreList.getSelectionModel().addSelectionHandler(event -> {
             final TableBuilder tb = new TableBuilder();
-            final ResultStoreInfo resultStoreInfo = resultStoreListPresenter.getSelectionModel().getSelected();
+            final ResultStoreInfo resultStoreInfo = resultStoreList.getSelectionModel().getSelected();
             if (resultStoreInfo != null) {
                 tb
                         .row(TableCell.header("Store Details", 2))
@@ -114,7 +116,7 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
     }
 
     public void show() {
-        resultStoreListPresenter.refresh();
+        resultStoreList.refresh();
 
         final PopupSize popupSize = PopupSize.resizable(1000, 600);
         ShowPopupEvent.builder(this)
@@ -126,7 +128,7 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
 
     public interface ResultStoreView extends View {
 
-        void setListView(View view);
+        void setListView(IsWidget view);
 
         void setData(SafeHtml safeHtml);
     }

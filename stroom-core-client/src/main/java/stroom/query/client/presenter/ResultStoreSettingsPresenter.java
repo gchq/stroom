@@ -49,7 +49,12 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
         this.resultStoreModel = resultStoreModel;
     }
 
-    void show(final ResultStoreInfo resultStoreInfo, final String title, final Consumer<Boolean> consumer) {
+    /// Shows a store's settings, to change them.
+    ///
+    /// @param resultStoreInfo The store.
+    /// @param title           The dialog's caption.
+    /// @param consumer        Told whether the settings were saved.
+    public void show(final ResultStoreInfo resultStoreInfo, final String title, final Consumer<Boolean> consumer) {
         read(resultStoreInfo);
 
         final PopupSize popupSize = PopupSize.resizableX();
