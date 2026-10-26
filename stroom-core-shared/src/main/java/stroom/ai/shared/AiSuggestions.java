@@ -207,10 +207,11 @@ public final class AiSuggestions {
             suggestions.add("Check " + name + " for mistakes");
             suggestions.add("Which pipelines use " + name + "?");
         } else if (VisualisationDoc.TYPE.equals(type)) {
-            // A chart, attached from its pane's toolbar: about what it shows, and what the user sees on it.
+            // A chart, attached from its pane's toolbar: what can be done with it (the analyses its kind and data
+            // allow, offered by the agent), what it shows, and what the user sees on it.
+            suggestions.add("What can I do with the chart " + name + "?");
             suggestions.add("What stands out in the chart " + name + "?");
             suggestions.add("Explain what I've selected or zoomed into on " + name);
-            suggestions.add("Is " + name + " the best chart for its data?");
         } else if (DashboardDoc.TYPE.equals(type)) {
             suggestions.add("Explain what " + name + " shows and where its data comes from");
             suggestions.add("Which data sources does " + name + " use?");
@@ -344,8 +345,9 @@ public final class AiSuggestions {
                    + "shown, and look into the events behind them";
         } else if (VisualisationDoc.TYPE.equals(type)) {
             return "explain what the chart shows and what stands out in it, explain what the user has selected or "
-                   + "zoomed into on it, analyse the rows it draws, and suggest a better chart for its data or "
-                   + "change this one";
+                   + "zoomed into on it, analyse the rows it draws, offer the analyses its kind allows (a trend "
+                   + "line over time, the clusters in a network graph and the nodes bridging them), and suggest a "
+                   + "better chart for its data or change this one";
         } else if (DashboardDoc.TYPE.equals(type)) {
             return "analyse a table's rows, propose changes to its tables (group, columns, sort, filter, "
                    + "formatting) with an 'Apply to dashboard' button, suggest and create a chart that suits a "

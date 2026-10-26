@@ -149,16 +149,44 @@ public final class EChartsTemplate {
     /// @param settingsJson A generated Visualisation's settings JSON.
     /// @return The default value of each control that has one, in the order given; empty if they can't be read.
     public static Map<String, String> defaults(final String settingsJson) {
+        final Map<String, String> defaults = new LinkedHashMap<>();
+        controls(settingsJson).forEach(control -> {
+            if (control.get("id") instanceof final String id && control.get("defaultValue") != null) {
+                defaults.put(id, String.valueOf(control.get("defaultValue")));
+            }
+        });
+        return defaults;
+    }
+
+    /// Reads the choices each selection control of a generated Visualisation's settings offers, as they were when
+    /// it was generated: a choice added since (e.g. a nodeColours of cluster) isn't among them, and the adapter it
+    /// was generated with doesn't draw it.
+    ///
+    /// @param settingsJson A generated Visualisation's settings JSON.
+    /// @return Each selection control's choices, by control id; empty if the settings can't be read.
+    public static Map<String, List<String>> choices(final String settingsJson) {
+        final Map<String, List<String>> choices = new LinkedHashMap<>();
+        controls(settingsJson).forEach(control -> {
+            if (control.get("id") instanceof final String id
+                && control.get("values") instanceof final List<?> values) {
+                choices.put(id, values.stream().map(String::valueOf).toList());
+            }
+        });
+        return choices;
+    }
+
+    // Every control on every tab of a Visualisation's settings; none if they can't be read.
+    private static List<Map<?, ?>> controls(final String settingsJson) {
         if (NullSafe.isBlankString(settingsJson)) {
-            return Map.of();
+            return List.of();
         }
         final Map<?, ?> settings;
         try {
             settings = JsonUtil.readValue(settingsJson, Map.class);
         } catch (final RuntimeException e) {
-            return Map.of();
+            return List.of();
         }
-        final Map<String, String> defaults = new LinkedHashMap<>();
+        final List<Map<?, ?>> found = new ArrayList<>();
         for (final Object tab : settings != null && settings.get("tabs") instanceof final List<?> tabs
                 ? tabs
                 : List.of()) {
@@ -168,14 +196,12 @@ public final class EChartsTemplate {
             for (final Object item : controls instanceof final List<?> list
                     ? list
                     : List.of()) {
-                if (item instanceof final Map<?, ?> control
-                    && control.get("id") instanceof final String id
-                    && control.get("defaultValue") != null) {
-                    defaults.put(id, String.valueOf(control.get("defaultValue")));
+                if (item instanceof final Map<?, ?> control) {
+                    found.add(control);
                 }
             }
         }
-        return defaults;
+        return found;
     }
 
     /// @param kind The chart kind.
