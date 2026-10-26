@@ -830,6 +830,17 @@ if (!window.visualisations) {
         return bands;
     }
 
+    // A dial per row (or per name, when a name column is mapped: a name's values are added up), laid out in a grid.
+    // A gauge's scale's labels: large numbers made short (e.g. 3T), which round a small dial otherwise overlap,
+    // unless the Units setting says how they read.
+    function gaugeScaleLabel(format, min, max) {
+        return function (value) {
+            return Math.max(Math.abs(min), Math.abs(max)) >= 10000 && format === formatNumber
+                ? compact(value, ["", "k", "M", "B", "T"], 1000)
+                : format(value);
+        };
+    }
+
     // ECharts' own palette, then as many more as are needed, spread round the colour wheel by the golden angle so
     // neighbouring ones differ, lighter on a dark theme.
     var BASE_PALETTE = ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4",
@@ -1248,15 +1259,21 @@ if (!window.visualisations) {
     // is; its ticks are those intervals.
     function niceLinear(C, min, max, range) {
         var interval = niceInterval((max - min) / 5);
-        var from = Math.floor(min / interval + 1e-9) * interval;
-        var to = Math.ceil(max / interval - 1e-9) * interval;
+        // Rounded out to whole intervals: a value a hair from one (by rounding error) is on it.
+        var round = function (value, out) {
+            var steps = value / interval;
+            // (+ 0 so that minus zero reads as 0.)
+            return (Math.abs(steps - Math.round(steps)) < 1e-12 ? Math.round(steps) : out(steps)) * interval + 0;
+        };
+        var from = round(min, Math.floor);
+        var to = round(max, Math.ceil);
         if (!(to > from)) {
             to = from + interval;
         }
         var scale = C.linear().domain([from, to]).range(range);
         var ticks = [];
         for (var tick = from; tick <= to + interval / 2; tick += interval) {
-            ticks.push(Math.round(tick / interval) * interval);
+            ticks.push(Math.round(tick / interval) * interval + 0);
         }
         scale.niceTicks = ticks;
         return scale;
@@ -1266,7 +1283,9 @@ if (!window.visualisations) {
     function axisTicks(scale, count) {
         // Fewer, if there isn't room for them all: every other one, or every third, ...
         if (scale.niceTicks) {
-            var every = Math.max(1, Math.ceil((scale.niceTicks.length - 1) / Math.max(1, count)));
+            // About five ticks may be a few more, as ECharts' are.
+            var every = scale.niceTicks.length <= count * 1.6 + 1 ? 1 :
+                Math.max(1, Math.ceil((scale.niceTicks.length - 1) / Math.max(1, count)));
             return scale.niceTicks.filter(function (tick, i) {
                 return i % every === 0;
             });
@@ -1776,11 +1795,15 @@ if (!window.visualisations) {
         ctx.svg.append("defs").append("clipPath").attr("id", clipId).append("rect")
             .attr("x", 0).attr("y", -2).attr("width", plot.width).attr("height", plot.height + 4);
         var g = ctx.svg.append("g").attr("transform", "translate(" + plot.left + "," + plot.top + ")");
-        // Grid lines behind the marks, and labels in front of them, not cut off at the plot's edge.
+        // Grid lines behind the marks, and points and labels in front of them, not cut off at the plot's edge (as
+        // ECharts draws a point whose middle is in the plot whole).
         g.gridLayer = g.append("g").attr("class", "grid");
         var marks = g.append("g").attr("clip-path", "url(#" + clipId + ")");
+        var points = g.append("g").attr("class", "points");
         var labels = g.append("g").attr("class", "labels");
-        return {axes: g, marks: marks, labels: labels};
+        return {axes: g, marks: marks, points: points, labels: labels, inPlot: function (x, y) {
+            return x >= -1 && x <= plot.width + 1 && y >= -1 && y <= plot.height + 1;
+        }};
     }
 
     function drawBar(ctx) {
@@ -2100,13 +2123,17 @@ if (!window.visualisations) {
         var area = boolSetting(settings, "area", false);
         var smooth = boolSetting(settings, "smooth", false);
 
-        // Stacked: each series' y on top of those before it at the same x.
+        // Stacked: each series' y on top of those before it at the same x (not on its own other rows there).
         var tops = {};
         var lines = shown.map(function (name) {
+            var before = {};
+            Object.keys(tops).forEach(function (x) {
+                before[x] = tops[x];
+            });
             return {
                 name: name,
                 points: data.bySeries[name].map(function (point) {
-                    var base = stack ? tops[point[0]] || 0 : 0;
+                    var base = stack ? before[point[0]] || 0 : 0;
                     if (stack) {
                         tops[point[0]] = base + point[1];
                     }
@@ -2178,7 +2205,10 @@ if (!window.visualisations) {
                     }
                     var selection = fields.selection(pairs);
                     var selected = ctx.isSelected(selection);
-                    var dot = linePoint(groups.marks, xOf(point[0]), y(point[1]), colour, selected, showPoints);
+                    if (!groups.inPlot(xOf(point[0]), y(point[1]))) {
+                        return;
+                    }
+                    var dot = linePoint(groups.points, xOf(point[0]), y(point[1]), colour, selected, showPoints);
                     outline(dot, ctx, selected);
                     ctx.mark(dot, selection, (time ? timeFormat(ctx)(point[0]) : ctx.format(point[0])) +
                         (ctx.fields.has("series") ? " · " + line.name : "") + ": " + ctx.format(point[4]));
@@ -2301,8 +2331,13 @@ if (!window.visualisations) {
                 return point && (!y.isLog || point[1] > 0);
             });
             points += drawn.length;
+            // A category the series has no value for is a gap in its line, as ECharts leaves one.
+            var defined = function (point) {
+                return !!point && (!y.isLog || point[1] > 0);
+            };
             if (area || stack) {
                 groups.marks.append("path").attr("d", ctx.C.area(smooth)
+                    .defined(defined)
                     .x(function (point) {
                         return xOf(point[0]);
                     })
@@ -2311,15 +2346,16 @@ if (!window.visualisations) {
                     })
                     .y1(function (point) {
                         return y(point[1]);
-                    })(drawn)).attr("fill", colour).attr("fill-opacity", 0.25);
+                    })(line.points)).attr("fill", colour).attr("fill-opacity", 0.25);
             }
             groups.marks.append("path").attr("d", ctx.C.line(smooth)
+                .defined(defined)
                 .x(function (point) {
                     return xOf(point[0]);
                 })
                 .y(function (point) {
                     return y(point[1]);
-                })(drawn)).attr("fill", "none").attr("stroke", colour).attr("stroke-width", 2);
+                })(line.points)).attr("fill", "none").attr("stroke", colour).attr("stroke-width", 2);
             drawn.forEach(function (point) {
                 var category = matrix.categories[point[0]];
                 var pairs = [["x", fields.rawOf("x", category)]];
@@ -2328,7 +2364,10 @@ if (!window.visualisations) {
                 }
                 var selection = fields.selection(pairs);
                 var selected = ctx.isSelected(selection);
-                var dot = linePoint(groups.marks, xOf(point[0]), y(point[1]), colour, selected,
+                if (!groups.inPlot(xOf(point[0]), y(point[1]))) {
+                    return;
+                }
+                var dot = linePoint(groups.points, xOf(point[0]), y(point[1]), colour, selected,
                     drawn.length <= 200);
                 outline(dot, ctx, selected);
                 ctx.mark(dot, selection, category + (fields.has("series") ? " · " + line.series.name : "") +
@@ -2388,6 +2427,8 @@ if (!window.visualisations) {
         var settings = ctx.settings;
         requireFields(fields, ["x", "y"]);
         var time = axisFor(fields.type("x")) === "time";
+        // A y of dates is on a time axis, as ECharts draws it.
+        var yTime = axisFor(fields.type("y")) === "time";
         var hasSize = fields.has("size");
         var data = seriesPoints(ctx, "x", "y", hasSize ? function (row) {
             var size = toNumber(fields.value(row, "size"));
@@ -2411,15 +2452,24 @@ if (!window.visualisations) {
                 }
             });
         });
-        var probe = valueScaleOf(ctx, ys, [0, 1]);
-        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, ctx.format) + 30), 16);
+        var yFormat = yTime ? timeFormat(ctx) : ctx.format;
+        var yExtent = ys.length ? [Math.min.apply(null, ys), Math.max.apply(null, ys)] : [0, 1];
+        var timeY = function (range) {
+            return ctx.C.time().domain([new Date(yExtent[0]), new Date(yExtent[1] > yExtent[0] ? yExtent[1] :
+                yExtent[0] + 1)]).range(range).nice();
+        };
+        var probe = yTime ? timeY([0, 1]) : valueScaleOf(ctx, ys, [0, 1]);
+        var plot = plotArea(ctx, legend, Math.max(36, labelWidth(probe, yFormat) + 30), 16);
         var extent = xs.length ? [Math.min.apply(null, xs), Math.max.apply(null, xs)] : [0, 1];
         // A value x axis includes zero, as ECharts' does.
         if (!time) {
             extent = [Math.min(0, extent[0]), Math.max(0, extent[1])];
         }
         var x = xScaleOf(ctx, extent, time, plot);
-        var y = valueScaleOf(ctx, ys, [plot.height, 0]);
+        var y = yTime ? timeY([plot.height, 0]) : valueScaleOf(ctx, ys, [plot.height, 0]);
+        var yOf = function (value) {
+            return y(yTime ? new Date(value) : value);
+        };
         var groups = plotGroup(ctx, plot);
         var jitter = boolSetting(settings, "jitter", false);
         var minSize = sizes.length ? Math.min.apply(null, sizes) : 0;
@@ -2434,26 +2484,34 @@ if (!window.visualisations) {
                 }
                 index++;
                 points++;
-                var cx = x(time ? new Date(point[0]) : point[0]) + (jitter ? jitterOf(index) * plot.width * 0.02 : 0);
-                var cy = y(point[1]) + (jitter ? jitterOf(index + 7919) * plot.height * 0.02 : 0);
+                // In the plot by where it is, before it is jittered.
+                var px = x(time ? new Date(point[0]) : point[0]);
+                var py = yOf(point[1]);
+                if (!groups.inPlot(px, py)) {
+                    return;
+                }
+                var cx = px + (jitter ? jitterOf(index) * plot.width * 0.02 : 0);
+                var cy = py + (jitter ? jitterOf(index + 7919) * plot.height * 0.02 : 0);
                 var radius = hasSize ? scaleSqrt(point[4], minSize, maxSize, 3, 18) : 5;
                 var pairs = [["x", point[2]], ["y", point[3]]];
                 if (fields.has("series")) {
                     pairs.push(["series", fields.rawOf("series", name)]);
                 }
                 var selection = fields.selection(pairs);
-                var dot = groups.marks.append("circle").attr("cx", cx).attr("cy", cy).attr("r", radius)
+                var dot = groups.points.append("circle").attr("cx", cx).attr("cy", cy).attr("r", radius)
                     .attr("fill", colour).attr("fill-opacity", 0.8);
                 outline(dot, ctx, ctx.isSelected(selection));
                 ctx.mark(dot, selection, (fields.has("series") ? name + ": " : "") +
-                    (time ? timeFormat(ctx)(point[0]) : ctx.format(point[0])) + ", " + ctx.format(point[1]));
+                    (time ? timeFormat(ctx)(point[0]) : ctx.format(point[0])) + ", " + yFormat(point[1]));
             });
         });
         drawValueAxis(groups.axes, x, true, plot, time ? timeFormat(ctx) : ctx.format, ctx.style,
             textSetting(settings, "xAxisName") || fields.column("x"), time);
-        drawValueAxis(groups.axes, y, false, plot, ctx.format, ctx.style,
-            textSetting(settings, "yAxisName") || fields.column("y"));
-        drawValueLines(ctx, groups.axes, y, false, plot, []);
+        drawValueAxis(groups.axes, y, false, plot, yFormat, ctx.style,
+            textSetting(settings, "yAxisName") || fields.column("y"), yTime);
+        if (!yTime) {
+            drawValueLines(ctx, groups.axes, y, false, plot, []);
+        }
         ctx.report.series = shown.length;
         ctx.report.points = points;
         ctx.zoomKind = "axis";
@@ -2491,7 +2549,10 @@ if (!window.visualisations) {
         });
         var bins = intSetting(settings, "bins", 0, 0, MAX_BINS) ||
             Math.min(50, Math.max(1, Math.ceil(Math.log(Math.max(1, values.length)) / Math.LN2 + 1)));
-        if (!(max > min)) {
+        // No values, no bars; one value (or all the same), one.
+        if (values.length === 0) {
+            bins = 0;
+        } else if (!(max > min)) {
             bins = 1;
         }
         var width = bins > 0 && max > min ? (max - min) / bins : 1;
@@ -2662,8 +2723,13 @@ if (!window.visualisations) {
         var hoverArc = ctx.C.arc().innerRadius(doughnut ? radius * 4 / 7 : 0).outerRadius(radius + 10);
         var labels = [];
         var angle = 0;
+        // Nothing to show: an empty circle, as ECharts draws one.
+        if (shown.length === 0) {
+            g.append("path").attr("d", arc({startAngle: 0, endAngle: Math.PI * 2})).attr("fill", "lightgray");
+        }
         shown.forEach(function (slice) {
-            var sweep = total > 0 ? slice.value / total * Math.PI * 2 : 0;
+            // All of nothing: equal slices, as ECharts draws them.
+            var sweep = total > 0 ? slice.value / total * Math.PI * 2 : Math.PI * 2 / shown.length;
             var part = {startAngle: angle, endAngle: angle + sweep};
             angle += sweep;
             var selection = slice.combined ? null : fields.selection([["name", fields.rawOf("name", slice.name)]]);
@@ -2913,7 +2979,8 @@ if (!window.visualisations) {
                 .attr("stroke", style.subtleText).attr("stroke-width", split ? 2 : 1);
             if (split) {
                 var labelAt = inner - 10 - 15;
-                svgText(dial, ctx.format(min + (max - min) * i / 50), sin * labelAt, cos * labelAt, style,
+                svgText(dial, gaugeScaleLabel(ctx.format, min, max)(min + (max - min) * i / 50), sin * labelAt,
+                    cos * labelAt, style,
                     {anchor: "middle", baseline: "middle", colour: style.subtleText, size: SMALL_FONT_SIZE});
             }
         }
@@ -2982,7 +3049,7 @@ if (!window.visualisations) {
                 var selection = fields.selection([["x", fields.rawOf("x", x)], ["y", fields.rawOf("y", y)]]);
                 var rect = groups.marks.append("rect").attr("x", xBand.position(i)).attr("y", yBand.position(j))
                     .attr("width", xBand.width).attr("height", yBand.width)
-                    .attr("fill", colourAt(colours, max > min ? (value - min) / (max - min) : 0.5));
+                    .attr("fill", colourAt(colours, max > min ? (value - min) / (max - min) : 1));
                 outline(rect, ctx, ctx.isSelected(selection));
                 ctx.mark(rect, selection, x + " · " + y + ": " + ctx.format(value));
                 if (showLabels && xBand.width > 16 && yBand.width > 12) {
@@ -3129,7 +3196,7 @@ if (!window.visualisations) {
                 var rect = calendar.append("rect").attr("x", at.week * cellWidth).attr("y", at.weekday * cellHeight)
                     .attr("width", cellWidth).attr("height", cellHeight)
                     .attr("fill", value === undefined ? "transparent" :
-                        colourAt(colours, max > min ? (value - min) / (max - min) : 0.5))
+                        colourAt(colours, max > min ? (value - min) / (max - min) : 1))
                     .attr("stroke", ctx.style.border).attr("stroke-width", 1);
                 if (value !== undefined) {
                     selectedDays++;
@@ -3594,12 +3661,17 @@ if (!window.visualisations) {
                 });
             });
         };
+        // The middle of the nodes a node flows from (sources), to (targets), or both, weighted by the flows.
         var centreOf = function (name, ends) {
             var total = 0;
             var weighted = 0;
             links.forEach(function (link) {
-                var other = ends === "sources" ? (link.target === name ? link.source : null) :
-                    (link.source === name ? link.target : null);
+                var other = null;
+                if (link.target === name && ends !== "targets") {
+                    other = link.source;
+                } else if (link.source === name && ends !== "sources") {
+                    other = link.target;
+                }
                 if (other !== null && position[other] !== undefined) {
                     total += link.value;
                     weighted += position[other] * link.value;
@@ -3608,13 +3680,16 @@ if (!window.visualisations) {
             return total > 0 ? weighted / total : position[name];
         };
         number();
-        for (var sweep = 0; sweep < 6; sweep++) {
+        for (var sweep = 0; sweep < 24; sweep++) {
             var forward = sweep % 2 === 0;
             for (var c = forward ? 1 : columns.length - 2; forward ? c < columns.length : c >= 0;
                 c += forward ? 1 : -1) {
                 var centres = {};
+                // The first and last columns follow their one neighbour; those between, both, once settled.
+                var ends = c === 0 ? "targets" : c === columns.length - 1 ? "sources" :
+                    sweep >= 12 ? "both" : forward ? "sources" : "targets";
                 columns[c].forEach(function (name) {
-                    centres[name] = centreOf(name, forward ? "sources" : "targets");
+                    centres[name] = centreOf(name, ends);
                 });
                 columns[c].sort(function (a, b) {
                     return centres[a] - centres[b];
