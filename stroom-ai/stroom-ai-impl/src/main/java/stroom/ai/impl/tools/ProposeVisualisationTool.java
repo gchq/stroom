@@ -31,7 +31,7 @@ import stroom.ai.impl.vis.ChartCheck.Sample;
 import stroom.ai.impl.vis.ChartCheck.TableColumn;
 import stroom.ai.impl.vis.ChartKind;
 import stroom.ai.impl.vis.ChartLibraries;
-import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
+import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.ChartRole;
 import stroom.ai.impl.vis.D3Visualisation;
 import stroom.ai.impl.vis.StyleSetting;
@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -104,6 +105,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final String ADD_NEW_ARG = "addNew";
     static final String ECHARTS = "echarts";
     static final String D3 = "d3";
+    /// Wires one of the visualisations content pack's own D3 Visualisations to the table; nothing is generated.
+    static final String CONTENT_PACK = "content-pack";
     static final int MAX_SAMPLE_ROWS = 5_000;
     static final int MAX_NAME_CHARS = 100;
     static final int MAX_SUMMARY_CHARS = 500;
@@ -181,22 +184,24 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 .description(ToolDescription.builder()
                         .chatOnly("Plans a chart of a table on the dashboard, or of the StroomQL query, the user "
                                   + "attached, checks the table's rows can make it, and offers it. With library "
-                                  + "echarts it offers a 'Create visualisation' button: the user names it and "
+                                  + "echarts or d3 it offers a 'Create visualisation' button: the user names it and "
                                   + "picks its folder (the dashboard's, by default) in Stroom's own dialog, and it "
                                   + "is then added to the dashboard below the table (or to the query's show "
-                                  + "clause), unsaved, updating as the table does. With library d3 it gives the "
-                                  + "change that wires the content pack's existing D3 Visualisation to the table, "
-                                  + "for you to propose. Call list_visualisations first to see which libraries are "
-                                  + "installed and each kind's inputs, and ask the user which library to use "
-                                  + "(ask_user) when more than one is. If the data can't make the chart, nothing "
-                                  + "is offered: tell the user why and suggest the fix the result gives. When the "
-                                  + "table already has a chart Stroom AI generated (e.g. the user asks for it as "
-                                  + "another kind of chart), ask the user (ask_user) whether to replace it or add a "
-                                  + "new one, unless they have said, and give replace or addNew. You never "
-                                  + "write the chart's code or settings JSON: Stroom builds them.")
+                                  + "clause), unsaved, updating as the table does. With library content-pack it "
+                                  + "gives the change that wires the content pack's existing D3 Visualisation to "
+                                  + "the table, for you to propose. Call list_visualisations first to see which "
+                                  + "libraries are installed and each kind's inputs, and ask the user which "
+                                  + "library to use (ask_user) when more than one is. If the data can't make the "
+                                  + "chart, nothing is offered: tell the user why and suggest the fix the result "
+                                  + "gives. When the table already has a chart Stroom AI generated (e.g. the user "
+                                  + "asks for it as another kind of chart), ask the user (ask_user) whether to "
+                                  + "replace it or add a new one, unless they have said, and give replace or "
+                                  + "addNew. You never write the chart's code or settings JSON: Stroom builds them.")
                         .build())
                 .parameters(ObjectSchema.builder()
-                        .addEnumProperty(LIBRARY_ARG, List.of(ECHARTS, D3), "The charting library to draw it with.")
+                        .addEnumProperty(LIBRARY_ARG, List.of(ECHARTS, D3, CONTENT_PACK), "The charting library "
+                                + "to draw it with: echarts or d3 to generate the chart, or content-pack to wire "
+                                + "one of the content pack's existing D3 Visualisations to the table.")
                         .addEnumProperty(KIND_ARG, Arrays.stream(ChartKind.values()).map(ChartKind::id).toList(),
                                 "The chart kind: " + Arrays.stream(ChartKind.values())
                                         .map(kind -> kind.id() + " (" + kind.summary() + ")")
@@ -206,11 +211,12 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                                       + "chart, by the name the user sees, when the dashboard has "
                                                       + "several.")
                         .addProperty(STYLE_ARG, style.build())
-                        .addStringProperty(OPTIONS_ARG, "Optional, echarts only. ECharts option overrides as a "
-                                                        + "JSON object, for what the style settings can't do, "
-                                                        + "e.g. {\"color\": [\"#5470c6\", \"#91cc75\"]}. Only "
-                                                        + "plain JSON: no functions, HTML or URLs.")
-                        .addStringProperty(NAME_ARG, "Echarts only. The name to suggest for the new "
+                        .addStringProperty(OPTIONS_ARG, "Optional, echarts or d3. Option overrides as a JSON object, "
+                                                        + "for what the style settings can't do, e.g. "
+                                                        + "{\"color\": [\"#5470c6\", \"#91cc75\"]}: ECharts "
+                                                        + "option keys, or for d3 only color. Only plain JSON: no "
+                                                        + "functions, HTML or URLs.")
+                        .addStringProperty(NAME_ARG, "Echarts or d3. The name to suggest for the new "
                                                      + "Visualisation, saying what it shows, e.g. 'Chat user "
                                                      + "connections'. The user confirms or changes it.")
                         .addStringProperty(COMPONENT_NAME_ARG, "Optional. The name of the chart's pane on the "
@@ -220,7 +226,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                 + "(the default), or as a tab beside it.")
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what the chart shows, shown with the "
                                                         + "button.")
-                        .addStringProperty(REPLACE_ARG, "Optional, echarts on a dashboard only. The name of the "
+                        .addStringProperty(REPLACE_ARG, "Optional, echarts or d3 on a dashboard. The name of the "
                                                         + "Visualisation pane whose chart (one Stroom AI generated, "
                                                         + "of the same table) the new one replaces: its "
                                                         + "Visualisation is rewritten for the new chart and renamed "
@@ -251,7 +257,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                         .addStringProperty(COMPONENT_NAME_ARG, "Optional. Its pane's name.")
                                         .required(KIND_ARG, COLUMNS_ARG, NAME_ARG)
                                         .build())
-                                .description("Echarts on a dashboard only. Several charts at once, of any kinds "
+                                .description("Echarts or d3, on a dashboard. Several charts at once, of any kinds "
                                              + "and tables (e.g. a gauge per column, or a line per metric), up to "
                                              + MAX_CHARTS + ", offered with one 'Create visualisations' button: "
                                              + "the user picks one folder and each is created, named as given. "
@@ -270,9 +276,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String library = NullSafe.string(stringArg(request, LIBRARY_ARG)).toLowerCase(Locale.ROOT);
-        if (!ECHARTS.equals(library) && !D3.equals(library)) {
-            throw new WorkspaceException("Give library as " + ECHARTS + " or " + D3 + ".");
+        if (!ECHARTS.equals(library) && !D3.equals(library) && !CONTENT_PACK.equals(library)) {
+            throw new WorkspaceException("Give library as " + ECHARTS + ", " + D3 + " or " + CONTENT_PACK + ".");
         }
+        // The library a generated chart is drawn with; a content pack chart's settings are checked as ECharts'.
+        final ChartLibrary chartLibrary = ChartLibrary.find(library).orElse(ChartLibrary.ECHARTS);
         if (argsMap(request).get(CHARTS_ARG) != null) {
             return runCharts(request, context, library);
         }
@@ -282,8 +290,10 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final Map<String, String> style;
         final String options;
         try {
-            style = VisualisationPlan.normaliseStyle(kind, stringMap(argsMap(request).get(STYLE_ARG), STYLE_ARG));
-            options = VisualisationPlan.normaliseOptions(optionsText(argsMap(request).get(OPTIONS_ARG)));
+            style = VisualisationPlan.normaliseStyle(kind, stringMap(argsMap(request).get(STYLE_ARG), STYLE_ARG),
+                    chartLibrary);
+            options = VisualisationPlan.normaliseOptions(optionsText(argsMap(request).get(OPTIONS_ARG)),
+                    chartLibrary);
         } catch (final IllegalArgumentException e) {
             throw new WorkspaceException(e.getMessage());
         }
@@ -295,7 +305,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("Give placement as " + VisualisationPlan.BELOW + " or "
                                          + VisualisationPlan.TAB + ".");
         }
-        if (ECHARTS.equals(library) && (name == null || name.isBlank() || name.length() > MAX_NAME_CHARS)) {
+        if (!CONTENT_PACK.equals(library) && (name == null || name.isBlank() || name.length() > MAX_NAME_CHARS)) {
             throw new WorkspaceException("Give the new Visualisation a name of up to " + MAX_NAME_CHARS
                                          + " characters, saying what it shows.");
         }
@@ -404,23 +414,24 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                     .append(String.join("\n- ", check.warnings()));
         }
 
-        if (D3.equals(library)) {
-            return d3(kind, mappings, target, query, tableName, placement, name, notes);
+        if (CONTENT_PACK.equals(library)) {
+            return contentPack(kind, mappings, target, query, tableName, placement, name, notes);
         }
         notes.append(clickFilterNote(kind, mappings, expressions, formats, query, tableName));
-        return echarts(kind, mappings, style, options, target, query, embedded, table, tableName, part, name,
-                summary, placement, replace, request, context, notes);
+        return generate(chartLibrary, kind, mappings, style, options, target, query, embedded, table, tableName,
+                part, name, summary, placement, replace, request, context, notes);
     }
 
     // Several charts proposed together, behind one button: each checked against its table's rows as a single chart
     // is. Those that can be drawn are offered; why the others can't is said. Each is a new chart (none replaces one),
     // on a dashboard table (an embedded query's chart is its show clause, proposed alone).
     private ToolResult runCharts(final ToolCall request, final ToolCallContext context, final String library) {
-        if (!ECHARTS.equals(library)) {
-            return ToolResult.text("No charts were offered: several charts at once are generated with ECharts "
-                                   + "(library " + ECHARTS + "). Propose the content pack's D3 charts one at a "
+        if (CONTENT_PACK.equals(library)) {
+            return ToolResult.text("No charts were offered: several charts at once are generated (library "
+                                   + ECHARTS + " or " + D3 + "). Propose the content pack's own D3 charts one at a "
                                    + "time.");
         }
+        final ChartLibrary chartLibrary = ChartLibrary.find(library).orElse(ChartLibrary.ECHARTS);
         if (!(argsMap(request).get(CHARTS_ARG) instanceof final List<?> charts) || charts.isEmpty()
             || charts.size() > MAX_CHARTS) {
             throw new WorkspaceException("Give charts as a list of 1 to " + MAX_CHARTS + " charts.");
@@ -489,8 +500,10 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 final Map<String, String> style;
                 final String options;
                 try {
-                    style = VisualisationPlan.normaliseStyle(kind, stringMap(spec.get(STYLE_ARG), STYLE_ARG));
-                    options = VisualisationPlan.normaliseOptions(optionsText(spec.get(OPTIONS_ARG)));
+                    style = VisualisationPlan.normaliseStyle(kind, stringMap(spec.get(STYLE_ARG), STYLE_ARG),
+                            chartLibrary);
+                    options = VisualisationPlan.normaliseOptions(optionsText(spec.get(OPTIONS_ARG)),
+                            chartLibrary);
                 } catch (final IllegalArgumentException e) {
                     throw new WorkspaceException(e.getMessage());
                 }
@@ -535,7 +548,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                         NullSafe.get(spec.get(COMPONENT_NAME_ARG), value -> String.valueOf(value).strip()), name);
                 final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, style, options, tableName,
                         table.getComponentId(), componentName, placement(layout, onTable), snapshotHash, null, null,
-                        null);
+                        null, chartLibrary.id());
                 try {
                     plan.validate();
                 } catch (final IllegalArgumentException e) {
@@ -561,17 +574,14 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (planned.isEmpty()) {
             return ToolResult.text("No charts were offered." + leftOut);
         }
-        final EChartsInstall echarts = chartLibraries.findECharts().orElse(null);
-        if (echarts == null) {
-            return ToolResult.text("No charts were offered: ECharts isn't installed in Stroom. An administrator "
-                                   + "installs it as a Script doc holding echarts.min.js from an Apache ECharts "
-                                   + "release, version " + ChartLibraries.MIN_ECHARTS_MAJOR + " or later. Tell the "
-                                   + "user.");
+        final Installed installed = installed(chartLibrary).orElse(null);
+        if (installed == null) {
+            return ToolResult.text(notInstalled(chartLibrary, "No charts were offered"));
         }
-        if (!chartLibraries.currentUserCanUse(echarts.script())) {
+        if (!chartLibraries.currentUserCanUse(installed.script())) {
             return ToolResult.text("No charts were offered: the user doesn't have Use permission on Script '"
-                                   + echarts.script().getName() + "' (ECharts). Tell them to ask an administrator "
-                                   + "for it.");
+                                   + installed.script().getName() + "' (" + chartLibrary.displayName() + "). Tell "
+                                   + "them to ask an administrator for it.");
         }
 
         final Map<String, Object> arguments = new LinkedHashMap<>();
@@ -584,8 +594,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                                            + NAME + " tool");
         final String arranged = NullSafe.nonBlankStringElse(layout, ROW);
         return ToolResult.text("The user has been shown a 'Create visualisations' button for " + planned.size()
-                               + " chart(s), drawn with ECharts " + echarts.version() + ":\n- "
-                               + String.join("\n- ", described)
+                               + " chart(s), drawn with " + chartLibrary.displayName() + " " + installed.version()
+                               + ":\n- " + String.join("\n- ", described)
                                + "\nWhen they click it, Stroom asks for one folder (the dashboard's, by default), "
                                + "creates a Visualisation for each there, named as above, and adds them to dashboard '"
                                + target.getName() + "' " + (planned.size() == 1
@@ -634,6 +644,51 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             case TABS -> "below their tables, stacked as tabs in one pane";
             default -> "below their tables, side by side";
         };
+    }
+
+    // The library's Script doc and version, if it is installed.
+    private Optional<Installed> installed(final ChartLibrary library) {
+        return library == ChartLibrary.D3
+                ? chartLibraries.findD3Library().map(d3 -> new Installed(d3.script(), d3.version()))
+                : chartLibraries.findECharts().map(echarts -> new Installed(echarts.script(), echarts.version()));
+    }
+
+    // Why nothing was offered when a library isn't installed, and what else is.
+    private String notInstalled(final ChartLibrary library, final String nothing) {
+        final boolean contentPack = !chartLibraries.findContentPackD3().isEmpty();
+        if (library == ChartLibrary.D3) {
+            return nothing + ": D3 isn't installed in Stroom. An administrator installs it as a Script doc holding a "
+                   + "D3 build, version 3 or later (e.g. d3.min.js from D3 7); the visualisations content pack "
+                   + "includes D3 3. " + (chartLibraries.findECharts().isPresent()
+                    ? "ECharts is installed: offer an ECharts chart instead (library " + ECHARTS + ")."
+                    : "No other charting library is installed either.") + " Tell the user.";
+        }
+        final String unrecognised = unrecognisedNote(chartLibraries.findUnrecognisedECharts());
+        return nothing + ": ECharts isn't installed in Stroom. " + unrecognised + "An administrator installs it by "
+               + "creating a Script doc (e.g. Visualisations/ECharts/ECharts) holding echarts.min.js from an Apache "
+               + "ECharts release, version " + ChartLibraries.MIN_ECHARTS_MAJOR + " or later. "
+               + (chartLibraries.findD3Library().isPresent()
+                ? "D3 is installed: offer a D3 chart instead (library " + D3 + "). "
+                : contentPack
+                        ? "The content pack's D3 Visualisations are installed: offer one instead (library "
+                          + CONTENT_PACK + "). "
+                        : "No other charting library is installed either. ")
+               + "Tell the user.";
+    }
+
+    // What to offer instead of a content pack chart: a chart generated with whichever library is installed.
+    private String generatedInstead() {
+        final List<String> libraries = new ArrayList<>();
+        if (chartLibraries.findECharts().isPresent()) {
+            libraries.add(ECHARTS);
+        }
+        if (chartLibraries.findD3Library().isPresent()) {
+            libraries.add(D3);
+        }
+        return libraries.isEmpty()
+                ? "Neither ECharts nor D3 is installed to generate one instead: tell the user an administrator "
+                  + "would need to install one."
+                : "Generate it instead (library " + String.join(" or ", libraries) + ").";
     }
 
     // How a click on the chart could filter the dashboard, for the agent to offer once the chart is created: what a
@@ -722,10 +777,10 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                    + "clause. Ask the user to open Query '" + embedded.referenced().getName() + "', attach its tab, "
                    + "and ask again.";
         }
-        if (!ECHARTS.equals(library)) {
+        if (CONTENT_PACK.equals(library)) {
             return "No chart was offered: an embedded query is charted by a show clause in its StroomQL, which "
-                   + "Stroom puts there for a chart it generates (library " + ECHARTS + "). Use library " + ECHARTS
-                   + ".";
+                   + "Stroom puts there for a chart it generates (library " + ECHARTS + " or " + D3 + "). Use one of "
+                   + "those.";
         }
         return null;
     }
@@ -763,10 +818,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                                          + ": a StroomQL query's chart is its show clause, which a new chart "
                                          + "takes the place of.");
         }
-        if (!ECHARTS.equals(library)) {
-            throw new WorkspaceException("Only an ECharts chart (library " + ECHARTS + ") can replace one Stroom "
-                                         + "AI generated, as its Visualisation is rewritten for it. Give "
-                                         + ADD_NEW_ARG + " true to add the D3 chart beside it instead.");
+        if (CONTENT_PACK.equals(library)) {
+            throw new WorkspaceException("Only a generated chart (library " + ECHARTS + " or " + D3 + ") can "
+                                         + "replace one Stroom AI generated, as its Visualisation is rewritten for "
+                                         + "it. Give " + ADD_NEW_ARG + " true to add the content pack chart beside "
+                                         + "it instead.");
         }
         final List<Component> panes = components.stream()
                 .filter(component -> DashboardComponents.VISUALISATION.equals(component.type()))
@@ -798,41 +854,32 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         return new Replace(pane.id(), pane.name(), visualisation);
     }
 
-    private ToolResult echarts(final ChartKind kind,
-                               final Map<String, String> mappings,
-                               final Map<String, String> style,
-                               final String options,
-                               final DocRef target,
-                               final boolean query,
-                               final EmbeddedQuery embedded,
-                               final AiTabSearch table,
-                               final String tableName,
-                               final UnsavedPart part,
-                               final String name,
-                               final String summary,
-                               final String placement,
-                               final Replace replace,
-                               final ToolCall request,
-                               final ToolCallContext context,
-                               final StringBuilder notes) {
-        final EChartsInstall echarts = chartLibraries.findECharts().orElse(null);
-        if (echarts == null) {
-            final boolean d3 = !chartLibraries.findD3().isEmpty();
-            final String unrecognised = unrecognisedNote(chartLibraries.findUnrecognisedECharts());
-            return ToolResult.text("No chart was offered: ECharts isn't installed in Stroom. " + unrecognised
-                                   + "An administrator installs it by creating a Script doc (e.g. "
-                                   + "Visualisations/ECharts/ECharts) holding echarts.min.js from an Apache "
-                                   + "ECharts release, version " + ChartLibraries.MIN_ECHARTS_MAJOR + " or later. "
-                                   + (d3
-                    ? "The content pack's D3 Visualisations are installed: offer the user a D3 chart instead "
-                      + "(library d3)."
-                    : "No other charting library is installed either.")
-                                   + " Tell the user.");
+    private ToolResult generate(final ChartLibrary library,
+                                final ChartKind kind,
+                                final Map<String, String> mappings,
+                                final Map<String, String> style,
+                                final String options,
+                                final DocRef target,
+                                final boolean query,
+                                final EmbeddedQuery embedded,
+                                final AiTabSearch table,
+                                final String tableName,
+                                final UnsavedPart part,
+                                final String name,
+                                final String summary,
+                                final String placement,
+                                final Replace replace,
+                                final ToolCall request,
+                                final ToolCallContext context,
+                                final StringBuilder notes) {
+        final Installed installed = installed(library).orElse(null);
+        if (installed == null) {
+            return ToolResult.text(notInstalled(library, "No chart was offered"));
         }
-        if (!chartLibraries.currentUserCanUse(echarts.script())) {
+        if (!chartLibraries.currentUserCanUse(installed.script())) {
             return ToolResult.text("No chart was offered: the user doesn't have Use permission on Script '"
-                                   + echarts.script().getName() + "' (ECharts), so the chart wouldn't load for "
-                                   + "them. Tell them to ask an administrator for it.");
+                                   + installed.script().getName() + "' (" + library.displayName() + "), so the "
+                                   + "chart wouldn't load for them. Tell them to ask an administrator for it.");
         }
         // A replaced chart keeps its pane's name unless given another.
         final String componentName = NullSafe.nonBlankStringElse(stringArg(request, COMPONENT_NAME_ARG),
@@ -864,7 +911,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 query
                         ? part.text()
                         : NullSafe.get(embedded, EmbeddedQuery::query),
-                replace);
+                replace,
+                library.id());
         try {
             plan.validate();
         } catch (final IllegalArgumentException e) {
@@ -886,9 +934,10 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
             return ToolResult.text(
                     "The user has been shown a 'Replace visualisation' button for a "
                     + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("
-                    + describeMappings(mappings) + "), drawn with ECharts " + echarts.version() + ". When they "
-                    + "click it, Visualisation '" + replace.visualisation().getName() + "' is rewritten for it and "
-                    + "renamed '" + name.strip() + "', saved at once (they need Edit permission on it), and pane '"
+                    + describeMappings(mappings) + "), drawn with " + library.displayName() + " "
+                    + installed.version() + ". When they click it, Visualisation '"
+                    + replace.visualisation().getName() + "' is rewritten for it and renamed '" + name.strip()
+                    + "', saved at once (they need Edit permission on it), and pane '"
                     + replace.componentName() + "' shows it" + (componentName.equals(replace.componentName())
                             ? ""
                             : ", renamed '" + componentName + "'")
@@ -911,8 +960,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         return ToolResult.text(
                 "The user has been shown a 'Create visualisation' button for a "
                 + kind.displayName().toLowerCase(Locale.ROOT) + " of table '" + tableName + "' ("
-                + describeMappings(mappings) + "), drawn with ECharts " + echarts.version() + ". When they click "
-                + "it, Stroom's New Visualisation dialog opens with the name '" + name.strip() + "' in the "
+                + describeMappings(mappings) + "), drawn with " + library.displayName() + " "
+                + installed.version() + ". When they click it, Stroom's New Visualisation dialog opens with the "
+                + "name '" + name.strip() + "' in the "
                 + (query
                         ? "query's"
                         : "dashboard's") + " folder, which they can change; once they create it, it is " + where
@@ -923,28 +973,23 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 .withUserAction(action);
     }
 
-    private ToolResult d3(final ChartKind kind,
-                          final Map<String, String> mappings,
-                          final DocRef target,
-                          final boolean query,
-                          final String tableName,
-                          final String placement,
-                          final String name,
-                          final StringBuilder notes) {
+    private ToolResult contentPack(final ChartKind kind,
+                               final Map<String, String> mappings,
+                               final DocRef target,
+                               final boolean query,
+                               final String tableName,
+                               final String placement,
+                               final String name,
+                               final StringBuilder notes) {
         if (D3Visualisation.find(kind).isEmpty()) {
             return ToolResult.text("No chart was offered: the visualisations content pack has no D3 "
-                                   + kind.displayName().toLowerCase(Locale.ROOT) + ". Draw it with ECharts "
-                                   + "(library echarts)" + (chartLibraries.findECharts().isPresent()
-                    ? "."
-                    : ", which an administrator would need to install."));
+                                   + kind.displayName().toLowerCase(Locale.ROOT) + ". " + generatedInstead());
         }
-        final DocRef visualisation = chartLibraries.findD3().get(kind);
+        final DocRef visualisation = chartLibraries.findContentPackD3().get(kind);
         if (visualisation == null) {
             return ToolResult.text("No chart was offered: the visualisations content pack's D3 "
                                    + kind.displayName().toLowerCase(Locale.ROOT) + " isn't installed. "
-                                   + (chartLibraries.findECharts().isPresent()
-                    ? "ECharts is: offer an ECharts chart instead (library echarts)."
-                    : "Tell the user it would need the content pack installed."));
+                                   + generatedInstead());
         }
         final D3Visualisation d3 = D3Visualisation.forKind(kind);
         final Map<String, String> settings = new LinkedHashMap<>();
@@ -1086,6 +1131,11 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
 
     // A sample of rows and a note on where it came from, or null and why there is none.
     private record SampleOutcome(Sample sample, String note) {
+
+    }
+
+    // A charting library as installed: its Script doc and version.
+    private record Installed(DocRef script, String version) {
 
     }
 }
