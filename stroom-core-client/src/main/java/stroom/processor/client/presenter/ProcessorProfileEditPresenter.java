@@ -23,6 +23,7 @@ import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.client.presenter.NodeGroupListModel;
 import stroom.node.shared.NodeGroup;
+import stroom.processor.client.component.ProfilePeriodListController;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.NullSafe;
@@ -35,6 +36,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -46,7 +48,7 @@ public class ProcessorProfileEditPresenter
 
     private final ProcessorProfileClient processorProfileClient;
     private final NodeGroupClient nodeGroupClient;
-    private final ProfilePeriodListPresenter profilePeriodListPresenter;
+    private final ProfilePeriodListController profilePeriodListPresenter;
 
     private boolean opening;
     private boolean open;
@@ -56,13 +58,13 @@ public class ProcessorProfileEditPresenter
                                          final ProcessorProfileEditView view,
                                          final ProcessorProfileClient processorProfileClient,
                                          final NodeGroupClient nodeGroupClient,
-                                         final ProfilePeriodListPresenter profilePeriodListPresenter) {
+                                         final ProfilePeriodListController profilePeriodListPresenter) {
         super(eventBus, view);
         own(profilePeriodListPresenter);
         this.processorProfileClient = processorProfileClient;
         this.nodeGroupClient = nodeGroupClient;
         this.profilePeriodListPresenter = profilePeriodListPresenter;
-        view.setListView(profilePeriodListPresenter.getView());
+        view.setListView(profilePeriodListPresenter);
 
         final NodeGroupListModel nodeGroupListModel = new NodeGroupListModel(eventBus, nodeGroupClient);
         nodeGroupListModel.setTaskMonitorFactory(this);
@@ -196,7 +198,7 @@ public class ProcessorProfileEditPresenter
 
         SelectionBox<NodeGroup> getNodeGroup();
 
-        void setListView(View listView);
+        void setListView(IsWidget listView);
 
         UserTimeZone getUserTimeZone();
 

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A processor profile's periods, bordered, with New, Edit, Remove and a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:PagerPanel ui:field="pager" toolbarName="Profile period actions"
+                   addStyleNames="form-control-background form-control-border">
+        <b:ToolbarButton ui:field="addButton" svg="ADD" title="New Profile Period"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Profile Period" enabled="false"/>
+        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Profile Period"
+                         enabled="false"/>
+        <dg:DataGrid ui:field="dataGrid" tableName="Profile Periods" multiLine="true"/>
+    </dg:PagerPanel>
+</ui:UiBinder>
