@@ -98,7 +98,7 @@ public final class UserAccessScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/UserAccessScreen", UserAccessScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // The grid has UserAccessListPresenter's seven columns
+                // The grid has UserAccessList's seven columns
                 .story("Default", context -> render(context, false))
                 .withPlay(play -> {
                     play.findByText("Alice Smith");
@@ -139,7 +139,7 @@ public final class UserAccessScreenStories {
                 .withPlay(play -> {
                     play.findByText("Alice Smith");
                     // GWT selects the first user when the list loads
-                    // (UserAccessListPresenter.changeData), so Alice's sessions are shown at once. The
+                    // (UserAccessListController.changeData), so Alice's sessions are shown at once. The
                     // sessions are fetched for the selected subject
                     final Query aliceRow = play.getByText("Alice Smith").closest(StroomDom.GRID_ROW);
                     play.expect(play.within(aliceRow).getByText("alice")).toBeInTheDocument();

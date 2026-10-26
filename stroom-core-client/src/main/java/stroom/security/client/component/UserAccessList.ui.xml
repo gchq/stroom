@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Who currently holds access: a quick filter above a page of users -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <v:QuickFilterPage ui:field="page" accessibleName="Filter users">
+        <dg:PagerPanel ui:field="pager">
+            <dg:DataGrid ui:field="dataGrid" tableName="User Access"/>
+        </dg:PagerPanel>
+    </v:QuickFilterPage>
+</ui:UiBinder>

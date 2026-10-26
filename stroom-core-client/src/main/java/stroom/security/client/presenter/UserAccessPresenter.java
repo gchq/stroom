@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.client.component.UserAccessListController;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
 import stroom.security.shared.UserAccessResource;
@@ -33,6 +34,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -53,7 +55,7 @@ public class UserAccessPresenter
 
     public static final String TAB_TYPE = "UserAccess";
 
-    private final UserAccessListPresenter listPresenter;
+    private final UserAccessListController listPresenter;
     private final UserSessionsListPresenter sessionsListPresenter;
     private final RestFactory restFactory;
     private final ButtonView revokeButton;
@@ -64,7 +66,7 @@ public class UserAccessPresenter
     @Inject
     public UserAccessPresenter(final EventBus eventBus,
                                final UserAccessView view,
-                               final UserAccessListPresenter listPresenter,
+                               final UserAccessListController listPresenter,
                                final UserSessionsListPresenter sessionsListPresenter,
                                final RestFactory restFactory,
                                final UiConfigCache uiConfigCache) {
@@ -75,7 +77,7 @@ public class UserAccessPresenter
         this.sessionsListPresenter = sessionsListPresenter;
         this.restFactory = restFactory;
 
-        view.setList(listPresenter.getView());
+        view.setList(listPresenter);
         view.setSessionList(sessionsListPresenter.getView());
 
         // Named for exactly what it does. "Revoke this user's access" was the earlier wording and claimed
@@ -237,7 +239,7 @@ public class UserAccessPresenter
 
         void focus();
 
-        void setList(View view);
+        void setList(IsWidget view);
 
         /**
          * The detail pane: the selected user's individual sessions.
