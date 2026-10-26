@@ -119,13 +119,12 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         }, false, new DefaultTaskMonitorFactory(this));
     }
 
+    // Applies the change on top of the dashboard as it is now, if the user can edit it.
     private void applyDashboardChange(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
-        final ApplyDashboardChangeEvent.Decision decision = ApplyDashboardChangeEvent.decide(!dashboard.isReadOnly(),
-                dashboard.aiDashboardHash(), event.getSnapshotHash(), dashboard.aiAppliedChangeHashes());
-        switch (decision) {
-            case NOT_EDITABLE -> event.notApplied(ApplyDashboardChangeEvent.NOT_EDITABLE);
-            case CHANGED -> event.notApplied(ApplyDashboardChangeEvent.CHANGED);
-            default -> approveAndApply(dashboard, event);
+        if (dashboard.isReadOnly()) {
+            event.notApplied(ApplyDashboardChangeEvent.NOT_EDITABLE);
+        } else {
+            approveAndApply(dashboard, event);
         }
     }
 

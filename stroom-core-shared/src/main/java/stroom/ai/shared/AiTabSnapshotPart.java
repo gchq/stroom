@@ -103,6 +103,24 @@ public class AiTabSnapshotPart {
         return Long.toHexString(hash);
     }
 
+    /// A hash of some text's lines ([#hashText(String)]), each without the space around it, leaving out blank
+    /// ones, so text laid out differently (e.g. indented, or with a final new line) hashes the same.
+    ///
+    /// @param text Some text, or null.
+    /// @return Its hash, as hex.
+    public static String hashLines(final String text) {
+        final StringBuilder lines = new StringBuilder();
+        for (final String line : (text == null
+                ? ""
+                : text).split("\n")) {
+            final String stripped = line.strip();
+            if (!stripped.isEmpty()) {
+                lines.append(stripped).append('\n');
+            }
+        }
+        return hashText(lines.toString());
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
