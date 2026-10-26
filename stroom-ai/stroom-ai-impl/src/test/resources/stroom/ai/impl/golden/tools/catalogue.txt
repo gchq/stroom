@@ -1659,7 +1659,7 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           },
           "kind" : {
             "description" : "The chart kind.",
-            "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge" ],
+            "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst" ],
             "type" : "string"
           },
           "name" : {
@@ -1695,6 +1695,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "date" : {
           "description" : "The column for date.",
+          "type" : "string"
+        },
+        "level2" : {
+          "description" : "The column for level2.",
           "type" : "string"
         },
         "level3" : {
@@ -1804,8 +1808,8 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "type" : "object"
     },
     "kind" : {
-      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped).",
-      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge" ],
+      "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped); sunburst (rings of a whole: the inner ring by name, each ring out splitting the one inside it by a further column).",
+      "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge", "sunburst" ],
       "type" : "string"
     },
     "layout" : {
