@@ -20,6 +20,7 @@ import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.component.ClassificationWrapper;
 import stroom.data.client.component.DataTextPaneController;
 import stroom.data.client.component.ItemNavigatorController;
+import stroom.data.client.component.MarkerListController;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataInfoSection;
@@ -121,7 +122,8 @@ public class DataPresenter
     private final ControllerLayer textPaneLayer;
     private final ItemNavigatorController itemNavigator;
     private final SourceProgressBar sourceProgressBar;
-    private final MarkerListPresenter markerListPresenter;
+    private final MarkerListController markerList;
+    private final ControllerLayer markerLayer;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final boolean userHasPipelineSteppingPermission;
@@ -170,7 +172,7 @@ public class DataPresenter
                          final ClassificationLabelController classificationLabelController,
                          final DataTextPaneController textPane,
                          final SourceProgressBar sourceProgressBar,
-                         final MarkerListPresenter markerListPresenter,
+                         final MarkerListController markerList,
                          final SourceTabPlugin sourceTabPlugin,
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
@@ -178,7 +180,7 @@ public class DataPresenter
         super(eventBus, classificationWrapper);
         own(itemNavigator);
         own(textPane);
-        own(markerListPresenter);
+        own(markerList);
         own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
         classificationWrapper.setContent(dataView);
         this.dataView = dataView;
@@ -190,12 +192,12 @@ public class DataPresenter
         textPaneLayer = new ControllerLayer(textPane);
         this.sourceProgressBar = sourceProgressBar;
         // Use properties mode for meta
-        this.markerListPresenter = markerListPresenter;
+        this.markerList = markerList;
+        this.markerLayer = new ControllerLayer(markerList);
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
 
-        markerListPresenter.getWidget().addStyleName("max");
-        markerListPresenter.setDataPresenter(this);
+        markerList.setOnExpandedChange(() -> update(true));
 
         textPane.setOnBeginStepping(this::beginStepping);
         textPane.setWrapLines(true);
@@ -488,7 +490,7 @@ public class DataPresenter
 //        currentSourceLocation = SourceLocation.builder(meta.getId())
 //                .build();
 //        currentStreamType = meta.getTypeName();
-//        markerListPresenter.resetExpandedSeverities();
+//        markerList.resetExpandedSeverities();
 //
 ////        GWT.log("ID " + getCurrentMetaId()
 ////                + " streamType " + currentStreamType
@@ -533,7 +535,7 @@ public class DataPresenter
                 if (!Objects.equals(currentSourceLocation, sourceLocation)) {
                     // New data location so re-fetch
                     currentSourceLocation = sourceLocation;
-                    markerListPresenter.resetExpandedSeverities();
+                    markerList.resetExpandedSeverities();
 
                     update(fireEvents, currentStreamType);
                 } else {
@@ -676,7 +678,7 @@ public class DataPresenter
     }
 
     private void updateFromResource(final boolean fireEvents, final SourceLocation sourceLocation) {
-        final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
+        final Severity[] expandedSeverities = markerList.getExpandedSeverities();
 
         doWithConfig(sourceConfig -> {
             final DataRange dataRange;
@@ -997,7 +999,7 @@ public class DataPresenter
 
     private void showMarkerPresenter() {
         itemNavigator.setDisplay(navigatorData);
-        dataView.getLayerContainer().show(markerListPresenter);
+        dataView.getLayerContainer().show(markerLayer);
     }
 
     private void hidePresenters() {
@@ -1143,7 +1145,7 @@ public class DataPresenter
             pageCount = result.getTotalItemCount().getCount().intValue();
         }
 
-        markerListPresenter.setData(markers, pageOffset, pageCount);
+        markerList.setData(markers, pageOffset, pageCount);
     }
 
     public void setBeginSteppingHandler(final BeginSteppingHandler beginSteppingHandler) {

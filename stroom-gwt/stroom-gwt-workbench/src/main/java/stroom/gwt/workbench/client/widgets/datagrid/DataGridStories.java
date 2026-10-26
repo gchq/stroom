@@ -402,7 +402,7 @@ public final class DataGridStories {
                     play.expect(play.querySelector(GRID)).toHaveClass("data-grid--multiline");
                     play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                 })
-                // Row column spans: as MarkerListPresenter spans its summary rows
+                // Row column spans: as MarkerList spans its summary rows
                 .story("RowColumnSpans", DataGridStories::rowColumnSpans)
                 .withPlay(play -> {
                     final Query rows = play.querySelectorAll(ROW);
@@ -866,7 +866,7 @@ public final class DataGridStories {
 
     private static Widget rowColumnSpans(final StoryContext context) {
         final DataGrid<Note> grid = noteGrid(false);
-        // As MarkerListPresenter.setData: span the first row's first cell across all three columns
+        // As MarkerList.setData: span the first row's first cell across all three columns
         grid.setRowSpans((row, absIndex) -> absIndex == 0
                 ? Collections.singletonMap(0, 3)
                 : Collections.emptyMap());

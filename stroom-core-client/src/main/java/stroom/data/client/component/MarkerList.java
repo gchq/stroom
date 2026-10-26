@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -28,47 +29,47 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.WrapperView;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.HtmlBuilder;
 
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Consumer;
 
-public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
+/// A stream's markers: a summary row for each severity (bold, its count spanning the columns after
+/// its icon), which expands to show its markers, each with its element, stream part, line, column
+/// and message.
+public class MarkerList extends Component {
 
-    private static final Set<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final Template TEMPLATE = GWT.create(Template.class);
 
-    private final RegExp messageCauseDelimiterPattern;
+    @UiField
+    DataGrid<Marker> dataGrid;
 
-    private final DataGrid<Marker> dataGrid;
-    private Set<Severity> expandedSeverities;
-    private DataPresenter dataPresenter;
+    private final RegExp messageCauseDelimiterPattern =
+            RegExp.compile(RegExp.quote(StoredError.MESSAGE_CAUSE_DELIMITER));
+    private Consumer<Severity> onToggle = severity -> {
+    };
 
-    @Inject
-    public MarkerListPresenter(final EventBus eventBus,
-                               final WrapperView view) {
-        super(eventBus, view);
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Markers");
-        dataGrid.setMultiLine(true);
+    /// Makes an empty list.
+    public MarkerList() {
+        initWidget(BINDER.createAndBindUi(this));
         // A severity's summary row is keyed by its severity (there is one of each), so it is still the
         // same row, keeping the keyboard's place, when expanding or collapsing it fetches new rows
         dataGrid.setKeyProvider(marker -> marker instanceof final Summary summary
@@ -83,7 +84,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
             }
             return Collections.emptyMap();
         });
-        view.setWidget(dataGrid);
 
         addExpanderColumn();
         addSeverityColumn();
@@ -92,8 +92,27 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
         addLine();
         addCol();
         addMessage();
+    }
 
-        messageCauseDelimiterPattern = RegExp.compile(RegExp.quote(StoredError.MESSAGE_CAUSE_DELIMITER));
+    /// Shows a page of markers.
+    ///
+    /// @param markers The page's markers, or `null` for none.
+    /// @param start   The absolute index of the page's first marker.
+    /// @param count   How many markers there are in all.
+    public void setData(final List<Marker> markers, final int start, final int count) {
+        if (markers == null) {
+            // Reset visible range.
+            dataGrid.setRowData(0, new ArrayList<>());
+            dataGrid.setRowCount(0);
+        } else {
+            dataGrid.setRowData(start, markers);
+            dataGrid.setRowCount(count);
+        }
+    }
+
+    /// @param onToggle Given a summary row's severity when its expander is pressed.
+    public void setOnToggle(final Consumer<Severity> onToggle) {
+        this.onToggle = onToggle;
     }
 
     private void addExpanderColumn() {
@@ -107,18 +126,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                 return null;
             }
         };
-        expanderColumn.setFieldUpdater((index, marker, value) -> {
-            final Severity severity = marker.getSeverity();
-            if (severity != null) {
-                if (expandedSeverities.contains(severity)) {
-                    expandedSeverities.remove(severity);
-                } else {
-                    expandedSeverities.add(severity);
-                }
-            }
-
-            dataPresenter.update(true);
-        });
+        expanderColumn.setFieldUpdater((index, marker, value) -> onToggle.accept(marker.getSeverity()));
         dataGrid.addColumn(expanderColumn, "<br/>", ExpanderCell.getColumnWidth(1));
     }
 
@@ -179,14 +187,8 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                                     }
                                 }
 
-                                // Make summery items bold.
-                                // TODO use SafeHtmlUtil#getTemplate
-                                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                                builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
-                                builder.appendEscaped(sb.toString());
-                                builder.appendHtmlConstant("</div>");
-
-                                return builder.toSafeHtml();
+                                // Summary rows are bold
+                                return TEMPLATE.summary(sb.toString());
                             }
 
                             return null;
@@ -289,34 +291,20 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                 800);
     }
 
-    public void setData(final List<Marker> markers, final int start, final int count) {
-        if (markers == null) {
-            // Reset visible range.
-            dataGrid.setRowData(0, new ArrayList<>());
-            dataGrid.setRowCount(0);
-        } else {
-            dataGrid.setRowData(start, markers);
-            dataGrid.setRowCount(count);
-        }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, MarkerList> {
+
     }
 
-    public HandlerRegistration addRangeChangeHandler(final RangeChangeEvent.Handler handler) {
-        return dataGrid.addRangeChangeHandler(handler);
-    }
 
-    public Severity[] getExpandedSeverities() {
-        if (expandedSeverities.size() == 0) {
-            return null;
-        }
+    // A severity's summary, in bold
+    interface Template extends SafeHtmlTemplates {
 
-        return expandedSeverities.toArray(new Severity[0]);
-    }
-
-    public void resetExpandedSeverities() {
-        expandedSeverities = new HashSet<>(ALL_SEVERITIES);
-    }
-
-    public void setDataPresenter(final DataPresenter dataPresenter) {
-        this.dataPresenter = dataPresenter;
+        @Template("<div class=\"marker-list__summary\">{0}</div>")
+        SafeHtml summary(String text);
     }
 }

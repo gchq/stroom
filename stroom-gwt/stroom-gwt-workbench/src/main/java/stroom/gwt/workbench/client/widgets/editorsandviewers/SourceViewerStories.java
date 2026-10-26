@@ -21,8 +21,9 @@ import stroom.data.client.component.ItemNavigator;
 import stroom.data.client.component.ItemNavigatorController;
 import stroom.data.client.component.ItemSelection;
 import stroom.data.client.component.ItemSelectionController;
+import stroom.data.client.component.MarkerList;
+import stroom.data.client.component.MarkerListController;
 import stroom.data.client.presenter.DataPresenter;
-import stroom.data.client.presenter.MarkerListPresenter;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.client.view.DataViewImpl;
 import stroom.editor.client.component.HtmlPane;
@@ -43,7 +44,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
-import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.progress.client.component.SourceProgressBar;
 
 import com.google.gwt.core.client.GWT;
@@ -127,7 +127,7 @@ public final class SourceViewerStories {
                 // The navigation's icon buttons, and the tab stops they cost
                 .withPlay(play -> play.waitFor(() -> play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                         "First part, Previous part, Next part, Last part, Refresh: 1 tab stop"))))
-                // The marker list (MarkerListPresenter) of an Error stream
+                // The marker list (MarkerListController) of an Error stream
                 .story("Markers", context -> render(context, MARKERS_FIXTURES, location(1001)))
                 .withPlay(play -> {
                     // An Error stream's markers are shown in its Error tab
@@ -160,7 +160,7 @@ public final class SourceViewerStories {
                     final Supplier<Object> lastFetch = lastFetch(play);
                     play.click(play.findByText(ERROR, TAB_LABEL));
                     play.waitFor(() -> play.expect(play.getByText("Errors (1 item)")).toBeInTheDocument());
-                    // MarkerListPresenter starts with every severity expanded
+                    // MarkerListController starts with every severity expanded
                     // (resetExpandedSeverities), so the error shows to begin with
                     // and the first click collapses the group
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
@@ -253,7 +253,7 @@ public final class SourceViewerStories {
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 EditorWidgets.dataTextPane(eventBus),
                 new SourceProgressBar(),
-                new MarkerListPresenter(eventBus, new WrapperViewImpl()),
+                new MarkerListController(eventBus, new MarkerList()),
                 // Only used to open the source in a new tab, which the workbench doesn't have
                 null,
                 harness.getUiConfigCache(),

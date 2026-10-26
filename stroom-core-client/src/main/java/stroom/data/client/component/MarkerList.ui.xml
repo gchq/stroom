@@ -1,0 +1,6 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A stream's markers (errors, warnings and the like), grouped by severity -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <dg:DataGrid ui:field="dataGrid" tableName="Markers" multiLine="true" addStyleNames="max"/>
+</ui:UiBinder>
