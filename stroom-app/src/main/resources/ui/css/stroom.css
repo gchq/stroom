@@ -93,7 +93,8 @@ table {
 	border-spacing: 0px;
 }
 
-textarea {
+/* A text area that isn't a text field (text-field.css styles those) */
+textarea:where(:not(.text-field)) {
 	display: block;
 	margin: 0px;
 	_margin-top: -1px;
@@ -560,25 +561,23 @@ td {
 	table-layout: fixed;
 }
 
-/* INPUT CONTROLS */
-.gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
+/* INPUT CONTROLS. Text fields (every text box, text area and password box) are styled by
+   text-field.css alone: the bare input and textarea rules here are for inputs with no block of their
+   own yet, and leave text fields out (:where() keeps their specificity as it was) */
+.gwt-ListBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 3px 5px;
 	outline: none !important;
 }
 
-.gwt-TextArea,
-.gwt-TextBox,
-.gwt-PasswordTextBox,
 .gwt-ListBox,
-.gwt-DateBox,
 .stroom-DropDownTree,
 .stroom-control,
 select,
-textarea,
-input,
-input[type="text"],
+textarea:where(:not(.text-field)),
+input:where(:not(.text-field)),
+input[type="text"]:where(:not(.text-field)),
 input[type="checkbox"],
 input[type="file"] {
 	border: solid 1px var(--control__border-color);
@@ -589,10 +588,10 @@ input[type="file"] {
 }
 
 /* Fix auto fill colours */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
+input:where(:not(.text-field)):-webkit-autofill,
+input:where(:not(.text-field)):-webkit-autofill:hover,
+input:where(:not(.text-field)):-webkit-autofill:focus,
+input:where(:not(.text-field)):-webkit-autofill:active {
 	font-family: var(--regular-font-family);
 	font-size: var(--font-size-13);
 	font-weight: 400;
@@ -610,18 +609,14 @@ input:-webkit-autofill:active {
 }
 
 
-.gwt-TextArea:disabled,
-.gwt-TextBox:disabled,
-.gwt-PasswordTextBox:disabled,
 .gwt-ListBox:disabled,
-.gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
 .stroom-control.disabled,
 select:disabled,
-textarea:disabled,
-input:disabled,
-input[type="text"]:disabled,
+textarea:where(:not(.text-field)):disabled,
+input:where(:not(.text-field)):disabled,
+input[type="text"]:where(:not(.text-field)):disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
 	border: solid 1px var(--control__border-color--disabled);
@@ -653,16 +648,15 @@ select option:disabled {
 	color: var(--text-color);
 	padding: 5px;
 	white-space: nowrap;
+	/* Its text can be selected, so copied */
+	-webkit-user-select: text;
+	-moz-user-select: text;
+	user-select: text;
 }
 
 .gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--control__background-color) !important;
   color: var(--control__text-color);
-}
-
-.gwt-TextArea {
-	resize: none;
-	height: 80px;
 }
 
 /*
@@ -671,11 +665,8 @@ value greyed. Disabled controls use the --control__*--disabled look above instea
 with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
 looking editable.)
 */
-.gwt-TextArea-readonly,
-.gwt-TextBox-readonly,
-.gwt-PasswordTextBox-readonly,
-input[readonly],
-textarea[readonly],
+input:where(:not(.text-field))[readonly],
+textarea:where(:not(.text-field))[readonly],
 .stroom-control.readonly {
   color: var(--control__text-color--readonly);
 }
@@ -688,7 +679,7 @@ textarea[readonly],
 
 /* Placeholders in the muted text colour, which is 4.5:1 on inputs (the browser's and Bootstrap's
    greys aren't); Firefox also fades them, which opacity: 1 stops */
-::placeholder,
+:where(:not(.text-field))::placeholder,
 .form-control::placeholder {
   color: var(--text-color--muted);
   opacity: 1;
@@ -698,7 +689,7 @@ textarea[readonly],
   color: var(--text-color--disabled);
 }
 
-/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
+/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.stroom-DropDownTree { */
 /* 	padding: 1px; */
 /* } */
 
@@ -924,81 +915,26 @@ textarea.clipboardCopy {
     text-transform: uppercase;
 }
 
-/* Keyboard focus on a field (text areas too, which once showed none) */
+/* Keyboard focus on a field that isn't a text field (text-field.css has those) */
 select:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
+input:where(:not(.text-field)):focus-visible,
+textarea:where(:not(.text-field)):focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
-select.invalid:focus-visible,
-input.invalid:focus-visible,
-textarea.invalid:focus-visible {
+select[aria-invalid="true"]:focus-visible,
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
-select.invalid,
-input.invalid,
-textarea.invalid {
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+select[aria-invalid="true"],
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
 }
 
-/*
-Radio buttons, drawn like Stroom's tick box (CustomCheckBox): a round box with the control's
-border, filled blue with a white dot when chosen, and a gap before the label. Disabled: the filled
-box with no border and a grey dot, as every disabled control has.
-*/
-input[type="radio"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    padding: 0;
-    border: 1px solid var(--control__border-color);
-    border-radius: 50%;
-    background-color: var(--control__background-color);
-    vertical-align: middle;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-input[type="radio"]:checked {
-    border-color: #2196F3;
-    background: radial-gradient(circle, white 0 3.5px, #2196F3 4px);
-}
-
-input[type="radio"]:focus-visible {
-    outline: 0;
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
-}
-
-input[type="radio"]:disabled {
-    background-color: var(--control__background-color--disabled);
-    border-color: var(--control__border-color--disabled);
-    cursor: default;
-}
-
-input[type="radio"]:disabled:checked {
-    background: radial-gradient(circle, var(--control__text-color--disabled) 0 3.5px, transparent 4px),
-                var(--control__background-color--disabled);
-}
-
-.gwt-RadioButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.gwt-RadioButton label {
-    cursor: pointer;
-    font-weight: normal;
-}
-
-.gwt-RadioButton-disabled label {
-    color: var(--control__text-color--disabled);
-    cursor: default;
-}
+/* Radio buttons are styled by radio-button.css */
 
 /* Query data view (Data tab on PlanB, SQL Temporal Store and Lucene index docs). These live here
    rather than in QueryDataViewImpl.ui.xml because GWT's ui:style parser cannot read var(). */

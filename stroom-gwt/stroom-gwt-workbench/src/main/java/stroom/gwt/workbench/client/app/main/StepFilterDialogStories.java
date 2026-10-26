@@ -22,6 +22,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -75,7 +76,7 @@ public final class StepFilterDialogStories {
                     // 'filterOn' class (hidden by 'filterOff')
                     play.expect(screen.querySelector(FILTER_ON)).toBeNull();
                     // Add an XPath filter: the default match type (Exists) needs no value
-                    play.click(screen.getByTitle("Add XPath Filter"));
+                    play.click(screen.getByTitle("New XPath Filter"));
                     final Play addDialog = dialog(screen, "Add XPath Filter");
                     play.click(addDialog.getByRole("button", StroomDom.button("OK")));
                     // The filter is listed and the element shows the active indicator
@@ -101,6 +102,27 @@ public final class StepFilterDialogStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Change Step Filters", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // The elements are a list (listbox) that has the focus when the dialog opens, the
+                // first element chosen; the arrows choose the element whose filters are shown
+                .story("ElementsByKeyboard", StepFilterDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play elements = screen.within(screen.findByRole("listbox", "Elements"));
+                    play.expect(elements.getAllByRole("option")).toHaveLength(2);
+                    final Query first = elements.getAllByRole("option").nth(0);
+                    final Query second = elements.getAllByRole("option").nth(1);
+                    play.waitFor(() -> play.expect(first).toHaveFocus());
+                    play.expect(first).toHaveAttribute("aria-selected", "true");
+                    play.expect(first).toBeVisible();
+                    play.expect(screen.getByText("xsltFilter", ".form-heading")).toBeInTheDocument();
+                    play.keyboard("{ArrowDown}");
+                    play.expect(second).toHaveFocus();
+                    play.expect(second).toHaveAttribute("aria-selected", "true");
+                    play.waitFor(() -> play.expect(screen.getByText("xmlWriter", ".form-heading")).toBeInTheDocument());
+                    play.keyboard("{ArrowUp}");
+                    play.expect(first).toHaveAttribute("aria-selected", "true");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }

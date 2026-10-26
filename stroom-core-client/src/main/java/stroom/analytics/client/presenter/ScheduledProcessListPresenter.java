@@ -25,9 +25,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,12 +34,14 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SvgImageUtil;
@@ -53,13 +52,13 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -70,7 +69,7 @@ public class ScheduledProcessListPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
-    private final MyDataGrid<ExecutionSchedule> dataGrid;
+    private final DataGrid<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -99,10 +98,8 @@ public class ScheduledProcessListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
-                ExecutionScheduleFields.NAME, true, true);
-        request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>(this);
+        request = ExecutionScheduleRequest.builder().build();
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager =
@@ -114,10 +111,13 @@ public class ScheduledProcessListPresenter
         view.setDataWidget(dataGrid);
 
         view.getToolbar().setName("Schedule actions");
-        addButton = view.getToolbar().button(SvgImage.ADD, "Add", () -> scheduledProcessingPresenter.add());
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> scheduledProcessingPresenter.edit());
+        addButton = view.getToolbar().button(SvgImage.ADD, "New Execution Schedule",
+                () -> scheduledProcessingPresenter.add());
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Execution Schedule",
+                () -> scheduledProcessingPresenter.edit());
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", () -> scheduledProcessingPresenter.remove());
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Execution Schedule",
+                () -> scheduledProcessingPresenter.remove());
         removeButton.setEnabled(false);
 
         addColumns();
@@ -162,15 +162,18 @@ public class ScheduledProcessListPresenter
                         .build(),
                 80);
 
+        final Column<ExecutionSchedule, String> nameColumn = DataGridUtil.textColumnBuilder(ExecutionSchedule::getName)
+                .withSorting(ExecutionScheduleFields.NAME, true)
+                .enabledWhen(ExecutionSchedule::isEnabled)
+                .build();
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ExecutionSchedule::getName)
-                        .withSorting(ExecutionScheduleFields.NAME, false)
-                        .enabledWhen(ExecutionSchedule::isEnabled)
-                        .build(),
+                nameColumn,
                 DataGridUtil.headingBuilder(ExecutionScheduleFields.NAME)
                         .withToolTip("The name for this execution schedule.")
                         .build(),
                 200);
+        // By name, A to Z, ignoring case, unless another sort is chosen
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, true));
 
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(this::getNodeNameAsSafeHtml)
@@ -302,9 +305,6 @@ public class ScheduledProcessListPresenter
         addButton.setEnabled(editable);
         editButton.setEnabled(editable && selectionModel.hasSelectedItems());
         removeButton.setEnabled(editable && selectionModel.hasSelectedItems());
-        addButton.setTitle("Add Execution Schedule");
-        editButton.setTitle("Edit Execution Schedule");
-        removeButton.setTitle("Remove Execution Schedule");
     }
 
     public void read(final DocRef ownerDocRef) {

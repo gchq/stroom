@@ -1,0 +1,112 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The selection box (stroom.item.client.BaseSelectionBox), named BEM style (block, block__element,
+   block--modifier): a WAI-ARIA combobox, its text box over a picture of its value, with the icon
+   box's drop-down arrow at its end (svg-icon-box.css). Its list is styled by selection-popup.css.
+
+   Its states (disabled, read only) are modifiers, as the box itself has no ARIA attribute for them:
+   they follow its text box's disabled and aria-readonly.
+*/
+
+/* As wide as a text field, unless a screen sizes it (e.g. w-100 or dock-max), at a class's weight so
+   that it can (it was lost when SelectionBox.css became this, so a box in a form group, a column
+   flexbox, stretched across the screen) */
+.selection-box {
+    width: 200px;
+}
+
+/* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
+   can be typed in). It draws the box's field: its border (stroom-control) and background, which a box
+   that can't be typed in otherwise lacks (its text box is hidden), showing what is behind it instead
+   of an input's colour. Its text stays on one line, ending in an ellipsis clear of the drop-down
+   arrow */
+.selection-box .selection-box__value {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* The arrow's 26px, and 4px between the text and it */
+    padding-right: 30px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background-color: var(--control__background-color);
+}
+
+/* The text box: the named control, and what is typed in a box that can be typed in. It has no border
+   of its own, not even the focus border a text field gets (text-field.css), which would make the box
+   2px taller while it has the keyboard's focus: the box draws its own */
+.selection-box__input,
+.selection-box__input:focus-visible {
+    position: relative;
+    border-width: 0 !important;
+}
+
+/* A box that can't be typed in opens its list when clicked, so the whole box shows it can be */
+.selection-box--select-only:not(.selection-box--disabled):not(.selection-box--readonly) .selection-box__input {
+    cursor: pointer;
+}
+
+/* Disabled: the filled field with no border that every disabled control has, drawn by the value (the
+   box itself has no fill, which the value's would double) */
+.selection-box.selection-box--disabled {
+    color: var(--control__text-color--disabled);
+}
+
+.selection-box--disabled .selection-box__value {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
+    color: var(--control__text-color--disabled);
+}
+
+/* Read only: the normal field with its value greyed */
+.selection-box--readonly .selection-box__value {
+    color: var(--control__text-color--readonly);
+}
+
+/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (a box's field is
+   otherwise at least 200px, svg-icon-box.css) */
+.selection-box.selection-box--cell {
+    width: 100%;
+}
+
+.selection-box--cell.svg-icon-box .svg-icon-box__field {
+    min-width: 0;
+}
+
+/* Where it sits: */
+
+/* In a Git repo's settings, beside the credentials' button */
+.gitrepo-settings-form #credentials-group .selection-box {
+    width: 280px;
+}
+
+/* In a conditional formatting rule's style, a colour swatch filling the box */
+.conditionalFormatStyleSelection .selection-box__value {
+    padding: 0;
+}
+
+/* In an expression's term, as flat as the term's other fields (TermEditor.css) */
+.termEditor-inner .selection-box__value {
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    padding: 3px 5px;
+    min-width: auto;
+}

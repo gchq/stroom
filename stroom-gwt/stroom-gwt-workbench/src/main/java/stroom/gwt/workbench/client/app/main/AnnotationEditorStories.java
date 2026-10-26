@@ -37,6 +37,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/AnnotationEditor`, showing Stroom's real [AnnotationPresenter] (an
@@ -52,6 +53,8 @@ public final class AnnotationEditorStories {
     private static final String CHANGE_PATH = "/annotation/v1/change";
     // FindAnnotationPresenter's warning for OK with no annotation selected
     private static final String NOTHING_SELECTED = "No annotation has been selected";
+    // The comment entry's actions button, and the menu it opens
+    private static final String COMMENT_ACTIONS = "Actions for history entry 'Comment' by Alice";
 
     private static final String ENTRIES = "["
             + AnnotationFixtures.entry(1, "STATUS", "Alice", 1700000000000L, "Open", null)
@@ -111,8 +114,8 @@ public final class AnnotationEditorStories {
                     // GWT doesn't select the first annotation found (its list only
                     // selects the first result when the filter changes), so OK with nothing selected
                     // warns and keeps the chooser open; the annotation is then selected
-                    play.expect(chooser.findByText("Related alert").closest("tr"))
-                            .not().toHaveClass("cellTableSelectedRow");
+                    play.expect(chooser.findByText("Related alert").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(chooser.getByRole("button", StroomDom.button("OK")));
                     final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
@@ -187,8 +190,9 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");
@@ -205,8 +209,9 @@ public final class AnnotationEditorStories {
                     play.findByText("Looking into it.");
                     // Pressing an entry's header (here the comment's) shows its menu
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");
@@ -223,6 +228,40 @@ public final class AnnotationEditorStories {
                             .getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/deleteAnnotationEntry").toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // An entry's menu also opens from the keyboard: each entry's actions icon is a button,
+                // named for the entry, that opens the menu with Enter or Space, or Shift+F10 or the
+                // context menu key, and the menu takes the focus. It could only be opened with the
+                // mouse
+                .story("EntryActionsByKeyboard", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Looking into it.");
+                    final Query comment = play.getByRole("button", COMMENT_ACTIONS);
+                    play.expect(comment).toHaveAttribute("tabindex", "0");
+                    play.expect(comment).toHaveAttribute("aria-haspopup", "menu");
+                    play.run("focus the comment's actions button", () -> comment.element().get().focus());
+                    play.keyboard("{Enter}");
+                    screen.findByRole("menu", COMMENT_ACTIONS);
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Comment")).toHaveFocus());
+                    play.expect(comment).toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                    play.expect(comment).toHaveAttribute("aria-expanded", "false");
+                    // The status entry's menu, with Shift+F10 and then the context menu key
+                    final Query status = play.getByRole("button", "Actions for history entry 'Status' by Alice");
+                    play.run("focus the status entry's actions button", () -> status.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    screen.findByRole("menu", "Actions for history entry 'Status' by Alice");
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Delete Entry")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                    play.run("focus the status entry's actions button", () -> status.element().get().focus());
+                    play.keyboard("{ContextMenu}");
+                    screen.findByRole("menu", "Actions for history entry 'Status' by Alice");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Consecutive entries of one group collapse into a header that expands on click
@@ -269,6 +308,28 @@ public final class AnnotationEditorStories {
                                     .toSpyMatcher()));
                     play.expect(tab(play, "Documentation")).toBeInTheDocument();
                     play.expect(tab(play, "Permissions")).toBeInTheDocument();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The label chooser's list is a listbox whose options say whether they are ticked
+                // (aria-checked): it has the focus when it opens, and Space ticks the label with
+                // the focus (it had no keys at all)
+                .story("LabelChooserKeys", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Labels"));
+                    final Play labels = screen.within(screen.findByRole("listbox", "Labels"));
+                    final Query p1 = labels.getByRole("option", "P1");
+                    play.expect(p1).toBeVisible();
+                    play.expect(p1).toHaveAttribute("aria-checked", "false");
+                    play.waitFor(() -> play.expect(p1).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withJsonBodyContaining("{\"change\": {\"type\": \"addTag\", "
+                                            + "\"tag\": {\"name\": \"P1\"}}}")
+                                    .toSpyMatcher()));
+                    play.expect(p1).toHaveAttribute("aria-checked", "true");
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Read only (no Edit permission): everything can be read, nothing changed (the
@@ -355,6 +416,58 @@ public final class AnnotationEditorStories {
                     play.click(play.getByText("Status"));
                     // GWT's status chooser is a list, with no selection box
                     play.click(screen.findByText("Closed"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withJsonBodyContaining("{\"change\": {\"type\": \"setTag\", "
+                                            + "\"tag\": {\"name\": \"Closed\"}}}")
+                                    .toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Each setting's ⋮ is a button, named for what it changes, that the keyboard reaches;
+                // Enter opens its chooser (the status list, which takes the focus), and Escape closes
+                // it, giving the focus back to the button (they were mouse only)
+                .story("SettingsByKeyboard", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    for (final String name : List.of("Change Status", "Change Assigned To", "Change Labels",
+                            "Change Collections", "Change Retention Period")) {
+                        play.expect(play.getByRole("button", name)).toHaveAttribute("aria-haspopup", "dialog");
+                    }
+                    final Query changeStatus = play.getByRole("button", "Change Status");
+                    play.run("focus Change Status", () -> changeStatus.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query list = screen.findByRole("listbox", "Statuses");
+                    play.waitFor(() -> play.expect(screen.within(list).getByRole("option", "Open")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("listbox", "Statuses")).toBeNull());
+                    play.waitFor(() -> play.expect(changeStatus).toHaveFocus());
+                })
+                // The status chooser's list is a listbox of options, the current status selected.
+                // Moving through it chooses nothing; typing goes to the status starting with what is
+                // typed, and Enter chooses it
+                .story("StatusChooserKeys", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Status"));
+                    final Query list = screen.findByRole("listbox", "Statuses");
+                    final Play statuses = screen.within(list);
+                    // As high as its statuses (a list on the grid once had no height in a popup)
+                    play.expect(statuses.getByRole("option", "Closed")).toBeVisible();
+                    play.expect(statuses.getAllByRole("option")).toHaveLength(2);
+                    play.expect(statuses.getByRole("option", "Open")).toHaveAttribute("aria-selected", "true");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveAttribute("aria-selected", "false");
+                    play.waitFor(() -> play.expect(statuses.getByRole("option", "Open")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveFocus();
+                    play.expect(statuses.getByRole("option", "Open")).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{ArrowUp}");
+                    play.keyboard("c");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveFocus();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
+                    play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"setTag\", "

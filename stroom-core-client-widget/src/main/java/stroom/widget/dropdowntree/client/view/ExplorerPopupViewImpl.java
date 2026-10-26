@@ -22,6 +22,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,11 +37,14 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
     QuickFilter nameFilter;
     @UiField
     SimplePanel treeContainer;
+    @UiField
+    Label status;
 
     @Inject
     public ExplorerPopupViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.sinkEvents(Event.ONMOUSEUP | Event.FOCUSEVENTS);
+        status.getElement().setAttribute("aria-live", "polite");
     }
 
     @Override
@@ -87,8 +91,28 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
     }
 
     @Override
+    public void setAccessibleName(final String accessibleName) {
+        nameFilter.setAccessibleName(accessibleName);
+    }
+
+    @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         nameFilter.setContextHandler(contextHandler);
+    }
+
+    @Override
+    public void setFilterMoveDown(final Runnable moveDown) {
+        nameFilter.setMoveDown(moveDown);
+    }
+
+    @Override
+    public void typeInFilter(final String text) {
+        nameFilter.type(text);
+    }
+
+    @Override
+    public void announce(final String message) {
+        status.setText(message);
     }
 
 

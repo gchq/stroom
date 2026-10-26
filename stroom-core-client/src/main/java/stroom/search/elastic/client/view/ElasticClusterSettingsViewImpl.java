@@ -16,22 +16,20 @@
 
 package stroom.search.elastic.client.view;
 
+import stroom.credentials.shared.Credential;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.form.client.PasswordBox;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -48,17 +46,9 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     TextArea connectionUrls;
     @UiField
-    TextArea caCertificate;
+    SelectionBox<Credential> apiKey;
     @UiField
-    CustomCheckBox useAuthentication;
-    @UiField
-    TextBox apiKeyId;
-    @UiField
-    PasswordBox apiKeySecret;
-    @UiField
-    IntegerBox connectionTimeoutMillis;
-    @UiField
-    IntegerBox responseTimeoutMillis;
+    Button setHttpClientConfig;
     @UiField
     Button testConnection;
 
@@ -66,8 +56,6 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public ElasticClusterSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         testConnection.setIcon(SvgImage.OK);
-
-        updateAuthenticationControlEnabledState(useAuthentication.getValue());
     }
 
     @Override
@@ -79,6 +67,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public List<String> getConnectionUrls() {
         return Arrays.stream(connectionUrls.getText().split("\n"))
                 .map(String::trim)
+                .filter(url -> !url.isEmpty())
                 .collect(Collectors.toList());
     }
 
@@ -88,123 +77,43 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
-    public String getCaCertificate() {
-        return caCertificate.getText().trim();
+    public SelectionBox<Credential> getApiKeySelectionBox() {
+        return apiKey;
     }
 
-    @Override
-    public void setCaCertificate(final String caCertificate) {
-        this.caCertificate.setText(caCertificate);
-    }
-
-    @Override
-    public boolean getUseAuthentication() {
-        return useAuthentication.getValue();
-    }
-
-    @Override
-    public void setUseAuthentication(final boolean useAuthentication) {
-        this.useAuthentication.setValue(useAuthentication);
-        updateAuthenticationControlEnabledState(useAuthentication);
-    }
-
-    @Override
-    public String getApiKeyId() {
-        return apiKeyId.getText().trim();
-    }
-
-    @Override
-    public void setApiKeyId(final String apiKeyId) {
-        this.apiKeyId.setText(apiKeyId);
-    }
-
-    @Override
-    public String getApiKeySecret() {
-        return apiKeySecret.getText().trim();
-    }
-
-    @Override
-    public void setApiKeySecret(final String apiKeySecret) {
-        this.apiKeySecret.setText(apiKeySecret);
-    }
-
-    @Override
-    public int getConnectionTimeoutMillis() {
-        return connectionTimeoutMillis.getValue();
-    }
-
-    @Override
-    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
-        this.connectionTimeoutMillis.setValue(connectionTimeoutMillis);
-    }
-
-    @Override
-    public int getResponseTimeoutMillis() {
-        return responseTimeoutMillis.getValue();
-    }
-
-    @Override
-    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
-        this.responseTimeoutMillis.setValue(responseTimeoutMillis);
-    }
-
-    // Read only: every field can be read and copied but not changed (the API key fields were once
-    // left editable, as reading the document enabled them again)
+    // Read only: every field can be read and copied but not changed
     @Override
     public void onReadOnly(final boolean readOnly) {
         connectionUrls.setReadOnly(readOnly);
-        caCertificate.setReadOnly(readOnly);
-        useAuthentication.setReadOnly(readOnly);
-        apiKeyId.setReadOnly(readOnly);
-        apiKeySecret.setReadOnly(readOnly);
-        connectionTimeoutMillis.setReadOnly(readOnly);
-        responseTimeoutMillis.setReadOnly(readOnly);
+        apiKey.setReadOnly(readOnly);
+    }
+
+    private void fireChange() {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
     }
 
     @UiHandler("connectionUrls")
     public void onConnectionUrls(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+        fireChange();
     }
 
-    @UiHandler("caCertificate")
-    public void onCaCertificate(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+    @UiHandler("apiKey")
+    public void onApiKeyValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Credential> event) {
+        fireChange();
     }
 
-    @UiHandler("apiKeyId")
-    public void onApiKeyId(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("apiKeySecret")
-    public void onApiKeySecret(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("connectionTimeoutMillis")
-    public void onConnectionTimeoutMillis(final ValueChangeEvent<Integer> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("responseTimeoutMillis")
-    public void onResponseTimeoutMillis(final ValueChangeEvent<Integer> event) {
-        getUiHandlers().onChange();
+    @UiHandler("setHttpClientConfig")
+    public void onSetHttpClientConfig(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onSetHttpClientConfiguration();
+        }
     }
 
     @UiHandler("testConnection")
     public void onTestConnectionClick(final ClickEvent event) {
         getUiHandlers().onTestConnection(testConnection);
-    }
-
-    @UiHandler("useAuthentication")
-    public void onUseAuthenticationChange(final ValueChangeEvent<Boolean> event) {
-        updateAuthenticationControlEnabledState(event.getValue());
-        getUiHandlers().onChange();
-    }
-
-    private void updateAuthenticationControlEnabledState(final boolean useAuthentication) {
-        apiKeyId.setEnabled(useAuthentication);
-        apiKeySecret.setEnabled(useAuthentication);
     }
 
     public interface Binder extends UiBinder<Widget, ElasticClusterSettingsViewImpl> {

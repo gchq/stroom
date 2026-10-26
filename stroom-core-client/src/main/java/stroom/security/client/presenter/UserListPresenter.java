@@ -21,8 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
@@ -43,6 +41,9 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -50,7 +51,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,7 +70,7 @@ public class UserListPresenter
 
     private final ClientSecurityContext securityContext;
     private final PagerView pagerView;
-    private final MyDataGrid<User> dataGrid;
+    private final DataGrid<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
     private final FindUserCriteria.Builder criteriaBuilder = new FindUserCriteria.Builder();
@@ -100,12 +100,13 @@ public class UserListPresenter
                              final UiConfigCache uiConfigCache,
                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users and groups");
         this.securityContext = securityContext;
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
@@ -232,22 +233,6 @@ public class UserListPresenter
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
         dataGrid.sort(displayNameCol);
 
-//        final Column<User, User> displayNameCol = DataGridUtil.columnBuilder(
-//                        Function.identity(),
-//                        () -> new HoverActionMenuCell<>(
-//                                User::getDisplayName,
-//                                this::buildActionMenu,
-//                                this))
-//                .enabledWhen(User::isEnabled)
-//                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-//                .build();
-//        dataGrid.addResizableColumn(
-//                displayNameCol,
-//                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
-//                        .withToolTip(displayNameTooltip)
-//                        .build(),
-//                400);
-
         // Full name
         if (mode.includesUsers()) {
             dataGrid.addResizableColumn(
@@ -296,6 +281,8 @@ public class UserListPresenter
                                         Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),
                                         this,
                                         copyPermissionsPopupFunction),
+                                null,
+                                (User user) -> UserAndGroupHelper.buildActionsForMsg(user),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -361,22 +348,6 @@ public class UserListPresenter
         if (userRef != null) {
 //            GWT.log(name + " - showUser: " + userRef);
             setQuickFilterText(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
-//            final ResultPage<User> currentData = getCurrentData();
-//            if (currentData == null) {
-//                // First time the screen is opened so get the data in the hope our
-//                // user is on the first page
-//                userToShow = userRef;
-//                refresh();
-//            } else {
-//                boolean found = UserAndGroupHelper.selectUserIfShown(
-//                        userRef,
-//                        getCurrentData(),
-//                        selectionModel,
-//                        dataGrid);
-//                if (!found) {
-//                    setQuickFilterText(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
-//                }
-//            }
         }
     }
 
@@ -475,7 +446,7 @@ public class UserListPresenter
         return selectionModel;
     }
 
-    public DataGrid<User> getDataGrid() {
+    public DataGridView<User> getDataGrid() {
         return dataGrid;
     }
 

@@ -36,13 +36,13 @@ final class ActivityFixtures {
 
     /// The default `ActivityConfig.editorBody` template: a code and a description with a length
     /// rule.
-    static final String EDITOR_BODY = "Activity Code:<br/>\n"
-            + "<input type=\"text\" name=\"code\"></input><br/><br/>\n"
-            + "Activity Description:<br/>\n"
+    static final String EDITOR_BODY = "<label>Activity Code:<br/>\n"
+            + "<input type=\"text\" name=\"code\"></input></label><br/><br/>\n"
+            + "<label>Activity Description:<br/>\n"
             + "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"\n"
             + "  validation=\".{10,}\"\n"
             + "  validationMessage=\"The activity description must be at least 10 characters long.\">\n"
-            + "</textarea>";
+            + "</textarea></label>";
 
     static final String PATH = "/activity/v1";
     static final String CURRENT_PATH = PATH + "/current";

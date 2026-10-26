@@ -26,9 +26,6 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.DocPresenter;
@@ -36,6 +33,9 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -53,7 +53,7 @@ import java.util.List;
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<PagerView, D> {
 
-    private final MyDataGrid<NotificationConfig> dataGrid;
+    private final DataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -74,8 +74,10 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Notifications");
+        // An edit replaces the row (their equals compares every field), so keep the row by its uuid
+        dataGrid.setKeyProvider(NotificationConfig::getUuid);
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<NotificationConfig> selectionEventManager =
                 new DataGridSelectionEventManager<>(
@@ -88,10 +90,10 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         dataProvider.setCompleteList(list);
 
         view.getToolbar().setName("Notification actions");
-        addButton = view.getToolbar().button(SvgImage.ADD, "Add", this::add);
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        addButton = view.getToolbar().button(SvgImage.ADD, "New Notification", this::add);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Notification", this::edit);
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::remove);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Remove Selected Notification", this::remove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -314,9 +316,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         addButton.setEnabled(editable);
         editButton.setEnabled(editable && hasSelection);
         removeButton.setEnabled(editable && hasSelection);
-        addButton.setTitle("Add Notification");
-        editButton.setTitle("Edit Notification");
-        removeButton.setTitle("Remove Notification");
     }
 
     /**

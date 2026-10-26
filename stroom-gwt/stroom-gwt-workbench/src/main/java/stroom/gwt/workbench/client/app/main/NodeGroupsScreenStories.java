@@ -123,14 +123,15 @@ public final class NodeGroupsScreenStories {
                     play.findByText("Processing");
                     // Toggle "Processing" enabled -> update. GWT's grid tick is a TickBoxCell div.
                     // The grid's rows are <tr> elements with no role attribute
-                    play.click(play.within(play.getByText("Processing").closest("tr")).querySelector(".tickBox"));
+                    play.click(play.within(play.getByText("Processing").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/nodeGroup/v2/2")
                                     .withJsonBodyContaining("{\"id\": 2, \"enabled\": true}")
                                     .toSpyMatcher()));
                     // New group via the create dialog.
-                    // The 'New' button is an icon button titled 'New'
-                    play.click(play.getByTitle("New"));
+                    // The 'New Node Group' button is an icon button titled 'New Node Group'
+                    play.click(play.getByTitle("New Node Group"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
                     // The name field is Stroom's shared NameDocumentViewImpl ('nameDocumentName')
                     play.type(screen.querySelector("#nameDocumentName"), "Reporting");
@@ -150,7 +151,7 @@ public final class NodeGroupsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("All Nodes");
-                    play.click(play.getByTitle("New"));
+                    play.click(play.getByTitle("New Node Group"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
                     play.type(screen.querySelector("#nameDocumentName"), "A/B nodes");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));

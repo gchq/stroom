@@ -77,6 +77,11 @@ import java.util.List;
  */
 public interface UpdatableTemporalStore extends HasCrud<TemporalEntry, TemporalEntryId>, SearchProvider {
 
+    /// The longest key the store accepts, matching the width of the `map_key` column. A longer key
+    /// is rejected up front with a message naming it, rather than failing in the database and taking
+    /// the rest of its batch down with it.
+    int MAX_KEY_LENGTH = 255;
+
     /**
      * The map-name field — a text field that scopes a query to a specific
      * logical namespace within the store. Must be included in every
@@ -243,7 +248,15 @@ public interface UpdatableTemporalStore extends HasCrud<TemporalEntry, TemporalE
      * on failure, display {@link ApplyChangesResult#getErrorMessage()} and
      * reload all UI panels from the server.</p>
      *
-     * <p>Requires {@code EDIT} permission on the map.</p>
+     * <p>Every operation is validated before any database work is done: a blank or over-long
+     * ({@link #MAX_KEY_LENGTH}) key, or a missing effective time, fails the whole request with a
+     * message naming the offending operation.</p>
+     *
+     * <p>Requires {@code EDIT} permission on the map, or {@code DELETE} if the batch contains any
+     * delete operation - the same permission {@link #delete} requires on its own.</p>
+     *
+     * <p>Not audit-logged here, because pipeline ingest writes through this method in batches of
+     * thousands; the REST resource logs the user-initiated calls.</p>
      *
      * @param request the ordered list of operations to apply; must not be
      *                {@code null}
@@ -254,6 +267,8 @@ public interface UpdatableTemporalStore extends HasCrud<TemporalEntry, TemporalE
     /**
      * Deletes all entries for the specified map, across all keys and all
      * effective times.
+     *
+     * <p>Requires {@code DELETE} permission on the store, as {@link #delete} does.</p>
      *
      * @param docRef reference to the store document to clear; must not be
      *               {@code null}

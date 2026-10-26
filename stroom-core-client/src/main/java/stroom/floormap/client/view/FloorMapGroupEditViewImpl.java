@@ -20,9 +20,9 @@ import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.MemberCandidate;
 import stroom.widget.colour.client.ColourBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
@@ -71,7 +71,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
     private final Label summary = new Label();
 
     /// Checkbox per candidate id, in display order, so selection can be read back.
-    private final Map<String, CheckBox> checkBoxesById = new LinkedHashMap<>();
+    private final Map<String, CustomCheckBox> checkBoxesById = new LinkedHashMap<>();
 
     /// The row widget per candidate id, so the filter can hide and show rows.
     private final Map<String, Widget> rowsById = new LinkedHashMap<>();
@@ -86,6 +86,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
 
         final Grid grid = new Grid(2, 2);
         grid.addStyleName("floormap-group-edit-fields");
+        FloorMapAria.layoutTable(grid);
         grid.setText(ROW_NAME, 0, "Name");
         grid.setWidget(ROW_NAME, 1, nameBox);
         grid.setText(ROW_COLOUR, 0, "Colour");
@@ -177,7 +178,8 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         final FlowPanel row = new FlowPanel();
         row.addStyleName("floormap-group-edit-member");
 
-        final CheckBox checkBox = new CheckBox(candidate.getName());
+        final CustomCheckBox checkBox = new CustomCheckBox();
+        checkBox.setLabel(candidate.getName());
         checkBox.setValue(selected);
         //noinspection unused e
         checkBox.addValueChangeHandler(e -> updateSummary());
@@ -213,7 +215,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         // Every row is consulted, including any the filter is currently hiding —
         // an out-of-view tick is still a member.
         final List<String> selected = new ArrayList<>();
-        for (final Map.Entry<String, CheckBox> entry : checkBoxesById.entrySet()) {
+        for (final Map.Entry<String, CustomCheckBox> entry : checkBoxesById.entrySet()) {
             if (Boolean.TRUE.equals(entry.getValue().getValue())) {
                 selected.add(entry.getKey());
             }

@@ -24,8 +24,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.ColumnBuilder;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.BatchScheduleRequest;
@@ -49,16 +47,18 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.ColumnBuilder;
+import stroom.widget.datagrid.client.DataGridView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
@@ -73,13 +73,10 @@ import java.util.stream.Collectors;
 public class JobNodeListHelper {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String FILTER_BTN_TITLE_ON = "Click to show all jobs";
-    private static final String FILTER_BTN_TITLE_OFF = "Click to show only enabled jobs";
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final SchedulePopup schedulePresenter;
-    private final MenuPresenter menuPresenter;
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final TaskMonitorFactory taskMonitorFactory;
@@ -91,7 +88,6 @@ public class JobNodeListHelper {
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
                              final SchedulePopup schedulePresenter,
-                             final MenuPresenter menuPresenter,
                              final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskMonitorFactory taskMonitorFactory,
                              final HasHandlers hasHandlers,
@@ -99,7 +95,6 @@ public class JobNodeListHelper {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
-        this.menuPresenter = menuPresenter;
         this.selectionModel = selectionModel;
         this.taskMonitorFactory = taskMonitorFactory;
         this.hasHandlers = hasHandlers;
@@ -346,15 +341,10 @@ public class JobNodeListHelper {
     /// @param toolbar The list's toolbar, to add the button to.
     /// @return The button, whose state the list reads when it fetches its rows.
     public ToolbarToggleButton addJobFilterButton(final Toolbar toolbar) {
-        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(SvgImage.FILTER, FILTER_BTN_TITLE_OFF, null);
-        showEnabledToggleBtn.setOnToggle(showEnabled -> {
-            if (showEnabled) {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_ON);
-            } else {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
-            }
-            refreshFunc.run();
-        });
+        // One name; whether it is on is the button's pressed state
+        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(
+                SvgImage.FILTER, "Show Only Enabled Jobs", null);
+        showEnabledToggleBtn.setOnToggle(showEnabled -> refreshFunc.run());
         return showEnabledToggleBtn;
     }
 
@@ -364,9 +354,11 @@ public class JobNodeListHelper {
             final String schedule = NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getSchedule);
 
             if (schedule != null) {
+                // Says which job and node, as the button's name is heard on its own
                 return new CommandLink(
                         schedule,
-                        "Edit schedule",
+                        "Edit schedule for job '" + jobNodeAndInfo.getJobName()
+                        + "' on node '" + jobNodeAndInfo.getNodeName() + "'",
                         () ->
                                 showSchedule(jobNodeAndInfo));
             } else {
@@ -417,7 +409,7 @@ public class JobNodeListHelper {
                 .build();
     }
 
-    public void addEnabledTickBoxColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
+    public void addEnabledTickBoxColumn(final DataGridView<JobNodeAndInfo> dataGrid,
                                         final boolean isSortable) {
 
         final ColumnBuilder<JobNodeAndInfo, TickBoxState, TickBoxCell> builder =
@@ -442,7 +434,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.ENABLED_COL);
     }
 
-    public void addTypeColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addTypeColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(JobNodeListHelper::buildJobTypeStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -453,7 +445,7 @@ public class JobNodeListHelper {
                 80);
     }
 
-    public void addNodeStateColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addNodeStateColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(
                                 (final JobNodeAndInfo jobNodeAndInfo) -> {
@@ -472,7 +464,7 @@ public class JobNodeListHelper {
                 80);
     }
 
-    public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addScheduleColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
                         buildOpenScheduleCommandLinkFunc())
                 .enabledWhen(this::isJobNodeEnabled)
@@ -486,7 +478,7 @@ public class JobNodeListHelper {
                 200);
     }
 
-    public void addLastExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addLastExecutedColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getLastExecutedTimeAsStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -498,7 +490,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
-    public void addNextExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addNextExecutedColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getNextScheduledTimeAsStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -510,23 +502,35 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
-    public void addActionColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addActionColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
 
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<JobNodeAndInfo>((jobNodeAndInfo, event) -> {
-                                    selectionModel.setSelected(jobNodeAndInfo);
-                                    final PopupPosition popupPosition = new PopupPosition(
-                                            event.getClientX() + 10, event.getClientY());
-                                    final List<Item> menuItems = buildActionMenu(jobNodeAndInfo);
-                                    menuPresenter.setData(menuItems);
-                                    ShowPopupEvent.builder(menuPresenter)
-                                            .popupType(PopupType.POPUP)
-                                            .popupPosition(popupPosition)
-                                            .fire();
-                                })
+                                () -> new ActionCell<JobNodeAndInfo>(this::showActionMenu, this::getActionMenuName)
                         )
                         .build(), "", 40);
+    }
+
+    // The name of a job node's actions (its button's and its menu's)
+    private String getActionMenuName(final JobNodeAndInfo jobNodeAndInfo) {
+        return "Actions for job '" + jobNodeAndInfo.getJobName()
+               + "' on node '" + jobNodeAndInfo.getNodeName() + "'";
+    }
+
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
+    private void showActionMenu(final JobNodeAndInfo jobNodeAndInfo, final NativeEvent event) {
+        selectionModel.setSelected(jobNodeAndInfo);
+        final PopupPosition popupPosition = new PopupPosition(
+                event.getClientX() + 10, event.getClientY());
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name(getActionMenuName(jobNodeAndInfo))
+                .items(buildActionMenu(jobNodeAndInfo))
+                .popupPosition(popupPosition)
+                .opener(opener)
+                .fire(hasHandlers);
     }
 }

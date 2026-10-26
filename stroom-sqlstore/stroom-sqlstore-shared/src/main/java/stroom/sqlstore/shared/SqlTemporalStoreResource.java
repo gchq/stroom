@@ -28,7 +28,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -80,19 +79,22 @@ public interface SqlTemporalStoreResource extends RestResource, DirectRestServic
      * Deletes <strong>all</strong> entries belonging to the store identified by
      * the supplied {@link DocRef}.
      *
-     * <p>Requires {@code EDIT} permission on the document.</p>
+     * <p>Requires {@code DELETE} permission on the document, as deleting a single entry does.</p>
+     *
+     * <p>A {@code POST} rather than a {@code DELETE}, because it takes a request body and some
+     * proxies drop the body of a {@code DELETE}.</p>
      *
      * @param docRef reference to the {@link SqlTemporalStoreDoc} whose data
      *               should be cleared; must not be {@code null}
      * @return {@code true} if the operation succeeded
      */
-    @DELETE
+    @POST
     @Path("/clear")
     @Operation(
             summary = "Clear a store",
             operationId = "clearSqlTemporalStore",
             description = "Deletes all entries for the store identified by the supplied DocRef. "
-                    + "Requires EDIT permission on the document.")
+                    + "Requires DELETE permission on the document.")
     Boolean clear(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     /**
@@ -299,7 +301,8 @@ public interface SqlTemporalStoreResource extends RestResource, DirectRestServic
      * <p>On failure the client should display the {@code errorMessage}, clear
      * its pending-changes buffer, and reload all panels from the server.</p>
      *
-     * <p>Requires {@code EDIT} permission on the map.</p>
+     * <p>Requires {@code EDIT} permission on the map, or {@code DELETE} if the batch contains
+     * a delete operation.</p>
      *
      * @param request ordered list of operations to apply; must not be
      *                {@code null}

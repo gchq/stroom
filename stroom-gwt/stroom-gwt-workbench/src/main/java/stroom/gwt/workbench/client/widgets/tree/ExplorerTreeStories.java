@@ -57,7 +57,8 @@ public final class ExplorerTreeStories {
     private static final String ON_OPEN = "onOpen";
     private static final String ON_SELECTION_CHANGE = "onSelectionChange";
     private static final String ON_NAME_FILTER_CHANGE = "onNameFilterChange";
-    private static final String SELECTED_ROW = "cellTableSelectedRow";
+    // The tree's chosen items
+    private static final String SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
     private static final String EXPANDER = ".explorerCell-expander";
 
     private ExplorerTreeStories() {
@@ -84,7 +85,7 @@ public final class ExplorerTreeStories {
                     final Query deep = play.findByText("Deep Doc");
                     play.expect(deep).toBeInTheDocument();
                     // The row is the cell table's <tr>
-                    play.waitFor(() -> play.expect(deep.closest("tr")).toHaveClass(SELECTED_ROW));
+                    play.waitFor(() -> play.expect(deep.closest(SELECTED_ROW)).toBeInTheDocument());
                 })
                 // Basic tree - open/close folders, click to select, double-click to "open"
                 .story("Basic", context -> {
@@ -107,6 +108,44 @@ public final class ExplorerTreeStories {
                     play.click(play.findByText("Feeds"));
                     play.waitFor(() -> play.expect(play.getByText(TextMatch.regex("Selected:\\s*Feeds", ""), "p"))
                             .toBeInTheDocument());
+                })
+                // A tree (WAI-ARIA's), its items saying their level, whether they are expanded and
+                // their place among their siblings. Moving doesn't choose an item (choosing opens its
+                // document): Space does, and Enter opens it, as a double click does. Right expands,
+                // or goes to the first child; Left goes to the parent, or collapses; typing goes to
+                // the next item starting with it; * expands the item's siblings
+                .story("Keys", context -> tree(context, TreeFixtures.fixtureTree(), new Options()))
+                .withPlay(play -> {
+                    play.click(play.findByText("Feeds"));
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-selected", "true");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-level", "2");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-posinset", "1");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-setsize", "4");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-expanded", "false");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(play, "Pipelines")).toHaveFocus();
+                    play.expect(item(play, "Pipelines")).toHaveAttribute("aria-selected", "false");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(item(play, "Pipelines")).toHaveAttribute("aria-expanded", "true"));
+                    play.findByText("Ingest");
+                    play.keyboard("{ArrowRight}");
+                    play.expect(item(play, "Ingest")).toHaveFocus();
+                    play.expect(item(play, "Ingest")).toHaveAttribute("aria-level", "3");
+                    play.keyboard("{ArrowLeft}");
+                    play.expect(item(play, "Pipelines")).toHaveFocus();
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "Pipelines")).toHaveAttribute("aria-expanded", "false"));
+                    play.keyboard("d");
+                    play.expect(item(play, "Dashboards")).toHaveFocus();
+                    play.keyboard(" ");
+                    play.expect(item(play, "Dashboards")).toHaveAttribute("aria-selected", "true");
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-selected", "false");
+                    play.keyboard("*");
+                    play.waitFor(() -> play.expect(item(play, "Reference")).toHaveAttribute("aria-expanded", "true"));
+                    play.expect(item(play, "Feeds")).toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("Dashboards"));
                 })
                 // Quick filter - type in the bar to filter the tree (folders open to reveal matches)
                 .story("Filtered", context -> {
@@ -254,10 +293,10 @@ public final class ExplorerTreeStories {
     /// The names of the selected rows, read from the table as the user sees them.
     private static List<String> selectedNames(final ExplorerTree tree) {
         final List<String> names = new ArrayList<>();
-        final NodeList<Element> rows = tree.getElement().getElementsByTagName("tr");
+        final NodeList<Element> rows = tree.getElement().getElementsByTagName("div");
         for (int i = 0; i < rows.getLength(); i++) {
             final Element row = rows.getItem(i);
-            if (row.hasClassName(SELECTED_ROW)) {
+            if ("treeitem".equals(row.getAttribute("role")) && "true".equals(row.getAttribute("aria-selected"))) {
                 final NodeList<Element> divs = row.getElementsByTagName("div");
                 for (int j = 0; j < divs.getLength(); j++) {
                     if (divs.getItem(j).hasClassName("explorerCell-text")) {
@@ -285,6 +324,11 @@ public final class ExplorerTreeStories {
     }
 
     /// Equivalent of `<div style={{padding: 12}}>{frame}<p ...>{echo}</p></div>`.
+    // The tree item with the name
+    private static Query item(final Play play, final String name) {
+        return play.getByText(name).closest("[role='treeitem']");
+    }
+
     private static Widget padded(final Widget frame, final Paragraph echo) {
         final FlowPanel panel = new FlowPanel();
         panel.getElement().getStyle().setProperty("padding", "12px");

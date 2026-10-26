@@ -82,10 +82,10 @@ public final class DataReceiptRulesScreenStories {
             + ",\"maxApiKeyExpiryAgeMs\":31536000000,\"obfuscatedFields\":[\"Feed\"]"
             + ",\"receiptCheckMode\":\"FEED_STATUS\",\"lastAnnotationChangeTime\":0}";
 
-    private static final String SAVE = "Save all rules";
+    private static final String SAVE = "Save Rules";
     // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
-    private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
+    private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataReceiptRulesScreenStories() {
         // Static utility
@@ -102,7 +102,7 @@ public final class DataReceiptRulesScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByText("Reject test feeds"));
-                    play.click(play.getByTitle("Edit selected rule"));
+                    play.click(play.getByTitle("Edit Selected Rule"));
                     final Play dialog = dialog(screen, "Edit Rule");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.getByText(
@@ -119,7 +119,7 @@ public final class DataReceiptRulesScreenStories {
                     // Select the rule -> its expression shows, read only
                     play.click(play.getByText("Reject test feeds"));
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
-                            .toHaveClass("expressionItemBox-label"));
+                            .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
                     expectNoProblems(play);
                 })
@@ -137,18 +137,18 @@ public final class DataReceiptRulesScreenStories {
                             "Whether this rule is enabled or disabled. A disabled rule will be ignored")))
                             .toBeInTheDocument();
                     // ...and no heading's tool tip just repeats its label
-                    final Query headerRow = play.querySelector("thead");
+                    final Query headerRow = play.querySelector("thead, .data-grid__head");
                     play.expect("a heading whose tool tip is its label", () -> headingEchoingItself(headerRow))
                             .toBe(false);
                     // Add a rule -> "Edit Rule" dialog (GWT's caption for an add too) -> name -> OK
-                    play.click(play.getByTitle("Add new rule"));
+                    play.click(play.getByTitle("New Rule"));
                     final Play dialog = dialog(screen, "Edit Rule");
                     // The field's id is its FormGroup's identity
                     play.type(dialog.querySelector("#ruleRuleName"), "Drop everything else");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Drop everything else");
                     // Save -> PUT the whole document with the new rule, inserted at the top as rule 1
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -168,8 +168,8 @@ public final class DataReceiptRulesScreenStories {
                     play.findByText("System");
                     // The field columns are sortable, sorted by name ascending to start with.
                     // GWT has no aria-sort; the sorted header shows a sort icon
-                    final Query nameHeader = play.getByText("Name", "th *").closest("th");
-                    final Query grid = nameHeader.closest(".dataGridWidget");
+                    final Query nameHeader = play.getByText("Name", "th *, [data-hcol] *").closest("th, [data-hcol]");
+                    final Query grid = nameHeader.closest(".data-grid");
                     play.expect(play.within(nameHeader).querySelector(".column-sortIcon")).not().toBeNull();
                     play.expect("the field order", () -> fieldOrder(grid.element().get()))
                             .toBe("Feed,System");
@@ -182,7 +182,7 @@ public final class DataReceiptRulesScreenStories {
                     play.type(dialog.querySelector("#fieldEditName"), "Environment");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Environment");
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

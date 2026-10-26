@@ -16,156 +16,47 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
-import stroom.widget.util.client.AbstractSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 
-public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
+/// The view of a [MenuPresenter]: a [Menu], whose items it chooses and whose sub menus it opens
+/// and closes (on a hover after a delay, on a click, or with Right and Left).
+public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView, Menu.Handler {
 
     private static final int SUBMENU_SHOW_DELAY_MILLIS = 400;
-    private static final String ROLE = "role";
-    private static final String ROLE_NONE = "none";
-    private static final String ARIA_DISABLED = "aria-disabled";
-    private static final String ARIA_HAS_POPUP = "aria-haspopup";
-    private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
 
-    private final CellTable<Item> cellTable;
-    private final ScrollPanel scrollPanel;
-    private final Widget widget;
+    private final Menu menu = new Menu();
 
-    private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
-    private int mouseOverRow = -1;
+    // The item the mouse last moved onto, so that moving within it does nothing more
+    private Item mouseOverItem;
+    // The item the primary button was pressed on, chosen if it is let go over it too
+    private Item pressedItem;
     private Timer subMenuShowTimer;
     // The item that has a delayed sub menu scheduled
     private Item timerItem = null;
     private boolean allowCloseOnMoveLeft = false;
 
     public MenuViewImpl() {
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
-        // The table is a menu, and each time it is drawn its rows are given the roles of menu items
-        cellTable.getElement().setAttribute(ROLE, "menu");
-        cellTable.addRedrawHandler(this::updateAria);
-
-        // Sink events.
-        final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
-        cellTable.sinkEvents(mouseMove);
-
-        cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
-        cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
-
-        scrollPanel = new ScrollPanel(cellTable);
-        scrollPanel.getElement().getStyle().setProperty("minWidth", 50 + "px");
-        scrollPanel.getElement().getStyle().setProperty("maxWidth", 400 + "px");
-        scrollPanel.getElement().getStyle().setProperty("maxHeight", 500 + "px");
-
-        final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell()) {
-            @Override
-            public Item getValue(final Item item) {
-                return item;
-            }
-        };
-        cellTable.addColumn(iconColumn);
-        cellTable.setSkipRowHoverCheck(true);
-
-        cellTable.setSelectionModel(selectionModel, new MenuSelectionEventManager(cellTable));
-
-        widget = scrollPanel;
-    }
-
-    // An enabled item, which can be chosen and can open its sub menu
-    private boolean isActionable(final Item item) {
-        return item instanceof MenuItem && ((MenuItem) item).isEnabled();
-    }
-
-    // Any item, enabled or not, that the arrow keys move to, so that a disabled item is still read
-    // out, as disabled
-    private boolean isReachable(final Item item) {
-        return item instanceof MenuItem;
-    }
-
-    // Gives the table the structure of a menu: the table's own parts have no role, and the
-    // focusable element of each row (the div GWT's table builder puts in the cell, which takes
-    // the keyboard focus) is a menu item or separator
-    private void updateAria() {
-        final NodeList<Element> sections = cellTable.getElement().getChildNodes().cast();
-        for (int i = 0; i < sections.getLength(); i++) {
-            final Element section = sections.getItem(i);
-            // The head, body and foot (a column group may not have a role)
-            if (Element.is(section) && TABLE_SECTIONS.contains(section.getTagName().toUpperCase(Locale.ROOT))) {
-                section.setAttribute(ROLE, ROLE_NONE);
-            }
-        }
-        final List<Item> items = cellTable.getVisibleItems();
-        for (int row = 0; row < items.size(); row++) {
-            final TableRowElement tr = cellTable.getRowElement(row);
-            tr.setAttribute(ROLE, ROLE_NONE);
-            final NodeList<TableCellElement> cells = tr.getCells();
-            for (int i = 0; i < cells.getLength(); i++) {
-                final TableCellElement td = cells.getItem(i);
-                td.setAttribute(ROLE, ROLE_NONE);
-                final Element focusable = td.getFirstChildElement();
-                if (focusable != null) {
-                    setItemAria(focusable, items.get(row));
-                }
-            }
-        }
-    }
-
-    private static void setItemAria(final Element element, final Item item) {
-        if (item instanceof final MenuItem menuItem) {
-            element.setAttribute(ROLE, "menuitem");
-            if (menuItem.isEnabled()) {
-                element.removeAttribute(ARIA_DISABLED);
-            } else {
-                element.setAttribute(ARIA_DISABLED, "true");
-            }
-            if (item instanceof HasChildren) {
-                element.setAttribute(ARIA_HAS_POPUP, "menu");
-            } else {
-                element.removeAttribute(ARIA_HAS_POPUP);
-            }
-        } else if (item instanceof Separator) {
-            element.setAttribute(ROLE, "separator");
-        } else {
-            // e.g. a group heading, which is read as it comes
-            element.setAttribute(ROLE, ROLE_NONE);
-        }
+        menu.setHandler(this);
     }
 
     public void showSubMenu(final Item item) {
         if (getUiHandlers() != null && item instanceof MenuItem) {
             cancelDelayedSubMenu();
-            getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
+            getUiHandlers().showSubMenu((MenuItem) item, menu.getRowElement(item));
         }
     }
 
     private void toggleSubMenu(final Item item) {
         if (getUiHandlers() != null && item instanceof MenuItem) {
             cancelDelayedSubMenu();
-            getUiHandlers().toggleSubMenu((MenuItem) item, getRowElement(item));
+            getUiHandlers().toggleSubMenu((MenuItem) item, menu.getRowElement(item));
         }
     }
 
@@ -182,7 +73,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                         public void run() {
                             // Timer has fired so clear the item associated with it
                             timerItem = null;
-                            getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
+                            getUiHandlers().showSubMenu((MenuItem) item, menu.getRowElement(item));
                         }
                     };
 
@@ -201,16 +92,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         if (subMenuShowTimer != null) {
             subMenuShowTimer.cancel();
             timerItem = null;
-        }
-    }
-
-    private Element getRowElement(final Item item) {
-        if (getUiHandlers() != null && item instanceof MenuItem) {
-            final List<Item> items = cellTable.getVisibleItems();
-            final int row = items.indexOf(item);
-            return cellTable.getRowElement(row);
-        } else {
-            return null;
         }
     }
 
@@ -247,13 +128,12 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public Widget asWidget() {
-        return widget;
+        return menu;
     }
 
     @Override
     public void setData(final List<Item> items) {
-        cellTable.setRowData(0, items);
-        cellTable.setRowCount(items.size());
+        menu.setItems(items);
     }
 
     @Override
@@ -263,25 +143,30 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void setWidth(final int width) {
-        final String px = width + "px";
-        // Replaces the limits that otherwise fit the menu to its items
-        scrollPanel.getElement().getStyle().setProperty("width", px);
-        scrollPanel.getElement().getStyle().setProperty("minWidth", px);
-        scrollPanel.getElement().getStyle().setProperty("maxWidth", px);
-        cellTable.getElement().getStyle().setProperty("width", "100%");
-        cellTable.getElement().getStyle().setProperty("maxWidth", "none");
-        // Lays the table out to that width, so that long items are cut short rather than widen it
-        cellTable.getElement().addClassName("menuCellTable--fixedWidth");
+        menu.setFixedWidth(width);
+    }
+
+    @Override
+    public void setName(final String name) {
+        menu.setName(name);
+    }
+
+    @Override
+    public void setLabelledBy(final String id) {
+        menu.setLabelledBy(id);
+    }
+
+    @Override
+    public void setOpenItem(final Item item) {
+        menu.setOpenItem(item);
     }
 
     @Override
     public void selectFirstItem() {
-        final int row = getFirstSelectableRow();
-        if (row >= 0) {
-            final List<Item> items = cellTable.getVisibleItems();
-            final Item item = items.get(row);
-            selectRow(row, true);
-            showSubMenu(item);
+        final int index = getFirstSelectableIndex();
+        if (index >= 0) {
+            menu.setActiveIndex(index, true);
+            showSubMenu(menu.getActiveItem());
         }
     }
 
@@ -295,158 +180,123 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         // Make sure the item is selected as the parent of the current child menu.
         if (parentItem != null) {
-            final int row = cellTable.getVisibleItems().indexOf(parentItem);
-            if (row >= 0) {
-                selectRow(row, false);
-            }
+            menu.setActiveIndex(menu.getItems().indexOf(parentItem), false);
         }
     }
 
     @Override
     public void focus() {
-        final int row = getFirstSelectableRow();
-        if (row >= 0) {
-            selectRow(row, true);
+        final int index = getFirstSelectableIndex();
+        if (index >= 0) {
+            menu.setActiveIndex(index, true);
         }
     }
 
-    private void selectRow(final int row, final boolean stealFocus) {
-        final List<Item> items = cellTable.getVisibleItems();
-        if (row >= 0 && row < items.size()) {
-            final Item item = items.get(row);
-            selectionModel.setSelected(item, true);
-            cellTable.setKeyboardSelectedRow(row, stealFocus);
+    // The active item, else the first enabled one, or -1 for none
+    private int getFirstSelectableIndex() {
+        if (menu.getActiveIndex() >= 0) {
+            return menu.getActiveIndex();
         }
-    }
-
-    private int getFirstSelectableRow() {
-        final List<Item> items = cellTable.getVisibleItems();
-
-        int row = cellTable.getKeyboardSelectedRow();
-        if (row > 0 && row < items.size()) {
-            return row;
-        }
-
-        row = -1;
-        for (int i = 0; i < items.size() && row == -1; i++) {
-            final Item item = items.get(i);
-            if (isActionable(item)) {
-                row = i;
+        final List<Item> items = menu.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            if (Menu.isActionable(items.get(i))) {
+                return i;
             }
         }
-
-        return row;
+        return -1;
     }
-
 
     // --------------------------------------------------------------------------------
+    // Menu.Handler
 
-
-    private class MenuSelectionEventManager
-            extends AbstractSelectionEventManager<Item> {
-
-        public MenuSelectionEventManager(final AbstractHasData<Item> cellTable) {
-            super(cellTable);
+    @Override
+    public void onMovedTo(final Item item) {
+        if (Menu.isActionable(item)) {
+            showSubMenu(item);
+        } else if (item instanceof final MenuItem menuItem && getUiHandlers() != null) {
+            // A disabled item opens no sub menu, so close the one the previous item opened
+            cancelDelayedSubMenu();
+            getUiHandlers().hideExistingSubMenu(menuItem);
         }
+    }
 
-        @Override
-        protected void onMoveRight(final CellPreviewEvent<Item> e) {
-            final Item selected = selectionModel.getSelectedObject();
-            // A disabled item's sub menu doesn't open
-            if (isActionable(selected)) {
-                showSubMenu(selected);
-                focusSubMenu();
-            }
+    @Override
+    public void onOpen(final Item item) {
+        // A disabled item's sub menu doesn't open
+        if (Menu.isActionable(item)) {
+            showSubMenu(item);
+            focusSubMenu();
         }
+    }
 
-        @Override
-        protected void onMoveLeft(final CellPreviewEvent<Item> e) {
-            if (hasParent()) {
-                focusParent(true);
-            } else if (allowCloseOnMoveLeft) {
-                escape();
-            }
-        }
-
-        @Override
-        protected void onClose(final CellPreviewEvent<Item> e) {
+    @Override
+    public void onBack() {
+        if (hasParent()) {
+            focusParent(true);
+        } else if (allowCloseOnMoveLeft) {
             escape();
         }
+    }
 
-        @Override
-        protected void onExecute(final CellPreviewEvent<Item> e) {
-            onSelect(e);
-        }
+    @Override
+    public boolean onClose() {
+        escape();
+        return true;
+    }
 
-        @Override
-        protected void onSelect(final CellPreviewEvent<Item> e) {
-            final Item selected = selectionModel.getSelectedObject();
-            // A disabled item does nothing
-            if (isActionable(selected)) {
-                execute((MenuItem) selected);
-            }
-        }
+    @Override
+    public void onChoose(final MenuItem item) {
+        execute(item);
+    }
 
-        @Override
-        protected void onMouseDown(final CellPreviewEvent<Item> e) {
-            final Item item = e.getValue();
-            if (isActionable(item)) {
-                final int row = cellTable.getVisibleItems().indexOf(item);
-                selectRow(row, true);
-
-                if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
-                    execute((MenuItem) item);
-                } else {
-                    // A click on the item of an open sub menu closes it
-                    toggleSubMenu(item);
+    @Override
+    public void onPress(final Item item, final boolean primary) {
+        pressedItem = null;
+        if (Menu.isActionable(item)) {
+            if (((MenuItem) item).getCommand() != null) {
+                // Chosen when the button is let go over it, so that a press can be taken back by
+                // moving off it first (WCAG 2.5.2)
+                if (primary) {
+                    pressedItem = item;
                 }
+            } else {
+                // A click on the item of an open sub menu closes it
+                toggleSubMenu(item);
             }
         }
+    }
 
-        @Override
-        protected void onMouseMove(final CellPreviewEvent<Item> e) {
-            // We have moved the mouse over this menu so tell the parent to cancel the sub menu timer and ensure the
-            // right menu item is selected.
-            if (getUiHandlers() != null) {
-                getUiHandlers().ensureParentItemSelected();
-            }
+    @Override
+    public void onRelease(final Item item, final boolean primary) {
+        final boolean chosen = item != null
+                               && Objects.equals(item, pressedItem)
+                               && primary
+                               && Menu.isActionable(item);
+        pressedItem = null;
+        if (chosen) {
+            execute((MenuItem) item);
+        }
+    }
 
-            final Item item = e.getValue();
-            if (isActionable(item)) {
-                final int row = cellTable.getVisibleItems().indexOf(item);
-                if (row != mouseOverRow) {
-                    selectRow(row, true);
-                    mouseOverRow = row;
-                    showSubMenuAfterDelay(item, SUBMENU_SHOW_DELAY_MILLIS);
-                }
-            }
+    @Override
+    public void onMouseOver(final Item item) {
+        // We have moved the mouse over this menu so tell the parent to cancel the sub menu timer and
+        // ensure the right menu item is selected.
+        if (getUiHandlers() != null) {
+            getUiHandlers().ensureParentItemSelected();
         }
 
-        @Override
-        protected void onBlur(final CellPreviewEvent<Item> e) {
-            final Item item = e.getValue();
-            if (isActionable(item)) {
-                mouseOverRow = -1;
-            }
+        if (Menu.isActionable(item) && !Objects.equals(item, mouseOverItem)) {
+            menu.setActiveIndex(menu.getItems().indexOf(item), true);
+            mouseOverItem = item;
+            showSubMenuAfterDelay(item, SUBMENU_SHOW_DELAY_MILLIS);
         }
+    }
 
-        @Override
-        protected void onKeyboardSelectRow(final int row, final boolean stealFocus) {
-            selectRow(row, true);
-            final List<Item> items = cellTable.getVisibleItems();
-            final Item item = items.get(row);
-            if (isActionable(item)) {
-                showSubMenu(item);
-            } else if (item instanceof final MenuItem menuItem && getUiHandlers() != null) {
-                // A disabled item opens no sub menu, so close the one the previous item opened
-                cancelDelayedSubMenu();
-                getUiHandlers().hideExistingSubMenu(menuItem);
-            }
-        }
-
-        @Override
-        protected boolean isSelectable(final Item item) {
-            return isReachable(item);
+    @Override
+    public void onLeft(final Item item) {
+        if (Menu.isActionable(item)) {
+            mouseOverItem = null;
         }
     }
 }

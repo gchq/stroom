@@ -719,6 +719,8 @@ class TestExpressionPredicateFactory {
 //
 //        List<String> classNames;
 //        try (ScanResult result = new ClassGraph()
+//                .enableClasspath()
+//                .enableNonSystemModules()
 //                .acceptPackages("stroom")
 //                .enableClassInfo()
 //                .ignoreClassVisibility()

@@ -20,12 +20,12 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -53,7 +53,7 @@ import java.util.function.Function;
 
 public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
-    private final MyDataGrid<ContentTemplate> dataGrid;
+    private final DataGrid<ContentTemplate> dataGrid;
     private final MultiSelectionModelImpl<ContentTemplate> selectionModel;
     private BiConsumer<ContentTemplate, Boolean> enabledStateHandler;
     private Function<ContentTemplate, List<Item>> actionMenuItemProvider;
@@ -63,7 +63,9 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     public ContentTemplateListPresenter(final EventBus eventBus,
                                         final PagerView view) {
         super(eventBus, view);
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
+        // Rows keyed by number (1 to n): a tick rebuilds the row
+        this.dataGrid.setKeyProvider(ContentTemplate::getTemplateNumber);
         this.dataGrid.setTableName("Content Templates");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -203,7 +205,8 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<>(this::showActionMenu))
+                                () -> new ActionCell<>(this::showActionMenu,
+                                        ContentTemplateListPresenter::getActionMenuName))
                         .enabledWhen(ContentTemplate::isEnabled)
                         .centerAligned()
                         .build(),
@@ -228,7 +231,8 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     private void addActionButtonColumn(final String name,
                                        final int width) {
 
-        final ActionCell<ContentTemplate> actionCell = new ActionCell<>(this::showActionMenu);
+        final ActionCell<ContentTemplate> actionCell = new ActionCell<>(this::showActionMenu,
+                ContentTemplateListPresenter::getActionMenuName);
 
         final Column<ContentTemplate, ContentTemplate> expressionColumn =
                 new Column<ContentTemplate, ContentTemplate>(actionCell) {
@@ -255,9 +259,19 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent
                 .builder()
+                .name(getActionMenuName(row))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // e.g. "Actions for template 3 'My template'"
+    private static String getActionMenuName(final ContentTemplate row) {
+        final String name = row.getName();
+        return "Actions for template " + row.getTemplateNumber()
+               + (NullSafe.isBlankString(name)
+                ? ""
+                : " '" + name + "'");
     }
 
 //    private void addTickBoxColumn(final String name,

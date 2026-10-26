@@ -27,11 +27,14 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -99,6 +102,7 @@ public class EditorViewImpl
         formatAction = new Action("Format", false, this::format);
 
         editor.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
+        editor.addDomHandler(this::handleContextMenu, com.google.gwt.event.dom.client.ContextMenuEvent.getType());
         rightBar.setEditor(editor);
     }
 
@@ -113,13 +117,29 @@ public class EditorViewImpl
     }
 
     protected void handleMouseDown(final MouseDownEvent event) {
-        if (MouseUtil.isSecondary(event)) {
-            final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
-            ContextMenuEvent.fire(this, popupPosition);
-        } else {
+        // A right press opens the menu on contextmenu (handleContextMenu), once Ace has put the cursor
+        // where it was pressed
+        if (!MouseUtil.isSecondary(event)) {
             EditorViewImpl.indicatorPopup.hide();
             MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);
         }
+    }
+
+    // A right-click, Shift+F10 or the context menu key opens the editor's menu, with the edit items
+    // for its text at the top, in place of the browser's menu. A Shift+right-click (or any, if the
+    // user prefers the browser's menu for text) is left to the browser
+    private void handleContextMenu(final com.google.gwt.event.dom.client.ContextMenuEvent event) {
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        if (ContextMenuManager.isLeftToBrowser(nativeEvent)) {
+            return;
+        }
+        nativeEvent.preventDefault();
+        nativeEvent.stopPropagation();
+        final TextEditTarget editTarget = ContextMenuManager.findEditTarget(nativeEvent);
+        final PopupPosition popupPosition = editTarget != null
+                ? ContextMenuManager.getPosition(nativeEvent, editTarget)
+                : new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
+        ContextMenuEvent.fire(this, popupPosition, editTarget);
     }
 
 
@@ -290,6 +310,8 @@ public class EditorViewImpl
 
         final ScrollPanel scrollPanel = new ScrollPanel();
         scrollPanel.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
+        scrollPanel.addDomHandler(this::handleContextMenu,
+                com.google.gwt.event.dom.client.ContextMenuEvent.getType());
         scrollPanel.getElement().addClassName("code-editor__load-error-container");
         scrollPanel.getElement().addClassName("max");
         scrollPanel.setWidget(new HTMLPanel(safeHtmlBuilder.toSafeHtml()).asWidget());

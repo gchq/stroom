@@ -32,8 +32,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -58,6 +56,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -91,7 +91,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final ProcessorInfoBuilder processorInfoBuilder;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
-    private final MyDataGrid<ProcessorListRow> dataGrid;
+    private final DataGrid<ProcessorListRow> dataGrid;
     private final MultiSelectionModelImpl<ProcessorListRow> selectionModel;
 
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
@@ -114,7 +114,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
         this.securityContext = securityContext;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Processors");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -383,7 +383,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     private void addPriorityColumn() {
         final Column<ProcessorListRow, Number> priorityColumn = new Column<ProcessorListRow, Number>(
-                new ValueSpinnerCell(ProcessorFilter.MIN_PRIORITY, ProcessorFilter.MAX_PRIORITY)) {
+                new ValueSpinnerCell("Priority", ProcessorFilter.MIN_PRIORITY, ProcessorFilter.MAX_PRIORITY)) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number priority = null;
@@ -407,7 +407,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 }
             });
         }
-        dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.VALUE_SPINNER_COL);
     }
 
 //    private void addMaxProcessingTasksColumn() {

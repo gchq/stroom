@@ -248,7 +248,7 @@ public class DynamicColumnSelectionListModel
 
     @Override
     public String getPathRoot() {
-        return "Columns";
+        return "All Columns";
     }
 
     @Override

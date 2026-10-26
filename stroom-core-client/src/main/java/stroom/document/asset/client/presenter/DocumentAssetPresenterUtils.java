@@ -16,11 +16,9 @@
 
 package stroom.document.asset.client.presenter;
 
+import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAsset;
-
-import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +41,7 @@ public class DocumentAssetPresenterUtils {
      * @param tree The GWT tree to add paths to. Must not be null.
      * @param assets The list of assets from the server. Might be null.
      */
-    static void addPathsToTree(final Tree tree,
+    static void addPathsToTree(final DocumentAssetTree tree,
                                final List<DocumentAsset> assets) {
         if (assets != null) {
             // Convert list of paths into a tree
@@ -54,7 +52,7 @@ public class DocumentAssetPresenterUtils {
                     path = path.substring(1);
                 }
                 final String[] pathItems = path.split(SLASH);
-                TreeItem treeItem = null;
+                DocumentAssetTreeItem treeItem = null;
 
                 for (int iPath = 0; iPath < pathItems.length; ++iPath) {
                     final String pathItem = pathItems[iPath];
@@ -64,7 +62,7 @@ public class DocumentAssetPresenterUtils {
                     DocumentAssetTreeItem existingTreeItem = null;
                     if (treeItem == null) {
                         for (int iChild = 0; iChild < tree.getItemCount(); ++iChild) {
-                            final DocumentAssetTreeItem item = (DocumentAssetTreeItem) tree.getItem(iChild);
+                            final DocumentAssetTreeItem item = tree.getItem(iChild);
                             if (pathItem.equals(item.getLabel())) {
                                 existingTreeItem = item;
                                 break;
@@ -73,7 +71,7 @@ public class DocumentAssetPresenterUtils {
                     } else {
                         for (int iChild = 0; iChild < treeItem.getChildCount(); ++iChild) {
                             final DocumentAssetTreeItem item =
-                                    (DocumentAssetTreeItem) treeItem.getChild(iChild);
+                                    treeItem.getChild(iChild);
                             if (pathItem.equals(item.getLabel())) {
                                 existingTreeItem = item;
                                 break;
@@ -81,7 +79,7 @@ public class DocumentAssetPresenterUtils {
                         }
                     }
 
-                    final TreeItem newChildItem;
+                    final DocumentAssetTreeItem newChildItem;
                     if (existingTreeItem == null) {
                         if (isLast) {
                             // Last item so set whether it is a folder or not
@@ -112,9 +110,9 @@ public class DocumentAssetPresenterUtils {
     /**
      * Stores the state of the tree in the variable treeItemPathToOpenState.
      */
-    static void storeOpenClosedState(final Tree tree, final Set<String> treeItemPathToOpenState) {
+    static void storeOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
-            final DocumentAssetTreeItem treeItem = (DocumentAssetTreeItem) tree.getItem(i);
+            final DocumentAssetTreeItem treeItem = tree.getItem(i);
             recurseStoreOpenClosedState(treeItem, treeItemPathToOpenState);
         }
     }
@@ -129,7 +127,7 @@ public class DocumentAssetPresenterUtils {
             // Item is open so store its state and everything under it
             treeItemPathToOpenState.add(getItemPath(assetTreeItem));
             for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                final DocumentAssetTreeItem child = (DocumentAssetTreeItem) assetTreeItem.getChild(i);
+                final DocumentAssetTreeItem child = assetTreeItem.getChild(i);
                 recurseStoreOpenClosedState(child, treeItemPathToOpenState);
             }
         }
@@ -138,9 +136,9 @@ public class DocumentAssetPresenterUtils {
     /**
      * Sets the state of the tree from the given set of open item paths (keyed by path, not id).
      */
-    static void restoreOpenClosedState(final Tree tree, final Set<String> treeItemPathToOpenState) {
+    static void restoreOpenClosedState(final DocumentAssetTree tree, final Set<String> treeItemPathToOpenState) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
-            final DocumentAssetTreeItem treeItem = (DocumentAssetTreeItem) tree.getItem(i);
+            final DocumentAssetTreeItem treeItem = tree.getItem(i);
             recurseRestoreOpenClosedState(treeItem, treeItemPathToOpenState);
         }
         treeItemPathToOpenState.clear();
@@ -157,7 +155,7 @@ public class DocumentAssetPresenterUtils {
         if (treeItemPathToOpenState.contains(itemPath)) {
             treeItem.setState(true);
             for (int i = 0; i < treeItem.getChildCount(); ++i) {
-                final DocumentAssetTreeItem child = (DocumentAssetTreeItem) treeItem.getChild(i);
+                final DocumentAssetTreeItem child = treeItem.getChild(i);
                 recurseRestoreOpenClosedState(child, treeItemPathToOpenState);
             }
         }
@@ -177,7 +175,7 @@ public class DocumentAssetPresenterUtils {
      * Sorts the whole tree, from root to leaf.
      * @param tree The tree to sort.
      */
-    static void sortTree(final Tree tree) {
+    static void sortTree(final DocumentAssetTree tree) {
         recurseSortTree(tree, null);
     }
 
@@ -187,13 +185,13 @@ public class DocumentAssetPresenterUtils {
      * @param tree The tree to sort.
      * @param assetTreeItem The node to sort and recurse. If null then will start at the root of the tree.
      */
-    static void recurseSortTree(final Tree tree,
+    static void recurseSortTree(final DocumentAssetTree tree,
                                 final DocumentAssetTreeItem assetTreeItem) {
         if (assetTreeItem == null) {
             // We're at the root of the tree so look at the tree widget
             final List<DocumentAssetTreeItem> childItems = new ArrayList<>();
             for (int i = 0; i < tree.getItemCount(); ++i) {
-                childItems.add((DocumentAssetTreeItem) tree.getItem(i));
+                childItems.add(tree.getItem(i));
             }
             childItems.sort(new TreeItemComparator());
             tree.removeItems();
@@ -207,7 +205,7 @@ public class DocumentAssetPresenterUtils {
             // Not at the root so look at the item
             final List<DocumentAssetTreeItem> childItems = new ArrayList<>();
             for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                childItems.add((DocumentAssetTreeItem) assetTreeItem.getChild(i));
+                childItems.add(assetTreeItem.getChild(i));
             }
             childItems.sort(new TreeItemComparator());
             assetTreeItem.removeItems();
@@ -230,7 +228,7 @@ public class DocumentAssetPresenterUtils {
         DocumentAssetTreeItem currentItem = item;
         while (currentItem != null) {
             pathList.add(currentItem.getLabel());
-            currentItem = (DocumentAssetTreeItem) currentItem.getParentItem();
+            currentItem = currentItem.getParentItem();
         }
         Collections.reverse(pathList);
 
@@ -274,9 +272,9 @@ public class DocumentAssetPresenterUtils {
      * @param itemId The ID of the item with the label. Ensures the label doesn't clash with itself.
      * @return true if there is a clash, false if not.
      */
-    static boolean labelClashesInTreeRoot(final Tree tree, final String itemLabel, final String itemId) {
+    static boolean labelClashesInTreeRoot(final DocumentAssetTree tree, final String itemLabel, final String itemId) {
         for (int i = 0; i < tree.getItemCount(); ++i) {
-            final DocumentAssetTreeItem assetTreeItem = (DocumentAssetTreeItem) tree.getItem(i);
+            final DocumentAssetTreeItem assetTreeItem = tree.getItem(i);
             if (!Objects.equals(assetTreeItem.getId(), itemId)
                 && Objects.equals(assetTreeItem.getLabel(), itemLabel)) {
                 return true;
@@ -294,7 +292,7 @@ public class DocumentAssetPresenterUtils {
         if (selectedTreeItem != null) {
             if (selectedTreeItem.isLeaf()) {
                 // File so we want the parent folder
-                return (DocumentAssetTreeItem) selectedTreeItem.getParentItem();
+                return selectedTreeItem.getParentItem();
             } else {
                 // Folder selected so return it
                 return selectedTreeItem;

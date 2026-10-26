@@ -19,24 +19,20 @@ package stroom.annotation.client;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
-import stroom.explorer.client.presenter.SelectionEventManager;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -47,7 +43,7 @@ import java.util.function.Consumer;
 
 public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final CellTable<Annotation> cellTable;
+    private final DataGrid<Annotation> resultList;
     private final RestDataProvider<Annotation, ResultPage<Annotation>> dataProvider;
     private final MultiSelectionModelImpl<Annotation> selectionModel;
 
@@ -79,26 +75,7 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
                                        final DurationLabel durationLabel) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<Annotation>(100) {
-            @Override
-            protected void onBrowserEvent2(final Event event) {
-                super.onBrowserEvent2(event);
-                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
-                    if (cellTable.getKeyboardSelectedRow() == 0) {
-                        findResultListHandler.focus();
-                    }
-                }
-            }
-        };
-        cellTable.addStyleName("FindCellTable");
-
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<Annotation> selectionEventManager = new SelectionEventManager<>(
-                cellTable,
-                selectionModel,
-                doc -> findResultListHandler.openDocument(doc),
-                null);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         dataProvider = new RestDataProvider<Annotation, ResultPage<Annotation>>(eventBus) {
             @Override
@@ -123,8 +100,8 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
                         filterErrorConsumer.accept(
                                 NullSafe.get(resultPage.getFilterError(), TokenError::getText));
                     }
-                    if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                        cellTable.setPageStart(resultPage.getPageStart());
+                    if (resultPage.getPageStart() != resultList.getPageStart()) {
+                        resultList.setPageStart(resultPage.getPageStart());
                     }
                     dataConsumer.accept(resultPage);
 
@@ -141,15 +118,15 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
 
-        final Column<Annotation, Annotation> column = new Column<Annotation, Annotation>(
-                new FindAnnotationCell(durationLabel)) {
-            @Override
-            public Annotation getValue(final Annotation object) {
-                return object;
-            }
-        };
-        cellTable.addColumn(column);
-        view.setDataWidget(cellTable);
+        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
+        // click, opens it, and Up on the first goes back to the filter
+        resultList = FindResultLists.create(this,
+                "Annotations found",
+                new FindAnnotationCell(durationLabel),
+                selectionModel,
+                doc -> findResultListHandler.openDocument(doc),
+                () -> findResultListHandler.focus());
+        view.setDataWidget(resultList);
     }
 
     private void resetFocus() {
@@ -162,7 +139,7 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(cellTable);
+            dataProvider.addDataDisplay(resultList);
         } else {
             dataProvider.refresh();
         }
@@ -177,7 +154,7 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
-        cellTable.setKeyboardSelectedRow(row, stealFocus);
+        resultList.setKeyboardSelectedRow(row, stealFocus);
     }
 
     public void setFocusText(final boolean focusText) {

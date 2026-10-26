@@ -143,9 +143,9 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 
 // ── Shared with crawl.mjs: labels, signatures, affordance clicking ───────────
 const CHROME = new Set([
-  'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
-  'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New', 'Delete',
+  'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
+  'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
+  'New Document', 'Delete Selected Documents',
   // The navigation logo and the tab bar's sidebar toggle (CurveTabLayoutViewImpl's `Hide Sidebar`)
   // are chrome; the names are listed in case either is given an `aria-label`. Walking the toggle
   // put a post-action state under every node.
@@ -155,21 +155,22 @@ const chromeDone = new Set();
 // A directed run walks the precondition it was given, not the app's chrome — the main menu, the
 // explorer's New/Delete and the AI dock are covered by the area shards.
 if (DIRECTED.length) for (const c of CHROME) chromeDone.add(c);
-// `Delete Store` is not a mutation the guard blocks — `result-store/v1/destroy` is a client's own
+// `Delete Selected Result Store` is not a mutation the guard blocks — `result-store/v1/destroy` is a client's own
 // search lifecycle and is allowed — but on the Search Result Stores dialog its OK destroys the ONE
-// store `seed-data.mjs` left, and with the row gone the node's remaining buttons (Store Settings)
+// store `seed-data.mjs` left, and with the row gone the node's remaining buttons (Edit Result Store Settings)
 // cannot be re-synced to. Confirm/OK is still walked everywhere the guard blocks the delete.
-const SELF_DESTRUCTIVE = new Set(['Sign Out', 'Sign Out Other Sessions', 'Delete Store']);
+const SELF_DESTRUCTIVE = new Set(['Sign Out', 'Sign Out Other Sessions', 'Delete Selected Result Store']);
 /**
  * Context-menu items that take the browser somewhere else, or start a download.
  *
- * `MyDataGrid`'s menu offers `Follow URL` and `Open In New Tab` on a cell that holds a link: clicking
+ * `MyDataGrid`'s menu offers `Open Link` and `Open Link in New Tab` on a cell that holds a link: clicking
  * either navigates away or opens a tab the walker is not tracking, and the walk cannot get back to
  * where it was. `Export Table` streams a file. None of them is destructive — the guard would not even
  * be involved — but all of them END the walk's grip on the page, which is worse than a write it can
  * abort. Recorded as affordances and never clicked, exactly as SELF_DESTRUCTIVE is.
  */
-const LEAVES_THE_PAGE = new Set(['Follow URL', 'Open In New Tab', 'Open In This Tab', 'Export Table', 'Download']);
+const LEAVES_THE_PAGE = new Set(['Open Link', 'Open Link in New Tab', 'Open Link in This Tab', 'Export Table',
+  'Download']);
 /**
  * Clicks whose state change is UNDONE by a known click, not by closing anything. The Ask Stroom AI
  * dock is the case that forced this: it stays open across the whole walk, and its buttons —
@@ -179,16 +180,16 @@ const LEAVES_THE_PAGE = new Set(['Follow URL', 'Open In New Tab', 'Open In This 
  */
 const INVERSE = new Map([
   ['Ask Stroom AI', 'Ask Stroom AI'],
-  ['Toggle Alerts', 'Toggle Alerts'],
-  ['Turn Auto Refresh On', 'Turn Auto Refresh Off'],
-  ['Turn Auto Refresh Off', 'Turn Auto Refresh On'],
-  ['Expand All', 'Collapse All'],
-  ['Collapse All', 'Expand All'],
-  // The label that appears does not share words with the one clicked, so the twin heuristic in
-  // walk() cannot find it.
-  ['Toggle wrapping', 'Turn Cell Line Wrapping Off'],
-  ['Turn Cell Line Wrapping Off', 'Turn Cell Line Wrapping On'],
-  ['Turn Cell Line Wrapping On', 'Turn Cell Line Wrapping Off'],
+  ['Show Alerts', 'Show Alerts'],
+  ['Auto Refresh', 'Auto Refresh'],
+  ['Expand All Folders', 'Collapse All Folders'],
+  ['Collapse All Folders', 'Expand All Folders'],
+  ['Expand All Tasks', 'Collapse All Tasks'],
+  ['Collapse All Tasks', 'Expand All Tasks'],
+  // A toggle keeps one name whatever its state (its pressed state says which), so no new label
+  // appears for the twin heuristic in walk() to find: these are toggles, and undo themselves.
+  ['Wrap Text', 'Wrap Text'],
+  ['Show Only Enabled Jobs', 'Show Only Enabled Jobs'],
 ]);
 
 // A toggle that is ON. The toolbar's ToolbarToggleButton says so with `aria-pressed="true"`;
@@ -229,9 +230,9 @@ function undouble(label) {
 // signature every sorted screen read as a different node afterwards. The sort is an expected
 // change the classifier records on the click; it is not part of what the screen IS.
 // A DIALOG is also identified by the screen it was opened from. Two presenters can wear one face:
-// Data Volumes' and Index Volumes' `Edit` both read "Edit Volume Group - Default Volume Group" with
-// the same buttons and body, so the second was filed as a duplicate and never descended — and its
-// own `New` (IndexVolumeEditPresenter) was never clicked. The root of the route (menu leaf, document
+// Data Volumes' and Index Volumes' `Edit Selected … Volume Group` both used to read "Edit Volume
+// Group - Default Volume Group" (now "Edit Data/Index Volume Group - …") with the same body, so the second was filed as a duplicate and never
+// descended — and its own `New Index Volume` (IndexVolumeEditPresenter) was never clicked. The root of the route (menu leaf, document
 // type or name) is the cheapest fact that separates them; an alert is left as it was, since every
 // alert is the one AlertPresenter and re-walking each per screen buys nothing.
 const rootOf = (node) => {
@@ -263,7 +264,7 @@ await gwt.signInFully(page, creds);
 await mkdir(OUT, { recursive: true });
 if (DEPTH !== 'reach') await mkdir(join(OUT, 'evidence'), { recursive: true });
 
-const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menuItem-outer')]
+const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menu__item')]
   .some((e) => e.offsetWidth > 0 && e.offsetHeight > 0)).catch(() => false);
 // ── The page can DIE under us, and a dead page does not fail: it WAITS ───────
 // docs7c's renderer reached 5.1 GB in the Pipeline editor and the kernel OOM-killed it at 21:51:58.
@@ -326,14 +327,12 @@ const LINK = 'link: ';
  *  blocks (`SettingBlock`, `title="Change Retention Period"`) open their choosers on a click. */
 const TITLED = 'titled: ';
 /** `entry: comment` — a MOUSEDOWN on an annotation history entry (`[entryType]`, COMMENT = 4) opens
- *  its Edit Entry / Delete Entry menu (`AnnotationEditPresenter.showEntryEditMenu`). */
+ *  its Edit Comment / Delete Entry menu (`AnnotationEditPresenter.showEntryEditMenu`). */
 const ENTRY = 'entry: ';
 const ENTRY_TYPES = { comment: '4' };
-/** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: the stepping toolbar's
- *  location label (`.stepLocationLink`, `[<metaId>:<part>:<record>]`) opens `Set Location` on a click. */
+/** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: a query result's link
+ *  (`.data-grid [role=gridcell] u[link]`), whose text is the row's data. */
 const SELECTOR = 'selector: ';
-/** The clickable-label classes the survey offers as `selector:` affordances (see survey()). */
-const CLICKABLE_LABELS = ['.itemNavigator-label', '.characterNavigator-label', '.stepLocationLink'];
 async function clickAffordance(label, timeout = 3000) {
   if (label.startsWith(COLUMN_MENU)) return clickDesignHeader(label.slice(COLUMN_MENU.length));
   if (label.startsWith(SELECTOR)) {
@@ -382,14 +381,14 @@ async function clickAffordance(label, timeout = 3000) {
   // Dependencies screen, and unescaped they broke the button regex and were reported `vanished` —
   // 17 times on one shard. A header without a sort index is still a header, so the header locator
   // is tried for every label, LAST, where a real button of the same name still wins.
-  // A chrome label that a SCREEN also uses — `New`, `Delete` — must click the screen's button, not
-  // the explorer's, which comes first in the DOM: the Pathways list's `New` (→ PathwayEditPresenter)
-  // and every pager's `New` were reaching the explorer's create dialog instead. This is the
+  // A chrome label that a SCREEN also uses must click the screen's button, not the explorer's, which
+  // comes first in the DOM: when both were plain `New`, the Pathways list's (→ PathwayEditPresenter)
+  // and every pager's were reaching the explorer's create dialog instead. This is the
   // `create` class in door-preconditions.md.
   if (CHROME.has(label)) {
     const box = await page.evaluate((wanted) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
       const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
@@ -406,16 +405,16 @@ async function clickAffordance(label, timeout = 3000) {
   // The TOPMOST dialog first. Dialogs stack — a component's Settings holds `Add New Rule`, and both
   // have an OK — and `.first()` over the whole page is the one BEHIND, whose click the front dialog
   // intercepts: every nested dialog's OK and Cancel read as `did not accept a click within 3s`.
-  const popups = page.locator('.dialog-popup, .resizableDialog-popup').filter({ visible: true });
+  const popups = page.locator('.dialog').filter({ visible: true });
   const top = (await popups.count().catch(() => 0)) ? popups.last() : null;
   const within = (root) => [
     ...(isColumnHeader(label)
-      ? [root.locator('.dataGridHeader, [role=columnheader], th').filter({ hasText: columnName(label) })]
+      ? [root.locator('[role=columnheader], th').filter({ hasText: columnName(label) })]
       : []),
     root.locator(`button[title="${label}"]:not([disabled])`),
     root.locator(`button[aria-label="${label}"]:not([disabled])`),
     root.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
-    ...(isColumnHeader(label) ? [] : [root.locator('.dataGridHeader, [role=columnheader], th')
+    ...(isColumnHeader(label) ? [] : [root.locator('[role=columnheader], th')
       .filter({ hasText: new RegExp(`^\\s*${esc}(\\s+\\d+)?\\s*$`) })]),
   ];
   const candidates = [...(top ? within(top) : []), ...within(page)];
@@ -443,11 +442,11 @@ async function clickAffordance(label, timeout = 3000) {
  * default — MyDataGrid's default — so its header menu (Filter, Format, Conditional Formatting, …)
  * opens on any results table with no mode to enter.
  */
-let columnScope = { selector: '.dashboard-panel .dataGridWidget th, .dashboard-panel [role=columnheader]', design: true };
+let columnScope = { selector: '.dashboard-panel [role=columnheader]', design: true };
 async function readDesignHeaders() {
-  return page.evaluate(({ selector, design }) => {
+  return page.evaluate(({ selector, design, designOn }) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    if (design && !document.querySelector('button[title="Exit Design Mode"]')) return [];
+    if (design && !document.querySelector(designOn)) return [];
     return [...document.querySelectorAll(selector)]
       .filter((th) => th.offsetWidth > 30)
       .map((th) => {
@@ -456,7 +455,7 @@ async function readDesignHeaders() {
         return { name: norm(th.querySelector('.column-label')?.textContent ?? th.textContent), ok: th.contains(hit) };
       })
       .filter((h) => h.name && h.ok).map((h) => h.name);
-  }, columnScope).catch(() => []);
+  }, { ...columnScope, designOn: toggleOn('Design Mode') }).catch(() => []);
 }
 
 async function clickDesignHeader(name) {
@@ -491,7 +490,7 @@ async function tabBarOf(tab) {
     const bar = lab?.closest('.tabLayout-barOuter');
     if (!bar) return null;
     const r = bar.getBoundingClientRect();
-    const settings = [...bar.querySelectorAll('button[title="Settings"]')].find((b) => b.offsetWidth > 0);
+    const settings = [...bar.querySelectorAll('button[title="Tab Actions"]')].find((b) => b.offsetWidth > 0);
     const s = settings?.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2,
       settings: s ? { x: s.x + s.width / 2, y: s.y + s.height / 2 } : null };
@@ -501,7 +500,7 @@ async function tabBarOf(tab) {
 /** Identical to crawl.mjs's survey, on purpose: the signature must mean the same thing. */
 async function survey() {
   const scope = await page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')]
+    const popups = [...document.querySelectorAll('.dialog')]
       .filter((e) => e.offsetWidth > 0);
     if (!popups.length) return 'body';
     popups[popups.length - 1].setAttribute('data-crawl-scope', '1');
@@ -526,23 +525,17 @@ async function survey() {
     }, scope).catch(() => []);
     for (const label of headers) if (!buttons.some((b) => b.label === label)) buttons.push({ kind: 'header', label, enabled: true, visible: true });
   }
-  // Labels that OPEN something, which no markup advertises: a GWT `Label` with a click handler is a
-  // div. The data preview's item pager (`.itemNavigator-label`, "Part 1 of 1" → ItemSelection-
-  // Presenter), the source view's character pager (`.characterNavigator-label` → CharacterRange-
-  // SelectionPresenter) and the stepping toolbar's location (`.stepLocationLink` → StepLocation-
-  // Presenter). Offered as `selector:` affordances whenever one is visible in scope.
-  if (!menuItems.length) {
-    const labels = await page.evaluate(([sel, classes]) => {
-      const root = document.querySelector(sel) ?? document.body;
-      return classes.filter((cls) => [...root.querySelectorAll(cls)].some((e) => e.offsetWidth > 0 && e.offsetHeight > 0));
-    }, [scope, CLICKABLE_LABELS]).catch(() => []);
-    for (const cls of labels) buttons.push({ kind: 'label', label: `${SELECTOR}${cls}`, enabled: true, visible: true });
-  }
+  // The data preview's item pager ("Part 1 of 1" → ItemSelectionPresenter), the source view's
+  // character pager (→ CharacterRangeSelectionPresenter) and the stepping toolbar's location
+  // (→ StepLocationPresenter) were GWT `Label`s with click handlers, which no markup advertised, so
+  // they were offered here as `selector:` affordances. They are buttons now (#5406), titled
+  // `Select Part`/`Select Record`, `Set Source Range` and `Set Location`, so the button reader
+  // finds them.
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    // GWT's `.dataGridWidget` table, with an ARIA grid (`role=grid`, whose header is
-    // `[role=row][aria-rowindex="1"]` and whose data rows follow it) as a fallback.
-    return [...document.querySelectorAll('.dataGridWidget, [role=grid]')]
+    // The data grid (`.data-grid`, a `grid` or a `treegrid`, whose header is
+    // `[role=row][aria-rowindex="1"]` and whose data rows follow it), or another ARIA grid.
+    return [...document.querySelectorAll('.data-grid, [role=grid]')]
       .filter((g) => g.offsetWidth > 0)
       .map((g) => {
         const rows = [...g.querySelectorAll('tbody tr, [role=row]:not([aria-rowindex="1"])')];
@@ -681,7 +674,7 @@ async function reloadAndSignIn() {
 async function readSubTabs({ inDialog = false } = {}) {
   return page.evaluate((inDialog) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
     return [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0)
@@ -700,7 +693,7 @@ const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.ta
  * Close EVERY content tab bar Welcome — the client-side "fresh" a reload used to deliver, without
  * the reload. A route that runs through a menu chain opens the LAST leaf's screen, not the first's,
  * so closing the route's first tab left `Properties` open with its paging intact and `Data Receipt
- * Rules` sitting under every later root. Best effort: the tab's own `Close All`, then one by one.
+ * Rules` sitting under every later root. Best effort: the tab's own `Close All Tabs`, then one by one.
  */
 /**
  * Close any DIRTY content tab before opening another document.
@@ -726,10 +719,10 @@ async function closeAllContentTabs() {
     if (!open.length) return true;
     if (attempt === 0 && await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', open[0]).catch(() => false)) {
       const before = (await contentTabs()).length;
-      if (await clickMenuItem(page, 'Close All').catch(() => false)) {
-        // Close All closes tab by tab and may ask once per dirty document.
+      if (await clickMenuItem(page, 'Close All Tabs').catch(() => false)) {
+        // Close All Tabs closes tab by tab and may ask once per dirty document.
         let rounds = 0;
-        while (rounds < 6 && await settleTabClose(before, 'Close All')) {
+        while (rounds < 6 && await settleTabClose(before, 'Close All Tabs')) {
           rounds += 1;
           if (!(await contentTabs()).some((t) => t && !/Welcome/.test(t))) break;
         }
@@ -754,16 +747,16 @@ async function closeAllContentTabs() {
   }
   if (survived.length && !tabsSurvivedReported) {
     tabsSurvivedReported = true;
-    console.log(`      (tabs survived Close All: ${await whereAmI()})`);
+    console.log(`      (tabs survived Close All Tabs: ${await whereAmI()})`);
     // What readDialogs — the reader discardIfAsked polls — sees, against a raw DOM read of the
     // Confirm: caption, root class, buttons, and why the title might fail the visibility test.
     const seen = await readDialogs(page).catch((e) => `threw: ${e.message.slice(0, 80)}`);
     console.log(`      (readDialogs sees: ${typeof seen === 'string' ? seen : JSON.stringify(seen.map((d) => ({ caption: d.caption, h: d.heightPx, buttons: d.buttons.map((b) => b.label) })))})`);
     const raw = await page.evaluate(() => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      return [...document.querySelectorAll('.dialog-titleText')].map((t) => {
+      return [...document.querySelectorAll('.dialog__title')].map((t) => {
         const r = t.getBoundingClientRect(); const st = getComputedStyle(t);
-        const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+        const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
         return { caption: norm(t.textContent), w: Math.round(r.width), h: Math.round(r.height), vis: st.visibility, op: st.opacity, disp: st.display,
           root: root.className.toString().slice(0, 60),
           buttons: [...root.querySelectorAll('button, [role=button], .Button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
@@ -802,10 +795,10 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
     // Say what it asked, once per distinct text, so the cause is named rather than inferred.
     const body = await page.evaluate(`(() => {
       const norm = (t) => String(t ?? '').replace(/\\s+/g, ' ').trim();
-      const t = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
+      const t = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
       if (!t) return '';
-      const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
-      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog-titleText, button, .Button').forEach((x) => x.remove());
+      const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
+      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .Button').forEach((x) => x.remove());
       return norm(c.textContent).slice(0, 160);
     })()`).catch(() => '');
     if (!confirmTexts.has(body)) { confirmTexts.add(body); console.log(`      (answered Confirm: "${body}")`); }
@@ -867,10 +860,10 @@ async function clickDialogButton(captionRe, labelRe) {
     const lab = new RegExp(labSrc, 'i');
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const undouble = (s) => { const t = norm(s); const h = t.slice(0, t.length / 2); if (t.length % 2 === 0 && h === t.slice(t.length / 2)) return h.trim(); const m = t.match(/^(.+) \1$/); return m ? m[1] : t; };
-    const titles = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0 && cap.test(norm(e.textContent)));
+    const titles = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && cap.test(norm(e.textContent)));
     const t = titles[titles.length - 1];
     if (!t) return null;
-    const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+    const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
     const btn = [...root.querySelectorAll('button, [role=button], .Button')]
       .filter((b) => b.offsetWidth > 0 && b.offsetHeight > 0)
       .find((b) => lab.test(undouble(b.textContent || b.getAttribute('title') || '')));
@@ -891,7 +884,7 @@ async function whereAmI() {
     const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0)
       .map((t) => `${norm((t.querySelector('.tab-bar__label') || t).textContent)}${t.getAttribute('aria-selected') === 'true' ? '*' : ''}`);
     const sub = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
-    const dialogs = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
+    const dialogs = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     return `tabs [${tabs.join(' | ')}] sub-tabs [${sub.join(', ')}] dialogs [${dialogs.join(', ')}]`;
   }).catch(() => '(unknown)');
 }
@@ -910,7 +903,7 @@ async function waitForDocOpen() {
 }
 
 async function expandExplorer() {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand', budget: 5_000 }).catch(() => {});
 }
 
@@ -1055,10 +1048,10 @@ async function closeTop(childKind) {
     await page.evaluate(`(() => {
       const norm = (t) => String(t ?? '').replace(/\\s+/g, ' ').trim();
       const undouble = (s) => { const t = norm(s); const h = t.slice(0, t.length / 2); return t.length % 2 === 0 && h === t.slice(t.length / 2) ? h.trim() : t; };
-      const titles = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0);
+      const titles = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0);
       const t = titles[titles.length - 1];
       if (!t) return;
-      const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+      const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
       const btn = [...root.querySelectorAll('button, [role=button], .Button')]
         .find((b) => /^(cancel|close)$/i.test(undouble(b.textContent || b.getAttribute('title') || '')));
       if (btn) btn.click();
@@ -1082,7 +1075,7 @@ async function driveStep(step) {
     await waitUntil(page, async () => !(await menuIsOpen()), { budget: 1_500, label: `leaf:${step.leaf}`, kind: 'screen' })
       .catch(() => {});
     await waitForStableCount(page, () => page.evaluate(() =>
-      document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+      document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: `content:${step.leaf}`, kind: 'content', allowZero: true })
       .catch(() => {});
     // Only if a menu is still open: `dismissMenus` presses Escape first, and a leaf that opens a
@@ -1120,7 +1113,7 @@ async function driveStep(step) {
       }
     } else if (step.opens === 'changed') {
       await waitForStableCount(page, () => page.evaluate(() =>
-        document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+        document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
       { budget: 1_000, poll: 150, stableFor: 2, label: `button:${step.label}`, kind: 'content', allowZero: true })
         .catch(() => {});
     } else {
@@ -1192,10 +1185,10 @@ async function driveStep(step) {
     // paints its grid when the last answers, so a read taken as the dialog opens sees the empty
     // placeholder row. Poll briefly for a row that has text before giving up.
     const findCell = () => page.evaluate(([match, text]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const wanted = text ? new RegExp(text) : null;
-      for (const g of scope.querySelectorAll('.dataGridWidget, [role=grid]')) {
+      for (const g of scope.querySelectorAll('.data-grid, [role=grid]')) {
         if (!(g.offsetWidth > 0)) continue;
         // `match` is a selector the wanted row must contain — `.svg-image__users` is a GROUP row on
         // the Users screen, where the first row is the user `admin` and Edit stays disabled.
@@ -1226,7 +1219,7 @@ async function driveStep(step) {
     // And let the grid finish arriving: that same dialog repaints when its LAST node answers, and a
     // selection made on the first paint was gone by the survey (Store Settings still disabled).
     await waitForStableCount(page, () => page.evaluate(() =>
-      document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]').length),
+      document.querySelectorAll('.data-grid [role=row][data-row]').length),
     { budget: 2_000, poll: 300, stableFor: 3, label: 'select-row:settle', kind: 'content', allowZero: true }).catch(() => {});
     cell = (await findCell()) ?? cell;
     await page.mouse.click(cell.x, cell.y);
@@ -1234,12 +1227,12 @@ async function driveStep(step) {
       [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'tick-row') {
-    // The first row's TICK BOX (`TickBoxCell` renders `div.tickBox`), a real click — the batch
+    // The first row's TICK BOX (`TickBoxCell` renders `div.tick-box--cell`), a real click — the batch
     // selection, which enables the batch buttons without selecting the row for the preview.
     const box = await page.evaluate(() => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const tick = [...scope.querySelectorAll('.dataGridWidget tbody tr .tickBox, [role=grid] [role=row] .tickBox')].find((e) => e.offsetWidth > 0);
+      const tick = [...scope.querySelectorAll('.data-grid [role=row][data-row] .tick-box--cell')].find((e) => e.offsetWidth > 0);
       if (!tick) return null;
       const r = tick.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1254,9 +1247,9 @@ async function driveStep(step) {
     // a per-row menu (Dependencies: Open / Properties / Delete / Locate; Users: Open user…). Not a
     // button the survey offers, so it is a seed.
     const box = await page.evaluate((nth) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const rows = [...scope.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
+      const rows = [...scope.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
       const row = rows[nth ?? 0];
       const cell = row && [...row.querySelectorAll('.svgCell-button')].find((c) => c.offsetWidth > 0);
       if (!cell) return null;
@@ -1272,7 +1265,7 @@ async function driveStep(step) {
     // rows (`selector`), and `match` names what the wanted row must contain — the Pipeline icon,
     // because a chooser lists the folders above its documents too.
     const box = await page.evaluate(([selector, match]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const item = [...scope.querySelectorAll(selector)].find((e) => e.offsetWidth > 0 && e.textContent.trim()
         && (!match || e.querySelector(match)));
@@ -1288,11 +1281,11 @@ async function driveStep(step) {
     // folders until a filter expands it to the matching documents. `empty: true` picks the first
     // EMPTY visible text box in the topmost dialog instead of a selector — a create dialog's name.
     const box = await page.evaluate(([selector, empty]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const sel = empty ? 'input[type="text"], input:not([type]), .gwt-TextBox, textarea' : selector;
+      const sel = empty ? 'input[type="text"], input:not([type]), .text-field, textarea' : selector;
       const el = [...scope.querySelectorAll(sel)].find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
-        && (!empty || !String(e.value ?? '').trim()) && !e.classList.contains('quickFilter-textBox'));
+        && (!empty || !String(e.value ?? '').trim()) && !e.classList.contains('quick-filter__input'));
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1317,7 +1310,7 @@ async function driveStep(step) {
       const box = [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0);
       // The ICON, not the text box: a click on the text box calls showPopup() and then bubbles to
       // the box's own click handler, which calls it again — and the second call HIDES the popup.
-      const el = box?.querySelector('.svgIconBox-icon') ?? box;
+      const el = box?.querySelector('.svg-icon-box__icon') ?? box;
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1328,7 +1321,7 @@ async function driveStep(step) {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       // ON SCREEN: a popup is laid out off-viewport (−956,−938) before it is positioned, and another
       // SelectionList (the query help pane) may hold the same text; `offsetWidth > 0` passes both.
-      const row = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+      const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
         .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
       if (!row) return null;
       const r = row.getBoundingClientRect();
@@ -1339,7 +1332,7 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.mouse.up();
     await page.waitForTimeout(400);
-    const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.SelectionBox-renderBox')?.textContent.trim(), step.selector);
+    const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.selection-box__value')?.textContent.trim(), step.selector);
     console.log(`      (set-select ${step.selector} = "${step.value}" → box reads "${shows}")`);
   } else if (step.via === 'click-in-header') {
     // A child of a column HEADER — the `.column-valueFilterIcon` that opens ColumnValuesFilterPresenter.
@@ -1347,7 +1340,7 @@ async function driveStep(step) {
     // aimed at the icon: `QueryTableColumnsManager.onShowMenu` looks at the event's target.
     const box = await page.evaluate(([wanted, child]) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const th = [...document.querySelectorAll('.dataGridWidget th, [role=columnheader]')]
+      const th = [...document.querySelectorAll('[role=columnheader]')]
         .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
       const el = th?.querySelector(child);
       if (!el) return null;
@@ -1362,10 +1355,10 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.waitForTimeout(60);
     await page.mouse.up();
-    // What opens is a SIMPLE popup (`simplePopup-popup`), not a captioned dialog, so the dialog
+    // What opens is a SIMPLE popup (`popup--floating`), not a captioned dialog, so the dialog
     // reader cannot name it; the seed names it, and this is the evidence the seed's claim rests on.
     const popup = await waitUntil(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('.simplePopup-popup')].some((e) => e.offsetWidth > 0) || null),
+      [...document.querySelectorAll('.popup--floating')].some((e) => e.offsetWidth > 0) || null),
     { budget: 2_000, label: 'click-in-header', kind: 'dialog-appear' });
     if (!popup.ok) throw new Error(`no popup after clicking ${step.child} in header "${step.column}"`);
   } else if (step.via === 'set-ace') {
@@ -1384,7 +1377,7 @@ async function driveStep(step) {
       // `match` picks an element by name — the pipeline REFERENCE list is enabled only for an element
       // with a pipelineReference property, which is the XSLT filter, not the Reference Data Filter
       // (that one LOADS reference data; the XSLT filter CONSUMES it).
-      const boxes = [...document.querySelectorAll('.pipelineElementBox-label')].filter((e) => e.offsetWidth > 0);
+      const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0);
       const el = match ? boxes.find((e) => new RegExp(match, 'i').test(e.textContent)) : boxes[boxes.length - 1];
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -1414,10 +1407,10 @@ async function driveStep(step) {
     await gwt.waitForSignIn(page).catch(() => {});
     await page.waitForTimeout(800);
   } else if (step.via === 'tab-menu') {
-    // A dashboard component tab's own menu (the `Settings` button on its tab bar): Rename, Settings,
+    // A dashboard component tab's own menu (the `Tab Actions` button on its tab bar): Rename, Settings,
     // Hide, Duplicate, Remove, Maximise. Used to MAXIMISE a pane so its headers can be clicked.
     const bar = await tabBarOf(step.tab);
-    if (!bar?.settings) throw new Error(`no tab bar with a Settings button for "${step.tab}"`);
+    if (!bar?.settings) throw new Error(`no tab bar with a Tab Actions button for "${step.tab}"`);
     await page.mouse.click(bar.settings.x, bar.settings.y);
     await waitForMenu(page, { budget: 1_500, label: `tab-menu:${step.tab}` }).catch(() => {});
     if (!(await clickMenuItem(page, step.item))) throw new Error(`no "${step.item}" in the "${step.tab}" tab menu`);
@@ -1607,9 +1600,9 @@ if (DIRECTED.includes('dashboard')) {
   // document (discarding), so every seed starts from the stored dashboard.
   const design = [
     { via: 'docType', type: 'Dashboard' },
-    { via: 'button', label: 'Enter Design Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Design Mode', post: true, opens: 'changed' },
   ];
-  const path = ['Dashboard (document)', 'after Enter Design Mode'];
+  const path = ['Dashboard (document)', 'after Design Mode'];
   // No `seedDepth` here on purpose: the route's own post steps spend POSTDEPTH, so a column menu's
   // `changed` items (sorts, moves, Hide, Remove) are recorded but NOT descended — each of those
   // states is the dashboard's whole toolbar again, which the document shard walks.
@@ -1713,28 +1706,28 @@ if (DIRECTED.includes('results')) {
   const withResults = run('from "Example Index" limit 20 select StreamId, EventTime, UserId');
   const annotations = run('from "Annotations" select Id, Title, Status');
   seeds.push(
-    { kind: 'post-action', presenter: 'QueryResultTablePresenter', columnMenus: { selector: '.dataGridWidget th, [role=columnheader]', design: false },
+    { kind: 'post-action', presenter: 'QueryResultTablePresenter', columnMenus: { selector: '[role=columnheader]', design: false },
       path: ['Query (document)', 'after query with results'], route: withResults },
     { kind: 'post-action', presenter: 'QueryResultTablePresenter', seedDepth: 3,
       path: ['Query (document)', 'after query with results (toolbar)'], route: withResults },
     { kind: 'menu', presenter: 'QueryResultTablePresenter', seedDepth: 4,
-      path: ['Query (document)', 'after annotations query', 'after select row', 'Annotate'],
-      route: [...annotations, { via: 'select-row', post: true, opens: 'changed' }, { via: 'button', label: 'Annotate', opens: 'menu' }] },
+      path: ['Query (document)', 'after annotations query', 'after select row', 'Annotate Selected Rows'],
+      route: [...annotations, { via: 'select-row', post: true, opens: 'changed' }, { via: 'button', label: 'Annotate Selected Rows', opens: 'menu' }] },
   );
-  console.log('  + 3 directed results seed(s): a query with rows — its column menu, its toolbar, and the Annotate menu on a selected annotation row');
+  console.log('  + 3 directed results seed(s): a query with rows — its column menu, its toolbar, and the Annotate Selected Rows menu on a selected annotation row');
 }
 if (DIRECTED.includes('annotation')) {
-  // The annotation EDITOR, opened from a selected annotation row's Annotate › Edit Annotation. Its
+  // The annotation EDITOR, opened from a selected annotation row's Annotate Selected Rows › Edit Annotation. Its
   // sub-tabs walk as an editor's do (Events › Add → AddEventLinkPresenter); its own surface adds two
   // things the button reader cannot see: the `Change Retention Period` setting block
-  // (DurationPresenter) and a comment entry's mousedown menu (Edit Entry → CommentEditPresenter).
+  // (DurationPresenter) and a comment entry's mousedown menu (Edit Comment → CommentEditPresenter).
   const annotations = [
     { via: 'docType', type: 'Query' },
     { via: 'set-ace', text: 'from "Annotations" select Id, Title, Status', post: true, opens: 'changed' },
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
     // The annotation `seed-data.mjs` gave a comment entry, by title: `entry: comment` needs one.
     { via: 'select-row', text: SEED_DATA.annotation.title, post: true, opens: 'changed' },
-    { via: 'button', label: 'Annotate', opens: 'menu' },
+    { via: 'button', label: 'Annotate Selected Rows', opens: 'menu' },
     { via: 'button', match: '^Edit Annotation', post: true, opens: 'changed' },
   ];
   seeds.push({ kind: 'editor', presenter: 'AnnotationPresenter', seedDepth: 6,
@@ -1751,12 +1744,12 @@ if (DIRECTED.includes('cf')) {
     { via: 'set-ace', text: 'from "Example Index" limit 20 select StreamId, EventTime, UserId', post: true, opens: 'changed' },
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
   ];
-  const scope = { selector: '.dataGridWidget th, [role=columnheader]', design: false };
+  const scope = { selector: '[role=columnheader]', design: false };
   seeds.push(
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
-      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Conditional Formatting', 'Add', 'after Formatting Type = Custom'],
-      route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Conditional Formatting', opens: 'dialog' },
-        { via: 'button', label: 'Add', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
+      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Edit Conditional Formatting for Table', 'New Formatting Rule', 'after Formatting Type = Custom'],
+      route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Edit Conditional Formatting for Table', opens: 'dialog' },
+        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],
       route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-valueFilterIcon', opens: 'dialog' }] },
@@ -1783,42 +1776,43 @@ if (DIRECTED.includes('pathways')) {
   console.log('  + 1 directed pathways seed');
 }
 if (DIRECTED.includes('stepping')) {
-  // STEPPING MODE on a pipeline: `Enter Stepping Mode` swaps the Structure tab for SteppingPresenter,
+  // STEPPING MODE on a pipeline: `Stepping Mode` swaps the Structure tab for SteppingPresenter,
   // whose meta list finds ONE stream for the seed pipeline and so auto-selects it and steps
   // (`addChangeDataHandler` → `beginStepping` when the page has a single row). `POST /stepping/v1/step`
   // was BLOCKED by the read-only guard until triaged (2026-09-21): it captures element IO into a
   // scratch store under Stroom's TEMP dir, creates no meta and writes no stream, so it is allowed now
   // and the step controls (First/Backward/Forward/Last/Refresh) run for real.
   //
-  // Two doors, neither a button: `Set Location` (StepLocationPresenter) opens from the toolbar's
-  // location LABEL, whose text is `[<metaId>:<part>:<record>]` — data, hence `selector:`; and
-  // ElementPresenter is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
+  // Two doors: `Set Location` (StepLocationPresenter) opens from the toolbar's location button
+  // (titled `Set Location`; its text, `[<metaId>:<part>:<record>]`, is data); and ElementPresenter
+  // is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
   // element is selected in the stepping tree — the same canvas as the Structure tab, so the same
   // `select-element` step. Its panes (code, input, output, log) are the second seed's surface.
   const stepping = [
     { via: 'docType', type: 'Pipeline' },
     { via: 'tab', label: 'Structure', nth: 0 },
-    { via: 'button', label: 'Enter Stepping Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Stepping Mode', post: true, opens: 'changed' },
   ];
   // The meta list finds 100 streams here and its first row is an ERROR stream: selecting it runs
   // `step` (200, `Content is not allowed in prolog`, foundRecord:false) and the step controls stay
   // disabled. An `Events` row parses: `[<meta>:1:1]`, Step Forward → `[<meta>:1:2]`, and the
   // response's elementMap carries the XSLT filter's input and output (probe-stepping.mjs).
   const onStream = [...stepping, { via: 'select-row', text: '^\\S+ Events ', post: true, opens: 'changed' }];
-  // The location label (`selector: .stepLocationLink` → Set Location) is offered by the survey
-  // itself (CLICKABLE_LABELS); it used to be an `extra` on these two seeds.
+  // The location button (`Set Location`) is found by the survey's button reader; it used to be an
+  // `extra` on these two seeds.
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 3,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode'], route: stepping });
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode'], route: stepping });
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 4,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode', 'after select stream (Events)'], route: onStream });
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode', 'after select stream (Events)'], route: onStream });
   seeds.push({ kind: 'post-action', presenter: 'ElementPresenter', seedDepth: 5,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode', 'after select stream (Events)', 'after select element (xsltFilter)'],
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode', 'after select stream (Events)', 'after select element (xsltFilter)'],
     route: [...onStream, { via: 'select-element', match: 'xslt', post: true, opens: 'changed' }] });
   console.log('  + 3 directed stepping seed(s): stepping mode at rest, stepping on an Events stream, its XSLT element');
 }
 if (DIRECTED.includes('datalink')) {
-  // A result cell that is a `data(…)` HYPERLINK with displayType `tab` — rendered `<u link="…">`, and
-  // DataGridSelectionEventManager fires HyperlinkEvent for it, whose handler fires ShowDataEvent as
+  // A result cell that is a `data(…)` HYPERLINK with displayType `tab` — rendered `<u link="…"
+  // role="link">`, and DataGridSelectionEventManager fires HyperlinkEvent for it (on a mousedown,
+  // or Enter), whose handler fires ShowDataEvent as
   // a STROOM_TAB — DataPreviewTab-
   // Presenter, the one door opened only by an event (door-preconditions.md, class `event`). Nothing
   // to seed: the query builds the link over the same rows the `results` seeds use.
@@ -1827,7 +1821,7 @@ if (DIRECTED.includes('datalink')) {
     { via: 'set-ace', text: "from \"Example Index\" limit 5 select StreamId, data('Open', StreamId, 1, 1, 1, 1, 10, 1, 'preview', 'tab') as Link", post: true, opens: 'changed' },
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
   ];
-  const link = `${SELECTOR}.dataGridWidget tbody u[link]`;
+  const link = `${SELECTOR}.data-grid [role=gridcell] u[link]`;
   seeds.push({ kind: 'post-action', presenter: 'QueryResultTablePresenter', seedDepth: 3,
     path: ['Query (document)', 'after query with data links'], route: linked, extra: [link] });
   // The tab the link opens, walked as an EDITOR and named — the same shape as the `stream` seed's
@@ -1840,17 +1834,17 @@ if (DIRECTED.includes('datalink')) {
 if (DIRECTED.includes('settings')) {
   // A component's Settings DIALOG, whose own tabs the walk now descends: the Table's is Basic /
   // Conditional Formatting / Selection Filter and the Query's is Basic / Selection Query, and each
-  // Selection tab's Add opens `Add New Selection Handler` (SelectionHandlerPresenter) — a `create`
+  // Selection tab's New Selection Handler opens `Add New Selection Handler` (SelectionHandlerPresenter) — a `create`
   // path on a list that is empty here, one tab across from where the document shard stood.
   const design = [
     { via: 'docType', type: 'Dashboard' },
-    { via: 'button', label: 'Enter Design Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Design Mode', post: true, opens: 'changed' },
   ];
   // The dialog IS the component's settings presenter; the selection-handler and rules lists are
   // what it embeds, and the handler inventory joins through that embedding.
   for (const [tab, presenter] of [['Table', 'TableSettingsPresenter'], ['Query', 'QuerySettingsPresenter']]) {
     seeds.push({ kind: 'dialog', presenter, seedDepth: 3,
-      path: ['Dashboard (document)', 'after Enter Design Mode', tab, 'Settings'],
+      path: ['Dashboard (document)', 'after Design Mode', tab, 'Settings'],
       route: [...design, { via: 'tab-menu', tab, item: 'Settings', opens: 'dialog' }] });
   }
   console.log('  + 2 directed settings seeds: the Table and Query components\' Settings dialogs');
@@ -1866,9 +1860,10 @@ if (DIRECTED.includes('gitrepo')) {
 }
 if (DIRECTED.includes('fields')) {
   // The field lists that fill CLIENT-SIDE from their own New (the handler inventory's unreached
-  // Edit / Remove): a Lucene index's Fields tab and a Solr index's. `New Field` › OK is a
-  // validation alert on a blank form; the walker fills the name and presses OK again, the row
-  // appears, and the selection rule reaches Edit Field / Remove Field on it.
+  // Edit / Remove): a Lucene index's Fields tab and a Solr index's. `New Index Field` › OK is
+  // a validation alert on a blank form; the walker fills the name and presses OK again, the row
+  // appears, and the selection rule reaches Edit Selected Index Field / Delete Selected Index Fields
+  // (Lucene) or Remove Selected Index Fields (Solr) on it.
   for (const [type, presenter] of [['LuceneIndex', 'IndexFieldListPresenter'], ['SolrIndex', 'SolrIndexFieldListPresenter']]) {
     seeds.push({ kind: 'editor-tab', presenter, seedDepth: 2, path: [`${type} (document)`, 'Fields'],
       route: [{ via: 'docType', type }, { via: 'tab', label: 'Fields', nth: 0 }] });
@@ -1892,7 +1887,7 @@ if (DIRECTED.includes('process')) {
   seeds.push({ kind: 'dialog', presenter: 'ProcessorLimitsPresenter', seedDepth: 5,
     path: ['Dashboard (document)', 'Process', 'after filter', 'after select tree item (a pipeline)', 'OK'],
     route: [{ via: 'docType', type: 'Dashboard' }, { via: 'button', label: 'Process', opens: 'dialog' },
-      { via: 'fill', selector: 'input.quickFilter-textBox', text: 'Example', post: true, opens: 'changed' },
+      { via: 'fill', selector: 'input.quick-filter__input', text: 'Example', post: true, opens: 'changed' },
       { via: 'select-tree', selector: '.explorerCell', match: '.explorerCell-icon[title="Pipeline"]', post: true, opens: 'changed' },
       { via: 'button', label: 'OK', opens: 'dialog' }] });
   console.log('  + 1 directed process seed: a pipeline chosen for a dashboard\'s Process');
@@ -2329,7 +2324,7 @@ async function probeMouse(node, id) {
     const v = contextVerdict(ev);
     affordances.push({ node: id, label: `right-click ${t.what}`, kind: 'context',
       outcome: v.verdict === 'pass' ? 'menu' : 'nothing',
-      detail: 'a context handler that runs puts a .menuItem-outer menu on screen',
+      detail: 'a context handler that runs puts a .menu__item menu on screen',
       rows: [], blocked: [], clickMs: Date.now() - tc, backMs: 0, check: { kind: 'context', ...v, evidence: ev } });
     if (v.verdict === 'fail') checkFails += 1;
     if (v.verdict !== 'unchecked') console.log(`      ⊿ right-click ${t.what} → ${v.why.slice(0, 100)}  {context ${v.verdict}}`);
@@ -2752,7 +2747,7 @@ async function walk(node, state, arrivedAt) {
         // pop on it then "failed". Wait for READY, not PRESENT — the rule driveStep already applies.
         if (result.outcome === 'changed') {
           await waitForStableCount(page, () => page.evaluate(() =>
-            document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+            document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
           { budget: 1_500, poll: 150, stableFor: 2, label: `content:${label}`, kind: 'content', allowZero: true })
             .catch(() => {});
           after = await settledSurvey({ lead: 0 });
@@ -2873,11 +2868,11 @@ async function walk(node, state, arrivedAt) {
     if (node.kind === 'dialog' && label === 'OK' && result.outcome === 'alert' && said?.class === 'validation'
       && !blocked.length && !explorerCreate && !/after OK \(/.test(node.path.at(-1) ?? '')) {
       const hasEmpty = await page.evaluate(() => {
-        const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+        const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
         // The alert is the topmost popup; the form is the one beneath it.
         const form = popups[popups.length - 2];
-        return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .gwt-TextBox, textarea')]
-          .some((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !String(e.value ?? '').trim() && !e.classList.contains('quickFilter-textBox'));
+        return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .text-field, textarea')]
+          .some((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !String(e.value ?? '').trim() && !e.classList.contains('quick-filter__input'));
       }).catch(() => false);
       if (hasEmpty) {
         const caption = String(node.path.at(-1) ?? 'value').replace(/[^A-Za-z0-9 ]+/g, ' ').trim().slice(0, 30);
@@ -2963,7 +2958,7 @@ async function walk(node, state, arrivedAt) {
     // this click's doing — a leaf chosen from a menu, a screen a button opened — and is closed
     // before the check, or the next node is surveyed over the wrong screen.
     // A toggle without an entry: the click made exactly one new button appear whose label shares
-    // its opening words with the click (`Click to show all jobs` -> `Click to show enabled jobs`).
+    // its opening words with the click (`Expand Groups to Level 2` -> `Expand Groups to Level 3`).
     // Bounded — one candidate, same prefix — and the signature check decides whether it worked.
     const grew = after ? after.buttons.filter((b) => !before.buttons.includes(b)) : [];
     const twin = grew.length === 1 && grew[0].split(' ').slice(0, 2).join(' ') === label.split(' ').slice(0, 2).join(' ')
@@ -3076,13 +3071,13 @@ async function walk(node, state, arrivedAt) {
         route: [...node.route, { via: 'right-click', what: t.what, opens: 'menu' }] };
       const childId = idOf(child);
       if (seen.has(childId)) continue;
-      const beforeMenu = await page.evaluate(() => document.querySelectorAll('.menuItem-outer').length).catch(() => 0);
+      const beforeMenu = await page.evaluate(() => document.querySelectorAll('.menu__item').length).catch(() => 0);
       const t0 = Date.now();
       try {
         await driveStep(child.route.at(-1));
         const after = await settledSurvey();
         const items = (await readVisibleMenuItems(page).catch(() => [])).map((m) => (typeof m === 'string' ? m : m?.label)).filter(Boolean);
-        const grew = (await page.evaluate(() => document.querySelectorAll('.menuItem-outer').length).catch(() => 0)) > beforeMenu;
+        const grew = (await page.evaluate(() => document.querySelectorAll('.menu__item').length).catch(() => 0)) > beforeMenu;
         if (!grew || !items.length) {
           // Say so rather than continuing in silence: a right-click that opens nothing here, when the
           // checker a moment earlier saw a menu, means the page moved under us — and a silent skip
@@ -3106,7 +3101,7 @@ async function walk(node, state, arrivedAt) {
   }
 
   // ── A selection is a precondition (door-preconditions.md, class `selection`) ──
-  // `Edit` on the volume-group, node-group, result-store and user screens is DISABLED until a row
+  // `Edit Selected …` on the volume-group, node-group, result-store and user screens is DISABLED until a row
   // is selected, so no click on the screen at rest can open those dialogs. Select the first row
   // and walk ONLY what that newly enabled — the rest of the screen was walked above. Bounded by
   // POSTDEPTH like any other post-action state, and skipped when the selection enabled nothing.
@@ -3148,10 +3143,10 @@ async function walk(node, state, arrivedAt) {
       }
     }
     // A TICK is a different selection: a stream grid's first column is a `TickBoxCell`, and
-    // ticking a row is what enables the BATCH buttons — Download, Restore, Delete, Process,
-    // `Selection summary` (MetaPresenter's, all unreached in the handler inventory) — while a
+    // ticking a row is what enables the BATCH buttons — Download, Restore, Delete and Process
+    // Selected Streams, `Show Summary of Selected Streams` (MetaPresenter's, all unreached in the handler inventory) — while a
     // click on the row selects it for the preview. Same shape as above, on the tick.
-    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr .tickBox, [role=grid] [role=row] .tickBox')]
+    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.data-grid [role=row][data-row] .tick-box--cell')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);
     if (hasTick) {
       const tick = { kind: 'post-action', path: [...node.path, `after tick row in ${node.path.at(-1)}`],
@@ -3188,7 +3183,7 @@ for (const seed of seeds) {
   const t0 = Date.now();
   // Where this seed's column headers are, BEFORE the route is driven: a route may itself click one.
   columnScope = typeof seed.columnMenus === 'object' ? seed.columnMenus
-    : seed.columnScope ?? { selector: '.dashboard-panel .dataGridWidget th, .dashboard-panel [role=columnheader]', design: true };
+    : seed.columnScope ?? { selector: '.dashboard-panel [role=columnheader]', design: true };
   try {
     await resync(seed);
   } catch (e) {

@@ -16,21 +16,10 @@
 
 package stroom.widget.help.client.presenter;
 
-import stroom.svg.shared.SvgImage;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.view.AbstractPopupPanel;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.popup.client.view.Popup;
-import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.help.client.HelpPopup;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -54,12 +43,8 @@ public class HelpManager {
             return;
         }
 
-        final HelpPopup popup = new HelpPopup(showHelpEvent.getContent());
-        // A mousedown on the help button mustn't auto-hide the popup, so that its click can toggle it
-        // shut
-        if (element != null) {
-            popup.addAutoHidePartner(element);
-        }
+        final HelpPopup popup = HelpPopup.markdown(showHelpEvent.getContent(), "Help");
+        popup.setOpener(element);
         popup.addCloseHandler(event -> {
             if (currentPopup == popup) {
                 currentPopup = null;
@@ -68,82 +53,6 @@ public class HelpManager {
         });
         currentPopup = popup;
         currentElement = element;
-        popup.setVisible(false);
-        popup.setModal(false);
-        // Add the markdown class so that it gets styled like rendered markdown, so we are
-        // consistent with that. Add quickFilter-tooltip so it get styling consistent
-        // with quickfilter popups
-        popup.setStyleName("quickFilter-tooltip help-popup markdown");
-
-        final PopupPosition popupPosition = showHelpEvent.getPopupPosition();
-
-        PopupUtil.showPopup(
-                popup,
-                false,
-                popupPosition,
-                null,
-                PopupType.POPUP,
-                null);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class HelpPopup extends AbstractPopupPanel implements Popup {
-
-        public HelpPopup(final SafeHtml content) {
-            this(content, new CloseActionHandler());
-        }
-
-        private HelpPopup(final SafeHtml content, final CloseActionHandler closeActionHandler) {
-            // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
-            // If this is set, the panel closes itself automatically when the user
-            // clicks outside of it.
-            super(closeActionHandler, true, false);
-            // Escape (the close action) closes it
-            closeActionHandler.popup = this;
-
-            setWidget(new HTMLPanel(content));
-            // A dialog (not modal) for screen readers
-            getElement().setAttribute("role", "dialog");
-            getElement().setAttribute("aria-label", "Help");
-        }
-
-        @Override
-        public void setContent(final Widget widget) {
-            setWidget(widget);
-        }
-
-        @Override
-        public void forceHide(final boolean autoClose) {
-            super.hide(autoClose);
-        }
-
-        @Override
-        public void setIcon(final SvgImage icon) {
-            // No icon
-        }
-
-        @Override
-        public void setCaption(final String caption) {
-            // No caption
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class CloseActionHandler implements DialogActionUiHandlers {
-
-        private PopupPanel popup;
-
-        @Override
-        public void onDialogAction(final DialogAction action) {
-            if (action == DialogAction.CLOSE && popup != null) {
-                popup.hide();
-            }
-        }
+        popup.show(showHelpEvent.getPopupPosition());
     }
 }

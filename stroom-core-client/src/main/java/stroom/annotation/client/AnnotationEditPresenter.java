@@ -68,22 +68,27 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Clipboard;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -106,6 +111,9 @@ public class AnnotationEditPresenter
     private static final String ENTRY_ID_ATTRIBUTE = "entryId";
     private static final String ENTRY_TYPE_ATTRIBUTE = "entryType";
     private static final String GROUP_ID_ATTRIBUTE = "groupId";
+    // The class of an entry's actions button, which opens the entry's menu
+    private static final String ENTRY_ACTIONS_CLASS = "annotationHistoryActions";
+    private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
             "<div class=\"setting-block-icon icon-colour__grey svgIcon\">" +
@@ -133,6 +141,11 @@ public class AnnotationEditPresenter
     private static final Attribute HISTORY_ITEM = Attribute.className("annotationHistoryItem");
     private static final Attribute ANNOTATION_TABLE = Attribute.className("annotationTable");
     private static final Attribute ANNOTATION_LINK = Attribute.className("annotationLink");
+    // An event or annotation reference is a link the keyboard can reach and follow (with Enter)
+    private static final Attribute LINK_ROLE = new Attribute("role", "link");
+    private static final Attribute LINK_TAB_INDEX = new Attribute("tabindex", "0");
+    // Put between references written with nothing between them: an em space
+    private static final String LINK_GAP = "\u2003";
 
     private final AnnotationResourceClient annotationResourceClient;
     private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
@@ -203,6 +216,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        annotationStatusPresenter.setAccessibleName("Statuses");
 
         this.annotationLabelPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
@@ -211,6 +225,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationLabelPresenter.setAccessibleName("Labels");
 
         this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
@@ -219,6 +234,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationCollectionPresenter.setAccessibleName("Collections");
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
@@ -232,6 +248,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        commentPresenter.setAccessibleName("Standard comments");
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
     }
 
@@ -531,28 +548,25 @@ public class AnnotationEditPresenter
 
             final HTML panel = new HTML(html.toSafeHtml());
             panel.setStyleName("dock-max annotationHistoryOuter");
+            // Enter on an event or annotation reference follows it, as a mouse press does. Enter,
+            // Space, Shift+F10 or the context menu key on an entry's actions button opens the
+            // entry's menu, as pressing the entry does
+            panel.addDomHandler(e -> {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
+                    e.preventDefault();
+                    followLink(target);
+                } else if (ElementUtil.hasClassName(target, ENTRY_ACTIONS_CLASS) && isMenuKey(e)) {
+                    e.preventDefault();
+                    showEntryEditMenu(target, new PopupPosition(
+                            new Rect(target).grow(3), PopupLocation.BELOW));
+                }
+            }, KeyDownEvent.getType());
             panel.addMouseDownHandler(e -> {
                 // If the user has clicked on a link then consume the event.
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 if (target.hasTagName("u")) {
-                    final String link = target.getAttribute("link");
-                    if (NullSafe.isNonBlankString(link)) {
-                        final Hyperlink hyperlink = Hyperlink.create(link);
-                        if (hyperlink != null) {
-                            HyperlinkEvent.fire(this, hyperlink, this);
-                        }
-                    } else {
-                        final String eventIdString = target.getAttribute("eventId");
-                        if (NullSafe.isNonBlankString(eventIdString)) {
-                            final EventId eventId = EventId.parse(eventIdString);
-                            ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
-                        } else {
-                            final String annotationIdString = target.getAttribute("annotationId");
-                            if (NullSafe.isNonBlankString(annotationIdString)) {
-                                EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
-                            }
-                        }
-                    }
+                    followLink(target);
                 } else {
                     Element parent = target;
                     String id = null;
@@ -580,37 +594,26 @@ public class AnnotationEditPresenter
                         }
                         updateHistory();
                     } else if (NullSafe.isNonBlankString(id) && NullSafe.isNonBlankString(type)) {
-                        final AnnotationEntryType entryType =
-                                AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(Byte.parseByte(type));
-                        showEntryEditMenu(e, Long.parseLong(id), entryType);
+                        showEntryEditMenu(target, new PopupPosition(e.getClientX(), e.getClientY()));
                     }
                 }
             });
 
-            final TextArea textCopy = new TextArea();
-            textCopy.setTabIndex(-2);
-            textCopy.setStyleName("annotationHistoryText");
-            textCopy.setText(text.toString());
+            final String historyText = text.toString();
 
             final Button copyToClipboard = new Button();
             copyToClipboard.setIcon(SvgImage.COPY);
             copyToClipboard.setText("Copy History");
             copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
-            copyToClipboard.addClickHandler(e -> {
-                textCopy.selectAll();
-                final boolean success = copy(textCopy.getElement());
-                if (!success) {
-                    AlertEvent.fireError(
-                            AnnotationEditPresenter.this,
-                            "Unable to copy",
-                            null);
-                }
-            });
+            copyToClipboard.addClickHandler(e -> Clipboard.writeText(historyText, () -> {
+            }, () -> AlertEvent.fireError(
+                    AnnotationEditPresenter.this,
+                    "Unable to copy",
+                    null)));
 
             final FlowPanel verticalPanel = new FlowPanel();
             verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
             verticalPanel.add(panel);
-            verticalPanel.add(textCopy);
             verticalPanel.add(copyToClipboard);
 
             getView().setHistoryView(verticalPanel);
@@ -621,9 +624,41 @@ public class AnnotationEditPresenter
         }
     }
 
-    private void showEntryEditMenu(final MouseDownEvent event,
-                                   final long id,
-                                   final AnnotationEntryType entryType) {
+    // Whether a key opens an entry's menu from its actions button: Enter or Space, as for any
+    // button, or Shift+F10 or the context menu key, as for any context menu
+    private static boolean isMenuKey(final KeyDownEvent event) {
+        final int keyCode = event.getNativeKeyCode();
+        return keyCode == KeyCodes.KEY_ENTER
+               || keyCode == KeyCodes.KEY_SPACE
+               || keyCode == KeyCodes.KEY_CONTEXT_MENU
+               || (keyCode == KeyCodes.KEY_F10 && event.isShiftKeyDown());
+    }
+
+    // Shows the menu of the history entry that an element (the entry, or something in it) is in
+    private void showEntryEditMenu(final Element element, final PopupPosition popupPosition) {
+        Element entryElement = element;
+        while (entryElement != null && NullSafe.isBlankString(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE))) {
+            entryElement = entryElement.getParentElement();
+        }
+        if (entryElement == null || NullSafe.isBlankString(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE))) {
+            return;
+        }
+        final long id = Long.parseLong(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE));
+        final AnnotationEntryType entryType = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER
+                .fromPrimitiveValue(Byte.parseByte(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE)));
+        // The entry's actions button names the menu, and is what the menu was opened from
+        final Element actionsButton = ElementUtil.findChild(entryElement, ENTRY_ACTIONS_CLASS);
+        final String name = actionsButton != null
+                ? actionsButton.getAttribute(ARIA_LABEL_ATTRIBUTE)
+                : "Actions for history entry '" + entryType.getDisplayValue() + "'";
+        showEntryEditMenu(id, entryType, name, actionsButton, popupPosition);
+    }
+
+    private void showEntryEditMenu(final long id,
+                                   final AnnotationEntryType entryType,
+                                   final String name,
+                                   final Element opener,
+                                   final PopupPosition popupPosition) {
         // A read-only annotation's entries can't be edited or deleted
         if (isReadOnly()) {
             return;
@@ -631,7 +666,7 @@ public class AnnotationEditPresenter
         final List<Item> menuItems = new ArrayList<>();
         if (AnnotationEntryType.COMMENT.equals(entryType)) {
             final IconMenuItem editItem = new IconMenuItem.Builder()
-                    .text("Edit Entry")
+                    .text("Edit Comment")
                     .icon(SvgImage.EDIT)
                     .command(() -> editComment(id))
                     .build();
@@ -645,11 +680,12 @@ public class AnnotationEditPresenter
                 .build();
         menuItems.add(deleteItem);
 
-        final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
         ShowMenuEvent
                 .builder()
+                .name(name)
                 .items(menuItems)
                 .popupPosition(popupPosition)
+                .opener(opener)
                 .fire(this);
     }
 
@@ -832,6 +868,25 @@ public class AnnotationEditPresenter
         return userRef.toDisplayString();
     }
 
+    // An entry's actions icon. While the entry's menu can be used (the annotation isn't read only)
+    // it is a button that opens the menu, named for the entry, so that the menu can be reached
+    // from the keyboard as well as by pressing the entry
+    private SafeHtml getEntryActions(final AnnotationEntry entry) {
+        if (isReadOnly()) {
+            return ELLIPSES;
+        }
+        final String name = "Actions for history entry '" + entry.getEntryType().getDisplayValue()
+                            + "' by " + getUserName(entry.getEntryUser());
+        final String startTag = "<div class=\"setting-block-icon icon-colour__grey svgIcon "
+                                + ENTRY_ACTIONS_CLASS + "\" role=\"button\" tabindex=\"0\" "
+                                + "aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"";
+        return new SafeHtmlBuilder()
+                .append(SafeHtmlUtils.fromTrustedString(startTag))
+                .appendEscaped(name)
+                .append(SafeHtmlUtils.fromTrustedString("\">" + SvgImage.ELLIPSES_VERTICAL.getSvg() + "</div>"))
+                .toSafeHtml();
+    }
+
     private Attribute[] getEntryIdAttributes(final Attribute className,
                                              final AnnotationEntry entry) {
         return new Attribute[]{
@@ -963,7 +1018,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        header.append(ELLIPSES);
+                        header.append(getEntryActions(entry));
 
                     }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
                     border.div(body -> decorateComment(body, entryUiValue), HISTORY_COMMENT_BODY);
@@ -996,7 +1051,7 @@ public class AnnotationEditPresenter
                     }, HISTORY_LABEL);
 
                     // Add change icon.
-                    item.append(ELLIPSES);
+                    item.append(getEntryActions(entry));
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
 
                 added = true;
@@ -1023,7 +1078,7 @@ public class AnnotationEditPresenter
                             }, HISTORY_LABEL);
 
                             // Add change icon.
-                            header.append(ELLIPSES);
+                            header.append(getEntryActions(entry));
 
                         }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
 
@@ -1075,7 +1130,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        item.append(ELLIPSES);
+                        item.append(getEntryActions(entry));
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
@@ -1103,7 +1158,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        item.append(ELLIPSES);
+                        item.append(getEntryActions(entry));
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
@@ -1145,7 +1200,7 @@ public class AnnotationEditPresenter
                     }, HISTORY_LABEL);
 
                     // Add change icon.
-                    item.append(ELLIPSES);
+                    item.append(getEntryActions(entry));
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
                 added = true;
             }
@@ -1158,6 +1213,8 @@ public class AnnotationEditPresenter
         final char[] chars = comment.toCharArray();
 
         boolean start = true;
+        // Whether a link has been added (so one added next with no text before it needs a space)
+        boolean afterLink = false;
         for (int i = 0; i < chars.length; i++) {
             final char c = chars[i];
             if (start && c == '#') {
@@ -1170,10 +1227,15 @@ public class AnnotationEditPresenter
                     if (sb.length() > 0) {
                         html.append(sb.toString());
                         sb.setLength(0);
+                    } else if (afterLink) {
+                        // Links written with nothing between them (#5#6) are spaced apart (an
+                        // em space, wide enough that each is a target of its own, WCAG 2.5.8)
+                        html.append(LINK_GAP);
                     }
 
                     // Append the link.
                     link(html, AnnotationEntryType.LINK_ANNOTATION, idString);
+                    afterLink = true;
 
                     // Jump to next index.
                     i += idString.length();
@@ -1199,10 +1261,13 @@ public class AnnotationEditPresenter
                             if (sb.length() > 0) {
                                 html.append(sb.toString());
                                 sb.setLength(0);
+                            } else if (afterLink) {
+                                html.append(LINK_GAP);
                             }
 
                             // Append the link.
                             link(html, AnnotationEntryType.LINK_EVENT, streamIdString + ":" + eventIdString);
+                            afterLink = true;
 
                             // Jump to next index.
                             i = pos - 1;
@@ -1282,15 +1347,27 @@ public class AnnotationEditPresenter
     }
 
 
-    private static native boolean copy(final Element element) /*-{
-        var activeElement = $doc.activeElement;
-        element.focus();
-        var success = $doc.execCommand('copy');
-        if (activeElement) {
-            activeElement.focus();
+    // Follows a link in the history: a hyperlink, or an event or annotation reference
+    private void followLink(final Element target) {
+        final String link = target.getAttribute("link");
+        if (NullSafe.isNonBlankString(link)) {
+            final Hyperlink hyperlink = Hyperlink.create(link);
+            if (hyperlink != null) {
+                HyperlinkEvent.fire(this, hyperlink, this);
+            }
+        } else {
+            final String eventIdString = target.getAttribute("eventId");
+            if (NullSafe.isNonBlankString(eventIdString)) {
+                final EventId eventId = EventId.parse(eventIdString);
+                ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
+            } else {
+                final String annotationIdString = target.getAttribute("annotationId");
+                if (NullSafe.isNonBlankString(annotationIdString)) {
+                    EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
+                }
+            }
         }
-        return success;
-    }-*/;
+    }
 
     private static void link(final HtmlBuilder builder,
                              final AnnotationEntryType entryType,
@@ -1300,7 +1377,11 @@ public class AnnotationEditPresenter
             final EventId eventId = EventId.parse(value);
             if (eventId != null) {
                 builder.underline(u -> u.append(eventId.toString()),
-                        ANNOTATION_LINK, new Attribute("eventId", eventId.toString()));
+                        ANNOTATION_LINK,
+                        new Attribute("eventId", eventId.toString()),
+                        LINK_ROLE,
+                        LINK_TAB_INDEX,
+                        new Attribute("aria-label", "Event " + eventId));
             } else {
                 builder.bold(value);
             }
@@ -1309,7 +1390,11 @@ public class AnnotationEditPresenter
             builder.underline(u -> {
                 u.append("#");
                 u.append(value);
-            }, ANNOTATION_LINK, new Attribute("annotationId", value));
+            }, ANNOTATION_LINK,
+                    new Attribute("annotationId", value),
+                    LINK_ROLE,
+                    LINK_TAB_INDEX,
+                    new Attribute("aria-label", "Annotation " + value));
         } else {
             builder.bold(value);
         }
@@ -1386,6 +1471,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationStatusPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Status")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationStatusPresenter.focus())
@@ -1414,6 +1500,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationLabelPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Labels")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationLabelPresenter.focus())
@@ -1434,6 +1521,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationCollectionPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Collections")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationCollectionPresenter.focus())
@@ -1452,6 +1540,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(commentPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Comment")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> commentPresenter.focus())

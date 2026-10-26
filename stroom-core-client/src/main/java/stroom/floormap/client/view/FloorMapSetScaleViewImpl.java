@@ -20,11 +20,11 @@ import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapSetScalePresenter.FloorMapSetScaleView;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Family;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -52,7 +52,7 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
     private final FlowPanel root;
     private final Label currentReading = new Label();
     private final TextBox distanceBox = new TextBox();
-    private final ListBox unitListBox = new ListBox();
+    private final SelectionBox<Unit> unitListBox = new SelectionBox<>();
 
     @Inject
     public FloorMapSetScaleViewImpl() {
@@ -61,9 +61,10 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
 
         for (final Unit unit : Unit.values()) {
             if (unit.getFamily() == Family.METRIC) {
-                unitListBox.addItem(unit.getLabel(), unit.name());
+                unitListBox.addItem(unit);
             }
         }
+        unitListBox.setDisplayValueFunction(Unit::getLabel);
 
         distanceBox.addStyleName("stroom-control");
         distanceBox.addStyleName("floormap-set-scale-distance");
@@ -76,6 +77,7 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
 
         final Grid grid = new Grid(2, 2);
         grid.addStyleName("floormap-set-scale-fields");
+        FloorMapAria.layoutTable(grid);
         grid.setText(ROW_CURRENT, 0, "The line you measured is currently");
         grid.setWidget(ROW_CURRENT, 1, currentReading);
         grid.setText(ROW_DISTANCE, 0, "It is really");
@@ -88,7 +90,7 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
         FloorMapAria.labelledByCell(grid, ROW_DISTANCE, 0, distanceBox);
         // The unit list shares the row, so the row label alone would not say what
         // it selects.
-        FloorMapAria.label(unitListBox, "Unit of the distance you typed");
+        FloorMapAria.labelInnerControl(unitListBox, "Unit of the distance you typed");
     }
 
     @Override
@@ -117,26 +119,17 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
 
     @Override
     public void setUnit(final Unit unit) {
-        final String value = unit != null
-                ? unit.name()
-                : Unit.METRE.name();
-        for (int i = 0; i < unitListBox.getItemCount(); i++) {
-            if (unitListBox.getValue(i).equals(value)) {
-                unitListBox.setSelectedIndex(i);
-                return;
-            }
-        }
+        // Only the metric units are listed
+        unitListBox.setValue(unit != null && unitListBox.getItems().contains(unit)
+                ? unit
+                : Unit.METRE);
     }
 
     @Override
     public Unit getUnit() {
-        try {
-            return Unit.valueOf(unitListBox.getSelectedValue());
-        } catch (final IllegalArgumentException | NullPointerException e) {
-            // The list is built from the enum, so this cannot normally happen;
-            // falling back keeps a broken selection from blocking the dialog.
-            return Unit.METRE;
-        }
+        return unitListBox.getValue() != null
+                ? unitListBox.getValue()
+                : Unit.METRE;
     }
 
     @Override

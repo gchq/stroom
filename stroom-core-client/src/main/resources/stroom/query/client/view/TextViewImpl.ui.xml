@@ -8,7 +8,7 @@
         <g:FlowPanel styleName="dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-max"/>
             <b:Toolbar name="Text actions" addStyleNames="dock-min">
-                <b:ToolbarButton ui:field="close" svg="CLOSE" title="Close"/>
+                <b:ToolbarButton ui:field="close" svg="CLOSE" title="Close Text Pane"/>
             </b:Toolbar>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-max stepping-button-container">
@@ -18,6 +18,6 @@
                          title="Enter Stepping Mode" visible="false"/>
         </g:FlowPanel>
         <l:ClassificationLabel ui:field="classification" styleName="dock-min classificationLabel"/>
-        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
+        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" />
     </g:FlowPanel>
 </ui:UiBinder>

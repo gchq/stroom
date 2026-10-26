@@ -25,14 +25,14 @@ import stroom.annotation.shared.UnlinkEvents;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -46,7 +46,7 @@ import javax.inject.Inject;
 public class LinkedEventPresenter
         extends DocPresenter<LinkedEventView, Annotation> {
 
-    private final MyDataGrid<EventId> dataGrid;
+    private final DataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
 
     private final AnnotationResourceClient annotationResourceClient;
@@ -72,7 +72,7 @@ public class LinkedEventPresenter
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Linked Events");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

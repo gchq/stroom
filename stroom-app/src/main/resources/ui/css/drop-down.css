@@ -1,0 +1,78 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A picker (stroom.widget.dropdowntree.client.view.DropDownViewImpl, the document and user
+   pickers), named BEM style (block, block__element): a button showing the chosen value
+   (drop-down__value), with the "…" icon at its end (drop-down__icon). A problem with the value is
+   shown as a form shows what is wrong with a field: the picker is aria-invalid, and the message is in
+   its form group's feedback, or a line of its own under it (drop-down__feedback).
+   It draws the field with the shared stroom-control classes, whose readonly and disabled classes
+   give it the read-only and disabled looks every field has.
+*/
+
+.drop-down {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 200px;
+    cursor: pointer;
+}
+
+/* One that can't be used (disabled, or read only, which is aria-disabled too) */
+.drop-down[aria-disabled="true"] {
+    cursor: default;
+}
+
+/* The chosen value, on one line, ending in an ellipsis clear of the icon */
+.drop-down__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 20px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The "…" icon, a picture of what the button does, in the bottom corner */
+.drop-down__icon {
+    position: absolute;
+    display: flex;
+    bottom: 0;
+    right: 4px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.drop-down__icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* A problem with the value (e.g. the document can't be found): the red border of an invalid field,
+   and, outside a form group (which shows it in its own feedback), the message under the picker */
+.drop-down[aria-invalid="true"] {
+    border: thin solid var(--focus-border--invalid) !important;
+}
+
+.drop-down__feedback {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 80%;
+    color: var(--feedback);
+}

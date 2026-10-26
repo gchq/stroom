@@ -19,8 +19,6 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.SessionDetails;
@@ -30,6 +28,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -57,7 +57,7 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final MyDataGrid<SessionDetails> dataGrid;
+    private final DataGrid<SessionDetails> dataGrid;
     private final MultiSelectionModelImpl<SessionDetails> selectionModel;
     private final ButtonView endSessionButton;
 
@@ -72,13 +72,15 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        this.dataGrid.setKeyProvider(SessionDetails::getSessionHandle);
         this.dataGrid.setTableName("Sessions");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
         view.getToolbar().setName("Session actions");
-        endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End this session", this::endSelectedSession);
+        endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End Selected Session", this::endSelectedSession);
         endSessionButton.setEnabled(false);
         initTableColumns();
     }

@@ -46,9 +46,6 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.grid.client.MessagePanel;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -108,6 +105,9 @@ import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.MessagePanel;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -173,7 +173,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final UserPreferencesManager userPreferencesManager;
     private final DynamicColumnSelectionListModel columnSelectionListModel;
     private final ColumnsManager columnsManager;
-    private final MyDataGrid<TableRow> dataGrid;
+    private final DataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
@@ -229,7 +229,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(this);
         annotationManager.setTaskMonitorFactory(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
+        dataGrid.setVirtual(true);
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -245,18 +247,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         pagerView.getToolbar().setName("Table actions");
-        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download", this::onDownload);
+        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download Table Results",
+                this::onDownload);
         downloadButton.setEnabled(false);
         downloadButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Show Column Filters",
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Column Filters",
                 pressed -> toggleShowValueFilters());
 
         // Annotate
-        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate", this::showAnnotationMenu);
+        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate Selected Rows",
+                this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
+        annotateButton.setOpensMenu(true);
 
         // Ask AI
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
@@ -466,11 +471,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void setShowValueFilters(final boolean showValueFilters) {
         valueFilterButton.setState(showValueFilters);
-        if (showValueFilters) {
-            valueFilterButton.setTitle("Hide Column Filters");
-        } else {
-            valueFilterButton.setTitle("Show Column Filters");
-        }
         if (showValueFilters) {
             dataGrid.addStyleName("showValueFilters");
         } else {
@@ -725,10 +725,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public Element getFilterButton(final Column column) {
         final int index = columnsManager.getColumnIndex(column);
         if (index >= 0) {
-            final Element thead = dataGrid.getTableHeadElement().cast();
-            final Element tr = thead.getChild(0).cast();
-            final Element th = tr.getChild(index).cast();
-            return ElementUtil.findChild(th, "column-valueFilterIcon");
+            final Element headerCell = dataGrid.getHeaderCellElement(index);
+            return headerCell != null
+                    ? ElementUtil.findChild(headerCell, "column-valueFilterIcon")
+                    : null;
         }
 
         return null;
@@ -907,6 +907,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
+        // A wrapping column's rows vary in height, which the grid must know (it then draws every
+        // row rather than only those in view)
+        dataGrid.setColumnWraps(col, column.getFormat() != null
+                                     && Boolean.TRUE.equals(column.getFormat().getWrap()));
         existingColumns.add(col);
     }
 

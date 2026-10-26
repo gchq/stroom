@@ -17,12 +17,12 @@
 package stroom.data.client.presenter;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -88,9 +88,7 @@ public class CopyTextUtil {
                             COPY_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
                     // Cell values could be huge so truncate big ones
-                    final String truncatedStr = str.length() > TRUNCATE_THRESHOLD
-                            ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
-                            : str;
+                    final String truncatedStr = truncate(str);
                     div.div(d -> d.append(copy),
                             Attribute.title("Copy value '" + truncatedStr + "' to clipboard"));
 
@@ -105,6 +103,32 @@ public class CopyTextUtil {
                     }
                 });
             }, Attribute.className(containerClasses));
+        }
+    }
+
+    /// The accessible name of the menu for a value, e.g. "Actions for value 'abc'", with big
+    /// values cut short.
+    ///
+    /// @param value The value the menu acts on.
+    /// @return The menu's name.
+    public static String getValueMenuName(final String value) {
+        return "Actions for value '" + truncate(NullSafe.trim(value)) + "'";
+    }
+
+    private static String truncate(final String str) {
+        return str.length() > TRUNCATE_THRESHOLD
+                ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
+                : str;
+    }
+
+    /// Stops a mouse press on an icon that acts on the press (copy, insert, open) starting a text
+    /// selection, which the slightest drag would stretch across the page (#5111). A key press is
+    /// left alone.
+    ///
+    /// @param event The event the icon acts on.
+    public static void keepSelection(final NativeEvent event) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
+            event.preventDefault();
         }
     }
 
@@ -125,11 +149,13 @@ public class CopyTextUtil {
                 if (MouseUtil.isPrimary(e)) {
                     final Element copy = ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
                     if (copy != null) {
-                        ClipboardUtil.copy(text.trim());
+                        keepSelection(e);
+                        Clipboard.writeText(text.trim());
                     } else if (insertHandler != null) {
                         final Element insert = ElementUtil
                                 .findParent(element, CopyTextUtil.INSERT_CLASS_NAME, 5);
                         if (insert != null) {
+                            keepSelection(e);
                             insertHandler.accept(text.trim());
                         }
                     }
@@ -139,18 +165,19 @@ public class CopyTextUtil {
                             .priority(1)
                             .icon(SvgImage.COPY)
                             .text("Copy")
-                            .command(() -> ClipboardUtil.copy(text.trim()))
+                            .command(() -> Clipboard.writeText(text.trim()))
                             .build());
                     if (insertHandler != null) {
                         menuItems.add(new IconMenuItem.Builder()
                                 .priority(2)
                                 .icon(SvgImage.INSERT)
-                                .text("Insert")
+                                .text("Insert into Expression")
                                 .command(() -> insertHandler.accept(text.trim()))
                                 .build());
                     }
                     ShowMenuEvent
                             .builder()
+                            .name(getValueMenuName(text))
                             .items(menuItems)
                             .popupPosition(new PopupPosition(e.getClientX(), e.getClientY()))
                             .fire(hasHandlers);

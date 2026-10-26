@@ -91,11 +91,10 @@ public final class AppShellStories {
     private static final String NAVIGATION = ".navigation";
     // The document tabs' labels
     private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
-    // Menu items have no 'menuitem' role or aria-disabled; a disabled item has
-    // the 'menuItem-disabled' class
-    private static final String MENU_ITEM = ".menuItem-outer";
-    private static final String MENU_ITEM_DISABLED = "menuItem-disabled";
-    private static final String MENU_SHORTCUT = ".menuItem-shortcut";
+    // A menu item's row (MenuItemCell), inside the element with its role and aria-disabled
+    private static final String MENU_ITEM = ".menu__item";
+    private static final String MENU_ITEM_ROLE = ":is([role='menuitem'], [role='menuitemcheckbox'])";
+    private static final String MENU_SHORTCUT = ".menu__shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
     // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
@@ -183,7 +182,7 @@ public final class AppShellStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The full shell over the rich fixture tree (Explorer left, empty content right)
                 .story("Default", context -> render(context, TreeFixtures.fixtureTree()))
-                // The explorer's Filter Types button opens the type filter (the document types);
+                // The explorer's Filter Document Types button opens the type filter (the document types);
                 // turning a type off restricts the tree and lights the button
                 .story("ExplorerTypeFilter", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> routes.get(StartupFixtures.DOCUMENT_TYPES_PATH,
@@ -192,7 +191,7 @@ public final class AppShellStories {
                         }, null))
                 .withPlay(play -> {
                     final Play nav = navTree(play);
-                    final Query filter = nav.getByRole("button", "Filter Types");
+                    final Query filter = nav.getByRole("button", "Filter Document Types");
                     // The toggle button says whether a filter is set with aria-pressed
                     play.expect(filter).toHaveAttribute("aria-pressed", "false");
                     play.click(filter);
@@ -204,7 +203,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(filter).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
-                // The Toggle Alerts button shows only when dependency warnings are enabled
+                // The Show Alerts button shows only when dependency warnings are enabled
                 .story("ExplorerToggleAlerts", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> {
                         },
@@ -214,7 +213,7 @@ public final class AppShellStories {
                         null))
                 .withPlay(play -> {
                     final Play nav = navTree(play);
-                    final Query alerts = nav.getByRole("button", "Toggle Alerts");
+                    final Query alerts = nav.getByRole("button", "Show Alerts");
                     play.expect(alerts).toHaveAttribute("aria-pressed", "false");
                     play.click(alerts);
                     play.waitFor(() -> play.expect(alerts).toHaveAttribute("aria-pressed", "true"));
@@ -257,6 +256,53 @@ public final class AppShellStories {
                     play.expect(menuItem(screen, "Help")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // A user who may manage nodes, but nothing that the Administration group holds, has
+                // no Administration group. The Node Groups and Processor Profiles plugins added an
+                // empty one, as well as their items in Monitoring
+                .story("MainMenuNoEmptyGroup", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> {
+                        }, builder -> builder.appPermissions(AppPermission.MANAGE_NODES_PERMISSION), null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Monitoring")).toBeInTheDocument());
+                    play.expect(menuItem(screen, "Administration")).toBeNull();
+                    play.hover(menuItem(screen, "Monitoring"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Node Groups")).toBeInTheDocument());
+                    play.expect(menuItem(screen, "Processor Profiles")).toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // The Help group's items open pages in a new browser tab, which their names say
+                // (in hidden text, after their visible text)
+                .story("HelpMenu", context -> render(context, TreeFixtures.fixtureTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Help")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Help"));
+                    final Query help = screen.findByRole("menuitem", "Help (opens in new tab)");
+                    play.expect(help).not().toHaveAttribute("aria-disabled");
+                    play.expect(screen.getByRole("menuitem", "API Specification (opens in new tab)"))
+                            .toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // With no help URL configured, the Help group's 'Help is not configured!' is shown
+                // disabled, as other unavailable items are, rather than as an item that does nothing
+                .story("HelpNotConfigured", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> {
+                        }, builder -> builder.uiConfig(StartupFixtures.DEFAULT_UI_CONFIG
+                                .replace("\"helpUrl\": \"https://gchq.github.io/stroom-docs/7.13/docs\",", "")),
+                        null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Help")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Help"));
+                    final Query notConfigured = screen.findByRole("menuitem", "Help is not configured!");
+                    play.expect(notConfigured).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Help is not configured!")).toHaveAttribute("aria-disabled", "true");
+                    expectNoProblems(play);
+                })
                 // The menu shows the keyboard shortcuts, and 'g' then 'u' opens the preferences
                 .story("GotoShortcut", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
@@ -267,15 +313,20 @@ public final class AppShellStories {
                     // GWT shows a group's items (with their shortcuts) only
                     // while the group is hovered, so each group is hovered in turn
                     play.hover(menuItem(screen, "User"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("gu"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("G U"));
                     play.hover(menuItem(screen, "Tools"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("gd"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("G D"));
                     play.hover(menuItem(screen, "Navigation"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Alt+Shift+f"));
-                    play.expect(shortcuts(play)).toContain("Ctrl+Shift+f");
-                    play.expect(shortcuts(play)).toContain("Ctrl+e");
-                    play.expect(shortcuts(play)).toContain("Alt+l");
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Alt+Shift+F"));
+                    play.expect(shortcuts(play)).toContain("Ctrl+Shift+F");
+                    play.expect(shortcuts(play)).toContain("Ctrl+E");
+                    play.expect(shortcuts(play)).toContain("Alt+L");
+                    // Escape closes the open sub menu, then the menu: while a menu is open, typed
+                    // letters go to its items (type-ahead) rather than to the shortcuts
                     play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.getAllByRole("menu")).toHaveLength(1));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     // GWT's key sequences complete on the keys' release, so
                     // the keys are pressed and released rather than only pressed
                     play.keyboard("gu");
@@ -309,14 +360,96 @@ public final class AppShellStories {
                             "One dark");
                     expectNoProblems(play);
                 })
+                // The Keyboard Shortcuts tab lists each action the user can bind, one row per
+                // shortcut, with the built-in arrow keys that can't be changed
+                .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play dialog = openKeyboardShortcuts(play);
+                    play.expect(dialog.getByText("Recent items")).toBeInTheDocument();
+                    play.expect(dialog.getByText("Ctrl+E")).toBeInTheDocument();
+                    play.expect(dialog.getByText("G U")).toBeInTheDocument();
+                    play.expect(dialog.getAllByText("Built in").count()).toBeGreaterThan(0);
+                    play.expect(dialog.getByRole("checkbox", "Enable Character Key Shortcuts")).toBeChecked();
+                    expectNoProblems(play);
+                })
+                // Pressing new keys for 'Recent items' saves them in the preferences, and the
+                // Navigation menu then shows them
+                .story("ChangeKeyboardShortcut", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::savePreferencesRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openKeyboardShortcuts(play);
+                    final Play recorder = recordShortcut(play, dialog, "Recent items");
+                    play.keyboard("{Control>}{Shift>}e{/Shift}{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByLabelText("Keys for 'Recent items'"))
+                            .toHaveValue("Ctrl+Shift+E"));
+                    // Enter accepts the keys, as the recorder says
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(dialog.getByText("Ctrl+Shift+E")).toBeInTheDocument());
+                    play.expect(dialog.getByText("Changed")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1")
+                                    .withJsonBodyContaining("{\"keyBindings\": {\"RECENT_ITEMS\": [\"Ctrl+Shift+E\"]}}")
+                                    .toSpyMatcher()));
+                    play.click(play.getByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Navigation")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Navigation"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Ctrl+Shift+E"));
+                    play.expect(shortcuts(play)).not().toContain("Ctrl+E");
+                    expectNoProblems(play);
+                })
+                // Keys another action uses are moved from it, after the recorder says so, and keys
+                // that can't be changed are refused
+                .story("RecordClashingShortcut", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play dialog = openKeyboardShortcuts(play);
+                    final Play recorder = recordShortcut(play, dialog, "Locate in explorer");
+                    play.keyboard("{Control>}a{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByText(TextMatch.containing(
+                            "Ctrl+A is used for 'Select all', which can't be changed"))).toBeInTheDocument());
+                    play.keyboard("{Control>}e{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByText(TextMatch.containing(
+                            "Ctrl+E clashes with the shortcut for 'Recent items' (Ctrl+E)"))).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // Turning character key shortcuts off marks them as off, and the menu no longer
+                // shows them
+                .story("CharacterKeyShortcutsOff", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::savePreferencesRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openKeyboardShortcuts(play);
+                    play.click(dialog.getByRole("checkbox", "Enable Character Key Shortcuts"));
+                    play.waitFor(() -> play.expect(dialog.getAllByText("Default, turned off").count())
+                            .toBeGreaterThan(0));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1")
+                                    .withJsonBodyContaining("{\"enableCharacterKeyShortcuts\": false}")
+                                    .toSpyMatcher()));
+                    play.click(play.getByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Navigation")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Navigation"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Ctrl+E"));
+                    play.hover(menuItem(screen, "User"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Preferences")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).not().toContain("G U");
+                    play.keyboard("{Escape}");
+                    expectNoProblems(play);
+                })
                 // The maintenance banner above the shell
                 .story("Banner", context -> render(context, TreeFixtures.fixtureTree(), routes -> {
                 }, builder -> builder.uiConfig(QueryFixtures.uiConfigWith("\"maintenanceMessage\": "
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
-                    // GWT's banner has no 'alert' role
+                    // The banner is an alert, so a screen reader says it when it is shown
                     play.waitFor(() -> play.expect(play.querySelector(".mainViewImpl-banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
+                    play.expect(play.getByRole("alert")).toHaveTextContent(
+                            TextMatch.containingIgnoreCase("system maintenance"));
                     expectNoProblems(play);
                 })
                 // The current activity below the tree opens the chooser; choosing one updates it
@@ -422,21 +555,21 @@ public final class AppShellStories {
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                             "Main Menu: 1 tab stop",
                             "Hide Sidebar: 1 tab stop",
-                            "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
-                            + "Find In Content: 1 tab stop"));
+                            "Ask Stroom AI, Show Main Menu: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
+                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                             "Main Menu: 1 tab stop",
                             "Hide Sidebar: 1 tab stop",
-                            "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Save, Save As, Download Dictionary words: 1 tab stop",
-                            "New, Delete, Locate Current Item, Expand All, Collapse All, "
-                            + "Filter Types, Find In Content: 1 tab stop"));
+                            "Ask Stroom AI, Show Main Menu: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Save, Save As, Download Dictionary Words: 1 tab stop",
+                            "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
+                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the
@@ -456,6 +589,9 @@ public final class AppShellStories {
                     play.run("focus the main menu's button", () -> mainMenu.element().get().focus());
                     play.tab();
                     play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
+                    // The main view round it all isn't a tab stop (it was: a nameless stop holding
+                    // the whole app, which Shift+Tab from the first button landed on)
+                    play.expect(play.querySelector(".mainViewImpl[tabindex]")).not().toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened
@@ -472,6 +608,18 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
                     play.expect(play.getByTitle(MAIN_MENU)).not().toHaveFocus();
                     expectNoProblems(play);
+                })
+                // #5403: the explorer and the content are landmarks (navigation and main) that screen
+                // readers can go to, and F6 and Shift+F6 move the focus between the main toolbar, the
+                // explorer and the content (the runner's real input check, test-runner/lib/real-input/
+                // areas.mjs, presses them, as a play's F6 has no key code for the key bindings)
+                .story("MovesBetweenAreas", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByRole("navigation", "Explorer")).toBeInTheDocument());
+                    play.expect(play.getByRole("main")).toBeInTheDocument();
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
                 })
                 // #5405: a document opened from the explorer takes the focus
                 .story("OpenedDocumentTakesFocus", context -> render(context, AppShellFixtures.dictTree()))
@@ -509,21 +657,25 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     // Freshly loaded: Save is disabled
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     // Remove an import (confirmed), which makes the document dirty
                     play.click(play.getByText("Imports", StroomDom.LINK_TAB_LABEL));
                     removeImport(play, "Alpha");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // Save: the server echoes, so the document is clean again
-                    play.click(play.getByTitle("Save"));
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
+                    play.click(play.getByRole("button", "Save"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "dict-countries")
                                     .withJsonBodyContaining("{\"imports\": [{\"name\": \"Beta\"}]}")
                                     .toSpyMatcher());
                     // Edit again, then close: the unsaved changes are confirmed
                     removeImport(play, "Beta");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // The tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
                                     .closest(".tab-bar__tab"))
@@ -571,7 +723,7 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
                     rightClick(play, nav.getByText("Countries"));
-                    play.expect(screen.findByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
+                    play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.getByText("Add to Favourites", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.queryByText("Open", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.keyboard("{Escape}");
@@ -579,16 +731,17 @@ public final class AppShellStories {
                     play.expect(play.findByText("Words", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // The System root isn't a document: Copy, Move, Rename and Delete are disabled
+                // The System root isn't a document: Copy To..., Move, Rename and Delete are disabled
                 .story("ContextMenuOnSystemRoot", context -> render(context, AppShellFixtures.rootedTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play, "System").getByText("System"));
-                    play.expect(screen.findByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
-                    for (final String name : List.of("Copy", "Move", "Rename", "Delete")) {
-                        play.waitFor(() -> play.expect(menuItem(screen, name)).toHaveClass(MENU_ITEM_DISABLED));
+                    play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
+                    for (final String name : List.of("Copy To...", "Move", "Rename", "Delete")) {
+                        play.waitFor(() -> play.expect(menuItem(screen, name))
+                                .toHaveAttribute("aria-disabled", "true"));
                     }
-                    play.expect(menuItem(screen, "Permissions")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Edit Permissions")).not().toHaveAttribute("aria-disabled");
                     expectNoProblems(play);
                 })
                 // A tab's context menu, with positional enablement on the first of two tabs
@@ -602,25 +755,89 @@ public final class AppShellStories {
                     play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
                     // The menu is shown on a secondary button's mouseup on a tab
                     play.fireEvent().mouseUp(play.getByText("Countries", TAB_LABEL), EventInit.create().button(2));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
-                    for (final String name : List.of("Close", "Close Others", "Close Saved", "Close All",
-                            "Close Tabs to the Left", "Close Tabs to the Right", "Save", "Save All", "Move First",
-                            "Move Last", "Locate in Explorer", "Add to Favourites")) {
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
+                    for (final String name : List.of("Close", "Close Other Tabs", "Close Saved Tabs",
+                            "Close All Tabs", "Close Tabs to the Left", "Close Tabs to the Right", "Save",
+                            "Save All Tabs", "Move Tab to Start", "Move Tab to End", "Locate in Explorer",
+                            "Add to Favourites")) {
                         play.expect(menuItem(screen, name)).toBeInTheDocument();
                     }
-                    for (final String accelerator : List.of("Alt+w", "Alt+Shift+w", "Ctrl+s", "Ctrl+Shift+s",
-                            "Alt+l")) {
+                    for (final String accelerator : List.of("Alt+W", "Alt+Shift+W", "Alt+Shift+S", "Ctrl+S",
+                            "Ctrl+Shift+S", "Alt+L")) {
                         play.expect(shortcuts(play)).toContain(accelerator);
                     }
-                    play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Close Tabs to the Right")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move First")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move Last")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Save")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Save All")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.click(menuItem(screen, "Close Others"));
+                    play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Close Tabs to the Right")).not().toHaveAttribute("aria-disabled");
+                    play.expect(menuItem(screen, "Move Tab to Start")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Move Tab to End")).not().toHaveAttribute("aria-disabled");
+                    play.expect(menuItem(screen, "Save")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Save All Tabs")).toHaveAttribute("aria-disabled", "true");
+                    play.click(menuItem(screen, "Close Other Tabs"));
                     play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
                     play.expect(tabs(play).nth(0)).toHaveTextContent(TextMatch.containing("Countries"));
+                    expectNoProblems(play);
+                })
+                // #2278: a toolbar button that a shortcut also presses shows the shortcut in its
+                // tooltip, and the User menu's Keyboard Shortcuts lists the shortcuts, which a filter
+                // narrows. The runner's real input check (test-runner/lib/real-input/shortcuts.mjs)
+                // presses '?' to show the list, and Alt+PageUp and Alt+PageDown to move between the
+                // two tabs, as a play's keys have no key codes for the key bindings to read
+                .story("KeyboardShortcuts", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play nav = navTree(play);
+                    play.dblClick(nav.getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    // Save is still named 'Save'; its tooltip and aria-keyshortcuts give Ctrl+S
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("title", "Save (Ctrl+S)");
+                    play.expect(save).toHaveAttribute("aria-keyshortcuts", "Ctrl+S");
+                    play.dblClick(nav.getByText("Colours"));
+                    play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
+
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "User")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "User"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Keyboard Shortcuts")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).toContain("Shift+/");
+                    play.click(menuItem(screen, "Keyboard Shortcuts"));
+                    final Play dialog = screen.within(screen.findByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("Refresh list")).toBeInTheDocument());
+                    play.expect(dialog.getByText("Alt+R")).toBeInTheDocument();
+                    play.expect(dialog.getByText("OK, or run a query")).toBeInTheDocument();
+                    // The filter takes the focus, and narrows the list to the matching shortcuts
+                    final Query filter = dialog.getByLabelText("Filter keyboard shortcuts");
+                    play.waitFor(() -> play.expect(filter).toHaveFocus());
+                    play.type(filter, "alt+page");
+                    play.waitFor(() -> play.expect(dialog.queryByText("Refresh list")).toBeNull());
+                    play.expect(dialog.getByText("Go to next tab")).toBeInTheDocument();
+                    play.expect(dialog.getByText("Go to previous tab")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
+                // #4293: in the explorer, F2 renames the item with the focus and Alt+Enter shows its
+                // info, which its menu shows beside Rename and Show Info; a screen reader is told when
+                // they can't (a feed can't be renamed). #4163: Alt+Shift+S closes the saved tabs. The
+                // runner's real input check (test-runner/lib/real-input/shortcuts.mjs) presses the
+                // keys, as a play's keys have no key codes for the key bindings to read
+                .story("ExplorerItemKeys", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play nav = navTree(play);
+                    rightClick(play, nav.getByText("Colours"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Rename")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).toContain("F2");
+                    play.expect(shortcuts(play)).toContain("Alt+Enter");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Rename", StroomDom.MENU_ITEM_TEXT)).toBeNull());
+                    // Two saved tabs for Alt+Shift+S to close
+                    play.dblClick(nav.getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.dblClick(nav.getByText("Colours"));
+                    play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
                     expectNoProblems(play);
                 })
                 // From the keyboard: Shift+F10 or the context menu key opens a focused tab's menu
@@ -638,13 +855,13 @@ public final class AppShellStories {
                     play.click(countries);
                     play.expect(countries).toHaveFocus();
                     play.keyboard("{Shift>}{F10}{/Shift}");
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
                     play.keyboard("{Escape}");
-                    play.waitFor(() -> play.expect(screen.queryByText("Close Others", StroomDom.MENU_ITEM_TEXT))
+                    play.waitFor(() -> play.expect(screen.queryByText("Close Other Tabs", StroomDom.MENU_ITEM_TEXT))
                             .toBeNull());
                     play.waitFor(() -> play.expect(countries).toHaveFocus());
                     play.keyboard("{ContextMenu}");
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(countries).toHaveFocus());
                     play.keyboard("{ArrowRight}");
@@ -659,7 +876,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     rightClick(play, navTree(play, "System").getByText("Favourites"));
                     play.sleep(250);
-                    play.expect(play.screen().queryByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeNull();
+                    play.expect(play.screen().queryByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     expectNoProblems(play);
                 })
                 // Info shows the document's identity, audit history and tags
@@ -667,7 +884,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.click(screen.findByText("Info", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Show Info", StroomDom.MENU_ITEM_TEXT));
                     // GWT bolds the key and appends the ': ' after it
                     play.waitFor(() -> play.expect(screen.getByText("UUID")).toBeInTheDocument());
                     play.expect(screen.getByText("Type")).toBeInTheDocument();
@@ -694,9 +911,9 @@ public final class AppShellStories {
                     // The quick filter has no label, only its placeholder
                     play.expect(play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toBeInTheDocument();
-                    final Query typeFilter = play.within(dialog).getByRole("button", "Filter Types");
+                    final Query typeFilter = play.within(dialog).getByRole("button", "Filter Document Types");
                     play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
-                    // The Filter Types button is beside the quick filter, in the same row.
+                    // The Filter Document Types button is beside the quick filter, in the same row.
                     // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
                     play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -770,12 +987,12 @@ public final class AppShellStories {
                     expectDeleted(play, "dict-countries");
                     expectNoProblems(play);
                 })
-                // The toolbar's Delete is enabled by a selection, and deletes it
+                // The toolbar's Delete Selected Documents is enabled by a selection, and deletes it
                 .story("ToolbarDelete", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
-                    final Query delete = nav.getByRole("button", "Delete");
+                    final Query delete = nav.getByRole("button", "Delete Selected Documents");
                     play.expect(delete).toHaveAttribute("aria-disabled", "true");
                     play.click(nav.getByText("Countries"));
                     play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
@@ -788,7 +1005,7 @@ public final class AppShellStories {
                     expectDeleted(play, "dict-countries");
                     expectNoProblems(play);
                 })
-                // New: the document types menu, the create dialog, and the new document opens
+                // New Document: the document types menu, the create dialog, and the new document opens
                 .story("CreateDocument", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> routes.get(StartupFixtures.DOCUMENT_TYPES_PATH, RestReply.json(DICTIONARY_TYPES))
                                 .get(DICTIONARY_PATH + "new-doc", RestReply.json(newDoc("Regions"))),
@@ -797,12 +1014,17 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
-                    final Query newButton = nav.getByRole("button", "New");
+                    final Query newButton = nav.getByRole("button", "New Document");
                     play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-disabled", "true"));
                     play.click(nav.getByText("Dictionaries"));
                     play.waitFor(() -> play.expect(newButton).not().toHaveAttribute("aria-disabled"));
+                    // A menu button, which says whether its menu of document types is open
+                    play.expect(newButton).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(newButton).toHaveAttribute("aria-expanded", "false");
                     play.click(newButton);
+                    play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-expanded", "true"));
                     play.click(screen.findByText("Dictionary", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-expanded", "false"));
                     final Query dialog = screen.findByText("New Dictionary", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG);
                     // Pick the destination folder in the dialog's tree
@@ -830,12 +1052,12 @@ public final class AppShellStories {
                             "delete these 2 items"))).toBeNull());
                     expectNoProblems(play);
                 })
-                // Copy of one item: a name box filled with its name, and its folder chosen
+                // Copy To... of one item: a name box filled with its name, and its folder chosen
                 .story("CopyDocument", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.click(screen.findByText("Copy", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Copy To...", StroomDom.MENU_ITEM_TEXT));
                     screen.findByText("Copy Countries", StroomDom.DIALOG_TITLE);
                     final Query name = screen.getByLabelText("Name");
                     play.waitFor(() -> play.expect(name).toHaveValue("Countries"));
@@ -871,9 +1093,10 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Delete")).toHaveClass(MENU_ITEM_DISABLED));
-                    play.expect(menuItem(screen, "Rename")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Copy")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.waitFor(() -> play.expect(menuItem(screen, "Delete"))
+                            .toHaveAttribute("aria-disabled", "true"));
+                    play.expect(menuItem(screen, "Rename")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Copy To...")).not().toHaveAttribute("aria-disabled");
                     expectNoProblems(play);
                 })
                 // A deep link opens its document at start-up; Alt+W closes it
@@ -895,7 +1118,7 @@ public final class AppShellStories {
                     play.expect(play.findByText("Dictionaries")).toBeInTheDocument();
                     play.expect(play.getByRole("button", TextMatch.regex("expand all", "i"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", TextMatch.regex("collapse all", "i"))).toBeInTheDocument();
-                    play.expect(play.getByRole("button", TextMatch.regex("^new$", "i"))).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "New Document")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
                 // Sign Out Other Sessions confirms first, then signs out the others
@@ -988,8 +1211,8 @@ public final class AppShellStories {
                     play.hover(menuItem(screen, "Security"));
                     play.expect(screen.findByText("User Access", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.findByText("Signing Keys", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
-                    play.expect(shortcuts(play)).toContain("gw");
-                    play.expect(shortcuts(play)).toContain("gy");
+                    play.expect(shortcuts(play)).toContain("G W");
+                    play.expect(shortcuts(play)).toContain("G Y");
                     expectNoProblems(play);
                 })
                 // Locate in Explorer is offered only for a tab the explorer can hold, as the
@@ -1001,7 +1224,7 @@ public final class AppShellStories {
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.fireEvent().mouseUp(play.getByText("Countries", TAB_LABEL), EventInit.create().button(2));
                     play.waitFor(() -> play.expect(menuItem(screen, "Locate in Explorer"))
-                            .not().toHaveClass(MENU_ITEM_DISABLED));
+                            .not().toHaveAttribute("aria-disabled"));
                     play.keyboard("{Escape}");
                     // The rule is Stroom's DocumentPluginRegistry.getExplorerDocRef,
                     // checked with the shell's registry (the Dictionary plugin is registered, no
@@ -1192,7 +1415,7 @@ public final class AppShellStories {
     private static void chooseTheme(final Play play, final Play dialog, final String theme) {
         play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
         // The box is a combo box, which says when its list is open, and the list is named after it
-        final Query box = dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox");
+        final Query box = dialog.querySelector("#userPreferencesTheme .selection-box__input");
         play.expect(box).toHaveAttribute("role", "combobox");
         play.expect(box).toHaveAttribute("aria-expanded", "false");
         play.click(box);
@@ -1203,9 +1426,9 @@ public final class AppShellStories {
         // Its options, the current theme's selected
         play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
                 .toBeGreaterThan(1));
-        play.click(play.screen().findByText(theme, ".SelectionPopup .selectionItemCell-text"));
+        play.click(play.screen().findByText(theme, ".selection-popup .selectionItemCell-text"));
         play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
-        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .SelectionBox-renderBox"))
+        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .selection-box__value"))
                 .toHaveTextContent(theme));
     }
 
@@ -1214,19 +1437,44 @@ public final class AppShellStories {
     private static void expectEditorThemes(final Play play, final Play dialog, final String... themes) {
         final Play screen = play.screen();
         play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
-        play.click(dialog.querySelector("#userPreferencesEditorTheme .SelectionBox-textBox"));
+        play.click(dialog.querySelector("#userPreferencesEditorTheme .selection-box__input"));
         final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
-                .closest(".SelectionPopup"));
+                .closest(".selection-popup"));
         play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
         for (final String theme : themes) {
             play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
         }
         play.keyboard("{Escape}");
-        play.waitFor(() -> play.expect(screen.querySelector(".SelectionPopup")).toBeNull());
+        play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());
+    }
+
+    // Answers the save of the user's preferences
+    private static void savePreferencesRoute(final RestFixtures.Builder routes) {
+        routes.post(StartupFixtures.USER_PREFERENCES_PATH, RestReply.json("true"));
+    }
+
+    // Opens the preferences with 'g' then 'u', and their Keyboard Shortcuts tab
+    private static Play openKeyboardShortcuts(final Play play) {
+        final Play screen = play.screen();
+        play.findByText("Dictionaries");
+        play.keyboard("gu");
+        final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                .closest(StroomDom.DIALOG));
+        play.click(dialog.getByText("Keyboard Shortcuts", StroomDom.LINK_TAB_LABEL));
+        play.waitFor(() -> play.expect(dialog.getByText("Recent items")).toBeInTheDocument());
+        return dialog;
+    }
+
+    // Opens the recorder for the action's (first) shortcut, by double-clicking its row
+    private static Play recordShortcut(final Play play, final Play dialog, final String action) {
+        final Play screen = play.screen();
+        play.dblClick(dialog.getAllByText(action).first());
+        return screen.within(screen.findByText("Change Keyboard Shortcut", StroomDom.DIALOG_TITLE)
+                .closest(StroomDom.DIALOG));
     }
 
     private static Query menuItem(final Play screen, final String title) {
-        return screen.querySelector(MENU_ITEM + "[title=\"" + title + "\"]");
+        return screen.querySelector(MENU_ITEM_ROLE + ":has(> " + MENU_ITEM + "[title=\"" + title + "\"])");
     }
 
     private static Supplier<List<String>> shortcuts(final Play play) {
@@ -1250,7 +1498,7 @@ public final class AppShellStories {
     private static void removeImport(final Play play, final String name) {
         final Play screen = play.screen();
         play.click(play.findByText(name));
-        play.click(play.getByTitle("Remove Import"));
+        play.click(play.getByTitle("Remove Imported Dictionary"));
         play.click(screen.findByRole("button", StroomDom.button("OK")));
     }
 

@@ -28,13 +28,30 @@
 // checks belong to one file: a story id in two files is an error.
 
 import { CHECKS as ACE_EDITOR } from './ace-editor.mjs';
+import { CHECKS as AREAS } from './areas.mjs';
 import { CHECKS as BUTTONS } from './buttons.mjs';
+import { CHECKS as COPY_ICONS } from './copy-icons.mjs';
+import { CHECKS as DASHBOARD_TABLE } from './dashboard-table.mjs';
+import { CHECKS as DATA_GRID } from './data-grid.mjs';
+import { CHECKS as DATE_TIME } from './date-time.mjs';
+import { CHECKS as HELP } from './help.mjs';
+import { CHECKS as ICON_PICKER } from './icon-picker.mjs';
+import { CHECKS as MENU } from './menu.mjs';
+import { CHECKS as SELECTION_BOX } from './selection-box.mjs';
+import { CHECKS as SELECTION_LIST } from './selection-list.mjs';
+import { CHECKS as SHORTCUTS } from './shortcuts.mjs';
 import { CHECKS as SPLIT_PANE } from './split-pane.mjs';
 import { CHECKS as TABS } from './tabs.mjs';
+import { CHECKS as TEXT_CONTEXT_MENU } from './text-context-menu.mjs';
 import { CHECKS as TOP_BAR } from './top-bar.mjs';
+import { CHECKS as VALUE_SPINNER } from './value-spinner.mjs';
 
-const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'buttons.mjs': BUTTONS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS,
-  'top-bar.mjs': TOP_BAR };
+const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'areas.mjs': AREAS, 'buttons.mjs': BUTTONS,
+  'copy-icons.mjs': COPY_ICONS, 'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
+  'date-time.mjs': DATE_TIME, 'help.mjs': HELP,
+  'icon-picker.mjs': ICON_PICKER, 'menu.mjs': MENU, 'selection-box.mjs': SELECTION_BOX,
+  'selection-list.mjs': SELECTION_LIST, 'shortcuts.mjs': SHORTCUTS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS,
+  'text-context-menu.mjs': TEXT_CONTEXT_MENU, 'top-bar.mjs': TOP_BAR, 'value-spinner.mjs': VALUE_SPINNER };
 
 // Merges each file's checks, refusing a story id found in two files
 export function mergeChecks(files) {
@@ -50,6 +67,13 @@ export function mergeChecks(files) {
     }
   }
   return checks;
+}
+
+// The ids of checks that match no story, e.g. misspelt or of a story since renamed: such a check
+// would never run, and its story would pass without it
+export function unknownCheckIds(checks, stories) {
+  const ids = new Set(stories.map((story) => story.id));
+  return Object.keys(checks).filter((storyId) => !ids.has(storyId));
 }
 
 export const REAL_INPUT_CHECKS = mergeChecks(FILES);

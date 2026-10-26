@@ -41,6 +41,7 @@ public class DurationPresenter extends MyPresenterWidget<DurationView> {
         getView().setDuration(duration);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Set Retention Period")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

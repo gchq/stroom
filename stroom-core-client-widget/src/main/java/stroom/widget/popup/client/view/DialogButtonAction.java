@@ -16,6 +16,9 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.util.client.TabOrder;
+
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -39,8 +42,10 @@ final class DialogButtonAction {
     /// disabling it moves focus to the page's body.
     ///
     /// @param button The button about to be disabled.
-    /// @return Something to run once the button is enabled again: it puts focus back on the
-    /// button if the button had it and focus hasn't moved anywhere else since.
+    /// @return Something to run once the action has finished: it puts focus back on the button if
+    /// the button had it and focus hasn't moved anywhere else since, or, if the button stays
+    /// disabled (e.g. OK, while what the dialog holds is invalid), on the dialog's next tab stop
+    /// after it (or its first), rather than leaving it on the page's body, outside the dialog.
     static Runnable keepFocus(final FocusWidget button) {
         final Document document = Document.get();
         final boolean hadFocus = button.getElement() == CurrentFocus.getActiveElement(document);
@@ -50,9 +55,43 @@ final class DialogButtonAction {
             final boolean focusStayed = active == null
                     || active == document.getBody()
                     || active == button.getElement();
-            if (hadFocus && focusStayed && button.isAttached() && button.isEnabled()) {
-                button.setFocus(true);
+            if (hadFocus && focusStayed && button.isAttached()) {
+                if (button.isEnabled()) {
+                    button.setFocus(true);
+                } else {
+                    focusNextInDialog(button.getElement());
+                }
             }
         };
     }
+
+    // Moves the focus to the tab stop after an element within its dialog, or the dialog's first if
+    // none follows it; outside a dialog, as Tab would
+    private static void focusNextInDialog(final Element from) {
+        final Element dialog = closestDialog(from);
+        if (dialog == null) {
+            TabOrder.focusNext(from, false);
+            return;
+        }
+        final JsArray<Element> stops = TabOrder.tabStops(dialog);
+        for (int i = 0; i < stops.length(); i++) {
+            if (follows(from, stops.get(i))) {
+                stops.get(i).focus();
+                return;
+            }
+        }
+        if (stops.length() > 0) {
+            stops.get(0).focus();
+        }
+    }
+
+    // The dialog (or alert dialog) an element is in, or null
+    private static native Element closestDialog(Element element) /*-{
+        return element.closest('[role="dialog"], [role="alertdialog"]');
+    }-*/;
+
+    // Whether an element comes after another in the document
+    private static native boolean follows(Element first, Element element) /*-{
+        return (first.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    }-*/;
 }

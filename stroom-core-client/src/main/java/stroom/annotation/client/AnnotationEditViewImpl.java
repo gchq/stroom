@@ -21,6 +21,7 @@ import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 
@@ -99,6 +100,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         AssignYourselfLink.init(assignYourself, this::assignYourself);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
+        // Named, as a placeholder is only a hint, and the title each is given (its value, for when
+        // it is too long to show) would otherwise be read as its name
+        AccessibleName.set(titleTextBox, "Title");
+        AccessibleName.set(subjectTextBox, "Subject");
         create.setIcon(SvgImage.ADD);
         delete.setIcon(SvgImage.DELETE);
 

@@ -22,21 +22,26 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -49,7 +54,10 @@ public class QueryFavouritesPresenter
 
     private final RestFactory restFactory;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<StoredQuery> selectionModel;
+    private static final String NAME = "Favourite queries";
+
+    private final MultiSelectionModelImpl<StoredQuery> selectionModel;
+    private final DataGrid<StoredQuery> list;
     private final NamePresenter namePresenter;
     private final ButtonView createButton;
     private final ButtonView editButton;
@@ -64,7 +72,8 @@ public class QueryFavouritesPresenter
                                     final QueryFavouritesView view,
                                     final ExpressionTreePresenter expressionPresenter,
                                     final NamePresenter namePresenter,
-                                    final RestFactory restFactory) {
+                                    final RestFactory restFactory,
+                                    final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;
@@ -75,8 +84,18 @@ public class QueryFavouritesPresenter
 
         view.setExpressionView(expressionPresenter.getView());
 
-        selectionModel = new MySingleSelectionModel<>();
-        view.getCellList().setSelectionModel(selectionModel);
+        // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
+        // double click, on one opens it (the dialog's OK)
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName(NAME);
+        list.addColumn(DataGridUtil.columnBuilder((StoredQuery query) -> query,
+                        () -> new QueryCell(dateTimeFormatter))
+                .build(), "", 200);
+        selectionModel = new MultiSelectionModelImpl<>();
+        list.setSelectionModel(selectionModel,
+                new DataGridSelectionEventManager<>(list, selectionModel, false));
+        view.setList(list);
 
         createButton = view.getToolbar().button(SvgImage.ADD, "Create Favourite From Current Query", this::onCreate);
         editButton = view.getToolbar().button(SvgImage.EDIT, "Change Favourite Name", this::onEdit);
@@ -102,14 +121,14 @@ public class QueryFavouritesPresenter
     }
 
     private void onEdit() {
-        final StoredQuery query = selectionModel.getSelectedObject();
+        final StoredQuery query = selectionModel.getSelected();
         if (query != null) {
             namePresenter.show(query, result -> refresh(false));
         }
     }
 
     private void onDelete() {
-        final StoredQuery query = selectionModel.getSelectedObject();
+        final StoredQuery query = selectionModel.getSelected();
         if (query != null) {
             ConfirmEvent.fire(QueryFavouritesPresenter.this,
                     "Are you sure you want to delete this favourite?", ok -> {
@@ -123,7 +142,7 @@ public class QueryFavouritesPresenter
     @Override
     protected void onBind() {
         registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-            final StoredQuery query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelected();
 
             if (query == null || query.getQuery() == null) {
                 expressionPresenter.read(null);
@@ -135,7 +154,11 @@ public class QueryFavouritesPresenter
                 deleteButton.setEnabled(true);
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
+        registerHandler(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                hide();
+            }
+        }));
     }
 
     public void show(final QueryPresenter queryPresenter, final String dashboardUuid,
@@ -162,8 +185,8 @@ public class QueryFavouritesPresenter
                 .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();
-                    getView().getCellList().setRowData(result.getValues());
-                    getView().getCellList().setRowCount(result.size(), true);
+                    list.setRowData(0, result.getValues());
+                    list.setRowCount(result.size(), true);
 
                     if (showAfterRefresh) {
                         final PopupSize popupSize = PopupSize.resizable(500, 400);
@@ -174,7 +197,7 @@ public class QueryFavouritesPresenter
                                 .onShow(e -> createButton.focus())
                                 .onHideRequest(e -> {
                                     if (e.isOk()) {
-                                        final StoredQuery query = selectionModel.getSelectedObject();
+                                        final StoredQuery query = selectionModel.getSelected();
                                         if (query != null && query.getQuery() != null &&
                                             query.getQuery().getExpression() != null) {
                                             queryPresenter.setExpression(query.getQuery().getExpression());
@@ -208,7 +231,8 @@ public class QueryFavouritesPresenter
 
     public interface QueryFavouritesView extends View {
 
-        CellList<StoredQuery> getCellList();
+        /// @param list The list of favourite queries, shown above the selected query.
+        void setList(Widget list);
 
         void setExpressionView(View view);
 

@@ -64,6 +64,12 @@ public class ChangeCurrentPreferencesEvent extends GwtEvent<ChangeCurrentPrefere
         return currentPreferences.getEditorTheme();
     }
 
+    /// @return The name of the palette visualisations colour categories from, or null for the
+    /// default.
+    public String getVisualisationPalette() {
+        return currentPreferences.getVisualisationPalette();
+    }
+
     public String getEditorKeyBindings() {
         return currentPreferences.getEditorKeyBindings();
     }

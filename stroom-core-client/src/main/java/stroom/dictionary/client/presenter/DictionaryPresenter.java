@@ -85,7 +85,7 @@ public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, Dicti
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary words", null);
+        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary Words", null);
         downloadButton.setEnabled(false);
 
 

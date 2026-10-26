@@ -50,7 +50,6 @@ public final class TableFilterSettingsStories {
             DashboardDocs.component("table-filter", "tf1", "Filter", "\"tableId\": \"t1\", \"columns\": []"));
 
     // The ticked tick box class of Stroom's TickBoxCell
-    private static final String TICKED = "tickBox-tick";
 
     private TableFilterSettingsStories() {
         // Static utility
@@ -75,12 +74,12 @@ public final class TableFilterSettingsStories {
                     // The tick boxes are a grid's (TickBoxCell), found by their column's row; the
                     // select-all tick box is the grid's header
                     play.waitFor(() -> play.expect(dialog.getByText("Count")).toBeInTheDocument());
-                    play.expect(dialog.querySelector("th .tickBox")).toBeInTheDocument();
+                    play.expect(dialog.querySelector("th .tick-box, [data-hcol] .tick-box")).toBeInTheDocument();
                     play.expect(tickBox(dialog, "Name")).toBeInTheDocument();
                     final Query count = tickBox(dialog, "Count");
-                    play.expect(count).not().toHaveClass(TICKED);
+                    play.expect(count).toHaveAttribute("aria-checked", "false");
                     play.click(count);
-                    play.waitFor(() -> play.expect(tickBox(dialog, "Count")).toHaveClass(TICKED));
+                    play.waitFor(() -> play.expect(tickBox(dialog, "Count")).toHaveAttribute("aria-checked", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // The choice is saved with the dashboard
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeEnabled());
@@ -95,7 +94,8 @@ public final class TableFilterSettingsStories {
 
     // The tick box of a column's row
     private static Query tickBox(final Play dialog, final String column) {
-        return dialog.within(dialog.getByText(column, "td *").closest("tr")).querySelector(".tickBox");
+        return dialog.within(dialog.getByText(column, StroomDom.GRID_CELL_TEXT).closest(StroomDom.GRID_ROW))
+                .querySelector(".tick-box");
     }
 
     // Whether a saved dashboard's Table Filter has the Count column

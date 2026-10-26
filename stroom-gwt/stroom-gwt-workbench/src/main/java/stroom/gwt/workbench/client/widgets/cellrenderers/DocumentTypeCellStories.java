@@ -17,8 +17,6 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.table.client.MyCellTable;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -31,10 +29,12 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.util.client.CheckListSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -46,9 +46,9 @@ import java.util.Map;
 /// Stories for Stroom's [DocumentTypeCell].
 ///
 /// The cell is shown as Stroom's type filter (`TypeFilterPresenter`) shows it: as the one column of
-/// a [MyCellTable] with the `menuCellTable` class, one row per type, whose tick boxes are toggled by
-/// a [CheckListSelectionEventManager]. The cell's [DocumentTypeSelectionModel] gives each type's
-/// tick box state; a null state renders no tick box.
+/// a [DataGrid] list ([DataGridProfile#LISTBOX]), one row per type, whose tick boxes Space, Enter or
+/// a press toggles. The cell's [DocumentTypeSelectionModel] gives each type's tick box state; a null
+/// state renders no tick box.
 public final class DocumentTypeCellStories {
 
     // Arg names
@@ -127,7 +127,7 @@ public final class DocumentTypeCellStories {
         return new DocumentType(DocumentTypeGroup.SEARCH, key, key, SvgImage.DOCUMENT_SEARCHABLE);
     }
 
-    /// The types in a [MyCellTable], as `TypeFilterPresenter` shows them.
+    /// The types in a [DataGrid] list, as `TypeFilterPresenter` shows them.
     ///
     /// @param states    Each type's tick box state, or null for no tick box.
     /// @param toggleable True if a click toggles a type's tick box, reporting it to `onToggle`.
@@ -138,56 +138,37 @@ public final class DocumentTypeCellStories {
         // In the order the types were given in
         final List<DocumentType> types = new ArrayList<>(states.keySet());
 
-        final MyCellTable<DocumentType> cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
+        final DataGrid<DocumentType> list = new DataGrid<>(new SimpleEventBus(), DataGrid.DEFAULT_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName("Document types");
+        list.setFitContent(true);
+        list.setFitWidth(true);
+        list.setRowChecked(states::get);
+        list.setCellPadding(false);
+        list.addStyleName("type-filter");
         final DocumentTypeSelectionModel selectionModel = states::get;
-        cellTable.addColumn(new Column<DocumentType, DocumentType>(new DocumentTypeCell(selectionModel)) {
+        list.addColumn(new Column<DocumentType, DocumentType>(new DocumentTypeCell(selectionModel)) {
             @Override
             public DocumentType getValue(final DocumentType documentType) {
                 return documentType;
             }
+        }, "", 100);
+        final DataGridSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        selectionEventManager.setChooser(documentType -> {
+            if (toggleable && states.get(documentType) != null) {
+                final TickBoxState state = TickBoxState.TICK.equals(states.get(documentType))
+                        ? TickBoxState.UNTICK
+                        : TickBoxState.TICK;
+                states.put(documentType, state);
+                onToggle.call(documentType.getType(), state.name());
+                list.redraw();
+            }
         });
-        cellTable.setSkipRowHoverCheck(true);
-        cellTable.setSelectionModel(new MySingleSelectionModel<>(), new ToggleManager(
-                cellTable,
-                documentType -> {
-                    if (toggleable) {
-                        final TickBoxState state = TickBoxState.TICK.equals(states.get(documentType))
-                                ? TickBoxState.UNTICK
-                                : TickBoxState.TICK;
-                        states.put(documentType, state);
-                        onToggle.call(documentType.getType(), state.name());
-                        cellTable.redraw();
-                    }
-                }));
-        cellTable.setRowData(0, types);
-        cellTable.setRowCount(types.size());
-        return cellTable;
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /// Toggles a type's tick box on a click, as `TypeFilterPresenter`'s selection event manager does.
-    private static final class ToggleManager extends CheckListSelectionEventManager<DocumentType> {
-
-        private final ToggleHandler handler;
-
-        private ToggleManager(final CellTable<DocumentType> cellTable, final ToggleHandler handler) {
-            super(cellTable);
-            this.handler = handler;
-        }
-
-        @Override
-        protected void onToggle(final DocumentType item) {
-            handler.onToggle(item);
-        }
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /// Called when a type is toggled.
-    private interface ToggleHandler {
-
-        void onToggle(DocumentType documentType);
+        // The ticks are the rows' own state, not a selection
+        list.setSelectionModel(null, selectionEventManager);
+        list.setRowData(0, types);
+        list.setRowCount(types.size());
+        return list;
     }
 }

@@ -24,31 +24,60 @@ import stroom.task.client.TaskMonitorFactory;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
+/// A small spinner shown while tasks run, e.g. on a tab or the explorer's bar. It fades in and out
+/// (`busy-spinner--active`), and spins only while it is shown or fading out
+/// (`busy-spinner--spinning`): once it has faded
+/// out it is hidden (from screen readers too) and its animation is stopped, as the explorer's bar and
+/// every tab have one, which would otherwise spin unseen all the time (#5299).
 public class SpinnerSmall extends Widget implements TaskMonitorFactory {
 
+    // How long it takes to fade out (spinner.css), after which it stops spinning
+    private static final int FADE_MILLIS = 500;
+    private static final String BLOCK = "busy-spinner";
+    private static final String REFRESHING = BLOCK + "--active";
+    private static final String SPINNING = BLOCK + "--spinning";
+
     private int taskCount;
+    private Timer stopSpinning;
 
     public SpinnerSmall() {
         final Element spinningInner = DOM.createDiv();
-        spinningInner.setClassName("spinning-inner");
+        spinningInner.setClassName(BLOCK + "__inner");
         spinningInner.setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
         spinningInner.setTitle("Loading...");
         final Element spinningOuter = DOM.createDiv();
         spinningOuter.appendChild(spinningInner);
-        spinningOuter.setClassName("spinning-outer");
+        spinningOuter.setClassName(BLOCK + "__outer");
         final Element spinnerSmall = DOM.createDiv();
         spinnerSmall.appendChild(spinningOuter);
-        spinnerSmall.setClassName("SpinnerSmall");
+        spinnerSmall.setClassName(BLOCK + " " + BLOCK + "--small");
         setElement(spinnerSmall);
     }
 
+    /// Shows the spinner, fading it in, or fades it out and then stops it spinning.
+    ///
+    /// @param refreshing Whether something is loading.
     public void setRefreshing(final boolean refreshing) {
+        if (stopSpinning != null) {
+            stopSpinning.cancel();
+            stopSpinning = null;
+        }
         if (refreshing) {
-            addStyleName("refreshing");
-        } else {
-            removeStyleName("refreshing");
+            addStyleName(SPINNING);
+            addStyleName(REFRESHING);
+        } else if (getStyleName().contains(REFRESHING)) {
+            removeStyleName(REFRESHING);
+            stopSpinning = new Timer() {
+                @Override
+                public void run() {
+                    stopSpinning = null;
+                    removeStyleName(SPINNING);
+                }
+            };
+            stopSpinning.schedule(FADE_MILLIS);
         }
     }
 

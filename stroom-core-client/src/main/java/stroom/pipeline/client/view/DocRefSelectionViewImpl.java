@@ -21,7 +21,6 @@ import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -45,7 +44,7 @@ public class DocRefSelectionViewImpl extends ViewImpl implements DocRefSelection
     }
 
     @Override
-    public void setDataWidget(final AbstractHasData<?> widget) {
+    public void setDataWidget(final Widget widget) {
         listContainer.add(widget);
     }
 

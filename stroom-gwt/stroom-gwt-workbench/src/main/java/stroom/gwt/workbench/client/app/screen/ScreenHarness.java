@@ -25,6 +25,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
+import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.FixtureDispatcher;
 import stroom.gwt.workbench.client.app.rest.FixtureUploads;
@@ -41,7 +42,8 @@ import stroom.security.shared.AppPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
@@ -209,8 +211,13 @@ public final class ScreenHarness {
         eventBus.addHandler(ShowPopupEvent.getType(), event -> popups.onShow(event.getPresenterWidget()));
         eventBus.addHandler(HidePopupEvent.getType(), event -> popups.onHide(event.getPresenterWidget()));
         new PopupManager(eventBus);
-        // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
-        new Menu(eventBus, this::createMenuPresenter);
+        // Widgets with no event bus of their own show their dialogs on Stroom's static one (e.g. a
+        // DateTimeBox not given a dialog provider), as in Stroom
+        new StaticEventBus(eventBus);
+        // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's MenuManager does
+        new MenuManager(eventBus, this::createMenuPresenter);
+        // and the edit menu on text fields, in place of the browser's
+        addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
         // MainPresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
@@ -402,7 +409,9 @@ public final class ScreenHarness {
         content.setStyleName(CONTENT_STYLE);
         content.getElement().getStyle().setProperty("position", "relative");
         content.getElement().getStyle().setProperty("width", "100%");
-        content.getElement().getStyle().setProperty("height", "100vh");
+        // The page's height within the story's padding, so that the page doesn't scroll and the
+        // bottom of the screen shows
+        content.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
         final Widget widget = presenter.getWidget();
         widget.getElement().getStyle().setProperty("position", "absolute");
         widget.getElement().getStyle().setProperty("inset", "0");

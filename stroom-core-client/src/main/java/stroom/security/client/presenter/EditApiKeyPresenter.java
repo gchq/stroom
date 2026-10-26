@@ -118,6 +118,7 @@ public class EditApiKeyPresenter
             }
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .modal()
                     .popupSize(popupSize)
                     .caption(caption)
                     .onShow(e ->
@@ -152,6 +153,7 @@ public class EditApiKeyPresenter
         final PopupSize popupSize = PopupSize.resizableX(600);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Edit API key")
                 .onShow(e ->

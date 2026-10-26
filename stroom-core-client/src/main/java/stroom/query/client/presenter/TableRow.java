@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkName;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -132,9 +133,10 @@ public class TableRow {
     private void appendValue(final String value, final StringBuilder sb) {
         appendValue(value, part -> {
             if (part instanceof final Hyperlink hyperlink) {
-                if (NullSafe.isNonBlankString(hyperlink.getText())) {
-                    sb.append(hyperlink.getText());
-                }
+                // As the link is shown, which a link with no text still is
+                sb.append(NullSafe.isNonBlankString(hyperlink.getText())
+                        ? hyperlink.getText()
+                        : HyperlinkName.getDisplayText(hyperlink));
             } else if (part != null) {
                 // A plain string
                 sb.append(part);
@@ -158,18 +160,22 @@ public class TableRow {
     private void appendValue(final String value, final SafeHtmlBuilder sb) {
         appendValue(value, part -> {
             if (part instanceof final Hyperlink hyperlink) {
-                if (NullSafe.isNonBlankString(hyperlink.getText())) {
-                    // Title for the link tells you what it is linking to
-                    final String title = buildTitle(hyperlink);
-                    final SafeHtml displayValueHtml = NullSafe.isNonBlankString(hyperlink.getText())
-                            ? SafeHtmlUtils.fromString(hyperlink.getText())
-                            : SafeHtmlUtil.NBSP;
-                    if (template == null) {
-                        template = GWT.create(Template.class);
-                    }
-                    final SafeHtml linkHtml = template.link(hyperlink.toString(), title, displayValueHtml);
-                    sb.append(linkHtml);
+                // Title for the link tells you what it is linking to
+                final String title = buildTitle(hyperlink);
+                // A link with no text is shown with a name made from the rest of it, rather than
+                // dropped
+                final String displayText = NullSafe.isNonBlankString(hyperlink.getText())
+                        ? hyperlink.getText()
+                        : HyperlinkName.getDisplayText(hyperlink);
+                final SafeHtml displayValueHtml = SafeHtmlUtils.fromString(displayText);
+                final String accessibleName = HyperlinkName.getAccessibleName(hyperlink);
+                if (template == null) {
+                    template = GWT.create(Template.class);
                 }
+                final SafeHtml linkHtml = accessibleName == null
+                        ? template.link(hyperlink.toString(), title, displayValueHtml)
+                        : template.namedLink(hyperlink.toString(), title, accessibleName, displayValueHtml);
+                sb.append(linkHtml);
             } else {
                 // A plain string
                 appendText(part.toString(), sb);
@@ -295,9 +301,16 @@ public class TableRow {
     // --------------------------------------------------------------------------------
 
 
+    // A link is a row action (RowActions), so the keyboard reaches it from its row, and the table
+    // follows it on Enter (DataGridSelectionEventManager), as it does on a mouse press
     interface Template extends SafeHtmlTemplates {
 
-        @SafeHtmlTemplates.Template("<u link=\"{0}\" title=\"{1}\">{2}</u>")
+        @SafeHtmlTemplates.Template("<u link=\"{0}\" title=\"{1}\" role=\"link\" tabindex=\"-1\" "
+                                    + "data-row-action=\"\">{2}</u>")
         SafeHtml link(String hyperlink, String title, SafeHtml displayValue);
+
+        @SafeHtmlTemplates.Template("<u link=\"{0}\" title=\"{1}\" role=\"link\" tabindex=\"-1\" "
+                                    + "data-row-action=\"\" aria-label=\"{2}\">{3}</u>")
+        SafeHtml namedLink(String hyperlink, String title, String accessibleName, SafeHtml displayValue);
     }
 }

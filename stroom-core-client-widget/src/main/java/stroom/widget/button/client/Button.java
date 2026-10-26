@@ -32,6 +32,10 @@ import com.google.gwt.user.client.ui.ButtonBase;
 
 public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
+    // While the busy spinner spins (Button.css), until it has shrunk away (as long as that takes)
+    private static final String SPINNING = "Button--spinning";
+    private static final int SPINNER_FADE_MILLIS = 500;
+
     private final Element rippleContainer;
     private final Element buttonContent;
     private final Element buttonSpinner;
@@ -41,6 +45,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     private final Element text;
 
     private int taskCount;
+    private Timer stopSpinning;
 
     /**
      * Creates a button with no caption.
@@ -51,7 +56,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         //     <div class="ripple-container"></div>
         //     <div class="Button__content">
         //        <span class="Button__spinner">
-        //           <span role="status" aria-hidden="true" class="spinner-border spinner-border-sm"></span>
+        //           <span aria-hidden="true" class="Button__spinner-ring"></span>
         //        </span>
         //        <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="check" class="svg-inline--fa fa-check fa-w-16 fa-lg " role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"></path>
         //        </svg>
@@ -89,7 +94,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         buttonContent.appendChild(buttonSpinner);
 
         spinnerBorder = DOM.createSpan();
-        spinnerBorder.setClassName("spinner-border spinner-border-sm");
+        spinnerBorder.setClassName("Button__spinner-ring");
         // Only a picture: the button itself says it is busy (aria-busy)
         spinnerBorder.setAttribute("aria-hidden", "true");
         buttonSpinner.appendChild(spinnerBorder);
@@ -161,13 +166,32 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         }.schedule(1000);
     }
 
+    /// Shows the button's busy spinner, which grows in, or shrinks it away. The spinner spins only
+    /// while it shows or shrinks away (`Button--spinning`), so an idle button's spinner costs nothing.
+    ///
+    /// @param loading Whether the button's action is running.
     public void setLoading(final boolean loading) {
+        if (stopSpinning != null) {
+            stopSpinning.cancel();
+            stopSpinning = null;
+        }
         if (loading) {
+            getElement().addClassName(SPINNING);
             getElement().addClassName("Button--loading");
             getElement().setAttribute("aria-busy", "true");
         } else {
             getElement().removeClassName("Button--loading");
             getElement().removeAttribute("aria-busy");
+            if (getElement().hasClassName(SPINNING)) {
+                stopSpinning = new Timer() {
+                    @Override
+                    public void run() {
+                        stopSpinning = null;
+                        getElement().removeClassName(SPINNING);
+                    }
+                };
+                stopSpinning.schedule(SPINNER_FADE_MILLIS);
+            }
         }
     }
 

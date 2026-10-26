@@ -30,6 +30,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -90,30 +91,33 @@ public final class DependenciesScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/DependenciesScreen", DependenciesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // The action menu: Locate / Properties fire the app's events; Show dependants filters
+                // The action menu: Locate / Show Info fire the app's events; Show dependants filters
                 .story("ActionMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alpha XSLT");
-                    // The action buttons: [row1 From, row1 To, row2 From, row2 To]. Open row1's To
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
-                    // All five GWT items are present
-                    screen.findByText("Properties");
+                    // Each action button is named for its document (as its menu is): open Alpha
+                    // XSLT's
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
+                    // The menu is named for its document, and takes the focus. All five GWT items
+                    // are present
+                    screen.findByRole("menu", TextMatch.regex("^Actions for .+ 'Alpha XSLT'$"));
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Show Info")).toHaveFocus());
                     screen.findByText("Locate in Explorer");
-                    screen.findByText("Show dependants");
+                    screen.findByText("Show Dependants");
                     play.expect(screen.getByText("Delete")).toBeInTheDocument();
-                    play.expect(screen.getByText("Show dependencies")).toBeInTheDocument();
-                    // Properties shows the document's dependency information
-                    play.click(screen.getByText("Properties"));
+                    play.expect(screen.getByText("Show Dependencies")).toBeInTheDocument();
+                    // Show Info shows the document's dependency information
+                    play.click(screen.getByText("Show Info"));
                     play.waitFor(() -> play.expect(play.spy(ON_PROPERTIES)).toHaveBeenCalledWith("x-1"));
                     // Reopen: Locate fires LocateDocEvent
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
                     play.click(screen.findByText("Locate in Explorer"));
                     play.waitFor(() -> play.expect(play.spy(ON_LOCATE)).toHaveBeenCalledWith("x-1"));
                     // Reopen and show the dependants of Alpha XSLT: GWT writes `touuid:<uuid>` into
                     // the quick filter and lets the server apply it
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
-                    play.click(screen.findByText("Show dependants"));
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
+                    play.click(screen.findByText("Show Dependants"));
                     // GWT's quick filter has no label, only a placeholder
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.waitFor(() -> play.expect(filter).toHaveValue("touuid:x-1"));

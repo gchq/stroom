@@ -21,12 +21,12 @@ import stroom.query.api.Column;
 import stroom.query.api.Sort;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.SortIcon;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.SortIcon;
 
 import java.util.Set;
 import java.util.stream.Collectors;

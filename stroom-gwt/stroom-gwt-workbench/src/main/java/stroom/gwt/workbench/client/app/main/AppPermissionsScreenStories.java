@@ -112,12 +112,12 @@ public final class AppPermissionsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
-                    // The menu omits a link back to App Permissions; open the user in Manage API Keys
-                    play.expect(screen.findByText("Show user on the Manage API Keys screen")).toBeInTheDocument();
-                    play.expect(screen.queryByText("Show user on the Application Permissions screen")).toBeNull();
-                    play.click(screen.getByText("Show user on the Manage API Keys screen"));
+                    // The menu omits a link back to App Permissions; open the user in API Keys
+                    play.expect(screen.findByText("Show in API Keys")).toBeInTheDocument();
+                    play.expect(screen.queryByText("Show in Application Permissions")).toBeNull();
+                    play.click(screen.getByText("Show in API Keys"));
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
                             .toHaveBeenCalledWith("ApiKeys: Alice Anderson"));
                     // The quick filter narrows the list (the server applies it)
@@ -130,7 +130,7 @@ public final class AppPermissionsScreenStories {
                 .withPlay(play -> {
                     play.click(play.findByText("Alice Anderson"));
                     final Query box = tickBox(play, "Manage Cache");
-                    play.waitFor(() -> play.expect(box).toHaveClass("tickBox-noBorder"));
+                    play.waitFor(() -> play.expect(box).toHaveAttribute("aria-readonly", "true"));
                     play.click(box);
                     play.sleep(50);
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
@@ -148,7 +148,7 @@ public final class AppPermissionsScreenStories {
 
     /// @return The 'Granted' tick box (a `TickBoxCell` div) of a permission's row, once it is shown.
     private static Query tickBox(final Play play, final String permission) {
-        return play.within(play.findByText(permission).closest("tr")).querySelector(".tickBox");
+        return play.within(play.findByText(permission).closest(StroomDom.GRID_ROW)).querySelector(".tick-box");
     }
 
     private static String page(final String rows) {

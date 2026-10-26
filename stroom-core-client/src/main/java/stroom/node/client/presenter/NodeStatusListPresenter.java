@@ -22,8 +22,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
@@ -43,6 +41,8 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -81,10 +81,8 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "__healthy";
     private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
     private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
-    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
-    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
-    private final MyDataGrid<NodeStatusResult> dataGrid;
+    private final DataGrid<NodeStatusResult> dataGrid;
     private final NodeClient nodeClient;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
@@ -109,7 +107,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                                    final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Nodes");
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -120,7 +118,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
 
         getView().getToolbar().setName("Node actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, AUTO_REFRESH_ON_TITLE,
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
@@ -181,10 +179,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
         }
     }
 
@@ -322,7 +317,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
 
         // Priority.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(NodeStatusListPresenter::extractNodePriority,
+                DataGridUtil.valueSpinnerColumnBuilder("Priority", NodeStatusListPresenter::extractNodePriority,
                                 1L,
                                 100L)
                         .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
@@ -339,7 +334,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                                      "assigning a master. The larger the number the more chance it will become " +
                                      "the master.")
                         .build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
 
         // Enabled
         dataGrid.addColumn(

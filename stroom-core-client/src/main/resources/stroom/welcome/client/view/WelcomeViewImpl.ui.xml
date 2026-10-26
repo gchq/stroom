@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max welcomeViewImpl-body">
         <g:SimplePanel ui:field="html"/>
-            <g:Grid styleName="welcomeViewImpl-buildInfo stroom-control-grid w-100">
+            <g:Grid ui:field="buildInfo" styleName="welcomeViewImpl-buildInfo stroom-control-grid w-100">
                 <g:row>
                     <g:cell>User Unique Identity:</g:cell>
                     <g:customCell>

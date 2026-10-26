@@ -106,14 +106,16 @@ public final class StatisticStoreEditorStories {
                 .story("CustomRollUpsEditable", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the Custom Roll-ups tab, as 'CustomRollUpsEditable' shows it
                 .story("CustomRollUpsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -127,7 +129,7 @@ public final class StatisticStoreEditorStories {
                     play.expect(play.getByText("user")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.getByRole("button", "New Field"));
+                    play.click(play.getByRole("button", "New Statistic Field"));
                     // The name's text box is identified as 'statisticsFieldName'
                     final Query input = nameInput(screen);
                     play.type(input, "app");
@@ -141,7 +143,7 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Fields");
-                    play.click(play.findByRole("button", "New Field"));
+                    play.click(play.findByRole("button", "New Statistic Field"));
                     play.type(nameInput(screen), "host");
                     final Query ok = screen.getByRole("button", StroomDom.button("OK"));
                     play.expect(ok).not().toBeDisabled();
@@ -159,15 +161,17 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Fields");
-                    play.expect(play.findByRole("button", "Edit Field")).toHaveAttribute("aria-disabled", "true");
-                    play.expect(play.getByRole("button", "Remove Field")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.findByRole("button", "Edit Selected Statistic Field"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Remove Selected Statistic Fields"))
+                            .toHaveAttribute("aria-disabled", "true");
                     play.dblClick(play.findByText("user"));
                     play.expect(nameInput(screen)).toHaveValue("user");
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.click(play.getByText("host"));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Remove Field"))
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Remove Selected Statistic Fields"))
                             .not().toHaveAttribute("aria-disabled"));
-                    play.click(play.getByRole("button", "Remove Field"));
+                    play.click(play.getByRole("button", "Remove Selected Statistic Fields"));
                     play.waitFor(() -> play.expect(play.queryByText("host")).toBeNull());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase("are you sure"))).toBeNull();
                     DocumentEditors.expectNoProblems(play);
@@ -178,13 +182,14 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
                     // The headers are found by their text in the <th> cells
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
-                    play.expect(play.getByText("user", "th, th *")).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
+                    play.expect(play.getByText("user", StroomDom.GRID_HEADER_TEXT)).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.getByRole("button", "New roll-up permutation"));
+                    play.click(play.getByRole("button", "New Roll-up Permutation"));
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
-                    play.expect(play.getByRole("button", "Remove roll-up permutation"))
+                    play.expect(play.getByRole("button", "Remove Selected Roll-up Permutation"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -192,9 +197,9 @@ public final class StatisticStoreEditorStories {
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     openTab(play, "Fields");
-                    play.expect(play.findByRole("button", "New field disabled as fields are read only"))
+                    play.expect(play.findByRole("button", "New Statistic Field (fields are read only)"))
                             .toHaveAttribute("aria-disabled", "true");
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -203,10 +208,10 @@ public final class StatisticStoreEditorStories {
                 .story("RemovingTheLastRollUpReSeedsIt", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    // The rows are the grid's <tr>s
+                    // The grid's rows (either grid's)
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1));
-                    play.click(play.querySelectorAll(StroomDom.GRID_ROW + " td").nth(0));
-                    play.click(play.getByRole("button", "Remove roll-up permutation"));
+                    play.click(play.querySelectorAll("tr[__gwt_row] td, .data-grid__row[data-row] [data-col]").nth(0));
+                    play.click(play.getByRole("button", "Remove Selected Roll-up Permutation"));
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1));
                     DocumentEditors.expectNoProblems(play);
                 });

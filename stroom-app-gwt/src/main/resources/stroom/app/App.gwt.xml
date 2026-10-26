@@ -73,6 +73,7 @@
     <inherits name="stroom.widget.tickbox.TickBox" />
     <inherits name="stroom.widget.tooltip.Tooltip" />
     <inherits name="stroom.widget.valuespinner.ValueSpinner" />
+    <inherits name="stroom.widget.datagrid.DataGrid" />
     <inherits name="stroom.editor.Editor" />
     <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
     <inherits name="stroom.widget.htree.HTree"/>
@@ -165,7 +166,6 @@
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data" />
-    <inherits name="stroom.data.grid.Grid" />
     <inherits name="stroom.data.table.Table" />
     <inherits name="stroom.data.pager.Pager" />
     <inherits name="stroom.cell.Cell" />

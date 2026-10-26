@@ -30,7 +30,7 @@ import { judgeA11y, updateBaseline } from './a11y-check.mjs';
 import { judgeContentFocus } from './focus-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
 import { safeFileBase, screenshotFile } from './screenshots.mjs';
-import { mergeChecks } from './real-input/index.mjs';
+import { mergeChecks, unknownCheckIds } from './real-input/index.mjs';
 
 test('filters', () => {
   const stories = [
@@ -321,4 +321,12 @@ test('real input checks: each component file adds its own, and a story id in two
     ['one--a', 'two--b']);
   assert.throws(() => mergeChecks({ 'x.mjs': { 'one--a': a }, 'y.mjs': { 'one--a': b } }),
     /one--a is in both x\.mjs and y\.mjs/);
+});
+
+test('real input checks: a check whose story id matches no story is found', () => {
+  const check = async () => {};
+  const stories = [{ id: 'widgets-cell-renderers-feedrefcell--context-menu' }, { id: 'one--a' }];
+  assert.deepEqual(unknownCheckIds({ 'one--a': check }, stories), []);
+  assert.deepEqual(unknownCheckIds({ 'one--a': check, 'widgets-cellrenderers-feedrefcell--context-menu': check },
+    stories), ['widgets-cellrenderers-feedrefcell--context-menu']);
 });

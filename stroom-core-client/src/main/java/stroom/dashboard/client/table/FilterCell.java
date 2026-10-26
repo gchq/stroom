@@ -158,7 +158,7 @@ public class FilterCell
      * Constructs a TextInputCell that renders its text without HTML markup.
      */
     public FilterCell(final FilterCellManager filterCellManager) {
-        super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
+        super(BrowserEvents.CHANGE, BrowserEvents.KEYUP, BrowserEvents.CLICK);
         this.filterCellManager = filterCellManager;
     }
 
@@ -172,6 +172,17 @@ public class FilterCell
 
         final String eventType = event.getType();
         final Element target = event.getEventTarget().cast();
+
+        // The disable button turns the filter off or on, when clicked or pressed with Enter or Space
+        if (BrowserEvents.CLICK.equals(eventType)) {
+            if (isInButton(parent, target) && filterCellManager != null) {
+                final ColumnFilter columnFilter = ColumnFilter.fromColumn(column).build();
+                filterCellManager.setColumnFilter(column, ColumnFilter.fromColumn(column)
+                        .enabled(!columnFilter.isEnabled())
+                        .build());
+            }
+            return;
+        }
 
         // Ignore events that don't target the input.
         final InputElement input = getInputElement(parent);
@@ -191,6 +202,20 @@ public class FilterCell
             }
             vd.setCurrentValue(input.getValue());
         }
+    }
+
+    @Override
+    protected void onEnterKeyDown(final Context context,
+                                  final Element parent,
+                                  final Column column,
+                                  final NativeEvent event,
+                                  final ValueUpdater<Column> valueUpdater) {
+        // Enter on the disable button is the button's (a click), so it keeps the focus rather
+        // than the text box taking it
+        if (isInButton(parent, event.getEventTarget().cast())) {
+            return;
+        }
+        super.onEnterKeyDown(context, parent, column, event, valueUpdater);
     }
 
     @Override
@@ -233,6 +258,7 @@ public class FilterCell
             outer.elem(
                     SafeHtmlUtils.fromSafeConstant("input"),
                     new Attribute("type", "text"),
+                    new Attribute("aria-label", "Filter " + NullSafe.string(column.getName())),
                     Attribute.className(textClassName.build()),
                     new Attribute("value", s));
 
@@ -286,6 +312,11 @@ public class FilterCell
     protected InputElement getInputElement(final Element parent) {
         final Element element = ElementUtil.findChild(parent, e -> e.getTagName().equalsIgnoreCase("input"));
         return element.cast();
+    }
+
+    private static boolean isInButton(final Element parent, final Element target) {
+        final Element button = ElementUtil.findChild(parent, "dashboard-table-filter-cell-disable-button");
+        return button != null && button.isOrHasChild(target);
     }
 
     private String getValue(final Column column) {

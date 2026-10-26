@@ -301,6 +301,81 @@ public class SafeHtmlUtil {
         return SafeHtmlUtils.fromString(string);
     }
 
+    /// The text a piece of HTML shows, without its tags and with its character references (e.g.
+    /// `&amp;`, `&#39;`, `&nbsp;`) decoded, e.g. for an attribute such as `title` that a template
+    /// escapes itself, so that it isn't escaped twice.
+    ///
+    /// @param safeHtml The HTML, or null.
+    /// @return Its text, or an empty string for null.
+    public static String toPlainText(final SafeHtml safeHtml) {
+        if (safeHtml == null) {
+            return "";
+        }
+        final String html = safeHtml.asString();
+        final StringBuilder sb = new StringBuilder(html.length());
+        int i = 0;
+        while (i < html.length()) {
+            final char c = html.charAt(i);
+            if (c == '<') {
+                // Skip the tag
+                final int end = html.indexOf('>', i);
+                i = end < 0
+                        ? html.length()
+                        : end + 1;
+            } else if (c == '&') {
+                final int end = html.indexOf(';', i);
+                final String decoded = end < 0
+                        ? null
+                        : decodeReference(html.substring(i + 1, end));
+                if (decoded != null) {
+                    sb.append(decoded);
+                    i = end + 1;
+                } else {
+                    sb.append(c);
+                    i++;
+                }
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
+    }
+
+    // A character reference's text (without its & and ;), or null if it isn't one this knows
+    private static String decodeReference(final String reference) {
+        switch (reference) {
+            case "amp":
+                return "&";
+            case "lt":
+                return "<";
+            case "gt":
+                return ">";
+            case "quot":
+                return "\"";
+            case "apos":
+                return "'";
+            case "nbsp":
+                return " ";
+            case "ensp":
+                return " ";
+            default:
+                break;
+        }
+        if (reference.length() > 1 && reference.charAt(0) == '#') {
+            try {
+                final boolean hex = reference.charAt(1) == 'x' || reference.charAt(1) == 'X';
+                final int codePoint = hex
+                        ? Integer.parseInt(reference.substring(2), 16)
+                        : Integer.parseInt(reference.substring(1));
+                return new String(Character.toChars(codePoint));
+            } catch (final IllegalArgumentException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
     /**
      * If untrustedColour is a valid HTML colour (i.e. a valid colour name or hex/rgb/rgba/hsl code)
      * then an {@link Optional} will be returned populated with that colour. The returned value

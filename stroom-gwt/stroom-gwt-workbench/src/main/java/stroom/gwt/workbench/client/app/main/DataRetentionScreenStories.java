@@ -95,12 +95,12 @@ public final class DataRetentionScreenStories {
 
     // The Impact Summary's toolbar buttons
     private static final String RUN_QUERY = "Run Query";
-    private static final String ABORT_QUERY = "Abort Query";
+    private static final String STOP_QUERY = "Stop Query";
     private static final String SET_FILTER = "Set Query Filter";
 
     // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
-    private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
+    private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataRetentionScreenStories() {
         // Static utility
@@ -131,7 +131,7 @@ public final class DataRetentionScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Keep a month");
                     // Save -> PUT the rules (the retain-all rule excluded) with the renamed rule
-                    final Query save = play.getByTitle("Save rules");
+                    final Query save = play.getByTitle("Save Rules");
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -153,7 +153,7 @@ public final class DataRetentionScreenStories {
                     // Select the rule -> its expression shows, read only (labels, not editors)
                     play.click(play.getByText("Keep 30 days"));
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
-                            .toHaveClass("expressionItemBox-label"));
+                            .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
                     // The synthetic retain-all rule has no expression -> the panel clears
                     play.click(play.getByText("Default Retain All Forever Rule"));
@@ -166,26 +166,27 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Keep 30 days");
-                    play.click(play.within(row(play, "Keep 30 days")).getByTitle(StroomDom.ACTIONS_TITLE));
+                    // Each row's button is named for its rule, as its menu is
+                    play.click(play.getByTitle("Actions for rule 1 'Keep 30 days'"));
                     play.waitFor(() -> play.expect(menuItem(screen, "Edit Rule")).toBeVisible());
                     for (final String label : new String[]{
-                            "Add new rule above", "Add new rule below", "Edit Rule", "Copy Rule", "Delete Rule"}) {
+                            "Add Rule Above", "Add Rule Below", "Edit Rule", "Duplicate Rule", "Delete Rule"}) {
                         play.expect(menuItem(screen, label)).toBeVisible();
                     }
                     // Row 1 of 2: no Move Up, but Move Down
                     play.expect(screen.queryByText("Move Rule Up", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.expect(menuItem(screen, "Move Rule Down")).toBeVisible();
-                    // Copy Rule acts on that row -> a second rule appears
-                    play.click(menuItem(screen, "Copy Rule"));
+                    // Duplicate Rule acts on that row -> a second rule appears
+                    play.click(menuItem(screen, "Duplicate Rule"));
                     play.waitFor(() -> play.expect(play.getAllByText("Keep 30 days").count()).toBe(2));
-                    // The default retain-all row: only Add above and Copy
+                    // The default retain-all row: only Add above and Duplicate
                     play.click(play.within(row(play, "Default Retain All Forever Rule"))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Add new rule above")).toBeVisible());
-                    play.expect(menuItem(screen, "Copy Rule")).toBeVisible();
+                            .getByTitle(TextMatch.regex("^Actions for rule ")));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Add Rule Above")).toBeVisible());
+                    play.expect(menuItem(screen, "Duplicate Rule")).toBeVisible();
                     play.expect(screen.queryByText("Edit Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.expect(screen.queryByText("Delete Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();
-                    play.expect(screen.queryByText("Add new rule below", StroomDom.MENU_ITEM_TEXT)).toBeNull();
+                    play.expect(screen.queryByText("Add Rule Below", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     expectNoProblems(play);
                 })
                 // The Impact Summary tab: Run Query fetches the per-rule deletion counts
@@ -195,31 +196,31 @@ public final class DataRetentionScreenStories {
                     play.click(play.getByTitle(RUN_QUERY));
                     // GWT's nested view (its default) shows the feeds once
                     // expanded; the rules start expanded down to their types
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.getByText("42")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // A query in flight disables Run/Filter and enables Abort, which cancels it by queryId
+                // A query in flight disables Run/Filter and enables Stop, which cancels it by queryId
                 .story("ImpactAbort", context -> render(context, ABORT_FIXTURES))
                 .withPlay(play -> {
                     openImpactSummary(play);
-                    // Idle: Run enabled, Abort disabled
-                    play.expect(play.getByTitle(ABORT_QUERY)).toHaveAttribute("aria-disabled", "true");
+                    // Idle: Run enabled, Stop disabled
+                    play.expect(play.getByTitle(STOP_QUERY)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // In flight: the gating inverts (updateButtonStates)
                     play.click(play.getByTitle(RUN_QUERY));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                    play.waitFor(() -> play.expect(play.getByTitle(STOP_QUERY))
                             .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.getByTitle(RUN_QUERY)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle(SET_FILTER)).toHaveAttribute("aria-disabled", "true");
-                    // Abort cancels the same queryId the run was issued with
-                    play.click(play.getByTitle(ABORT_QUERY));
+                    // Stop cancels the same queryId the run was issued with
+                    play.click(play.getByTitle(STOP_QUERY));
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the query ids run and cancelled",
                                     () -> runAndCancelledIds(requests))
                             .toSatisfy("one run, cancelled by its id", DataRetentionScreenStories::isCancelledRun));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                    play.waitFor(() -> play.expect(play.getByTitle(STOP_QUERY))
                             .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // The aborted run's late response must not fill the cleared table
@@ -233,10 +234,10 @@ public final class DataRetentionScreenStories {
                     openImpactSummary(play);
                     play.click(play.getByTitle(RUN_QUERY));
                     // GWT's default nested view shows the feeds once expanded
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("LONG_FEED");
                     // Ascending by Rule Age -> 30 Days (rule 1) before 5 Years (rule 2)
-                    final Query rows = play.querySelector("tbody");
+                    final Query rows = play.within(impactGrid(play)).querySelector(".data-grid__body");
                     play.click(play.getByText("Rule Age"));
                     play.waitFor(() -> play.expect("the first feed", () -> firstFeed(rows)).toBe("TEST"));
                     // Descending flips it
@@ -253,10 +254,9 @@ public final class DataRetentionScreenStories {
                     // so the toggle isn't needed; the rule and type rows show the subtotal (42 + 8)
                     play.waitFor(() -> play.expect(play.getAllByText("50").count())
                             .toBeGreaterThanOrEqual(1));
-                    // The full column set, behind an expander column.
-                    // GWT's sortable headers have role="button", so the headers
-                    // are the table's <th> cells
-                    play.expect(play.querySelectorAll("thead th").textContents()).toEqual(List.of(
+                    // The full column set, behind an expander column
+                    play.expect(play.within(impactGrid(play)).querySelectorAll(StroomDom.GRID_HEADER_CELL)
+                            .textContents()).toEqual(List.of(
                             "", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
                     // An active rule with no deletes still shows, as a 0 count row.
                     // GWT builds the rows from the fetched rules' active rules,
@@ -264,8 +264,8 @@ public final class DataRetentionScreenStories {
                     // row is 'Keep 5 years' (an active rule nothing is deleted by)
                     play.expect(play.queryByText("Default Retain All Forever Rule")).toBeNull();
                     play.expect(play.getByText("Keep 5 years")).toBeInTheDocument();
-                    // Expand all -> the feed rows show
-                    play.click(play.getByTitle("Expand all"));
+                    // Expand All Results -> the feed rows show
+                    play.click(play.getByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.getByText("OTHER_FEED")).toBeInTheDocument();
                     expectNoProblems(play);
@@ -285,7 +285,7 @@ public final class DataRetentionScreenStories {
                                     .withJsonBodyContaining(
                                             "{\"criteria\": {\"expression\": {\"type\": \"operator\"}}}")
                                     .toSpyMatcher()));
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.queryByTitle("Clear Filter")).toBeNull();
                     expectNoProblems(play);
@@ -299,9 +299,14 @@ public final class DataRetentionScreenStories {
         play.findByTitle(RUN_QUERY);
     }
 
-    // GWT's grid rows are <tr> elements with no role attribute
+    // The impact summary's grid (the rules grid is on the screen too), found by its count column
+    private static Query impactGrid(final Play play) {
+        return play.getByText("Stream Delete Count", StroomDom.GRID_HEADER_TEXT).closest(".data-grid");
+    }
+
+    // A grid row
     private static Query row(final Play play, final String text) {
-        return play.getAllByText(text).nth(0).closest("tr");
+        return play.getAllByText(text).nth(0).closest(StroomDom.GRID_ROW);
     }
 
     private static Query menuItem(final Play screen, final String text) {

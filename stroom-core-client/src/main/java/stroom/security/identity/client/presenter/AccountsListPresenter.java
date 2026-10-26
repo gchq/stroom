@@ -22,9 +22,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -43,6 +40,9 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -71,7 +71,7 @@ public class AccountsListPresenter
     private final Provider<EditAccountPresenter> editAccountPresenterProvider;
     private final MultiSelectionModelImpl<Account> selectionModel;
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
-    private final MyDataGrid<Account> dataGrid;
+    private final DataGrid<Account> dataGrid;
     private final ToolbarButton addButton;
     private final ToolbarButton editButton;
     private final ToolbarButton deleteButton;
@@ -88,23 +88,26 @@ public class AccountsListPresenter
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter accounts");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
-        this.dataGrid = new MyDataGrid<>(this, 1000);
+        this.dataGrid = new DataGrid<>(this, 1000);
+        // Rows keyed by id, so a row whose values change is still the same row
+        this.dataGrid.setKeyProvider(Account::getId);
         this.dataGrid.setTableName("Accounts");
         this.selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<Account> selectionEventManager =
+                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
         final Toolbar toolbar = pagerView.getToolbar();
         toolbar.setName("Account actions");
-        addButton = toolbar.button(SvgImage.ADD, "Add new account", this::createNewAccount);
-        editButton = toolbar.button(SvgImage.EDIT, "Edit account", this::editSelectedAccount);
-        deleteButton = toolbar.button(SvgImage.DELETE, "Delete selected account", this::deleteSelectedAccount);
+        addButton = toolbar.button(SvgImage.ADD, "New Account", this::createNewAccount);
+        editButton = toolbar.button(SvgImage.EDIT, "Edit Selected Account", this::editSelectedAccount);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected Account", this::deleteSelectedAccount);
         setButtonStates();
         initTableColumns();
 
@@ -278,9 +281,11 @@ public class AccountsListPresenter
                                 "" + account.getFailureCount())
                         .enabledWhen(Account::isEnabled)
                         .withSorting(AccountFields.FIELD_NAME_FAILURE_COUNT)
+                        .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Sign In Failures")
                         .withToolTip("The number of sign in failures since the last successful sign in.")
+                        .rightAligned()
                         .build(),
                 130);
 

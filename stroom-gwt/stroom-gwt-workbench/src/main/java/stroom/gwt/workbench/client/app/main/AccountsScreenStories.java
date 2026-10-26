@@ -34,9 +34,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.shared.AppPermission;
+import stroom.widget.datagrid.client.SortIcon;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/AccountsScreen`, showing Stroom's real [AccountsPresenter] (the 'Manage
@@ -94,10 +94,10 @@ public final class AccountsScreenStories {
                 .story("UserIdCommandLink", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("admin");
-                    // Only the open icon fires the command; clicking the text selects the row
-                    final Play row = play.within(play.getByText("admin").closest("tr"));
-                    final Query open = row.querySelector(StroomDom.COMMAND_LINK_OPEN);
-                    play.expect(open.closest("[title]")).toHaveAttribute("title",
+                    // Only the open button fires the command; clicking the text selects the row.
+                    // The button is named for what it opens
+                    final Play row = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
+                    final Query open = row.getByRole("button",
                             "Open account 'admin' on the Users and Groups screen.");
                     play.click(open);
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
@@ -110,17 +110,18 @@ public final class AccountsScreenStories {
                 .story("UserIdPlainWithoutTarget", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("admin");
-                    final Play row = play.within(play.getByText("admin").closest("tr"));
+                    final Play row = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
                     // Stroom's grid always has somewhere to open the user (the
-                    // Users and Groups screen), so the User Id cell always has its open icon
-                    play.expect(row.querySelector(StroomDom.COMMAND_LINK_OPEN)).toBeInTheDocument();
+                    // Users and Groups screen), so the User Id cell always has its open button
+                    play.expect(row.getByRole("button", "Open account 'admin' on the Users and Groups screen."))
+                            .toBeInTheDocument();
                     expectNoProblems(play);
                 })
                 // The account states have a column each; editing sends only the changed values
                 .story("Accounts", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("admin");
-                    final Query rowElement = play.getByText("admin").closest("tr");
+                    final Query rowElement = play.getByText("admin").closest(StroomDom.GRID_ROW);
                     final Play row = play.within(rowElement);
                     play.expect(row.getByText("Enabled")).toBeInTheDocument();
                     play.expect(row.getByText("Active")).toBeInTheDocument();
@@ -147,10 +148,14 @@ public final class AccountsScreenStories {
                 .story("LockedAccount", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("locked.user");
-                    final Play row = play.within(play.getByText("locked.user").closest("tr"));
+                    final Play row = play.within(play.getByText("locked.user").closest(StroomDom.GRID_ROW));
                     play.expect(row.getByText(TextMatch.startingWith("Locked until "))).toBeInTheDocument();
+                    // Its sign in failures, a count, are right-aligned, as their heading is (#4442)
+                    play.expect(row.getByText("3").closest(".data-grid__cell"))
+                            .toHaveClass("data-grid__cell--align-right");
+                    play.expect(play.getByText("Sign In Failures").closest("[data-hcol]")).toHaveClass("right-align");
                     // The unlocked account's Locked cell stays blank
-                    final Play adminRow = play.within(play.getByText("admin").closest("tr"));
+                    final Play adminRow = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
                     play.expect(adminRow.queryByText(TextMatch.startingWith("Locked"))).toBeNull();
                     expectNoProblems(play);
                 })
@@ -166,7 +171,7 @@ public final class AccountsScreenStories {
                                     "{\"sortList\": [{\"id\": \"userid\", \"desc\": false}]}")));
                     // GWT's headers have no aria-sort; the sorted header shows
                     // the 'Sort Ascending' icon
-                    play.expect(play.within(play.getByText("User Id").closest("th"))
+                    play.expect(play.within(play.getByText("User Id").closest("th, [data-hcol]"))
                             .getByTitle(SortIcon.SORT_ASCENDING)).toBeInTheDocument();
                     expectNoProblems(play);
                 });

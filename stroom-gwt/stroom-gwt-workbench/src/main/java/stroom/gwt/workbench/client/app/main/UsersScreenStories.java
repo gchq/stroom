@@ -100,7 +100,7 @@ public final class UsersScreenStories {
                     play.expect(play.getByText("alice")).toBeInTheDocument();
                     // Create User: the dialog, the unique user id, OK.
                     // Stroom's dialogs have no role="dialog"; the dialog is the caption's closest
-                    // '.dialog-container'
+                    // '.dialog__container'
                     play.click(play.getByTitle("Create User"));
                     final Play dialog = screen.within(
                             screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
@@ -208,17 +208,20 @@ public final class UsersScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     // The cell's open icon: GWT shows it to a MANAGE_USERS holder (or on your own row)
-                    play.expect(row.getByTitle(TextMatch.containing("Open user Alice Anderson in new tab")))
+                    play.expect(row.getByTitle(TextMatch.containing("Open user Alice Anderson")))
                             .toBeInTheDocument();
                     // GWT's shared ActionMenuCell: an ellipsis titled 'Actions...'
                     final Query actions = row.getByTitle(StroomDom.ACTIONS_TITLE);
                     play.expect(row.queryByTitle("Actions")).toBeNull();
                     play.click(actions);
-                    screen.findByText("Actions for user 'Alice Anderson':");
+                    // The menu is named for the user, rather than having a heading item that does
+                    // nothing
+                    screen.findByRole("menu", "Actions for user 'Alice Anderson'");
+                    play.expect(screen.queryByText(TextMatch.containing("Actions for user"))).toBeNull();
                     // The menu omits a link back to Users; App Permissions opens it focused on Alice
-                    play.click(screen.getByText("Show user on the Application Permissions screen"));
+                    play.click(screen.getByText("Show in Application Permissions"));
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
                             .toHaveBeenCalledWith("ApplicationPermissions: Alice Anderson"));
                     expectNoProblems(play);

@@ -20,14 +20,14 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.HeadingBuilder;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.HeadingBuilder;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -56,7 +56,7 @@ import java.util.function.Function;
 
 public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
-    private final MyDataGrid<DataRetentionRule> dataGrid;
+    private final DataGrid<DataRetentionRule> dataGrid;
     private final MultiSelectionModelImpl<DataRetentionRule> selectionModel;
     private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
     private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
@@ -66,7 +66,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                                             final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by rule number (their position): a tick rebuilds them
+        dataGrid.setKeyProvider(DataRetentionRule::getRuleNumber);
         dataGrid.setTableName("Data Retention Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -152,7 +154,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
     private void addActionButtonColumn(final int width) {
 
-        final ActionCell<DataRetentionRule> actionCell = new stroom.cell.info.client.ActionCell<>(this::showActionMenu);
+        final ActionCell<DataRetentionRule> actionCell = new ActionCell<>(this::showActionMenu,
+                DataRetentionPolicyListPresenter::getActionMenuName);
 
         final Column<DataRetentionRule, DataRetentionRule> expressionColumn =
                 new Column<DataRetentionRule, DataRetentionRule>(actionCell) {
@@ -179,9 +182,19 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent
                 .builder()
+                .name(getActionMenuName(row))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // e.g. "Actions for rule 3 'My rule'"
+    private static String getActionMenuName(final DataRetentionRule row) {
+        final String name = row.getName();
+        return "Actions for rule " + row.getRuleNumber()
+               + (NullSafe.isBlankString(name)
+                ? ""
+                : " '" + name + "'");
     }
 
     private void addEnabledCol(final Function<DataRetentionRule, Boolean> valueFunc) {

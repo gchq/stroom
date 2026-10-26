@@ -60,7 +60,7 @@ await page.route((u) => u.pathname.startsWith(ENDPOINT), async (route) => {
     body: JSON.stringify({ code: 500, message: JACKSON, details: JACKSON }) });
 });
 
-await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
 await settleExplorer(page, { label: 'expand', budget: 8_000 }).catch(() => {});
 
 const name = await page.evaluate((t) => {
@@ -88,7 +88,7 @@ const dialogs = await readDialogs(page).catch(() => []);
 const tabsAfter = await page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
 const bodyText = await page.evaluate(() => {
-  const pops = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const pops = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   return pops.map((p) => p.textContent.replace(/\s+/g, ' ').trim()).join(' || ');
 });
 

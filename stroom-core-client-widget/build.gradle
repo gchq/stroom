@@ -29,6 +29,8 @@ dependencies {
         exclude(module: 'gwtp-crawler-service')
     }
 
+    // SafeHtmlBuilder checks its HTML constants with gwt-dev's HTML parser on the JVM
+    testImplementation libs.gwt.dev
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

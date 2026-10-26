@@ -23,8 +23,6 @@ import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
-import stroom.data.grid.client.Heading;
-import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
@@ -33,6 +31,9 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.Heading;
+import stroom.widget.datagrid.client.HeadingListener;
+import stroom.widget.datagrid.client.SortIcon;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -51,7 +52,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -142,33 +142,17 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                 HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
 
                             } else if (isFilterButton) {
-                                currentFilterColIndex = colIndex;
-                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
-                                        .getDataSupplier(column, null);
-                                columnValuesFilterPresenter.show(
-                                        () -> button,
-                                        th,
-                                        column,
-                                        () -> dataSupplier,
-                                        hideEvent -> resetFilterColIndex(),
-                                        column.getColumnValueSelection(),
-                                        QueryTableColumnsManager.this);
-
-                            } else if (isDiableFilterButton) {
-                                final FilterCellManager filterCellManager = tablePresenter.getFilterCellManager();
-                                if (filterCellManager != null) {
-                                    final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
-                                    builder.enabled(!builder.build().isEnabled());
-                                    filterCellManager.setColumnFilter(column, builder.build());
-                                }
+                                showValuesFilter(column, colIndex, th, button);
                             }
+                            // The filter's disable button acts on its own click (FilterCell), so
+                            // that Enter and Space work it too: here it only must not open the menu
 
                             if (currentMenuColIndex == colIndex) {
                                 HideMenuEvent.builder().fire(queryTableColumnsManager);
 
                             } else if (!isFilterButton && !isDiableFilterButton) {
                                 currentMenuColIndex = colIndex;
-                                final List<Item> menuItems = getMenuItems(column);
+                                final List<Item> menuItems = getMenuItems(column, colIndex, th);
 
                                 Rect relativeRect = new Rect(th);
                                 relativeRect = relativeRect.grow(3);
@@ -177,6 +161,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
                                 ShowMenuEvent
                                         .builder()
+                                        .name("Options for column '" + column.getName() + "'")
                                         .items(menuItems)
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
@@ -302,7 +287,16 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private void filterColumn(final Column column) {
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
-            final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
+            // The dialog isn't modal, so the column may have been changed or removed while it was
+            // open: the filter goes on the column as it is now
+            final Column current = findColumn(getColumns(), oldColumn.getId());
+            if (current == null) {
+                fireColumnRemoved(oldColumn);
+                return;
+            }
+            final List<Column> newColumns = replaceColumns(getColumns(), current, current.copy()
+                    .columnFilter(newColumn.getColumnFilter())
+                    .build());
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.onColumnFilterChange();
         });
@@ -320,6 +314,19 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         columns.remove(column);
         columns.add(column);
         tablePresenter.setPreferredColumns(columns);
+    }
+
+    // The column with the id, or null if there is none
+    private static Column findColumn(final List<Column> columns, final String id) {
+        return columns.stream()
+                .filter(column -> column.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void fireColumnRemoved(final Column column) {
+        AlertEvent.fireWarn(this, "The column '" + column.getName() + "' was removed while its filter "
+                                  + "was being edited, so the filter can't be kept.", null);
     }
 
     private List<Column> replaceColumns(final List<Column> sourceColumns,
@@ -442,7 +449,25 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         this.columnsStartIndex = columnsStartIndex;
     }
 
-    private List<Item> getMenuItems(final Column column) {
+    // Shows the column's values filter below its header's filter icon (the icon or the column
+    // menu's Filter Values item)
+    private void showValuesFilter(final Column column,
+                                  final int colIndex,
+                                  final Element th,
+                                  final Element button) {
+        currentFilterColIndex = colIndex;
+        final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
+        columnValuesFilterPresenter.show(
+                () -> button,
+                th,
+                column,
+                () -> dataSupplier,
+                hideEvent -> resetFilterColIndex(),
+                column.getColumnValueSelection(),
+                this);
+    }
+
+    private List<Item> getMenuItems(final Column column, final int colIndex, final Element th) {
         final List<Item> menuItems = new ArrayList<>();
 
 //        // Create rename menu.
@@ -459,6 +484,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 //        menuItems.add(createFilterMenu(column));
         // Add column filter menu item.
         menuItems.add(createColumnFilterMenu(column));
+        // The values filter, as the header's filter icon opens it, for the keyboard
+        menuItems.add(createValuesFilterMenu(column, colIndex, th));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -527,7 +554,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, SortIcon.UNSORTED, null));
+        // An action, so not SortIcon.UNSORTED, which names the state
+        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
                 .icon(SortIcon.SORT_ASCENDING_ICON)
@@ -666,6 +694,18 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .build();
     }
 
+    private Item createValuesFilterMenu(final Column column, final int colIndex, final Element th) {
+        return new IconMenuItem.Builder()
+                .priority(5)
+                .icon(SvgImage.VALUE_FILTER)
+                .text("Filter Values")
+                .command(() -> showValuesFilter(column, colIndex, th,
+                        ElementUtil.findChild(th, "column-valueFilterIcon")))
+                .highlight(column.getColumnValueSelection() != null
+                           && column.getColumnValueSelection().isEnabled())
+                .build();
+    }
+
     private Item createFormatMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(6)
@@ -681,7 +721,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Column to Start")
                 .command(() -> moveFirst(column))
                 .build();
     }
@@ -690,7 +730,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Column to End")
                 .command(() -> moveLast(column))
                 .build();
     }
@@ -708,7 +748,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.HIDE)
-                .text("Hide")
+                .text("Hide Column")
                 .command(() -> hideColumn(column))
                 .build();
     }
@@ -736,7 +776,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconParentMenuItem.Builder()
                 .priority(11)
                 .icon(SvgImage.SHOW)
-                .text("Show")
+                .text("Show Hidden Column")
                 .children(menuItems)
                 .build();
     }
@@ -745,7 +785,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(12)
                 .icon(SvgImage.FORMAT)
-                .text("Conditional Formatting")
+                .text("Edit Conditional Formatting for Table")
                 .command(() -> {
                     final QueryTablePreferences queryTablePreferences = tablePresenter.getQueryTablePreferences();
                     final RulesPresenter rulesPresenter = rulesPresenterProvider.get();
@@ -755,15 +795,19 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                     ShowPopupEvent.builder(rulesPresenter)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .popupSize(popupSize)
-                            .modal(true)
                             .caption("Settings")
                             .onShow(e -> rulesPresenter.focus())
                             .onHideRequest(e -> {
                                 if (e.isOk()) {
                                     if (rulesPresenter.validate()) {
+                                        // The dialog isn't modal, so the table may have changed
+                                        // while it was open: the rules go on its preferences as
+                                        // they are now
+                                        final QueryTablePreferences current =
+                                                tablePresenter.getQueryTablePreferences();
                                         final QueryTablePreferences updated = rulesPresenter
-                                                .write(queryTablePreferences);
-                                        if (!Objects.equals(updated, queryTablePreferences)) {
+                                                .write(current);
+                                        if (!Objects.equals(updated, current)) {
                                             tablePresenter.setQueryTablePreferences(updated);
                                             tablePresenter.onChange();
                                             tablePresenter.refresh();

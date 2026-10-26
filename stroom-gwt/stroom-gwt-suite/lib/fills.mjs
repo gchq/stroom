@@ -43,7 +43,7 @@ export function field(scope, label) {
 export async function setField(scope, label, value) {
   const g = field(scope, label);
   if (!(await g.count())) return false;
-  const box = g.locator('input.gwt-TextBox, input[type=text], input[type=password], textarea').first();
+  const box = g.locator('input.text-field, input[type=text], input[type=password], textarea').first();
   if (!(await box.count())) return false;
   return box
     .fill(String(value), { timeout: 5_000 })
@@ -73,12 +73,12 @@ export async function saveDocument(page, { budgetMs = 15_000 } = {}) {
     // "still dirty" alone sent one of these fills round three diagnostic loops.
     const alert = await page.evaluate(() => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const p = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].find(
-        (x) => norm(x.querySelector('.dialog-titleText')?.textContent) === 'Alert',
+      const p = [...document.querySelectorAll('.dialog')].find(
+        (x) => norm(x.querySelector('.dialog__title')?.textContent) === 'Alert',
       );
       if (!p) return null;
-      const detail = [...p.querySelectorAll('textarea, .gwt-TextArea')].map((t) => t.value || t.textContent).join(' ');
-      return `${norm(p.querySelector('.dialog-content')?.textContent)} ${detail}`.replace(/(Show|Hide) Detail/g, '').trim();
+      const detail = [...p.querySelectorAll('textarea, .text-field--multiline')].map((t) => t.value || t.textContent).join(' ');
+      return `${norm(p.querySelector('.dialog__content')?.textContent)} ${detail}`.replace(/(Show|Hide) Detail/g, '').trim();
     });
     if (alert) return `rejected: ${alert.slice(0, 300)}`;
   }
@@ -155,11 +155,11 @@ export async function fillDocumentationTab(page, text) {
 export async function pickDocRef(page, label, name) {
   const g = field(page, label);
   if (!(await g.count())) return false;
-  const box = g.locator('input.SelectionBox-textBox, .SelectionBox').first();
+  const box = g.locator('input.selection-box__input, .selection-box').first();
   if (!(await box.count())) return false;
   await box.click();
   await page.waitForTimeout(800);
-  const filter = page.locator('input.quickFilter-textBox:visible').last();
+  const filter = page.locator('input.quick-filter__input:visible').last();
   if (await filter.count()) {
     await filter.pressSequentially(name, { delay: 30 });
     await page.waitForTimeout(1000);
@@ -233,16 +233,12 @@ export const FILLS = {
   },
 
   'Elastic Cluster': async (page) => {
-    // "Use authentication" gates the two key fields — tick it FIRST or they are disabled and the
-    // fill silently skips them.
-    await setCheck(page, 'Use authentication', true);
-    await page.waitForTimeout(400);
+    // The API key is an Access Token credential chosen by name (filled as the OpenAI Model's is).
+    // The timeouts, TLS and proxy are in the HTTP client configuration dialog (Set Http Client
+    // Config), which isn't filled.
     const n = await setFields(page, [
       ['Connection URLs', 'http://elastic.seed.invalid:9200'],
-      ['API key ID', 'seed-api-key-id'],
-      ['API key secret', 'seed-api-key-secret'],
-      ['Connection timeout (ms)', '5000'],
-      ['Response timeout (ms)', '30000'],
+      ['API Key (optional)', 'seed-elastic-api-key'],
     ]);
     await fillDocumentationTab(page, '# Seed Elastic Cluster\n\nPoints at a host that does not exist, on purpose.');
     return `${n} settings + documentation`;

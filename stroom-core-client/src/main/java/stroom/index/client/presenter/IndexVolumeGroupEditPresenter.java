@@ -87,12 +87,15 @@ public class IndexVolumeGroupEditPresenter
         this.nodeClient = nodeClient;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::create);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Index Volume", this::create);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Index Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Index Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Volumes",
+        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes",
                 this::onRescan);
 
         view.setListView(volumeStatusListPresenter.getView());
@@ -129,7 +132,7 @@ public class IndexVolumeGroupEditPresenter
 
     private void create() {
         final IndexVolume indexVolume = IndexVolume.builder().indexVolumeGroupId(volumeGroup.getId()).build();
-        editVolume(indexVolume, "Add Volume");
+        editVolume(indexVolume, "New Index Volume");
     }
 
     private void edit() {
@@ -138,7 +141,7 @@ public class IndexVolumeGroupEditPresenter
             restFactory
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
-                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .onSuccess(result -> editVolume(result, "Edit Index Volume"))
                     .taskMonitorFactory(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }

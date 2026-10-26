@@ -48,10 +48,10 @@ export const gwt = {
    * changed on a previous run). Throws if the popup appears but no new password was supplied.
    */
   async changePasswordIfPresent(page, { newPass }) {
-    // The change-password OK/Cancel dialog (`.dialog-popup` inside `.gwt-PopupPanelGlass`). Scoping
+    // The change-password OK/Cancel dialog (`.dialog` inside `.gwt-PopupPanelGlass`). Scoping
     // to it disambiguates the new-password box from the login field of the same class sitting
     // behind the modal glass.
-    const popup = page.locator('.dialog-popup').filter({ has: page.locator(CONFIRM_PASSWORD) });
+    const popup = page.locator('.dialog').filter({ has: page.locator(CONFIRM_PASSWORD) });
     const appeared = await popup
       .first()
       .waitFor({ state: 'visible', timeout: 8_000 })
@@ -132,10 +132,10 @@ export const gwt = {
     }
   },
 
-  /** Type into the explorer Quick Filter (`.quickFilter-textBox`). GWT filters on real keystrokes,
+  /** Type into the explorer Quick Filter (`.quick-filter__input`). GWT filters on real keystrokes,
    * so type char-by-char (a programmatic value-set doesn't fire its handler). */
   async filterExplorer(page, term) {
-    const box = page.locator('input.quickFilter-textBox');
+    const box = page.locator('input.quick-filter__input');
     await box.waitFor({ state: 'visible', timeout: 15_000 });
     await box.click();
     await box.pressSequentially(term, { delay: 40 });

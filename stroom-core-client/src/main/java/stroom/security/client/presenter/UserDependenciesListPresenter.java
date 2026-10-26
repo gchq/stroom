@@ -20,8 +20,6 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -34,6 +32,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -55,7 +55,7 @@ public class UserDependenciesListPresenter
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final MyDataGrid<UserDependency> dataGrid;
+    private final DataGrid<UserDependency> dataGrid;
     private final MultiSelectionModelImpl<UserDependency> selectionModel;
     private final RestFactory restFactory;
     private final FindUserDependenciesCriteria.Builder criteriaBuilder = FindUserDependenciesCriteria.builder();
@@ -73,10 +73,11 @@ public class UserDependenciesListPresenter
                                          final UiConfigCache uiConfigCache,
                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, dependenciesListView);
+        getView().setAccessibleName("Filter dependencies");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("User Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

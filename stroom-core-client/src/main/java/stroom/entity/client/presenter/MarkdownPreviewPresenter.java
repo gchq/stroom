@@ -74,6 +74,7 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
         codePresenter.setMode(AceEditorMode.MARKDOWN);
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
+        iFramePresenter.setAccessibleName("Preview");
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 
         view.setViews(codePresenter.getView(), iFramePresenter.getView());

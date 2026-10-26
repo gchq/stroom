@@ -56,7 +56,9 @@ public class MenuItems {
 
             final List<Item> compressedItems = new ArrayList<>();
             for (final Item item : sortedItems) {
-                if (item != null) {
+                // A sub menu with nothing in it (e.g. one whose items the user has no permission
+                // for) is left out, so that no empty sub menu is shown
+                if (item != null && !isEmptySubMenu(item, new HashSet<>())) {
                     compressedItems.add(item);
                 }
             }
@@ -92,6 +94,30 @@ public class MenuItems {
         }
 
         needsCompression = false;
+    }
+
+    // Whether an item is a keyed sub menu that has no items other than separators and empty sub
+    // menus. The keys being checked are passed down, so that a sub menu that contains itself
+    // counts as empty rather than looping forever
+    private boolean isEmptySubMenu(final Item item, final Set<MenuKey> checking) {
+        if (!(item instanceof KeyedParentMenuItem)) {
+            return false;
+        }
+        final MenuKey menuKey = ((KeyedParentMenuItem) item).getMenuKey();
+        if (!checking.add(menuKey)) {
+            return true;
+        }
+        final Set<Item> children = menuItems.get(menuKey);
+        if (children != null) {
+            for (final Item child : children) {
+                if (child != null && !(child instanceof Separator) && !isEmptySubMenu(child, checking)) {
+                    checking.remove(menuKey);
+                    return false;
+                }
+            }
+        }
+        checking.remove(menuKey);
+        return true;
     }
 
     public void clear(final MenuKey menuKey) {

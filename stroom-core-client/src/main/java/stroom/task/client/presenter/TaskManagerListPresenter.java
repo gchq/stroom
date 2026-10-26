@@ -30,8 +30,6 @@ import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -69,6 +67,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -85,6 +85,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -124,7 +125,7 @@ public class TaskManagerListPresenter
     private final Map<String, List<String>> errorMap = new HashMap<>();
     private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
-    private final MyDataGrid<TaskProgress> dataGrid;
+    private final DataGrid<TaskProgress> dataGrid;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
@@ -157,31 +158,32 @@ public class TaskManagerListPresenter
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
-        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid = new DataGrid<>(this, 1000);
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
         getView().getToolbar().setName("Task actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Turn Auto Refresh Off",
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
-        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Task",
+        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Selected Tasks",
                 this::endSelectedTask);
 
-        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
+        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All Tasks",
+                this::onExpandAll);
         expandAllButton.setEnabled(false);
-        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
+        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All Tasks",
+                this::onCollapseAll);
         collapseAllButton.setEnabled(false);
 
-        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Toggle wrapping of Info column",
+        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Wrap Text",
                 this::onWrapToggled);
 
-        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
+        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Task Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         updateButtonStates();
@@ -210,19 +212,11 @@ public class TaskManagerListPresenter
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle("Turn Auto Refresh Off");
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle("Turn Auto Refresh On");
         }
     }
 
     private void onWrapToggled(final boolean wrap) {
-        if (wrap) {
-            wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
-        } else {
-            wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
-        }
         dataGrid.setMultiLine(wrap);
     }
 
@@ -366,14 +360,13 @@ public class TaskManagerListPresenter
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                 ColumnSizeConstants.DATE_COL);
 
-        // Age.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
-                        .withSorting(FindTaskProgressCriteria.FIELD_AGE)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_AGE,
-                ColumnSizeConstants.SMALL_COL);
+        // Age. The oldest first, unless another sort is chosen
+        final Column<TaskProgress, SafeHtml> ageColumn = DataGridUtil.htmlColumnBuilder(getColouredCellFunc(
+                        taskProgress -> ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                .withSorting(FindTaskProgressCriteria.FIELD_AGE)
+                .build();
+        dataGrid.addResizableColumn(ageColumn, FindTaskProgressCriteria.FIELD_AGE, ColumnSizeConstants.SMALL_COL);
+        dataGrid.setDefaultSort(new ColumnSortInfo(ageColumn, false));
 
         // Info
         dataGrid.addAutoResizableColumn(
@@ -479,7 +472,7 @@ public class TaskManagerListPresenter
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.OPEN)
-                        .text("Show Filter Tasks")
+                        .text("Show Processor Filter Tasks")
                         .enabled(true)
                         .command(() -> OpenProcessorTaskEvent.fire(this, processorFilter))
                         .build());

@@ -12,7 +12,7 @@
     border: 1px solid rgba(0,0,0,.2);
 }
 
-.dataGridCell .cf-colour-swatch {
+.data-grid__cell .cf-colour-swatch {
     min-width: 100px;
     padding: 2px;
 }
@@ -483,11 +483,6 @@
 
 
 
-
-/* Styles for the drop down selection box */
-.conditionalFormatStyleSelection .SelectionBox-renderBox {
-    padding: 0;
-}
 
 .conditionalFormatStyleSelection .cf-colour-swatch {
     border: none;

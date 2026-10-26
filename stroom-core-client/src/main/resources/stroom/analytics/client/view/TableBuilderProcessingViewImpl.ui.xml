@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
@@ -20,12 +20,12 @@
         <form:FormGroup identity="analyticProcessingMinMetaCreateTimeMs" label="Min Stream Create Time"
                         helpText="Streams created before this time are not processed. Leave blank for no lower limit."
                         screenReaderText="Leave blank for no lower limit.">
-            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
+            <datetimebox:DateTimeBox ui:field="minMetaCreateTimeMs" optional="true"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingMaxMetaCreateTimeMs" label="Max Stream Create Time"
                         helpText="Streams created after this time are not processed, and no results are reported beyond it. Leave blank for no upper limit."
                         screenReaderText="Leave blank for no upper limit.">
-            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
+            <datetimebox:DateTimeBox ui:field="maxMetaCreateTimeMs" optional="true"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsTimeToWaitForData" label="Time To Wait For Data"
                         helpText="How long to wait for late data before rows are reported. Rows are reported up to the latest event time in the table minus this period. Default is 1 Hours."

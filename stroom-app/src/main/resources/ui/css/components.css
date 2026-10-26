@@ -55,33 +55,6 @@
     opacity: 1;
 }
 
-.info-tooltip {
-	-moz-user-focus: initial;
-	-moz-user-input: initial;
-	-webkit-user-focus: initial;
-	-webkit-user-input: initial;
-	user-focus: initial;
-	user-input: initial;
-
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
-
-  	max-width: 500px;
-  	max-height: 500px;
-  	overflow: auto;
-  	opacity: 1;
-}
-
-.info-tooltip table {
-    white-space: pre;
-    table-layout: fixed;
-}
-
-.info-tooltip table .wrap {
-    white-space: normal;
-}
-
 .info-layout {
 	width: 100%;
 	height: 100%;
@@ -114,7 +87,7 @@
     align-items: center;
 }
 
-.batchExecutionScheduleEdit-row > .SimpleTickBox {
+.batchExecutionScheduleEdit-row > .tick-box {
     flex: 0 0 50px;
 }
 
@@ -189,65 +162,6 @@
 }
 */
 
-.dropDownView-container {
-    position: relative;
-    width: 200px;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	/*padding: 3px 5px;
-	border-radius: 2px;
-	background-color: var(--control__background-color);
-	color: var(--control__text-color);*/
-    cursor: pointer;
-}
-
-.dropDownView-label {
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.dropDownView-button {
-    position: absolute;
-    display: flex;
-    bottom: 0;
-    right: 4px;
-	width: 15px;
-	height: 15px;
-    cursor: pointer;
-}
-
-/* Holds the warning button, which is placed in the drop down, so takes no room of its own */
-.dropDownView-warningToolbar {
-    margin: 0;
-}
-
-.dropDownView-warning {
-    position: absolute;
-    display: flex;
-    bottom: 8px;
-    right: 3px;
-	width: 17px;
-	width: 17px;
-    cursor: pointer;
-}
-
-.dropDownView-warning svg {
-    width: 17px;
-    height: 17px;
-}
-
-.dropDownView-warning::before {
-    /* Because the icon is inside the drop down text box, we need to alter its hover background
-       so it doesn't spill over the border of the text box. */
-    height: 88%;
-    margin-top: 2px;
-}
-
-.dropDownView-button svg {
-	width: 15px;
-	height: 15px;
-}
 
 .tabBarContainer {
     display: flex;
@@ -321,7 +235,6 @@
 
 .pipelineStructureViewImpl-viewSource {
     margin-left: auto;
-    text-decoration: underline;
 }
 
 .pipelineStructureViewImpl-property-added {
@@ -493,11 +406,6 @@
     color: lab(from var(--classification-label__background-color, #888888) clamp(0, (49.4 - l) * 1000, 100) 0 0);
     overflow: hidden;
     white-space: nowrap;
-}
-
-.queryHistoryViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
 }
 
 .resizableAcceptRejectContent-button {
@@ -832,11 +740,6 @@
     display: flex;
 }
 
-.queryFavouritesViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
-}
-
 .editExpressionViewImpl-expressionTree {
     padding-left: 5px;
 }
@@ -868,13 +771,6 @@
 }
 
 .columnFunctionEditorViewImpl-completionLabel {
-}
-
-.columnFunctionEditorViewImpl .quickFilter-textBox,
-.QueryHelpViewImpl .quickFilter-textBox {
-    border-color: transparent;
-    border-bottom-color: var(--control__border-color);
-    border-radius: 0;
 }
 
 .QueryEditViewImpl {
@@ -1043,6 +939,9 @@
     padding-left: 10px;
     padding-right: 3px;
     padding-top: 1px;
+    /* Keeps the toolbar below clear of the tabs: a tab under 24px high needs 12px from its centre to
+       its neighbours (WCAG 2.5.8), which the toolbar was half a pixel short of */
+    padding-bottom: 1px;
 }
 
 .dataRetentionViewImpl-tabBarInner {
@@ -1065,6 +964,8 @@
 
 .welcomeViewImpl-body {
     padding: 5px !important;
+    /* Its text can be selected, so copied */
+    user-select: text;
 }
 
 .welcomeViewImpl-buildInfo {
@@ -1115,18 +1016,6 @@
     scrollbar-gutter: stable;
 }
 
-.chooserViewImpl-clearSelection {
-    display: none;
-    color: var(--link__text-color);
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 6px 8px;
-}
-
-.stepToolbar {
-    align-items: center;
-}
-
 .steppingFilterViewImpl {
 }
 
@@ -1151,16 +1040,6 @@
     text-decoration: none;
 }
 
-.stepLocationViewImpl-left {
-}
-
-.stepLocationViewImpl-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
 .stepLocationViewImpl-layout {
     white-space: nowrap;
 }
@@ -1170,18 +1049,6 @@
     margin-top: 2px;
     vertical-align: top;
     white-space: nowrap;
-}
-
-.infoMenuItem {
-    cursor:default;
-    color:#212121;
-    /*background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));*/
-    /*border: 1px solid gray;*/
-}
-
-.stroom-theme-dark .infoMenuItem {
-	color: var(--text-color);
-    /*border: 1px solid var(--dialog__border-color);*/
 }
 
 .button-group {
@@ -1194,6 +1061,27 @@
     width: 250px;
 }
 
+/* The list of keyboard shortcuts fills what the tab has left below the filter, framed as a control */
+.keyBindingPreferences-list {
+    min-height: 0;
+    margin-top: var(--control__gap--vertical);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The keys of a keyboard shortcut being recorded */
+.keyShortcutRecorder-keys {
+    font-family: monospace;
+}
+
+/* What the user can do next while recording a keyboard shortcut, kept the same height as it changes */
+.keyShortcutRecorder-message {
+    min-height: 4.5em;
+    white-space: normal;
+}
+
 .default-min-sizes {
     min-width: 200px;
     min-height: 200px;
@@ -1203,24 +1091,6 @@
     min-width: 400px;
     min-height: 400px;
 }
-
-/*
-.treePanel-panel {
-    position: relative;
-}
-
-.treePanel-boxPanel {
-    position: relative;
-    top: 0;
-    left: 0;
-}
-
-.treePanel-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-*/
 
 .focus-without-border {
     border: 1px solid transparent;
@@ -1252,42 +1122,6 @@
 .navigation .toolbar-button__icon {
     color: var(--navigation-icon-button__color);
 }
-
-.navigation .cellTableSelectedRow {
-	background-color: var(--navigation__background-color--selected);
-	color: var(--navigation__text-color--selected);
-}
-
-.navigation .cellTableOddRow:hover,
-.navigation .cellTableEvenRow:hover {
-    background-color: var(--navigation__background-color--hovered);
-}
-
-.navigation .cellTableSelectedRow:hover {
-    background-color: var(--navigation__background-color--selected-hovered);
-}
-
-/*
-.navigation .cellTableOddRow:focus-within,
-.navigation .cellTableEvenRow:focus-within {
-    background-color: var(--navigation__background-color--focussed);
-}
-
-.navigation .cellTableSelectedRow:focus-within {
-    background-color: var(--navigation__background-color--selected--focussed);
-}
-*/
-
-.navigation .cellTableOddRow:focus-within,
-.navigation .cellTableEvenRow:focus-within {
-    box-shadow: var(--row__box-shadow--focussed);
-}
-
-.navigation .cellTableSelectedRow:focus-within {
-    box-shadow: var(--row__box-shadow--selected--focussed);
-}
-
-
 
 .navigation-title-bar {
     display: flex;
@@ -1396,8 +1230,10 @@
     overflow: hidden;
 }
 
+/* A box holding a control in a form (a list, tree, grid or editor), or a read-only field's text:
+   filled as an input is, in either theme, so it stands apart from the dialog around it */
 .form-control-background {
-  background-color: var(--content-box__background-color);
+  background-color: var(--control__background-color);
 }
 
 .form-control {
@@ -1453,61 +1289,6 @@
     min-width: 80px;
 }
 */
-
-.timeRange-selector {
-    color: var(--link__text-color);
-    cursor: pointer;
-    font-size: var(--font-size-14);
-    padding-right: 5px;
-}
-
-.timeRange-selector:hover {
-    text-decoration: underline;
-}
-
-/* Read only: the value greyed; disabled: greyed too, and neither opens the dialog */
-.timeRange-selector.readonly,
-.timeRange-selector.disabled {
-    color: var(--control__text-color--readonly);
-    cursor: default;
-    text-decoration: none;
-}
-
-.timeRange-selector.disabled {
-    color: var(--control__text-color--disabled);
-}
-
-.timeRange-popup {
-    z-index: 10;
-    /*padding: 0.6rem 0.6rem 0.4rem 0.6rem;*/
-}
-
-.timeRange-quickSettings {
-    display: flex;
-    min-width: 32rem;
-}
-
-.timeRange-quickSettingPanel {
-    padding: 0.4rem;
-    min-width: 8rem;
-}
-
-.timeRange-quickSettingPanel-title {
-    padding-bottom: 0.4rem;
-    font-weight: 300;
-    padding-top: 0.4rem;
-}
-
-.timeRange-quickSetting {
-    color: var(--link__text-color);
-    cursor: pointer;
-    padding-bottom: 0.2rem;
-}
-
-.timeRange-quickSetting:hover {
-    text-decoration: underline;
-}
-
 
 .infoTable {
     white-space: nowrap;
@@ -1690,12 +1471,12 @@
     padding: 0;
 }
 
-.FindViewImpl-top .gwt-TextArea {
+.FindViewImpl-top .text-field--multiline {
     /* Single line */
     height: 2.1rem;
 }
 
-.FindViewImpl-top .gwt-TextArea.multiLine {
+.FindViewImpl-top .text-field--multiline.multiLine {
     /* Multi line */
     height: 6.3rem;
 }
@@ -1715,30 +1496,6 @@
     position: absolute;
     right: 3px;
     top: 3px;
-}
-
-.FindCellTable {
-    table-layout: fixed;
-}
-
-.FindCellTable tr:nth-child(even) {
-    background-color: var(--row__background-color--even);
-}
-.FindCellTable tr:nth-child(odd) {
-    background-color: var(--row__background-color--odd);
-}
-.FindCellTable tr:nth-child(even):hover,
-.FindCellTable tr:nth-child(odd):hover {
-    background-color: var(--row__background-color--hovered);
-}
-.FindCellTable tr:nth-child(even).cellTableSelectedRow,
-.FindCellTable tr:nth-child(odd).cellTableSelectedRow {
-	background-color: var(--row__background-color--selected);
-	color: var(--row__text-color--selected);
-}
-.FindCellTable tr:nth-child(even).cellTableSelectedRow:hover,
-.FindCellTable tr:nth-child(odd).cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected--hovered);
 }
 
 .findCell {
@@ -1801,7 +1558,7 @@
     */
 }
 
-.cellTableSelectedRowCell .findCell-highlight {
+.data-grid__row--selected .findCell-highlight {
 	background-color: var(--highlight__background-color--selected);
 }
 
@@ -1848,20 +1605,13 @@
 }
 
 /* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
-.cellTableSelectedRow .findCell-tags,
-.cellTableSelectedRow .findCell-path,
-.cellTableSelectedRow .findCell-uuid,
-.dataGridSelectedRow .findCell-tags,
-.dataGridSelectedRow .findCell-path,
-.dataGridSelectedRow .findCell-uuid {
+.data-grid__row--selected .findCell-tags,
+.data-grid__row--selected .findCell-path,
+.data-grid__row--selected .findCell-uuid {
     color: inherit;
 }
 
 .pipelineElementChooser-iconCell {
-}
-
-.pipelineElementChooser-textCell {
-    min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
@@ -1875,71 +1625,6 @@
 
 .pipelineElementChooser-filterIconCell.pipelineElementChooser-filterOff {
     visibility: hidden;
-}
-
-.SelectionPopup .listContainer {
-    min-width: 200px;
-    max-width: 400px;
-    max-height: 400px;
-}
-
-.SelectionPopup .selectionList {
-    width: auto;
-    height: auto;
-}
-
-.selectionList {
-    width: 100%;
-    height: 100%;
-}
-
-.selectionList-elementChooser {
-    overflow: hidden;
-}
-
-.selectionList .cellTableCell {
-     display: flex;
-     align-items: center;
-     min-height: 20px;
-}
-
-.selectionList .cellTableSelectedRow {
-	background-color: var(--row__background-color--selected);
-	color: var(--row__text-color--selected);
-}
-
-.selectionList .cellTableOddRow:hover,
-.selectionList .cellTableEvenRow:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
-.selectionList .cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected--hovered);
-}
-
-.selectionList .cellTableOddRow:focus-within,
-.selectionList .cellTableEvenRow:focus-within {
-    box-shadow: var(--row__box-shadow--focussed);
-}
-
-.selectionList .cellTableSelectedRow:focus-within {
-    box-shadow: var(--row__box-shadow--selected--focussed);
-}
-
-.selectionList-links {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-    padding: 3px;
-    padding-top: 7px;
-}
-
-.selectionList-links .gwt-Label {
-    opacity: 0.8;
-}
-
-.selectionList-links .gwt-HyperLink:hover {
-    text-decoration: underline;
 }
 
 .selectionItemCell {
@@ -1964,13 +1649,6 @@
 
 .queryHelp-details {
     overflow: hidden;
-}
-
-.duration-picker {
-    display: flex;
-    width: 200px;
-    /* Room for a focused field's focus ring, so it doesn't run into the field beside it */
-    gap: 8px;
 }
 
 /* The days of the week, one tick box under another, with room for a focused one's focus ring */
@@ -2000,6 +1678,14 @@
     margin-top: 0px;
 }
 
+/* The tag lists' row takes the height left in the dialog, not the height of every tag, so that a
+   long list scrolls within its border rather than squashing the field above */
+.editNodeTagsListsContainer,
+.removeNodeTagsListsContainer {
+    flex-basis: 0;
+    min-height: 0;
+}
+
 .editNodeTags .form-label {
     margin-bottom: 0px;
 }
@@ -2020,22 +1706,77 @@
 
 /* Shown on hover, and on the row with keyboard focus so keyboard users see them too; the same
    whether the row is disabled or not */
-.dataGridKeyboardSelectedRow:focus-within .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .docRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .commandLinkContainer .svg-image,
-.dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridCell:hover .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .commandLinkContainer .svg-image,
+.data-grid__cell:hover .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__cell:hover .docRefLinkContainer .svg-image.hoverIcon,
 .userRefLinkContainer:hover .svg-image.hoverIcon,
 .docRefLinkContainer:hover .svg-image.hoverIcon,
 .commandLinkContainer:hover .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .userRefLinkContainer .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .userRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .docRefLinkContainer .svg-image,
 .dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .docRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .commandLinkContainer:hover .svg-image {
     opacity: .8;
     color: var(--text-color);
     cursor: pointer;
+}
+
+/* A button in a table cell (RowActions), without the browser's button look, so it looks as the
+   icon it holds. :where() leaves the cell's own styles in charge */
+:where(.rowAction) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* A row action's icon also shows while it has the focus */
+.rowAction:focus .svg-image,
+.rowAction:focus .svg-image.hoverIcon {
+    opacity: .8;
+    color: var(--text-color);
+}
+
+/* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
+   reference, or an annotation history entry's actions button */
+[data-row-action]:focus-visible,
+.annotationLink:focus-visible,
+.annotationHistoryActions:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}
+
+/* A text button drawn as the text around it (LinkButton), without the browser's button look;
+   the caller's style names give it its look. :where() leaves them in charge */
+:where(.linkButton) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.linkButton:hover {
+    text-decoration: underline;
+}
+
+.linkButton:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
@@ -2115,8 +1856,8 @@
 
 /* In a dialog, the table (with its toolbar) and the details are framed as controls, and inset to line
    up with the controls above them (which have form-padding) */
-.dialog-content .documentUserPermissions-table,
-.dialog-content .documentUserPermissions-details {
+.dialog__content .documentUserPermissions-table,
+.dialog__content .documentUserPermissions-details {
     width: auto;
     margin: 0 var(--control__gap--horizontal);
     border: 1px solid var(--control__border-color);
@@ -2144,7 +1885,10 @@
 }
 
 .ColumnValuesFilterViewImpl .link {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	/* At least 24px high, the minimum target size (WCAG 2.5.8) */
+	min-height: 24px;
 	cursor: pointer;
 	padding: 2px 5px;
     text-decoration: underline;
@@ -2171,8 +1915,12 @@
     display: flex;
 }
 
-.ExpressionTreeViewImpl-layoutPanel {
-    position: absolute;
+/* A pane that scrolls and takes the keyboard focus so that it can be scrolled with the keys (as
+   WCAG 2.1.1 asks of a scrolling region with nothing focusable in it); its focus ring is inset, as
+   it fills its space */
+.scroll-region:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
 }
 
 /* ==== Content store CSS ==== */
@@ -2182,6 +1930,11 @@
 /** Allows things to scroll in y-direction */
 .contentstore-scroll-y {
     overflow-y: auto;
+}
+/* The details take the keyboard focus, to be scrolled with it */
+.contentstore-scroll-y:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
 }
 /* Details title */
 .contentstore-details .contentstore-details-heading {
@@ -2208,6 +1961,11 @@
 }
 .contentstore-details .contentstore-details-list > * {
     padding: 5px;
+}
+/* The URL shown after a link to it */
+.contentstore-details .contentstore-details-url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
 }
 /* Overall width of details table */
 .contentstore-details .contentstore-details-vertical {
@@ -2253,9 +2011,6 @@
 .gitrepo-settings-form #credentials-group {
     width: 400px;
 }
-.gitrepo-settings-form #credentials-group .SelectionBox {
-    width: 280px;
-}
 .gitrepo-settings-form button.credentials-button {
     width: 120px;
 }
@@ -2290,11 +2045,7 @@
 }
 
 /* --- */
-.multiChooser td {
-    vertical-align: middle;
-}
-
-.multiChooser .tickBox {
+.multiChooser .tick-box {
     cursor: pointer;
 }
 
@@ -2369,46 +2120,27 @@
     height: 400px;
 }
 
-.ColumnValuesFilterViewImpl .cellTableOddRow {
-    background-color: var(--row__background-color--odd);
-}
-
-.ColumnValuesFilterViewImpl .cellTableEvenRow {
-    background-color: var(--row__background-color--even);
-}
-
-.ColumnValuesFilterViewImpl .cellTableOddRow:hover,
-.ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
-.customFileUpload {
-    display: flex;
-    align-items: center;
-    gap: var(--control__gap--horizontal);
-}
-
-.dataGridWidget .dashboard-table-filter-cell {
+.data-grid .dashboard-table-filter-cell {
     display: none;
     position: relative;
     width: 100%;
 }
 
-.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+.data-grid.showValueFilters .dashboard-table-filter-cell {
     display: block;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text {
+.data-grid .dashboard-table-filter-cell-text {
     padding-right: 25px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+.data-grid .dashboard-table-filter-cell-text-disabled {
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
 
-.dataGridWidget .dashboard-table-filter-cell-buttons {
+.data-grid .dashboard-table-filter-cell-buttons {
     position: absolute;
     display: flex;
     height: 100%;
@@ -2418,7 +2150,7 @@
     padding: 5px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-disable-button {
+.data-grid .dashboard-table-filter-cell-disable-button {
     display: flex;
     position: relative;
     width: 22px;

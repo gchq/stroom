@@ -59,6 +59,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import tools.jackson.databind.JsonNode;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,8 +95,11 @@ public class S3EventService {
     private static final String TIME_FIELD = "Time";
     private static final String BUCKET_FIELD = "Bucket";
     private static final String RECORDS_FIELD = "Records";
+    private static final Duration CLIENT_CREATION_RETRY_DELAY = Duration.ofMinutes(1);
     /// AWS states a message can have up to 10 message attributes
     public static final int MAX_MESSAGE_ATTRIBUTES = 10;
+    private static final String VALIDATION_MESSAGE = "Either fix the S3 event configuration or disable S3 " +
+                                                     "event polling.";
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final SqsClientFactory sqsClientFactory;
@@ -110,7 +114,8 @@ public class S3EventService {
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
     private volatile S3EventConfig lastS3EventConfig = null;
     private volatile ClientState sqsClientState;
-    private volatile Instant lastConfigWarning = Instant.EPOCH;
+    private volatile Instant lastClientCreationAttempt = Instant.EPOCH;
+    private volatile Instant lastConfigValidationError = Instant.EPOCH;
 
     @Inject
     public S3EventService(
@@ -223,7 +228,7 @@ public class S3EventService {
             final ClientState clientState = getSqsClient();
             if (clientState != null) {
                 final S3EventConfig s3EventConfig = clientState.config;
-                final SqsConfig sqsConfig = s3EventConfig.getSqs();
+                final SqsConfig sqsConfig = Objects.requireNonNull(s3EventConfig.getSqs());
                 final SqsClient sqsClient = clientState.sqsClient;
                 final String queueUrl = sqsConfig.getQueueUrl();
                 final String deadLetterQueueUrl = sqsConfig.getDeadLetterQueueUrl();
@@ -277,31 +282,45 @@ public class S3EventService {
                             queueUrl, LogUtil.exceptionMessage(e)), e);
                 }
             } else {
-                throw new RuntimeException("SQS has not been configured. Nothing to do.");
+                // Not configured. Config validation will have already logged an error, so just sleep
+                // and go round again
+                doSleep(terminationChecker, null);
             }
         } catch (final Exception e) {
-            // Had a failure so no point in immediately retrying, so sleep for a bit
-            final StroomDuration sleepDuration = NullSafe.getOrElse(
-                    sqsClientState,
-                    ClientState::config,
-                    S3EventConfig::getSleepDurationPostFailure,
-                    S3EventConfig.DEFAULT_SLEEP_DURATION_POST_FAILURE);
-            LOGGER.error("{} Will sleep for {} before trying again.", LogUtil.exceptionMessage(e), sleepDuration, e);
-
-            final long sleepEndTimeEpochMs = Instant.now()
-                    .plus(sleepDuration)
-                    .toEpochMilli();
-
-            do {
-                try {
-                    Thread.sleep(1_000);
-                } catch (final InterruptedException ie) {
-                    LOGGER.debug("Thread interrupted while sleeping");
-                    Thread.currentThread().interrupt();
-                    throw UncheckedInterruptedException.create(ie);
-                }
-            } while (!terminationChecker.isTerminated() && System.currentTimeMillis() < sleepEndTimeEpochMs);
+            doSleep(terminationChecker, e);
         }
+    }
+
+    private void doSleep(final TerminationChecker terminationChecker, final Exception e) {
+        // Had a failure so no point in immediately retrying, so sleep for a bit
+        final StroomDuration sleepDuration = getSleepDuration();
+        if (e != null) {
+            LOGGER.error("{} Will sleep for {} before trying again.", LogUtil.exceptionMessage(e), sleepDuration, e);
+        } else {
+            LOGGER.debug("doSleep() - Will sleep for {} before trying again.", sleepDuration);
+        }
+
+        final long sleepEndTimeEpochMs = Instant.now()
+                .plus(sleepDuration)
+                .toEpochMilli();
+
+        do {
+            try {
+                Thread.sleep(1_000);
+            } catch (final InterruptedException ie) {
+                LOGGER.debug("Thread interrupted while sleeping");
+                Thread.currentThread().interrupt();
+                throw UncheckedInterruptedException.create(ie);
+            }
+        } while (!terminationChecker.isTerminated() && System.currentTimeMillis() < sleepEndTimeEpochMs);
+    }
+
+    private StroomDuration getSleepDuration() {
+        final StroomDuration sleepDuration = NullSafe.getOrElse(
+                lastS3EventConfig,
+                S3EventConfig::getSleepDurationPostFailure,
+                S3EventConfig.DEFAULT_SLEEP_DURATION_POST_FAILURE);
+        return sleepDuration;
     }
 
     private void handleSqsMessage(final Message message,
@@ -372,8 +391,7 @@ public class S3EventService {
                     message.messageAttributes());
 
             putMessageAttribute(msgAttributesCopy, "OriginalMessageId", message.messageId());
-            NullSafe.consumeNonBlankString(cause.getMessage(), msg ->
-                    putMessageAttribute(msgAttributesCopy, "ErrorMessage", msg));
+            putMessageAttribute(msgAttributesCopy, "ErrorMessage", cause.getMessage());
 
             if (cause instanceof final StroomStreamException sse) {
                 final StroomStatusCode statusCode = NullSafe.get(
@@ -418,16 +436,22 @@ public class S3EventService {
     private static void putMessageAttribute(final Map<String, MessageAttributeValue> msgAttributes,
                                             final String key,
                                             final String value) {
-        if (msgAttributes.size() < MAX_MESSAGE_ATTRIBUTES) {
-            msgAttributes.put(
-                    key,
-                    MessageAttributeValue.builder()
-                            .stringValue(value)
-                            .build());
-        } else {
-            LOGGER.warn("putMessageAttribute() - Max attributes {} reached, messageAttributes: {}, " +
-                        "omitting key: {}, value: {}",
-                    MAX_MESSAGE_ATTRIBUTES, msgAttributes, key, value);
+        LOGGER.debug("putMessageAttribute() - key: {}, value: '{}', messageAttributes: {}",
+                key, value, msgAttributes);
+        Objects.requireNonNull(msgAttributes);
+        NullSafe.requireNonBlankString(key, () -> "key should not be blank");
+
+        // No point adding an attribute if the value is blank
+        if (NullSafe.isNonBlankString(value)) {
+            if (msgAttributes.size() < MAX_MESSAGE_ATTRIBUTES) {
+                msgAttributes.put(key, MessageAttributeValue.builder()
+                        .stringValue(value)
+                        .build());
+            } else {
+                LOGGER.warn("putMessageAttribute() - Max attributes {} reached, messageAttributes: {}, " +
+                            "omitting key: {}, value: {}",
+                        MAX_MESSAGE_ATTRIBUTES, msgAttributes, key, value);
+            }
         }
     }
 
@@ -591,28 +615,112 @@ public class S3EventService {
     }
 
     private ClientState getSqsClient() {
-        // Intentionally use instance equality as the object is large, and the provider will
-        // return a different instance if the config has changed.
-        if (receiveDataConfigProvider.get().getS3Event() != lastS3EventConfig) {
+        // Intentionally use instance equality as the object is large. The config is immutable so
+        // the provider will return a different instance if the config has benn changed.
+        S3EventConfig newS3EventConfig = receiveDataConfigProvider.get().getS3Event();
+        LOGGER.debug("getSqsClient() - Before synch, newS3EventConfig: {}, lastS3EventConfig: {}",
+                newS3EventConfig, lastS3EventConfig);
+
+        if (newS3EventConfig != lastS3EventConfig || sqsClientState == null) {
             synchronized (this) {
-                final S3EventConfig newS3EventConfig = receiveDataConfigProvider.get().getS3Event();
-                if (newS3EventConfig != null && newS3EventConfig.getSqs() != null) {
-                    if (newS3EventConfig != lastS3EventConfig) {
-                        final ClientState oldClientState = sqsClientState;
-                        closeClient(oldClientState);
-                        final SqsClient sqsClient = sqsClientFactory.createSqsClient(newS3EventConfig.getSqs());
-                        sqsClientState = new ClientState(sqsClient, newS3EventConfig);
-                        lastS3EventConfig = newS3EventConfig;
-                        LOGGER.debug(() -> LogUtil.message("getClients() - sqsClientState: {}", sqsClientState));
+                newS3EventConfig = receiveDataConfigProvider.get().getS3Event();
+                LOGGER.debug("getSqsClient() - After synch, newS3EventConfig: {}, lastS3EventConfig: {}",
+                        newS3EventConfig, lastS3EventConfig);
+
+                if (newS3EventConfig != lastS3EventConfig) {
+                    LOGGER.debug("getSqsClient() - config has changed, lastS3EventConfig: {}, newS3EventConfig: {}",
+                            lastS3EventConfig, newS3EventConfig);
+                    clearClientStateAndCloseClient();
+                    if (isConfigValid(newS3EventConfig)) {
+                        createClient(newS3EventConfig);
+                    } else {
+                        LOGGER.debug("getSqsClient() - Invalid config: {}", newS3EventConfig);
                     }
-                } else {
-                    closeClient(sqsClientState);
-                    sqsClientState = null;
-                    lastS3EventConfig = null;
+                    lastS3EventConfig = newS3EventConfig;
+                } else if (isConfigValid(newS3EventConfig)) {
+                    // No change to config, but something may have changed outside our config,
+                    // e.g. aws credentials in a file/env var, so try to create a new client again
+                    if (Instant.now().isAfter(lastClientCreationAttempt.plus(CLIENT_CREATION_RETRY_DELAY))) {
+                        LOGGER.debug("getSqsClient() - No config change, but trying to create a client " +
+                                     "with existing config");
+                        clearClientStateAndCloseClient();
+                        createClient(newS3EventConfig);
+                    } else {
+                        LOGGER.debug("getSqsClient() - No config change, use existing clientState");
+                    }
                 }
             }
         }
         return sqsClientState;
+    }
+
+    private void createClient(final S3EventConfig newS3EventConfig) {
+        try {
+            lastClientCreationAttempt = Instant.now();
+            final SqsClient sqsClient = sqsClientFactory.createSqsClient(newS3EventConfig.getSqs());
+            sqsClientState = new ClientState(sqsClient, newS3EventConfig);
+            LOGGER.debug(() -> LogUtil.message("getClients() - sqsClientState: {}",
+                    sqsClientState));
+        } catch (final Exception e) {
+            LOGGER.error("Error creating SQS client from config {} - {}",
+                    newS3EventConfig, LogUtil.exceptionMessage(e), e);
+            // clear existing client
+            clearClientStateAndCloseClient();
+        }
+    }
+
+    private boolean isConfigValid(final S3EventConfig newS3EventConfig) {
+        final Duration sleepDuration = getSleepDuration().getDuration();
+        final boolean log = Instant.now().isAfter(lastConfigValidationError.plus(sleepDuration));
+        boolean isValid = true;
+        if (newS3EventConfig == null) {
+            if (log) {
+                LOGGER.error("Property {} has not been configured. {}",
+                        ReceiveDataConfig.PROP_NAME_S3_EVENT, VALIDATION_MESSAGE);
+            }
+            isValid = false;
+        } else {
+            final SqsConfig sqsConfig = newS3EventConfig.getSqs();
+            if (sqsConfig == null) {
+                if (log) {
+                    LOGGER.error("Property {}.{} has not been configured. {}",
+                            ReceiveDataConfig.PROP_NAME_S3_EVENT,
+                            S3EventConfig.PROP_NAME_SQS,
+                            VALIDATION_MESSAGE);
+                }
+                isValid = false;
+            } else {
+                if (!validateProp(sqsConfig.getAwsRegionName(),
+                        SqsConfig.PROP_NAME_AWS_REGION_NAME,
+                        sqsConfig,
+                        log)) {
+                    isValid = false;
+                }
+                if (isValid && !validateProp(sqsConfig.getQueueUrl(),
+                        SqsConfig.PROP_NAME_QUEUE_URL,
+                        sqsConfig,
+                        log)) {
+                    isValid = false;
+                }
+                LOGGER.debug("isConfigValid() - newS3EventConfig: {}, returning: {}", newS3EventConfig, isValid);
+            }
+        }
+        return isValid;
+    }
+
+    private boolean validateProp(final String propVal,
+                                 final String propName,
+                                 final SqsConfig sqsConfig,
+                                 final boolean log) {
+        if (NullSafe.isBlankString(propVal)) {
+            if (log) {
+                LOGGER.error("SQS configuration property {} must be set to consume S3 event notifications. {}",
+                        sqsConfig.getFullPathStr(propName), VALIDATION_MESSAGE);
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void closeClient(final ClientState clientState) {
@@ -628,6 +736,13 @@ public class S3EventService {
         }
     }
 
+    private void clearClientStateAndCloseClient() {
+        if (sqsClientState != null) {
+            closeClient(this.sqsClientState);
+            sqsClientState = null;
+        }
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -637,6 +752,7 @@ public class S3EventService {
         private ClientState {
             Objects.requireNonNull(sqsClient);
             Objects.requireNonNull(config);
+            Objects.requireNonNull(config.getSqs());
         }
     }
 

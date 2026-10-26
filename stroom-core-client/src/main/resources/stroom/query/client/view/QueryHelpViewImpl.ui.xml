@@ -10,8 +10,8 @@
         <sl:SelectionList ui:field="selectionList"/>
         <g:FlowPanel styleName="QueryHelpViewImpl-details max dashboard-panel dock-container-vertical">
             <b:Toolbar name="Help actions" addStyleNames="QueryHelpViewImpl-buttons dock-min">
-                <b:ToolbarButton ui:field="insertButton" svg="INSERT" title="Insert" enabled="false"/>
-                <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy" enabled="false"/>
+                <b:ToolbarButton ui:field="insertButton" svg="INSERT" title="Insert into Query" enabled="false"/>
+                <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy to Clipboard" enabled="false"/>
             </b:Toolbar>
             <g:SimplePanel ui:field="details" styleName="dock-max queryHelpDetail"/>
         </g:FlowPanel>

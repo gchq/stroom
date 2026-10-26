@@ -208,7 +208,7 @@ async function freshTree() {
   await closeDialogs(page);
   await dismissMenus(page).catch(() => {});
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
 }
 
@@ -273,11 +273,11 @@ for (const [type, label] of docs) {
       await clickEditorTab(page, home, { timeout: 5_000 }).catch(() => {});
       await page.waitForTimeout(1_200);
       const at = await page.evaluate(() => {
-        const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=row]')]
+        const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
           .find((e) => e.offsetHeight > 0 && e.textContent.trim());
         if (!row) return null;
         const cell = [...row.querySelectorAll('td, [role=gridcell]')]
-          .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, svg')) ?? row;
+          .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, svg')) ?? row;
         const r = cell.getBoundingClientRect();
         return { x: r.x + Math.min(r.width / 2, 60), y: r.y + r.height / 2 };
       }).catch(() => null);
@@ -330,7 +330,7 @@ for (const it of INTERACTIONS) {
     await ipage.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await gwt.signInFully(ipage, credentials());
     await settleExplorer(ipage, { label: 'reload' }).catch(() => {});
-    await ipage.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+    await ipage.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
     await settleExplorer(ipage, { label: 'expand' }).catch(() => {});
     await gwt.openDocByName(ipage, it.label, it.type);
     await ipage.waitForTimeout(5000);

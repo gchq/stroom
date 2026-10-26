@@ -80,7 +80,7 @@ public final class QuickFilterPanelStories {
                     // GWT's FormGroup contributes the padding
                     final Query group = play.within(panel).querySelector(".form-group.form-padding");
                     play.expect(group).not().toBeNull();
-                    play.expect(play.within(group).querySelector(".quickFilter-textBox")).not().toBeNull();
+                    play.expect(play.within(group).querySelector(".quick-filter__input")).not().toBeNull();
                     play.expect(play.getByText("Scotland")).toBeInTheDocument();
                 })
                 // The DIALOG layout - GWT QuickFilterDialogViewImpl: no FormGroup and no padding, and
@@ -96,7 +96,7 @@ public final class QuickFilterPanelStories {
                 .withPlay(play -> {
                     final Query panel = play.querySelector(PANEL);
                     play.expect(panel).not().toBeNull();
-                    play.expect(panel).toHaveClass("quickFilter-container");
+                    play.expect(panel).toHaveClass("quick-filter-layout");
                     // The filter is a direct child - no FormGroup wrapper in this variant
                     play.expect(play.within(panel).querySelector(".form-group.form-padding")).toBeNull();
                     final Query results = play.within(panel).querySelector(RESULTS);

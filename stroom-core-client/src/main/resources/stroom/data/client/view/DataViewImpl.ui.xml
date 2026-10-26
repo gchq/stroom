@@ -20,6 +20,6 @@
         </g:FlowPanel>
         <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min dataViewImpl-progressBarPanel"/>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dataViewImpl-layerContainer dock-max"/>
-        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
+        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" />
     </g:FlowPanel>
 </ui:UiBinder>

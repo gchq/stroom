@@ -249,6 +249,7 @@ appConfig:
     urls:
     - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
   credentials:
+    allowedKeyStoreFileDirs: []
     db:
       connection:
         jdbcDriverClassName: null
@@ -266,6 +267,9 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     keyStoreCachePath: "${stroom.home}/keystores"
+    keyStoreFiles: []
+    keyStoreFilesOwnerSubjectId: "Administrators"
+    keyStoreFilesOwnerType: "GROUP"
   crossModule:
     db:
       connection:
@@ -764,7 +768,7 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
-      refreshAfterWrite: null
+      refreshAfterWrite: "PT10M"
       statisticsMode: "INTERNAL"
     parser:
       cache:
@@ -1068,7 +1072,30 @@ appConfig:
     s3Event:
       rePollDuration: "PT5M"
       sleepDurationPostFailure: "PT1M"
-      sqs: null
+      sqs:
+        assumeRole: null
+        awsRegionName: null
+        credentials: null
+        deadLetterQueueUrl: null
+        httpClient:
+          connectionRequestTimeout: "PT3M"
+          connectionTimeout: "PT3M"
+          cookiesEnabled: false
+          followRedirects: true
+          keepAlive: "PT0S"
+          maxConnections: 1024
+          maxConnectionsPerRoute: 1024
+          proxy: null
+          retries: 0
+          timeToLive: "PT1H"
+          timeout: "PT3M"
+          tls: null
+          userAgent: null
+          validateAfterInactivityPeriod: "PT0S"
+        maxNumberOfMessages: 10
+        pollMaxWaitTime: "PT10S"
+        queueUrl: null
+        visibilityTimeout: "PT3M"
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
@@ -1455,11 +1482,11 @@ appConfig:
       \ systems.</p>"
     activity:
       chooseOnStartup: false
-      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
+      editorBody: "<label>Activity Code:</br><input type=\"text\" name=\"code\"></input></label></br></br><label>Activity\
         \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
         description\" validation=\".{80,}\" validationMessage=\"The activity description\
-        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
-        \ is"
+        \ must be at least 80 characters long.\" ></textarea></label>Explain what\
+        \ the activity is"
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
@@ -1493,7 +1520,6 @@ appConfig:
     nodeMonitoring:
       pingMaxThreshold: 500
       pingWarnThreshold: 100
-    oncontextmenu: "return false;"
     process:
       defaultRecordLimit: 1000000
       defaultTimeLimit: 30

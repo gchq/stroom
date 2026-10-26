@@ -67,7 +67,7 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download", null);
+        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download S3 Configuration", null);
         downloadButton.setEnabled(false);
 
         addTab(CONFIG, new AbstractTabProvider<S3ConfigDoc, EditorPresenter>(eventBus) {

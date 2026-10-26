@@ -48,6 +48,9 @@ final class DashboardPlays {
     /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
 
+    /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
+    static final String DESIGN_MODE = "Design Mode";
+
     private DashboardPlays() {
         // Static utility
     }
@@ -77,10 +80,11 @@ final class DashboardPlays {
     }
 
     /// @param play  The play.
-    /// @param title The button's title, e.g. `Execute Query`.
+    /// @param title The button's name (its title without the shortcut its tooltip shows), e.g.
+    ///              `Execute Query`.
     /// @return A button of the dashboard's own query toolbar.
     static Query toolbarButton(final Play play, final String title) {
-        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByTitle(title);
+        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByRole("button", title);
     }
 
     /// Clicks a Query component's own Execute Query button.
@@ -103,14 +107,15 @@ final class DashboardPlays {
         play.click(toolbarButton(play, "Execute Query"));
     }
 
-    /// Enters (or leaves) design mode with the toolbar's toggle.
+    /// Enters (or leaves) design mode with the toolbar's toggle, `Design Mode`, which keeps its name
+    /// and says whether it is on with `aria-pressed`.
     ///
     /// @param play  The play.
     /// @param enter Whether to enter design mode.
     static void designMode(final Play play, final boolean enter) {
-        play.click(play.getByTitle(enter
-                ? "Enter Design Mode"
-                : "Exit Design Mode"));
+        final Query toggle = play.getByTitle(DESIGN_MODE);
+        play.expect(toggle).toHaveAttribute("aria-pressed", String.valueOf(!enter));
+        play.click(toggle);
     }
 
     /// Selects a component's tab, if it isn't selected, by clicking it.
@@ -156,7 +161,7 @@ final class DashboardPlays {
     /// @param text   The item's text.
     /// @return An item of a menu of plain items (`SimpleMenuItem`, e.g. Add Component's).
     static Query simpleMenuItem(final Play screen, final String text) {
-        return screen.findByText(text, ".menuItem-simpleText");
+        return screen.findByText(text, ".menu__text");
     }
 
     /// @param screen  The play of the page's body.
@@ -175,7 +180,11 @@ final class DashboardPlays {
     static void clickHeader(final Play play, final Query target) {
         play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
         play.sleep(200);
+        // Pointer events before mouse events, as a browser sends them: the new grid
+        // (DataGrid) reads the pointer events, MyDataGrid the mouse events
+        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }
@@ -185,6 +194,13 @@ final class DashboardPlays {
     /// @return The label of a results table's column header.
     static Query header(final Play play, final String name) {
         return play.getByText(name, ".column-top .column-label");
+    }
+
+    /// @param play The play.
+    /// @param name The column's name.
+    /// @return A results table's column header cell, with its filter box and button.
+    static Query headerCell(final Play play, final String name) {
+        return header(play, name).closest("th, [data-hcol]");
     }
 
     /// Drags with the mouse, as Stroom's `FlexLayout` reads it (mouse events, the move and release

@@ -19,8 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,6 +38,8 @@ import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -78,8 +78,9 @@ public class PropertyListPresenter
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
     private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
+    private static final String EDIT_TITLE = "Edit Selected Property";
 
-    private final MyDataGrid<PipelineProperty> dataGrid;
+    private final DataGrid<PipelineProperty> dataGrid;
     private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
@@ -100,7 +101,9 @@ public class PropertyListPresenter
                                  final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by element and property name: an edit replaces the row
+        dataGrid.setKeyProvider(property -> property.getElement() + ":" + property.getName());
         dataGrid.setTableName("Pipeline Properties");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -111,7 +114,7 @@ public class PropertyListPresenter
         this.documentPluginRegistry = documentPluginRegistry;
 
         view.getToolbar().setName("Property actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit",
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE,
                 () -> onEdit(selectionModel.getSelected(), readOnly));
         editButton.setEnabled(false);
 
@@ -371,9 +374,16 @@ public class PropertyListPresenter
                     inheritedValue,
                     inheritedFrom);
 
+            // The dialog isn't modal, so another element can be chosen, or this one removed, while
+            // it is open
+            final PipelineElement element = currentElement;
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
-                    if (editor.isDirty()) {
+                    if (editor.isDirty() && !pipelineModel.hasElement(element)) {
+                        AlertEvent.fireWarn(this, "'" + element.getId() + "' was removed from the pipeline "
+                                                  + "while its property was being edited, so the change "
+                                                  + "can't be kept.", null);
+                    } else if (editor.isDirty()) {
 
                         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
 
@@ -403,7 +413,7 @@ public class PropertyListPresenter
                                 final String docType = pipelinePropertyType.getDocRefTypes()[0];
                                 final DocRef parentDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
                                 final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
-                                                                    currentElement.getId() + ")";
+                                                                    element.getId() + ")";
 
                                 final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
                                         Document.class);
@@ -448,7 +458,6 @@ public class PropertyListPresenter
                     .caption("Edit Property")
                     .onShow(e -> editor.getView().focus())
                     .onHideRequest(handler)
-                    .modal(true)
                     .fire();
         }
     }
@@ -548,9 +557,9 @@ public class PropertyListPresenter
         editButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {
-            editButton.setTitle("Edit disabled as this pipeline is read only");
+            editButton.setTitle(EDIT_TITLE + " (read only)");
         } else {
-            editButton.setTitle("Edit Property");
+            editButton.setTitle(EDIT_TITLE);
         }
     }
 

@@ -105,7 +105,8 @@ public class ListInputPresenter
     }
 
     private void update(final ListInputComponentSettings settings) {
-
+        // Named for the component (e.g. "Colour"), so a rename renames it too
+        getView().setAccessibleName(getComponentConfig().getName());
         getView().setAllowTextEntry(settings.isAllowTextEntry());
 
         if (settings.isUseDictionary() &&
@@ -181,6 +182,11 @@ public class ListInputPresenter
         String getSelectedValue();
 
         void setAllowTextEntry(boolean allowTextEntry);
+
+        /// Names the list input's box for screen readers.
+        ///
+        /// @param name The box's name: the component's name.
+        void setAccessibleName(String name);
     }
 
 

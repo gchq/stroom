@@ -16,18 +16,33 @@
 
 package stroom.floormap.impl;
 
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.docstore.impl.StoreFactoryImpl;
+import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
 import stroom.planb.impl.PlanBNameValidator;
+import stroom.planb.impl.PlanBStoreNames;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.TemporalStateSettings;
+import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.Severity;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The store's two rules: what a name may be, and that expiry may not outlive retention.
 ///
@@ -37,6 +52,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// rule says to show it, and a missing entity looks like a data problem rather than a configuration
 /// one. Both settings live on this one document so that this check is possible at all.
 class TestFloorMapEventStoreStoreImpl {
+
+    // Another Plan B store type, standing in for an ordinary Plan B state store.
+    private static final String PLAN_B_TYPE = "StateStore";
 
     private static SimpleDuration duration(final int time, final TimeUnit unit) {
         return SimpleDuration.builder().time(time).timeUnit(unit).build();
@@ -159,5 +177,123 @@ class TestFloorMapEventStoreStoreImpl {
 
         assertThat(copy).matches(PlanBNameValidator.getPattern());
         assertThat(copy.length()).isLessThanOrEqualTo(48);
+    }
+
+    // ------------------------------------------------------------------
+    // Name uniqueness across Plan B document types.
+    // ------------------------------------------------------------------
+
+    /// Regression test: names were only checked against other event stores, but Plan B resolves a
+    /// name across every Plan B document type, so sharing a name with an ordinary Plan B store broke
+    /// lookups of both.
+    @Test
+    void createRefusesANamePlanBStoreHas() {
+        final RealStore realStore = new RealStore();
+        realStore.givenAPlanBStoreNamed("events");
+
+        assertThatThrownBy(() -> realStore.store.createDocument("events"))
+                .isInstanceOf(EntityServiceException.class)
+                .hasMessageContaining("events");
+        assertThat(realStore.store.list())
+                .as("the rolled-back document must not be left behind")
+                .isEmpty();
+    }
+
+    @Test
+    void renameRefusesANamePlanBStoreHas() {
+        final RealStore realStore = new RealStore();
+        final DocRef docRef = realStore.store.createDocument("mine");
+        realStore.givenAPlanBStoreNamed("events");
+
+        assertThatThrownBy(() -> realStore.store.renameDocument(docRef, "events"))
+                .isInstanceOf(EntityServiceException.class);
+    }
+
+    /// Regression test: a copy given a unique name was only made unique among event stores, so the
+    /// usual explorer copy could produce a name a Plan B store already had.
+    @Test
+    void aCopyIsNamedClearOfPlanBStores() {
+        final RealStore realStore = new RealStore();
+        final DocRef docRef = realStore.store.createDocument("events");
+        Mockito.when(realStore.docFinder.findByName(PLAN_B_TYPE, "*", true))
+                .thenReturn(List.of(new DocRef(PLAN_B_TYPE, "plan-b-uuid", "events2")));
+
+        final DocRef copy = realStore.store.copyDocument(docRef, "events", true, Set.of());
+
+        assertThat(copy.getName()).isEqualTo("events3");
+    }
+
+    /// Regression test: names were checked only among the event stores the user could see, but a
+    /// store hidden from them breaks name resolution just the same.
+    @Test
+    void anEventStoreTheUserCannotSeeStillHasItsName() {
+        final RealStore realStore = new RealStore();
+        realStore.store.createDocument("events");
+        realStore.securityContext.canView = false;
+
+        assertThatThrownBy(() -> realStore.store.createDocument("events"))
+                .isInstanceOf(EntityServiceException.class);
+    }
+
+    /// Regression test: import did not check names at all.
+    @Test
+    void importRefusesANewEventStoreWithANamePlanBStoreHas() {
+        final RealStore realStore = new RealStore();
+        realStore.givenAPlanBStoreNamed("events");
+        final DocRef imported = new DocRef(FloorMapEventStoreDoc.TYPE, "new-uuid", "events");
+        final ImportState importState = new ImportState(imported, "events");
+
+        realStore.store.importDocument(imported, null, importState, ImportSettings.auto());
+
+        assertThat(importState.getMessageList())
+                .singleElement()
+                .satisfies(message -> {
+                    assertThat(message.getSeverity()).isEqualTo(Severity.ERROR);
+                    assertThat(message.getMessage()).contains("events");
+                });
+    }
+
+    /// An existing store keeps its own name on import, so re-importing it never clashes with itself.
+    @Test
+    void importOfAnExistingEventStoreIsNotRefused() {
+        final RealStore realStore = new RealStore();
+        final DocRef existing = realStore.store.createDocument("events");
+        final ImportState importState = new ImportState(existing, "events");
+
+        realStore.store.importDocument(existing, null, importState, ImportSettings.auto());
+
+        assertThat(importState.getMessageList()).isEmpty();
+    }
+
+    // The real store over an in-memory persistence, with the other Plan B store types answered by a
+    // mock finder.
+    private static class RealStore {
+
+        private final DocFinder docFinder = Mockito.mock(DocFinder.class);
+        private final ToggleableSecurityContext securityContext = new ToggleableSecurityContext();
+        private final FloorMapEventStoreStoreImpl store = new FloorMapEventStoreStoreImpl(
+                new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
+                new FloorMapEventStoreSerialiser(new Serialiser2FactoryImpl()),
+                securityContext,
+                () -> null,
+                new PlanBStoreNames(securityContext,
+                        () -> docFinder,
+                        Set.of(PLAN_B_TYPE, FloorMapEventStoreDoc.TYPE)));
+
+        private void givenAPlanBStoreNamed(final String name) {
+            Mockito.when(docFinder.findByName(PLAN_B_TYPE, name))
+                    .thenReturn(List.of(new DocRef(PLAN_B_TYPE, "plan-b-uuid", name)));
+        }
+    }
+
+    // A security context whose user can be made unable to see any document.
+    private static class ToggleableSecurityContext extends MockSecurityContext {
+
+        private boolean canView = true;
+
+        @Override
+        public boolean hasDocumentPermission(final DocRef docRef, final DocumentPermission permission) {
+            return canView;
+        }
     }
 }

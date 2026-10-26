@@ -38,7 +38,7 @@ await page.goto(gwt.baseUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 await gwt.signInFully(page, credentials());
 await page.waitForTimeout(2_000);
 
-const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
   .filter((e) => e.offsetWidth).map((e) => e.textContent.trim()));
 const press = async (name) => {
   try {
@@ -55,7 +55,7 @@ await page.locator('.explorerCell', { hasText: 'System' }).first().dblclick();
 await page.waitForTimeout(2_500);
 await page.locator('.tab-bar--link .tab-bar__label', { hasText: 'Processors' }).first().click({ force: true });
 await page.waitForTimeout(2_000);
-await page.locator('[title="Batch Edit Current Processors"]').first().click();
+await page.locator('[title="Batch Edit Filtered Processors"]').first().click();
 await page.waitForTimeout(1_500);
 console.log(`opened: ${JSON.stringify(await dialogs())}`);
 

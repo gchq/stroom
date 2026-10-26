@@ -20,8 +20,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
@@ -30,6 +28,8 @@ import stroom.statistics.impl.sql.client.presenter.State.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -43,7 +43,7 @@ import java.util.List;
 public class StatisticsCustomMaskListPresenter
         extends DocPresenter<PagerView, StatisticStoreDoc> {
 
-    private final MyDataGrid<Mask> dataGrid;
+    private final DataGrid<Mask> dataGrid;
     private final MultiSelectionModelImpl<Mask> selectionModel;
 
     private final ButtonView newButton;
@@ -58,15 +58,17 @@ public class StatisticsCustomMaskListPresenter
                                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Statistics Custom Masks");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        newButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
-        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate roll-up permutations",
+        view.getToolbar().setName("Roll-up actions");
+        newButton = view.getToolbar().button(SvgImage.ADD, "New Roll-up Permutation", this::onAdd);
+        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate Roll-up Permutations",
                 this::onAutoGenerate);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Roll-up Permutation",
+                this::onRemove);
         removeButton.setEnabled(false);
     }
 
@@ -87,15 +89,12 @@ public class StatisticsCustomMaskListPresenter
         final Mask selectedElement = selectionModel.getSelected();
         removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
-        if (isReadOnly()) {
-            newButton.setTitle("New roll-up permutation disabled as read only");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations disabled as read only");
-            removeButton.setTitle("Remove roll-up permutation disabled as read only");
-        } else {
-            newButton.setTitle("New roll-up permutation");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations");
-            removeButton.setTitle("Remove roll-up permutation");
-        }
+        final String reason = isReadOnly()
+                ? " (read only)"
+                : "";
+        newButton.setTitle("New Roll-up Permutation" + reason);
+        autoGenerateButton.setTitle("Auto-generate Roll-up Permutations" + reason);
+        removeButton.setTitle("Remove Selected Roll-up Permutation" + reason);
     }
 
     private void addColumns() {
@@ -156,6 +155,8 @@ public class StatisticsCustomMaskListPresenter
         final List<Mask> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             state.removeMasks(list);
+            // The grid always has the no roll-up row, so removing the last permutation puts it back
+            state.addNoRollUpPerm();
 
             selectionModel.clear();
             refresh();

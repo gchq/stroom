@@ -19,6 +19,7 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorMapTimelineSettingsView;
 import stroom.util.client.Console;
+import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -26,7 +27,6 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -69,7 +69,7 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
         // reach even if it were one. Name them directly instead.
         FloorMapAria.group(startDateTimeBox, "Timeline start date and time");
         FloorMapAria.group(endDateTimeBox, "Timeline end date and time");
-        // labelInnerControl, not label: CustomCheckBox's root is a div.SimpleTickBox
+        // labelInnerControl, not label: CustomCheckBox's root is a label.tick-box
         // wrapping the real <input>, so a name written to the widget itself lands on
         // the wrapper and ARIA drops it — the checkbox was announced unnamed. Not
         // group() either, which would describe one checkbox as a group of controls.

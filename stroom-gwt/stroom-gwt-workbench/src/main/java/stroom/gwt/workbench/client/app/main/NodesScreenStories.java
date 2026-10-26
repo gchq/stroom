@@ -120,10 +120,12 @@ public final class NodesScreenStories {
                                     .withJsonBodyContaining("{\"sortList\": [{\"id\": \"URL\", \"desc\": false}]}")
                                     .toSpyMatcher()));
                     // Ping has no withSorting in GWT, so its header isn't sortable.
-                    // The headers are <th> elements (no role attribute), marked sortable with GWT's
-                    // 'dataGridSortableHeader' class
-                    play.expect(play.getByText("Ping (ms)").closest("th")).not().toHaveClass(StroomDom.SORTABLE_HEADER);
-                    play.expect(play.getByText("Name").closest("th")).toHaveClass(StroomDom.SORTABLE_HEADER);
+                    // A sortable header is marked with the grid's
+                    // 'data-grid__header-cell--sortable' class
+                    play.expect(play.getByText("Ping (ms)").closest(StroomDom.GRID_HEADER_CELL))
+                            .not().toHaveClass(StroomDom.SORTABLE_HEADER);
+                    play.expect(play.getByText("Name").closest(StroomDom.GRID_HEADER_CELL))
+                            .toHaveClass(StroomDom.SORTABLE_HEADER);
                     expectNoProblems(play);
                 })
                 // Selecting a node lists its jobs in the bottom pane (GWT NodeJobListPresenter)
@@ -152,7 +154,7 @@ public final class NodesScreenStories {
                 .withPlay(play -> {
                     play.findByText("node1a");
                     play.findByText("Data Retention");
-                    play.waitFor(() -> play.expect(play.getByText("node1a").closest("tr"))
+                    play.waitFor(() -> play.expect(play.getByText("node1a").closest(StroomDom.GRID_ROW))
                             .toHaveClass(StroomDom.SELECTED_ROW));
                     expectNoProblems(play);
                 })
@@ -165,8 +167,8 @@ public final class NodesScreenStories {
                     play.waitFor(() -> play.expect(play.getByText("42")).toBeInTheDocument());
                     play.expect(play.getByText("42").closest("[title]").attribute("title")).toBe("Ping: 42 ms");
                     // Toggle node2b's Enabled tick box: the last tick in the row (Master is read only)
-                    final Query ticks = play.within(play.getByText("node2b").closest("tr"))
-                            .querySelectorAll(".tickBox");
+                    final Query ticks = play.within(play.getByText("node2b").closest(StroomDom.GRID_ROW))
+                            .querySelectorAll(".tick-box");
                     play.click(ticks.nth(1));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/v1/enabled/node2b").withJsonBody("true").toSpyMatcher()));

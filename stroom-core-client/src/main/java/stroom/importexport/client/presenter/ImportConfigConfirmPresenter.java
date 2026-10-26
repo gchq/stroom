@@ -23,7 +23,6 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -42,6 +41,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -84,7 +84,7 @@ public class ImportConfigConfirmPresenter extends
 
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
-    private final MyDataGrid<ImportState> dataGrid;
+    private final DataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
@@ -112,8 +112,10 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        dataGrid = new MyDataGrid<>(this, MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         dataGrid.setTableName("Import Items");
+        // An import can hold many thousands of items, all on one page: draw only those in view
+        dataGrid.setVirtual(true);
 
         view.setDataGrid(dataGrid);
         view.setRootFolderView(rootFolderPresenter.getView());
@@ -169,6 +171,7 @@ public class ImportConfigConfirmPresenter extends
                 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Confirm Import")
                 .onShow(e -> getView().focus())

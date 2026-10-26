@@ -23,6 +23,7 @@ import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
+import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -103,6 +104,10 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
     ProcessorTaskListPresenter getProcessorTaskListPresenter();
+
+    /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
+    /// list), as `FolderPresenter`, `FeedPresenter` and `PipelinePresenter` create it.
+    ProcessorTaskPresenter getProcessorTaskPresenter();
 
     // Data
 

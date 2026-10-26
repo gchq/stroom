@@ -25,13 +25,13 @@ import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
-import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -43,6 +43,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.view.ProgressViewImpl;
 
@@ -146,9 +147,10 @@ public final class SourceViewerStories {
                     // ElementId.toString(): `name {id}`
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
                     // Summary rows span Element+Stream+Line+Col+Message.
-                    // The summary cell has a colspan
-                    final Query summaryRow = play.getByText("Errors (1 item)").closest("tr");
-                    play.expect(play.within(summaryRow).querySelector("td[colspan=\"5\"]")).not().toBeNull();
+                    // The summary cell spans five columns
+                    final Query summaryRow = play.getByText("Errors (1 item)").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(summaryRow).querySelector("[data-col][aria-colspan=\"5\"]").exists())
+                            .toBe(true);
                     // The expander column is ExpanderCell.getColumnWidth(1) = 45px
                     final Value<Double> expanderWidth = play.getAllByRole("columnheader").nth(0).width();
                     play.expect("the expander column's width", expanderWidth::get).toBeGreaterThan(40);
@@ -223,7 +225,7 @@ public final class SourceViewerStories {
     private static Widget render(final StoryContext context,
                                  final RestFixtures fixtures,
                                  final SourceLocation sourceLocation) {
-        // Stroom's Menu (for the data's context menus) is the harness's
+        // Stroom's MenuManager (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
         final DataPresenter presenter = dataPresenter(harness);
         // As GWTP does when the presenter is revealed

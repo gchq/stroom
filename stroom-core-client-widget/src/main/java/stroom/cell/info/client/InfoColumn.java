@@ -51,15 +51,19 @@ public abstract class InfoColumn<T> extends Column<T, CellIcon> {
         super.onBrowserEvent(context, elem, row, event);
         Element target = event.getEventTarget().cast();
 
-        // Find the parent TD.
-        while (target.getParentElement() != null &&
-                !target.getTagName().equalsIgnoreCase("td") &&
-                !target.getParentElement().getTagName().equalsIgnoreCase("td")) {
+        // Find the cell (MyDataGrid's td, DataGrid's [data-col]), or the element in it
+        while (target.getParentElement() != null
+               && !isCell(target)
+               && !isCell(target.getParentElement())) {
             target = target.getParentElement();
         }
 
         final Rect relativeRect = new Rect(target);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         showInfo(row, position, target);
+    }
+
+    private static boolean isCell(final Element element) {
+        return element.getTagName().equalsIgnoreCase("td") || element.hasAttribute("data-col");
     }
 }

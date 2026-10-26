@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -41,9 +42,11 @@ public class ColumnValuesFilterViewImpl
     private final Widget widget;
 
     @UiField
-    Label selectAllLink;
+    LinkButton selectAllLink;
     @UiField
-    Label selectNoneLink;
+    LinkButton selectNoneLink;
+    @UiField
+    Label separator;
     @UiField
     QuickFilter quickFilter;
     @UiField
@@ -52,6 +55,10 @@ public class ColumnValuesFilterViewImpl
     @Inject
     public ColumnValuesFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        quickFilter.setAccessibleName("Filter values");
+        // Only drawn between the two buttons, not read out
+        separator.getElement().setAttribute("aria-hidden", "true");
     }
 
     @Override

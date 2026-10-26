@@ -33,6 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.AppPermission;
+import stroom.svg.client.SvgIconBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -122,7 +123,7 @@ public final class ExecutionSchedulesScreenStories {
                     // Schedule.toString() prefixes the type
                     play.expect(play.getByText("Cron 0 0 * * * ?")).toBeInTheDocument();
                     play.click(play.getByText("Daily report"));
-                    final Query delete = play.getByTitle("Delete Schedules");
+                    final Query delete = play.getByTitle("Delete Selected Schedules");
                     play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
                     play.click(delete);
                     // GWT's message is 'You are about to delete 1 schedule.'
@@ -206,7 +207,7 @@ public final class ExecutionSchedulesScreenStories {
                     // GWT's Clear Filter button is always there, but only enabled
                     // for an expression with terms (setButtonState), so an empty filter leaves it
                     // disabled
-                    play.expect(play.getByTitle("Clear Filter")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Clear Schedule Filter")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     expectNoErrors(play);
                 })
@@ -269,18 +270,18 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Hourly rollup");
                     play.click(play.getByTitle("Batch Edit Schedules"));
                     final Play dialog = dialog(screen, "Batch Change Selected Schedules");
-                    final Query schedule = dialog.querySelector(".ScheduleBox-textBox");
-                    final Query icon = dialog.querySelector(".ScheduleBox .svgIconBox-icon-outer");
+                    final Query schedule = dialog.querySelector(".schedule-box__input");
+                    final Query icon = dialog.querySelector(".schedule-box .svg-icon-box__icon");
                     play.expect(schedule).toBeDisabled();
-                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
-                            .toHaveClass("svgIconBox-readonly");
+                    play.expect(dialog.querySelector(".schedule-box.svg-icon-box"))
+                            .toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     play.click(icon);
                     play.expect(screen.queryByText("Change Schedule", StroomDom.DIALOG_TITLE)).toBeNull();
                     // Ticking the schedule's check box (after Name, Enabled's two and Node) enables both
                     play.click(dialog.getAllByRole("checkbox").nth(4));
                     play.expect(schedule).toBeEnabled();
-                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
-                            .not().toHaveClass("svgIconBox-readonly");
+                    play.expect(dialog.querySelector(".schedule-box.svg-icon-box"))
+                            .not().toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     expectNoErrors(play);
                 })
                 // Editing a schedule renames it, enables it and saves it
@@ -305,15 +306,16 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Daily digest");
                     expectNoErrors(play);
                 })
-                // The first fetch carries the default sort, Name descending ignoring case
-                .story("DefaultSortIsNameDescending", context -> render(context, FIXTURES, false))
+                // The first fetch carries the default sort, Name A to Z ignoring case
+                .story("DefaultSortIsNameAscending", context -> render(context, FIXTURES, false))
                 .withPlay(play -> {
                     play.findByText("Daily report");
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the first fetch's sort list", () -> firstSortList(requests))
-                            .toEqual(List.of(Map.of("id", "Name", "desc", true, "ignoreCase", true))));
-                    // A request default only: no header shows a sort icon
-                    play.expect(play.querySelector(".column-sortIcon")).toBeNull();
+                            .toEqual(List.of(Map.of("id", "Name", "desc", false, "ignoreCase", true))));
+                    // The grid's default (D10): the Schedule Name header shows it
+                    play.expect(play.getByText("Schedule Name", StroomDom.GRID_HEADER_TEXT)
+                            .closest(StroomDom.GRID_HEADER_CELL)).toHaveAttribute("aria-sort", "ascending");
                     expectNoErrors(play);
                 })
                 // A schedule naming a node that no longer exists

@@ -17,10 +17,11 @@
 package stroom.query.client.view;
 
 import stroom.dashboard.client.vis.VisFrame;
-import stroom.data.grid.client.MessagePanelImpl;
+import stroom.dashboard.client.vis.VisToolbarButton;
+import stroom.dashboard.client.vis.VisToolbarRow;
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
-import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.MessagePanelImpl;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
@@ -32,12 +33,16 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.List;
+import java.util.function.BiConsumer;
+
 public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisView {
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
     private final MessagePanelImpl messagePanel;
-    private final RefreshButton refreshButton;
+    // Above the visualisation: its buttons and its pause and resume button
+    private final VisToolbarRow toolbarRow;
 
     private VisFrame visFrame;
 
@@ -48,11 +53,13 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         visContainer = new SimplePanel();
         visContainer.setStyleName("queryVis-innerLayout");
 
-        // Its pause and resume button, over its top right corner. The presenter sets what it does.
-        final Toolbar toolbar = new Toolbar("Visualisation");
-        toolbar.addStyleName("dashboardVis-refresh");
-        refreshButton = toolbar.refresh(null);
-        refreshButton.setAllowPause(true);
+        toolbarRow = new VisToolbarRow();
+
+        // The visualisation's frame is laid over visContainer (see onResize)
+        final FlowPanel body = new FlowPanel();
+        body.setStyleName("dock-max visBody");
+        body.add(visContainer);
+        body.add(messagePanel);
 
         widget = new FlowPanel() {
             @Override
@@ -77,10 +84,9 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
                 }
             }
         };
-        widget.setStyleName("queryVis-outerLayout"); //("dashboardVis-outerLayout");
-        widget.add(visContainer);
-        widget.add(toolbar);
-        widget.add(messagePanel);
+        widget.setStyleName("queryVis-outerLayout dock-container-vertical");
+        widget.add(toolbarRow);
+        widget.add(body);
     }
 
     @Override
@@ -90,7 +96,12 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
 
     @Override
     public RefreshButton getRefreshButton() {
-        return refreshButton;
+        return toolbarRow.getRefreshButton();
+    }
+
+    @Override
+    public void setVisButtons(final List<VisToolbarButton> buttons, final BiConsumer<String, Boolean> onPress) {
+        toolbarRow.setVisButtons(buttons, onPress);
     }
 
     public void setVisFrame(final VisFrame visFrame) {

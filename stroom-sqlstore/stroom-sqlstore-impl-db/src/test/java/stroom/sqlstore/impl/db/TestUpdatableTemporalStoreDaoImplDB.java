@@ -34,12 +34,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * Real-database tests for {@link UpdatableTemporalStoreDaoImpl}.
@@ -221,6 +223,62 @@ class TestUpdatableTemporalStoreDaoImplDB {
     }
 
     // -----------------------------------------------------------------------
+    // Keys are matched exactly - case and accents are significant
+    // -----------------------------------------------------------------------
+
+    /**
+     * Keys differing only in case or accents are different entries.
+     *
+     * <p>Regression test: {@code map_key} originally took the table's {@code utf8mb4_0900_ai_ci}
+     * collation, and it is part of the primary key. So {@code Room1} and {@code room1} were the
+     * same row, and the second upsert silently replaced the first one's value while keeping the
+     * first one's spelling of the key.</p>
+     */
+    @Test
+    void testKeysDifferingOnlyByCaseOrAccentAreDistinct() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "Room1", T1, "{\"v\":\"upper\"}"));
+        dao.create(store.uuid(), entry(store.name(), "room1", T1, "{\"v\":\"lower\"}"));
+        dao.create(store.uuid(), entry(store.name(), "café", T1, "{\"v\":\"accented\"}"));
+        dao.create(store.uuid(), entry(store.name(), "cafe", T1, "{\"v\":\"plain\"}"));
+
+        assertThat(dao.count(store.uuid())).isEqualTo(4);
+        assertThat(dao.fetch(store.uuid(), id(store.name(), "Room1")))
+                .map(TemporalEntry::getValue)
+                .hasValue("{\"v\":\"upper\"}");
+        assertThat(dao.fetch(store.uuid(), id(store.name(), "room1")))
+                .map(TemporalEntry::getValue)
+                .hasValue("{\"v\":\"lower\"}");
+        assertThat(dao.fetch(store.uuid(), id(store.name(), "café")))
+                .map(TemporalEntry::getValue)
+                .hasValue("{\"v\":\"accented\"}");
+        assertThat(dao.fetch(store.uuid(), id(store.name(), "cafe")))
+                .map(TemporalEntry::getValue)
+                .hasValue("{\"v\":\"plain\"}");
+        // Lookups are exact too - no spelling matches a key it was not written with.
+        assertThat(dao.fetch(store.uuid(), id(store.name(), "ROOM1"))).isEmpty();
+        assertThat(dao.fetchAll(store.uuid()))
+                .extracting(TemporalEntry::getKey)
+                .containsExactlyInAnyOrder("Room1", "room1", "café", "cafe");
+    }
+
+    /** Deleting one spelling of a key must leave the other spellings in place. */
+    @Test
+    void testDeleteOfMixedCaseKeyLeavesOtherSpellings() {
+        final Store store = uniqueStore();
+        dao.applyChanges(store.uuid(), List.of(
+                ChangeOperation.upsert(entry(store.name(), "Room1", T1, "{\"v\":\"upper\"}")),
+                ChangeOperation.upsert(entry(store.name(), "room1", T1, "{\"v\":\"lower\"}"))));
+        assertThat(dao.count(store.uuid())).isEqualTo(2);
+
+        assertThat(dao.delete(store.uuid(), id(store.name(), "room1"))).isTrue();
+
+        assertThat(dao.fetchAll(store.uuid()))
+                .extracting(TemporalEntry::getKey, TemporalEntry::getValue)
+                .containsExactly(tuple("Room1", "{\"v\":\"upper\"}"));
+    }
+
+    // -----------------------------------------------------------------------
     // getTimeRange
     // -----------------------------------------------------------------------
 
@@ -344,6 +402,182 @@ class TestUpdatableTemporalStoreDaoImplDB {
                 dao.find(store.uuid(), criteriaAt("a-name-that-was-never-used", T3_ISO));
 
         assertThat(result.getValues()).hasSize(1);
+    }
+
+    /** Regression test: {@code <} was applied as {@code <=}. */
+    @Test
+    void testFindLessThanIsStrict() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "gate", T1, "{\"v\":1}"));
+        dao.create(store.uuid(), entry(store.name(), "gate", T2, "{\"v\":2}"));
+
+        final ResultPage<TemporalEntry> result = dao.find(store.uuid(), criteria(store.name(),
+                timeTerm(ExpressionTerm.Condition.LESS_THAN, T2_ISO)));
+
+        assertThat(result.getValues())
+                .extracting(TemporalEntry::getValue)
+                .containsExactly("{\"v\":1}");
+    }
+
+    /**
+     * Regression test: a lower bound was stripped from the query, so a key whose latest version
+     * predates it was still returned.
+     */
+    @Test
+    void testFindHonoursALowerBound() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "stale", T1, "{\"v\":\"stale\"}"));
+        dao.create(store.uuid(), entry(store.name(), "fresh", T1, "{\"v\":1}"));
+        dao.create(store.uuid(), entry(store.name(), "fresh", T2, "{\"v\":2}"));
+
+        final ResultPage<TemporalEntry> result = dao.find(store.uuid(), criteria(store.name(),
+                timeTerm(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, T2_ISO),
+                timeTerm(ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, T3_ISO)));
+
+        assertThat(result.getValues())
+                .extracting(TemporalEntry::getKey, TemporalEntry::getEffectiveTimeMs)
+                .containsExactly(tuple("fresh", T2));
+    }
+
+    /**
+     * Regression test: a time term inside a NOT was pulled out and used as the snapshot instant, so
+     * "not at or before T1" returned the version at T1 - the opposite of what was asked.
+     */
+    @Test
+    void testFindKeepsTheMeaningOfATimeTermInsideNot() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "gate", T1, "{\"v\":1}"));
+        dao.create(store.uuid(), entry(store.name(), "gate", T2, "{\"v\":2}"));
+        dao.create(store.uuid(), entry(store.name(), "gate", T3, "{\"v\":3}"));
+
+        final ExpressionCriteria criteria = new ExpressionCriteria(ExpressionOperator.builder()
+                .addTerm(UpdatableTemporalStore.MAP_FIELD.getFldName(), ExpressionTerm.Condition.EQUALS, store.name())
+                .addOperator(ExpressionOperator.builder()
+                        .op(ExpressionOperator.Op.NOT)
+                        .addTerm(timeTerm(ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, T1_ISO))
+                        .build())
+                .build());
+
+        assertThat(dao.find(store.uuid(), criteria).getValues())
+                .extracting(TemporalEntry::getEffectiveTimeMs)
+                .containsExactly(T2, T3);
+    }
+
+    /**
+     * Regression test: the offset was applied by the query and then again to its result, so the
+     * second page came back empty or threw. Results are also ordered, so pages are stable.
+     */
+    @Test
+    void testFindPagesThroughEveryRowInOrder() {
+        final Store store = uniqueStore();
+        for (int i = 0; i < 5; i++) {
+            dao.create(store.uuid(), entry(store.name(), "k" + i, T1, "{}"));
+        }
+
+        final ResultPage<TemporalEntry> page1 = dao.find(store.uuid(), pagedCriteria(store.name(), 0, 2));
+        final ResultPage<TemporalEntry> page2 = dao.find(store.uuid(), pagedCriteria(store.name(), 2, 2));
+        final ResultPage<TemporalEntry> page3 = dao.find(store.uuid(), pagedCriteria(store.name(), 4, 2));
+
+        assertThat(page1.getValues()).extracting(TemporalEntry::getKey).containsExactly("k0", "k1");
+        assertThat(page1.getPageResponse().isExact()).as("more follow page 1").isFalse();
+        assertThat(page2.getValues()).extracting(TemporalEntry::getKey).containsExactly("k2", "k3");
+        assertThat(page3.getValues()).extracting(TemporalEntry::getKey).containsExactly("k4");
+        assertThat(page3.getPageResponse().isExact()).as("page 3 is the last").isTrue();
+    }
+
+    /**
+     * The search path keeps reading {@code >= T AND < T} - the zero-width range the query framework
+     * builds for "as at T" - as the state at T, including an entry effective at exactly T.
+     */
+    @Test
+    void testSearchReadsTheFrameworksZeroWidthRangeAsAt() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "gate", T1, "{\"v\":1}"));
+        dao.create(store.uuid(), entry(store.name(), "gate", T2, "{\"v\":2}"));
+
+        final List<TemporalEntry> found = new java.util.ArrayList<>();
+        dao.search(store.uuid(), criteria(store.name(),
+                        timeTerm(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, T2_ISO),
+                        timeTerm(ExpressionTerm.Condition.LESS_THAN, T2_ISO)),
+                true,
+                found::add);
+
+        assertThat(found)
+                .extracting(TemporalEntry::getValue)
+                .containsExactly("{\"v\":2}");
+    }
+
+    /** A search can be stopped part-way by its consumer, as termination does. */
+    @Test
+    void testSearchStopsWhenTheConsumerThrows() {
+        final Store store = uniqueStore();
+        for (int i = 0; i < 10; i++) {
+            dao.create(store.uuid(), entry(store.name(), "k" + i, T1, "{}"));
+        }
+
+        final java.util.concurrent.atomic.AtomicInteger seen = new java.util.concurrent.atomic.AtomicInteger();
+        assertThatThrownBy(() -> dao.search(store.uuid(), criteria(store.name()), false, entry -> {
+            if (seen.incrementAndGet() == 3) {
+                throw new IllegalStateException("stop");
+            }
+        }))
+                .hasMessageContaining("stop");
+        assertThat(seen.get()).isEqualTo(3);
+    }
+
+    /// A page of the maximum length is allowed - the limit refuses only longer pages.
+    @Test
+    void testFindAllowsAPageOfTheMaximumLength() {
+        final Store store = uniqueStore();
+        dao.create(store.uuid(), entry(store.name(), "k", T1, "{}"));
+
+        assertThat(dao.find(store.uuid(),
+                        pagedCriteria(store.name(), 0, UpdatableTemporalStoreDaoImpl.MAX_PAGE_LENGTH))
+                .getValues())
+                .extracting(TemporalEntry::getKey)
+                .containsExactly("k");
+    }
+
+    /// Search streams rows a row at a time. More rows than one fetch batch must all arrive, in both
+    /// the plain and the snapshot paths.
+    @Test
+    void testSearchStreamsMoreRowsThanOneBatch() {
+        final Store store = uniqueStore();
+        final int rowCount = 2_500;
+        final List<ChangeOperation> operations = new ArrayList<>();
+        for (int i = 0; i < rowCount; i++) {
+            operations.add(ChangeOperation.upsert(entry(store.name(), "k" + i, T1, "{}")));
+        }
+        dao.applyChanges(store.uuid(), operations);
+
+        final AtomicInteger plainCount = new AtomicInteger();
+        dao.search(store.uuid(), criteria(store.name()), false, entry -> plainCount.incrementAndGet());
+        final AtomicInteger snapshotCount = new AtomicInteger();
+        dao.search(store.uuid(), criteriaAt(store.name(), T3_ISO), false, entry -> snapshotCount.incrementAndGet());
+
+        assertThat(plainCount.get()).isEqualTo(rowCount);
+        assertThat(snapshotCount.get()).isEqualTo(rowCount);
+    }
+
+    /// A streamed read stopped part-way must release its connection cleanly: with MySQL streaming, a
+    /// connection still holding an open result set can run nothing else.
+    @Test
+    void testTheStoreStillWorksAfterASearchIsStoppedPartWay() {
+        final Store store = uniqueStore();
+        for (int i = 0; i < 10; i++) {
+            dao.create(store.uuid(), entry(store.name(), "k" + i, T1, "{}"));
+        }
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            assertThatThrownBy(() -> dao.search(store.uuid(), criteria(store.name()), false, entry -> {
+                throw new IllegalStateException("stop");
+            }))
+                    .hasMessageContaining("stop");
+        }
+
+        assertThat(dao.count(store.uuid())).isEqualTo(10);
+        dao.create(store.uuid(), entry(store.name(), "after", T1, "{}"));
+        assertThat(dao.count(store.uuid())).isEqualTo(11);
     }
 
     // -----------------------------------------------------------------------
@@ -514,6 +748,31 @@ class TestUpdatableTemporalStoreDaoImplDB {
 
     private static TemporalEntryId id(final String map, final String key) {
         return new TemporalEntryId(map, key, TestUpdatableTemporalStoreDaoImplDB.T1);
+    }
+
+    private static ExpressionTerm timeTerm(final ExpressionTerm.Condition condition, final String isoTime) {
+        return ExpressionTerm.builder()
+                .field(UpdatableTemporalStore.TIME_FIELD.getFldName())
+                .condition(condition)
+                .value(isoTime)
+                .build();
+    }
+
+    /** Criteria naming the map, ANDed with the given terms. */
+    private static ExpressionCriteria criteria(final String map, final ExpressionTerm... terms) {
+        return new ExpressionCriteria(ExpressionOperator.builder()
+                .addTerm(UpdatableTemporalStore.MAP_FIELD.getFldName(), ExpressionTerm.Condition.EQUALS, map)
+                .addTerms(terms)
+                .build());
+    }
+
+    private static ExpressionCriteria pagedCriteria(final String map, final int offset, final int length) {
+        return new ExpressionCriteria(
+                new stroom.util.shared.PageRequest(offset, length),
+                null,
+                ExpressionOperator.builder()
+                        .addTerm(UpdatableTemporalStore.MAP_FIELD.getFldName(), ExpressionTerm.Condition.EQUALS, map)
+                        .build());
     }
 
     /**

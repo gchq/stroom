@@ -17,11 +17,11 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -37,7 +37,7 @@ import java.util.function.Function;
 
 public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
-    private final MyDataGrid<ReceiveDataRule> dataGrid;
+    private final DataGrid<ReceiveDataRule> dataGrid;
     private final MultiSelectionModelImpl<ReceiveDataRule> selectionModel;
 
     @Inject
@@ -45,7 +45,9 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
                                 final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // A rule has no id: its number is its position, which an edit keeps but a move changes
+        dataGrid.setKeyProvider(ReceiveDataRule::getRuleNumber);
         dataGrid.setTableName("Receive Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

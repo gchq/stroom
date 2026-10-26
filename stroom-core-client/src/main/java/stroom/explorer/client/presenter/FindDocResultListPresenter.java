@@ -17,8 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentFindRequest;
@@ -30,13 +28,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +46,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final CellTable<FindResult> cellTable;
+    private final DataGrid<FindResult> resultList;
     private final RestDataProvider<FindResult, ResultPage<FindResult>> dataProvider;
     private final MultiSelectionModelImpl<FindResult> selectionModel;
     private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();
@@ -79,26 +76,15 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                                       final RestFactory restFactory) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<FindResult>(100) {
-            @Override
-            protected void onBrowserEvent2(final Event event) {
-                super.onBrowserEvent2(event);
-                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
-                    if (cellTable.getKeyboardSelectedRow() == 0) {
-                        findResultListHandler.focus();
-                    }
-                }
-            }
-        };
-        cellTable.addStyleName("FindCellTable");
-
+        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
+        // click, opens it, and Up on the first goes back to the filter
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
-                cellTable,
+        resultList = FindResultLists.create(this,
+                "Documents found",
+                new FindResultCell(),
                 selectionModel,
                 doc -> findResultListHandler.openDocument(doc),
-                null);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
+                () -> findResultListHandler.focus());
 
         explorerTreeFilterBuilder.requiredPermissions(DocumentPermission.VIEW);
 
@@ -120,8 +106,8 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                 if ((filter.getRecentItems() == null && NullSafe.isBlankString(filter.getNameFilter())) ||
                     (filter.getRecentItems() != null && filter.getRecentItems().size() == 0)) {
                     final ResultPage<FindResult> resultPage = ResultPage.empty();
-                    if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                        cellTable.setPageStart(resultPage.getPageStart());
+                    if (resultPage.getPageStart() != resultList.getPageStart()) {
+                        resultList.setPageStart(resultPage.getPageStart());
                     }
                     dataConsumer.accept(resultPage);
                     selectionModel.clear();
@@ -139,8 +125,8 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                                     filterErrorConsumer.accept(
                                             NullSafe.get(resultPage.getFilterError(), TokenError::getText));
                                 }
-                                if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                                    cellTable.setPageStart(resultPage.getPageStart());
+                                if (resultPage.getPageStart() != resultList.getPageStart()) {
+                                    resultList.setPageStart(resultPage.getPageStart());
                                 }
                                 dataConsumer.accept(resultPage);
 
@@ -161,14 +147,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
 
-        final Column<FindResult, FindResult> column = new Column<FindResult, FindResult>(new FindResultCell()) {
-            @Override
-            public FindResult getValue(final FindResult object) {
-                return object;
-            }
-        };
-        cellTable.addColumn(column);
-        view.setDataWidget(cellTable);
+        view.setDataWidget(resultList);
     }
 
     private void resetFocus() {
@@ -181,7 +160,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(cellTable);
+            dataProvider.addDataDisplay(resultList);
         } else {
             dataProvider.refresh();
         }
@@ -204,7 +183,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
-        cellTable.setKeyboardSelectedRow(row, stealFocus);
+        resultList.setKeyboardSelectedRow(row, stealFocus);
     }
 
     public void setFocusText(final boolean focusText) {

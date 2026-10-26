@@ -16,10 +16,10 @@
 
 package stroom.data.client.presenter;
 
-import stroom.data.grid.client.OrderByColumn;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -50,10 +50,9 @@ public final class CriteriaUtil {
      */
     public static void setSortList(final BaseCriteria criteria,
                                    final ColumnSortList columnSortList) {
-        final List<CriteriaFieldSort> sortList = createSortList(columnSortList);
-        if (!sortList.isEmpty()) {
-            criteria.setSortList(sortList);
-        }
+        // Even when empty (design deviation D7): the old sort mustn't stay in effect once the header
+        // shows none. A grid with a default sort (setDefaultSort) is never left empty.
+        criteria.setSortList(createSortList(columnSortList));
     }
 
     public static PageRequest createPageRequest(final Range range) {

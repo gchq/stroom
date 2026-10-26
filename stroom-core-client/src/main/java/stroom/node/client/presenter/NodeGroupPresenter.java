@@ -18,12 +18,12 @@ package stroom.node.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.grid.client.WrapperView;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -60,10 +60,12 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.newNodeGroupPresenterProvider = newNodeGroupPresenterProvider;
 
         nodeGroupListPresenter.getView().getToolbar().setName("Node group actions");
-        newButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Node Group", this::add);
+        openButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Node Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Node Group", this::delete);
         deleteButton.setEnabled(false);
 
         view.setView(nodeGroupListPresenter.getView());

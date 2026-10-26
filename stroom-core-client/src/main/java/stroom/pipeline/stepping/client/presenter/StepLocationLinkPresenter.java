@@ -20,10 +20,10 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -49,13 +49,14 @@ public class StepLocationLinkPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        getView().getLabel().addClickHandler(event -> {
+        getView().getButton().addClickHandler(event -> {
             if (!enabled) {
                 return;
             }
             stepLocationPresenter.setStepLocation(stepLocation);
             ShowPopupEvent.builder(stepLocationPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .modal()
                     .caption("Set Location")
                     .onShow(e -> stepLocationPresenter.focus())
                     .onHideRequest(e -> {
@@ -85,14 +86,21 @@ public class StepLocationLinkPresenter
     }
 
     private void updateLabel(final StepLocation stepLocation) {
+        final LinkButton button = getView().getButton();
         if (stepLocation.getMetaId() == 0 && stepLocation.getPartIndex() == 0 && stepLocation.getRecordIndex() == 0) {
-            getView().getLabel().setText("[??:??:??]");
+            button.setText("[??:??:??]");
+            // The text is a code, so the name says what it is and what pressing it does
+            button.setAriaLabel("Set Location ([??:??:??], none chosen)");
         } else {
-            getView().getLabel().setText("[" +
-                                         stepLocation.getMetaId() + ":" +
-                                         (stepLocation.getPartIndex() + 1) + ":" +
-                                         (stepLocation.getRecordIndex() + 1) +
-                                         "]");
+            final String text = "[" +
+                                stepLocation.getMetaId() + ":" +
+                                (stepLocation.getPartIndex() + 1) + ":" +
+                                (stepLocation.getRecordIndex() + 1) +
+                                "]";
+            button.setText(text);
+            button.setAriaLabel("Set Location (" + text + ", stream " + stepLocation.getMetaId()
+                                + ", part " + (stepLocation.getPartIndex() + 1)
+                                + ", record " + (stepLocation.getRecordIndex() + 1) + ")");
         }
     }
 
@@ -102,7 +110,8 @@ public class StepLocationLinkPresenter
 
     public interface StepLocationLinkView extends View {
 
-        Label getLabel();
+        /// @return The button showing the location, which opens the dialog that sets it.
+        LinkButton getButton();
 
         /// Shows whether the location can be clicked to set a new one.
         ///

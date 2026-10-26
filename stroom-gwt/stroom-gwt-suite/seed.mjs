@@ -93,7 +93,7 @@ async function freshTree() {
   await closeDialogs(page);
   await dismissMenus(page).catch(() => {});
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
 }
 
@@ -108,7 +108,7 @@ const readTree = () =>
     }));
   });
 
-const dialog = () => page.locator('.resizableDialog-popup, .dialog-popup').last();
+const dialog = () => page.locator('.dialog').last();
 
 /**
  * Drive `New > [category >] type` from a right-click on `parent`, name the document and confirm.
@@ -129,7 +129,7 @@ async function createDoc(parentLabel, category, type, name) {
   const d = dialog();
   await d.waitFor({ state: 'visible', timeout: 20_000 });
   await page.waitForTimeout(500);
-  const nameBox = d.locator('input.gwt-TextBox.w-100:not(.quickFilter-textBox)').first();
+  const nameBox = d.locator('input.text-field.w-100:not(.quick-filter__input)').first();
   await nameBox.waitFor({ state: 'visible', timeout: 10_000 });
   await nameBox.fill(name);
   await d.getByText('OK', { exact: true }).first().click();
@@ -142,10 +142,10 @@ async function createDoc(parentLabel, category, type, name) {
   // tree" ten minutes later. See stroom-gwt/ISSUES.md #31.
   const alert = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const p = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].find(
-      (x) => norm(x.querySelector('.dialog-titleText')?.textContent) === 'Alert',
+    const p = [...document.querySelectorAll('.dialog')].find(
+      (x) => norm(x.querySelector('.dialog__title')?.textContent) === 'Alert',
     );
-    return p ? norm(p.querySelector('.dialog-content')?.textContent).slice(0, 300) : null;
+    return p ? norm(p.querySelector('.dialog__content')?.textContent).slice(0, 300) : null;
   });
   if (alert) throw new Error(`create rejected: ${alert.replace(/(Show|Hide) Detail.*/, '').trim()}`);
 }

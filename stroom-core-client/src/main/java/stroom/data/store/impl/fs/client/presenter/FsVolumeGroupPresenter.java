@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.grid.client.WrapperView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
@@ -27,6 +26,7 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -66,10 +66,13 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.newFsVolumeGroupPresenterProvider = newFsVolumeGroupPresenterProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Data Volume Group", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Data Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Data Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());
@@ -108,7 +111,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private void edit(final FsVolumeGroup volumeGroup) {
         final FsVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(volumeGroup, "Edit Volume Group - " + volumeGroup.getName(), result -> {
+        editor.show(volumeGroup, "Edit Data Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();
             }

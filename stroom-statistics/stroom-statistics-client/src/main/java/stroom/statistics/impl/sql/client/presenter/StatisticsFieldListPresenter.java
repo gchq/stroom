@@ -17,8 +17,6 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
@@ -27,6 +25,8 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 public class StatisticsFieldListPresenter extends DocPresenter<PagerView, StatisticStoreDoc> {
 
-    private final MyDataGrid<Field> dataGrid;
+    private final DataGrid<Field> dataGrid;
     private final MultiSelectionModelImpl<Field> selectionModel;
 
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
@@ -57,7 +57,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Statistics Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -65,10 +65,12 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
         view.getToolbar().setName("Field actions");
-        newButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", this::onEdit);
+        newButton = view.getToolbar().button(SvgImage.ADD, "New Statistic Field", this::onAdd);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Statistic Field",
+                this::onEdit);
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Statistic Fields",
+                this::onRemove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -93,15 +95,12 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         editButton.setEnabled(enabled);
         removeButton.setEnabled(enabled);
 
-        if (isReadOnly()) {
-            newButton.setTitle("New field disabled as fields are read only");
-            editButton.setTitle("Edit field disabled as fields are read only");
-            removeButton.setTitle("Remove field disabled as fields are read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        final String reason = isReadOnly()
+                ? " (fields are read only)"
+                : "";
+        newButton.setTitle("New Statistic Field" + reason);
+        editButton.setTitle("Edit Selected Statistic Field" + reason);
+        removeButton.setTitle("Remove Selected Statistic Fields" + reason);
     }
 
     private void addColumns() {

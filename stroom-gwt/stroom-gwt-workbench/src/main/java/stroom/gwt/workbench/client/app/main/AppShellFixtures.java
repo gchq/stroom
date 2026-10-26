@@ -20,12 +20,9 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 
-import java.math.BigDecimal;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /// The `App/Main/AppShell` stories' fixtures that are plain Java (so unit tested on the JVM): the
 /// explorer trees and the server's replies that are computed from a request, e.g.
@@ -157,80 +154,6 @@ final class AppShellFixtures {
     /// @param value The value.
     /// @return The JSON.
     static String toJson(final Object value) {
-        final StringBuilder sb = new StringBuilder();
-        append(sb, value);
-        return sb.toString();
-    }
-
-    private static void append(final StringBuilder sb, final Object value) {
-        if (value == null) {
-            sb.append("null");
-        } else if (value instanceof String) {
-            appendString(sb, (String) value);
-        } else if (value instanceof Map) {
-            sb.append('{');
-            boolean first = true;
-            for (final Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
-                if (!first) {
-                    sb.append(',');
-                }
-                first = false;
-                appendString(sb, String.valueOf(entry.getKey()));
-                sb.append(':');
-                append(sb, entry.getValue());
-            }
-            sb.append('}');
-        } else if (value instanceof Collection) {
-            sb.append('[');
-            boolean first = true;
-            for (final Object item : (Collection<?>) value) {
-                if (!first) {
-                    sb.append(',');
-                }
-                first = false;
-                append(sb, item);
-            }
-            sb.append(']');
-        } else if (value instanceof BigDecimal) {
-            sb.append(((BigDecimal) value).toPlainString());
-        } else {
-            sb.append(value);
-        }
-    }
-
-    private static void appendString(final StringBuilder sb, final String value) {
-        sb.append('"');
-        for (int i = 0; i < value.length(); i++) {
-            final char c = value.charAt(i);
-            switch (c) {
-                case '"':
-                    sb.append("\\\"");
-                    break;
-                case '\\':
-                    sb.append("\\\\");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
-                default:
-                    if (c < 0x20) {
-                        final String hex = Integer.toHexString(c);
-                        sb.append("\\u");
-                        for (int j = hex.length(); j < 4; j++) {
-                            sb.append('0');
-                        }
-                        sb.append(hex);
-                    } else {
-                        sb.append(c);
-                    }
-            }
-        }
-        sb.append('"');
+        return JsonValues.toJson(value);
     }
 }

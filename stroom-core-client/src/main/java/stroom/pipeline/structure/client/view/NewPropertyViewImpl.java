@@ -19,6 +19,7 @@ package stroom.pipeline.structure.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -130,6 +131,10 @@ public class NewPropertyViewImpl
     @Override
     public void setValueWidget(final Widget widget) {
         value.setWidget(widget);
+        // The form group's label was given before the value's control was, so isn't for it
+        if (widget != null) {
+            AccessibleName.set(widget, "Value");
+        }
     }
 
     @UiHandler("source")

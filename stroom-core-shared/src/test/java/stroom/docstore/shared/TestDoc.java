@@ -43,11 +43,13 @@ public class TestDoc {
     @Test
     void test() {
         try (final ScanResult scanResult = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                 .enableClassInfo()
                 .enableMethodInfo()
                 .scan()) {
-            final ClassInfoList classes = scanResult.getClassesImplementing(Document.class);
+            final ClassInfoList classes = scanResult.getAllClassesImplementing(Document.class);
             final List<String> classNames = new ArrayList<>();
             for (final ClassInfo classInfo : classes) {
                 LOGGER.debug("class: {}", classInfo.getName());

@@ -20,15 +20,15 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Selection;
+import stroom.widget.datagrid.client.DataGrid;
 
-import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -41,7 +41,7 @@ import java.util.function.Function;
 
 public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionView> {
 
-    private final MyDataGrid<DocRef> dataGrid;
+    private final DataGrid<DocRef> dataGrid;
     private final Selection<DocRef> selection = new Selection<>(true, new HashSet<>());
     private final ListDataProvider<DocRef> dataProvider = new ListDataProvider<>();
 
@@ -51,7 +51,7 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
     public DocRefSelectionPresenter(final EventBus eventBus, final DocRefSelectionView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Document References");
         addSelectedColumn();
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Document Name", Function.identity(), false);
@@ -132,7 +132,7 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
 
     public interface DocRefSelectionView extends View {
 
-        void setDataWidget(final AbstractHasData<?> widget);
+        void setDataWidget(final Widget widget);
 
         void setMessage(final String message);
     }

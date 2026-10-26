@@ -60,6 +60,8 @@ import java.util.stream.Collectors;
 public class RuleSetSettingsPresenter
         extends DocPresenter<RuleSetSettingsView, ReceiveDataRules> {
 
+    private static final String ENABLE_DISABLE_TITLE = "Enable or Disable Selected Rules";
+
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -97,19 +99,19 @@ public class RuleSetSettingsPresenter
 
         final Toolbar ruleActions = listPresenter.getToolbar();
         ruleActions.setName("Receipt rule actions");
-        addButton = ruleActions.button(SvgImage.ADD, "Add new rule", this::addRuleButtonClickHandler);
-        editButton = ruleActions.button(SvgImage.EDIT, "Edit selected rule", this::editButtonClickHandler);
+        addButton = ruleActions.button(SvgImage.ADD, "New Rule", this::addRuleButtonClickHandler);
+        editButton = ruleActions.button(SvgImage.EDIT, "Edit Selected Rule", this::editButtonClickHandler);
         editButton.setEnabled(false);
-        copyButton = ruleActions.button(SvgImage.COPY, "Copy selected rule", this::copyRuleButtonClickHandler);
+        copyButton = ruleActions.button(SvgImage.COPY, "Duplicate Selected Rule", this::copyRuleButtonClickHandler);
         copyButton.setEnabled(false);
-        disableButton = ruleActions.button(SvgImage.DISABLE, "Disable/enable selected rule",
+        disableButton = ruleActions.button(SvgImage.DISABLE, ENABLE_DISABLE_TITLE,
                 this::disableButtonClickHandler);
         disableButton.setEnabled(false);
-        deleteButton = ruleActions.button(SvgImage.DELETE, "Delete selected rule", this::deleteButtonClickHandler);
+        deleteButton = ruleActions.button(SvgImage.DELETE, "Delete Selected Rules", this::deleteButtonClickHandler);
         deleteButton.setEnabled(false);
-        moveUpButton = ruleActions.button(SvgImage.UP, "Move selected rule up", this::moveUpButtonClickHandler);
+        moveUpButton = ruleActions.button(SvgImage.UP, "Move Rule Up", this::moveUpButtonClickHandler);
         moveUpButton.setEnabled(false);
-        moveDownButton = ruleActions.button(SvgImage.DOWN, "Move selected rule down", this::moveDownButtonClickHandler);
+        moveDownButton = ruleActions.button(SvgImage.DOWN, "Move Rule Down", this::moveDownButtonClickHandler);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
@@ -304,6 +306,12 @@ public class RuleSetSettingsPresenter
         showRulePresenter(editRulePresenter, () -> {
             final ReceiveDataRule rule = editRulePresenter.write();
             final int index = rules.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                          + "so the changes can't be kept.", null);
+                return;
+            }
             rules.remove(index);
             rules.add(index, rule);
 
@@ -479,12 +487,14 @@ public class RuleSetSettingsPresenter
 
         if (areSelectedEnabled != null) {
             if (areSelectedEnabled) {
-                disableButton.setTitle("Disable selected rules");
+                disableButton.setTitle("Disable Selected Rules");
             } else {
-                disableButton.setTitle("Enable selected rules");
+                disableButton.setTitle("Enable Selected Rules");
             }
+        } else if (selectionModel.getSelectedCount() > 1) {
+            disableButton.setTitle(ENABLE_DISABLE_TITLE + " (selected rules must share the same enabled state)");
         } else {
-            disableButton.setTitle("Select one or more rules with the same enabled state to enable/disable them.");
+            disableButton.setTitle(ENABLE_DISABLE_TITLE);
         }
     }
 

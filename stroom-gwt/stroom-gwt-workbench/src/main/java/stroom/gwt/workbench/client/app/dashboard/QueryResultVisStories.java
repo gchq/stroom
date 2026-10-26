@@ -70,6 +70,6 @@ public final class QueryResultVisStories {
 
     // The visualisation pane's refresh (pause) button, in its toolbar
     private static Query pauseButton(final Play play) {
-        return play.querySelector(".dashboardVis-refresh .refresh-button");
+        return play.querySelector(".visToolbarRow .refresh-button");
     }
 }

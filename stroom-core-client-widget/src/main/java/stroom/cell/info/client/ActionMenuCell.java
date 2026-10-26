@@ -21,7 +21,10 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.ElementUtil;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -38,12 +41,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * A cell containing an ellipses icon that when clicked
- * will show a popup menu of actions to perform.
- *
- * @param <R>
- */
+/// A cell holding an "Actions..." button (an ellipsis) that shows a menu of actions for its row:
+/// pressed with the mouse, the menu by the pointer; Enter or Space while it has the focus (the grid's
+/// keyboard puts the focus on it), the menu below the button. A row with no actions has no button.
+///
+/// @param <R> The row's type.
 public class ActionMenuCell<R> extends AbstractCell<R> {
 
     private static final CellIcon ICON = CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions...");
@@ -51,7 +53,28 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
 
     private final Function<R, String> tooltipExtractor;
     private final Function<R, List<Item>> menuCreator;
+    private final Function<R, String> menuNameExtractor;
     private final HasHandlers hasHandlers;
+
+    /// @param menuCreator       Function to create the menu items to display.
+    /// @param tooltipExtractor  Function to supply the tooltip for the ellipses icon, or null for
+    ///                          'Actions...'.
+    /// @param menuNameExtractor Function to supply the menu's accessible name for a row as plain
+    ///                          text, e.g. "Actions for user 'jbloggs'" (see
+    ///                          [ShowMenuEvent.Builder#name]), or null (or a function giving null)
+    ///                          for "Actions for row N".
+    /// @param hasHandlers       What the menu's [ShowMenuEvent] is fired on.
+    public ActionMenuCell(final Function<R, List<Item>> menuCreator,
+                          final Function<R, String> tooltipExtractor,
+                          final Function<R, String> menuNameExtractor,
+                          final HasHandlers hasHandlers) {
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
+
+        this.menuCreator = menuCreator;
+        this.tooltipExtractor = tooltipExtractor;
+        this.menuNameExtractor = menuNameExtractor;
+        this.hasHandlers = hasHandlers;
+    }
 
     /**
      * @param menuCreator      Function to create the menu items to display
@@ -60,11 +83,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     public ActionMenuCell(final Function<R, List<Item>> menuCreator,
                           final Function<R, String> tooltipExtractor,
                           final HasHandlers hasHandlers) {
-        super(BrowserEvents.MOUSEDOWN);
-
-        this.menuCreator = menuCreator;
-        this.tooltipExtractor = tooltipExtractor;
-        this.hasHandlers = hasHandlers;
+        this(menuCreator, tooltipExtractor, null, hasHandlers);
     }
 
     /**
@@ -81,60 +100,74 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                                final R row,
                                final NativeEvent event,
                                final ValueUpdater<R> valueUpdater) {
-        super.onBrowserEvent(context, parent, row, event, valueUpdater);
-        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-            final EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
+        final EventTarget eventTarget = event.getEventTarget();
+        final Element button = parent.getFirstChildElement();
+        if (row == null || button == null || !Element.is(eventTarget)
+            || !button.isOrHasChild(Element.as(eventTarget))) {
+            // Ignore events outside the button
+            return;
+        }
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+            showActionMenu(context, row, button, new PopupPosition(
+                    event.getClientX() + 10,
+                    event.getClientY() + 10));
+            if (valueUpdater != null) {
+                valueUpdater.update(row);
             }
-            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
-                // Ignore clicks that occur outside the main element.
-                onEnterKeyDown(context, parent, row, event, valueUpdater);
+        } else if (RowActions.isKeyPress(event)) {
+            // Enter or Space: the menu below the button (the browser's own click is prevented)
+            event.preventDefault();
+            showActionMenu(context, row, button, new PopupPosition(new Rect(button), PopupLocation.BELOW));
+            if (valueUpdater != null) {
+                valueUpdater.update(row);
             }
         }
     }
 
-    @Override
-    protected void onEnterKeyDown(final Context context,
-                                  final Element parent,
-                                  final R row,
-                                  final NativeEvent event,
-                                  final ValueUpdater<R> valueUpdater) {
-        final Element element = event.getEventTarget().cast();
-        if (ElementUtil.hasClassName(element, ACTION_MENU_CELL_CLASS_NAME, 5)) {
-            final List<Item> items = NullSafe.get(menuCreator, mc -> mc.apply(row));
-            if (NullSafe.hasItems(items)) {
-                showActionMenu(row, event);
-            }
-        }
-        if (valueUpdater != null) {
-            valueUpdater.update(row);
-        }
-    }
-
-    private void showActionMenu(final R row, final NativeEvent event) {
+    private void showActionMenu(final Context context,
+                                final R row,
+                                final Element button,
+                                final PopupPosition popupPosition) {
         Objects.requireNonNull(menuCreator);
         final List<Item> items = menuCreator.apply(row);
-        final PopupPosition popupPosition = new PopupPosition(
-                event.getClientX() + 10,
-                event.getClientY() + 10);
+        if (!NullSafe.hasItems(items)) {
+            return;
+        }
         ShowMenuEvent
                 .builder()
+                .name(getMenuName(NullSafe.get(menuNameExtractor, func -> func.apply(row)), context))
                 .items(items)
                 .popupPosition(popupPosition)
-//                    .onShow(e -> {
-//                    })
-//                    .onHide(e -> {
-//                    })
+                .opener(button)
                 .allowCloseOnMoveLeft()
                 .fire(hasHandlers);
+    }
+
+    /// The accessible name of a row's menu: the name given, or else "Actions for row N", where N
+    /// is the row's number counting from 1, so that no row's menu is unnamed.
+    ///
+    /// @param name    The menu's name, or null or blank for none.
+    /// @param context The cell's context, giving the row's index.
+    /// @return The menu's name.
+    static String getMenuName(final String name, final Context context) {
+        if (NullSafe.isNonBlankString(name)) {
+            return name;
+        }
+        final int index = context == null
+                ? 0
+                : context.getIndex();
+        return "Actions for row " + (index + 1);
     }
 
     @Override
     public void render(final Context context,
                        final R row,
                        final SafeHtmlBuilder sb) {
-        if (row == null) {
+        // A row with no actions has no button: there would be no menu for it to open
+        final List<Item> items = row == null || menuCreator == null
+                ? null
+                : menuCreator.apply(row);
+        if (!NullSafe.hasItems(items)) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final String tooltipText = NullSafe.getOrElse(
@@ -142,12 +175,12 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                     func -> func.apply(row),
                     "Actions...");
 
-            final CellIcon icon = ICON.withName(tooltipText);
-            sb.append(SvgImageUtil.toSafeHtml(
-                    icon,
-                    "svgCell-icon",
-                    "svgCell-button",
-                    ACTION_MENU_CELL_CLASS_NAME));
+            // A button the grid's keyboard reaches (a row action), named by its title, that says it
+            // opens a menu
+            sb.append(RowActions.menuButton(
+                    "svgCell-button " + ACTION_MENU_CELL_CLASS_NAME,
+                    tooltipText,
+                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "svgCell-icon")));
         }
     }
 }

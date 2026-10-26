@@ -9,7 +9,7 @@
                 <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max"
                                 helpText="Regular expressions, one per line. A row is shown if its value contains a match for any of them (or matches an Include Dictionary). Parameters such as ${{key} can be used."
                                 screenReaderText="Regular expressions, one per line. Rows containing a match are shown.">
-                    <g:TextArea ui:field="includeText" styleName="max"/>
+                    <g:TextArea ui:field="includeText" addStyleNames="w-100 h-100"/>
                 </form:FormGroup>
                 <form:FormGroup label="Include Dictionaries" addStyleNames=" default-min-sizes dock-max"
                                 helpText="Dictionaries of values to include. Rows whose value exactly matches a dictionary word (case-sensitive) are shown; * can be used as a wildcard."
@@ -22,7 +22,7 @@
                 <form:FormGroup identity="filterExclude" label="Exclude" addStyleNames="dock-max"
                                 helpText="Regular expressions, one per line. A row is hidden if its value contains a match for any of them. Parameters such as ${{key} can be used."
                                 screenReaderText="Regular expressions, one per line. Rows containing a match are hidden.">
-                    <g:TextArea ui:field="excludeText" styleName="max"/>
+                    <g:TextArea ui:field="excludeText" addStyleNames="w-100 h-100"/>
                 </form:FormGroup>
                 <form:FormGroup label="Exclude Dictionaries" addStyleNames="default-min-sizes dock-max"
                                 helpText="Dictionaries of values to exclude. Rows whose value exactly matches a dictionary word (case-sensitive) are hidden; * can be used as a wildcard."

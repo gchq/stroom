@@ -1,4 +1,5 @@
-/*
+      // A disabled item says so with aria-disabled (its look comes from that too).
+      const enabled = el.getAttribute('aria-disabled') !== 'true';/*
  * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +18,8 @@
 //
 // When this was written (2026-07-27) GWT emitted few ARIA roles (no `role=tab` or
 // `role=columnheader`), so an extractor written against roles would silently return nothing.
-// Extraction is keyed on Stroom's CSS CLASSES instead (`.menuItem-outer / -text / -disabled /
-// -separator / -shortcut / -expandArrow`, `.menuCellTable`, the `inline-svg-button` toolbar
+// Extraction is keyed on Stroom's CSS CLASSES instead (`.menu__item / -text / -disabled /
+// -separator / -shortcut / -expandArrow`, `.menu`, the `inline-svg-button` toolbar
 // classes), and the adapter supplies only the *affordances* — which element opens the menu, where
 // a toolbar lives. The output shape is:
 //
@@ -96,10 +97,10 @@ const HELPERS = `
 export async function readVisibleMenuItems(page) {
   return page.evaluate(`(() => {
     ${HELPERS}
-    const outers = [...document.querySelectorAll('.menuItem-outer')].filter(visible);
+    const outers = [...document.querySelectorAll('.menu__item')].filter(visible);
     return outers.map((el, i) => {
-      const textEl = el.querySelector('.menuItem-text, .menuItem-simpleText');
-      const shortcutEl = el.querySelector('.menuItem-shortcut');
+      const textEl = el.querySelector('.menu__text');
+      const shortcutEl = el.querySelector('.menu__shortcut');
       const shortcut = shortcutEl ? norm(shortcutEl.textContent) : null;
       let label = norm(textEl ? textEl.textContent : el.textContent);
       if (!textEl && shortcut && label.endsWith(shortcut)) label = norm(label.slice(0, -shortcut.length));
@@ -108,27 +109,27 @@ export async function readVisibleMenuItems(page) {
       const ariaDisabled = el.getAttribute('aria-disabled');
       const enabled = !/menuItem-disabled/.test(cls) && ariaDisabled !== 'true';
       // A separator sits in the PRECEDING SIBLING of this item's row container.
-      // NB closest() starts at the element itself, so a selector list including '.menuItem-outer'
+      // NB closest() starts at the element itself, so a selector list including '.menu__item'
       // returns el and the sibling walk never reaches GWT's row. GWT renders each entry as its own
-      // cellTable row (separator = a div.menuItem-separator in its own row). Resolve the row
-      // explicitly: prefer the tr, else the item itself.
-      const row = el.closest('tr') || el;
+      // row (a menu__row, a cellTable tr in older builds; separator = a div.menu__separator in its
+      // own row). Resolve the row explicitly: prefer the row, else the item itself.
+      const row = el.closest('.menu__row, tr') || el;
       const prevRow = row.previousElementSibling;
       // The descendant search must not reach into the previous ITEM's own subtree: if a group's
       // element contains its children, a separator among them would be read as a separator before
       // the NEXT group. So a previous row only counts when it is a separator ROW: it carries the
       // class itself, or it contains a separator and no menu text of its own (GWT's tr / td /
-      // div.menuItem-separator shape).
+      // div.menu__separator shape).
       // NB this whole block is inside a page.evaluate template literal — no backticks in here.
       const isSeparatorRow = (r) => {
         if (!r) return false;
-        if (/menuItem-separator/.test(String(r.className || ''))) return true;
+        if (/menu__separator/.test(String(r.className || ''))) return true;
         if (!r.querySelector) return false;
-        return !!r.querySelector('.menuItem-separator') && !r.querySelector('.menuItem-text');
+        return !!r.querySelector('.menu__separator') && !r.querySelector('.menu__text');
       };
       const separatorBefore = isSeparatorRow(prevRow);
       return {
-        kind: el.querySelector('.menuItem-expandArrow') ? 'submenu' : 'item',
+        kind: el.querySelector('.menu__arrow') ? 'submenu' : 'item',
         label,
         order: i,
         enabled,
@@ -146,9 +147,9 @@ export async function clickMenuItem(page, label) {
     `(() => {
       ${HELPERS}
       const target = ${JSON.stringify(label)};
-      const el = [...document.querySelectorAll('.menuItem-outer')]
+      const el = [...document.querySelectorAll('.menu__item')]
         .filter(visible)
-        .find((e) => norm((e.querySelector('.menuItem-text, .menuItem-simpleText') || e).textContent) === target);
+        .find((e) => norm((e.querySelector('.menu__text') || e).textContent) === target);
       if (!el) return false;
       el.scrollIntoView({ block: 'center' });
       const r = el.getBoundingClientRect();
@@ -176,11 +177,11 @@ export async function clickMenuItem(page, label) {
   return true;
 }
 
-/** Visible `.menuItem-outer` count — the shared measure of "the menu is up and populated". */
+/** Visible `.menu__item` count — the shared measure of "the menu is up and populated". */
 export async function countVisibleMenuItems(page) {
   return page.evaluate(`(() => {
     ${HELPERS}
-    return [...document.querySelectorAll('.menuItem-outer')].filter(visible).length;
+    return [...document.querySelectorAll('.menu__item')].filter(visible).length;
   })()`);
 }
 
@@ -195,6 +196,9 @@ export async function readButtons(page, scopeSelector) {
       const out = [];
       let order = 0;
       for (const el of els) {
+        // A grid cell's buttons (an 'open' icon, marked data-row-action) are its rows' content,
+        // named for each row's data, not toolbar structure; the grid reader reads the rows
+        if (el.hasAttribute('data-row-action')) continue;
         const label = norm(el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent);
         if (!label) continue;
         const cls = String(el.className || '');
@@ -323,11 +327,11 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
       // under Search Results. Scope to the open dialog when there is one.
       let root = ${JSON.stringify(scopeSelector)} ? document.querySelector(${JSON.stringify(scopeSelector)}) : document;
       if (${inVisibleDialog ? 'true' : 'false'}) {
-        const title = [...document.querySelectorAll('.dialog-titleText')].filter(visible).pop();
+        const title = [...document.querySelectorAll('.dialog__title')].filter(visible).pop();
         const dlg =
           title &&
           (title.closest('[role=dialog]') ||
-            title.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent'));
+            title.closest('.dialog__layout, .dialog, .popupContent'));
         if (dlg) root = dlg;
       }
       if (!root) return null;
@@ -462,8 +466,8 @@ async function pointOf(page, containerSelector, label) {
  * reveals to settle.
  *
  * Screens and doc-editor tabs gate their real actions on a selection — with nothing selected, API
- * Keys offers only a disabled "Edit API Key", and the Lucene index's Fields tab only a disabled
- * "Edit Field" — so a sweep that never selects captures a toolbar of greyed-out buttons and no
+ * Keys offers only a disabled "Edit Selected API Key", and the Lucene index's Fields tab only a
+ * disabled "Edit Selected Index Field" — so a sweep that never selects captures a toolbar of greyed-out buttons and no
  * dialogs at all. A5b's first run did exactly that: 0 dialogs across 32 screens.
  *
  * Located via the first visible column HEADER on the page — the explorer tree has no column
@@ -559,23 +563,23 @@ export async function selectFirstMasterRow(page, { label = 'master row' } = {}) 
 /**
  * Read every VISIBLE dialog: caption, size, button set, sub-tabs and form-field labels.
  *
- * GWT's Dialog.java sets `dialog-popup` and its CSS defines `.dialog-titleBar` /
- * `.dialog-titleText`, so every dialog's caption is read the same way.
+ * GWT's Dialog.java sets `dialog` and its CSS defines `.dialog__title-bar` /
+ * `.dialog__title`, so every dialog's caption is read the same way.
  */
 export async function readDialogs(page) {
   return page.evaluate(`(() => {
     ${HELPERS}
-    const titles = [...document.querySelectorAll('.dialog-titleText')].filter(visible);
+    const titles = [...document.querySelectorAll('.dialog__title')].filter(visible);
     return titles.map((t) => {
-      // Resolve the dialog ROOT. GWT has two popup shapes: a plain Dialog (.dialog-popup) and a
-      // RESIZABLE one whose root is .resizableDialog-popup — a selector with only .dialog-popup
+      // Resolve the dialog ROOT. GWT has two popup shapes: a plain Dialog (.dialog) and a
+      // RESIZABLE one whose root is .dialog--resizable — a selector with only .dialog
       // matches neither for the resizable kind, and closest() then returns null. Falling back to
-      // t.parentElement lands on .dialog-titleBar: exactly 65px tall, containing no buttons and no
+      // t.parentElement lands on .dialog__title-bar: exactly 65px tall, containing no buttons and no
       // fields, which reads as an empty dialog.
       // [role=dialog] is an ARIA fallback; Stroom's dialogs match the container classes.
       const root =
         t.closest('[role=dialog]') ||
-        t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') ||
+        t.closest('.dialog__layout, .dialog, .popupContent') ||
         t.parentElement;
       const btns = [...root.querySelectorAll('button, [role=button], .Button')]
         .filter(visible)
@@ -617,8 +621,8 @@ export async function readDialogs(page) {
  * could save or create something.
  *
  * Lives here, not in a journey, because it duplicated the dialog-root selector and then DRIFTED:
- * readDialogs was fixed to know about GWT's `.resizableDialog-popup` root while the journey's copy
- * still looked only for `.dialog-popup`, so `closest()` returned null for every resizable GWT dialog
+ * readDialogs was fixed to know about GWT's `.dialog--resizable` root while the journey's copy
+ * still looked only for `.dialog`, so `closest()` returned null for every resizable GWT dialog
  * and it was never dismissed. The survivor then sat over the next leaf and was attributed to it —
  * one stray "Application Property - …" popup accounted for 18 of A5's findings.
  *
@@ -633,10 +637,10 @@ export async function closeDialogs(page, { attempts = 4 } = {}) {
     if (!(await readDialogs(page)).length) return true;
     await page.evaluate(`(() => {
       ${HELPERS}
-      for (const t of document.querySelectorAll('.dialog-titleText')) {
+      for (const t of document.querySelectorAll('.dialog__title')) {
         const root =
           t.closest('[role=dialog]') ||
-          t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent');
+          t.closest('.dialog__layout, .dialog, .popupContent');
         if (!root) continue;
         const btn = [...root.querySelectorAll('button, [role=button], .Button')].find((b) =>
           /^(cancel|close)$/i.test(labelOf(b)),
@@ -661,7 +665,7 @@ async function clickInertPoint(page) {
   const pt = await page.evaluate(`(() => {
     const interactive = (el) =>
       !el ||
-      el.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .tab-bar__tab, .cellTableRow, tr, [role=row], .dialog-popup, .resizableDialog-popup, .popupContent');
+      el.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorerCell, [role=tab], .tab-bar__tab, .cellTableRow, tr, [role=row], .dialog, .popupContent');
     const W = window.innerWidth, H = window.innerHeight;
     for (const y of [H - 6, Math.round(H * 0.5), Math.round(H * 0.75)]) {
       for (const x of [Math.round(W * 0.5), W - 6, Math.round(W * 0.75)]) {
@@ -681,10 +685,10 @@ async function clickInertPoint(page) {
  * panel, a hover card.
  *
  * This exists because A5c's first full run captured zero dialogs from `New Field` and `Edit Field`
- * on GWT, having captured both a run earlier. Nothing had regressed: the sweep clicks the tab's
- * quick-filter help immediately before them, and GWT's help tooltip (`.quickFilter-tooltip >
+ * (now `New Index Field` and `Edit Selected Index Field`) on GWT, having captured both a run earlier. Nothing had regressed: the sweep clicks the tab's
+ * quick-filter help immediately before them, and GWT's help tooltip (`.help-popup >
  * .popupContent`) takes neither Escape nor `closeDialogs` nor `dismissMenus` — the last only acts
- * when a `.menuItem-outer` is visible. The tooltip simply stayed up, physically over the next
+ * when a `.menu__item` is visible. The tooltip simply stayed up, physically over the next
  * button, and `elementFromPoint` at the resolved centre returned the tooltip.
  *
  * That is the THIRD time a help popup has eaten the click aimed at the next button in this suite,
@@ -694,9 +698,9 @@ export async function dismissPopups(page, { toggle } = {}) {
   const stillUp = async () =>
     page.evaluate(`(() => {
       ${HELPERS}
-      return [...document.querySelectorAll('.popupContent, .quickFilter-tooltip, .tooltip-popup, [class*=tooltip] .popupContent')]
+      return [...document.querySelectorAll('.popupContent, .help-popup, .tooltip-popup, [class*=tooltip] .popupContent')]
         .filter(visible)
-        .filter((el) => !el.closest('.dialog-popup, .resizableDialog-popup'))
+        .filter((el) => !el.closest('.dialog'))
         .length;
     })()`);
   if (!(await stillUp())) return true;
@@ -767,7 +771,7 @@ export async function resolveButtonPoint(page, buttonSelector, label) {
       // panel. So: click through inert cover, never through a control.
       const interactiveBlocker =
         at != null &&
-        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .tab-bar__tab, .tab-bar--link, .link-tab-bar, .cellTableRow, tr, [role=row]');
+        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menu__item, .stroom-menu, .menu, .explorerCell, [role=tab], .tab-bar__tab, .tab-bar--link, .link-tab-bar, .cellTableRow, tr, [role=row]');
       return { found: true, hits, x, y, interactiveBlocker, blockedBy: hits ? '' : chain.join(' < ') };
     })()`,
   );
@@ -783,7 +787,7 @@ export async function dismissMenus(page) {
   // and being attributed to whichever leaf came next (18 findings in A5).
   const menuOpen = await page.evaluate(`(() => {
     ${HELPERS}
-    return [...document.querySelectorAll('.menuItem-outer')].some(visible);
+    return [...document.querySelectorAll('.menu__item')].some(visible);
   })()`);
   if (!menuOpen) return;
   await clickInertPoint(page);

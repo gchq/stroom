@@ -18,8 +18,6 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.UniqueUtil;
-import stroom.data.grid.client.Heading;
-import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
@@ -28,6 +26,9 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.client.presenter.ColumnHeaderHtmlUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.Heading;
+import stroom.widget.datagrid.client.HeadingListener;
+import stroom.widget.datagrid.client.SortIcon;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -43,7 +44,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -158,39 +158,17 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                                 HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
 
                             } else if (isFilterButton) {
-                                currentFilterColIndex = colIndex;
-                                columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
-                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
-                                        .getDataSupplier(column, null);
-                                columnValuesFilterPresenter.show(
-                                        () -> button,
-                                        th,
-                                        column,
-                                        () -> dataSupplier,
-                                        hideEvent -> {
-                                            currentQuickFilters.put(
-                                                    column.getId(),
-                                                    columnValuesFilterPresenter.getNameFilter());
-                                            resetFilterColIndex();
-                                        },
-                                        column.getColumnValueSelection(),
-                                        ColumnsManager.this);
-
-                            } else if (isDiableFilterButton) {
-                                final FilterCellManager filterCellManager = tablePresenter.getFilterCellManager();
-                                if (filterCellManager != null) {
-                                    final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
-                                    builder.enabled(!builder.build().isEnabled());
-                                    filterCellManager.setColumnFilter(column, builder.build());
-                                }
+                                showValuesFilter(column, colIndex, th, button);
                             }
+                            // The filter's disable button acts on its own click (FilterCell), so
+                            // that Enter and Space work it too: here it only must not open the menu
 
                             if (currentMenuColIndex == colIndex) {
                                 HideMenuEvent.builder().fire(columnsManager);
 
                             } else if (!isFilterButton && !isDiableFilterButton) {
                                 currentMenuColIndex = colIndex;
-                                final List<Item> menuItems = getMenuItems(column);
+                                final List<Item> menuItems = getMenuItems(column, colIndex, th);
 
                                 Rect relativeRect = new Rect(th);
                                 relativeRect = relativeRect.grow(3);
@@ -199,6 +177,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
                                 ShowMenuEvent
                                         .builder()
+                                        .name("Options for column '" + column.getName() + "'")
                                         .items(menuItems)
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
@@ -210,6 +189,28 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 }
             }
         }
+    }
+
+    // Shows the column's values filter below its header's filter icon (the icon or the column
+    // menu's Filter Values item)
+    private void showValuesFilter(final Column column,
+                                  final int colIndex,
+                                  final Element th,
+                                  final Element button) {
+        currentFilterColIndex = colIndex;
+        columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
+        final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
+        columnValuesFilterPresenter.show(
+                () -> button,
+                th,
+                column,
+                () -> dataSupplier,
+                hideEvent -> {
+                    currentQuickFilters.put(column.getId(), columnValuesFilterPresenter.getNameFilter());
+                    resetFilterColIndex();
+                },
+                column.getColumnValueSelection(),
+                this);
     }
 
     private void resetFilterColIndex() {
@@ -339,7 +340,21 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private void filterColumn(final Column column) {
         tableFilterPresenter.show(column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
+            // The dialog isn't modal, so the column may have been changed or removed while it was
+            // open: the filters go on the column as it is now
+            final Column current = getColumns().stream()
+                    .filter(c -> c.getId().equals(oldField.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (current == null) {
+                AlertEvent.fireWarn(this, "The column '" + oldField.getName() + "' was removed while its "
+                                          + "filter was being edited, so the filter can't be kept.", null);
+                return;
+            }
+            replaceColumn(current, current.copy()
+                    .columnFilter(newField.getColumnFilter())
+                    .filter(newField.getFilter())
+                    .build());
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
@@ -527,7 +542,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         this.columnsStartIndex = columnsStartIndex;
     }
 
-    private List<Item> getMenuItems(final Column column) {
+    private List<Item> getMenuItems(final Column column, final int colIndex, final Element th) {
         final List<Item> menuItems = new ArrayList<>();
 
         // Create rename menu.
@@ -542,6 +557,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         menuItems.add(createFormatMenu(column));
         // Add column filter menu item.
         menuItems.add(createColumnFilterMenu(column));
+        // The values filter, as the header's filter icon opens it, for the keyboard
+        menuItems.add(createValuesFilterMenu(column, colIndex, th));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -588,7 +605,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.FIELDS_EXPRESSION)
-                .text("Expression")
+                .text("Edit Expression")
                 .command(() -> showExpression(column))
                 .highlight(highlight)
                 .build();
@@ -608,7 +625,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, SortIcon.UNSORTED, null));
+        // An action, so not SortIcon.UNSORTED, which names the state
+        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
                 .icon(SortIcon.SORT_ASCENDING_ICON)
@@ -661,7 +679,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
         final Item item = new IconMenuItem.Builder()
                 .priority(maxGroup + 1)
-                .text("Not grouped")
+                .text("Ungroup")
                 .command(() -> setGroup(column, null))
                 .build();
         menuItems.add(item);
@@ -745,6 +763,18 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 .build();
     }
 
+    private Item createValuesFilterMenu(final Column column, final int colIndex, final Element th) {
+        return new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgImage.VALUE_FILTER)
+                .text("Filter Values")
+                .command(() -> showValuesFilter(column, colIndex, th,
+                        ElementUtil.findChild(th, "column-valueFilterIcon")))
+                .highlight(column.getColumnValueSelection() != null
+                           && column.getColumnValueSelection().isEnabled())
+                .build();
+    }
+
     private Item createFormatMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(5)
@@ -760,7 +790,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(6)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Column to Start")
                 .command(() -> moveFirst(column))
                 .build();
     }
@@ -769,7 +799,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Column to End")
                 .command(() -> moveLast(column))
                 .build();
     }
@@ -787,7 +817,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(9)
                 .icon(SvgImage.HIDE)
-                .text("Hide")
+                .text("Hide Column")
                 .command(() -> hideColumn(column))
                 .build();
     }
@@ -815,7 +845,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconParentMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.SHOW)
-                .text("Show")
+                .text("Show Hidden Column")
                 .children(menuItems)
                 .build();
     }

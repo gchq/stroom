@@ -17,11 +17,10 @@
 package stroom.cell.tickbox.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.svg.shared.SvgImage;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
@@ -38,10 +37,17 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntFunction;
 
 /**
  * A {@link Cell} used to render a checkbox. The value of the checkbox may be
  * toggled using the ENTER key as well as via mouse click.
+ * <p>
+ * It is drawn as the tick box widget's box ({@code tick-box.css}): the block {@code tick-box} with
+ * the {@code tick-box--cell} modifier, an element with {@code role="checkbox"} and
+ * {@code aria-checked} (true, false or mixed, part ticked) holding the drawn box
+ * ({@code tick-box__mark}). One that can't be clicked is {@code aria-readonly}, which draws the
+ * read-only look.
  */
 public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState> {
 
@@ -57,6 +63,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
      * @param dependsOnSelection true if the cell depends on the selection state
      * @param handlesSelection   true if the cell modifies the selection state
      */
+    // A row's tick box's accessible name, e.g. "Create Pipeline", or null to leave it unnamed
+    private IntFunction<String> nameForRow;
+
     private TickBoxCell(final Appearance appearance,
                         final boolean dependsOnSelection,
                         final boolean handlesSelection,
@@ -89,6 +98,34 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
+    }
+
+    /// Name each row's tick box for its row, e.g. "Create Pipeline", rather than leaving assistive
+    /// technology only its state ("Ticked", its title, which says what the mouse would see).
+    ///
+    /// @param nameForRow The name of the tick box of the row at an index (as the grid counts them).
+    /// @return This cell.
+    public TickBoxCell withNameForRow(final IntFunction<String> nameForRow) {
+        this.nameForRow = nameForRow;
+        return this;
+    }
+
+    // The tick box's HTML with its row's name, if it is given one
+    private SafeHtml named(final SafeHtml html, final Context context) {
+        if (nameForRow == null || context == null) {
+            return html;
+        }
+        final String name = nameForRow.apply(context.getIndex());
+        if (name == null || name.isEmpty()) {
+            return html;
+        }
+        final String tickBox = html.asString();
+        final String start = "<div ";
+        if (!tickBox.startsWith(start)) {
+            return html;
+        }
+        return SafeHtmlUtils.fromTrustedString(start + "aria-label=\"" + SafeHtmlUtils.htmlEscape(name) + "\" "
+                                               + tickBox.substring(start.length()));
     }
 
     @Override
@@ -140,8 +177,14 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                     }
 
                     // Update the tick image immediately.
-                    final SafeHtml html = appearance.getHTML(state, clickable);
+                    final SafeHtml html = named(appearance.getHTML(state, clickable), context);
+                    final Element active = activeElement();
+                    final boolean focused = active != parent && parent.isOrHasChild(active);
                     parent.setInnerHTML(html.asString());
+                    // A tick box with the focus (a grid keyboard's, ticked with Space) keeps it
+                    if (focused) {
+                        focusTickBox(parent);
+                    }
                 }
 
                 // Save the new value. However, if the cell depends on the
@@ -160,6 +203,19 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
     }
 
+    private static native Element activeElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    // Focuses the tick box drawn in the cell, keeping it the grid's tab stop
+    private static native void focusTickBox(Element parent) /*-{
+        var tickBox = parent.querySelector('[role="checkbox"]');
+        if (tickBox) {
+            tickBox.tabIndex = 0;
+            tickBox.focus({ preventScroll: true });
+        }
+    }-*/;
+
     /// @return Whether the tick can be changed by clicking it (or pressing Enter or Space).
     public boolean isClickable() {
         return clickable;
@@ -171,7 +227,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         for (int i = 0; i < 4 && !isTickBox && element != null; i++) {
             final String className = element.getClassName();
             try {
-                isTickBox = className != null && className.contains("tickBox");
+                isTickBox = className != null && className.contains(DefaultAppearance.BLOCK);
             } catch (final RuntimeException e) {
                 // Ignore.
             }
@@ -182,7 +238,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     @Override
     public void render(final Context context, final TickBoxState value, final SafeHtmlBuilder sb) {
-        appearance.render(this, context, value, sb);
+        final SafeHtmlBuilder html = new SafeHtmlBuilder();
+        appearance.render(this, context, value, html);
+        sb.append(named(html.toSafeHtml(), context));
     }
 
 
@@ -222,22 +280,20 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     public static class DefaultAppearance implements Appearance {
 
-        private static final String TICKBOX_CLASSNAME = "tickBox";
-        private static final String TICK = "tickBox-tick";
-        private static final String HALF_TICK = "tickBox-halfTick";
-        private static final String UNTICK = "tickBox-untick";
-        private static final String HALF_TICK_INNER = "tickBox-halfTick-inner";
+        private static final String BLOCK = "tick-box";
+        private static final String CELL_CLASS_NAMES = BLOCK + " " + BLOCK + "--cell";
+        private static final SafeHtml TICK_SVG = SafeHtmlUtils.fromSafeConstant(CustomCheckBox.TICK_SVG);
 
         private static Template template;
 
         private final String additionalClassNames;
 
         public DefaultAppearance(final String additionalClassNames) {
-            this.additionalClassNames = " " + additionalClassNames + " ";
+            this.additionalClassNames = " " + additionalClassNames;
         }
 
         public DefaultAppearance() {
-            this.additionalClassNames = " ";
+            this.additionalClassNames = "";
         }
 
         @Override
@@ -267,27 +323,18 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             // that can't be clicked is read only (it shows a value, as a read-only tick box does)
             final String ariaReadOnly = String.valueOf(!clickable);
             final SafeHtml safeHtml;
+            final String className = CELL_CLASS_NAMES + additionalClassNames;
             switch (value) {
                 case TICK:
-                    safeHtml = template.tick(
-                            "Ticked",
-                            SvgImage.BASE_CLASS_NAME + " " + SvgImage.TICK.getClassName() + " "
-                            + TICKBOX_CLASSNAME + additionalClassNames + TICK,
-                            ariaReadOnly,
-                            SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.TICK.getSvg()));
+                    safeHtml = template.tickBox("Ticked", className, "true", ariaReadOnly, TICK_SVG);
                     break;
                 case HALF_TICK:
-                    safeHtml = template.halfTick(
-                            "Half-Ticked",
-                            TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
-                            ariaReadOnly,
-                            HALF_TICK_INNER);
+                    safeHtml = template.tickBox("Half-Ticked", className, "mixed", ariaReadOnly,
+                            SafeHtmlUtils.EMPTY_SAFE_HTML);
                     break;
                 case UNTICK:
-                    safeHtml = template.untick(
-                            "Not Ticked",
-                            TICKBOX_CLASSNAME + additionalClassNames + UNTICK,
-                            ariaReadOnly);
+                    safeHtml = template.tickBox("Not Ticked", className, "false", ariaReadOnly,
+                            SafeHtmlUtils.EMPTY_SAFE_HTML);
                     break;
                 default:
                     safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
@@ -295,6 +342,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             }
 
             return safeHtml;
+        }
+
+        /// The tick box drawn for a state, as a picture only (hidden from assistive technology),
+        /// for a row that says the state itself, e.g. a list's option (`aria-checked`), which may
+        /// not hold a check box of its own.
+        ///
+        /// @param value The state.
+        /// @return The tick box's HTML.
+        public SafeHtml getPicture(final TickBoxState value) {
+            if (value == null) {
+                return SafeHtmlUtils.EMPTY_SAFE_HTML;
+            }
+            // Drawn as a tick box that can be clicked, as its row can
+            final String html = getHTML(value, true).asString();
+            return SafeHtmlUtils.fromTrustedString(html.replaceFirst("<div ", "<div aria-hidden=\"true\" "));
         }
     }
 
@@ -304,27 +366,23 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"true\" "
-                  + "aria-readonly=\"{2}\">{3}</div>")
-        SafeHtml tick(String title, String className, String ariaReadOnly, SafeHtml svg);
-
-        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"mixed\" "
-                  + "aria-readonly=\"{2}\"><div class=\"{3}\"></div></div>")
-        SafeHtml halfTick(String title, String outerClassName, String ariaReadOnly, String innerClassName);
-
-        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"false\" "
-                  + "aria-readonly=\"{2}\"></div>")
-        SafeHtml untick(String title, String outerClassName, String ariaReadOnly);
+        /// The tick box: a check box to assistive technology, holding the drawn box, with the tick
+        /// in it when ticked.
+        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"{2}\" "
+                  + "aria-readonly=\"{3}\"><span class=\"tick-box__mark\">{4}</span></div>")
+        SafeHtml tickBox(String title, String className, String ariaChecked, String ariaReadOnly, SafeHtml tick);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
+    /// The appearance of a tick box that can't be changed. Its read-only look comes from its
+    /// `aria-readonly` (a cell that isn't clickable), so it is the default appearance.
     public static class NoBorderAppearance extends DefaultAppearance {
 
         public NoBorderAppearance() {
-            super("tickBox-noBorder");
+            super();
         }
     }
 }

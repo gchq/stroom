@@ -73,7 +73,18 @@ public final class DialogTitleStories {
                 .withArgs(Args.of(TITLE, "Information", ICON_HTML, "INFO"))
                 // Busy — the title-bar spinner (GWT SpinnerLarge) fades in
                 .story("Busy", DialogTitleStories::fromArgs)
-                .withArgs(Args.of(TITLE, "Loading data", ICON_HTML, "QUESTION", BUSY, true));
+                .withArgs(Args.of(TITLE, "Loading data", ICON_HTML, "QUESTION", BUSY, true))
+                // Its status (a live region) says it is busy only once it shows, so that a screen
+                // reader reads it (a live region that appears with its text in it isn't reliably read)
+                .withPlay(play -> play.waitFor(() -> play.expect(
+                                play.screen().querySelector(".dialog__spinner [role='status']"))
+                        .toHaveTextContent("Loading...")))
+                // Not busy: its status says nothing
+                .story("NotBusy", DialogTitleStories::fromArgs)
+                .withArgs(Args.of(TITLE, "Settings", ICON_HTML, "QUESTION", BUSY, false))
+                .withPlay(play -> play.expect(
+                                play.screen().querySelector(".dialog__spinner [role='status']"))
+                        .toHaveTextContent(""));
     }
 
     private static Widget fromArgs(final StoryContext context) {

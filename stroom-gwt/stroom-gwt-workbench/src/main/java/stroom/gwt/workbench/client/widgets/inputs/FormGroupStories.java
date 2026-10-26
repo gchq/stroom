@@ -25,10 +25,17 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /// Stories for [FormGroup], with Stroom's `TextBox` as its control (see [TextInputStories]).
 public final class FormGroupStories {
@@ -77,7 +84,7 @@ public final class FormGroupStories {
                                                                    + "Must be a valid address in the format "
                                                                    + "user@domain.com.");
                     play.expect(email).toHaveAttribute("aria-keyshortcuts", "F1");
-                    final Query help = play.getByTitle("Email address - Click for help");
+                    final Query help = play.getByTitle("Email address - Click for help (F1)");
                     play.expect(help).toHaveAttribute("tabindex", "-2");
                     // Clicking the help button shows the help, leaving the focus in the text box
                     play.click(email);
@@ -86,6 +93,22 @@ public final class FormGroupStories {
                                     ".help-popup *"))
                             .toBeInTheDocument();
                     play.expect(email).toHaveFocus();
+                    // F1 shows it from the keyboard, taking the focus so that a screen reader reads
+                    // it (#5400): the runner's real input check (test-runner/lib/real-input/help.mjs)
+                    // presses the real key, as a play's F1 has no key code for the key bindings
+                })
+                // The help shortcut is the user's (Keyboard Shortcuts preferences): rebound to
+                // Alt+H, the help button's tooltip and the field's aria-keyshortcuts say so
+                .story("HelpShortcutRebound", context -> withHelpBinding(context, List.of("Alt+H")))
+                .withPlay(play -> {
+                    play.expect(play.getByLabelText("Email address")).toHaveAttribute("aria-keyshortcuts", "Alt+H");
+                    play.expect(play.getByTitle("Email address - Click for help (Alt+H)")).toBeInTheDocument();
+                })
+                // With no help shortcut, neither mentions one
+                .story("HelpShortcutRemoved", context -> withHelpBinding(context, List.of()))
+                .withPlay(play -> {
+                    play.expect(play.getByLabelText("Email address")).not().toHaveAttribute("aria-keyshortcuts");
+                    play.expect(play.getByTitle("Email address - Click for help")).toBeInTheDocument();
                 })
                 // Validation feedback - the message updates when the value changes
                 .story("Feedback", context -> {
@@ -105,6 +128,10 @@ public final class FormGroupStories {
                     // by its feedback
                     final Query username = play.getByLabelText("Username");
                     play.expect(username).toHaveAttribute("aria-required", "true");
+                    // Its label shows that it is required, with an asterisk that screen readers skip
+                    // (they hear "required"), so the field's name is still just its label (#5410)
+                    play.expect(play.getByText("Username", "label")).toHaveClass("form-label--required");
+                    play.expect(play.getByRole("textbox", "Username")).toBeInTheDocument();
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
                     play.expect(username).toHaveAccessibleDescription("This field is required.");
                     play.expect(play.getByText("This field is required.")).toBeInTheDocument();
@@ -113,7 +140,7 @@ public final class FormGroupStories {
                     play.tab();
                     play.waitFor(() -> play.expect(username).not().toHaveAttribute("aria-invalid"));
                     play.expect(username).not().toHaveAttribute("aria-describedby");
-                    play.expect(username).not().toHaveClass("invalid");
+                    play.expect(username).not().toHaveAttribute("aria-invalid");
                     // Ends invalid, so the screenshot shows how an invalid field looks
                     play.clear(username);
                     play.type(username, "ab");
@@ -121,7 +148,8 @@ public final class FormGroupStories {
                     play.waitFor(() -> play.expect(play.getByText("Must be at least 3 characters."))
                             .toBeInTheDocument());
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
-                    play.expect(username).toHaveClass("invalid");
+                    // Shown by aria-invalid alone, not a class as well
+                    play.expect(username).not().toHaveClass("invalid");
                 })
                 // Disabled state - greys out the label and description
                 .story("Disabled", context -> {
@@ -150,7 +178,7 @@ public final class FormGroupStories {
                     play.expect(size).toHaveAttribute("aria-keyshortcuts", "F1");
                     // A required field is announced as required (not in its description)
                     play.expect(size).toHaveAttribute("aria-required", "true");
-                    play.click(play.getByTitle("Max Store Size - Click for help"));
+                    play.click(play.getByTitle("Max Store Size - Click for help (F1)"));
                     play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
@@ -173,7 +201,7 @@ public final class FormGroupStories {
                     play.expect(play.within(group).getByRole("checkbox", "Follow Redirects"))
                             .toBeInTheDocument();
                     // The help is for the tick box's label, as it would be for a group label
-                    play.click(play.within(group).getByTitle("Follow Redirects - Click for help"));
+                    play.click(play.within(group).getByTitle("Follow Redirects - Click for help (F1)"));
                     play.expect(play.screen().findByText(TICK_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
@@ -201,6 +229,18 @@ public final class FormGroupStories {
                     // The label names the group, not either control
                     play.expect(play.queryByRole("textbox", "Retain For")).toBeNull();
                 });
+    }
+
+    // A form group with help, made once the help action's shortcuts are the given ones (as a user's
+    // preferences set them); the defaults are put back when the story is left
+    private static Widget withHelpBinding(final StoryContext context, final List<String> helpShortcuts) {
+        KeyBinding.applyUserBindings(Map.of(Action.HELP.name(), helpShortcuts), true);
+        context.addCleanUp(() -> KeyBinding.applyUserBindings(Collections.emptyMap(), true));
+        StoryPopups.create(context).withHelp();
+        final FormGroup formGroup = formGroup("fg-email", "Email address");
+        formGroup.setHelpText("The email address used for notifications.");
+        formGroup.add(InputWidgets.textBox(context, "", "user@example.com"));
+        return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
     }
 
     private static FormGroup formGroup(final String identity, final String label) {

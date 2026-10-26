@@ -48,6 +48,7 @@ dependencies {
 }
 
 dependencies {
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-sqlstore:stroom-sqlstore-impl-db-jooq')
     testImplementation libs.bundles.common.test.implementation

@@ -18,13 +18,13 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.processor.shared.FeedDependency;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,7 +43,12 @@ import java.util.UUID;
 public class FeedDependencyListPresenter
         extends MyPresenterWidget<PagerView> {
 
-    private final MyDataGrid<FeedDependency> dataGrid;
+    private static final String NEW_TITLE = "New Feed Dependency";
+    private static final String EDIT_TITLE = "Edit Selected Feed Dependency";
+    private static final String REMOVE_TITLE = "Remove Selected Feed Dependency";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
+
+    private final DataGrid<FeedDependency> dataGrid;
     private final MultiSelectionModelImpl<FeedDependency> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -60,7 +65,7 @@ public class FeedDependencyListPresenter
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Feed Dependencies");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -68,11 +73,11 @@ public class FeedDependencyListPresenter
 
         this.newFeedDependencyPresenter = newFeedDependencyPresenter;
 
-        addButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
         view.getToolbar().setName("Feed dependency actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> onEdit(selectionModel.getSelected()));
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -243,17 +248,14 @@ public class FeedDependencyListPresenter
 
         final FeedDependency selected = selectionModel.getSelected();
 
-        editButton.setEnabled(!readOnly);
+        editButton.setEnabled(!readOnly && selected != null);
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("New feed dependency disabled as filter is read only");
-            editButton.setTitle("Edit feed dependency disabled as filter is read only");
-            removeButton.setTitle("Remove feed dependency disabled as filter is read only");
-        } else {
-            addButton.setTitle("New Reference");
-            editButton.setTitle("Edit Reference");
-            removeButton.setTitle("Remove Reference");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        addButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(REMOVE_TITLE + readOnlySuffix);
     }
 }

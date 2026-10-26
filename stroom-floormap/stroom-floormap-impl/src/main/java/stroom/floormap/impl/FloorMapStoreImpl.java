@@ -105,7 +105,7 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
         // The document's assets live outside the document, so copy() does not bring them and a
         // duplicated floor map would render with every graphic and background missing.
         try {
-            documentAssetService.copyAssetsToDoc(docRef, copyDocRef);
+            documentAssetService.copyAssetsToNewDoc(docRef, copyDocRef);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -138,6 +138,12 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
                                  final ImportSettings importSettings) {
         final DocRef storeDocRef = getStore()
                 .importDocument(docRef, importExportDocument, importState, importSettings);
+        // Only when the store actually wrote the document. An import preview (CREATE_CONFIRMATION)
+        // or an item the user did not tick must leave the live assets alone: setAssetsFromImport
+        // deletes everything under the owner before inserting.
+        if (!ImportSettings.ok(importSettings, importState)) {
+            return storeDocRef;
+        }
         try {
             // The ref the store returned, not the one passed in. Equivalent today - StoreImpl only
             // rewrites the name, never the UUID, and setAssetsFromImport keys on the UUID - so this

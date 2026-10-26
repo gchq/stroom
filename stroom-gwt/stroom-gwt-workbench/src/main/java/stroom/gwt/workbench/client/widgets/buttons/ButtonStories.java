@@ -20,6 +20,7 @@ import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -100,6 +101,17 @@ public final class ButtonStories {
                 .withArgs(Args.of(TEXT, "Cancel", VARIANT, "contained-secondary"))
                 // Loading state, click to toggle (auto-resets after 2 s)
                 .story("Loading", ButtonStories::loading)
+                // While loading, its spinner spins; once loading has ended and the spinner has
+                // shrunk away it stops, so an idle button's spinner costs nothing (#5299)
+                .withPlay(play -> {
+                    final Query button = play.getByRole("button", "Submit");
+                    play.expect(button).not().toHaveClass("Button--spinning");
+                    play.click(button);
+                    play.expect(button).toHaveClass("Button--loading");
+                    play.expect(button).toHaveClass("Button--spinning");
+                    play.waitFor(4000, () -> play.expect(button).not().toHaveClass("Button--loading"));
+                    play.waitFor(() -> play.expect(button).not().toHaveClass("Button--spinning"));
+                })
                 .story("Disabled", context -> {
                     final Button disabledDefault = button(context, "Disabled default", null);
                     disabledDefault.setEnabled(false);

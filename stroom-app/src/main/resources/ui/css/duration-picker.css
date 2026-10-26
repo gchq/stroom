@@ -1,0 +1,30 @@
+/*
+ * A duration (DurationPicker): its amount (a value spinner, duration-picker__amount) beside its unit
+ * (a selection box, duration-picker__unit). Each is as wide as its longest value needs, in units of
+ * the fields' font size, so both fit at every font size: the picker was 200px, as wide as the
+ * unit's box alone, so the amount was squeezed until its arrows hid its value.
+ */
+
+.duration-picker {
+    display: flex;
+    /* Room for a focused field's focus ring, so it doesn't run into the field beside it */
+    gap: 8px;
+}
+
+/* Room for 1000000 (the largest amount) beside the arrows (their 54px, and the field's padding and
+   border). Under the block, to outrank value-spinner.css's width */
+.duration-picker .duration-picker__amount {
+    flex: 0 0 auto;
+    width: calc(var(--font-size-13) * 4 + 64px);
+}
+
+/* Room for "Milliseconds" (the longest unit) beside the drop-down arrow. Under the block, to outrank
+   selection-box.css's width, and its field's minimum width (svg-icon-box.css) */
+.duration-picker .duration-picker__unit {
+    flex: 0 0 auto;
+    width: calc(var(--font-size-13) * 6 + 40px);
+}
+
+.duration-picker .duration-picker__unit .svg-icon-box__field {
+    min-width: 0;
+}

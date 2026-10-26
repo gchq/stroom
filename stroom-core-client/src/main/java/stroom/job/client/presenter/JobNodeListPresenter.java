@@ -18,10 +18,9 @@ package stroom.job.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.valuespinner.shared.EditableInteger;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -45,7 +44,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerViewWithHeading;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -68,8 +68,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
     private static final int REDRAW_TIMER_DELAY_MS = 50;
-    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
-    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final RestFactory restFactory;
@@ -77,7 +75,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
 
-    private final MyDataGrid<JobNodeAndInfo> dataGrid;
+    private final DataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final ToolbarToggleButton showEnabledToggleBtn;
 
@@ -92,16 +90,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final PagerViewWithHeading view,
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
-                                final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Job Nodes");
-        this.dataGrid.addDefaultSelectionModel(true);
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -111,7 +107,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 dateTimeFormatter,
                 restFactory,
                 schedulePresenter,
-                menuPresenter,
                 selectionModel,
                 getView(),
                 JobNodeListPresenter.this,
@@ -121,7 +116,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.showEnabledToggleBtn = jobNodeListHelper.addJobFilterButton(view.getToolbar());
 
         autoRefresh = false;
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, AUTO_REFRESH_OFF_TITLE,
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
@@ -144,10 +139,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
         }
     }
 
@@ -301,7 +293,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
         // Max.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
+                DataGridUtil.valueSpinnerColumnBuilder("Max Tasks", this::getTaskLimit, 1L, 9999L)
                         .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
                             if (jobNodeAndInfo != null) {
@@ -320,7 +312,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 DataGridUtil.headingBuilder("Max Tasks")
                         .withToolTip("The task limit for this job on this node")
                         .build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
 
         // Current Tasks (Cur).
         dataGrid.addColumn(
@@ -332,7 +324,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         .rightAligned()
                         .withToolTip("The number of the currently executing tasks on this node for this job")
                         .build(),
-                100);
+                // Room for the heading and the space before Last Executed
+                115);
 
         // Last executed.
         jobNodeListHelper.addLastExecutedColumn(dataGrid);

@@ -55,6 +55,10 @@ class TestTableRow {
                 .addCase(
                         " prefix [link1](b){c} and [link2](e){f} and [link3](g){h} suffix ",
                         " prefix link1 and link2 and link3 suffix ")
+                // A link with no text is shown with a name made from its address, not dropped
+                .addCase("[](https://example.com/a?b=c)", "example.com/a")
+                .addCase(" prefix [](https://example.com/a){browser} suffix ", " prefix example.com/a suffix ")
+                .addCase("[](id=1){data}", "Data")
                 // Malformed links
                 .addCase(" prefix link1](b){c} suffix ", " prefix link1](b){c} suffix ")
                 .addCase(" prefix [link1]{c} suffix ", " prefix [link1]{c} suffix ")

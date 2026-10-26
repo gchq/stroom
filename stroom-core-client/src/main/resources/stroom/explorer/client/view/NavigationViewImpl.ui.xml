@@ -8,12 +8,12 @@
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <g:Button ui:field="logo" styleName="navigation-logo"/>
             <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
-                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu"/>
+                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>
         </g:FlowPanel>
 
         <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+            <v:QuickFilter accessibleName="Filter documents" ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
         </g:SimplePanel>
         <b:ToolbarRow addStyleNames="navigation-toolbar">
             <b:Toolbar ui:field="toolbar" name="Explorer" addStyleNames="toolbar--navigation"/>

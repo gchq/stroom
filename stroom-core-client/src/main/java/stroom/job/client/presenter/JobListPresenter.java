@@ -21,8 +21,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
@@ -33,6 +31,8 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +66,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        final MyDataGrid<JobWrapper> dataGrid = new MyDataGrid<>(this);
+        final DataGrid<JobWrapper> dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Jobs");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -128,7 +128,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private void initColumns(final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
-                             final MyDataGrid<JobWrapper> dataGrid) {
+                             final DataGrid<JobWrapper> dataGrid) {
         final Function<JobWrapper, Boolean> function = ref -> ref.getJob().isEnabled();
         final Function<JobWrapper, TickBoxState> stateFunction = TickBoxState.createTickBoxFunc(function);
 
@@ -176,7 +176,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         // Help
         dataGrid.addColumn(
                 DataGridUtil.cellIconColumnBuilder(true, (JobWrapper job) ->
-                                CellIcon.of(SvgImage.HELP, "Help"))
+                                CellIcon.of(SvgImage.HELP, "Help (opens in new tab)"))
                         .enabledWhen(job ->
                                 NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .withBrowserEventHandler((context, elem, row, event) -> {

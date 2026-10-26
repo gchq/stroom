@@ -200,7 +200,7 @@ final class PopupDom {
 
     /// The `MenuPaintsExactlyOneBorder` walk: the menu's chrome wrappers that paint a top border,
     /// starting at the element matching the selector and descending only into children whose class
-    /// names look like chrome (`simplePopup`, `popupContent`, `background`, `content`).
+    /// names look like chrome (`popup`, `popupContent`, `background`, `content`).
     ///
     /// @param selector The menu popup's selector.
     /// @return `className (width colour)` for each element painting a border.
@@ -218,7 +218,7 @@ final class PopupDom {
             }
             for (var i = 0; i < el.children.length; i++) {
                 var c = el.children[i];
-                if (/simplePopup|popupContent|background|content/i.test(c.className)) {
+                if (/popup|background|content/i.test(c.className)) {
                     walk(c);
                 }
             }

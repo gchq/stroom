@@ -46,12 +46,12 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -182,7 +182,7 @@ public class AskStroomAiPresenter
                     // Capture copy click events.
                     final String data = button.getAttribute("data");
                     if (NullSafe.isNonBlankString(data)) {
-                        if (ClipboardUtil.copy(data)) {
+                        Clipboard.writeText(data, () -> {
                             // Code to change label
                             final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
                             final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
@@ -197,7 +197,8 @@ public class AskStroomAiPresenter
                                     }
                                 }.schedule(2000);
                             }
-                        }
+                        }, () -> {
+                        });
                     }
                 }
             }
@@ -687,7 +688,7 @@ public class AskStroomAiPresenter
                                       final long nowMs) {
         hb.elem(details -> {
             details.elem(summary -> {
-                button(summary, icon, iconButtonClassName("ai-message-summary-icon"));
+                icon(summary, icon, "ai-message-summary-icon");
                 summary.append(summaryText);
             }, SUMMARY, Attribute.className("ai-message-header"));
 
@@ -761,7 +762,7 @@ public class AskStroomAiPresenter
                                       final long nowMs) {
         hb.elem(details -> {
             details.elem(summary -> {
-                button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
+                icon(summary, SvgImage.INFO, "ai-message-summary-icon");
                 summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
             }, SUMMARY, Attribute.className("ai-message-header"));
 
@@ -801,7 +802,7 @@ public class AskStroomAiPresenter
     }
 
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
-        button(hb, icon, iconButtonClassName("ai-attachment-status-icon"));
+        icon(hb, icon, "ai-attachment-status-icon");
         hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
     }
 
@@ -871,6 +872,15 @@ public class AskStroomAiPresenter
 
     private static Attribute iconButtonClassName(final String className) {
         return Attribute.className(className + " toolbar-button");
+    }
+
+    // An icon that is decoration beside text that says the same, e.g. at the start of a message's
+    // summary (which itself opens and closes the message) or beside an attachment's status. It
+    // isn't a button, which was a nameless control (inside a summary, itself a control), but looks
+    // as it did
+    private static void icon(final HtmlBuilder hb, final SvgImage icon, final String className) {
+        hb.span(span -> span.appendTrustedString(SvgMarkup.decorative(icon.getSvg(), "toolbar-button__icon")),
+                iconButtonClassName(className));
     }
 
     private static void button(final HtmlBuilder hb,

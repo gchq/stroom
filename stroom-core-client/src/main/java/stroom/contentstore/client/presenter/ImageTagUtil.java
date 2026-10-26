@@ -24,14 +24,15 @@ import com.google.gwt.http.client.URL;
 public class ImageTagUtil {
 
     /**
-     * Returns the image tag for an icon with the given ID.
+     * Returns the image tag for an icon with the given ID. The icon is decorative (the pack's name
+     * is always shown with it), so it has an empty alt for screen readers to skip.
      */
     public static String getImageTag(final int height,
                                      final int width,
                                      final String id) {
         final String encodedId = URL.encode(id);
         return "<img height=\"" + height + "\" width=\"" + width
-               + "\" src=\"/iconPassThrough?" + encodedId + "\">";
+               + "\" src=\"/iconPassThrough?" + encodedId + "\" alt=\"\">";
     }
 
 }

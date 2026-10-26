@@ -53,6 +53,7 @@ public class FloorMapTimelineSettingsPresenter
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.ABOVE);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
+                .caption("Timeline Settings")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(anchor.getElement())
                 .fire();

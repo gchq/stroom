@@ -106,7 +106,7 @@ public final class ContentTemplatesScreenStories {
                     play.type(name, "My template");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText(EDIT_TEMPLATE)).toBeNull());
-                    // Nothing was saved: the document is only saved by "Save templates"
+                    // Nothing was saved: the document is only saved by "Save Templates"
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.put(PATH).toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
@@ -147,26 +147,30 @@ public final class ContentTemplatesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("My template");
                     // Row 1 of 2: the full set, Move Down but no Move Up
-                    play.click(play.within(play.getByText("My template").closest("tr"))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(screen.getByText("Edit template")).toBeVisible());
-                    for (final String label : new String[]{"Add new template above", "Add new template below",
-                            "Edit template", "Copy template", "Delete template"}) {
+                    // Each row's button is named for its template, as its menu is
+                    play.click(play.getByTitle("Actions for template 1 'My template'"));
+                    play.waitFor(() -> play.expect(screen.getByText("Edit Template")).toBeVisible());
+                    for (final String label : new String[]{"Add Template Above", "Add Template Below",
+                            "Edit Template", "Duplicate Template", "Delete Template"}) {
                         play.expect(screen.getByText(label)).toBeVisible();
                     }
-                    play.expect(screen.queryByText("Move template Up")).toBeNull();
-                    play.expect(screen.getByText("Move template Down")).toBeVisible();
-                    // Copy acts on that row and names the copy "<name> (copy)"
-                    play.click(screen.getByText("Copy template"));
+                    play.expect(screen.queryByText("Move Template Up")).toBeNull();
+                    play.expect(screen.getByText("Move Template Down")).toBeVisible();
+                    // Duplicate acts on that row and names the copy "<name> (copy)"
+                    play.click(screen.getByText("Duplicate Template"));
                     play.waitFor(() -> play.expect(play.getByText("My template (copy)")).toBeInTheDocument());
                     // The last row has Move Up but no Move Down
-                    play.click(play.within(play.getByText("Undescribed").closest("tr"))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(screen.getByText("Move template Up")).toBeVisible());
-                    play.expect(screen.queryByText("Move template Down")).toBeNull();
+                    play.click(play.within(play.getByText("Undescribed").closest(StroomDom.GRID_ROW))
+                            .getByTitle(TextMatch.regex("^Actions for template ")));
+                    play.waitFor(() -> play.expect(screen.getByText("Move Template Up")).toBeVisible());
+                    play.expect(screen.queryByText("Move Template Down")).toBeNull();
+                    // Closed, so the accessibility check doesn't measure the buttons it covers (a
+                    // row's button is a 24px target, but one partly under the menu isn't)
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Move Template Up")).toBeNull());
                     ContentStorySupport.expectNoProblems(play);
                 })
-                // Editing a template (rename) dirties the document; Save templates saves it
+                // Editing a template (rename) dirties the document; Save Templates saves it
                 .story("Templates", ContentTemplatesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -180,7 +184,7 @@ public final class ContentTemplatesScreenStories {
                     play.type(name, "Renamed template");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Renamed template");
-                    final Query save = play.getByTitle("Save templates");
+                    final Query save = play.getByTitle("Save Templates");
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

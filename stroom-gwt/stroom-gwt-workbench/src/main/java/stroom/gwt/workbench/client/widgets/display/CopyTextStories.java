@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
 
@@ -43,8 +43,8 @@ import java.util.function.Consumer;
 /// There is no copy text widget in GWT: Stroom's `CurrentSelectionPresenter` renders
 /// [CopyTextUtil#render] into an `HTML` widget and passes its mouse downs to
 /// [CopyTextUtil#onClick], as the stories do. A left click on the copy icon copies the value,
-/// on the insert icon inserts it, and a right click shows Stroom's menu (Copy, and Insert if
-/// there is an insert handler), which needs Stroom's [Menu] listening on the event bus and a
+/// on the insert icon inserts it, and a right click shows Stroom's menu (Copy, and Insert into
+/// Expression if there is an insert handler), which needs Stroom's [Menu] listening on the event bus and a
 /// popup manager, so the stories use a [ScreenHarness] (it makes no REST requests).
 public final class CopyTextStories {
 
@@ -73,7 +73,7 @@ public final class CopyTextStories {
                 .story("LongValue", context -> {
                     final ScreenHarness harness = harness(context);
                     // With no insert handler, CopyTextUtil's insert icon does nothing and the menu has
-                    // no Insert item
+                    // no Insert into Expression item
                     harness.add(minWidth(copyText(harness,
                             "this is a very long value that will be truncated in the copy tooltip preview",
                             true,
@@ -99,8 +99,8 @@ public final class CopyTextStories {
 
     private static ScreenHarness harness(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
-        // Shows ShowMenuEvent's menu, as Stroom's Menu singleton does
-        new Menu(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()));
+        // Shows ShowMenuEvent's menu, as Stroom's MenuManager singleton does
+        new MenuManager(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()));
         return harness;
     }
 

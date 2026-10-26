@@ -22,8 +22,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -45,14 +43,15 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -84,19 +83,21 @@ public class DependenciesPresenter
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private Consumer<String> filterErrorConsumer;
-    private final MyDataGrid<Dependency> dataGrid;
-    private final MenuPresenter menuPresenter;
+    private final DataGrid<Dependency> dataGrid;
 
     private Set<String> openableTypes = new HashSet<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
-                                 final RestFactory restFactory,
-                                 final MenuPresenter menuPresenter) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this, 100);
+        dataGrid = new DataGrid<>(this, 100);
+        // Rows keyed by the documents they link
+        dataGrid.setKeyProvider(row -> NullSafe.get(row.getFrom(), DocRef::getUuid)
+                                       + ">"
+                                       + NullSafe.get(row.getTo(), DocRef::getUuid));
         dataGrid.setTableName("Dependencies");
         view.setDataWidget(dataGrid);
 
@@ -131,7 +132,6 @@ public class DependenciesPresenter
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.menuPresenter = menuPresenter;
         initColumns();
     }
 
@@ -211,7 +211,7 @@ public class DependenciesPresenter
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,
                                        final String name,
                                        final int width) {
-        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu);
+        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu, this::getActionMenuName);
         final Column<Dependency, DocRef> actionColumn = DataGridUtil.columnBuilder(
                 docRefSelector,
                 () -> actionCell
@@ -219,14 +219,29 @@ public class DependenciesPresenter
         dataGrid.addColumn(actionColumn, name, width);
     }
 
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
-
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-        menuPresenter.setData(buildActionMenu(docRef));
-        ShowPopupEvent.builder(menuPresenter)
-                .popupType(PopupType.POPUP)
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name(getActionMenuName(docRef))
+                .items(buildActionMenu(docRef))
                 .popupPosition(popupPosition)
-                .fire();
+                .opener(opener)
+                .fire(this);
+    }
+
+    // The name of a document's actions (its button's and its menu's)
+    private String getActionMenuName(final DocRef docRef) {
+        return "Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'";
+    }
+
+    // A document type as users see it, e.g. 'XSLT Translation'
+    private static String getDisplayType(final DocRef docRef) {
+        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+        return NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {
@@ -234,7 +249,7 @@ public class DependenciesPresenter
         return MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.INFO)
-                        .text("Properties")
+                        .text("Show Info")
                         .command(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DELETE)
@@ -246,11 +261,11 @@ public class DependenciesPresenter
                         .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependencies")
+                        .text("Show Dependencies")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDENCY)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependants")
+                        .text("Show Dependants")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDANT)))
                 .build();
     }

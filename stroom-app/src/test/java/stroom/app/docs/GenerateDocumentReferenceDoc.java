@@ -30,6 +30,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -87,7 +88,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     void generateDocumentsReference(final ScanResult scanResult) {
 
         final List<DocInfo> docInfoList = scanResult
-                .getSubclasses(AbstractDoc.class)
+                .getAllSubclasses(AbstractDoc.class)
                 .parallelStream()
                 // Not visible in UI currently
                 .filter(Predicate.not(ClassInfo::isInterface))
@@ -109,11 +110,13 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                         Comparator.comparing(DocumentTypeGroup::getDisplayName)))
                 .map(this::mapGroup)
                 .filter(Objects::nonNull)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining(""));
 
         final Path file = StroomDocsUtil.resolveStroomDocsFile(DOCUMENT_SUB_PATH);
 
-        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
+        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(
+                file,
+                "\n\n" + generatedContent);
 
         if (didReplace) {
             LOGGER.info("Replaced generated content in file: {}", file);
@@ -145,7 +148,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     }
 
     private DocInfo mapClass(final ClassInfo classInfo) {
-        final Class<?> clazz = classInfo.loadClass();
+        final Class<?> clazz = loadClass(classInfo.getName());
 
         if (!classInfo.isInterface() && classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
             final DocumentType docType;
@@ -166,12 +169,14 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
                 String description = null;
                 if (classInfo.hasAnnotation(Description.class)) {
-                    final Class<?> docClazz = classInfo.loadClass();
+                    final Class<?> docClazz = loadClass(classInfo.getName());
                     final Description descriptionAnno = docClazz.getAnnotation(Description.class);
-                    description = descriptionAnno.value();
+                    description = NullSafe.trim(descriptionAnno.value());
                 } else {
                     LOGGER.warn("No {} annotation for class {}",
                             Description.class.getSimpleName(), classInfo.getName());
+//                    throw new RuntimeException(LogUtil.message("No {} annotation for class {}",
+//                            Description.class.getSimpleName(), classInfo.getName()));
                 }
 
                 final SvgImage icon = docType.getIcon();
@@ -203,10 +208,10 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
             return LogUtil.message("""
                             ## {}
-                            \s
+
                             {}
-                            \s
-                            \s
+
+
                             {}
                             """,
                     documentTypeGroup.getDisplayName(),
@@ -227,12 +232,12 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     private String convertDocToText(final DocInfo docInfo) {
         final String template = """
                 ### {}
-                \s
+
                 * Icon: {{< stroom-icon "{}" >}}
                 * Type: `{}`
-                \s
+
                 {}
-                \s
+
                 """;
 
         // Strip so that a multi-line description, which carries a trailing newline from its text
@@ -248,6 +253,15 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 docInfo.icon.getRelativePathStr(),
                 docInfo.type,
                 description);
+    }
+
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, GenerateDocumentReferenceDoc.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

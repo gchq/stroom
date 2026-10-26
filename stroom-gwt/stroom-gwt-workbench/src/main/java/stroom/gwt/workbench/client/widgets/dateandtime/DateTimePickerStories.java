@@ -28,6 +28,7 @@ import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.datepicker.client.DateTimeViewImpl;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
@@ -43,8 +44,8 @@ public final class DateTimePickerStories {
 
     private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
     // The calendar icon, and the element its read-only class is on
-    private static final String ICON_OUTER = ".svgIconBox-icon-outer";
-    private static final String ICON_INNER = ".svgIconBox-icon-inner";
+    private static final String ICON_OUTER = ".svg-icon-box__icon";
+    private static final String ICON_INNER = ".svg-icon-box";
     /// 2024-01-15T09:50:00.000Z.
     private static final long VALUE_MS = 1705312200000L;
 
@@ -63,6 +64,27 @@ public final class DateTimePickerStories {
                 .story("Basic", context -> withMsLabel(context, VALUE_MS))
                 // Empty: the calendar icon opens the dialog on the current time
                 .story("Empty", context -> withMsLabel(context, null))
+                // In the dialog, the calendar's Year and Month boxes are named, and its previous and
+                // next buttons are toolbars named "Year" and "Month", one tab stop each. They once
+                // weren't: the dialog is laid out while hidden, so the toolbars saw no buttons, and
+                // never looked again once it was shown
+                .story("CalendarToolbarsInTheDialog", context -> withMsLabel(context, VALUE_MS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    // Opened from the keyboard, so no pointer rests on a button (its tooltip would
+                    // take its title)
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    screen.findByText("Set Date And Time");
+                    for (final String name : new String[]{"Year", "Month"}) {
+                        screen.findByRole("toolbar", name);
+                        screen.getByRole("combobox", name);
+                    }
+                    play.expect(screen.getByRole("button", "Previous Year")).toHaveAttribute("tabindex", "0");
+                    play.expect(screen.getByRole("button", "Next Year")).toHaveAttribute("tabindex", "-1");
+                    play.expect(screen.getByRole("button", "Previous Month")).toHaveAttribute("tabindex", "0");
+                    play.expect(screen.getByRole("button", "Next Month")).toHaveAttribute("tabindex", "-1");
+                })
                 // Disabled: the text box and calendar icon are greyed out, and the icon doesn't open
                 // the dialog
                 .story("Disabled", context -> {
@@ -81,6 +103,87 @@ public final class DateTimePickerStories {
                     play.click(play.querySelector(ICON_OUTER));
                     play.sleep(100);
                     play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                })
+                // The field says it opens a dialog; Alt+Down opens it as Enter does, and the focus
+                // starts in the Hour spinner. Escape closes it unchanged
+                .story("AltDownOpensTheDialog", context -> withMsLabel(context, VALUE_MS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(play.querySelector("input")).toHaveAttribute("aria-haspopup", "dialog");
+                    play.tab();
+                    play.keyboard("{Alt>}{ArrowDown}{/Alt}");
+                    screen.findByText("Set Date And Time");
+                    play.expect(screen.getByRole("spinbutton", "Hour")).toHaveFocus();
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time")).toBeNull());
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // In the dialog, a day is chosen with the calendar's keys, and OK puts it in the
+                // field, keeping the time
+                .story("ChooseADayWithTheKeys", context -> withMsLabel(context, VALUE_MS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    screen.findByText("Set Date And Time");
+                    play.click(screen.getByRole("gridcell", "Monday, 15 January 2024"));
+                    play.keyboard("{ArrowRight}{ArrowDown}{Enter}");
+                    play.expect(screen.getByText("23 January 2024")).toBeVisible();
+                    play.click(screen.getByRole("button", "OK"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time")).toBeNull());
+                    play.expect(play.querySelector("input")).toHaveValue("2024-01-23T09:50:00.000Z");
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledTimes(1);
+                })
+                // The dialog's shortcuts and Reset are buttons, named for what they do (they were
+                // text that only a mouse could use)
+                .story("ShortcutsAreButtons", context -> withMsLabel(context, VALUE_MS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    screen.findByText("Set Date And Time");
+                    for (final String name : new String[]{"Today", "Yesterday", "Week Start", "Now",
+                            "Midnight", "Midday", "Reset hour", "Reset minute", "Reset second",
+                            "Reset millisecond"}) {
+                        screen.getByRole("button", name);
+                    }
+                    play.click(screen.getByRole("button", "Midday"));
+                    play.expect(screen.getByRole("spinbutton", "Hour")).toHaveValue("12");
+                    play.click(screen.getByRole("button", "Reset hour"));
+                    play.expect(screen.getByRole("spinbutton", "Hour")).toHaveValue("0");
+                })
+                // Text that isn't a time is marked invalid when the field is left
+                .story("InvalidTextIsMarked", context -> withMsLabel(context, VALUE_MS))
+                .withPlay(play -> {
+                    play.tab();
+                    play.keyboard("{Control>}a{/Control}now()-1d{Tab}");
+                    play.expect(play.querySelector("input")).toHaveAttribute("aria-invalid", "true");
+                })
+                // A box that allows expressions (a query's time range and terms) takes any text and
+                // doesn't mark it. Enter is the screen's (e.g. to run the query), so doesn't open the
+                // dialog; Alt+Down does, and OK replaces the expression with the time chosen
+                .story("ExpressionsAllowed", context -> {
+                    final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
+                    final DateTimeBox box = dateTimeBox(context, harness, null);
+                    box.setExpressionsAllowed(true);
+                    box.setText("now()-1d");
+                    harness.add(box);
+                    return harness.asWidget();
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                    play.keyboard("{Tab}");
+                    play.expect(play.querySelector("input")).not().toHaveAttribute("aria-invalid", "true");
+                    play.keyboard("{Shift>}{Tab}{/Shift}{Alt>}{ArrowDown}{/Alt}");
+                    screen.findByText("Set Date And Time");
+                    play.click(screen.getByRole("button", "OK"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time")).toBeNull());
+                    play.expect(play.querySelector("input")).not().toHaveValue("now()-1d");
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledTimes(1);
                 });
     }
 
@@ -99,6 +202,8 @@ public final class DateTimePickerStories {
                                            final ScreenHarness harness,
                                            final Long valueMs) {
         final DateTimeBox box = new DateTimeBox();
+        // Named, as a form group's label names it on Stroom's screens
+        AccessibleName.set(box, "Start Time");
         // As Stroom's presenters give it the dialog, e.g. ScheduledProcessEditPresenter
         box.setPopupProvider(() -> new DateTimePopup(harness.getEventBus(),
                 new DateTimeViewImpl(GWT.create(DateTimeViewImpl.Binder.class)),

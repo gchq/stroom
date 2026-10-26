@@ -180,11 +180,11 @@ public final class CodeDocumentEditorStories {
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
-                // Config (default), Documentation and Permissions, and a Download toolbar button
+                // Config (default), Documentation and Permissions, and a Download Kafka Config toolbar button
                 .story("KafkaConfig", context -> kafka(context, false))
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
-                    play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Download Kafka Config")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
@@ -200,7 +200,7 @@ public final class CodeDocumentEditorStories {
                 .story("S3Config", context -> s3(context, false))
                 .withPlay(play -> {
                     expectTabs(play, "Config", "Documentation", "Permissions");
-                    play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Download S3 Configuration")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
@@ -217,7 +217,8 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     expectTabs(play, "Graphical", "Text", "Settings", "Documentation", "Permissions");
                     // The schema's validity indicator is on the toolbar
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Schema is valid")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Show Validation Result (schema is valid)"))
+                            .toBeInTheDocument());
                     // Graphical is the default tab; Settings has the schema's fields
                     play.click(DocEditors.tab(play, "Settings"));
                     play.expect(play.findByText("Namespace URI", "label")).toBeInTheDocument();
@@ -269,7 +270,7 @@ public final class CodeDocumentEditorStories {
                     play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly");
                     play.click(DocEditors.tab(play, "Settings"));
                     play.waitFor(() -> play.expect(play.querySelector(NAMESPACE_URI)).toHaveAttribute("readonly"));
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -280,7 +281,7 @@ public final class CodeDocumentEditorStories {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(".ace_content")).toBeInTheDocument());
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    // The menu opens on a secondary mousedown (EditorViewImpl), on the page's body
+                    // The menu opens on contextmenu (EditorViewImpl), its edit items above Format
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();

@@ -123,8 +123,8 @@ public final class UserTabScreenStories {
                     play.waitFor(() -> play.expect(play.getByText("created by this user")).toBeInTheDocument());
                     // The Document Name cell shows the document (it was once always blank, as
                     // UserDependenciesListPresenter's DocRefCell had no docRefFunction)
-                    play.expect(play.within(play.getByText("created by this user").closest("tr"))
-                            .querySelector("td")).toHaveTextContent("Ops Dashboard");
+                    play.expect(play.within(play.getByText("created by this user").closest("tr, [role=\"row\"]"))
+                            .querySelector("td, [data-col]")).toHaveTextContent("Ops Dashboard");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The Document Permissions tab lists the documents and their permissions
@@ -134,7 +134,7 @@ public final class UserTabScreenStories {
                     play.waitFor(() -> play.expect(play.getByText("TEST_FEED")).toBeInTheDocument());
                     // The permission's display value, with Permission and Inherited Permission apart
                     play.expect(play.getByText("Edit")).toBeInTheDocument();
-                    final Play grid = play.within(play.getByText("Edit").closest(".dataGridWidget"));
+                    final Play grid = play.within(play.getByText("Edit").closest(".data-grid"));
                     play.expect(grid.getAllByRole("columnheader").textContents())
                             .toEqual(List.of("Document", "Permission", "Inherited Permission", "Path"));
                     SecurityPlays.expectNoProblems(play);
@@ -146,19 +146,19 @@ public final class UserTabScreenStories {
                     play.waitFor(() -> play.expect(play.getAllByText("Administrators").count()).toBeGreaterThan(0));
                     // GWT's sortable headers have role="button", not "columnheader", so the headings are
                     // read from the header cells' name holders
-                    final Value<List<String>> headings = play.querySelectorAll(".dataGridSortableHeaderNameHolder")
+                    final Value<List<String>> headings = play.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the headings", () -> trimmed(headings.get())).toContain("Display Name");
                     play.expect("the headings", () -> trimmed(headings.get())).not().toContain("Group");
                     play.expect("the headings", () -> trimmed(headings.get())).not().toContain("Unique ID");
                     // The user/group icon column and the action menu
-                    final Query rowElement = play.getAllByText("Administrators").nth(0).closest("tr");
+                    final Query rowElement = play.getAllByText("Administrators").nth(0).closest(StroomDom.GRID_ROW);
                     final Play row = play.within(rowElement);
                     play.expect(row.getByTitle(StroomDom.ACTIONS_TITLE)).toBeInTheDocument();
                     play.expect(row.querySelector(".svgCell-icon")).toBeInTheDocument();
-                    // Remove is a pager toolbar button, not a per-row one
-                    play.expect(row.queryByTitle("Remove")).toBeNull();
-                    play.expect(play.getAllByTitle("Remove").count()).toBeGreaterThan(0);
+                    // Remove from Selected Group is a pager toolbar button, not a per-row one
+                    play.expect(row.queryByTitle("Remove from Selected Group")).toBeNull();
+                    play.expect(play.getAllByTitle("Remove from Selected Group").count()).toBeGreaterThan(0);
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The Application Permissions tab changes a permission
@@ -171,7 +171,8 @@ public final class UserTabScreenStories {
                             .toEqual(List.of("Granted", "Permission", "Description"));
                     play.expect(play.getByText("No application permission selected")).toBeInTheDocument();
                     // The explicit ANNOTATIONS is ticked; unticking it removes it
-                    play.click(play.within(play.getByText("Annotations").closest("tr")).querySelector(".tickBox"));
+                    play.click(play.within(play.getByText("Annotations").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/permission/app/v1/changeAppPermission")
                                     .withJsonBodyContaining("""

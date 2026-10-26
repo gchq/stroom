@@ -74,6 +74,8 @@ public class KeyValueInputPresenter
             setSettings(createSettings());
         }
         getView().setValue(getKeyValueInputSettings().getText());
+        // Named for the component, so a rename renames it too
+        getView().setAccessibleName(getComponentConfig().getName());
     }
 
     private KeyValueInputComponentSettings getKeyValueInputSettings() {
@@ -90,6 +92,7 @@ public class KeyValueInputPresenter
 
     @Override
     public void changeSettings() {
+        getView().setAccessibleName(getComponentConfig().getName());
     }
 
     @Override
@@ -113,6 +116,11 @@ public class KeyValueInputPresenter
     public interface KeyValueInputView extends View, HasUiHandlers<KeyValueInputUiHandlers> {
 
         void setValue(String value);
+
+        /// Names the input's box for screen readers.
+        ///
+        /// @param name The box's name: the component's name.
+        void setAccessibleName(String name);
 
         String getValue();
     }

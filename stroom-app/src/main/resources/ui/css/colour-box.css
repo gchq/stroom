@@ -1,0 +1,72 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The colour box (stroom.widget.colour.client.ColourBox), the BEM block colour-box: a native colour
+   input, so its role, keys and picker are the browser's. The browser draws its swatch in a shadow
+   DOM, styled through its vendor pseudo-elements. It is as high as a text field, and as wide as a
+   swatch needs.
+*/
+
+/* At an element and a class's weight, to outrank stroom.css's bare input rules */
+input.colour-box {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 3rem;
+    height: calc(1em + 2 * var(--input__padding--vertical) + 2px);
+    margin: 0;
+    padding: 3px;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+    cursor: pointer;
+}
+
+/* The swatch fills the box, inside its padding */
+input.colour-box::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input.colour-box::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
+
+input.colour-box::-moz-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
+
+input.colour-box:focus-visible {
+    outline: none;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+input.colour-box:disabled {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
+    opacity: var(--disabled-opacity);
+    cursor: default;
+}
+
+/* In the dark theme, the browser's own picker is drawn dark too (where it follows color-scheme;
+   a picker the operating system draws may follow the system's setting instead) */
+.stroom-theme-dark input.colour-box {
+    color-scheme: dark;
+}

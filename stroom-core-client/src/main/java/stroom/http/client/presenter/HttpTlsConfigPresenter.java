@@ -54,14 +54,14 @@ public class HttpTlsConfigPresenter
         final CredentialListModel keyStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         keyStoreListModel.setTaskMonitorFactory(this);
         view.getKeyStoreSelectionBox().setModel(keyStoreListModel);
 
         final CredentialListModel trustStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         trustStoreListModel.setTaskMonitorFactory(this);
         view.getTrustStoreSelectionBox().setModel(trustStoreListModel);
     }
@@ -74,6 +74,7 @@ public class HttpTlsConfigPresenter
 //        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
 //                .popupSize(PopupSize.)
                 .caption("Edit HTTP TLS Configuration")
                 .onShow(e -> getView().focus())
@@ -97,18 +98,23 @@ public class HttpTlsConfigPresenter
         }
     }
 
-    public void read(final HttpTlsConfig config) {
-        if (config != null) {
-            getView().setProtocol(config.getProtocol());
-            getView().setProvider(config.getProvider());
-            setCredential(getView().getKeyStoreSelectionBox(), config.getKeyStoreName());
-            setCredential(getView().getTrustStoreSelectionBox(), config.getTrustStoreName());
-            getView().setTrustSelfSignedCertificates(config.isTrustSelfSignedCertificates());
-            getView().setVerifyHostname(config.isVerifyHostname());
-            getView().setSupportedProtocols(config.getSupportedProtocols());
-            getView().setSupportedCiphers(config.getSupportedCiphers());
-            getView().setCertAlias(config.getCertAlias());
-        }
+    /// Shows a TLS config in the view.
+    ///
+    /// @param httpTlsConfig The config, or null for none yet, which shows the defaults (so that OK
+    ///                      saves them rather than whatever the view's controls start as).
+    public void read(final HttpTlsConfig httpTlsConfig) {
+        final HttpTlsConfig config = httpTlsConfig != null
+                ? httpTlsConfig
+                : HttpTlsConfig.builder().build();
+        getView().setProtocol(config.getProtocol());
+        getView().setProvider(config.getProvider());
+        setCredential(getView().getKeyStoreSelectionBox(), config.getKeyStoreName());
+        setCredential(getView().getTrustStoreSelectionBox(), config.getTrustStoreName());
+        getView().setTrustSelfSignedCertificates(config.isTrustSelfSignedCertificates());
+        getView().setVerifyHostname(config.isVerifyHostname());
+        getView().setSupportedProtocols(config.getSupportedProtocols());
+        getView().setSupportedCiphers(config.getSupportedCiphers());
+        getView().setCertAlias(config.getCertAlias());
     }
 
     public HttpTlsConfig write() {

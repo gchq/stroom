@@ -72,6 +72,8 @@ import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -184,25 +186,29 @@ public class QueryPresenter
             }
         });
 
-        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add", this::addTerm);
-        addTermButton.setTitle("Add Term");
+        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
                 this::addOperator);
-        addOperatorButton.setTitle("Add Operator");
-        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Copy", this::copy);
+        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item",
+                this::copy);
         copyButton.setEnabled(false);
-        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE, "Disable", this::disable);
+        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE,
+                "Disable Selected Expression Item", this::disable);
         disableItemButton.setEnabled(false);
-        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE,
+                "Delete Selected Expression Item", this::delete);
         deleteItemButton.setEnabled(false);
-        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "History", this::onHistory);
-        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES, "Favourites", this::onFavourite);
-        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download",
+        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "Show Query History",
+                this::onHistory);
+        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES,
+                "Show Favourite Queries", this::onFavourite);
+        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download Query",
                 this::downloadQuery);
         downloadQueryButton.setEnabled(false);
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS, "Process", this::choosePipeline);
+            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS,
+                    "Process Query with Pipeline", this::choosePipeline);
         }
 
         // Its icon and name are set by the messages it shows
@@ -240,9 +246,11 @@ public class QueryPresenter
 
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
-            final List<Item> menuItems = addExpressionActionsToMenu();
+            // On a term's field, the field's edit items come first
+            final List<Item> menuItems = ContextMenuManager.withEditItems(
+                    event.getEditTarget(), addExpressionActionsToMenu());
             if (!menuItems.isEmpty()) {
-                showMenu(menuItems, event.getPopupPosition());
+                showMenu(menuItems, event.getPopupPosition(), event.getEditTarget());
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
@@ -338,7 +346,7 @@ public class QueryPresenter
             errorsButton.setTitle("Show Errors");
         } else if (Severity.WARNING.equals(severity)) {
             errorsButton.setSvg(SvgImage.ALERT);
-            errorsButton.setTitle("Show Warning");
+            errorsButton.setTitle("Show Warnings");
         } else if (Severity.INFO.equals(severity)) {
             errorsButton.setSvg(SvgImage.INFO);
             errorsButton.setTitle("Show Messages");
@@ -359,18 +367,16 @@ public class QueryPresenter
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
             // The title is the button's name, so it stays when the button is disabled
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(true);
         }
@@ -481,6 +487,7 @@ public class QueryPresenter
                 processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
                 ShowPopupEvent.builder(processorLimitsPresenter)
                         .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .modal()
                         .caption("Process Search Results")
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {
@@ -806,7 +813,7 @@ public class QueryPresenter
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                .text("Duplicate")
                 .command(this::copy)
                 .enabled(hasSelection)
                 .build());
@@ -824,6 +831,7 @@ public class QueryPresenter
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(6));
 
         return menuItems;
     }
@@ -844,12 +852,29 @@ public class QueryPresenter
     }
 
     private void showMenu(final List<Item> menuItems,
-                          final PopupPosition popupPosition) {
-        ShowMenuEvent
+                          final PopupPosition popupPosition,
+                          final TextEditTarget textField) {
+        final ShowMenuEvent.Builder builder = ShowMenuEvent
                 .builder()
+                .name(getMenuName())
                 .items(menuItems)
-                .popupPosition(popupPosition)
-                .fire(this);
+                .popupPosition(popupPosition);
+        if (textField != null) {
+            // Opened on a term's field: the focus goes back to it
+            builder.onHide(e -> textField.restore());
+        }
+        builder.fire(this);
+    }
+
+    // The context menu's accessible name, saying which term or operator it acts on
+    private String getMenuName() {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        final String text = selectedItem != null
+                ? selectedItem.toString().trim()
+                : "";
+        return text.isEmpty()
+                ? "Expression Actions"
+                : "Actions for expression item '" + text + "'";
     }
 
     private void downloadQuery() {

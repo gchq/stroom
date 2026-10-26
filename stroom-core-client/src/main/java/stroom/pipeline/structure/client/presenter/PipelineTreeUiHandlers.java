@@ -23,4 +23,10 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface PipelineTreeUiHandlers extends UiHandlers {
 
     void onMove(PipelineElement parent, PipelineElement child);
+
+    /// Asks for an element to be removed, e.g. with the Delete key.
+    ///
+    /// @param element The element.
+    default void onRemove(final PipelineElement element) {
+    }
 }

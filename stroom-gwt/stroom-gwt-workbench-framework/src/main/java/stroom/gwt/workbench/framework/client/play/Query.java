@@ -143,6 +143,19 @@ public final class Query {
                 element -> Dom.closest(element, selector), -1);
     }
 
+    /// The `<body>` of the document shown in this query's `<iframe>`, e.g. to search a frame that
+    /// Stroom loads its own page into (a visualisation's `ui/vis.html`), with
+    /// [Play#withinFrame(Query)]. The frame's document must be of the page's origin. Until it has
+    /// loaded the frame shows an empty document, so wait for what is looked for in it.
+    ///
+    /// @return A query for the body of the frame's document, the equivalent of
+    /// `iframe.contentDocument.body`.
+    public Query frameBody() {
+        return new Query(this, true, "frameBody", "frameBody", "", false,
+                "Unable to find the document of " + describe() + " (is it an <iframe> of the page's origin?)",
+                "Found multiple frame documents", false, Dom::frameBody, -1);
+    }
+
     /// @return The query as Storybook shows it in the Interactions addon, e.g.
     /// `within(<div#workbench-root>).getByRole("button", { name: "Save" })`.
     public String describe() {

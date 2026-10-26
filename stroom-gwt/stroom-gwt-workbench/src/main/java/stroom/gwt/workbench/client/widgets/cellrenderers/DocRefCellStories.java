@@ -20,10 +20,12 @@ import stroom.data.client.presenter.DocRefCell;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -33,10 +35,12 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.cellview.client.CellWidget;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -81,9 +85,32 @@ public final class DocRefCellStories {
                 .withPlay(play -> {
                     // The broken ref can be copied but not opened (DocRefCell once only hid the open
                     // button for a null UUID, which a DocRef can't have)
-                    play.expect(play.getByTitle("Open Pipeline Event Processing in new tab")).toBeInTheDocument();
+                    play.expect(play.getByTitle("Open Pipeline Event Processing")).toBeInTheDocument();
                     play.expect(play.getByTitle("Copy name 'Deleted Pipeline' to clipboard")).toBeInTheDocument();
-                    play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline in new tab")).toBeNull();
+                    play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline")).toBeNull();
+                })
+                // In a grid, as Stroom's lists show it: the open icon is a button, named for what it
+                // opens, which the grid's keys reach (Right from the row into its cell, whose button
+                // takes the focus; Down to the same cell of the next row) and Enter or Space
+                // presses. It was an icon that only a mouse could press
+                .story("OpenByKeyboard", DocRefCellStories::grid)
+                .withPlay(play -> {
+                    final Query openFeed = play.getByRole("button", "Open Feed TEST_FEED");
+                    final Query openPipeline = play.getByRole("button", "Open Pipeline Event Processing");
+                    // Pressing a row's text gives the row the keyboard focus, and Right its button
+                    play.click(play.getByText("TEST_FEED"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(openFeed).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("Feed TEST_FEED"));
+                    // Down to the same cell of the next row, whose button takes the focus
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(openPipeline).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN))
+                            .toHaveBeenNthCalledWith(2, "Pipeline Event Processing"));
+                    // Each key opened its document once (the button's own click does nothing more)
+                    play.expect(play.spy(ON_OPEN).callCount()).toBe(2);
                 })
                 // No type icon, and the hasOpenAndCopy(false) variant (plain text, no buttons)
                 .story("IconAndButtonToggles", context -> StoryPanels.column(8,
@@ -135,6 +162,37 @@ public final class DocRefCellStories {
         }
         column.add(lastAction);
         return column;
+    }
+
+    /// The cell in a grid with a selection model, as Stroom's lists use it.
+    private static Widget grid(final StoryContext context) {
+        final Spy onOpen = context.fn(ON_OPEN);
+        final EventBus eventBus = new SimpleEventBus();
+        eventBus.addHandler(OpenDocumentEvent.getType(), event ->
+                onOpen.call(event.getDocRef().getType() + " " + event.getDocRef().getName()));
+        final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
+                .eventBus(eventBus)
+                .showIcon(true)
+                .docRefFunction(docRef -> docRef)
+                .build();
+
+        // The grid takes a GWT event bus, not the cell's web bindery one
+        final DataGrid<DocRef> grid = new DataGrid<>(new com.google.gwt.event.shared.SimpleEventBus());
+        grid.setWidth("100%");
+        grid.setHeight("100%");
+        grid.addDefaultSelectionModel(false);
+        grid.addResizableColumn(new Column<DocRef, DocRef>(cell) {
+            @Override
+            public DocRef getValue(final DocRef docRef) {
+                return docRef;
+            }
+        }, "Document", CELL_WIDTH_PX);
+        grid.setRowData(List.of(FEED_REF, PIPELINE_REF, DICTIONARY_REF));
+
+        final SimplePanel panel = new SimplePanel(grid);
+        panel.getElement().getStyle().setProperty("height", "200px");
+        panel.getElement().getStyle().setProperty("width", (CELL_WIDTH_PX + 40) + "px");
+        return panel;
     }
 
     private static FlowPanel cellBox(final Cell<DocRef> cell, final DocRef docRef) {

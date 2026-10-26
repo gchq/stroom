@@ -76,7 +76,7 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
                     new IconMenuItem.Builder()
                             .priority(100)
                             .icon(SvgImage.KEY_BLUE)
-                            .text("Credentials Manager")
+                            .text("Credentials")
                             .command(this::open)
                             .build());
         }

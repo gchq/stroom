@@ -50,11 +50,11 @@ import { clickEditorTab } from './lib/tabs.mjs';
 async function restoreTabContext(page, home) {
   if (home) { await clickEditorTab(page, home, { timeout: 5_000 }).catch(() => {}); await page.waitForTimeout(1_200); }
   const at = await page.evaluate(() => {
-    const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=row]')]
+    const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
       .find((e) => e.offsetHeight > 0 && e.textContent.trim());
     if (!row) return null;
     const cell = [...row.querySelectorAll('td, [role=gridcell]')]
-      .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, svg')) ?? row;
+      .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, svg')) ?? row;
     const r = cell.getBoundingClientRect();
     return { x: r.x + Math.min(r.width / 2, 60), y: r.y + r.height / 2 };
   }).catch(() => null);
@@ -159,7 +159,7 @@ async function shootAndScore(page, t, { wait = 4500 } = {}) {
  */
 async function openDoc(page, t) {
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
   await gwt.openDocByName(page, t.label, t.type);
   await closeDialogs(page).catch(() => {});

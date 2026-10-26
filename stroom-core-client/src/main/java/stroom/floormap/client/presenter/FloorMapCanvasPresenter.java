@@ -1133,6 +1133,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             event.preventDefault();
             event.stopPropagation();
 
+            // Shift+F10 or the context menu key has already opened the menu for the selection
+            if (isBrowserMenuForKeyPress()) {
+                return;
+            }
+
             // While drawing an area, right-click undoes the last vertex
             // (misclicks are the dominant error when tracing) — or cancels an
             // empty draft. The context menu never opens mid-draw.
@@ -1326,7 +1331,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// follow has to go through the Tracking panel, whose Stop Tracking button is
     /// already keyboard-reachable and keeps both ends in step.
     ///
-    /// - **Enter** / **Space** opens the context menu
+    /// - **Enter** / **Space** (or **Shift+F10** / the **context menu key**,
+    ///   the standard keys for a context menu) opens the context menu
     ///   for the selection — see [#openKeyboardContextMenu()]. Edit mode
     ///   only, and only when no gesture is in progress, matching the mouse
     ///   path: `MapContextMenuEvent` is handled by the Editor tab alone,
@@ -1355,6 +1361,14 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             case KeyCodes.KEY_DOWN:
                 panByKeyboard(event, 0, -step);
                 break;
+            case KeyCodes.KEY_F10:
+                if (event.isShiftKeyDown()) {
+                    openContextMenuFromMenuKey(event);
+                }
+                break;
+            case KeyCodes.KEY_CONTEXT_MENU:
+                openContextMenuFromMenuKey(event);
+                break;
             case KeyCodes.KEY_ENTER:
             case KeyCodes.KEY_SPACE:
                 // Same guards as the mouse contextmenu handler: only the Editor tab
@@ -1371,6 +1385,36 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 handleZoomKeys(event);
                 break;
         }
+    }
+
+    /// How long after Shift+F10 or the context menu key opened the menu a `contextmenu` event is
+    /// taken to be the browser's own for that key press, and ignored.
+    private static final double KEYBOARD_CONTEXT_MENU_WINDOW_MS = 1000;
+
+    /// When Shift+F10 or the context menu key last opened the menu, or 0.
+    private double keyboardContextMenuOpenedAtMs;
+
+    /// Opens the context menu for Shift+F10 or the context menu key, the standard keys for a
+    /// focused element's context menu, as Enter and Space do (see [#openKeyboardContextMenu()]).
+    ///
+    /// The browser follows these keys with a `contextmenu` event of its own, at no particular
+    /// object, which the mouse handler would turn into a second menu; it is cancelled here where
+    /// it can be, and ignored by the mouse handler (see [#isBrowserMenuForKeyPress()]) where it
+    /// can't (the context menu key fires it on release on some systems).
+    private void openContextMenuFromMenuKey(final KeyDownEvent event) {
+        // The same guards as for Enter and Space
+        if (editMode && gesture == Gesture.NONE) {
+            event.preventDefault();
+            keyboardContextMenuOpenedAtMs = System.currentTimeMillis();
+            openKeyboardContextMenu();
+        }
+    }
+
+    /// Whether a `contextmenu` event is the browser's own for the key that just opened the menu.
+    private boolean isBrowserMenuForKeyPress() {
+        final double sinceKeyMs = System.currentTimeMillis() - keyboardContextMenuOpenedAtMs;
+        keyboardContextMenuOpenedAtMs = 0;
+        return sinceKeyMs >= 0 && sinceKeyMs < KEYBOARD_CONTEXT_MENU_WINDOW_MS;
     }
 
     /// `keyCode` for the main-row `=`/`+` key in Chrome, Safari
@@ -1754,8 +1798,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : null;
     }
 
-    /// [#displayName] with the id as the last resort, for use in a list.
-    private String displayNameOrId(final String id) {
+    /// [#displayName] with the id as the last resort, for use in a list or a menu name.
+    ///
+    /// @param id The entity's id.
+    /// @return The entity's name, else its id.
+    String displayNameOrId(final String id) {
         final String name = displayName(id);
         return name != null
                 ? name
@@ -1914,24 +1961,20 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     }
 
     /// Resolves the id of the map object under an event target, or `null`
-    /// if the target is not a real object shape. Wrapper `<g>` groups
-    /// (prefixed [FloorMapJsonKeys#SVG_GROUP_PREFIX]), transform handles
-    /// (prefixed [FloorMapJsonKeys#HANDLE_PREFIX]) and cluster glyphs
-    /// (prefixed [FloorMapJsonKeys#CLUSTER_PREFIX]) are not objects.
+    /// if the target is not a real object shape.
     ///
-    /// The cluster exclusion is load-bearing: a cluster's key is one of its
-    /// members' ids, so without it a press on a cluster would announce that member
+    /// Only an id written by [FloorMapJsonKeys#objectDomId] names an object. Wrapper `<g>`
+    /// groups, transform handles and cluster glyphs carry other prefixes and so are never
+    /// mistaken for one. Matching on the object prefix, rather than excluding the others, is what
+    /// stops an object whose key happens to start `__handle_` being taken for a handle.
+    ///
+    /// The cluster case is load-bearing: a cluster's key is one of its
+    /// members' ids, so treating its glyph as an object would announce that member
     /// as the thing that was clicked — selecting an entity the user cannot see and
     /// did not aim at.
     private String hitObjectId(final EventTarget target) {
         if (Element.is(target)) {
-            final String id = Element.as(target).getId();
-            if (id != null && !id.isEmpty()
-                    && !id.startsWith(FloorMapJsonKeys.SVG_GROUP_PREFIX)
-                    && !id.startsWith(FloorMapJsonKeys.HANDLE_PREFIX)
-                    && !id.startsWith(FloorMapJsonKeys.CLUSTER_PREFIX)) {
-                return id;
-            }
+            return FloorMapJsonKeys.objectKeyFromDomId(Element.as(target).getId());
         }
         return null;
     }

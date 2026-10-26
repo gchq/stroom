@@ -78,6 +78,24 @@
     */
 }
 
+/* The editor's tab stop in Ace's keyboard accessibility mode, its content (ace_keyboard-focus; the
+   gutter's is taken away by Editor): a ring inside its edge, for keyboard focus only (Ace draws its
+   own blue for any focus). An outline, not Ace's box shadow, so forced colours keep it. Its colour
+   follows the editor's theme (ace_dark), not Stroom's, as the two are chosen apart: --blue-800 is
+   4.2:1 or more on every light editor theme, --blue-300 4.9:1 or more on every dark one */
+.code-editor__ace .ace_keyboard-focus:focus {
+    box-shadow: none;
+}
+
+.code-editor__ace .ace_keyboard-focus:focus-visible {
+    outline: 2px solid var(--blue-800);
+    outline-offset: -2px;
+}
+
+.code-editor__ace.ace_dark .ace_keyboard-focus:focus-visible {
+    outline-color: var(--blue-300);
+}
+
 .code-editor__error-underline {
     position: absolute;
     border-bottom: 1px solid red;
@@ -197,22 +215,6 @@
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-.code-editor-menu-option--on {
-  color: var(--code-editor-menu-option__color--on);
-}
-
-.cellTableSelectedRowCell .code-editor-menu-option--on {
-  color: var(--code-editor-menu-option__color--on--selected);
-}
-
-.code-editor-menu-option--off {
-  color: var(--code-editor-menu-option__color--off);
-}
-
-.cellTableSelectedRowCell .code-editor-menu-option--off {
-  color: var(--code-editor-menu-option__color--off--selected);
-}
-
 /* The overview bar, its markers and their indicator popup */
 
 .code-editor-indicator {
@@ -330,4 +332,10 @@
 	border: 1px solid var(--code-editor__border-color--fatal);
 	background-color: var(--code-editor__background-color--fatal);
 	opacity: 0.75;
+}
+
+/* Ace's search box's "1 of 3" counter, darker than Ace's #666, which was 4.22:1 on the box's #ddd
+   (WCAG 1.4.3 asks 4.5:1): #555 is 5.5:1 */
+.ace_editor .ace_search_counter {
+    color: #555;
 }

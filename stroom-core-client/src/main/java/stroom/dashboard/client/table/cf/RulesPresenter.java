@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
@@ -82,18 +83,24 @@ public class RulesPresenter
         getView().setTableView(listPresenter.getView());
 
         listPresenter.getToolbar().setName("Conditional formatting rule actions");
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "Add", this::add);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onEdit);
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Formatting Rule", this::add);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Formatting Rule",
+                this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy", this::onCopy);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Formatting Rule",
+                this::onCopy);
         copyButton.setEnabled(false);
-        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable", this::onDisable);
+        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable Selected Formatting Rule",
+                this::onDisable);
         disableButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Formatting Rule",
+                this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Up", this::onMoveUp);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Formatting Rule Up",
+                this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Down", this::onMoveDown);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Formatting Rule Down",
+                this::onMoveDown);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
@@ -256,15 +263,21 @@ public class RulesPresenter
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
                         final int index = rules.indexOf(existingRule);
-                        rules.remove(index);
-                        rules.add(index, rule);
+                        if (index < 0) {
+                            // Deleted behind the dialog, which isn't modal
+                            AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                                      + "so the changes can't be kept.", null);
+                        } else {
+                            rules.remove(index);
+                            rules.add(index, rule);
 
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
 
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
                         }
                     }
                     e.hide();
@@ -393,9 +406,9 @@ public class RulesPresenter
         }
 
         if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
+            disableButton.setTitle("Disable Selected Formatting Rule");
         } else {
-            disableButton.setTitle("Enable");
+            disableButton.setTitle("Enable Selected Formatting Rule");
         }
 
         addButton.setEnabled(loadedPolicy);

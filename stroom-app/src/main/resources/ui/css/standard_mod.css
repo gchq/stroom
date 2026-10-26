@@ -24,7 +24,9 @@ body,table td,select {
 	box-sizing: border-box;
 }
 
-.dataGridWidget button {
+/* Not a row action (.rowAction, components.css), a button that looks as the icon it holds: this
+   look would make its rows 5px taller. :where() keeps the specificity as it was */
+.data-grid button:where(:not(.rowAction)) {
 	margin: 0;
 	padding: 2px 4px;
 	text-decoration: none;
@@ -179,36 +181,6 @@ body,table td,select {
 		;
 }
 
-.gwt-MenuBarPopup {
-	margin: 0px;
-	z-index: 100;
-}
-
-.gwt-MenuBar .gwt-MenuItem-selected {
-	background: #abcdf6;
-}
-
-.gwt-MenuBar-horizontal {
-	background: none;
-	border: none;
-}
-
-.gwt-MenuBar-horizontal .gwt-MenuItem {
-	padding: 0px 10px;
-	vertical-align: bottom;
-	color: white;
-}
-
-.gwt-MenuBar-vertical .subMenuIcon {
-	padding-right: 4px;
-	vertical-align: middle;
-}
-
-.gwt-MenuBar-vertical .subMenuIcon-selected {
-	vertical-align: middle;
-	background: #abcdf6;
-}
-
 .gwt-PopupPanel {
 	border: 1px solid black;
 	padding: 3px;
@@ -321,7 +293,7 @@ body,table td,select {
 }
 
 /* INPUT CONTROLS */
-.gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-ListBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
@@ -339,60 +311,14 @@ body,table td,select {
 	padding: 0px;
 }
 
-.gwt-TextArea {
-	resize: none;
-	height: 80px;
-	overflow-y: auto;
-}
 textarea {
 	resize: none;
 	height: 80px;
 }
 
-/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
+/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.stroom-DropDownTree { */
 /* 	padding: 1px; */
 /* } */
-
-.gwt-DatePicker {
-	position: absolute;
-    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-	cursor: default;
-}
-.dateBoxPopup {
-    padding: 1px;
-	z-index: 100;
-}
-.datePickerDay,.datePickerWeekdayLabel,.datePickerWeekendLabel {
-	font-size: var(--font-size-13);
-	text-align: center;
-	padding: 4px;
-	outline: none;
-}
-td.datePickerMonth {
-	text-align: center;
-	vertical-align: center;
-	white-space: nowrap;
-	font-weight: 500;
-}
-td.datePickerMonth,
-td.datePickerYear {
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
-  font-size: var(--font-size-13);
-  font-weight: 500;
-}
-.datePickerPreviousButton,
-.datePickerNextButton,
-.datePickerPreviousYearButton,
-.datePickerNextYearButton {
-  font-size: var(--font-size-13);
-  line-height: 1em;
-  cursor: hand;
-  cursor: pointer;
-  padding: 0px 4px;
-}
-
 
 .gwt-ValueSpinner .arrows {
 	width: 1px;

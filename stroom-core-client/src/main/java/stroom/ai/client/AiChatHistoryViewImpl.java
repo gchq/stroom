@@ -48,6 +48,8 @@ public class AiChatHistoryViewImpl
     @Inject
     public AiChatHistoryViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        nameFilter.setAccessibleName("Filter chats");
         setDialogMode(true);
     }
 

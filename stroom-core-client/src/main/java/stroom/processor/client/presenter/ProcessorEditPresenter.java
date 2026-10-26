@@ -207,7 +207,6 @@ public class ProcessorEditPresenter
                 .caption(existingFilter
                         ? "Edit Filter"
                         : "Add Filter")
-                .modal(true)
                 .onShow(e -> editExpressionPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

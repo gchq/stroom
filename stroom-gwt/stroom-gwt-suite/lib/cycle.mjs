@@ -44,28 +44,28 @@ import { setAce, tab as toLinkTab } from './fills.mjs';
 export function readRows(page) {
   return page.evaluate(() => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return [];
-    return [...grid.querySelectorAll('tbody tr, [role=row]')]
+    return [...grid.querySelectorAll('tbody tr, [role=row][data-row]')]
       .filter((r) => r.offsetHeight > 0 && n(r.textContent)).map((r) => n(r.textContent));
   }).catch(() => []);
 }
 
 /**
  * A row's SIGNATURE: its text plus the state of any tick box in it. A grid's boolean column is a
- * `TickBoxCell` — a `div.tickBox`, not a checkbox — so it contributes NO text, and a row whose
+ * `TickBoxCell` — a `div.tick-box--cell`, not an input — so it contributes NO text, and a row whose
  * Enabled flag was just toggled reads identically by text. The tick's class names carry the state,
  * so they are part of the signature.
  */
 export function rowSignature(page, text) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
-    const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const row = [...(grid?.querySelectorAll('tbody tr, [role=row][data-row]') ?? [])]
       .find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     const ticks = [...row.querySelectorAll('[class*=tick], [class*=Tick], input[type=checkbox]')]
@@ -76,7 +76,7 @@ export function rowSignature(page, text) {
 
 /** The captions of every visible dialog, outermost first. */
 export function dialogCaptions(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+  return page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
     .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim())).catch(() => []);
 }
 
@@ -91,7 +91,7 @@ export async function clickButton(page, label) {
       const twice = s.match(/^(.+) \1$/);
       if (twice) return twice[1];
       return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const matches = [...scope.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0 && !b.disabled
       && !b.classList.contains('disabled')
@@ -120,10 +120,10 @@ export async function clickButton(page, label) {
 export async function fillField(page, label, text) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const boxes = [...scope.querySelectorAll('input[type="text"], input[type="password"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'));
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'));
     const want = wanted === null ? null : (Array.isArray(wanted) ? wanted : [wanted]);
     const el = want
       ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)))
@@ -142,21 +142,21 @@ export async function fillField(page, label, text) {
 
 /**
  * Click the tick box labelled `label`: the one inside the FormGroup of that label, or a
- * `CustomCheckBox` that carries the label itself (`.SimpleTickBox` with its own `.form-label`, in a
+ * `CustomCheckBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
  * FormGroup with none, as Node Group's "Enabled" is). GWT renders a tick box as a div, not as a
  * bare checkbox (the CustomCheckBox's input is hidden), so the click has to land on the div.
  */
 export async function clickTickBox(page, label) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
-    const el = tick?.querySelector('.checkmark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
+    const tick = group?.querySelector('.tick-box') ?? own;
+    const el = tick?.querySelector('.tick-box__mark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
     if (!el || !(el.offsetWidth > 0)) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -173,16 +173,16 @@ export async function clickTickBox(page, label) {
 export async function readTick(page, label) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
+    const tick = group?.querySelector('.tick-box') ?? own;
     if (!tick) return null;
     const input = tick.querySelector('input[type="checkbox"]');
-    return input ? input.checked : /\btickBox-tick\b/.test(tick.className);
+    return input ? input.checked : tick.getAttribute('aria-checked') === 'true';
   }, [label]).catch(() => null);
 }
 
@@ -190,17 +190,17 @@ export async function readTick(page, label) {
 export async function selectRow(page, text) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
-    const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const row = [...(grid?.querySelectorAll('tbody tr, [role=row][data-row]') ?? [])]
       .find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     // A cell with a link or a tick box consumes the click; prefer a plain one. And one WITH TEXT, as
     // the walker's `select-row` does: a query result's first column is blank, and a click there left
     // the row unselected, so the Annotate menu had no annotation ids and offered no Change Status.
     const cells = [...row.querySelectorAll('td, [role=gridcell]')]
-      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, [role=button], svg'));
+      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, [role=button], svg'));
     const cell = cells.find((c) => n(c.textContent)) ?? cells[0] ?? row;
     // A row below the grid's fold is measured off-screen, and the click landed on nothing.
     cell.scrollIntoView({ block: 'center' });
@@ -245,7 +245,8 @@ export async function openScreen(page, { clickMenuItem, settle }, group, leaf) {
  * `spec` describes ONE thing that can be created, edited and deleted through the UI:
  *
  *   { name, menu: [group, leaf], nameField, seed, edited,
- *     create: 'New', edit: 'Edit', remove: 'Delete', confirm: true,
+ *     create: 'New Node Group', edit: 'Edit Selected Node Group', remove: 'Delete Selected Node Group',
+ *     confirm: true,
  *     writes: [{ method: 'POST', path: /\/api\/node\/nodeGroup\// }, …] }
  *
  * Returns a record: every phase with `ok` and why, whether the row leaked, and the writes the guard
@@ -380,7 +381,7 @@ export async function runCycle(page, spec, { guard, settle, log = () => {} }) {
       if (!(await pick(spec.seed))) throw new Error('could not select the new row');
       await settle(600);
       // Some screens interpolate the ROW's name into the button: User Groups offers
-      // `Edit group 'Administrators'`, not `Edit`. So a spec may give a function of the name.
+      // `Edit Group 'Administrators'`, not `Edit`. So a spec may give a function of the name.
       const editLabel = typeof spec.edit === 'function' ? spec.edit(spec.seed) : (spec.edit ?? 'Edit');
       if (!(await clickButton(page, editLabel))) throw new Error(`no "${editLabel}" button (is it disabled without a selection?)`);
       await settle(1000);
@@ -521,11 +522,11 @@ export async function runCycle(page, spec, { guard, settle, log = () => {} }) {
 export function readField(page, label) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const want = Array.isArray(wanted) ? wanted : [wanted];
     const el = [...scope.querySelectorAll('input[type="text"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'))
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'))
       .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)));
     return el ? String(el.value ?? '') : null;
   }, [label]).catch(() => null);
@@ -700,10 +701,10 @@ export async function runEditCycle(page, spec, { guard, settle, log = () => {} }
  */
 export function gridFilter(page) {
   return page.evaluate(() => {
-    const grid = [...document.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...document.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
     const g = grid.getBoundingClientRect();
-    const boxes = [...document.querySelectorAll('.quickFilter-textBox')].filter((e) => e.offsetWidth > 0);
+    const boxes = [...document.querySelectorAll('.quick-filter__input')].filter((e) => e.offsetWidth > 0);
     const mine = boxes
       .map((e) => ({ e, r: e.getBoundingClientRect() }))
       .filter(({ r }) => r.x + r.width > g.x && r.x < g.x + g.width && r.y <= g.y)
@@ -842,8 +843,8 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       await settle(600);
       if (!(await dialogCaptions(page)).length) throw new Error('New opened no dialog');
       // The name box is the full-width one that is not the folder picker's quick filter.
-      const nameBox = page.locator('.resizableDialog-popup, .dialog-popup').last()
-        .locator('input.gwt-TextBox.w-100:not(.quickFilter-textBox)').first();
+      const nameBox = page.locator('.dialog').last()
+        .locator('input.text-field.w-100:not(.quick-filter__input)').first();
       await nameBox.fill(spec.seed, { timeout: 10_000 });
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the New dialog');
       await settle(2000);
@@ -881,7 +882,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('Rename opened no dialog');
       if (!(await fillField(page, null, spec.edited)) && !(await fillField(page, 'Name', spec.edited))) {
         // A pre-filled box: fillField(null) wants an empty one, so take the dialog's only text box.
-        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.gwt-TextBox').first();
+        const box = page.locator('.dialog').last().locator('input.text-field').first();
         await box.fill(spec.edited, { timeout: 5_000 });
       }
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the Rename dialog');
@@ -947,13 +948,13 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
  * listens for mousedown, not click. Returns the text the box shows afterwards.
  */
 export async function chooseInSelectionBox(page, label, item, settle) {
-  const scope = page.locator('.dialog-popup, .resizableDialog-popup').last();
+  const scope = page.locator('.dialog').last();
   const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
-  await group.locator('.SelectionBox .svgIconBox-icon-outer').first().click({ timeout: 5_000 });
+  await group.locator('.selection-box .svg-icon-box__icon').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const row = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+    const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
       .find((e) => e.offsetWidth > 0 && n(e.textContent) === wanted);
     if (!row) return null;
     const r = row.getBoundingClientRect();
@@ -967,7 +968,7 @@ export async function chooseInSelectionBox(page, label, item, settle) {
   await page.mouse.down();
   await page.mouse.up();
   await settle(400);
-  return (await group.locator('.SelectionBox-renderBox').first().textContent()).replace(/\s+/g, ' ').trim();
+  return (await group.locator('.selection-box__value').first().textContent()).replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -979,17 +980,17 @@ export async function chooseInSelectionBox(page, label, item, settle) {
 export function readGridRow(page, text) {
   return page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
-    const heads = [...grid.querySelectorAll('thead th')].map((h) => n(h.textContent).replace(/\s\d+$/, ''));
-    const row = [...grid.querySelectorAll('tbody tr')].find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
+    const heads = [...grid.querySelectorAll('thead th, [role=columnheader]')].map((h) => n(h.textContent).replace(/\s\d+$/, ''));
+    const row = [...grid.querySelectorAll('tbody tr, [role=row][data-row]')].find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     const said = (c) => n([...c.querySelectorAll('*:not(svg):not(svg *)')].filter((e) => !e.children.length)
       .map((e) => e.textContent).join(' '))
       || [...c.querySelectorAll('[title]:not(svg *)')].map((e) => n(e.getAttribute('title'))).filter(Boolean).join(', ');
-    return Object.fromEntries([...row.querySelectorAll('td')].map((c, i) => [heads[i] ?? `#${i}`, said(c)]));
+    return Object.fromEntries([...row.querySelectorAll('td, [role=gridcell]')].map((c, i) => [heads[i] ?? `#${i}`, said(c)]));
   }, text).catch(() => null);
 }
 
@@ -1049,9 +1050,9 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
     if (!(await clickButton(page, 'Set Document Create Permissions'))) throw new Error('no "Set Document Create Permissions" button');
     await settle(1500);
     await caption(page, 'Set Document Create Permissions');
-    const row = page.locator('.dialog-popup, .resizableDialog-popup').last().locator('tbody tr')
-      .filter({ has: page.locator('td:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
-    await row.locator('.tickBox').first().click({ timeout: 5_000 });
+    const row = page.locator('.dialog').last().locator('[role=row][data-row]')
+      .filter({ has: page.locator('[role=gridcell]:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
+    await row.locator('.tick-box--cell').first().click({ timeout: 5_000 });
     await settle(400);
     if (!(await clickButton(page, 'OK'))) throw new Error('no OK in "Set Document Create Permissions"');
     await closed(ctx, 'the create permission change');
@@ -1069,7 +1070,7 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
   };
   return [
     ['open its Permissions', async (ctx) => {
-      await ctx.menuPath(ctx.name, ['Permissions']);
+      await ctx.menuPath(ctx.name, ['Edit Permissions']);
       await ctx.settle(1500);
       const row = await readBack(ctx);
       if (row['Explicit Permission'] !== from) throw new Error(`"${user}" starts as "${row['Explicit Permission']}", not "${from}"`);
@@ -1090,9 +1091,9 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
  * back to "never had a status", and each change adds history, so the cycle makes an annotation of
  * its own and deletes it rather than changing the seeded one:
  *
- *     Create Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
+ *     New Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
  *     -> `from "Annotations"` -> select its row -> Change Status -> re-run, read the status
- *     -> Change Assigned To (Assign Yourself) -> re-run, read the assignee
+ *     -> Change Assignee (Assign Yourself) -> re-run, read the assignee
  *     -> Delete Annotation in its editor -> re-run, read it absent
  *
  * `spec.query` names any Query document: its text is replaced in the browser and never saved.
@@ -1152,7 +1153,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
   const annotate = async (item) => {
     if (!(await selectRow(page, `${id}${title}`))) throw new Error(`no row for annotation #${id}`);
     await settle(500);
-    if (!(await clickButton(page, 'Annotate'))) throw new Error('no Annotate button');
+    if (!(await clickButton(page, 'Annotate Selected Rows'))) throw new Error('no Annotate Selected Rows button');
     await settle(800);
     if (!(await clickMenuItem(page, item))) throw new Error(`no "${item}" in the Annotate menu — is the row selected?`);
     await settle(1500);
@@ -1174,15 +1175,15 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     })) return rec;
 
     const allowedBefore = (guard.allowed ?? []).length;
-    const madeIt = await phase('create an annotation on an event (Create Annotation)', async () => {
+    const madeIt = await phase('create an annotation on an event (New Annotation)', async () => {
       await runQuery(spec.eventQuery);
       const first = (await readRows(page))[0];
       if (!first) throw new Error(`"${spec.eventQuery}" returned no rows`);
       if (!(await selectRow(page, first))) throw new Error('could not select the first event row');
       await settle(500);
-      if (!(await clickButton(page, 'Annotate'))) throw new Error('no Annotate button');
+      if (!(await clickButton(page, 'Annotate Selected Rows'))) throw new Error('no Annotate Selected Rows button');
       await settle(800);
-      if (!(await clickMenuItem(page, 'Create Annotation'))) throw new Error('no "Create Annotation" in the Annotate menu');
+      if (!(await clickMenuItem(page, 'New Annotation'))) throw new Error('no "New Annotation" in the Annotate menu');
       await settle(3000);
       const said = await alertText();
       if (said) throw new Error(`the create was refused: "${String(said).slice(0, 300)}"`);
@@ -1203,7 +1204,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
 
     if (!await phase(`change it to ${spec.status} (Change Status)`, async () => {
       await annotate('Change Status');
-      const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+      const dlg = page.locator('.dialog').last();
       await dlg.locator('.annotationSettingHeading').first().click({ timeout: 5_000 });
       await settle(1000);
       // The chooser is a popup of its own, not inside the dialog.
@@ -1218,9 +1219,9 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${spec.status}" after re-running the query`;
     })) return rec;
 
-    await phase('change it to assigned to me (Change Assigned To)', async () => {
-      await annotate('Change Assigned To');
-      const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+    await phase('change it to assigned to me (Change Assignee)', async () => {
+      await annotate('Change Assignee');
+      const dlg = page.locator('.dialog').last();
       await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
       await settle(600);
       const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
@@ -1243,7 +1244,8 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await runQuery(annotationsQuery);
       await annotate('Edit Annotation');
       await toTab(new RegExp(`#${id} `));
-      return page.locator('.annotationHistoryText').filter({ visible: true }).first().inputValue({ timeout: 5_000 });
+      // The history as shown (it has no hidden copy of its text since gchq/stroom#5897)
+      return page.locator('.annotationHistoryContainer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
     };
     if (spec.comment && await phase('add a comment', async () => {
       if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {
@@ -1261,7 +1263,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${comment}" in the history after reopening the editor`;
     })) {
       await phase('change the comment (Edit Comment)', async () => {
-        // A MOUSEDOWN on the entry opens its Edit Entry / Delete Entry menu (showEntryEditMenu);
+        // A MOUSEDOWN on the entry opens its Edit Comment / Delete Entry menu (showEntryEditMenu);
         // COMMENT is entry type 4.
         const box = await page.evaluate(() => {
           const el = [...document.querySelectorAll('[entryType="4"]')].find((e) => e.offsetWidth > 0);
@@ -1275,12 +1277,12 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
         await page.mouse.down();
         await page.mouse.up();
         await settle(600);
-        if (!(await clickMenuItem(page, 'Edit Entry'))) throw new Error('no "Edit Entry" in the entry\'s menu');
+        if (!(await clickMenuItem(page, 'Edit Comment'))) throw new Error('no "Edit Comment" in the entry\'s menu');
         await settle(1200);
         // The dialog's text is an Ace editor (CommentEditPresenter's editorPresenter), whose textarea
         // is only Ace's input catcher; and the query's own Ace editor is on the page behind it.
         const ace = (value) => page.evaluate((v) => {
-          const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+          const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
           const el = popups[popups.length - 1]?.querySelector('.ace_editor');
           const ed = el && (window.ace?.edit ? window.ace.edit(el) : el.env?.editor);
           if (!ed) return null;
@@ -1406,9 +1408,9 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   /** TICK the row: a stream grid's batch buttons follow its tick boxes, not the row selection. */
   const tick = async () => {
     const box = await page.evaluate((text) => {
-      const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]')]
+      const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
         .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
-      const t = row?.querySelector('.tickBox');
+      const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
       t.scrollIntoView({ block: 'center' });
       const r = t.getBoundingClientRect();
@@ -1431,7 +1433,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     const allowedBefore = (guard.allowed ?? []).length;
     const done = await phase('delete the stream (Confirm Delete)', async () => {
       await tick();
-      await press('Delete');
+      await press('Delete Selected Streams');
       await okIn('Confirm');
       await okIn('Confirm Delete');
       const text = await said();
@@ -1452,12 +1454,14 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     if (deleted) {
       const back = await phase('restore it (Confirm Restore, compensation)', async () => {
         await open();
-        if (!(await clickButton(page, 'Filter'))) throw new Error('no Filter button');
+        if (!(await clickButton(page, 'Filter Streams'))) throw new Error('no Filter Streams button');
         await settle(1200);
-        const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+        const dlg = page.locator('.dialog').last();
         await dlg.getByText('Status = Unlocked', { exact: true }).click({ timeout: 5_000 });
         await settle(400);
-        if (!(await clickButton(page, 'Disable'))) throw new Error('no Disable for the Status term');
+        if (!(await clickButton(page, 'Disable Selected Expression Item'))) {
+          throw new Error('no Disable Selected Expression Item for the Status term');
+        }
         await settle(400);
         await okIn('Filter Streams');
         // "You are setting advanced filters! ..."
@@ -1465,7 +1469,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
         await settle(1500);
         if (!(await shown())) throw new Error(`the deleted row holding "${spec.row}" is not listed with the Status term off`);
         await tick();
-        await press('Restore');
+        await press('Restore Selected Streams');
         await okIn('Confirm');
         await okIn('Confirm Restore');
         const text = await said();
@@ -1498,12 +1502,17 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
  * group's reopened dialog, then delete it and read it gone. The group is new and no feed or index
  * uses it, so Stroom writes nothing to the volume; `path` should be a scratch directory.
  *
- * `fields` are any other boxes the Add Volume dialog needs filled (an index volume's "Node").
+ * `fields` are any other boxes the new volume's dialog needs filled (an index volume's "Node").
+ *
+ * `labels` names the buttons, which say what they act on: `{ editGroup, newVolume, deleteVolume }`,
+ * e.g. "Edit Selected Data Volume Group", "New Data Volume", "Delete Selected Data Volumes". The
+ * dialog `newVolume` opens is captioned the same as the button (e.g. "New Data Volume").
  */
-export function volumeSteps({ path, fields = {} }) {
+export function volumeSteps({ path, fields = {}, labels }) {
+  const { editGroup, newVolume, deleteVolume } = labels;
   /** The top dialog's grid rows as text. */
   const dialogRows = (page) => page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
     return top ? [...top.querySelectorAll('tbody tr, [role=row]')].filter((r) => r.offsetWidth > 0)
       .map((r) => r.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean) : [];
@@ -1512,7 +1521,7 @@ export function volumeSteps({ path, fields = {} }) {
     await closeAnyDialogs(page, settle);
     if (!(await pick(name))) throw new Error(`could not select "${name}"`);
     await settle(400);
-    if (!(await clickButton(page, 'Edit'))) throw new Error('no Edit for the group');
+    if (!(await clickButton(page, editGroup))) throw new Error(`no "${editGroup}" for the group`);
     await settle(1500);
     if (!(await dialogCaptions(page)).length) throw new Error('the group\'s dialog did not open');
   };
@@ -1528,20 +1537,20 @@ export function volumeSteps({ path, fields = {} }) {
     return rows.some((r) => r.includes(path));
   };
   return [
-    [`add a volume at the scratch path (Add Volume)`, async (ctx) => {
+    [`add a volume at the scratch path (${newVolume})`, async (ctx) => {
       const { page, settle } = ctx;
       await openGroup(ctx);
-      if (!(await clickButton(page, 'New'))) throw new Error('no New in the group\'s dialog');
+      if (!(await clickButton(page, newVolume))) throw new Error(`no "${newVolume}" in the group's dialog`);
       await settle(1500);
       const top = (await dialogCaptions(page)).at(-1);
-      if (top !== 'Add Volume') throw new Error(`expected "Add Volume", found [${(await dialogCaptions(page)).join(', ')}]`);
+      if (top !== newVolume) throw new Error(`expected "${newVolume}", found [${(await dialogCaptions(page)).join(', ')}]`);
       // `{ choose }` is a selection box (an index volume's Node), anything else is typed.
       for (const [label, value] of Object.entries(fields)) {
         if (value?.choose) await chooseInSelectionBox(page, label, value.choose, settle);
-        else if (!(await fillField(page, label, value))) throw new Error(`no "${label}" box in Add Volume`);
+        else if (!(await fillField(page, label, value))) throw new Error(`no "${label}" box in ${newVolume}`);
       }
-      if (!(await fillField(page, 'Path', path))) throw new Error('no "Path" box in Add Volume');
-      if (!(await clickButton(page, 'OK'))) throw new Error('no OK in Add Volume');
+      if (!(await fillField(page, 'Path', path))) throw new Error(`no "Path" box in ${newVolume}`);
+      if (!(await clickButton(page, 'OK'))) throw new Error(`no OK in ${newVolume}`);
       await settle(2000);
       // A path that does not exist yet is a warning to confirm, not an error.
       if ((await dialogCaptions(page)).at(-1) === 'Confirm') {
@@ -1551,9 +1560,9 @@ export function volumeSteps({ path, fields = {} }) {
         ctx.warned = said;
       }
       const now = await dialogCaptions(page);
-      if (now.includes('Add Volume') || now.some((c) => /alert/i.test(c))) {
+      if (now.includes(newVolume) || now.some((c) => /alert/i.test(c))) {
         const said = (await readTopDialogBody(page))?.text ?? '';
-        throw new Error(`Add Volume did not close: [${now.join(', ')}] ${said.slice(0, 300)}`);
+        throw new Error(`${newVolume} did not close: [${now.join(', ')}] ${said.slice(0, 300)}`);
       }
       await closeGroup(page, settle);
       if (!(await listed(ctx))) throw new Error(`"${path}" is not in the group's volumes after reopening it`);
@@ -1563,7 +1572,7 @@ export function volumeSteps({ path, fields = {} }) {
       const { page, settle } = ctx;
       await openGroup(ctx);
       const box = await page.evaluate((p) => {
-        const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+        const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
         const row = [...popups[popups.length - 1].querySelectorAll('tbody tr, [role=row]')]
           .find((r) => r.offsetWidth > 0 && r.textContent.includes(p));
         const cell = row && [...row.querySelectorAll('td, [role=gridcell]')].find((c) => c.textContent.trim());
@@ -1574,7 +1583,7 @@ export function volumeSteps({ path, fields = {} }) {
       if (!box) { await closeGroup(page, settle); return 'no volume at the scratch path to delete'; }
       await page.mouse.click(box.x, box.y);
       await settle(600);
-      if (!(await clickButton(page, 'Delete'))) throw new Error('no enabled Delete for the volume');
+      if (!(await clickButton(page, deleteVolume))) throw new Error(`no enabled "${deleteVolume}" for the volume`);
       await settle(800);
       // "Are you sure you want to delete the selected volume?"
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the confirm');
@@ -1621,18 +1630,21 @@ export async function runProcessorBatchCycle(page, spec, { guard, settle, log = 
   };
   /** The filter rows' Enabled: a filter row is the one with a Run As User; its tick box is the state. */
   const enabled = () => page.evaluate(() => {
-    const g = [...document.querySelectorAll('.dataGridWidget')].find((e) => e.offsetWidth > 0);
+    const g = [...document.querySelectorAll('.data-grid')].find((e) => e.offsetWidth > 0);
     if (!g) return null;
-    const heads = [...g.querySelectorAll('thead th')].map((t) => t.textContent.trim());
+    const heads = [...g.querySelectorAll('[role=columnheader]')].map((t) => t.textContent.trim());
     const at = (h) => heads.indexOf(h);
-    return [...g.querySelectorAll('tbody tr')].filter((r) => r.offsetWidth > 0)
-      .map((r) => [...r.querySelectorAll('td')])
+    return [...g.querySelectorAll('[role=row][data-row]')].filter((r) => r.offsetWidth > 0)
+      .map((r) => [...r.querySelectorAll('[role=gridcell]')])
       .filter((tds) => tds[at('Run As User')]?.textContent.trim())
-      .map((tds) => tds[at('Enabled')]?.querySelector('.tickBox')?.classList.contains('tickBox-tick') ?? null);
+      .map((tds) => {
+        const tick = tds[at('Enabled')]?.querySelector('.tick-box--cell');
+        return tick ? tick.getAttribute('aria-checked') === 'true' : null;
+      });
   });
   /** Choose a change in the batch dialog and see it through its Confirm and its info Alert. */
   const batch = async (change) => {
-    if (!(await clickButton(page, 'Batch Edit Current Processors'))) throw new Error('no "Batch Edit Current Processors" button');
+    if (!(await clickButton(page, 'Batch Edit Filtered Processors'))) throw new Error('no "Batch Edit Filtered Processors" button');
     await settle(2000);
     if ((await dialogCaptions(page)).at(-1) !== 'Batch Change All Filtered Processors') {
       throw new Error(`no batch dialog: [${(await dialogCaptions(page)).join(', ')}]`);

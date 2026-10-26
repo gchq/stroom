@@ -176,12 +176,12 @@ test('checks: inline feedback is new text, or a box newly marked invalid', () =>
 });
 
 test('checks: the Filter rule applies only to a dialog that filters', () => {
-  assert.equal(isFilterAction('Filter'), true);
-  assert.equal(isFilterAction('Filter Documents To Apply Permissions Changes On'), true);
-  // `Add XPath Filter` adds a row by design — accusing it of growing the grid was a scoping bug.
-  assert.equal(isFilterAction('Add XPath Filter'), false);
+  assert.equal(isFilterAction('Filter Streams'), true);
+  assert.equal(isFilterAction('Filter Documents to Apply Permission Changes To'), true);
+  // `New XPath Filter` adds a row by design — accusing it of growing the grid was a scoping bug.
+  assert.equal(isFilterAction('New XPath Filter'), false);
   assert.equal(isFilterAction('Manage Step Filters'), false);
-  assert.equal(isFilterAction('New Field'), false);
+  assert.equal(isFilterAction('New Index Field'), false);
 });
 
 test('dirty: Save is the document\'s flag, and silence is not a defect', () => {
@@ -199,10 +199,12 @@ test('dirty: Save is the document\'s flag, and silence is not a defect', () => {
 
 test('checks: only a pair that undoes itself is a toggle round-trip', () => {
   assert.equal(togglesRoundTrip('Ask Stroom AI'), true);
-  assert.equal(togglesRoundTrip('Turn Auto Refresh On'), true);
-  // Both are absolute: Collapse All closes folders that were open before Expand All ran.
-  assert.equal(togglesRoundTrip('Expand All'), false);
-  assert.equal(togglesRoundTrip('Collapse All'), false);
+  assert.equal(togglesRoundTrip('Auto Refresh'), true);
+  // Both are absolute: Collapse All Folders closes folders that were open before Expand All Folders ran.
+  assert.equal(togglesRoundTrip('Expand All Folders'), false);
+  assert.equal(togglesRoundTrip('Collapse All Folders'), false);
+  assert.equal(togglesRoundTrip('Expand All Tasks'), false);
+  assert.equal(togglesRoundTrip('Collapse All Results'), false);
 });
 
 // ── The mouse gestures (lib/mouse.mjs) ──────────────────────────────────────
@@ -375,6 +377,10 @@ test('places: a node is matched across runs whatever route reached it', async ()
   assert.equal(
     placeOf('dialog / Navigation / Locate Current Item / Main Menu / Navigation / Save Tab Session'),
     placeOf('dialog / Navigation / Locate Current Item / Main Menu / Administration / after Data Volumes / after Ask Stroom AI / Show Menu / Navigation / Save Tab Session'));
+  // The AI dock's menu button has been `Show Main Menu` since #5406; a hop either way.
+  assert.equal(
+    placeOf('dialog / Navigation / Locate Current Item / Main Menu / Navigation / Save Tab Session'),
+    placeOf('dialog / Navigation / Locate Current Item / Main Menu / Administration / after Data Volumes / after Ask Stroom AI / Show Main Menu / Navigation / Save Tab Session'));
   // The area or document is kept: the same dialog in another document is another place.
   assert.notEqual(
     placeOf('dialog / PlanB (document) / Settings / Main Menu / Administration / after Data Volumes / New'),

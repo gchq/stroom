@@ -60,6 +60,8 @@ public final class DocumentationEditorStories {
 
     // Stroom's Ace editor has a text area with the class ace_text-input too
     private static final String ACE_INPUT = ".ace_text-input";
+    // The Help with Documentation button's name, which says that it opens a new browser tab
+    private static final String HELP_BUTTON = "Help with Documentation (opens in new tab)";
 
     private DocumentationEditorStories() {
         // Static utility
@@ -76,19 +78,22 @@ public final class DocumentationEditorStories {
                     // GWT tabs: Documentation (default-selected) and Permissions
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Documentation")).toBeInTheDocument());
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
-                    // The toolbar carries Save / Save As / Download; Save starts disabled
+                    // The toolbar carries Save / Save As / Download Documentation; Save starts disabled
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", "Save As")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Download Documentation")).toBeInTheDocument();
                     // A non-blank document loads in preview mode, the preview being an iframe
                     play.waitFor(() -> play.expect(play.querySelector(PREVIEW)).toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
                 })
-                // The markdown Edit/Help buttons are on the editor's toolbar (HasToolbar); Edit
-                // toggles into the edit view (an Ace editor) and is marked 'on'
+                // The markdown Edit Documentation / Help with Documentation buttons are on the
+                // editor's toolbar (HasToolbar); Edit Documentation toggles into the edit view (an
+                // Ace editor) and is marked 'on'. Help opens the docs in a new browser tab, which its
+                // name says
                 .story("EditModeToggle", context -> render(context, false))
                 .withPlay(play -> {
-                    final Query edit = play.findByRole("button", "Edit");
+                    final Query edit = play.findByRole("button", "Edit Documentation");
+                    play.expect(play.getByRole("button", HELP_BUTTON)).toBeInTheDocument();
                     // Loads in preview mode (non-blank body): no Ace editor, Edit not pressed
                     play.expect(edit).toHaveAttribute("aria-pressed", "false");
                     play.expect(play.querySelector(ACE_INPUT)).toBeNull();
@@ -101,11 +106,11 @@ public final class DocumentationEditorStories {
                 // (getDocumentButtons() is empty) and Save is retitled
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
-                    play.findByRole("button", "Save is not available as this document is read only");
+                    play.findByRole("button", "Save (read only)");
                     play.waitFor(() -> play.expect(play.querySelector(PREVIEW)).toBeInTheDocument());
-                    play.expect(play.queryByRole("button", "Edit")).toBeNull();
-                    play.expect(play.queryByRole("button", "Documentation help")).toBeNull();
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.queryByRole("button", "Edit Documentation")).toBeNull();
+                    play.expect(play.queryByRole("button", HELP_BUTTON)).toBeNull();
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });

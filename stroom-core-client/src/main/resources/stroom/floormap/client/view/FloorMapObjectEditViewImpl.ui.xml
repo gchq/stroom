@@ -19,7 +19,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
-             xmlns:colour="urn:import:stroom.widget.colour.client">
+             xmlns:colour="urn:import:stroom.widget.colour.client"
+             xmlns:t="urn:import:stroom.widget.tickbox.client.view">
 
     <ui:style>
         .matrixBox {
@@ -49,7 +50,7 @@
                     <g:TextBox ui:field="nameBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
-                <form:FormGroup label="Type" identity="floorMapObjectType">
+                <form:FormGroup label="Type" required="true" identity="floorMapObjectType">
                     <form:HelpHTML>
                         <p>The object's <strong>type</strong> — for example <code>gate</code>,
                             <code>camera</code> or <code>person</code>. The type drives the paint
@@ -79,7 +80,7 @@
                             this area its own colour.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="fillRow" addStyleNames="dock-container-horizontal align-center">
-                        <g:CheckBox ui:field="fillDefaultCheck" text="Default" addStyleNames="{style.fillDefault}" />
+                        <t:CustomCheckBox ui:field="fillDefaultCheck" label="Default" addStyleNames="{style.fillDefault}"/>
                         <colour:ColourBox ui:field="fillBox" />
                     </g:FlowPanel>
                 </form:FormGroup>

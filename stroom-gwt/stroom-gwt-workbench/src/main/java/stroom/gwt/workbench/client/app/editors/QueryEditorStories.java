@@ -194,6 +194,14 @@ public final class QueryEditorStories {
     // The text of a query help item
     private static final String HELP_ITEM = ".selectionItemCell-text";
 
+    // The help detail of 'count' (as JSON string content), ending with the link to its
+    // documentation that Stroom's server adds (Functions), which says it opens a new tab
+    private static final String COUNT_HELP = "# count\\n\\nHelp for **count**.\\n\\n"
+            + "For more information see the <a href=\\\"https://gchq.github.io/stroom-docs/7.13/docs/"
+            + "reference-section/expressions/aggregate#count\\\" target=\\\"_blank\\\" "
+            + "rel=\\\"noopener noreferrer\\\">count documentation"
+            + "<span class=\\\"sr-only\\\"> (opens in new tab)</span></a>.";
+
     private static final String FIND_TAGS_PATH = "/annotation/v1/findAnnotationTags";
     private static final String BATCH_CHANGE_PATH = "/annotation/v1/batchChange";
 
@@ -211,7 +219,7 @@ public final class QueryEditorStories {
               "defaultDestinationFeed": {"type": "Feed", "uuid": "feed-dst", "name": "DEST_FEED"},
               "defaultNode": "node1"}""");
 
-    // Create Rule / Create Report: the query's explorer node, the validation, and the new
+    // Create Analytic Rule / Create Report: the query's explorer node, the validation, and the new
     // document, fetched and written (echoed)
     private static RestFixtures.Builder createRoutes(final boolean groupBy) {
         return RestFixtures.builder()
@@ -285,6 +293,14 @@ public final class QueryEditorStories {
             RestReply.json(nameTable(
                     "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data}")));
 
+    // Links followed from the keyboard: a link to stream 1001, one with no text to stream 1002, and
+    // one whose text is its URL, each beside a note
+    private static final RestFixtures KEYBOARD_LINK_FIXTURES = fixtures(RestFixtures.builder(),
+            RestReply.json(linkTable(
+                    "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "first",
+                    "[](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second",
+                    "[https://example.com/docs/](https://example.com/docs/){browser}", "third")));
+
     // Visualisation: a vis result as well as the table, and the visualisation document
     private static final String VIS_SETTINGS =
             "{\"json\": \"{}\", \"visualisation\": {\"type\": \"Visualisation\", \"uuid\": \"vis-1\", "
@@ -323,7 +339,7 @@ public final class QueryEditorStories {
                         play.waitFor(() -> play.expect(DocumentEditors.tab(play, label)).toBeInTheDocument());
                     }
                     play.expect(play.findByRole("button", "Execute Query")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Create Rule")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Create Analytic Rule")).toBeInTheDocument();
                     play.expect(play.getByText("All time")).toBeInTheDocument();
                     // Stroom shows an empty table, with no message, so the check is that it has no
                     // rows
@@ -349,31 +365,76 @@ public final class QueryEditorStories {
                     execute(play);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
                             .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
-                    play.click(play.querySelector(".timeRange-selector"));
-                    // The popup is a GWT PopupPanel on the page's body
-                    play.waitFor(() -> play.expect(screen.querySelector(".timeRange-popup")).toBeInTheDocument());
-                    final Play popup = screen.within(screen.querySelector(".timeRange-popup"));
-                    play.click(popup.getByText("Today"));
+                    play.click(screen.getByRole("button", "Time range: All time"));
+                    final Play popup = screen.within(screen.findByRole("dialog", "Time Range"));
+                    // The quick settings are buttons in groups named by their titles (they were
+                    // labels with click handlers, which the keyboard couldn't reach), pressed here
+                    // with Enter
+                    final Query today = popup.within(popup.getByRole("group", "Present"))
+                            .getByRole("button", "Today");
+                    play.run("focus Today", () -> today.element().get().focus());
+                    play.expect(today).toHaveFocus();
+                    play.keyboard("{Enter}");
                     play.click(popup.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryContext\": {\"timeRange\": {\"name\": \"Today\"}}}");
+                    play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The time range is a button that opens a modal dialog named "Time Range" below it
+                // (it was text acting as a button, opening a popup with no role, name or Escape):
+                // the focus starts in After Time and is kept in the dialog, and Escape cancels it,
+                // putting the focus back on the button
+                .story("TimeRangeDialogKeys", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query selector = screen.findByRole("button", "Time range: All time");
+                    play.expect(selector).toHaveAttribute("aria-haspopup", "dialog");
+                    play.run("focus the time range", () -> selector.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query dialog = screen.findByRole("dialog", "Time Range");
+                    play.expect(dialog).toHaveAttribute("aria-modal", "true");
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "After Time (inclusive)"))
+                            .toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Time Range")).toBeNull());
+                    play.expect(selector).toHaveFocus();
+                    play.expect(screen.getByRole("button", "Time range: All time")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The query help: the root rows load, expanding one loads its children and
-                // selecting a row shows its documentation and enables Insert
+                // selecting a row shows its documentation and enables Insert into Query. The
+                // documentation's link says what it is for and that it opens a new tab, and the
+                // breadcrumb above the rows goes back to the top (gchq/stroom#5406)
                 .story("QueryHelp", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     // The help rows are grid cells, not buttons
                     play.waitFor(() -> play.expect(play.getByText("Functions", HELP_ITEM)).toBeInTheDocument());
                     play.expect(play.getByText("Fields", HELP_ITEM)).toBeInTheDocument();
+                    final Query breadcrumb = play.getByRole("navigation", "Breadcrumb");
+                    play.expect(play.within(breadcrumb).getByText("Help Contents"))
+                            .toHaveAttribute("aria-current", "page");
                     play.click(play.getByText("Functions", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
                     play.click(play.getByText("count", HELP_ITEM));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Insert"))
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Insert into Query"))
                             .not().toHaveAttribute("aria-disabled"));
-                    // The documentation is shown in an iframe, so the check is that it was fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/fetchDetail")
                                     .withJsonBodyContaining("{\"title\": \"count\"}").toSpyMatcher());
+                    // The server's link already says it opens a new tab, and the Markdown
+                    // rendering doesn't say it again
+                    final Query docsLink = play.findByRole("link", "count documentation (opens in new tab)");
+                    play.expect(docsLink).toHaveAttribute("target", "_blank");
+                    play.expect(docsLink).toHaveAttribute("rel", "noopener noreferrer");
+                    // The breadcrumb: the level shown is the current one, those above are buttons
+                    play.expect(play.within(breadcrumb).getByText("Functions"))
+                            .toHaveAttribute("aria-current", "page");
+                    play.click(play.within(breadcrumb).getByRole("button", "Help Contents"));
+                    play.waitFor(() -> play.expect(play.queryByText("count", HELP_ITEM)).toBeNull());
+                    play.expect(play.getByText("Fields", HELP_ITEM)).toBeInTheDocument();
+                    play.expect(play.within(breadcrumb).getByText("Help Contents"))
+                            .toHaveAttribute("aria-current", "page");
+                    play.expect(play.within(breadcrumb).queryByRole("button", "Help Contents")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The query help pages each level: a full page (100 rows) offers the next page
@@ -421,7 +482,7 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.findByText("alpha");
-                    play.click(play.getByRole("button", "Download"));
+                    play.click(play.getByRole("button", "Download Results"));
                     // Stroom's dialogs have no role="dialog"
                     final Play dialog = dialog(screen, "Download Options");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -434,13 +495,13 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalled());
                     DocumentEditors.expectNoProblems(play);
                 })
-                // The column menu's Hide hides the column, searching again with the column marked
+                // The column menu's Hide Column hides the column, searching again with the column marked
                 // as not visible in the table's preferences
                 .story("ColumnMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     executeAndOpenColumnMenu(play, "Count");
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.screen().findByText("Hide", StroomDom.MENU_ITEM_TEXT));
+                    play.click(play.screen().findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
                     // Stroom hides the column at once, without searching again; the preference is
                     // kept on the document, which is now dirty, and is sent with the next search
                     play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
@@ -457,8 +518,9 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Filter 'Count'");
-                    // A modal dialog, named by its title, for screen readers
-                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).toHaveAttribute("aria-modal", "true");
+                    // A dialog named by its title, for screen readers. Not modal, so the results behind
+                    // can be read and copied from while writing the filter (as agreed)
+                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).not().toHaveAttribute("aria-modal");
                     // The filter is an Ace editor, which the dialog focuses once it is shown. That
                     // happens after the dialog appears, so the play waits for it: clicking before it
                     // would let it move the focus after the click
@@ -474,6 +536,11 @@ public final class QueryEditorStories {
                     play.keyboard("foo");
                     play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
                             .toMatch(TextMatch.containing("foo")));
+                    // Escape stops editing, leaving the dialog open, with the editor's content
+                    // focused so Tab can leave it (a second Escape would cancel the dialog)
+                    play.keyboard("{Escape}");
+                    play.expect(dialog.querySelector(".ace_scroller")).toHaveFocus();
+                    play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"columnFilter\": {\"filter\": \"foo\"}}, "
@@ -498,7 +565,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     // The values filter is opened by the filter icon of the column's header
-                    clickHeader(play, play.within(header(play, "Count").closest("th"))
+                    clickHeader(play, play.within(header(play, "Count").closest("th, [data-hcol]"))
                             .querySelector(".column-valueFilterIcon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD)
@@ -521,7 +588,7 @@ public final class QueryEditorStories {
                     play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Format 'Name'");
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
-                    play.click(screen.findByText("Number", ".SelectionPopup *"));
+                    play.click(screen.findByText("Number", ".selection-popup *"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // The play formats 'Name' ('Count' is a Number already, so choosing Number would
                     // change nothing)
@@ -535,10 +602,10 @@ public final class QueryEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     executeAndOpenColumnMenu(play, "Count");
-                    play.click(screen.findByText("Conditional Formatting", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Edit Conditional Formatting for Table", StroomDom.MENU_ITEM_TEXT));
                     // The rules dialog is captioned 'Settings'
                     final Play list = dialog(screen, "Settings");
-                    play.click(list.getByRole("button", "Add"));
+                    play.click(list.getByRole("button", "New Formatting Rule"));
                     final Play rule = dialog(screen, "Add New Rule");
                     play.click(rule.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Add New Rule", StroomDom.DIALOG_TITLE))
@@ -560,6 +627,8 @@ public final class QueryEditorStories {
                     play.expect(link.property("tagName")).toBe("U");
                     // Stroom URL encodes the link in the attribute
                     play.expect(link.attribute("link")).toMatch("https%3A%2F%2Fexample.com");
+                    // It is announced as a link, named by its text
+                    play.expect(play.getByRole("link", "Docs")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // A group row has an expander; expanding it fetches again with the open group
@@ -622,12 +691,12 @@ public final class QueryEditorStories {
                                     .toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
-                // Create Rule: validates the query, chooses STREAMING (not grouped), asks for a new
+                // Create Analytic Rule: validates the query, chooses STREAMING (not grouped), asks for a new
                 // rule, and the new rule is written with the query and the default feeds
                 .story("CreateRule", context -> render(context, CREATE_FIXTURES, CREATE_UI_CONFIG, false,
                         QueryEditorStories::createProbe))
                 .withPlay(play -> {
-                    play.click(play.findByRole("button", "Create Rule"));
+                    play.click(play.findByRole("button", "Create Analytic Rule"));
                     expectCreateRequest(play, "AnalyticRule", "Create New Analytic Rule");
                     play.expect(play.getByTestId("pending-name")).toHaveTextContent("My Query");
                     play.click(play.getByRole("button", "run-seed"));
@@ -642,12 +711,12 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(play.spy(OPEN_DOC)).toHaveBeenCalledWith("new-1"));
                     DocumentEditors.expectNoProblems(play);
                 })
-                // Create Rule with no UI defaults: the rule is still created, with no error feed
+                // Create Analytic Rule with no UI defaults: the rule is still created, with no error feed
                 .story("CreateRuleWithoutDefaults", context -> render(context, CREATE_FIXTURES,
                         EMPTY_DEFAULTS_UI_CONFIG, false,
                         QueryEditorStories::createProbe))
                 .withPlay(play -> {
-                    play.click(play.findByRole("button", "Create Rule"));
+                    play.click(play.findByRole("button", "Create Analytic Rule"));
                     expectCreateRequest(play, "AnalyticRule", "Create New Analytic Rule");
                     play.click(play.getByRole("button", "run-seed"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -673,11 +742,11 @@ public final class QueryEditorStories {
                                     """).toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
-                // A grouped query makes Create Rule choose SCHEDULED_QUERY
+                // A grouped query makes Create Analytic Rule choose SCHEDULED_QUERY
                 .story("CreateRuleGroupBy", context -> render(context, CREATE_GROUP_BY_FIXTURES, CREATE_UI_CONFIG,
                         false, QueryEditorStories::createProbe))
                 .withPlay(play -> {
-                    play.click(play.findByRole("button", "Create Rule"));
+                    play.click(play.findByRole("button", "Create Analytic Rule"));
                     expectCreateRequest(play, "AnalyticRule", "Create New Analytic Rule");
                     play.click(play.getByRole("button", "run-seed"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -694,14 +763,14 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.click(play.findByText("alpha"));
-                    // The actions are in the 'Annotate' button's menu
-                    play.click(play.getByRole("button", "Annotate"));
-                    play.click(screen.findByText("Create Annotation", StroomDom.MENU_ITEM_TEXT));
+                    // The actions are in the 'Annotate Selected Rows' button's menu
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("New Annotation", StroomDom.MENU_ITEM_TEXT));
                     // Stroom fires CreateAnnotationEvent, which Stroom's annotation plugin (not part
                     // of this screen) handles by creating and opening it
                     play.waitFor(() -> play.expect(play.spy(CREATE_ANNOTATION)).toHaveBeenCalledWith("[1001:5]"));
                     play.click(play.getByText("beta"));
-                    play.click(play.getByRole("button", "Annotate"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
                     play.click(screen.findByText("Edit Annotation", StroomDom.MENU_ITEM_TEXT));
                     play.waitFor(() -> play.expect(play.spy(EDIT_ANNOTATION)).toHaveBeenCalledWith("55"));
                     DocumentEditors.expectNoProblems(play);
@@ -715,7 +784,7 @@ public final class QueryEditorStories {
                     play.click(play.findByText("beta"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_TAGS_PATH).toSpyMatcher());
-                    play.click(play.getByRole("button", "Annotate"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
                     play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
                     // The statuses are a chooser in the 'Change Status' dialog
                     final Play dialog = dialog(screen, "Change Status");
@@ -739,8 +808,8 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.click(play.findByText("beta"));
-                    play.click(play.getByRole("button", "Annotate"));
-                    play.click(screen.findByText("Change Assigned To", StroomDom.MENU_ITEM_TEXT));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Change Assigned To");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -749,7 +818,7 @@ public final class QueryEditorStories {
                                     + "\"userRef\": null}}").toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
-                // Add To Annotation: choose an existing annotation, link the row's event to it and
+                // Add to Annotation: choose an existing annotation, link the row's event to it and
                 // open it
                 .story("AddToAnnotation", context -> render(context, ANNOTATION_FIXTURES, null, false, true,
                         QueryEditorStories::findAnnotation))
@@ -757,14 +826,14 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.click(play.findByText("alpha"));
-                    play.click(play.getByRole("button", "Annotate"));
-                    play.click(screen.findByText("Add To Annotation", StroomDom.MENU_ITEM_TEXT));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Add to Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
                     // Stroom doesn't select the first annotation (the list only selects it when the
                     // filter changes), so OK with none selected warns and keeps the chooser open;
                     // the play then selects it
-                    play.expect(dialog.findByText("Existing incident").closest("tr"))
-                            .not().toHaveClass("cellTableSelectedRow");
+                    play.expect(dialog.findByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
@@ -774,8 +843,8 @@ public final class QueryEditorStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
                     play.click(dialog.getByText("Existing incident"));
-                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("tr"))
-                            .toHaveClass("cellTableSelectedRow"));
+                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").withJsonBodyContaining(
@@ -825,6 +894,39 @@ public final class QueryEditorStories {
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A table's links are reached with Tab from their row (only the row with the keyboard
+                // focus has its links in the tab order) and followed with Enter. They were
+                // underlined text that only a mouse could follow. A link with no text is shown,
+                // named for what it opens, rather than dropped; one whose text is its URL is named
+                // by the URL's host and path
+                .story("HyperlinksByKeyboard", context -> render(context, KEYBOARD_LINK_FIXTURES, null, false,
+                        QueryEditorStories::hyperlinks))
+                .withPlay(play -> {
+                    execute(play);
+                    final Query open = play.findByRole("link", "Open");
+                    final Query noText = play.getByRole("link", "Data");
+                    play.expect(noText).toHaveTextContent("Data");
+                    play.expect(play.getByRole("link", "example.com/docs"))
+                            .toHaveTextContent("https://example.com/docs/");
+                    // Pressing a row's text gives the row the focus, and Right goes into its cells: a
+                    // link's cell gives its link the focus (the grid is one tab stop, so no link is
+                    // one)
+                    play.click(play.getByText("first"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.expect(open).toHaveAttribute("tabindex", "0");
+                    play.expect(noText).toHaveAttribute("tabindex", "-1");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
+                    // Down goes to the same cell in the next row, its link
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(noText).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1002:4"));
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // When the query's data source is Annotations, changing an annotation runs a new
                 // search (with no query key), rather than refreshing the old one
                 .story("AnnotationChangeForcesNewSearch", context -> render(context, ANNOTATIONS_DATA_SOURCE_FIXTURES,
@@ -871,7 +973,7 @@ public final class QueryEditorStories {
                 // Read only: Save can never be enabled, but the query can still be run
                 .story("ReadOnly", context -> render(context, FIXTURES, null, true))
                 .withPlay(play -> {
-                    play.expect(play.findByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.findByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", "Execute Query")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
@@ -888,7 +990,7 @@ public final class QueryEditorStories {
                 // The help detail: the row's title as its documentation and insert text
                 .route(RequestMatcher.post("/query/v1/fetchDetail")
                                 .withJsonBodyContaining("{\"title\": \"count\"}"),
-                        RestReply.json("{\"documentation\": \"# count\\n\\nHelp for **count**.\", "
+                        RestReply.json("{\"documentation\": \"" + COUNT_HELP + "\", "
                                        + "\"insertText\": \"count\", \"insertType\": \"PLAIN_TEXT\"}"));
     }
 
@@ -920,6 +1022,20 @@ public final class QueryEditorStories {
         return QueryFixtures.response(true, QueryFixtures.tableResult("table",
                 "[{\"id\": \"f-name\", \"name\": \"Name\", \"visible\": true}]",
                 "[{\"values\": [\"" + value + "\"], \"depth\": 0}]", 1));
+    }
+
+    // A complete search of a table of a 'Name' column and a 'Note' column, given as the values of
+    // each row in turn
+    private static String linkTable(final String... values) {
+        final String[] rows = new String[values.length / 2];
+        for (int i = 0; i < rows.length; i++) {
+            rows[i] = "{\"values\": [\"" + values[i * 2] + "\", \"" + values[i * 2 + 1]
+                      + "\"], \"depth\": 0, \"groupKey\": \"row-" + i + "\"}";
+        }
+        return QueryFixtures.response(true, QueryFixtures.tableResult("table",
+                "[{\"id\": \"f-name\", \"name\": \"Name\", \"visible\": true}, "
+                + "{\"id\": \"f-note\", \"name\": \"Note\", \"visible\": true}]",
+                "[" + String.join(", ", rows) + "]", rows.length));
     }
 
     // A page of help rows field_<from> to field_<from + count - 1> of `total`
@@ -958,14 +1074,17 @@ public final class QueryEditorStories {
     /// buttons once the mouse has moved over it (it attaches a native preview handler after the
     /// move, and drops it when the mouse leaves), so the play moves the mouse over the header,
     /// waits, then presses and releases the button there without moving again (user-event's
-    /// click would move the mouse in from the page's body).
+    /// click would move the mouse in from the page's body). Pointer events go before the mouse
+    /// events, as a browser sends them: the new grid (DataGrid) reads the pointer events.
     ///
     /// @param play   The play.
     /// @param target The part of the header to click, e.g. its label or value filter icon.
     static void clickHeader(final Play play, final Query target) {
         play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
         play.sleep(200);
+        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }
@@ -982,8 +1101,8 @@ public final class QueryEditorStories {
         final Play screen = play.screen();
         execute(play);
         play.click(play.findByText("beta"));
-        play.click(play.getByRole("button", "Annotate"));
-        play.click(screen.findByText("Change Assigned To", StroomDom.MENU_ITEM_TEXT));
+        play.click(play.getByRole("button", "Annotate Selected Rows"));
+        play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
         final Play dialog = dialog(screen, "Change Assigned To");
         play.click(dialog.getByText("Assign Yourself"));
         play.click(dialog.getByRole("button", StroomDom.button("OK")));

@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.DataRetentionFields;
@@ -33,6 +32,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.PagerView;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
@@ -120,6 +120,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         // Set the width of the expander column so that all expanders
         // can be seen.
         dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
+        // Give any width the expander column gave up to the fill columns (the grid has sized its
+        // columns before the first rows), as TreeRowHandler does
+        dataGrid.resizeTableToFitColumns(true);
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }

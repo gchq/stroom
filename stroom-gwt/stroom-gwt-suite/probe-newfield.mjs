@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Why did `New Field` › OK on the Lucene index's Fields tab register as `nothing` — neither closed
+// Why did `New Index Field` › OK on the Lucene index's Fields tab register as `nothing` — neither closed
 // nor alerted? Open it, read the form, press OK, and read what is there afterwards.
 import { chromium } from 'playwright';
 import { gwt } from './compare/adapters/gwt.mjs';
@@ -29,7 +29,7 @@ gwt.baseUrl = BASE;
 await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await gwt.signInFully(page, credentials());
 await closeDialogs(page);
-await page.locator('button[title="Expand All"]').first().click({ timeout: 10000 });
+await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10000 });
 await page.waitForTimeout(2000);
 const first = await page.evaluate(() => [...document.querySelectorAll('.explorerCell')].find((e) => e.querySelector('.explorerCell-icon')?.getAttribute('title') === 'Lucene Index')?.textContent.trim());
 console.log('index:', first);
@@ -39,18 +39,18 @@ await clickEditorTab(page, 'Fields', { nth: 0 });
 await page.waitForTimeout(1500);
 const dump = (label) => page.evaluate((label) => {
   const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
-  const rows = [...document.querySelectorAll('.dataGridWidget tbody tr')].filter((r) => r.offsetHeight > 0 && norm(r.textContent)).map((r) => norm(r.textContent).slice(0, 60));
-  return { label, dialogs: popups.map((p) => norm(p.querySelector('.dialog-titleText')?.textContent)),
+  const rows = [...document.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && norm(r.textContent)).map((r) => norm(r.textContent).slice(0, 60));
+  return { label, dialogs: popups.map((p) => norm(p.querySelector('.dialog__title')?.textContent)),
     inputs: top ? [...top.querySelectorAll('input, select, textarea')].filter((i) => i.offsetWidth > 0).map((i) => `${i.tagName}.${i.className.split(' ')[0]}=${JSON.stringify(i.value)}`) : [],
     buttons: top ? [...top.querySelectorAll('button, .Button')].filter((b) => b.offsetWidth > 0).map((b) => norm(b.textContent || b.title) + (b.disabled ? '(d)' : '')) : [], rows: rows.length, first: rows[0] };
 }, label);
 console.log(JSON.stringify(await dump('at rest')));
-await page.locator('button[title="New Field"]').first().click();
+await page.locator('button[title="New Index Field"]').first().click();
 await page.waitForTimeout(1200);
 console.log(JSON.stringify(await dump('dialog open')));
-const okBox = await page.evaluate(() => { const p = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0).pop(); const b = [...p.querySelectorAll('button, .Button')].find((x) => /^\s*OK\s*(OK)?\s*$/.test(x.textContent)); const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, cls: b.className, tag: b.tagName }; });
+const okBox = await page.evaluate(() => { const p = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0).pop(); const b = [...p.querySelectorAll('button, .Button')].find((x) => /^\s*OK\s*(OK)?\s*$/.test(x.textContent)); const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, cls: b.className, tag: b.tagName }; });
 console.log('OK button', JSON.stringify(okBox));
 await page.mouse.click(okBox.x, okBox.y);
 await page.waitForTimeout(1500);

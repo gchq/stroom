@@ -16,8 +16,6 @@
 
 package stroom.processor.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -25,6 +23,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.inject.Inject;
@@ -40,7 +40,12 @@ import java.util.UUID;
 public class ProfilePeriodListPresenter
         extends MyPresenterWidget<PagerView> {
 
-    private final MyDataGrid<ProfilePeriod> dataGrid;
+    private static final String NEW_TITLE = "New Profile Period";
+    private static final String EDIT_TITLE = "Edit Selected Profile Period";
+    private static final String REMOVE_TITLE = "Remove Selected Profile Period";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
+
+    private final DataGrid<ProfilePeriod> dataGrid;
     private final MultiSelectionModelImpl<ProfilePeriod> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -57,7 +62,9 @@ public class ProfilePeriodListPresenter
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by uuid: an edit replaces the row
+        dataGrid.setKeyProvider(ProfilePeriod::getUuid);
         dataGrid.setTableName("Profile Periods");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -65,11 +72,11 @@ public class ProfilePeriodListPresenter
 
         this.newConcurrencyTimeRangePresenter = newConcurrencyTimeRangePresenter;
 
-        addButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
         view.getToolbar().setName("Profile period actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> onEdit(selectionModel.getSelected()));
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -220,17 +227,14 @@ public class ProfilePeriodListPresenter
 
         final ProfilePeriod selected = selectionModel.getSelected();
 
-        editButton.setEnabled(!readOnly);
+        editButton.setEnabled(!readOnly && selected != null);
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("New period disabled as profile is read only");
-            editButton.setTitle("Edit period disabled as profile is read only");
-            removeButton.setTitle("Remove period disabled as profile is read only");
-        } else {
-            addButton.setTitle("New Period");
-            editButton.setTitle("Edit Period");
-            removeButton.setTitle("Remove Period");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        addButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(REMOVE_TITLE + readOnlySuffix);
     }
 }

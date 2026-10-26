@@ -60,16 +60,15 @@
     @BOOTSTRAP@
   </head>
 
-  <!-- Set this to true to enable the browser's context menu -->
-  <!-- <body class="stroom-body" oncontextmenu="return true;"> -->
-  <body class="stroom-body" oncontextmenu="@ON_CONTEXT_MENU@">
+  <!-- Right-clicks are handled by ContextMenuManager (Shift+right-click for the browser's menu) -->
+  <body class="stroom-body">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
 
     <div id="loading">
 	  <div id="loadingBox">
         <div id="loadingLeft">
-          <div class="spinner-blue" role="status">
+          <div class="busy-spinner busy-spinner--page" role="status">
             <span class="sr-only">Loading...</span>
           </div>
         </div>

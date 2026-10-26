@@ -42,11 +42,27 @@
     overflow-y: auto;
 }
 
+/* A LinkButton that shows and hides the detail, drawn as a link with an arrow that points right
+   while the detail is hidden and down while it is shown */
 .alert-showHide {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--link__text-color);
 }
 
-.alert-showHide a {
-	color: var(--link__text-color) !important;
+.alert-showHide-arrow {
+    width: 0;
+    height: 0;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.4rem solid currentColor;
+    transition: transform 0.1s;
+}
+
+.alert-showHide[aria-expanded="true"] .alert-showHide-arrow {
+    transform: rotate(90deg);
 }
 
 .alert-detail {
@@ -60,6 +76,13 @@
 	background-color: var(--content-box__background-color);
 	color: var(--control__text-color);
 	border-radius: .25rem;
+}
+
+/* It takes the focus, so that the keyboard can scroll it */
+.alert-detail:focus-visible {
+    outline: none;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
 }
 
 .alert-detail-text {

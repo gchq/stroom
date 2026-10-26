@@ -71,6 +71,10 @@ public final class LogoStories {
         final Button logo = new Button();
         logo.setStyleName("navigation-logo");
         logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation-logo-image"));
+        // Out of the tab order and hidden from screen readers, as the Main Menu button beside it in
+        // Stroom does the same
+        logo.getElement().setTabIndex(-2);
+        logo.getElement().setAttribute("aria-hidden", "true");
         return logo;
     }
 

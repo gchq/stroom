@@ -19,9 +19,14 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
+import stroom.floormap.client.presenter.FloorMapEditorPresenter;
+import stroom.floormap.client.presenter.FloorMapInitPresenter;
+import stroom.floormap.client.presenter.FloorMapMapPresenter;
+import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.folder.client.FolderPresenter;
 import stroom.folder.client.FolderRootPresenter;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
@@ -43,6 +48,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
@@ -76,6 +82,7 @@ import com.google.gwt.inject.client.GinModules;
         ElasticClusterScreenModule.class,
         ElasticIndexScreenModule.class,
         FeedScreenModule.class,
+        FloorMapScreenModule.class,
         FolderScreenModule.class,
         GitRepoScreenModule.class,
         HttpScreenModule.class,
@@ -91,6 +98,7 @@ import com.google.gwt.inject.client.GinModules;
         StreamStoreScreenModule.class,
         VisualisationScreenModule.class,
         XMLSchemaScreenModule.class,
+        SqlTemporalStoreScreenModule.class,
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
 
@@ -102,6 +110,21 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return An Elastic Cluster's editor tab, as `ElasticClusterPlugin` creates it.
     ElasticClusterPresenter getElasticClusterPresenter();
+
+    /// @return A Floor Map's 'Editor' tab (the map canvas, its timeline and its Layers panel), as
+    /// `FloorMapPresenter` creates it.
+    FloorMapEditorPresenter getFloorMapEditorPresenter();
+
+    /// @return The dialog that asks for a new Floor Map's facts and events stores, as
+    /// `FloorMapPlugin` creates it (its `DocInitialisationHandler`).
+    FloorMapInitPresenter getFloorMapInitPresenter();
+
+    /// @return A Floor Map's 'Map' tab (the read-only map canvas, its timeline and its Tracking,
+    /// Layers and Groups panels), as `FloorMapPresenter` creates it.
+    FloorMapMapPresenter getFloorMapMapPresenter();
+
+    /// @return A Floor Map's 'Settings' tab, as `FloorMapPresenter` creates it.
+    FloorMapSettingsPresenter getFloorMapSettingsPresenter();
 
     /// @return A Git Repository's editor tab, as `GitRepoPlugin` creates it.
     GitRepoPresenter getGitRepoPresenter();
@@ -118,6 +141,13 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
     DocumentAssetPresenter<VisualisationDoc> getVisualisationAssetsPresenter();
+
+    /// @return A document's asset picker, as a floor map's settings have it, which opens the
+    /// 'Choose Asset' dialog.
+    DocumentAssetDropDownPresenter getDocumentAssetDropDownPresenter();
+
+    /// @return A SQL temporal store's 'Settings' tab (its entry count and Reset Store).
+    SqlTemporalStoreSettingsPresenter getSqlTemporalStoreSettingsPresenter();
 
     // Code documents
 

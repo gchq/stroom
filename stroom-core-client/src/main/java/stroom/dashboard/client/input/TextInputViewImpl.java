@@ -17,6 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -52,6 +53,11 @@ public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> i
     @Override
     public String getValue() {
         return value.getValue();
+    }
+
+    @Override
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(value, name);
     }
 
     @UiHandler("value")

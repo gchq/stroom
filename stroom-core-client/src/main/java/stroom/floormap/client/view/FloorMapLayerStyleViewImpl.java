@@ -25,12 +25,12 @@ import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.colour.client.ColourBox;
+import stroom.widget.form.client.RadioGroup;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -59,7 +59,6 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
     private static final int PREVIEW_SIZE_PX = 32;
 
     /// Shared name grouping the mode radios into one selection.
-    private static final String MODE_GROUP = "floormap-layer-graphic-mode";
 
     /// Applied to whichever of the Shape / Icon / Image rows the mode ignores.
     private static final String DIMMED_ROW_STYLE = "floormap-layer-style-row-dimmed";
@@ -72,9 +71,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
     private static final int ROW_PREVIEW = 5;
 
     private final Grid grid;
-    private final RadioButton shapeMode = new RadioButton(MODE_GROUP, "Shape");
-    private final RadioButton iconMode = new RadioButton(MODE_GROUP, "Icon");
-    private final RadioButton imageMode = new RadioButton(MODE_GROUP, "Image");
+    private final RadioGroup<GraphicMode> modeGroup = new RadioGroup<>();
     private final SelectionBox<String> shapeBox = new SelectionBox<>();
     private final FloorMapIconPicker iconPicker = new FloorMapIconPicker();
     private final ColourBox colourBox = new ColourBox();
@@ -105,6 +102,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
 
         grid = new Grid(6, 2);
         grid.addStyleName("floormap-layer-style-dialog");
+        FloorMapAria.layoutTable(grid);
 
         grid.setText(ROW_GRAPHIC, 0, "Graphic");
         grid.setWidget(ROW_GRAPHIC, 1, buildModePanel());
@@ -125,10 +123,11 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         grid.setWidget(ROW_PREVIEW, 1, buildPreviewPanel());
 
         // Each row's label is <td> text, which names nothing — see
-        // FloorMapAria.labelledByCell. The Graphic row is exempt: its two radios
-        // carry their own visible labels, and the radio group is named by the
-        // fieldset-less grouping below.
-        FloorMapAria.labelledByCell(grid, ROW_SHAPE, 0, shapeBox);
+        // FloorMapAria.labelledByCell. The Graphic row's radio group is named by its
+        // cell too, and each radio button by its own text.
+        FloorMapAria.labelledByCell(grid, ROW_GRAPHIC, 0, modeGroup);
+        // A selection box: its combobox is the text box inside it
+        FloorMapAria.labelledByCellInnerControl(grid, ROW_SHAPE, 0, shapeBox);
         FloorMapAria.labelledByCell(grid, ROW_COLOUR, 0, colourBox);
         FloorMapAria.labelledByCell(grid, ROW_IMAGE, 0, assetPickerPanel);
         // The icon grid is a group of choices rather than one control, so the row
@@ -151,26 +150,17 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
             fireChange();
         });
 
-        shapeMode.setValue(true);
+        modeGroup.setValue(GraphicMode.SHAPE);
         applyModeEnablement();
     }
 
     private Widget buildModePanel() {
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("floormap-layer-style-modes");
-        shapeMode.setTitle("Draw a coloured shape for facts of this type");
-        iconMode.setTitle("Draw one of the built-in icons, in this layer's colour");
-        imageMode.setTitle("Draw an image from this document's assets");
+        modeGroup.addItem(GraphicMode.SHAPE, "Shape", "Draw a coloured shape for facts of this type");
+        modeGroup.addItem(GraphicMode.ICON, "Icon", "Draw one of the built-in icons, in this layer's colour");
+        modeGroup.addItem(GraphicMode.IMAGE, "Image", "Draw an image from this document's assets");
         //noinspection unused event
-        shapeMode.addValueChangeHandler(event -> onModeChanged());
-        //noinspection unused event
-        iconMode.addValueChangeHandler(event -> onModeChanged());
-        //noinspection unused event
-        imageMode.addValueChangeHandler(event -> onModeChanged());
-        panel.add(shapeMode);
-        panel.add(iconMode);
-        panel.add(imageMode);
-        return panel;
+        modeGroup.addValueChangeHandler(event -> onModeChanged());
+        return modeGroup;
     }
 
     private Widget buildImagePanel() {
@@ -195,8 +185,6 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         return panel;
     }
 
-    /// Radio groups fire a change on both the newly-selected and the deselected
-    /// button, so enablement and the preview are refreshed once per real change.
     private void onModeChanged() {
         applyModeEnablement();
         fireChange();
@@ -258,19 +246,16 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
 
     @Override
     public void setMode(final GraphicMode mode) {
-        shapeMode.setValue(mode == GraphicMode.SHAPE);
-        iconMode.setValue(mode == GraphicMode.ICON);
-        imageMode.setValue(mode == GraphicMode.IMAGE);
+        modeGroup.setValue(mode != null
+                ? mode
+                : GraphicMode.SHAPE);
         applyModeEnablement();
     }
 
     @Override
     public GraphicMode getMode() {
-        if (imageMode.getValue()) {
-            return GraphicMode.IMAGE;
-        }
-        return iconMode.getValue()
-                ? GraphicMode.ICON
+        return modeGroup.getValue() != null
+                ? modeGroup.getValue()
                 : GraphicMode.SHAPE;
     }
 

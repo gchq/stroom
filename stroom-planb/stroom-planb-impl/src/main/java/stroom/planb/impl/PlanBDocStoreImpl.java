@@ -20,6 +20,9 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.importexport.api.ImportExportDocument;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
@@ -27,6 +30,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -34,6 +38,7 @@ import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,13 +50,15 @@ public class PlanBDocStoreImpl
 
     private final SecurityContext securityContext;
     private final Provider<ClusterLockService> clusterLockServiceProvider;
+    private final PlanBStoreNames planBStoreNames;
 
     @Inject
     public PlanBDocStoreImpl(
             final StoreFactory storeFactory,
             final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext,
-            final Provider<ClusterLockService> clusterLockServiceProvider) {
+            final Provider<ClusterLockService> clusterLockServiceProvider,
+            final PlanBStoreNames planBStoreNames) {
         super(storeFactory,
                 securityContext,
                 serialiser,
@@ -60,6 +67,7 @@ public class PlanBDocStoreImpl
                 PlanBDoc::copy);
         this.securityContext = securityContext;
         this.clusterLockServiceProvider = clusterLockServiceProvider;
+        this.planBStoreNames = planBStoreNames;
     }
 
     /**
@@ -110,18 +118,46 @@ public class PlanBDocStoreImpl
     }
 
     private void throwNameException(final String name) {
-        throw new EntityServiceException("A state store named '" + name + "' already exists");
+        throw new EntityServiceException(nameTakenMessage(name));
     }
 
+    private static String nameTakenMessage(final String name) {
+        return "A state store or another Plan B store named '" + name + "' already exists";
+    }
+
+    /// Whether a store other than `whitelistDocRef` already has this name, among state stores and
+    /// every other Plan B store type - see [PlanBStoreNames].
+    ///
+    /// State stores are listed through [#getStore()], the unchecked handle, rather than [#list()],
+    /// which leaves out the stores the caller cannot see: a clash with one of those breaks name
+    /// resolution just the same.
     private boolean checkDuplicateName(final String name, final DocRef whitelistDocRef) {
-        final List<DocRef> docRefs = list();
+        final List<DocRef> docRefs = getStore().list();
         for (final DocRef docRef : docRefs) {
             if (name.equals(docRef.getName()) &&
                 (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
             }
         }
-        return false;
+        return planBStoreNames.isTakenByAnotherType(name, PlanBDoc.TYPE);
+    }
+
+    /// Imports a state store, refusing a new one whose name another Plan B store already has.
+    ///
+    /// An existing store keeps its own name on import, so only a new one can bring a clashing name in.
+    /// It is refused with an error against its import item rather than imported, because Plan B would
+    /// then be unable to resolve either store.
+    @Override
+    public DocRef importDocument(final DocRef docRef,
+                                 final ImportExportDocument importExportDocument,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        final String name = NullSafe.get(docRef, DocRef::getName);
+        if (name != null && !getStore().exists(docRef) && checkDuplicateName(name, docRef)) {
+            importState.addMessage(Severity.ERROR, nameTakenMessage(name) + ", so this one cannot be imported");
+            return docRef;
+        }
+        return super.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
@@ -143,11 +179,14 @@ public class PlanBDocStoreImpl
         return getStore().copyDocument(docRef.getUuid(), newName);
     }
 
+    // Every Plan B store's name, whether or not the caller can see the store - see checkDuplicateName.
     private Set<String> getExistingNames() {
-        return list()
+        final Set<String> names = getStore().list()
                 .stream()
                 .map(DocRef::getName)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(HashSet::new));
+        names.addAll(planBStoreNames.namesOfOtherTypes(PlanBDoc.TYPE));
+        return names;
     }
 
     static String createUniqueName(final String name, final Set<String> existingNames) {
@@ -190,7 +229,7 @@ public class PlanBDocStoreImpl
 
         // Check a state store doesn't already exist with this key.
         if (checkDuplicateName(name, docRef)) {
-            throw new EntityServiceException("A state store named '" + name + "' already exists");
+            throwNameException(name);
         }
 
         return super.renameDocument(docRef, name);

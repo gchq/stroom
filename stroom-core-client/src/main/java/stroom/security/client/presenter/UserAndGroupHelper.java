@@ -32,14 +32,12 @@ import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.event.OpenAccountEvent;
-import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.menu.client.presenter.Item;
@@ -52,20 +50,13 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.client.ui.FocusUtil;
-import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -214,41 +205,6 @@ public class UserAndGroupHelper {
                + " '" + user.asRef().toDisplayString() + "'";
     }
 
-    public static <T extends HasUserRef> boolean selectUserIfShown(final UserRef userRef,
-                                                                   final ResultPage<T> currentData,
-                                                                   final SelectionModel<T> selectionModel,
-                                                                   final DataGrid<T> dataGrid) {
-        if (currentData != null) {
-            final AtomicInteger idx = new AtomicInteger(-1);
-            GWT.log("Attempting to show user " + userRef);
-            final boolean found = currentData.stream()
-                    .peek(appUserPermissions -> idx.incrementAndGet())
-                    .filter(Objects::nonNull)
-                    .filter(hasUserRef ->
-                            Objects.equals(hasUserRef.getUserRef(), userRef))
-                    .findAny()
-                    .map(hasUserRef -> {
-                        GWT.log("Found " + userRef);
-                        selectionModel.setSelected(hasUserRef, true);
-                        dataGrid.flush();
-                        dataGrid.setKeyboardSelectedRow(idx.get());
-                        Scheduler.get().scheduleDeferred(() -> {
-                            try {
-                                final TableRowElement rowElement = dataGrid.getRowElement(idx.get());
-                                NullSafe.consume(rowElement, FocusUtil::focusRow);
-                            } catch (final IndexOutOfBoundsException e) {
-                                GWT.log(idx.get() + " is out of bounds");
-                            }
-                        });
-                        return true;
-                    })
-                    .orElse(false);
-            return found;
-        } else {
-            return false;
-        }
-    }
-
     public static List<Item> buildUserActionMenu(final UserRef userRef,
                                                  final boolean isExternalIdp,
                                                  final Set<UserScreen> userScreens,
@@ -259,53 +215,50 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return Collections.emptyList();
         } else {
-            final MenuBuilder builder = MenuBuilder.builder()
-                    .withSimpleMenuItem(itemBuilder ->
-                            itemBuilder.text(buildActionsForMsg(userRef) + ":")
-                                    .build())
-                    .withSeparator();
+            // The menu is named by buildActionsForMsg, so has no heading item
+            final MenuBuilder builder = MenuBuilder.builder();
             if (screens.contains(UserScreen.USER)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(userRef.isGroup()
                                 ? UserTabPlugin.GROUP_ICON
                                 : UserTabPlugin.USER_ICON)
-                        .text("Open " + userRef.getType(CaseType.LOWER)
-                              + " '" + userRef.toDisplayString() + "'")
+                        // The menu name gives the user/group name
+                        .text("Open " + userRef.getType(CaseType.SENTENCE))
                         .command(() ->
                                 OpenUserEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.USERS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && !isExternalIdp && screens.contains(UserScreen.ACCOUNTS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AccountsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AccountsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AccountsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAccountEvent.fire(hasHandlers, userRef.getSubjectId())));
             }
             if (screens.contains(UserScreen.USER_GROUPS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersAndGroupsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersAndGroupsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersAndGroupsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersAndGroupsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (screens.contains(UserScreen.APP_PERMISSIONS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AppPermissionsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AppPermissionsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AppPermissionsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAppPermissionsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.API_KEYS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(ApiKeysPlugin.ICON)
-                        .text(buildMenuItemText(userRef, ApiKeysPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(ApiKeysPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenApiKeysScreenEvent.fire(hasHandlers, userRef)));
             }
@@ -314,7 +267,7 @@ public class UserAndGroupHelper {
 
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UserTabPlugin.USER_ICON)
-                        .text("Copy user groups and permissions from...")
+                        .text("Copy User Groups and Permissions from...")
                         .command(() -> {
                             copyPermissionsPopupFunction.apply(userRef).show("Select User");
                         }));
@@ -324,8 +277,9 @@ public class UserAndGroupHelper {
         }
     }
 
-    private static String buildMenuItemText(final UserRef userRef, final String screenName) {
-        return "Show " + userRef.getType(CaseType.LOWER) + " on the " + screenName + " screen";
+    private static String buildMenuItemText(final String screenName) {
+        // The menu name gives the user/group, so only the screen is needed
+        return "Show in " + screenName;
     }
 
     public static String buildActionsForMsg(final User user) {

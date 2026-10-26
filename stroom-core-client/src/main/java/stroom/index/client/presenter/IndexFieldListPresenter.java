@@ -19,8 +19,6 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -41,6 +39,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -59,10 +59,13 @@ public class IndexFieldListPresenter
         implements QuickFilterUiHandlers {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
+    private static final String NEW_TITLE = "New Index Field";
+    private static final String EDIT_TITLE = "Edit Selected Index Field";
+    private static final String DELETE_TITLE = "Delete Selected Index Fields";
 
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final MyDataGrid<IndexFieldImpl> dataGrid;
+    private final DataGrid<IndexFieldImpl> dataGrid;
     private final MultiSelectionModelImpl<IndexFieldImpl> selectionModel;
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
@@ -83,13 +86,16 @@ public class IndexFieldListPresenter
                                    final IndexFieldEditPresenter indexFieldEditPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter fields");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by name, unique in an index
+        dataGrid.setKeyProvider(IndexFieldImpl::getFldName);
         dataGrid.setTableName("Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
@@ -97,10 +103,10 @@ public class IndexFieldListPresenter
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         pagerView.getToolbar().setName("Field actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -158,15 +164,13 @@ public class IndexFieldListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New field disabled as index is read only");
-            editButton.setTitle("Edit field disabled as index is read only");
-            removeButton.setTitle("Remove field disabled as index is read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        // The names stay, with why the buttons are disabled for a read-only index
+        final String suffix = readOnly
+                ? " (index is read only)"
+                : "";
+        newButton.setTitle(NEW_TITLE + suffix);
+        editButton.setTitle(EDIT_TITLE + suffix);
+        removeButton.setTitle(DELETE_TITLE + suffix);
     }
 
     private void addColumns() {

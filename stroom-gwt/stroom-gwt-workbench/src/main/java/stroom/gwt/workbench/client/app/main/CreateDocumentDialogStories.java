@@ -46,9 +46,9 @@ import com.google.gwt.user.client.ui.Widget;
 public final class CreateDocumentDialogStories {
 
     // GWT's folder picker is an EntityTreePresenter: a quick filter above the tree
-    private static final String QUICK_FILTER = ".quickFilter-textBox";
-    // The explorer tree's selected row (a CellTable row)
-    private static final String TREE_SELECTED_ROW = "cellTableSelectedRow";
+    private static final String QUICK_FILTER = ".quick-filter__input";
+    // The explorer tree's selected item
+    private static final String TREE_SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
 
     private CreateDocumentDialogStories() {
         // Static utility
@@ -96,7 +96,7 @@ public final class CreateDocumentDialogStories {
                     final Play screen = play.screen();
                     final Play dialog = screen.within(screen.findByText("New Dictionary").closest(StroomDom.DIALOG));
                     final Query feeds = dialog.findByText("Feeds");
-                    play.waitFor(() -> play.expect(feeds.closest("." + TREE_SELECTED_ROW)).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(feeds.closest(TREE_SELECTED_ROW)).toBeInTheDocument());
                     final Query name = dialog.getByRole("textbox", "Name");
                     play.expect(name).toHaveAttribute("aria-required", "true");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -125,7 +125,7 @@ public final class CreateDocumentDialogStories {
                     final Play screen = play.screen();
                     // The picker expanded down to the containing folder and selected it
                     final Query reports = screen.findByText("Reports");
-                    play.waitFor(() -> play.expect(reports.closest("." + TREE_SELECTED_ROW))
+                    play.waitFor(() -> play.expect(reports.closest(TREE_SELECTED_ROW))
                             .toBeInTheDocument());
                     // The document itself is not offered by a folder-only picker
                     final Play picker = screen.within(screen.getByText("Select the parent folder")

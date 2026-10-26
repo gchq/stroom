@@ -62,9 +62,9 @@ public class QuickFilterContextHandlerFactory {
     private static final int MIN_MENU_WIDTH = 250;
     // The gap between the quick filter and its menu
     private static final int MENU_GAP = 3;
-    // The padding around a menu, either side (.simplePopup-content in SimplePopup.css), which
-    // the popup adds to the menu's width
-    private static final int MENU_PADDING = 4;
+    // What the popup adds to a menu's width, either side: its 1px border (menu.css; the viewport's
+    // own padding is inside the width the menu is given, as every box is border-box)
+    private static final int MENU_PADDING = 1;
 
     private final RestFactory restFactory;
     private final Provider<AdvancedQuickFilterPresenter> advancedQuickFilterPresenterProvider;
@@ -169,6 +169,8 @@ public class QuickFilterContextHandlerFactory {
             // As wide as the quick filter, as a combo box's list is, and lined up with it
             final Rect relativeRect = new Rect(quickFilter.getElement()).growY(MENU_GAP);
             ShowMenuEvent.builder()
+                    .name("Recent Filters")
+                    .opener(quickFilter.getRecentFiltersButton())
                     .items(items)
                     .width(Math.max(quickFilter.getOffsetWidth(), MIN_MENU_WIDTH) - 2 * MENU_PADDING)
                     .popupPosition(new PopupPosition(relativeRect, PopupLocation.BELOW))

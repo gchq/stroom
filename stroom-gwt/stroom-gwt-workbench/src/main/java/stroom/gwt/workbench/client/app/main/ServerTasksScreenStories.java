@@ -140,9 +140,9 @@ public final class ServerTasksScreenStories {
                     play.findByText("Stream Processor A");
                     play.findByText("Stream Processor B");
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
-                    play.click(play.within(play.getByText("Stream Processor A").closest("tr"))
-                            .querySelector(".tickBox"));
-                    play.click(play.getByRole("button", "Terminate Task"));
+                    play.click(play.within(play.getByText("Stream Processor A").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
+                    play.click(play.getByRole("button", "Terminate Selected Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/task/v1/terminate/node1")
                                     .withJsonBodyContaining("{\"criteria\": {\"idSet\": [{\"id\": \"c1\"}]}}")
@@ -158,7 +158,8 @@ public final class ServerTasksScreenStories {
                     // Every item the task info's keys allow is shown; the per-cell items come first,
                     // before the grid's own items
                     play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
-                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                            Arrays.asList("Open Feed", "Show Processor Filter Tasks", "Open Pipeline",
+                                    "Open Stream")));
                     play.click(screen.getByText("Open Pipeline"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DOC)).toHaveBeenCalledWith("Pipeline:pipe-uuid-1"));
                     // Open Feed looks the feed up by name and opens the doc ref found (a DocRef
@@ -180,14 +181,15 @@ public final class ServerTasksScreenStories {
                     play.rightClick(infoCell(play, "Pipeline Processor"));
                     // GWT's buildMenuItems order
                     play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
-                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                            Arrays.asList("Open Feed", "Show Processor Filter Tasks", "Open Pipeline",
+                                    "Open Stream")));
                     // meta_id=5 → the INFO view in a Stroom tab, exactly GWT's ShowDataEvent arguments
                     play.click(screen.findByText("Open Stream"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DATA))
                             .toHaveBeenCalledWith("data:5:INFO:STROOM_TAB"));
                     // 'filter id=7' → the filter's own task tab
                     play.rightClick(infoCell(play, "Pipeline Processor"));
-                    play.click(screen.findByText("Show Filter Tasks"));
+                    play.click(screen.findByText("Show Processor Filter Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_FILTER_TASKS))
                             .toHaveBeenCalledWith("filterTasks:7"));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
@@ -214,7 +216,7 @@ public final class ServerTasksScreenStories {
                     play.rightClick(infoCell(play, "Stream Processor A"));
                     play.sleep(200);
                     play.expect(screen.queryByText("Open Stream")).toBeNull();
-                    play.expect(screen.queryByText("Show Filter Tasks")).toBeNull();
+                    play.expect(screen.queryByText("Show Processor Filter Tasks")).toBeNull();
                     play.expect(screen.queryByText("Open Feed")).toBeNull();
                     expectNoProblems(play);
                 })
@@ -250,15 +252,24 @@ public final class ServerTasksScreenStories {
                 .withPlay(play -> {
                     play.findByText("Orphan Task");
                     // An unknown node reads '?', not blank (scoped to the row: the pager also shows '?')
-                    play.expect(play.within(play.getByText("Orphan Task").closest("tr")).getByText("?"))
+                    play.expect(play.within(play.getByText("Orphan Task").closest(StroomDom.GRID_ROW)).getByText("?"))
                             .toBeInTheDocument();
-                    // Nothing is expandable, so the expander column (the second) collapses.
-                    // The grid is a table, so this checks the expander column's <col>, which GWT gives
-                    // 1px
-                    play.expect(play.querySelector("colgroup col:nth-child(2)").attribute("style")).toBe("width: 1px;");
+                    // Nothing is expandable, so the expander column (the second) collapses to the
+                    // grid's 1px least: the gap between the first and third columns. (Its empty
+                    // header cell's padding overflows the track, so the cell itself is wider.)
+                    final Value<Double> firstRight = play.querySelector("[data-hcol=\"0\"]").right();
+                    final Value<Double> thirdLeft = play.querySelector("[data-hcol=\"2\"]").left();
+                    play.expect("the expander column's width", () -> thirdLeft.get() - firstRight.get())
+                            .toBe(1.0);
+                    // and the Info column (a fill column) takes the width it gave up: the columns
+                    // still reach the grid's right edge (less its scroll bar)
+                    final Value<Double> lastRight = play.querySelector("[data-hcol=\"8\"]").right();
+                    final Value<Double> gridRight = play.querySelector(".data-grid").right();
+                    play.expect("the space right of the columns", () -> gridRight.get() - lastRight.get())
+                            .toBeLessThan(20);
                     expectNoProblems(play);
                 })
-                // The first fetch sorts by Age descending (TaskManagerListPresenter's constructor)
+                // The first fetch sorts by Age descending, the grid's default sort, which the header shows
                 .story("DefaultSortIsAgeDescending", context -> render(context, FIXTURES, null))
                 .withPlay(play -> {
                     play.findAllByRole("row");
@@ -267,15 +278,16 @@ public final class ServerTasksScreenStories {
                                     .withJsonBodyContaining("{\"criteria\": {\"sortList\": "
                                             + "[{\"id\": \"Age\", \"desc\": true, \"ignoreCase\": false}]}}")
                                     .toSpyMatcher()));
-                    // A request default, not a grid one: no header has a sort indicator
-                    play.expect(play.querySelector(".column-sortIcon")).toBeNull();
+                    // The grid's default (D10): the Age header shows it
+                    play.expect(play.getByText("Age", StroomDom.GRID_HEADER_TEXT).closest(StroomDom.GRID_HEADER_CELL))
+                            .toHaveAttribute("aria-sort", "descending");
                     expectNoProblems(play);
                 });
     }
 
     // The Info cell of a task's row: the last column, the only one with a context menu
     private static Query infoCell(final Play play, final String taskName) {
-        return play.within(play.getByText(taskName).closest("tr")).querySelector("td:last-child");
+        return play.within(play.getByText(taskName).closest(StroomDom.GRID_ROW)).querySelector("[data-col]:last-child");
     }
 
     // The texts of the first items of the menu shown

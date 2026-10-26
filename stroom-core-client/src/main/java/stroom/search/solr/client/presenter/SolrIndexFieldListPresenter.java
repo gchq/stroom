@@ -18,8 +18,6 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -32,6 +30,8 @@ import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -56,7 +56,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final PagerView pagerView;
-    private final MyDataGrid<SolrIndexField> dataGrid;
+    private final DataGrid<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
     private final RestFactory restFactory;
@@ -81,17 +81,21 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(SolrIndexField::getFldName);
         dataGrid.setTableName("Solr Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
         view.setDataGridView(pagerView);
         pagerView.getToolbar().setName("Field actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New Index Field", this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit Selected Index Field",
+                this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.REMOVE, "Remove Selected Index Fields",
+                this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -142,15 +146,12 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             removeButton.setEnabled(false);
         }
 
-        if (isReadOnly()) {
-            newButton.setTitle("New field disabled as index is read only");
-            editButton.setTitle("Edit field disabled as index is read only");
-            removeButton.setTitle("Remove field disabled as index is read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        final String reason = isReadOnly()
+                ? " (index is read only)"
+                : "";
+        newButton.setTitle("New Index Field" + reason);
+        editButton.setTitle("Edit Selected Index Field" + reason);
+        removeButton.setTitle("Remove Selected Index Fields" + reason);
     }
 
     private void addColumns() {
@@ -286,9 +287,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         final List<SolrIndexField> list = selectionModel.getSelectedItems();
         //noinspection SizeReplaceableByIsEmpty
         if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected field?";
+            String message = "Are you sure you want to remove the selected field?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected fields?";
+                message = "Are you sure you want to remove the selected fields?";
             }
 
             ConfirmEvent.fire(this, message, result -> {

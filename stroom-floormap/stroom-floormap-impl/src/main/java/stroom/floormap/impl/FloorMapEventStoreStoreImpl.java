@@ -22,19 +22,25 @@ import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.floormap.shared.FloorMapEventExpiry;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
+import stroom.importexport.api.ImportExportDocument;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBNameValidator;
+import stroom.planb.impl.PlanBStoreNames;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.RetentionSettings;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,13 +68,15 @@ public class FloorMapEventStoreStoreImpl
         implements FloorMapEventStoreStore {
 
     private final Provider<ClusterLockService> clusterLockServiceProvider;
+    private final PlanBStoreNames planBStoreNames;
 
     @Inject
     public FloorMapEventStoreStoreImpl(
             final StoreFactory storeFactory,
             final FloorMapEventStoreSerialiser serialiser,
             final SecurityContext securityContext,
-            final Provider<ClusterLockService> clusterLockServiceProvider) {
+            final Provider<ClusterLockService> clusterLockServiceProvider,
+            final PlanBStoreNames planBStoreNames) {
         super(storeFactory,
                 securityContext,
                 serialiser,
@@ -76,6 +84,7 @@ public class FloorMapEventStoreStoreImpl
                 FloorMapEventStoreDoc::eventStoreBuilder,
                 FloorMapEventStoreDoc::copyEventStore);
         this.clusterLockServiceProvider = clusterLockServiceProvider;
+        this.planBStoreNames = planBStoreNames;
     }
 
     @Override
@@ -165,24 +174,55 @@ public class FloorMapEventStoreStoreImpl
     }
 
     private void throwNameException(final String name) {
-        throw new EntityServiceException("An event store named '" + name + "' already exists");
+        throw new EntityServiceException(nameTakenMessage(name));
     }
 
+    private static String nameTakenMessage(final String name) {
+        return "An event store or Plan B store named '" + name + "' already exists";
+    }
+
+    /// Whether a store other than `whitelistDocRef` already has this name, among event stores and
+    /// every other Plan B store type - see [PlanBStoreNames].
+    ///
+    /// Event stores are listed through [#getStore()], the unchecked handle, rather than [#list()],
+    /// which leaves out the stores the caller cannot see: a clash with one of those breaks name
+    /// resolution just the same.
     private boolean checkDuplicateName(final String name, final DocRef whitelistDocRef) {
-        for (final DocRef docRef : list()) {
+        for (final DocRef docRef : getStore().list()) {
             if (name.equals(docRef.getName()) &&
                 (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
             }
         }
-        return false;
+        return planBStoreNames.isTakenByAnotherType(name, FloorMapEventStoreDoc.TYPE);
     }
 
+    /// Imports an event store, refusing a new one whose name another Plan B store already has.
+    ///
+    /// An existing store keeps its own name on import, so only a new one can bring a clashing name in.
+    /// It is refused with an error against its import item rather than imported, because Plan B would
+    /// then be unable to resolve either store.
+    @Override
+    public DocRef importDocument(final DocRef docRef,
+                                 final ImportExportDocument importExportDocument,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        final String name = NullSafe.get(docRef, DocRef::getName);
+        if (name != null && !getStore().exists(docRef) && checkDuplicateName(name, docRef)) {
+            importState.addMessage(Severity.ERROR, nameTakenMessage(name) + ", so this one cannot be imported");
+            return docRef;
+        }
+        return super.importDocument(docRef, importExportDocument, importState, importSettings);
+    }
+
+    // Every Plan B store's name, whether or not the caller can see the store - see checkDuplicateName.
     private Set<String> getExistingNames() {
-        return list()
+        final Set<String> names = getStore().list()
                 .stream()
                 .map(DocRef::getName)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(HashSet::new));
+        names.addAll(planBStoreNames.namesOfOtherTypes(FloorMapEventStoreDoc.TYPE));
+        return names;
     }
 
     static String createUniqueName(final String name, final Set<String> existingNames) {

@@ -16,88 +16,59 @@
 
 package stroom.query.client.view;
 
+import stroom.event.client.StaticEventBus;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.util.shared.NullSafe;
-import stroom.widget.popup.client.view.HideRequest;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.popup.client.view.OkCancelContent;
-import stroom.widget.popup.client.view.SimplePopupLayout;
-import stroom.widget.util.client.DisabledState;
+import stroom.widget.button.client.LinkButton;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
 
+/// The time range a query or dashboard applies to all its queries, shown as a button drawn as a link
+/// (its text the range, e.g. "Today"), which opens the Time Range dialog ([TimeRangeDialog]) to
+/// change it. The button is named "Time range: " and its text, and says it opens a dialog.
+///
+/// A disabled or read-only selector stays focusable but doesn't open the dialog; both are
+/// `aria-disabled`, as a button can't be read only. Styled by `time-range-selector.css`.
 public class TimeRangeSelector extends Composite implements HasValue<TimeRange>, Focus {
 
-    private final Label label;
-    private final PopupPanel popup;
-    private final TimeRangePopup timeRangePopup;
+    private static final String BLOCK = "time-range-selector";
+    private static final String READ_ONLY = BLOCK + "--readonly";
+    private static final String ARIA_DISABLED = "aria-disabled";
+
+    private final LinkButton button;
+    private TimeRangeDialog dialog;
     private TimeRange value = stroom.query.api.TimeRanges.ALL_TIME;
     private ParamValues paramValues;
     private boolean enabled = true;
     private boolean readOnly;
 
+    /// Makes a selector of all time.
     public TimeRangeSelector() {
-        timeRangePopup = GWT.create(TimeRangePopup.class);
+        button = new LinkButton(getText());
+        button.addStyleName(BLOCK);
+        button.setOpensDialog(true);
+        button.setTitle("Time range to apply to all queries in this dashboard.\n"
+                        + "The selected time range applies to the time field applicable to each "
+                        + "query's data source.");
+        button.addClickHandler(event -> showDialog());
+        updateName();
 
-        label = new Label(getText(), false);
-        label.setStyleName("timeRange-selector");
-        label.setTitle("Time range to apply to all queries in this dashboard.\n" +
-                       "The selected time range applies to the time field applicable to each query's data source.");
-
-        this.popup = new PopupPanel(false);
-
-        final HideRequestUiHandlers hideRequestUiHandlers = new HideRequestUiHandlers() {
-            @Override
-            public void hideRequest(final HideRequest request) {
-                if (request.isOk()) {
-                    setValue(timeRangePopup.getValue(), true);
-                }
-                popup.hide();
-                request.getCancelHandler().run();
-            }
-        };
-        final OkCancelContent okCancelContent = new OkCancelContent(hideRequestUiHandlers);
-        okCancelContent.setContent(timeRangePopup.asWidget());
-
-        final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
-        simplePopupLayout.setContent(okCancelContent);
-
-        popup.addAutoHidePartner(label.getElement());
-        popup.setWidget(simplePopupLayout);
-        popup.setStyleName("timeRange-popup");
-
-        label.addClickHandler(event -> showPopup());
-        // Text that opens a dialog: a button the keyboard can reach and press
-        label.getElement().setAttribute("role", "button");
-        label.getElement().setAttribute("aria-haspopup", "dialog");
-        label.getElement().setTabIndex(0);
-        label.addDomHandler(event -> {
-            final int keyCode = event.getNativeKeyCode();
-            if (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE) {
-                event.preventDefault();
-                showPopup();
-            }
-        }, KeyDownEvent.getType());
-
-        initWidget(label);
+        initWidget(button);
     }
 
-    private void showPopup() {
+    private void showDialog() {
         if (enabled && !readOnly) {
-            timeRangePopup.setValue(value, false);
-            popup.showRelativeTo(label);
+            if (dialog == null) {
+                dialog = new TimeRangeDialog(StaticEventBus.getEventBus(), new TimeRangePopup());
+            }
+            dialog.show(value, button.getElement(), timeRange -> setValue(timeRange, true));
         }
     }
 
@@ -122,22 +93,17 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
 
     private void updateState() {
         if (!enabled || readOnly) {
-            popup.hide();
+            button.getElement().setAttribute(ARIA_DISABLED, "true");
+        } else {
+            button.getElement().removeAttribute(ARIA_DISABLED);
         }
-        DisabledState.set(label.getElement(), !enabled);
-        label.setStyleName("readonly", readOnly && enabled);
-        if (readOnly) {
-            label.getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
-        }
+        // Read only (but enabled) has a look of its own, as a read-only field's value does
+        button.setStyleName(READ_ONLY, readOnly && enabled);
     }
 
     @Override
     public void focus() {
-        label.getElement().focus();
-    }
-
-    public void setUtc(final boolean utc) {
-        timeRangePopup.setUtc(utc);
+        button.setFocus(true);
     }
 
     @Override
@@ -151,16 +117,20 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     }
 
     @Override
-    public void setValue(TimeRange value, final boolean fireEvents) {
-        if (value == null) {
-            value = stroom.query.api.TimeRanges.ALL_TIME;
-        }
-
-        this.value = value;
-        label.setText(getText());
+    public void setValue(final TimeRange value, final boolean fireEvents) {
+        this.value = value != null
+                ? value
+                : stroom.query.api.TimeRanges.ALL_TIME;
+        button.setText(getText());
+        updateName();
         if (fireEvents) {
-            ValueChangeEvent.fire(this, value);
+            ValueChangeEvent.fire(this, this.value);
         }
+    }
+
+    // Named for what it is as well as its value, which alone ("Today") wouldn't say
+    private void updateName() {
+        button.setAriaLabel("Time range: " + getText());
     }
 
     private String getText() {
@@ -186,8 +156,10 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
+    /// @param paramValues The parameters a range's text is shown with, or null.
     public void setParamValues(final ParamValues paramValues) {
         this.paramValues = paramValues;
-        label.setText(getText());
+        button.setText(getText());
+        updateName();
     }
 }

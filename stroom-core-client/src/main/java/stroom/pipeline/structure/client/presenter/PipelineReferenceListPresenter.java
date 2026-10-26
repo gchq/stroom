@@ -19,8 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -38,6 +36,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -71,8 +71,13 @@ public class PipelineReferenceListPresenter
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
+    private static final String NEW_TITLE = "New Pipeline Reference";
+    private static final String EDIT_TITLE = "Edit Selected Pipeline Reference";
+    private static final String REMOVE_TITLE = "Remove Selected Pipeline Reference";
+    private static final String RESTORE_TITLE = "Restore Selected Pipeline Reference";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    private final MyDataGrid<PipelineReference> dataGrid;
+    private final DataGrid<PipelineReference> dataGrid;
     private final MultiSelectionModelImpl<PipelineReference> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -98,7 +103,7 @@ public class PipelineReferenceListPresenter
                                           final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Pipeline References");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -108,11 +113,11 @@ public class PipelineReferenceListPresenter
         this.restFactory = restFactory;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
-        addButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
         view.getToolbar().setName("Reference actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> onEdit(selectionModel.getSelected()));
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -515,15 +520,16 @@ public class PipelineReferenceListPresenter
         editButton.setEnabled(!readOnly && State.ADDED.equals(state));
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("New reference disabled as pipeline is read only");
-            editButton.setTitle("Edit reference disabled as pipeline is read only");
-            removeButton.setTitle("Remove reference disabled as pipeline is read only");
-        } else {
-            addButton.setTitle("New Reference");
-            editButton.setTitle("Edit Reference");
-            removeButton.setTitle("Remove Reference");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        addButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        // Pressing it on a reference that is already removed restores it, so say so
+        final String removeTitle = State.REMOVED.equals(state)
+                ? RESTORE_TITLE
+                : REMOVE_TITLE;
+        removeButton.setTitle(removeTitle + readOnlySuffix);
     }
 
     private enum State {

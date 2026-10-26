@@ -25,6 +25,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
@@ -45,7 +46,10 @@ public class MenuPresenter
         implements MenuUiHandlers {
 
     private static final int HORIZONTAL_PADDING = 2;
-    private static final int VERTICAL_PADDING = 4;
+    // How far a menu's items sit in from its top edge (its border and its viewport's padding, menu.css),
+    // so that a sub menu's first item lines up with the item that opened it
+    private static final int VERTICAL_PADDING = 6;
+    private static final String ITEM_TEXT_CLASS = "menu__text";
 
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
@@ -108,13 +112,16 @@ public class MenuPresenter
 
                         final MenuPresenter presenter = menuPresenterProvider.get();
                         presenter.setParent(MenuPresenter.this, menuItem);
+                        // Named by the text of its parent item. Not by reference to the item's
+                        // element, which loses any id it is given when the menu redraws its rows
+                        presenter.setName(getItemText(element));
 //                        presenter.setHighlightItems(getHighlightItems());
                         presenter.setData(children);
 
                         // Set the current presenter telling us that the
                         // popup is showing.
                         currentMenu = presenter;
-                        currentItem = menuItem;
+                        setCurrentItem(menuItem);
 
                         final Rect dialog = new Rect(getWidget().getElement());
                         final Rect selection = new Rect(element);
@@ -131,16 +138,13 @@ public class MenuPresenter
                                 .onHideRequest(e -> {
                                     if (!e.isAutoClose() && !e.isOk()) {
                                         // Escape, which the sub menu's popup takes as its close
-                                        // action: close the whole menu, as Escape in the root
-                                        // menu does
-                                        currentMenu = null;
-                                        currentItem = null;
+                                        // action: close the sub menu, as Escape in it does
                                         presenter.escape();
                                     } else {
                                         presenter.hideChildren(e.isAutoClose(), e.isOk());
                                         presenter.hideSelf(e.isAutoClose(), e.isOk());
                                         currentMenu = null;
-                                        currentItem = null;
+                                        setCurrentItem(null);
                                     }
                                 })
                                 .fire();
@@ -148,6 +152,35 @@ public class MenuPresenter
                 });
             }
         }
+    }
+
+    // The text of a menu item's row, without its shortcut or arrow
+    private static String getItemText(final Element rowElement) {
+        if (rowElement == null) {
+            return null;
+        }
+        final Element text = ElementUtil.findChild(rowElement, MenuPresenter::isItemText);
+        final String name = text != null
+                ? text.getInnerText()
+                : rowElement.getInnerText();
+        return name == null
+                ? null
+                : name.trim();
+    }
+
+    // Whether an element holds a menu item's text. Its class is read as an attribute, as an SVG
+    // element's className isn't a string
+    private static boolean isItemText(final Element element) {
+        final String className = ElementUtil.getClassName(element);
+        if (className == null) {
+            return false;
+        }
+        for (final String name : className.split(" ")) {
+            if (ITEM_TEXT_CLASS.equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -165,6 +198,16 @@ public class MenuPresenter
     }
 
     public void focus() {
+        getView().focus();
+    }
+
+    /// Focuses an item of the menu, or its first if the item is null or not in the menu.
+    ///
+    /// @param item The item to focus. Can be null.
+    public void focusItem(final Item item) {
+        if (item != null) {
+            getView().ensureItemSelected(item);
+        }
         getView().focus();
     }
 
@@ -230,7 +273,13 @@ public class MenuPresenter
             currentMenu.hideSelf(autoClose, ok);
             currentMenu = null;
         }
-        currentItem = null;
+        setCurrentItem(null);
+    }
+
+    // The item whose sub menu is open, or null for none
+    private void setCurrentItem(final MenuItem item) {
+        currentItem = item;
+        getView().setOpenItem(item);
     }
 
     private void hideParent(final boolean autoClose, final boolean ok) {
@@ -242,9 +291,15 @@ public class MenuPresenter
         }
     }
 
+    /// Closes this menu: a sub menu closes and puts the focus back on the item that opened it, as
+    /// Left does (the WAI-ARIA menu pattern); the root menu closes with any sub menus.
     @Override
     public void escape() {
-        hideAll(true, false);
+        if (parent != null) {
+            focusParent(true);
+        } else {
+            hideAll(true, false);
+        }
     }
 
     public void hideAll(final boolean autoClose, final boolean ok) {
@@ -265,6 +320,20 @@ public class MenuPresenter
 
     public void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft) {
         getView().setAllowCloseOnMoveLeft(allowCloseOnMoveLeft);
+    }
+
+    /// Gives the menu an accessible name, which screen readers announce on entering it.
+    ///
+    /// @param name The name, as plain text without the word "menu", or null for none.
+    public void setName(final String name) {
+        getView().setName(name);
+    }
+
+    /// Names the menu by another element, e.g. the button that opened it.
+    ///
+    /// @param id The id of the element that names the menu, or null for none.
+    public void setLabelledBy(final String id) {
+        getView().setLabelledBy(id);
     }
 
     /// Gives the menu a fixed width rather than fitting it to its items. See
@@ -300,5 +369,21 @@ public class MenuPresenter
         ///
         /// @param width The menu's width in pixels.
         void setWidth(int width);
+
+        /// Gives the menu an accessible name (`aria-label`), replacing any element it was
+        /// labelled by.
+        ///
+        /// @param name The name, as plain text, or null or empty for none.
+        void setName(String name);
+
+        /// Names the menu by another element (`aria-labelledby`), replacing any name it was given.
+        ///
+        /// @param id The id of the element that names the menu, or null or empty for none.
+        void setLabelledBy(String id);
+
+        /// Says which item's sub menu is open (`aria-expanded` on the items that have one).
+        ///
+        /// @param item The item whose sub menu is open, or null for none.
+        void setOpenItem(Item item);
     }
 }

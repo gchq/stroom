@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -89,7 +90,17 @@ public final class DataUploadDialogStories {
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Events"));
                     play.waitFor(() -> play.expect(dialog.getByDisplayValue("Events")).toBeInTheDocument());
+                    // The button is named by its form group's label and its own text, and described by the
+                    // chosen file and the group's help
+                    final Query choose = dialog.querySelector(".file-upload__button");
+                    play.expect(choose).toHaveAttribute("aria-labelledby");
+                    // Required, said in its description, as a button can't be aria-required
+                    play.expect(choose).not().toHaveAttribute("aria-required");
+                    play.expect(choose).toHaveAccessibleDescription(TextMatch.containing("Required."));
+                    play.expect(choose).toHaveAccessibleDescription(TextMatch.containing("No file chosen"));
                     play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "stream.txt", "data", "text/plain");
+                    play.waitFor(() -> play.expect(choose)
+                            .toHaveAccessibleDescription(TextMatch.containing("stream.txt")));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // The upload
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
@@ -138,7 +149,7 @@ public final class DataUploadDialogStories {
             // The feed's data browser, which the dialog refreshes after an upload (its info
             // message is fired from it). Created after start-up, as it reads the UI config.
             final MetaPresenter metaPresenter = harness.unbindOnCleanUp(injector.getMetaPresenter());
-            // As MetaPresenter's 'Upload' button shows it
+            // As MetaPresenter's 'Upload Data to Feed' button shows it
             presenter.show(metaPresenter, feedRef);
         });
         return harness.asWidget();

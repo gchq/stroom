@@ -271,15 +271,15 @@ public class HtmlBuilder {
         return this;
     }
 
+    /// Appends a link that opens in a new browser tab, which tells screen readers so (see
+    /// [NewTabLink#link(String, String)]).
+    ///
+    /// @param url   The URL the link goes to.
+    /// @param title The link's text. If null or empty, the URL is the text.
+    /// @return This builder.
     public HtmlBuilder appendLink(final String url, final String title) {
         Objects.requireNonNull(url);
-        appendTrustedString("<a href=\"");
-        append(url);
-        appendTrustedString("\" target=\"_blank\">");
-        if (title != null && !title.isEmpty()) {
-            append(title);
-        }
-        appendTrustedString("</a>");
+        sb.append(NewTabLink.link(url, title));
         return this;
     }
 

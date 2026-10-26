@@ -223,11 +223,17 @@ for (const f of files) {
     // buttons this way, and the SvgPresets pattern above cannot see them.
     const inline = new RegExp(`${field}\\s*=\\s*[^;]*?new\\s+Preset\\s*\\(\\s*[A-Za-z0-9_.]+\\s*,\\s*"([^"]*)"`).exec(src);
     if (inline) return inline[1];
-    // `x = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary words", null)` and `.toggle(…)`:
+    // `x = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary Words", null)` and `.toggle(…)`:
     // the keyboard Toolbar (2026-10-12) names a button by its second argument, which it sets as the
     // title. Every icon button built since then is made this way.
     const onToolbar = new RegExp(`${field}\\s*=\\s*[^;]*?\\.(?:button|toggle)\\s*\\(\\s*SvgImage\\s*\\.\\s*[A-Z0-9_]+\\s*,\\s*"([^"]*)"`).exec(src);
     if (onToolbar) return onToolbar[1];
+    // The same, named by a string constant the file declares — `button(SvgImage.ADD, NEW_TITLE, …)`
+    // with `NEW_TITLE = "New Index Field"` — as the field lists do, which re-use the name with a
+    // read-only reason after it.
+    const onToolbarConst = new RegExp(`${field}\\s*=\\s*[^;]*?\\.(?:button|toggle)\\s*\\(\\s*SvgImage\\s*\\.\\s*[A-Z0-9_]+\\s*,\\s*([A-Z][A-Z0-9_]*)\\s*,`).exec(src);
+    const constValue = onToolbarConst && new RegExp(`\\b${onToolbarConst[1]}\\s*=\\s*"([^"]*)"\\s*;`).exec(src);
+    if (constValue) return constValue[1];
     // A view's @UiField: the ui.xml declares its title, text, or inner text.
     const fromXml = uiXml.get(name)?.get(field);
     if (fromXml) return fromXml;
@@ -277,10 +283,9 @@ for (const f of files) {
    * Buttons whose caption CHANGES with their state, so one mined label can only ever miss.
    *
    * `RefreshButton:78` is titled "Refresh", but `updateRefreshState():160-164` re-titles it
-   * "Resume Update", "Pause Update" or "Not Updating" depending on what the screen is doing. And the
-   * auto-refresh toggle carries whichever of its two titles is NOT its current state —
-   * `JobNodeListPresenter:72-73` names both constants explicitly, and they are crossed over:
-   * `AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off"`.
+   * "Resume Update", "Pause Update" or "Not Updating" depending on what the screen is doing. (The
+   * auto-refresh toggle used to be another, re-titled "Turn Auto Refresh On" / "Off"; since #5406 a
+   * toggle keeps one name, "Auto Refresh", and says whether it is on by its pressed state.)
    *
    * So these receivers get a SET of acceptable labels, every one of them taken from a literal in the
    * source rather than guessed, and the join accepts whichever the walk actually clicked. Twelve
@@ -290,7 +295,6 @@ for (const f of files) {
   const LABEL_SETS = [
     { when: /^(getRefreshButton|refresh|refreshButton)$/i,
       labels: ['Refresh', 'Resume Update', 'Pause Update', 'Not Updating'] },
-    { when: /^autoRefreshButton$/i, labels: ['Turn Auto Refresh On', 'Turn Auto Refresh Off'] },
   ];
   const labelsOf = (recv) => {
     const field = String(recv).replace(/\(\)$/, '').split('.').pop();
@@ -332,8 +336,11 @@ for (const f of files) {
   // toggle's `onToggle`. The handler is the third argument rather than an `addClickHandler`, so
   // without this the explorer's seven buttons left the inventory when they moved to the Toolbar
   // (2026-10-12). A `null` third argument is a button whose handler is added the usual way.
-  for (const m of src.matchAll(/\.(button|toggle)\s*\(\s*SvgImage\s*\.\s*[A-Z0-9_]+\s*,\s*"([^"]+)"\s*,(?!\s*null\s*\))/g)) {
-    handlers.push({ class: name, classKind, kind: 'click', receiver: `toolbar ${m[1]}`, label: m[2], line: lineOf(src, m.index), via: 'Toolbar' });
+  // The name may be a string constant the file declares (`NEW_TITLE = "New Index Field"`).
+  for (const m of src.matchAll(/\.(button|toggle)\s*\(\s*SvgImage\s*\.\s*[A-Z0-9_]+\s*,\s*(?:"([^"]+)"|([A-Z][A-Z0-9_]*))\s*,(?!\s*null\s*\))/g)) {
+    const label = m[2] ?? new RegExp(`\\b${m[3]}\\s*=\\s*"([^"]*)"\\s*;`).exec(src)?.[1];
+    if (!label) continue;
+    handlers.push({ class: name, classKind, kind: 'click', receiver: `toolbar ${m[1]}`, label, line: lineOf(src, m.index), via: 'Toolbar' });
   }
   // A dialog's OK / Cancel: `onHideRequest(e -> { if (e.isOk()) … })`.
   for (const m of src.matchAll(/\.onHideRequest\s*\(/g)) {
@@ -517,8 +524,8 @@ let markdownDirty = false;
  * underneath every one of them. But there is exactly one of each in the application, so the gesture
  * itself identifies the class:
  *
- *   a drag that moved a `.dialog-popup`          -> Dialog's down + move + up
- *   a drag or resize of a `.resizableDialog-popup` -> ResizableDialog's down + move + up
+ *   a drag that moved a `.dialog`          -> Dialog's down + move + up
+ *   a drag or resize of a `.dialog--resizable` -> ResizableDialog's down + move + up
  *   a spinner arrow gesture that passed          -> Spinner's handler FOR THAT EVENT
  *
  * Only the event that actually fired is credited: a hover does not pay for a press. The two
@@ -552,7 +559,7 @@ const mouseProven = new Map();
  * What a completed SELECTION also proves beyond the popup closing: the CLICK that opened it.
  *
  * `BaseSelectionBox:44` registers a click handler on `svgIconBox`, and that icon is exactly what the
- * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.svgIconBox-icon`,
+ * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.svg-icon-box__icon`,
  * because a SelectionBox does not open from its text box). So a selection that completed went through
  * this handler. `ScheduleBox`, `DateTimeBox` and `TimeBox` have an `svgIconBox` too and are NOT
  * credited: nothing opens those.
@@ -831,7 +838,7 @@ const EXERCISABLE_NOW = new Set(['click', 'command', 'ok', 'cancel', 'hide', 'se
  *
  *   MenubarItem  `probe-mouse.mjs` finds no `.menuItem > .background` anywhere in the application.
  *                Its ui.xml builds `.menuItem > .background + .text`, which is a different DOM from
- *                the popup menu's `.menuItem-outer > .menuItem-text`; the application's menu is a
+ *                the popup menu's `.menu__item > .menu__text`; the application's menu is a
  *                popup, and this GWTP view is only ever built by injection. 4 handlers.
  */
 const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists in the application (probe-mouse.mjs)'],
@@ -905,8 +912,8 @@ for (const h of handlers) {
   else if (h.kind === 'command' && h.label) {
     // A menu item is usually clicked on a `menu` node, but not always: a tab's context menu is
     // reached through `tab-context` and its items are recorded on the node the menu was opened
-    // from. So fall back to the same distinctive-label rule clicks use — `Close Others`,
-    // `Close Saved` and `Close All` are each registered by one class and were all clicked.
+    // from. So fall back to the same distinctive-label rule clicks use — `Close Other Tabs`,
+    // `Close Saved Tabs` and `Close All Tabs` are each registered by one class and were all clicked.
     hit = menuClicked.get('*')?.get(h.label)
       ?? ((classesByLabel.get(h.label)?.size ?? 99) <= 2 && everClicked.has(h.label)
         ? { ...everClicked.get(h.label), join: 'label' } : null);

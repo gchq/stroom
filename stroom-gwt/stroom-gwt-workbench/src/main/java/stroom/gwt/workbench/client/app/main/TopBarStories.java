@@ -34,7 +34,7 @@ import java.util.List;
 ///
 /// * Main Menu, beside the Stroom logo at the top of the explorer (`NavigationViewImpl`).
 /// * Hide Sidebar, to the left of the document tabs (`CurveTabLayoutViewImpl`).
-/// * Ask Stroom AI and Show Menu, the application's toolbar at the top right (`MainToolbar`).
+/// * Ask Stroom AI and Show Main Menu, the application's toolbar at the top right (`MainToolbar`).
 ///
 /// A focus ring shows only with `:focus-visible`, which a script can't put an element in. So, as
 /// Storybook's pseudo-states addon does (and `Widgets/Layout/SplitPaneStates`), `FocusRings` copies
@@ -50,7 +50,7 @@ public final class TopBarStories {
     private static final String MAIN_MENU = "Main Menu";
     private static final String HIDE_SIDEBAR = "Hide Sidebar";
     private static final String ASK_AI = "Ask Stroom AI";
-    private static final String SHOW_MENU = "Show Menu";
+    private static final String SHOW_MENU = "Show Main Menu";
 
     private TopBarStories() {
         // Static utility

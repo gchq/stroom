@@ -22,8 +22,6 @@ import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -33,6 +31,8 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -57,7 +57,7 @@ public class AnalyticDataShardListPresenter
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =
             GWT.create(AnalyticDataShardResource.class);
 
-    private final MyDataGrid<AnalyticDataShard> dataGrid;
+    private final DataGrid<AnalyticDataShard> dataGrid;
     private final MultiSelectionModelImpl<AnalyticDataShard> selectionModel;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -86,7 +86,9 @@ public class AnalyticDataShardListPresenter
         this.nodeClient = nodeClient;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows come from every node, so are keyed by node and path
+        dataGrid.setKeyProvider(shard -> shard.getNode() + ":" + shard.getPath());
         dataGrid.setTableName("Analytic Data Shards");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

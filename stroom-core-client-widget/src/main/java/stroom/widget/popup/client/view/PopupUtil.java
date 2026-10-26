@@ -66,6 +66,21 @@ public class PopupUtil {
             return false;
         }
         dialog.setAttribute(ROLE, ALERT_DIALOG_ROLE);
+        return setDialogDescription(content, message);
+    }
+
+    /// Describes the dialog holding some content by a message in it, so that a screen reader reads
+    /// the message as the dialog opens, wherever the focus goes. Call it once the content is in the
+    /// dialog (e.g. when it is attached).
+    ///
+    /// @param content The element of the dialog's content.
+    /// @param message The element holding the message, or null to describe the dialog by nothing.
+    /// @return True if the content is in a dialog.
+    public static boolean setDialogDescription(final Element content, final Element message) {
+        final Element dialog = findDialog(content);
+        if (dialog == null) {
+            return false;
+        }
         if (message == null) {
             dialog.removeAttribute(ARIA_DESCRIBED_BY);
         } else {
@@ -114,6 +129,8 @@ public class PopupUtil {
         if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
             if (isModal) {
                 element.setAttribute(ARIA_MODAL, "true");
+                // And keeps the focus in it, as the rest of the page can't be used
+                DialogFocusTrap.install(element);
             } else {
                 element.removeAttribute(ARIA_MODAL);
             }

@@ -90,13 +90,13 @@ public final class NodeGroupMembersDialogStories {
                     // GWT column order: tickbox, Status, Name, Cluster Base Endpoint
                     // GWT's sortable headers (Name, Cluster Base Endpoint) have role="button", so the
                     // headers are the table's <th> cells
-                    play.expect(screen.querySelectorAll("thead th").textContents())
+                    play.expect(screen.querySelectorAll("thead th, [data-hcol]").textContents())
                             .toEqual(List.of("", "Status", "Name", "Cluster Base Endpoint"));
                     // The grid's rows are <tr> elements with no role attribute
                     play.expect(screen.within(row(screen, "node1")).getByText("http://node1:8080/stroom"))
                             .toBeInTheDocument();
                     // The row's tick is a TickBoxCell div, not a checkbox input
-                    play.click(screen.within(row(screen, "node1")).querySelector(".tickBox"));
+                    play.click(screen.within(row(screen, "node1")).querySelector(".tick-box"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(UPDATE_PATH)
@@ -133,7 +133,7 @@ public final class NodeGroupMembersDialogStories {
 
     // The grid's rows are <tr> elements with no role attribute
     private static Query row(final Play screen, final String text) {
-        return screen.getByText(text).closest("tr");
+        return screen.getByText(text).closest(StroomDom.GRID_ROW);
     }
 
     private static boolean hasSelectedNodes(final String body, final int... ids) {

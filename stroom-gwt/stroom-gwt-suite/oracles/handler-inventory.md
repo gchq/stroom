@@ -12,8 +12,8 @@ when a post-action selection state was reached under it. The rest are classified
 
 | | declared | exercised | |
 | --- | ---: | ---: | ---: |
-| **all classes** | 1546 | 824 | 53.3% |
-| **presenters** | 803 | 502 | 62.5% |
+| **all classes** | 1546 | 823 | 53.2% |
+| **presenters** | 804 | 502 | 62.4% |
 
 _62 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
 
@@ -21,11 +21,11 @@ _62 of the exercised are joined by LABEL alone (a label one or two classes use, 
 | --- | ---: | ---: | ---: |
 | click | 471 | 254 | 53.9% |
 | value | 314 | 120 | 38.2% |
-| command | 214 | 137 | 64.0% |
+| command | 213 | 136 | 63.8% |
 | selection | 158 | 75 | 47.5% |
 | ok | 98 | 80 | 81.6% |
 | cancel | 98 | 80 | 81.6% |
-| key | 82 | 21 | 25.6% |
+| key | 83 | 21 | 25.3% |
 | hide | 33 | 20 | 60.6% |
 | dirty | 15 | 5 | 33.3% |
 | mousedown | 14 | 4 | 28.6% |
@@ -46,7 +46,7 @@ _62 of the exercised are joined by LABEL alone (a label one or two classes use, 
 | `needs-value` | 194 | a value must be typed or chosen (B3) |
 | `widget` | 90 | declared in a widget class — inherited by many presenters, counted once here |
 | `view` | 67 | declared in a ViewImpl (a @UiHandler) — joined by ui.xml label, none matched |
-| `needs-key` | 61 | a keyboard event (B3) |
+| `needs-key` | 62 | a keyboard event (B3) |
 | `unlabelled` | 48 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
 | `needs-dirty` | 10 | an editor made dirty (B3) |
 | `absent` | 7 | the class is not in the running application — unreachable, not outstanding |
@@ -61,9 +61,9 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | presenter | declared | exercised | unexercised by why |
 | --- | ---: | ---: | --- |
 | `ContentTemplateTabPresenter` | 20 | 6 | unreached 14 |
+| `AnnotationEditPresenter` | 11 | 4 | unreached 6, needs-key 1 |
 | `DataRetentionPolicyPresenter` | 19 | 12 | unreached 7 |
 | `AbstractNotificationListPresenter` | 9 | 3 | unreached 6 |
-| `AnnotationEditPresenter` | 10 | 4 | unreached 6 |
 | `TablePresenter` | 13 | 7 | unlabelled 2, unreached 3, needs-close 1 |
 | `SteppingPresenter` | 11 | 5 | unreached 5, needs-value 1 |
 | `NewPropertyPresenter` | 6 | 0 | unreached 1, needs-value 5 |
@@ -383,82 +383,82 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 
 _A labelled button in a presenter the walk attributes nodes to, whose label was never clicked there. Each is a walker gap, a miner mislabel, or a button the UI never shows — and only reading it says which._
 
-- `ManageActivityPresenter` · `New` (newButton, line 100)
-- `ManageActivityPresenter` · `Edit` (openButton, line 107)
-- `ManageActivityPresenter` · `Delete` (deleteButton, line 114)
+- `ManageActivityPresenter` · `New Activity` (newButton, line 100)
+- `ManageActivityPresenter` · `Edit Selected Activity` (openButton, line 107)
+- `ManageActivityPresenter` · `Delete Selected Activity` (deleteButton, line 114)
 - `AnalyticEmailDestinationPresenter` · `Send Test Email` (getSendTestEmailBtn(), line 64)
 - `AnalyticEmailDestinationPresenter` · `Test Template` (getTestSubjectTemplateBtn(), line 65)
 - `AnalyticEmailDestinationPresenter` · `Test Template` (getTestBodyTemplateBtn(), line 68)
-- `ScheduledProcessHistoryListPresenter` · `Replay Execution` (replayButton, line 86)
-- `ScheduledProcessListPresenter` · `Edit Execution Schedule` (editButton, line 124)
-- `ScheduledProcessListPresenter` · `Remove Execution Schedule` (removeButton, line 125)
+- `ScheduledProcessHistoryListPresenter` · `Replay Selected Execution` (replayButton, line 86)
+- `ScheduledProcessListPresenter` · `Edit Selected Execution Schedule` (editButton, line 124)
+- `ScheduledProcessListPresenter` · `Delete Selected Execution Schedule` (removeButton, line 125)
 - `AnnotationLinkPresenter` · `Remove Annotation Link` (remove, line 71)
 - `LinkedEventPresenter` · `Remove Event Link` (removeEventButton, line 120)
-- `ManageGlobalPropertyEditPresenter` · `All nodes have the same effective value` (effectiveValueInfoButton, line 124)
-- `ManageGlobalPropertyEditPresenter` · `Click to see cluster values` (effectiveValueWarningsButton, line 125)
+- `ManageGlobalPropertyEditPresenter` · `Show Cluster Values (all nodes have the same effective value)` (effectiveValueInfoButton, line 124)
+- `ManageGlobalPropertyEditPresenter` · `Show Cluster Values` (effectiveValueWarningsButton, line 125)
 - `ContentStoreContentPackDetailsPresenter` · `Install` (btnCreateGitRepo, line 140)
-- `CredentialsListPresenter` · `Edit` (btnEdit, line 216)
+- `CredentialsListPresenter` · `Edit Selected Credential` (btnEdit, line 216)
 - `QueryFavouritesPresenter` · `Change Favourite Name` (editButton, line 109)
 - `QueryFavouritesPresenter` · `Delete Favourite` (deleteButton, line 117)
-- `QueryPresenter` · `Copy` (copyButton, line 225)
+- `QueryPresenter` · `Duplicate Selected Expression Item` (copyButton, line 225)
 - `QueryPresenter` · `Show Messages` (errorsButton, line 264)
-- `SelectionHandlersPresenter` · `Edit` (editButton, line 121)
-- `SelectionHandlersPresenter` · `Copy` (copyButton, line 127)
-- `SelectionHandlersPresenter` · `Delete` (deleteButton, line 161)
+- `SelectionHandlersPresenter` · `Edit Selected Selection Handler` (editButton, line 121)
+- `SelectionHandlersPresenter` · `Duplicate Selected Selection Handler` (copyButton, line 127)
+- `SelectionHandlersPresenter` · `Delete Selected Selection Handler` (deleteButton, line 161)
 - `IncludeExcludeFilterDictionaryPresenter` · `Remove Dictionary` (removeButton, line 64)
-- `TablePresenter` · `Download` (downloadButton, line 364)
-- `RulesPresenter` · `Edit` (editButton, line 94)
-- `RulesPresenter` · `Delete` (deleteButton, line 135)
+- `TablePresenter` · `Download Table Results` (downloadButton, line 364)
+- `RulesPresenter` · `Edit Selected Formatting Rule` (editButton, line 94)
+- `RulesPresenter` · `Delete Selected Formatting Rule` (deleteButton, line 135)
 - `VisPresenter` · `Refresh` (getRefreshButton(), line 196)
-- `MetaPresenter` · `Restore` (streamListRestore, line 295)
-- `MetaPresenter` · `Restore` (streamRelationListRestore, line 302)
-- `DictionaryListPresenter` · `Remove Import` (removeButton, line 67)
-- `NavigationPresenter` · `Toggle Alerts` (toolbar toggle, line 141)
-- `IndexShardPresenter` · `Flush Selected Shards` (buttonFlush, line 112)
-- `IndexShardPresenter` · `Delete Selected Shards` (buttonDelete, line 119)
-- `NodeJobListPresenter` · `Turn Auto Refresh On` (autoRefreshButton, line 121)
-- `NodeStatusListPresenter` · `Turn Auto Refresh On` (autoRefreshButton, line 173)
+- `MetaPresenter` · `Restore Selected Streams` (streamListRestore, line 295)
+- `MetaPresenter` · `Restore Selected Related Streams` (streamRelationListRestore, line 302)
+- `DictionaryListPresenter` · `Remove Imported Dictionary` (removeButton, line 67)
+- `NavigationPresenter` · `Show Alerts` (toolbar toggle, line 141)
+- `IndexShardPresenter` · `Flush Selected Index Shards` (buttonFlush, line 112)
+- `IndexShardPresenter` · `Delete Selected Index Shards` (buttonDelete, line 119)
+- `NodeJobListPresenter` · `Auto Refresh` (autoRefreshButton, line 121)
+- `NodeStatusListPresenter` · `Auto Refresh` (autoRefreshButton, line 173)
 - `ConstraintListPresenter` · `New Constraint` (newButton, line 86)
-- `ConstraintListPresenter` · `Edit Constraint` (editButton, line 93)
-- `ConstraintListPresenter` · `Remove Constraint` (removeButton, line 100)
-- `PathwayListPresenter` · `Edit Pathway` (editButton, line 107)
-- `PathwayListPresenter` · `Remove Pathway` (removeButton, line 114)
+- `ConstraintListPresenter` · `Edit Selected Constraint` (editButton, line 93)
+- `ConstraintListPresenter` · `Delete Selected Constraints` (removeButton, line 100)
+- `PathwayListPresenter` · `Edit Selected Pathway` (editButton, line 107)
+- `PathwayListPresenter` · `Delete Selected Pathways` (removeButton, line 114)
 - `PathwayTreePresenter` · `View Matching Traces` (viewTracesButton, line 99)
 - `SteppingPresenter` · `Terminate Stepping` (terminateButton, line 240)
-- `SteppingPresenter` · `Toggle Log Pane` (toggleLogPaneButton, line 241)
-- `PipelineReferenceListPresenter` · `Remove Reference` (removeButton, line 124)
-- `FeedDependencyListPresenter` · `Remove Reference` (removeButton, line 85)
-- `ProcessorPresenter` · `Edit Processor` (editButton, line 157)
-- `ProcessorPresenter` · `Duplicate Processor` (duplicateButton, line 166)
-- `ProcessorPresenter` · `Delete Processor` (removeButton, line 175)
-- `ProcessorPresenter` · `Show Tasks` (showTasksButton, line 217)
-- `ProcessorProfilePresenter` · `Edit` (openButton, line 63)
-- `ProfilePeriodListPresenter` · `Remove Period` (removeButton, line 82)
+- `SteppingPresenter` · `Log Pane` (toggleLogPaneButton, line 241)
+- `PipelineReferenceListPresenter` · `Remove Selected Pipeline Reference` (removeButton, line 124)
+- `FeedDependencyListPresenter` · `Remove Selected Feed Dependency` (removeButton, line 85)
+- `ProcessorPresenter` · `Edit Selected Processor` (editButton, line 157)
+- `ProcessorPresenter` · `Duplicate Selected Processor` (duplicateButton, line 166)
+- `ProcessorPresenter` · `Delete Selected Processors` (removeButton, line 175)
+- `ProcessorPresenter` · `Show Tasks for Selected Processor` (showTasksButton, line 217)
+- `ProcessorProfilePresenter` · `Edit Selected Processor Profile` (openButton, line 63)
+- `ProfilePeriodListPresenter` · `Remove Selected Profile Period` (removeButton, line 82)
 - `ResultStoreListPresenter` · `Terminate Search` (terminateButton, line 139)
-- `ResultStoreListPresenter` · `Delete Store` (deleteButton, line 157)
-- `ContentTemplateTabPresenter` · `Move template down` (moveDownButton, line 272)
-- `ContentTemplateTabPresenter` · `Move template up` (moveUpButton, line 298)
-- `ContentTemplateTabPresenter` · `Delete template` (deleteButton, line 326)
-- `ContentTemplateTabPresenter` · `Copy template` (copyButton, line 367)
-- `ContentTemplateTabPresenter` · `Edit template` (editButton, line 418)
-- `ContentTemplateTabPresenter` · `Save templates` (saveButton, line 449)
+- `ResultStoreListPresenter` · `Delete Selected Result Store` (deleteButton, line 157)
+- `ContentTemplateTabPresenter` · `Move Template Down` (moveDownButton, line 272)
+- `ContentTemplateTabPresenter` · `Move Template Up` (moveUpButton, line 298)
+- `ContentTemplateTabPresenter` · `Delete Selected Template` (deleteButton, line 326)
+- `ContentTemplateTabPresenter` · `Duplicate Selected Template` (copyButton, line 367)
+- `ContentTemplateTabPresenter` · `Edit Selected Template` (editButton, line 418)
+- `ContentTemplateTabPresenter` · `Save Templates` (saveButton, line 449)
 - `DataRetentionImpactPresenter` · `Run` (runButton, line 255)
 - `DataRetentionImpactPresenter` · `Stop` (stopButton, line 259)
 - `DataRetentionImpactPresenter` · `Filter` (filterButton, line 262)
-- `DataRetentionImpactPresenter` · `Expand All` (expandAllButton, line 270)
-- `DataRetentionImpactPresenter` · `Collapse All` (collapseAllButton, line 274)
-- `ApiKeysPresenter` · `Edit API Key` (editButton, line 98)
-- `ApiKeysPresenter` · `Delete API Key` (deleteButton, line 103)
+- `DataRetentionImpactPresenter` · `Expand All Results` (expandAllButton, line 270)
+- `DataRetentionImpactPresenter` · `Collapse All Results` (collapseAllButton, line 274)
+- `ApiKeysPresenter` · `Edit Selected API Key` (editButton, line 98)
+- `ApiKeysPresenter` · `Delete Selected API Key` (deleteButton, line 103)
 - `BatchDocumentPermissionsPresenter` · `Edit Permissions For Selected Document` (docEdit, line 124)
 - `SigningKeyPresenter` · `Clear` (revokeAllButton, line 69)
 - `UserAndGroupsPresenter` · `Create User Or Group` (createButton, line 139)
 - `UserAndGroupsPresenter` · `No Selection` (editButton, line 144)
 - `UserAndGroupsPresenter` · `No Selection` (deleteButton, line 149)
-- `UserAndGroupsPresenter` · `Remove` (removeMemberOfButton, line 186)
-- `UserAndGroupsPresenter` · `Remove` (removeMembersInButton, line 215)
+- `UserAndGroupsPresenter` · `Remove from Selected Group` (removeMemberOfButton, line 186)
+- `UserAndGroupsPresenter` · `Remove Selected Member From Group` (removeMembersInButton, line 215)
 - `UserPermissionReportPresenter` · `Edit Permissions For Selected Document` (docEdit, line 120)
 - `UsersPresenter` · `No Selection` (deleteButton, line 86)
-- `TaskManagerListPresenter` · `Delete` (terminateButton, line 163)
-- `VisualisationAssetsPresenter` · `Revert changes` (revertButton, line 195)
+- `TaskManagerListPresenter` · `Terminate Selected Tasks` (terminateButton, line 163)
+- `VisualisationAssetsPresenter` · `Revert Asset Changes` (revertButton, line 195)
 - `XMLSchemaPresenter` · `Alert` (validationIndicator, line 165)
-- `StatisticsCustomMaskListPresenter` · `Remove roll-up permutation` (removeButton, line 69)
+- `StatisticsCustomMaskListPresenter` · `Remove Selected Roll-up Permutation` (removeButton, line 69)

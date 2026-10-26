@@ -18,13 +18,13 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.grid.client.WrapperView;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -64,10 +64,13 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         this.newIndexVolumeGroupPresenterProvider = newIndexVolumeGroupPresenterProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Index Volume Group", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Index Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Index Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());
@@ -128,7 +131,9 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> refresh());
+        editor.show(indexVolumeGroup,
+                "Edit Index Volume Group - " + indexVolumeGroup.getName(),
+                result -> refresh());
     }
 
     private void delete() {

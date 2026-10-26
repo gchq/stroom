@@ -16,38 +16,39 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
+import stroom.cell.textfield.client.TextFieldCell;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.cell.AccessibleSelectionCell;
-import stroom.floormap.client.cell.AccessibleTextInputCell;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.ValueFormat;
+import stroom.item.client.SelectionBox;
+import stroom.item.client.SelectionBoxCell;
+import stroom.item.client.SimpleSelectionItemWrapper;
+import stroom.item.client.SimpleSelectionListModel;
 import stroom.security.shared.DocumentPermission;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,7 +57,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /// Presenter for the *Settings* tab of a [FloorMapDoc].
@@ -91,20 +94,24 @@ public class FloorMapSettingsPresenter
     private final DocSelectionBoxPresenter factsStoreRefPresenter;
 
     // Value Format
-    private final ListBox valueFormatListBox;
+    private final SelectionBox<ValueFormat> valueFormatListBox;
 
     // Value Schema grid
-    private final MyDataGrid<FloorMapFieldMapping> schemaGrid;
+    private final DataGrid<FloorMapFieldMapping> schemaGrid;
     private final ListDataProvider<FloorMapFieldMapping> schemaDataProvider;
-    private final SingleSelectionModel<FloorMapFieldMapping> schemaSelectionModel;
+    private final MultiSelectionModelImpl<FloorMapFieldMapping> schemaSelectionModel;
+    // Each mapping's row key, by identity: an edit's replacement takes the key of the mapping it
+    // replaces. Cleared when a document is read
+    private final Map<FloorMapFieldMapping, Integer> rowKeys = new IdentityHashMap<>();
+    private int nextRowKey;
 
     // Held so that onRead can push the read-only state into them: the cells render
     // `disabled` when read-only, rather than looking editable while the field updaters
     // silently discard the edit.
-    private AccessibleSelectionCell roleCell;
-    private AccessibleTextInputCell pathCell;
-    private AccessibleTextInputCell nameCell;
-    private AccessibleTextInputCell defaultCell;
+    private SelectionBoxCell<String, SimpleSelectionItemWrapper<String>> roleCell;
+    private TextFieldCell pathCell;
+    private TextFieldCell nameCell;
+    private TextFieldCell defaultCell;
     private final ToolbarButton addButton;
     private final ToolbarButton removeButton;
     private boolean readOnly;
@@ -139,34 +146,22 @@ public class FloorMapSettingsPresenter
         view.setFactsStoreRefView(this.factsStoreRefPresenter.getView());
 
         // Value Format dropdown
-        valueFormatListBox = new ListBox();
-        for (final ValueFormat vf : ValueFormat.values()) {
-            valueFormatListBox.addItem(vf.name());
-        }
+        valueFormatListBox = new SelectionBox<>();
+        valueFormatListBox.addItems(ValueFormat.values());
         //noinspection unused e
-        valueFormatListBox.addChangeHandler(e -> onChange());
+        valueFormatListBox.addValueChangeHandler(e -> onChange());
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
-        schemaGrid = new MyDataGrid<>(this);
-        schemaSelectionModel = new SingleSelectionModel<>();
-        schemaGrid.setSelectionModel(schemaSelectionModel);
-        // Note for anyone tempted to set KeyboardSelectionPolicy.DISABLED here: don't.
-        // An earlier revision did, to remove a stray tab stop — GWT marks the
-        // keyboard-selected cell's wrapper div `tabindex="0"`, and as the selected cell
-        // moves that stop can land before the control being tabbed away from, sending
-        // focus backwards. Disabling the policy does give a clean row-major tab order,
-        // but it also switches off the table's arrow-key and space handling, and this
-        // grid's Remove button is enabled solely by schemaSelectionModel — so row
-        // selection became mouse-only and Remove stopped being operable by keyboard at
-        // all. A worse bargain than the tab order it bought.
-        //
-        // Note also that MyDataGrid's empty keyboard handler does NOT apply to this
-        // grid: it is installed by the two-arg setSelectionModel override, and the
-        // one-arg call above goes straight to AbstractHasData, so the policy here is
-        // GWT's own ENABLED default with GWT's DefaultKeyboardSelectionHandler live.
-        // The stray tab stop is the pre-existing behaviour of every Stroom grid, not
-        // something this feature introduced.
+        schemaGrid = new DataGrid<>(this);
+        schemaGrid.setTableName("Value Schema");
+        // An edit replaces a mapping with a new one, so rows are keyed by the mapping they
+        // started as (see rowKey), not by their values, and keep their row (and focus)
+        schemaGrid.setKeyProvider(this::rowKey);
+        // One row at a time: the selection (which enables Remove) follows the keyboard's row
+        schemaSelectionModel = new MultiSelectionModelImpl<>();
+        schemaGrid.setSelectionModel(schemaSelectionModel,
+                new DataGridSelectionEventManager<>(schemaGrid, schemaSelectionModel, false));
         schemaDataProvider = new ListDataProvider<>();
         schemaDataProvider.addDataDisplay(schemaGrid);
         initSchemaColumns();
@@ -210,28 +205,25 @@ public class FloorMapSettingsPresenter
     ///
     /// Four editable columns are added in order:
     ///
-    /// 1. **Role** – a dropdown ([AccessibleSelectionCell]) of
-    ///    [Role] values.
-    /// 2. **Path** – an [AccessibleTextInputCell] for the JSON path.
-    /// 3. **Display Name** – an [AccessibleTextInputCell] for the
-    ///    label.
-    /// 4. **Default** – an [AccessibleTextInputCell] for the default
-    ///    value.
+    /// 1. **Role** – a selection box ([SelectionBoxCell]) of [Role] values.
+    /// 2. **Path** – a text field ([TextFieldCell]) for the JSON path.
+    /// 3. **Display Name** – a text field for the label.
+    /// 4. **Default** – a text field for the default value.
     ///
-    /// These are the accessible variants rather than GWT's `SelectionCell` and
-    /// `EditTextCell`, both of which render `tabindex="-1"` and so cannot be
-    /// reached by keyboard in a Stroom grid — see [AccessibleSelectionCell] for the
-    /// reason.
+    /// These are Stroom's selection box and text field as cells, rather than GWT's
+    /// `SelectionCell` and `EditTextCell`, both of which render `tabindex="-1"` and so cannot be
+    /// reached by keyboard in a Stroom grid. Each is named for its column and row.
     ///
     /// Because [FloorMapFieldMapping] is immutable, each column's
     /// `FieldUpdater` creates a replacement instance and swaps it in
     /// the data provider list at the same index.
     private void initSchemaColumns() {
         // Role column – dropdown
-        final List<String> roleOptions = Arrays.stream(Role.values())
+        final SimpleSelectionListModel<String> roleModel = new SimpleSelectionListModel<>();
+        roleModel.addItems(Arrays.stream(Role.values())
                 .map(Role::name)
-                .collect(Collectors.toList());
-        roleCell = new AccessibleSelectionCell(roleOptions, index -> schemaCellLabel("Role", index));
+                .collect(Collectors.toList()));
+        roleCell = new SelectionBoxCell<>(roleModel, index -> schemaCellLabel("Role", index));
         final Column<FloorMapFieldMapping, String> roleColumn =
                 new Column<>(roleCell) {
                     @Override
@@ -249,7 +241,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(roleColumn, "Role");
 
         // Path column – editable text
-        pathCell = new AccessibleTextInputCell(index -> schemaCellLabel("Path", index));
+        pathCell = new TextFieldCell(index -> schemaCellLabel("Path", index));
         final Column<FloorMapFieldMapping, String> pathColumn =
                 new Column<>(pathCell) {
                     @Override
@@ -266,7 +258,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(pathColumn, "Path");
 
         // Display Name column – editable text
-        nameCell = new AccessibleTextInputCell(index -> schemaCellLabel("Display Name", index));
+        nameCell = new TextFieldCell(index -> schemaCellLabel("Display Name", index));
         final Column<FloorMapFieldMapping, String> nameColumn =
                 new Column<>(nameCell) {
                     @Override
@@ -283,7 +275,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(nameColumn, "Display Name");
 
         // Default Value column – editable text
-        defaultCell = new AccessibleTextInputCell(index -> schemaCellLabel("Default", index));
+        defaultCell = new TextFieldCell(index -> schemaCellLabel("Default", index));
         final Column<FloorMapFieldMapping, String> defaultColumn =
                 new Column<>(defaultCell) {
                     @Override
@@ -324,14 +316,16 @@ public class FloorMapSettingsPresenter
             // unnotified path.
             //
             // Do NOT add refreshGrid() back here. The flush above marks only this row and
-            // replaces just its children; refreshGrid()'s setRowData(0, list) covers the
-            // whole range, which sends GWT down its replaceAllChildren path and destroys
-            // every row's DOM. The focus guard below depends on the difference: a control
+            // redraws just its cells; refreshGrid()'s setRowData(0, list) covers the
+            // whole range and redraws every row's. The focus guard below depends on the difference: a control
             // in another row survives a single-row redraw and keeps focus, and only
             // because of that can restoreSchemaFocusAfterRedraw leave it alone.
+            // The replacement takes the replaced mapping's key. The replaced one keeps it too: the
+            // grid may draw the row once more before the list change reaches it
+            rowKeys.put(updated, rowKey(list.get(index)));
             list.set(index, updated);
             onChange();
-            // The redraw replaces the row element, destroying the control being edited and
+            // The redraw replaces the row's cells, destroying the control being edited and
             // dropping focus to <body>. Without this a keyboard user was ejected from the
             // grid after every single edit and had to tab all the way back in.
             restoreSchemaFocusAfterRedraw(index, schemaGrid.getColumnIndex(column));
@@ -361,11 +355,11 @@ public class FloorMapSettingsPresenter
         if (rowIndex < 0 || rowIndex >= schemaGrid.getVisibleItemCount()) {
             return;
         }
-        final TableRowElement row = schemaGrid.getRowElement(rowIndex);
+        final Element row = schemaGrid.getRowElement(rowIndex);
         if (row == null) {
             return;
         }
-        final TableCellElement cell = row.getCells().getItem(columnIndex);
+        final Element cell = cellOf(row, columnIndex);
         if (cell == null) {
             return;
         }
@@ -374,6 +368,22 @@ public class FloorMapSettingsPresenter
         // reports whether it found anything — a silent no-op here would look exactly like
         // a working restore.
         FloorMapAria.focusFirstFocusable(cell);
+    }
+
+    // The row's cell for a column (the grid marks each cell with its column's index)
+    private static Element cellOf(final Element row, final int columnIndex) {
+        final String column = String.valueOf(columnIndex);
+        for (Element cell = row.getFirstChildElement(); cell != null; cell = cell.getNextSiblingElement()) {
+            if (column.equals(cell.getAttribute("data-col"))) {
+                return cell;
+            }
+        }
+        return null;
+    }
+
+    // A mapping's row key: the first time it is seen, the next number
+    private Integer rowKey(final FloorMapFieldMapping mapping) {
+        return rowKeys.computeIfAbsent(mapping, unused -> nextRowKey++);
     }
 
     /// Returns the document's currently focused element, or `null` if nothing is
@@ -423,8 +433,8 @@ public class FloorMapSettingsPresenter
         //noinspection unused e
         registerHandler(factsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
         //noinspection unused e
-        registerHandler(schemaSelectionModel.addSelectionChangeHandler(
-                e -> removeButton.setEnabled(schemaSelectionModel.getSelectedObject() != null)));
+        registerHandler(schemaSelectionModel.addSelectionHandler(
+                e -> removeButton.setEnabled(schemaSelectionModel.getSelected() != null)));
     }
 
     /// Handles the *Add* button click by creating a new
@@ -450,7 +460,7 @@ public class FloorMapSettingsPresenter
     /// is cleared, the remove button is disabled, the grid is refreshed, and the
     /// document is marked as dirty via [#onChange()].
     private void onRemoveMapping() {
-        final FloorMapFieldMapping selected = schemaSelectionModel.getSelectedObject();
+        final FloorMapFieldMapping selected = schemaSelectionModel.getSelected();
         if (selected != null) {
             final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
             list.remove(selected);
@@ -462,7 +472,7 @@ public class FloorMapSettingsPresenter
     }
 
     /// Synchronises the schema [ListDataProvider]'s list with the
-    /// [MyDataGrid] widget, updating both the displayed rows and the total
+    /// [DataGrid] widget, updating both the displayed rows and the total
     /// row count so the grid reflects the current state of the data provider.
     private void refreshGrid() {
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
@@ -512,24 +522,20 @@ public class FloorMapSettingsPresenter
                 : floorMapDoc.getExtentQuery());
 
         // Value Format
-        final ValueFormat vf = floorMapDoc.getValueFormat();
-        for (int i = 0; i < valueFormatListBox.getItemCount(); i++) {
-            if (valueFormatListBox.getItemText(i).equals(vf.name())) {
-                valueFormatListBox.setSelectedIndex(i);
-                break;
-            }
-        }
+        valueFormatListBox.setValue(floorMapDoc.getValueFormat());
         valueFormatListBox.setEnabled(!readOnly);
 
         // Value Schema
         final List<FloorMapFieldMapping> schema =
                 new ArrayList<>(floorMapDoc.getValueSchema());
+        // A new document's mappings: forget the old ones' keys
+        rowKeys.clear();
         schemaDataProvider.setList(schema);
         setSchemaCellsReadOnly(readOnly);
         refreshGrid();
 
         addButton.setEnabled(!readOnly);
-        removeButton.setEnabled(!readOnly && schemaSelectionModel.getSelectedObject() != null);
+        removeButton.setEnabled(!readOnly && schemaSelectionModel.getSelected() != null);
 
         // Keep an Editor-tab area-support upgrade visible in the schema grid: the
         // document just read may predate the upgrade (it is only persisted on
@@ -594,13 +600,9 @@ public class FloorMapSettingsPresenter
     @Override
     protected FloorMapDoc onWrite(final FloorMapDoc doc) {
         // Read value format from dropdown
-        final String selectedFormat = valueFormatListBox.getSelectedValue();
-        ValueFormat vf = ValueFormat.JSON;
-        try {
-            vf = ValueFormat.valueOf(selectedFormat);
-        } catch (final IllegalArgumentException ignored) {
-            // Fall back to JSON
-        }
+        final ValueFormat vf = valueFormatListBox.getValue() != null
+                ? valueFormatListBox.getValue()
+                : ValueFormat.JSON;
 
         // Note: typeStyles is intentionally NOT written here — it is owned by
         // the Layers panel (persisted via the Editor tab). copy() preserves the
@@ -653,7 +655,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the widget used for the Value Format dropdown.
         ///
-        /// @param widget the [ListBox] (or equivalent) widget
+        /// @param widget the selection box
         void setValueFormatWidget(Widget widget);
 
         /// Sets the toolbar widget (add/remove buttons) above the schema grid.
@@ -663,7 +665,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the data grid widget that displays the Value Schema mappings.
         ///
-        /// @param grid the [MyDataGrid] widget
+        /// @param grid the [DataGrid] widget
         void setSchemaGrid(Widget grid);
     }
 }

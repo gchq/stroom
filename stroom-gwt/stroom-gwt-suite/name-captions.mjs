@@ -83,7 +83,7 @@ for (const [caption, count] of [...wanted].sort((a, b) => b[1] - a[1])) {
     // Presenters only: a caption in a ViewImpl or a plugin is not the thing being shown.
     //
     // The WHOLE quoted string, not a substring — `"New Folder"` must not match
-    // `.text("Add New Folder")`, which is a menu item in a presenter that has nothing to do with the
+    // `.text("New Folder")`, which is a menu item in a presenter that has nothing to do with the
     // dialog. That was a real false positive from the first version, and it is the failure mode this
     // whole tool exists to avoid.
     const out = execSync(

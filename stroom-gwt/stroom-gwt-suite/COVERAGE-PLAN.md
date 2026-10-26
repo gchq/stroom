@@ -486,8 +486,9 @@ was reached too but needed the miner; it is one of the two below, and the withdr
   `private void showSummary(…, final String caption, …) { selectionSummaryPresenterProvider.get()
   .show(…, caption, …) }`. When a show-site argument is a bare parameter of the enclosing method
   NAMED `caption`/`title`, every same-file call contributes what it passes there. Six captions for
-  `SelectionSummaryPresenter`, and `Add Volume` / `Edit Volume` for the two volume editors, whose
-  edges had been captionless.
+  `SelectionSummaryPresenter`, and `New Data Volume` / `Edit Data Volume` and `New Index Volume` /
+  `Edit Index Volume` (once `Add Volume` / `Edit Volume`) for the two volume editors, whose edges
+  had been captionless.
 
 **What the pass could not do, and why — the next worklist:**
 
@@ -517,7 +518,7 @@ crawled blind.
 | --- | --- | --- |
 | **the AI dock open** | `Ask Stroom AI` is a TOGGLE (`InlineSvgToggleButton`, `.on`), and neither a closed tab nor a closed dialog turns it off — so the re-sync after the blocked `New Conversation` re-clicked it and CLOSED the dock (`Conversation History → present when surveyed, not locatable when clicked`). A toggle in a route is now a state to be in, not a click to be made, and the re-sync turns off any toggle the route ahead does not want on. | `AiChatHistoryPresenter` |
 | **a stream really selected** | `select-row` was clicking the first cell wider than 20px — on a stream grid that is the 24px `TickBoxCell`, which CHECKS the row (Process / Delete light up, `getSelectionSummary` fires) without SELECTING it, so the relation list and data preview never loaded. `probe-source.mjs` showed it: no `/api/data/v1/fetch` at all. A cell WITH TEXT selects; the preview loads; its `View Source` label (`DataViewImpl.sourceLinkLabel`, a `clickableLabel`, not a button — the `link:` affordance) fires `ShowDataEvent` as a content tab `Stream <id> : 1 : 1`. | `SourceTabPresenter` |
-| **a pipeline element selected** | the Structure canvas is not a GWT `Tree`: `DraggableTreePanel` selects on MOUSEUP when the target is the element the MOUSEDOWN landed on (movement between the two is a drag). `select-element` presses and releases on the LAST `.pipelineElementBox-label` — the box itself carries no class. With the seed's own steps not spending `POSTDEPTH` (`seedDepth`), the properties grid gets the generic row selection too. | `NewElementPresenter` (Add › Filter › `Create Element`), `NewPropertyPresenter` (a property row › `Edit Property`) |
+| **a pipeline element selected** | the Structure canvas is not a GWT `Tree`: `DraggableTreePanel` selects on MOUSEUP when the target is the element the MOUSEDOWN landed on (movement between the two is a drag). `select-element` presses and releases on the LAST `.pipeline-element__label`. With the seed's own steps not spending `POSTDEPTH` (`seedDepth`), the properties grid gets the generic row selection too. | `NewElementPresenter` (Add › Filter › `Create Element`), `NewPropertyPresenter` (a property row › `Edit Property`) |
 | **a query that RETURNS ROWS** | `Execute Query` is a search and the read-only guard allows it (a search only makes transient server state) — the question in "The research pass" is answered. The seeded documents' queries all error; `probe-results.mjs` found `from "Example Index" limit 20 select StreamId, EventTime, UserId` answers 20 rows (`limit` goes BEFORE `select` — after it is `Unexpected token LIMIT`) and `from "Annotations" select Id, Title, Status` 10. A `set-ace` route step writes the query, client-side, nothing saved. `QueryResultTablePresenter` has `allowHeaderSelection` on by default (MyDataGrid's default; only the dashboard's TablePresenter ties it to design mode), so the column menu opens with no mode to enter — `columnMenus` takes a scope now. | `ColumnFilterPresenter`, `RulesPresenter` (Conditional Formatting), `DownloadPresenter`, and on a SELECTED annotation row's `Annotate` menu `ChangeStatusPresenter`, `ChangeAssignedToPresenter` |
 
 **Naming what was reached** — the seed says whose surface it walks. The Query doc's result table is

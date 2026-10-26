@@ -61,6 +61,7 @@ public class HttpClientConfigPresenter
         getView().onReadOnly(readOnly);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Edit HTTP Client Configuration")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

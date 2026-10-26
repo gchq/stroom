@@ -38,7 +38,7 @@ await page.goto(gwt.baseUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 await gwt.signInFully(page, credentials());
 await page.waitForTimeout(2_000);
 
-const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
   .filter((e) => e.offsetWidth).map((e) => e.textContent.trim()));
 const press = async (name) => {
   try {
@@ -50,7 +50,7 @@ const press = async (name) => {
   console.log(`after ${name}: ${JSON.stringify(await dialogs())}`);
 };
 
-await page.locator('[title="Show Menu"]').first().click();
+await page.locator('[title="Show Main Menu"]').first().click();
 await page.waitForTimeout(600);
 await page.getByText('User', { exact: true }).first().hover();
 await page.waitForTimeout(600);
@@ -59,7 +59,7 @@ await page.waitForTimeout(1_500);
 console.log(`opened: ${JSON.stringify(await dialogs())}`);
 
 // The second selection box is Layout Density: choose whichever option isn't chosen
-const density = page.locator('.SelectionBox-textBox').nth(1);
+const density = page.locator('.selection-box__input').nth(1);
 const before = await density.inputValue();
 await density.click();
 await page.waitForTimeout(600);

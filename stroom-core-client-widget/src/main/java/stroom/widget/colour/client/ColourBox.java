@@ -27,9 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A form-field colour picker: a thin widget wrapper around a native HTML
- * {@code <input type="color">} — the form-widget sibling of
- * {@link stroom.cell.colour.client.ColourInputCell} (which serves the same
- * purpose inside data grids).
+ * {@code <input type="color">}, the BEM block {@code colour-box} (colour-box.css).
  *
  * <p>Values are 7-character hex strings (e.g. {@code "#1e88e5"}); anything
  * else is normalised to black, since the native control cannot represent an
@@ -45,6 +43,7 @@ public class ColourBox extends Widget implements HasValue<String> {
     public ColourBox() {
         input = Document.get().createTextInputElement();
         input.setAttribute("type", "color");
+        input.setClassName("colour-box");
         input.setValue(DEFAULT_COLOUR);
         setElement(input);
         sinkEvents(Event.ONCHANGE);
@@ -87,8 +86,7 @@ public class ColourBox extends Widget implements HasValue<String> {
     }
 
     private static String normalise(final String value) {
-        // The native control requires a 7-char hex value (same rule as
-        // ColourInputCell).
+        // The native control requires a 7-char hex value
         if (value == null || !value.matches("^#[0-9a-fA-F]{6}$")) {
             return DEFAULT_COLOUR;
         }

@@ -25,9 +25,6 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -67,6 +64,9 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -112,7 +112,7 @@ public abstract class AbstractMetaListPresenter
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
-    final MyDataGrid<MetaRow> dataGrid;
+    final DataGrid<MetaRow> dataGrid;
     private final MultiSelectionModelImpl<MetaRow> selectionModel;
     private final DataGridSelectionEventManager<MetaRow> selectionEventManager;
 
@@ -135,7 +135,7 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Streams");
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);

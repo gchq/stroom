@@ -18,6 +18,8 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -129,6 +131,10 @@ public final class XsdBrowserStories {
 
             </xs:schema>""";
 
+    // The sample's documentation of the schema and of 'book', shown for what is selected
+    private static final String SCHEMA_DOCUMENTATION = "A small sample library schema for the XSD browser.";
+    private static final String BOOK_DOCUMENTATION = "A single book entry with a title, author and genre.";
+
     // Malformed: the <xs:element> start tag is never closed
     private static final String MALFORMED_XSD = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -160,6 +166,33 @@ public final class XsdBrowserStories {
                 // A type extending another: the base type's box above an arrow, above its own
                 .story("ExtendedType", XsdBrowserStories::fromArgs)
                 .withArgs(Args.of(OPEN, "EditorType"))
+                // Home, Back and Forward are buttons in a named group, which the keyboard reaches
+                // and presses (they were labels with click handlers, mouse only). Home is named
+                // "Schema Home", as "Home" alone could be taken for Stroom's home page
+                .story("KeyboardNavigation", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "book"))
+                .withPlay(play -> {
+                    final Query documentation = play.querySelector(".xsdBrowser-documentation");
+                    play.waitFor(() -> play.expect(documentation).toHaveTextContent(BOOK_DOCUMENTATION));
+                    final Play navigation = play.within(play.getByRole("group", "Schema navigation"));
+                    final Query home = navigation.getByRole("button", "Schema Home");
+                    final Query back = navigation.getByRole("button", "Back");
+                    final Query forward = navigation.getByRole("button", "Forward");
+                    // They are the first tab stops, in order
+                    play.tab();
+                    play.expect(home).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(documentation).toHaveTextContent(SCHEMA_DOCUMENTATION));
+                    play.tab();
+                    play.expect(back).toHaveFocus();
+                    play.tab();
+                    play.expect(forward).toHaveFocus();
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(documentation).toHaveTextContent(BOOK_DOCUMENTATION));
+                    play.tab(true);
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(documentation).toHaveTextContent(SCHEMA_DOCUMENTATION));
+                })
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
                 // XML parser recovers, and GWT's XSDModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)

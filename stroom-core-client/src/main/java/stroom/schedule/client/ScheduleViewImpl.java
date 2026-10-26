@@ -25,6 +25,7 @@ import stroom.util.shared.scheduler.FrequencyExpression;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.QuickSettings;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -32,7 +33,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -73,6 +73,9 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
         scheduleType.addItem(ScheduleType.FREQUENCY);
         scheduleType.addItem(ScheduleType.CRON);
         calculate.setIcon(SvgImage.HISTORY);
+        // Changes as the expression is calculated, so screen readers are told the new time (or why
+        // the expression isn't valid)
+        nextScheduledTime.getElement().setAttribute("aria-live", "polite");
         enterCronMode();
     }
 
@@ -83,55 +86,36 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
     private void enterFrequencyMode() {
         setNonInstantSettingsVisible(true);
 
-        final FlowPanel minute = createPanel("Minute");
-        for (final FrequencyExpression cronExpression : FrequencyExpressions.MINUTE) {
-            minute.add(createLabel(cronExpression));
-        }
-
-        final FlowPanel hour = createPanel("Hour");
-        for (final FrequencyExpression cronExpression : FrequencyExpressions.HOUR) {
-            hour.add(createLabel(cronExpression));
-        }
-
-        final FlowPanel quickSettingsPanel = new FlowPanel();
-        quickSettingsPanel.setStyleName("timeRange-quickSettings");
-        quickSettingsPanel.add(minute);
-        quickSettingsPanel.add(hour);
-
-        this.quickSettings.setWidget(quickSettingsPanel);
+        final QuickSettings settings = new QuickSettings();
+        addFrequencies(settings.addGroup("Minute"), FrequencyExpressions.MINUTE);
+        addFrequencies(settings.addGroup("Hour"), FrequencyExpressions.HOUR);
+        this.quickSettings.setWidget(settings);
     }
 
     private void enterCronMode() {
         setNonInstantSettingsVisible(true);
 
-        final FlowPanel minute = createPanel("Minute");
-        for (final CronExpression cronExpression : CronExpressions.MINUTE) {
-            minute.add(createLabel(cronExpression));
+        final QuickSettings settings = new QuickSettings();
+        addCrons(settings.addGroup("Minute"), CronExpressions.MINUTE);
+        addCrons(settings.addGroup("Hour"), CronExpressions.HOUR);
+        addCrons(settings.addGroup("Day"), CronExpressions.DAY);
+        addCrons(settings.addGroup("Month"), CronExpressions.MONTH);
+        this.quickSettings.setWidget(settings);
+    }
+
+    // A quick setting sets the expression
+    private void addFrequencies(final QuickSettings.Group group, final FrequencyExpression[] expressions) {
+        for (final FrequencyExpression frequencyExpression : expressions) {
+            group.add(frequencyExpression.getName(),
+                    () -> expression.setValue(frequencyExpression.getExpression(), true));
         }
+    }
 
-        final FlowPanel hour = createPanel("Hour");
-        for (final CronExpression cronExpression : CronExpressions.HOUR) {
-            hour.add(createLabel(cronExpression));
+    private void addCrons(final QuickSettings.Group group, final CronExpression[] expressions) {
+        for (final CronExpression cronExpression : expressions) {
+            group.add(cronExpression.getName(),
+                    () -> expression.setValue(cronExpression.getExpression(), true));
         }
-
-        final FlowPanel day = createPanel("Day");
-        for (final CronExpression cronExpression : CronExpressions.DAY) {
-            day.add(createLabel(cronExpression));
-        }
-
-        final FlowPanel month = createPanel("Month");
-        for (final CronExpression cronExpression : CronExpressions.MONTH) {
-            month.add(createLabel(cronExpression));
-        }
-
-        final FlowPanel quickSettingsPanel = new FlowPanel();
-        quickSettingsPanel.setStyleName("timeRange-quickSettings");
-        quickSettingsPanel.add(minute);
-        quickSettingsPanel.add(hour);
-        quickSettingsPanel.add(day);
-        quickSettingsPanel.add(month);
-
-        this.quickSettings.setWidget(quickSettingsPanel);
     }
 
     private void setNonInstantSettingsVisible(final boolean visible) {
@@ -144,33 +128,6 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
         nextScheduledTime.setVisible(visible);
         nextScheduledTimeFormGroup.setVisible(visible);
         calculate.setVisible(visible);
-    }
-
-    private FlowPanel createPanel(final String name) {
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("timeRange-quickSettingPanel");
-        final Label label = new Label(name, false);
-        label.addStyleName("timeRange-quickSettingPanel-title");
-        panel.add(label);
-        return panel;
-    }
-
-    private Label createLabel(final CronExpression cronExpression) {
-        final Label label = new Label(cronExpression.getName(), false);
-        label.addStyleName("timeRange-quickSetting");
-        label.addClickHandler(event -> {
-            expression.setValue(cronExpression.getExpression(), true);
-        });
-        return label;
-    }
-
-    private Label createLabel(final FrequencyExpression cronExpression) {
-        final Label label = new Label(cronExpression.getName(), false);
-        label.addStyleName("timeRange-quickSetting");
-        label.addClickHandler(event -> {
-            expression.setValue(cronExpression.getExpression(), true);
-        });
-        return label;
     }
 
     @Override

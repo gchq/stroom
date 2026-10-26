@@ -70,13 +70,13 @@ public final class AnnotationTagScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/AnnotationTagScreen", AnnotationTagScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Labels: New → create → the edit dialog opens with a Style field
+                // Labels: New Annotation Label → create → the edit dialog opens with a Style field
                 .story("Labels", context -> render(context, AnnotationTagType.LABEL, "Annotation Labels",
                         RestReply.json(page(BUG)), RestReply.json(page(BUG, FEATURE))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Bug");
-                    play.click(play.getByTitle("New"));
+                    play.click(play.getByTitle("New Annotation Label"));
                     final Play create = screen.within(screen.findByText("Create New Label")
                             .closest(StroomDom.DIALOG));
                     play.type(create.getByLabelText("Name"), "Feature");
@@ -100,7 +100,7 @@ public final class AnnotationTagScreenStories {
                     play.findByText("Open");
                     // Select the row, Edit: the editor has the permissions button
                     play.click(play.getByText("Open"));
-                    play.click(play.getByTitle("Edit"));
+                    play.click(play.getByTitle("Edit Selected Annotation Status"));
                     final Play edit = screen.within(screen.findByText("Edit Status - Open").closest(StroomDom.DIALOG));
                     // GWT's button reads 'Change Permissions', as does the
                     // popup's caption, so the popup is found by its title
@@ -120,7 +120,7 @@ public final class AnnotationTagScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Triage");
-                    play.click(play.getByTitle("New"));
+                    play.click(play.getByTitle("New Annotation Comment"));
                     final Play create = screen.within(screen.findByText("Create New Comment")
                             .closest(StroomDom.DIALOG));
                     play.expect(create.getByLabelText("Comment")).toBeInTheDocument();

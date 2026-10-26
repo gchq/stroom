@@ -49,8 +49,11 @@ public class TimeBox
         protected void onBind() {
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
+                // As a date-time box: Enter or Alt+Down opens the dialog
                 final int keyCode = event.getNativeKeyCode();
-                if (KeyCodes.KEY_ENTER == keyCode) {
+                if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
+                    || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
+                    event.preventDefault();
                     showPopup();
                 }
             }));
@@ -73,10 +76,12 @@ public class TimeBox
 
     public TimeBox() {
         textBox = new TextBox();
-        textBox.addStyleName("ScheduleBox-textBox stroom-control allow-focus");
+        // A date-time box's look (date-time-box.css), with a clock
+        textBox.addStyleName("date-time-box__input stroom-control allow-focus");
+        textBox.getElement().setAttribute("aria-haspopup", "dialog");
 
         svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName("ScheduleBox");
+        svgIconBox.addStyleName("date-time-box date-time-box--time");
         svgIconBox.setWidget(textBox, SvgImage.HISTORY);
 
         initWidget(svgIconBox);

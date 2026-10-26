@@ -165,7 +165,9 @@
 .annotationHistory {
 }
 
+/* A text field as wide as the history above it */
 .annotationComment {
+    width: 100%;
     padding: 5px;
     min-height: 300px;
 }
@@ -317,14 +319,6 @@
     padding: 0 10px 10px 10px
 }
 
-.annotationHistoryText {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    opacity: 1;
-    z-index: -1;
-}
-
 .annotationHistoryCopyButton {
     flex-grow: 0;
     width: 200px;
@@ -385,6 +379,8 @@
     height: 0.8rem !important;
 }
 
+/* An entry's actions button also shows while it has the focus */
+.annotationHistoryActions:focus,
 .annotationHistoryItem:hover .setting-block-icon,
 .annotationHistoryGroupHeader:hover .setting-block-icon,
 .annotationHistoryCommentHeader:hover .setting-block-icon,
@@ -478,4 +474,17 @@
 
 .setting-block.setting-block--readonly .setting-block-icon {
     display: none;
+}
+
+/* A setting's ⋮ is its button (SettingBlock): with the keyboard focus it shows, with a focus ring,
+   and its setting is highlighted as on a hover */
+.setting-block-icon:focus-visible {
+    opacity: 1;
+    outline: none;
+    border-radius: .25rem;
+    box-shadow: var(--focus-shadow);
+}
+
+.setting-block:has(> .setting-block-icon:focus-visible) {
+    background-color: var(--border-color);
 }

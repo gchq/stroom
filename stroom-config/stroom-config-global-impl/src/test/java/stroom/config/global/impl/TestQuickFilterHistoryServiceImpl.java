@@ -131,7 +131,7 @@ class TestQuickFilterHistoryServiceImpl {
     @Test
     void testHistorySizeIsAtLeastOne() {
         final UiConfig zero = new UiConfig(null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0);
         service = new QuickFilterHistoryServiceImpl(dao, securityContext, () -> zero);
 
         service.fetch(KEY);

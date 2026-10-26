@@ -20,7 +20,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableLong;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -50,7 +49,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
@@ -126,7 +125,7 @@ public final class ViewStateStories {
                     play.expect(play.getAllByRole("button", TextMatch.containing("My Pipeline")).nth(1))
                             .toHaveAttribute("aria-disabled", "true");
                     play.click(play.getAllByDisplayValue("Excel").nth(1));
-                    play.expect(play.screen().querySelector(".SelectionPopup")).toBeNull();
+                    play.expect(play.screen().querySelector(".selection-popup")).toBeNull();
                     // Disabled: out of the tab order (native controls)
                     play.expect(tickBoxes.nth(2)).toBeDisabled();
                 })
@@ -167,8 +166,6 @@ public final class ViewStateStories {
                         w -> ((DateTimeBox) w).setEnabled(false)),
                 new Row("Time", ViewStateStories::timeBox, w -> ((TimeBox) w).setReadOnly(true),
                         w -> ((TimeBox) w).setEnabled(false)),
-                new Row("Date (text)", ViewStateStories::dateBox, w -> ((MyDateBox) w).setReadOnly(true),
-                        w -> ((MyDateBox) w).setEnabled(false)),
                 new Row("Duration", ViewStateStories::duration, w -> ((DurationPicker) w).setReadOnly(true),
                         w -> ((DurationPicker) w).setEnabled(false)),
                 new Row("Schedule", ViewStateStories::schedule, w -> ((ScheduleBox) w).setReadOnly(true),
@@ -308,7 +305,7 @@ public final class ViewStateStories {
     // A grid of jobs: enabled, name, maximum tasks and an action, editable or as read-only screens
     // draw it (a borderless tick, a plain number and a disabled action)
     private static Widget grid(final ScreenHarness harness, final boolean editable) {
-        final MyDataGrid<Job> grid = new MyDataGrid<>(new SimpleEventBus());
+        final DataGrid<Job> grid = new DataGrid<>(new SimpleEventBus());
         grid.addColumn(DataGridUtil.updatableTickBoxColumnBuilder(
                                 TickBoxState.createTickBoxFunc(Job::isEnabled), editable)
                         .enabledWhen(Job::isEnabled)
@@ -321,12 +318,13 @@ public final class ViewStateStories {
                 DataGridUtil.headingBuilder("Job").build(),
                 110);
         grid.addColumn(DataGridUtil.valueSpinnerColumnBuilder(
+                                "Max Tasks",
                                 (Job job) -> maxTasks(job, editable),
                                 0L, 100L)
                         .enabledWhen(Job::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Max Tasks").build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
         grid.addColumn(DataGridUtil.cellIconColumnBuilder(true,
                                 (Job job) -> CellIcon.of(SvgImage.DELETE, "Delete", editable))
                         .build(),
@@ -493,13 +491,6 @@ public final class ViewStateStories {
         return box;
     }
 
-    private static Widget dateBox() {
-        final MyDateBox box = new MyDateBox();
-        box.setUtc(true);
-        box.setValue("2023-11-14T22:13:20.000Z");
-        return box;
-    }
-
     private static Widget duration() {
         final DurationPicker picker = new DurationPicker();
         picker.setValue(SimpleDuration.builder().time(30).timeUnit(TimeUnit.DAYS).build());
@@ -555,7 +546,7 @@ public final class ViewStateStories {
         private final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
 
         private PickerField() {
-            view.setText("My Pipeline", false);
+            view.setText("My Pipeline");
             initWidget(view.asWidget());
         }
     }

@@ -19,7 +19,8 @@ package stroom.widget.menu.client.presenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.NewTabLink;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -52,6 +53,16 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
+    // Tells screen readers that an item opens a new browser tab, with hidden text after the item's
+    // text. It is kept out of the text's own element, which other code reads as the item's
+    // visible text (e.g. to name a sub menu)
+    private static void appendNewTabHint(final MenuItem menuItem, final SafeHtmlBuilder sb) {
+        if (menuItem.isOpensNewTab()) {
+            sb.append(NewTabLink.hiddenHint());
+        }
+    }
+
+
     // --------------------------------------------------------------------------------
 
 
@@ -72,7 +83,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         @Override
         public void render(final MenuItemCell cell, final Context context, final Separator value,
                            final SafeHtmlBuilder sb) {
-            sb.append(Templates.div("menuItem-separator"));
+            sb.append(Templates.div("menu__separator"));
         }
     }
 
@@ -88,7 +99,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         @Override
         public void render(final MenuItemCell cell, final Context context, final GroupHeading value,
                            final SafeHtmlBuilder sb) {
-            sb.append(Templates.div("menuItem-groupHeading",
+            sb.append(Templates.div("menu__group-heading",
                     SafeHtmlUtils.fromTrustedString(value.getGroupName())));
         }
     }
@@ -130,7 +141,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 if (value.getIconColour() != null) {
                     iconColour = value.getIconColour();
                 }
-                final String iconClassName = "menuItem-icon" + " " + iconColour.getClassName();
+                final String iconClassName = "menu__icon" + " " + iconColour.getClassName();
 
                 if (value.isEnabled()) {
                     if (enabledIcon != null) {
@@ -150,31 +161,28 @@ public class MenuItemCell extends AbstractCell<Item> {
 
 
                 inner.append(
-                        TEMPLATE.inner("menuItem-text", value.getText()));
+                        TEMPLATE.inner("menu__text", value.getText()));
+                appendNewTabHint(value, inner);
 
-                if (value.getAction() != null) {
-                    final String shortcut = KeyBinding.getShortcut(value.getAction());
-                    if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
-                    }
+                final String shortcut = value.getShortcut();
+                if (shortcut != null) {
+                    inner.append(TEMPLATE.inner("menu__shortcut",
+                            SafeHtmlUtils.fromString(shortcut)));
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem)
                     && value.isEnabled()) {
-                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menu__arrow"));
                 }
 
-                String className = "menuItem-outer";
+                String className = "menu__item";
                 className += value.isHighlight()
-                        ? " menuItem-highlight"
+                        ? " menu__item--highlight"
                         : "";
-                className += value.isEnabled()
-                        ? ""
-                        : " menuItem-disabled";
                 final SafeHtml tooltip = NullSafe.getOrElse(value, MenuItem::getTooltip, value.getText());
-                sb.append(TEMPLATE.outer(className, tooltip.asString(), inner.toSafeHtml()));
+                // As text: the template escapes the title itself
+                sb.append(TEMPLATE.outer(className, SafeHtmlUtil.toPlainText(tooltip), inner.toSafeHtml()));
             }
         }
 
@@ -184,7 +192,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" title=\"{1}\" tabindex=\"-1\">{2}</div>")
+            @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
             SafeHtml outer(String className, String tooltip, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
@@ -213,27 +221,23 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 inner.append(
                         TEMPLATE.inner(
-                                "menuItem-simpleText",
+                                "menu__text",
                                 value.getText()));
+                appendNewTabHint(value, inner);
 
-                if (value.getAction() != null) {
-                    final String shortcut = KeyBinding.getShortcut(value.getAction());
-                    if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
-                    }
+                final String shortcut = value.getShortcut();
+                if (shortcut != null) {
+                    inner.append(TEMPLATE.inner("menu__shortcut",
+                            SafeHtmlUtils.fromString(shortcut)));
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof SimpleParentMenuItem) && value.isEnabled()) {
-                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menu__arrow"));
                 }
 
-                String className = "menuItem-outer";
-                className += value.isEnabled()
-                        ? ""
-                        : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
+                // A disabled item looks so from its aria-disabled (Menu)
+                sb.append(TEMPLATE.outer("menu__item", inner.toSafeHtml()));
             }
         }
 
@@ -243,7 +247,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
@@ -271,11 +275,11 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
-                        "menuItem-simpleText",
+                        "menu__text",
                         value.getText()));
 
                 sb.append(TEMPLATE.outer(
-                        "menuItem-outer infoMenuItem",
+                        "menu__item menu__item--info",
                         inner.toSafeHtml()));
             }
         }
@@ -286,7 +290,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")

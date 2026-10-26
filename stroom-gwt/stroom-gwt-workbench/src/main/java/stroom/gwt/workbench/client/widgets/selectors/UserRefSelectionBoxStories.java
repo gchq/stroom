@@ -20,7 +20,10 @@ package stroom.gwt.workbench.client.widgets.selectors;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -38,6 +41,7 @@ public final class UserRefSelectionBoxStories {
     private static final String ON_CHANGE = "onChange";
     // Delays the users' search, to show the "Loading…" state
     private static final int FIND_DELAY_MILLIS = 150;
+    private static final String SELECTED_ROW = "[role=dialog] .data-grid__row--selected";
 
     private UserRefSelectionBoxStories() {
         // Static utility
@@ -55,6 +59,51 @@ public final class UserRefSelectionBoxStories {
                 // Pre-selected user - the box shows the chosen user's name
                 .story("WithSelection", context -> withEcho(context,
                         UserFixture.fixtureUsers().get("u-alice")))
+                // The dialog from the keyboard: Down from the filter goes to the chosen user and moving
+                // chooses; Up from the first row goes back to the filter; typing in the grid goes to
+                // the filter; Enter on a row chooses that row (even one only highlighted after
+                // filtering) and closes the dialog
+                .story("KeysInTheDialog", context -> withEcho(context,
+                        UserFixture.fixtureUsers().get("u-alice")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query picker = play.querySelector(".drop-down");
+                    final String filter = "Filter users and groups";
+                    play.tab();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).toHaveFocus());
+                    play.expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
+                    play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW))
+                            .toHaveTextContent("Alice Anderson"));
+                    play.keyboard("{ArrowDown}");
+                    play.expect(screen.getByRole("searchbox", filter)).not().toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW)).toHaveTextContent("Bob Brown"));
+                    play.waitFor(() -> play.expect(screen.getByText("Bob Brown chosen")).toBeInTheDocument());
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW))
+                            .toHaveTextContent("Alice Anderson"));
+                    play.keyboard("{ArrowUp}");
+                    play.expect(screen.getByRole("searchbox", filter)).toHaveFocus();
+                    // Typed in the grid, the characters go to the filter
+                    play.keyboard("{ArrowDown}");
+                    play.keyboard("carol");
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).toHaveValue("carol"));
+                    play.expect(screen.getByRole("searchbox", filter)).toHaveFocus();
+                    play.waitFor(() -> play.expect(screen.queryByText("Bob Brown")).toBeNull());
+                    // The list filtered by the whole text: Alice (shown for 'c' and 'ca') has gone too.
+                    // Down too soon would go to a row of a list still being filtered
+                    final Play dialog = screen.within(screen.getByRole("dialog"));
+                    play.waitFor(() -> play.expect(dialog.queryByText("Alice Anderson")).toBeNull());
+                    // Down goes to the first row (the chosen user isn't shown), which Enter chooses
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).not().toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog")).toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.startingWith("Selected: Carol")))
+                            .toBeInTheDocument());
+                    play.expect(picker).toHaveFocus();
+                })
                 // Disabled - the picker can't be opened
                 .story("Disabled", context -> {
                     final ScreenHarness harness = harness(context);
@@ -104,6 +153,8 @@ public final class UserRefSelectionBoxStories {
         return ScreenHarness.create(context, RestFixtures.builder()
                 .post(UserFixture.FIND, request -> RestReply.json(users.find(request.getBody()))
                         .delayed(FIND_DELAY_MILLIS))
+                // A filter used when the picker's dialog is closed is recorded in the history
+                .post("/quickFilterHistory/v1/record", request -> RestReply.noContent())
                 .build());
     }
 

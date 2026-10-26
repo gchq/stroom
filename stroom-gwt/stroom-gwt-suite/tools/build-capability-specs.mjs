@@ -29,7 +29,7 @@
 //
 // Two shapes carry it, both declarative:
 //
-//   SvgPresets.DELETE.title("Delete selected rule")   a toolbar button; the preset supplies the
+//   SvgPresets.DELETE.title("Delete Selected Rules")  a toolbar button; the preset supplies the
 //                                                     default title AND the default enabled state,
 //                                                     since SvgPresets declares each as
 //                                                     enabled(...) or disabled(...)
@@ -243,11 +243,11 @@ for (const name of own.keys()) {
 // showed up as `extra` on a dozen presenters. Same rule the screen profiles use, applied at analysis
 // time so it needs no re-crawl.
 const CHROME = new Set([
-  'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
-  'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New', 'Delete',
+  'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
+  'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
+  'New Document', 'Delete Selected Documents',
 ]);
-// …but a label is chrome only when the screen does not claim it itself. `New` and `Delete` are the
+// …but a label is chrome only when the screen does not claim it itself. `New` and `Delete` were the
 // explorer's buttons AND genuine buttons on FsVolumeGroup, IndexVolumeGroup, NodeGroup and
 // ProcessorProfile, so filtering by label alone stripped four screens' real toolbars and reported them
 // as MISSING. The spec is what disambiguates: keep anything this presenter is expected to draw.

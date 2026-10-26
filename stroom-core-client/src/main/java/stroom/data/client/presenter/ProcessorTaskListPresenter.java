@@ -18,9 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -43,6 +40,9 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -72,7 +72,7 @@ public class ProcessorTaskListPresenter
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
-    private final MyDataGrid<ProcessorTask> dataGrid;
+    private final DataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final ExpressionCriteria criteria;
@@ -89,7 +89,7 @@ public class ProcessorTaskListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Processor Tasks");
         view.setDataWidget(dataGrid);
 

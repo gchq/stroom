@@ -21,8 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -41,6 +39,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -60,11 +60,15 @@ public class PathwayListPresenter
         implements QuickFilterUiHandlers {
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);
+    private static final String NEW_TITLE = "New Pathway";
+    private static final String EDIT_TITLE = "Edit Selected Pathway";
+    private static final String DELETE_TITLE = "Delete Selected Pathways";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final MyDataGrid<Pathway> dataGrid;
+    private final DataGrid<Pathway> dataGrid;
     private final MultiSelectionModelImpl<Pathway> selectionModel;
     private final PathwayEditPresenter pathwayEditPresenter;
     private final ButtonView newButton;
@@ -85,13 +89,16 @@ public class PathwayListPresenter
                                 final DateTimeFormatter dateTimeFormatter,
                                 final PathwayEditPresenter pathwayEditPresenter) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter pathways");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by name, unique in the document
+        dataGrid.setKeyProvider(Pathway::getName);
         dataGrid.setTableName("Pathways");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
@@ -99,10 +106,10 @@ public class PathwayListPresenter
         this.pathwayEditPresenter = pathwayEditPresenter;
 
         pagerView.getToolbar().setName("Pathway actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -164,15 +171,12 @@ public class PathwayListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New pathway disabled as read only");
-            editButton.setTitle("Edit pathway disabled as read only");
-            removeButton.setTitle("Remove pathway disabled as read only");
-        } else {
-            newButton.setTitle("New Pathway");
-            editButton.setTitle("Edit Pathway");
-            removeButton.setTitle("Remove Pathway");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        newButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(DELETE_TITLE + readOnlySuffix);
     }
 
     private void addColumns() {

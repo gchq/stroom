@@ -17,22 +17,23 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.UrlParameters;
-import stroom.data.grid.client.EventCell;
-import stroom.data.grid.client.HasContextMenus;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.EventCell;
+import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -85,7 +86,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                        final Function<T_ROW, DocRef> docRefFunction,
                        final Function<T_ROW, String> cssClassFunction,
                        final Function<T_ROW, Boolean> canOpenFunction) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.hasOpenAndCopy = hasOpenAndCopy;
@@ -112,11 +113,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
+        } else if (RowActions.isKeyPress(event)) {
+            // Enter or Space on the open button; the button's own click would come too
+            event.preventDefault();
+            onEnterKeyDown(context, parent, value, event, valueUpdater);
         }
     }
 
@@ -140,7 +144,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         .command(() -> OpenDocumentEvent.fire(this, docRef, true))
                         .build());
             }
-            menuItems.add(createCopyAsMenuItem(docRef, priority++));
+            menuItems.add(createCopyAsMenuItem(docRef, type, priority++));
 
         }
         return menuItems.isEmpty()
@@ -163,18 +167,21 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         final DocRef docRef = NullSafe.get(value, docRefFunction);
         if (docRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
-                    ClipboardUtil.copy(text);
+                    Clipboard.writeText(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 OpenDocumentEvent.fire(this, docRef, true);
             }
         } else {
             final String text = cellTextFunction.apply(value).asString();
             if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 if (text != null) {
-                    ClipboardUtil.copy(text);
+                    Clipboard.writeText(text);
                 }
             }
         }
@@ -230,13 +237,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 // A broken ref may have an empty UUID, which can't be opened
                 if (NullSafe.isNonBlankString(docRef.getUuid())) {
+                    // A button the keyboard reaches from its row (a row action)
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
                             ICON_CLASS_NAME,
-                            OPEN_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
-                    sb.append(Templates.divWithTitle(
-                            "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
+                            "Open " + docRef.getType() + " " + docRef.getName(),
                             open));
                 }
             }
@@ -246,12 +254,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     }
 
     private MenuItem createCopyAsMenuItem(final DocRef docRef,
+                                          final String type,
                                           final int priority) {
         final List<Item> children = createCopyAsChildMenuItems(docRef);
+        // Says what is copied, as this can sit beside the grid's own 'Copy' submenu
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy " + type + " Details")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -267,18 +277,18 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
-                    .command(() -> ClipboardUtil.copy(docRef.getName()))
+                    .command(() -> Clipboard.writeText(docRef.getName()))
                     .build());
         }
         if (NullSafe.isNonBlankString(docRef.getUuid())) {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy UUID to Clipboard")
+                    .text("UUID")
                     .enabled(true)
-                    .command(() -> ClipboardUtil.copy(docRef.getUuid()))
+                    .command(() -> Clipboard.writeText(docRef.getUuid()))
                     .build());
         }
         childMenuItems.add(createCopyLinkMenuItem(docRef, priority++));
@@ -297,8 +307,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
-                .command(() -> ClipboardUtil.copy(docUrl))
+                .text("Link")
+                .command(() -> Clipboard.writeText(docUrl))
                 .build();
     }
 

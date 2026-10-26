@@ -18,8 +18,6 @@ package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.FocusEvent;
@@ -36,6 +34,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -55,7 +55,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private final RestFactory restFactory;
-    private final MyDataGrid<FindResultWithPermissions> dataGrid;
+    private final DataGrid<FindResultWithPermissions> dataGrid;
     private final MultiSelectionModelImpl<FindResultWithPermissions> selectionModel;
     private RestDataProvider<FindResultWithPermissions, ResultPage<FindResultWithPermissions>> dataProvider;
     private final Builder criteriaBuilder = new Builder();
@@ -72,7 +72,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Document Permissions");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);

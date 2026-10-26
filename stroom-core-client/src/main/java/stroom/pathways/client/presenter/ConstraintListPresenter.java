@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Constraint;
@@ -29,6 +27,8 @@ import stroom.pathways.shared.pathway.PathNode;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -46,12 +46,16 @@ import java.util.stream.Collectors;
 public class ConstraintListPresenter
         extends MyPresenterWidget<PagerView> {
 
+    private static final String NEW_TITLE = "New Constraint";
+    private static final String EDIT_TITLE = "Edit Selected Constraint";
+    private static final String DELETE_TITLE = "Delete Selected Constraints";
+
 //    private static final ConstraintsResource PATHWAYS_RESOURCE = GWT.create(ConstraintsResource.class);
 
     //    private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final MyDataGrid<Constraint> dataGrid;
+    private final DataGrid<Constraint> dataGrid;
     private final MultiSelectionModelImpl<Constraint> selectionModel;
     private final ConstraintEditPresenter constraintEditPresenter;
     private final ButtonView newButton;
@@ -77,7 +81,9 @@ public class ConstraintListPresenter
 //        view.setDataView(pagerView);
 //        view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by name, unique, so an edited row is still the same row
+        dataGrid.setKeyProvider(Constraint::getName);
         dataGrid.setTableName("Constraints");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
@@ -85,10 +91,10 @@ public class ConstraintListPresenter
         this.constraintEditPresenter = constraintEditPresenter;
 
         pagerView.getToolbar().setName("Constraint actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -146,15 +152,13 @@ public class ConstraintListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New constraint disabled as read only");
-            editButton.setTitle("Edit constraint disabled as read only");
-            removeButton.setTitle("Remove constraint disabled as read only");
-        } else {
-            newButton.setTitle("New Constraint");
-            editButton.setTitle("Edit Constraint");
-            removeButton.setTitle("Remove Constraint");
-        }
+        // The names stay, with why the buttons are disabled when read only
+        final String suffix = readOnly
+                ? " (read only)"
+                : "";
+        newButton.setTitle(NEW_TITLE + suffix);
+        editButton.setTitle(EDIT_TITLE + suffix);
+        removeButton.setTitle(DELETE_TITLE + suffix);
     }
 
     private void addColumns() {

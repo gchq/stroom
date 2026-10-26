@@ -116,6 +116,8 @@ public class Spinner {
 
     private void update() {
         input.setValue(String.valueOf(value));
+        // The field is a spin button, so screen readers are told its value as it steps
+        input.setAttribute("aria-valuenow", String.valueOf(value));
     }
 
     public boolean hasChanged() {

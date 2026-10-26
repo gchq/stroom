@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.widgets.cellrenderers;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -27,6 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
@@ -54,7 +54,7 @@ public final class TickBoxCellStories {
     private static final String TICKED = "Ticked";
     private static final String HALF_TICKED = "Half-Ticked";
     private static final String NOT_TICKED = "Not Ticked";
-    private static final String HEADER_TICK_BOX = "th .tickBox";
+    private static final String HEADER_TICK_BOX = "[data-hcol] .tick-box";
 
     private TickBoxCellStories() {
         // Static utility
@@ -74,7 +74,7 @@ public final class TickBoxCellStories {
                 .story("ReadOnly", context -> grid(context, false, "Bravo", "Delta"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getAllByTitle(TICKED)).toHaveLength(2));
-                    play.expect(play.querySelectorAll(".tickBox-noBorder")).toHaveLength(NAMES.size());
+                    play.expect(play.querySelectorAll(".tick-box[aria-readonly='true']")).toHaveLength(NAMES.size());
                     // To assistive technology, each is a check box that can't be changed
                     play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size());
                     play.expect(rowTickBox(play, "Bravo")).toBeChecked();
@@ -94,6 +94,11 @@ public final class TickBoxCellStories {
         // To assistive technology, each is a check box: the half-ticked header is 'mixed'
         play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size() + 1);
         play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("aria-checked", "mixed");
+        // Drawn as the form's tick box (tick-box.css): the block with the cell modifier, holding the
+        // drawn box and nothing else (the mixed square is drawn by the stylesheet)
+        play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveClass("tick-box--cell");
+        play.expect(play.querySelectorAll(".tick-box--cell > .tick-box__mark")).toHaveLength(NAMES.size() + 1);
+        play.expect(play.querySelectorAll(".tick-box--cell > .tick-box__mark > div")).toHaveLength(0);
         play.expect(rowTickBox(play, "Bravo")).toBeChecked();
         play.expect(rowTickBox(play, "Alpha")).not().toBeChecked();
         play.expect(rowTickBox(play, "Alpha")).toHaveAttribute("aria-readonly", "false");
@@ -118,7 +123,7 @@ public final class TickBoxCellStories {
 
     /// @return The tick box in the row with the name.
     private static Query rowTickBox(final Play play, final String name) {
-        return play.within(play.getByText(name).closest("tr")).querySelector(".tickBox");
+        return play.within(play.getByText(name).closest("[role='row']")).querySelector(".tick-box");
     }
 
     /// A grid of [#NAMES] with a tick box column, as Stroom's list presenters build them.
@@ -128,7 +133,7 @@ public final class TickBoxCellStories {
     private static Widget grid(final StoryContext context, final boolean updatable, final String... ticked) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Set<String> selected = new LinkedHashSet<>(List.of(ticked));
-        final MyDataGrid<String> grid = new MyDataGrid<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
 

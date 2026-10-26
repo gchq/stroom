@@ -34,6 +34,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.Scheduler;
@@ -104,6 +105,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     protected Toolbar createToolbar() {
         final Toolbar toolbar = new Toolbar("Document actions");
         saveButton = toolbar.button(SvgImage.SAVE, "Save", this::save);
+        saveButton.setShortcut(Action.ITEM_SAVE);
         saveButton.setEnabled(false);
         saveAsButton = toolbar.button(SvgImage.SAVEAS, "Save As", this::saveAs);
         saveAsButton.setEnabled(false);
@@ -278,8 +280,11 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         this.docRef = docRef;
         setSaveEnabled(isDirty());
         setSaveAsEnabled(true);
-        if (readOnly && saveButton != null) {
-            saveButton.setTitle("Save is not available as this document is read only");
+        // Set on every read, so a document read again as editable gets its plain name back
+        if (saveButton != null) {
+            saveButton.setTitle(readOnly
+                    ? "Save (read only)"
+                    : "Save");
         }
         setReadOnlyStatus(readOnly);
         tabContentProvider.read(docRef, document, readOnly);

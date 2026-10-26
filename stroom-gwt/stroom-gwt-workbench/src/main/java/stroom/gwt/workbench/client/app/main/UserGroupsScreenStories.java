@@ -37,6 +37,7 @@ import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ public final class UserGroupsScreenStories {
 
     /// The name of the spy recording the screens opened from the action menus.
     static final String OPEN_SCREEN = "openScreen";
+
+    // Each list's quick filter, named for what it filters (UserListPresenter)
+    private static final String FILTER = "Filter users and groups";
 
     private static final String ALICE = """
             {"id": 1, "uuid": "u-alice", "subjectId": "alice", "displayName": "Alice Anderson",
@@ -112,6 +116,12 @@ public final class UserGroupsScreenStories {
                     play.findByText("Members of group \"Administrators\":");
                     play.waitFor(() -> play.expect(play.getAllByText("Alice Anderson").count())
                             .toBeGreaterThanOrEqual(2));
+                    // The group is a member of none: its pager counts none ("0 to 0 of 0", once
+                    // "1 to 1 of 0")
+                    play.waitFor(() -> play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .toContain("0 to 0 of 0"));
+                    play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .not().toContain("1 to 1 of 0");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The runs of icon buttons, and the tab stops each costs, once a group is selected
@@ -123,14 +133,14 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Create Group, Edit Group 'Administrators', Delete Group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Add to Group, Remove from Selected Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Add Member to Group, Remove Selected Member From Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop"));
                 })
                 // #5405: Tab reads the panes as they are laid out, the master list, then the left
@@ -147,15 +157,18 @@ public final class UserGroupsScreenStories {
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
-                    // first button), its toolbar and its pager (and its grid, a div), the master's,
-                    // then Member Of's, then Members', with the splitter (named by the pane it
-                    // resizes) between each
+                    // first button), its toolbar and its pager, then its grid, the master's, then
+                    // Member Of's, then Members', with the splitter (named by the pane it resizes)
+                    // between each. A grid is one tab stop: the row with the keyboard focus (named
+                    // by its text; its row actions are reached with Right), or, with no rows, the
+                    // grid itself, so its headers can still be reached (named by its table name, Users)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            "input", "Recent Filters", "Create Group", "First", "div",
+                            FILTER, "Show Recent Filters", "Create Group", "First", "Administrators",
                             "Users and groups",
-                            "input", "Recent Filters", "Add", "First",
+                            FILTER, "Show Recent Filters", "Add to Group", "First", "Users",
                             "Members",
-                            "input", "Recent Filters", "Add", "First", "div"));
+                            FILTER, "Show Recent Filters", "Add Member to Group", "First",
+                            "Alice Anderson Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
@@ -168,24 +181,25 @@ public final class UserGroupsScreenStories {
                     // GWT's sortable headers have role="button", not "columnheader", so their names are
                     // read from the header cells' name holders
                     final Play master = masterGrid(play);
-                    final Value<List<String>> names = master.querySelectorAll(".dataGridSortableHeaderNameHolder")
+                    final Value<List<String>> names = master.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the first three column headings", () -> trimmed(names.get()).subList(0, 3))
                             .toEqual(List.of("/", "Display Name", "Full Name"));
-                    play.expect(master.getByText("Display Name").closest("th"))
-                            .toHaveClass("dataGridSortedHeaderAscending");
+                    play.expect(master.getByText("Display Name").closest(StroomDom.GRID_HEADER_CELL))
+                            .toHaveAttribute("aria-sort", "ascending");
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
-                    play.expect(edit).toHaveAttribute("title", "No Selection");
+                    play.expect(edit).toHaveAttribute("title", "Edit Selected Group");
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A user: disabled, with GWT's reason
                     play.click(play.getByText("Alice Anderson"));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "User editing is not supported"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title",
+                            "Edit Selected Group (users cannot be edited here)"));
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A group: enabled
                     play.click(play.getAllByText("Administrators").nth(0));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit group 'Administrators'"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit Group 'Administrators'"));
                     play.expect(edit).not().toHaveAttribute("aria-disabled");
                     // Edit, rename, OK: the subject id and display name are both changed
                     play.click(edit);
@@ -207,12 +221,12 @@ public final class UserGroupsScreenStories {
                     final Play screen = play.screen();
                     play.findAllByText("Administrators");
                     // Master row: no link to the User Groups screen (we're on it)
-                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(masterRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the Users screen"))).toBeVisible());
+                            "Show in Users"))).toBeVisible());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeNull();
+                            "Show in User Groups"))).toBeNull();
                     play.keyboard("{Escape}");
                     // Select the group so the membership panes are shown
                     play.click(play.getAllByText("Administrators").nth(0));
@@ -220,10 +234,11 @@ public final class UserGroupsScreenStories {
                     // The Members pane's rows have their own menu, which keeps the User Groups link
                     final Play members = play.within(play.getByText("Members of group \"Administrators\":")
                             .closest(".dock-container-vertical"));
-                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0).closest("tr"));
+                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0)
+                            .closest(StroomDom.GRID_ROW));
                     play.click(memberRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeVisible());
+                            "Show in User Groups"))).toBeVisible());
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The action menu's 'Copy ... from' opens the user picker for the row's user
@@ -231,10 +246,10 @@ public final class UserGroupsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The item ends with three dots, not an ellipsis
-                    play.click(screen.findByText("Copy user groups and permissions from..."));
+                    play.click(screen.findByText("Copy User Groups and Permissions from..."));
                     screen.findByText("Select User");
                     // The picker lists the users (not groups) to copy from
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -264,6 +279,25 @@ public final class UserGroupsScreenStories {
         return "{\"values\": [" + String.join(", ", users) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
                 + users.length + ", \"total\": " + users.length + ", \"exact\": true}}";
     }
+
+    // Each pager's count, e.g. "1 to 3 of 3"
+    private static List<String> pagerCounts() {
+        final List<String> counts = new ArrayList<>();
+        final JsArrayString texts = pagerTexts();
+        for (int i = 0; i < texts.length(); i++) {
+            counts.add(texts.get(i));
+        }
+        return counts;
+    }
+
+    private static native JsArrayString pagerTexts() /*-{
+        var texts = [];
+        var pagers = $doc.querySelectorAll(".pager-paging");
+        for (var i = 0; i < pagers.length; i++) {
+            texts.push(pagers[i].textContent.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim());
+        }
+        return texts;
+    }-*/;
 
     private static Widget render(final StoryContext context) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);

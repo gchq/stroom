@@ -64,12 +64,12 @@ public class TestSearchable extends AbstractCoreIntegrationTest {
         LOGGER.info("docRefCount: {}", docRefCount);
 
         try (final ScanResult scanResult = createScanResult()) {
-            final ClassInfoList classInfoList = scanResult.getClassesImplementing(Searchable.class);
+            final ClassInfoList classInfoList = scanResult.getAllClassesImplementing(Searchable.class);
 
             final Set<Class<?>> classesNotBound = classInfoList.stream()
                     .peek(classInfo -> LOGGER.debug("classInfo: {}", classInfo))
                     .filter(Predicate.not(ClassInfo::isInterface))
-                    .map(ClassInfo::loadClass)
+                    .map(classInfo -> loadClass(classInfo.getName()))
                     .filter(clazz -> searchables.values().stream()
                             .noneMatch(searchable -> Objects.equals(searchable.getClass(), clazz)))
                     .collect(Collectors.toSet());
@@ -84,8 +84,18 @@ public class TestSearchable extends AbstractCoreIntegrationTest {
 
     private ScanResult createScanResult() {
         return new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .enableClassInfo()
                 .acceptPackages(STROOM_PACKAGE_NAME)  // Scan com.xyz and subpkgs (omit to scan all packages)
                 .scan();
+    }
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, TestSearchable.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

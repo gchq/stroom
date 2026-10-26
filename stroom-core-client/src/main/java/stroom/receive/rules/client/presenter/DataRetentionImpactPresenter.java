@@ -22,8 +22,6 @@ import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -40,6 +38,8 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -69,11 +69,11 @@ public class DataRetentionImpactPresenter
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
 
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
-    private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
+    private static final String BTN_TITLE_STOP_QUERY = "Stop Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
-    private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
-    private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
-    private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
+    private static final String BTN_TITLE_NESTED_TABLE = "Nested Results";
+    private static final String BTN_TITLE_EXPAND_ALL = "Expand All Results";
+    private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse All Results";
 
     private static final List<QueryField> FILTERABLE_FIELDS = new ArrayList<>();
 
@@ -82,7 +82,7 @@ public class DataRetentionImpactPresenter
         FILTERABLE_FIELDS.add(MetaFields.TYPE);
     }
 
-    private final MyDataGrid<DataRetentionImpactRow> dataGrid;
+    private final DataGrid<DataRetentionImpactRow> dataGrid;
     private final MultiSelectionModelImpl<DataRetentionImpactRow> selectionModel;
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
@@ -111,7 +111,7 @@ public class DataRetentionImpactPresenter
                                         final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Data Retention Impact");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

@@ -24,9 +24,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -46,6 +43,9 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -70,8 +70,10 @@ public class IndexShardPresenter
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
+    private static final String FLUSH_TITLE = "Flush Selected Index Shards";
+    private static final String DELETE_TITLE = "Delete Selected Index Shards";
 
-    private final MyDataGrid<IndexShard> dataGrid;
+    private final DataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -99,7 +101,9 @@ public class IndexShardPresenter
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGrid<>(this);
+        // Rows keyed by id, so the keyboard row survives a refresh
+        dataGrid.setKeyProvider(IndexShard::getId);
         dataGrid.setTableName("Index Shards");
         view.setDataWidget(dataGrid);
 
@@ -111,9 +115,9 @@ public class IndexShardPresenter
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             view.getToolbar().setName("Shard actions");
-            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, "Flush Selected Shards", this::flush);
+            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, FLUSH_TITLE, this::flush);
             buttonFlush.setEnabled(false);
-            buttonDelete = view.getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+            buttonDelete = view.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::delete);
             buttonDelete.setEnabled(false);
         }
 
@@ -130,20 +134,20 @@ public class IndexShardPresenter
     private void enableButtons() {
         final boolean enabled = !readOnly && !selectionCriteria.getIndexShardIdSet().isMatchNothing();
         if (buttonFlush != null) {
-            if (readOnly) {
-                buttonFlush.setTitle("Flush is not available as index is read only");
-            } else {
-                buttonFlush.setTitle("Flush Selected Shards");
-            }
+            // The name stays, with why the button is disabled for a read-only index
+            buttonFlush.setTitle(readOnly
+                    ? FLUSH_TITLE + " (index is read only)"
+                    : FLUSH_TITLE);
             buttonFlush.setEnabled(enabled);
         }
         if (buttonDelete != null) {
+            // The name stays, with why the button is disabled
             if (readOnly) {
-                buttonDelete.setTitle("Delete is not available as index is read only");
+                buttonDelete.setTitle(DELETE_TITLE + " (index is read only)");
             } else if (!allowDelete) {
-                buttonDelete.setTitle("You do not have delete permissions on this index");
+                buttonDelete.setTitle(DELETE_TITLE + " (no delete permission)");
             } else {
-                buttonDelete.setTitle("Delete Selected Shards");
+                buttonDelete.setTitle(DELETE_TITLE);
             }
             buttonDelete.setEnabled(allowDelete && enabled);
         }

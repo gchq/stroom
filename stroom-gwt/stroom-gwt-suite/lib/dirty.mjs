@@ -40,7 +40,7 @@ export function readSave(page) {
     const un = (t) => { const s = norm(t); return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     // The document's toolbar, NOT a dialog's — a dirty check is about the tab underneath.
     const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
-      && !b.closest('.dialog-popup, .resizableDialog-popup'));
+      && !b.closest('.dialog'));
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');
     if (!save) return null;
@@ -66,11 +66,11 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
      * all, and their views stayed `needs-value` for want of anyone looking. In that scope the topmost
      * dialog IS the form.
      */
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1] ?? null;
     const inDialog = (e) => (inDialogScope
       ? !(top && top.contains(e))
-      : !!e.closest('.dialog-popup, .resizableDialog-popup'));
+      : !!e.closest('.dialog'));
     /**
      * An ACE editor's text, enough of it to tell a change by. This used to be the empty string,
      * which made the editor the one field whose `value` check could never pass — so the ace
@@ -86,16 +86,16 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       return `${t.length}:${t.slice(0, 120)}`;
     };
     /**
-     * A `CustomCheckBox`: a visible `.SimpleTickBox` around a hidden `input.checkbox`, whose
+     * A `CustomCheckBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
      * `checked` is the state. Reading only `input[type=checkbox]` found the hidden input, which has
      * no size, so all 56 of its value handlers were `needs-value`. Disabled or read-only ones can't be
      * driven. It is named by its own label ("Enabled"), or by its input's `aria-label` when it stands
      * outside any FormGroup, as Batch Edit Schedules' "Change Schedule Name" enable boxes do.
      */
     const simpleTick = (el) => {
-      if (!el || !(el.offsetWidth > 0) || /SimpleTickBox-(disabled|readonly)/.test(el.className)) return null;
+      if (!el || !(el.offsetWidth > 0) || !!el.querySelector('.tick-box__input:disabled, .tick-box__input[aria-readonly="true"]')) return null;
       const input = el.querySelector('input[type="checkbox"]');
-      const target = el.querySelector('.checkmark') ?? el.querySelector('.checkbox-container') ?? el;
+      const target = el.querySelector('.tick-box__mark') ?? el;
       const r = target.getBoundingClientRect();
       return { label: norm(el.querySelector('.form-label')?.textContent) || norm(input?.getAttribute('aria-label'))
         || norm(el.getAttribute('aria-label')), kind: 'tick', value: `checked=${!!input?.checked}`,
@@ -104,7 +104,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     const out = [];
     for (const group of document.querySelectorAll('.form-group')) {
       if (!(group.offsetWidth > 0) || inDialog(group)) continue;
-      const ownTick = group.querySelector('.SimpleTickBox');
+      const ownTick = group.querySelector('.tick-box:not(.tick-box--cell)');
       // An inline tick's group has no `.form-group__label`: the tick box carries its own.
       const label = norm(group.querySelector('.form-group__label')?.textContent)
         || norm(ownTick?.querySelector('.form-label')?.textContent);
@@ -119,13 +119,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       };
       // A SelectionBox first: its inner text box is an <input> too, and typing into one does
       // nothing — the value is chosen from the popup its icon opens.
-      const select = group.querySelector('.SelectionBox');
+      const select = group.querySelector('.selection-box');
       // A disabled box can't be driven (Batch Edit Schedules' until its enable box is ticked), and
       // trying to opened nothing, so the Escape meant for its list closed the dialog instead.
       if (select && select.offsetWidth > 0 && /\bdisabled\b/.test(select.className)) continue;
       if (select && select.offsetWidth > 0) {
-        const icon = select.querySelector('.svgIconBox-icon') ?? select;
-        out.push({ label, kind: 'select', value: norm(select.querySelector('.SelectionBox-renderBox')?.textContent
+        const icon = select.querySelector('.svg-icon-box__icon') ?? select;
+        out.push({ label, kind: 'select', value: norm(select.querySelector('.selection-box__value')?.textContent
           ?? select.querySelector('input')?.value), ...at(icon) });
         continue;
       }
@@ -138,7 +138,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
         if (t) out.push({ ...t, label });
         continue;
       }
-      const tick = group.querySelector('.tickBox, input[type="checkbox"]');
+      const tick = group.querySelector('.tick-box--cell, input[type="checkbox"]');
       if (tick && tick.offsetWidth > 0) {
         const state = tick.tagName === 'INPUT'
           ? `checked=${tick.checked}`
@@ -149,12 +149,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // A VALUE SPINNER before any text box: its value IS an <input type=text>, but typing into
       // one is the wrong gesture. The box rejects anything non-numeric, so the dirty driver's
       // `${value}x` changed nothing and reported `unchecked` on every spinner it ever met — which
-      // read like a missing handler and is not. The arrow is the gesture (lib/mouse.mjs), and
-      // pressing it fires the same ValueChangeEvent while also exercising `Spinner`'s mousedown.
-      const spin = group.querySelector('.valueSpinner');
-      if (spin && spin.offsetWidth > 0 && !spin.querySelector('[class*=arrowUpDisabled]')) {
-        const up = spin.querySelector('[class*=arrowUp]');
-        const down = spin.querySelector('[class*=arrowDown]');
+      // read like a missing handler and is not. The increase arrow is the gesture (lib/mouse.mjs),
+      // and pressing it fires the same ValueChangeEvent while also exercising its mousedown.
+      const spin = group.querySelector('.value-spinner');
+      const spinInput = spin?.querySelector('input');
+      if (spin && spin.offsetWidth > 0 && spinInput && !spinInput.disabled && !spinInput.readOnly) {
+        const up = spin.querySelector('[title="Increase value"]');
+        const down = spin.querySelector('[title="Decrease value"]');
         if (up) {
           out.push({ label, kind: 'spinner', value: String(spin.querySelector('input')?.value ?? ''),
             ...at(up), down: down ? at(down) : null });
@@ -163,18 +164,18 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       }
       const box = [...group.querySelectorAll('input[type="text"], input:not([type]), textarea')]
         .find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
-          && !e.classList.contains('quickFilter-textBox')
+          && !e.classList.contains('quick-filter__input')
           && !e.classList.contains('ace_text-input') && !e.closest('.ace_editor'));
       if (box) { out.push({ label, kind: 'text', value: String(box.value ?? ''), ...at(box) }); continue; }
       // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownViewImpl`, rendered as
-      // `.dropDownView-container`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
+      // `.drop-down`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
       // MouseDownEvent.getType())`), and picking a document fires `addDataSelectionHandler`, which
       // the presenter turns into onChange -> setDirty (`DataGenSettingsPresenter:61`). DataGen's
       // destination feed and Script's dependencies are reachable no other way.
-      const chooser = group.querySelector('.dropDownView-container');
+      const chooser = group.querySelector('.drop-down');
       if (chooser && chooser.offsetWidth > 0) {
         out.push({ label, kind: 'chooser',
-          value: norm(chooser.querySelector('.dropDownView-label')?.textContent), ...at(chooser, 0.4) });
+          value: norm(chooser.querySelector('.drop-down__value')?.textContent), ...at(chooser, 0.4) });
         continue;
       }
       // An ACE editor. Every other probe avoids it — the popup framework ignores keys typed there,
@@ -187,7 +188,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     }
     // Tick boxes OUTSIDE any FormGroup: a batch dialog's per-field "enable" boxes, which decide
     // whether the field next to them is applied at all.
-    for (const el of document.querySelectorAll('.SimpleTickBox')) {
+    for (const el of document.querySelectorAll('.tick-box:not(.tick-box--cell)')) {
       if (el.closest('.form-group') || inDialog(el)) continue;
       const t = simpleTick(el);
       if (t && t.label) out.push(t);
@@ -199,7 +200,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     if (!out.length) {
       const solo = [...document.querySelectorAll('.ace_content')]
         .find((e) => e.offsetWidth > 100 && e.offsetHeight > 40
-          && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog-popup, .resizableDialog-popup')));
+          && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog')));
       if (solo) {
         const tab = norm([...document.querySelectorAll('.tab-bar--link .tab-bar__tab[aria-selected="true"] .tab-bar__label, .tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label')]
           .find((e) => e.offsetWidth > 0)?.textContent) || 'the editor';
@@ -249,16 +250,16 @@ export async function nudge(page, f) {
     await page.mouse.move(f.x, f.y);
     await page.mouse.down();
     await page.mouse.up();
-    const opened = await page.waitForFunction(() => [...document.querySelectorAll('.dialog-titleText')]
+    const opened = await page.waitForFunction(() => [...document.querySelectorAll('.dialog__title')]
       .some((e) => e.offsetWidth > 0 && e.textContent.trim() === 'Choose item'), null, { timeout: 3_000 })
       .then(() => true).catch(() => false);
     if (!opened) return null;
     await page.waitForTimeout(500);
     const pick = await page.evaluate((current) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const title = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0)
+      const title = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0)
         .filter((e) => e.textContent.trim() === 'Choose item').pop();
-      const dialog = title?.closest('.dialog-container, .resizableDialog-popup, .dialog-popup');
+      const dialog = title?.closest('.dialog__container, .dialog');
       const branch = new Set(['Folder', 'System', 'Favourites', 'Git Repo', null]);
       const row = [...(dialog?.querySelectorAll('.explorerCell') ?? [])].find((e) => e.offsetWidth > 0
         && !branch.has(e.querySelector('.explorerCell-icon')?.getAttribute('title') ?? null)
@@ -268,8 +269,8 @@ export async function nudge(page, f) {
       // The row's middle: nearer its start is the expander or the icon, which don't select it.
       return { x: r.x + r.width / 2, y: r.y + r.height / 2, text: norm(row.textContent) };
     }, f.value ?? '');
-    const button = (name) => page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
-      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]')
+    const button = (name) => page.locator('.dialog__title', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]')
       .getByRole('button', { name, exact: true }).last();
     if (!pick) {
       await button('Cancel').click({ timeout: 2_000 }).catch(() => {});
@@ -277,8 +278,8 @@ export async function nudge(page, f) {
     }
     // Clicked as an element, not at the point read: the dialog is still settling when it is read,
     // and a click at that point left the box as it was.
-    const dialog = page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
-      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]');
+    const dialog = page.locator('.dialog__title', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]');
     await dialog.locator('.explorerCell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
     await page.waitForTimeout(400);
     await button('OK').click({ timeout: 2_000 }).catch(() => {});
@@ -297,7 +298,7 @@ export async function nudge(page, f) {
   await page.waitForTimeout(500);
   const item = await page.evaluate((current) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const rows = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+    const rows = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
       .filter((e) => e.offsetWidth > 0 && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
     const other = rows.find((e) => norm(e.textContent) && norm(e.textContent) !== norm(current));
     if (!other) return null;
@@ -306,7 +307,7 @@ export async function nudge(page, f) {
   }, f.value ?? '');
   if (!item) {
     // Escape only if a list did open: with none, the Escape lands on the dialog and closes it.
-    const listOpen = await page.evaluate(() => [...document.querySelectorAll('.selectionList-elementChooser')]
+    const listOpen = await page.evaluate(() => [...document.querySelectorAll('.selection-list__options')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);
     if (listOpen) await page.keyboard.press('Escape').catch(() => {});
     return null;

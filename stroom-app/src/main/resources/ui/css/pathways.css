@@ -604,8 +604,8 @@
 /* Colour all text in a trace-list row red when the trace has any errored span (TraceRoot.error).
    Targets the cells (and their content) so it overrides the columns' own text colours; the themed
    --text-color--red keeps it legible in both light and dark themes. */
-.trace-row--error .dataGridCell,
-.trace-row--error .dataGridCell * {
+.trace-row--error .data-grid__cell,
+.trace-row--error .data-grid__cell * {
     color: var(--text-color--red);
 }
 
@@ -684,4 +684,20 @@
     justify-content: center;
     color: var(--text-color--muted);
     font-size: 13px;
+}
+
+/* The glass laid over the page while the trace overview's divider is dragged (TraceOverviewWidget),
+   so the drag keeps its cursor and isn't lost to an iframe. It has a colour, or the mouse events
+   would go through it, but can't be seen */
+.resizeGlass {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    margin: 0px;
+    padding: 0px;
+    border-width: 0px;
+    background-color: white;
+    opacity: 0;
+    z-index: 10;
+    cursor: col-resize;
 }

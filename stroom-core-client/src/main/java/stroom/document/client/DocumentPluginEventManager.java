@@ -53,6 +53,7 @@ import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
+import stroom.explorer.client.event.ExplorerItemKeyEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -97,7 +98,6 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -115,6 +115,7 @@ import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.HtmlBuilder;
@@ -144,18 +145,17 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local change: *creating* a document routes through
+// *Creating* a document routes through
 // plugin.getInitialisationHandler().showInitialisationDialog(...) rather than calling
 // plugin.open(...) directly, so a document type can require configuration before it is first
 // opened. The sole call site is in fireShowCreateDocumentDialogEvent below, and it is what makes
 // DocumentPlugin.getInitialisationHandler() do anything at all; FloorMap uses it to prompt for
-// its Facts/Events stores. Upstream calls open() directly - restoring that silently disables the
-// dialog for every document type that relies on it.
+// its Facts/Events stores. Calling open() directly there would silently disable the dialog for
+// every document type that relies on it.
 //
-// This banner said "opening a document" until 2026-09-04, which was wrong and dangerous to act on:
-// the handler's cancel path DELETES the document (see DocInitialisationHandler), so wiring this
-// into the open path would make cancelling the dialog destroy an existing document.
+// This applies to creating a document only, never to opening an existing one: the handler's
+// cancel path DELETES the document (see DocInitialisationHandler), so wiring this into the open
+// path would make cancelling the dialog destroy an existing document.
 @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 @Singleton
 public class DocumentPluginEventManager extends Plugin {
@@ -191,6 +191,8 @@ public class DocumentPluginEventManager extends Plugin {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
         });
+        KeyBinding.addCommand(Action.ITEM_CLOSE_SAVED, () ->
+                RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this));
         KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () ->
                 RequestCloseAllTabsEvent.fire(this));
 
@@ -493,7 +495,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 .builder()
                                 .items(children)
                                 .popupPosition(event.getPopupPosition())
-                                .addAutoHidePartner(event.getElement())
+                                .opener(event.getElement())
                                 .fire(this));
             }
         }));
@@ -530,6 +532,25 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
+        // Handle the keys for an explorer item's actions (e.g. F2 to rename it), which act as the
+        // item's menu would
+        registerHandler(getEventBus().addHandler(ExplorerItemKeyEvent.getType(), event -> {
+            final List<ExplorerNode> selectedItems = getSelectedItems();
+            if (!selectedItems.isEmpty()) {
+                fetchPermissions(selectedItems, documentPermissionMap -> {
+                    final String whyNot = ExplorerItemKeys.whyNot(event.getAction(), selectedItems,
+                            documentPermissionMap);
+                    if (whyNot != null) {
+                        event.announce(whyNot);
+                    } else if (event.getAction() == Action.EXPLORER_INFO) {
+                        showInfo(selectedItems.get(0), explorerListener);
+                    } else {
+                        renameItems(selectedItems);
+                    }
+                }, explorerListener);
+            }
+        }));
+
         // Handle the context menu for open tabs
         registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
             final List<Item> menuItems = new ArrayList<>();
@@ -563,6 +584,7 @@ public class DocumentPluginEventManager extends Plugin {
 
             ShowMenuEvent
                     .builder()
+                    .name("Actions for tab '" + event.getTabData().getLabel() + "'")
                     .items(menuItems)
                     .popupPosition(event.getPopupPosition())
                     .fire(this);
@@ -588,11 +610,26 @@ public class DocumentPluginEventManager extends Plugin {
 
                     ShowMenuEvent
                             .builder()
+                            .name(getItemContextMenuName(selectedItems, primarySelection))
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
                             .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 }, explorerListener), explorerListener);
+    }
+
+    // The explorer context menu's accessible name, saying what it acts on, e.g.
+    // "Actions for Feed 'MY_FEED'" or "Actions for 3 selected items"
+    private static String getItemContextMenuName(final List<ExplorerNode> selectedItems,
+                                                 final ExplorerNode primarySelection) {
+        if (selectedItems.size() != 1 || primarySelection == null) {
+            return "Actions for " + selectedItems.size() + " selected items";
+        }
+        final DocumentType documentType = DocumentTypeRegistry.get(primarySelection.getType());
+        final String type = documentType != null
+                ? documentType.getDisplayType()
+                : primarySelection.getType();
+        return "Actions for " + type + " '" + primarySelection.getDisplayValue() + "'";
     }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {
@@ -1440,7 +1477,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Others")
+                .text("Close Other Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
                 .build();
@@ -1451,7 +1488,8 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Saved")
+                .text("Close Saved Tabs")
+                .action(Action.ITEM_CLOSE_SAVED)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1462,7 +1500,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close All")
+                .text("Close All Tabs")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this))
@@ -1507,7 +1545,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Tab to Start")
                 .enabled(isTabItemSelected(selectedTab) && !isFirstTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, 0))
                 .build();
@@ -1519,7 +1557,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Tab to End")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
                 .build();
@@ -1556,7 +1594,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SAVE)
-                .text("Save All")
+                .text("Save All Tabs")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
@@ -1608,40 +1646,35 @@ public class DocumentPluginEventManager extends Plugin {
                                         final int priority,
                                         final boolean enabled,
                                         final TaskMonitorFactory taskMonitorFactory) {
-        final Command command;
-        if (enabled && explorerNode != null) {
-            command = () -> {
-                // Should only be one item as info is not supported for multi selection
-                // in the tree
-                restFactory
-                        .create(EXPLORER_RESOURCE)
-                        .method(res -> res.info(explorerNode.getDocRef()))
-                        .onSuccess(explorerNodeInfo -> {
-                            if (explorerNodeInfo == null) {
-                                AlertEvent.fireError(DocumentPluginEventManager.this,
-                                        buildNotFoundMessage(explorerNode.getDocRef()),
-                                        null);
-                            } else {
-                                ShowInfoDocumentDialogEvent.fire(
-                                        DocumentPluginEventManager.this,
-                                        explorerNodeInfo);
-                            }
-                        })
-                        .onFailure(this::handleFailure)
-                        .taskMonitorFactory(taskMonitorFactory)
-                        .exec();
-            };
-        } else {
-            command = null;
-        }
+        // Should only be one item as info is not supported for multi selection in the tree
+        final Command command = enabled && explorerNode != null
+                ? () -> showInfo(explorerNode, taskMonitorFactory)
+                : null;
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
-                .text("Info")
+                .text("Show Info")
+                .action(Action.EXPLORER_INFO)
                 .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
+    }
+
+    private void showInfo(final ExplorerNode explorerNode, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.info(explorerNode.getDocRef()))
+                .onSuccess(explorerNodeInfo -> {
+                    if (explorerNodeInfo == null) {
+                        AlertEvent.fireError(this, buildNotFoundMessage(explorerNode.getDocRef()), null);
+                    } else {
+                        ShowInfoDocumentDialogEvent.fire(this, explorerNodeInfo);
+                    }
+                })
+                .onFailure(this::handleFailure)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     private void handleFailure(final RestError t) {
@@ -1699,8 +1732,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
-                .command(() -> ClipboardUtil.copy(docUrl))
+                .text("Link")
+                .command(() -> Clipboard.writeText(docUrl))
                 .build();
     }
 
@@ -1713,7 +1746,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                // Opens a dialog to choose the folder to copy to
+                .text("Copy To...")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1727,7 +1761,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy to Clipboard")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -1746,7 +1780,7 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
@@ -1755,7 +1789,7 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUID to Clipboard")
+                        .text("UUID")
                         .enabled(true)
                         .command(() -> copyAs(allNodes, ExplorerNode::getUuid, "\n"))
                         .build());
@@ -1765,14 +1799,14 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (lines)")
+                    .text("Names (One per Line)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (comma delimited)")
+                    .text("Names (Comma Separated)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, ","))
                     .build());
@@ -1781,14 +1815,14 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (lines)")
+                        .text("UUIDs (One per Line)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, "\n"))
                         .build());
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (comma delimited)")
+                        .text("UUIDs (Comma Separated)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, ","))
                         .build());
@@ -1811,7 +1845,7 @@ public class DocumentPluginEventManager extends Plugin {
                     .collect(Collectors.joining(delimter));
         }
         if (!NullSafe.isBlankString(value)) {
-            ClipboardUtil.copy(value);
+            Clipboard.writeText(value);
         }
     }
 
@@ -1840,6 +1874,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.EDIT)
                 .text("Rename")
+                .action(Action.EXPLORER_RENAME)
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1875,7 +1910,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.LOCKED)
-                .text("Permissions")
+                .text("Edit Permissions")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1885,7 +1920,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.UPLOAD)
-                .text("Import")
+                .text("Import Content")
                 .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
@@ -1904,7 +1939,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependants")
+                .text("Show Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,
@@ -1916,7 +1951,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependencies")
+                .text("Show Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,

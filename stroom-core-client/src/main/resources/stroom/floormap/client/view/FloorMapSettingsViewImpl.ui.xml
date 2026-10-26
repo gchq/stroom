@@ -86,7 +86,8 @@
                 </ul>
                 <p>Use the toolbar to add or remove a mapping.</p>
             </form:HelpHTML>
-            <g:FlowPanel>
+            <!-- The toolbar and table in a control's box, as other forms' tables are -->
+            <g:FlowPanel styleName="stroom-control">
                 <g:SimplePanel ui:field="schemaToolbarContainer" />
                 <g:SimplePanel ui:field="schemaGridContainer" height="250px" />
             </g:FlowPanel>

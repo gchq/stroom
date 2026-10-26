@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -41,6 +42,19 @@ public final class QueryResultsTableStories {
                      {"id": "f-count", "name": "Count", "format": {"type": "NUMBER"},
                       "columnFilter": {"enabled": true, "filter": "x"}, "visible": true}]""",
             "[{\"values\": [\"alpha\", \"5\"], \"depth\": 0}]", 1));
+
+    // What `link(url)` gives a table: StroomQL's link() URL encodes the URL it uses as the text
+    // and the address, and XSLT's stroom:link() does not
+    private static final String QUERY_URL_LINK =
+            "[https%3A%2F%2Fexample.com%2Fdocs%2Fpage%3Fq%3D1](https%3A%2F%2Fexample.com%2Fdocs%2Fpage%3Fq%3D1)";
+    private static final String XSLT_URL_LINK = "[https://example.org/help/](https://example.org/help/)";
+
+    // The UrlLinkNamedByHostAndPath result: a Link column holding each link
+    private static final RestFixtures URL_LINK_FIXTURES = QueryEditorStories.searchFixtures(
+            QueryFixtures.tableResult("table",
+                    "[{\"id\": \"f-link\", \"name\": \"Link\", \"visible\": true}]",
+                    "[{\"values\": [\"" + QUERY_URL_LINK + "\"], \"depth\": 0}, "
+                    + "{\"values\": [\"" + XSLT_URL_LINK + "\"], \"depth\": 0}]", 2));
 
     private QueryResultsTableStories() {
         // Static utility
@@ -70,6 +84,31 @@ public final class QueryResultsTableStories {
                     play.expect(nameCell.attribute("style")).toMatch("white-space:normal");
                     play.expect(nameCell.attribute("style")).toMatch("font-weight:bold");
                     play.expect(play.getByText("5").attribute("style")).not().toMatch("font-weight:bold");
+                    // A filter's button turns it off: the next search asks for it off (the header
+                    // shows the columns the server sends back, which here always have it on), and
+                    // no column menu opens
+                    final Query buttons = play.querySelectorAll(".dashboard-table-filter-cell-disable-button");
+                    play.expect(buttons.nth(1)).toHaveAttribute("title", "Disable Filter");
+                    play.click(buttons.nth(1));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            QueryFixtures.SEARCH.withBody("a column filter turned off", body ->
+                                            body.contains("\"enabled\":false"))
+                                    .toSpyMatcher()));
+                    play.expect(play.screen().querySelector(".menuItem-text")).not().toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A link made by `link(url)`, with no text of its own, shows its URL but is named by
+                // the URL's host and path, so that a screen reader does not spell out the whole URL
+                .story("UrlLinkNamedByHostAndPath", context -> QueryEditorStories.renderEditor(context,
+                        URL_LINK_FIXTURES))
+                .withPlay(play -> {
+                    play.click(play.findByRole("button", "Execute Query"));
+                    final Query queryLink = play.findByRole("link", "example.com/docs/page");
+                    play.expect(queryLink).toHaveAttribute("aria-label", "example.com/docs/page");
+                    play.expect(queryLink).toHaveTextContent("https://example.com/docs/page?q=1");
+                    final Query xsltLink = play.getByRole("link", "example.org/help");
+                    play.expect(xsltLink).toHaveAttribute("aria-label", "example.org/help");
+                    play.expect(xsltLink).toHaveTextContent("https://example.org/help/");
                     DocumentEditors.expectNoProblems(play);
                 });
     }

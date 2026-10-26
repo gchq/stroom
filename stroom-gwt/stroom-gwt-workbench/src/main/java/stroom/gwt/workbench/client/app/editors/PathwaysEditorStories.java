@@ -122,14 +122,14 @@ public final class PathwaysEditorStories {
                     play.click(play.getByText("Auth"));
                     play.waitFor(() -> play.expect(play.getByText("Auth")).toHaveClass("pathway-nodeName--selected"));
                     // The main graph has no node detail panel; a node's constraints are shown, as a
-                    // grid (ConstraintListPresenter), in the Edit Pathway dialog, so the play opens
-                    // it and selects the node there
-                    play.click(play.getByRole("button", "Edit Pathway"));
+                    // grid (ConstraintListPresenter), in the Edit Pathway dialog (opened by Edit
+                    // Selected Pathway), so the play opens it and selects the node there
+                    play.click(play.getByRole("button", "Edit Selected Pathway"));
                     final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
-                    final Play constraints = play.within(dialog.getByText("host").closest(".dataGridWidget"));
+                    final Play constraints = play.within(dialog.getByText("host").closest(".data-grid"));
                     play.expect(constraints.getByText("Name")).toBeInTheDocument();
                     play.expect(constraints.getByText("Optional")).toBeInTheDocument();
                     // The value's type is shown as Stroom's ConstraintValueType
@@ -157,17 +157,17 @@ public final class PathwaysEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByText("login-flow"));
-                    play.click(play.getByRole("button", "Edit Pathway"));
+                    play.click(play.getByRole("button", "Edit Selected Pathway"));
                     final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
-                    // The constraint list's buttons stay disabled, titled 'New constraint disabled
-                    // as read only' (a Stroom bug, see ISSUES.md: ConstraintListPresenter.setData
+                    // The constraint list's buttons stay disabled, titled 'New Constraint (read
+                    // only)' (a Stroom bug, see ISSUES.md: ConstraintListPresenter.setData
                     // sets readOnly but never calls enableButtons(), so the buttons keep their
                     // initial read only state), so the New Constraint dialog and its validation
                     // can't be reached
-                    play.expect(dialog.getByRole("button", "New constraint disabled as read only"))
+                    play.expect(dialog.getByRole("button", "New Constraint (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     play.expect(dialog.queryByRole("button", "New Constraint")).toBeNull();
                     // Cancel the pathway's dialog
@@ -196,8 +196,7 @@ public final class PathwaysEditorStories {
                 })
                 .story("ReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))
                 .withPlay(play -> {
-                    final Query save = play.findByRole("button",
-                            "Save is not available as this document is read only");
+                    final Query save = play.findByRole("button", "Save (read only)");
                     play.click(DocEditors.tab(play, "Settings"));
                     final Query processingNode = play.findByDisplayValue("node1");
                     // The Processing Node text box stays enabled (a Stroom bug, see ISSUES.md:

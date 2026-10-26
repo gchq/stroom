@@ -19,6 +19,7 @@ package stroom.preferences.client;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
+import stroom.visualisation.shared.VisPalette;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -49,6 +50,8 @@ public final class ThemePreferencesViewImpl
     CustomCheckBox enableTransparency;
     @UiField
     CustomCheckBox hideConditionalStyles;
+    @UiField
+    SelectionBox<String> visualisationPalette;
 
     @Inject
     public ThemePreferencesViewImpl(final Binder binder) {
@@ -60,6 +63,10 @@ public final class ThemePreferencesViewImpl
         fontSize.addItem("Small");
         fontSize.addItem("Medium");
         fontSize.addItem("Large");
+
+        for (final VisPalette palette : VisPalette.values()) {
+            visualisationPalette.addItem(palette.getDisplayValue());
+        }
     }
 
     @Override
@@ -148,6 +155,16 @@ public final class ThemePreferencesViewImpl
         this.hideConditionalStyles.setValue(hideConditionalStyles);
     }
 
+    @Override
+    public String getVisualisationPalette() {
+        return visualisationPalette.getValue();
+    }
+
+    @Override
+    public void setVisualisationPalette(final String visualisationPalette) {
+        this.visualisationPalette.setValue(visualisationPalette);
+    }
+
     @UiHandler("theme")
     public void onThemeValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
@@ -178,6 +195,13 @@ public final class ThemePreferencesViewImpl
 
     @UiHandler("enableTransparency")
     public void onEnableTransparency(final ValueChangeEvent<Boolean> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("visualisationPalette")
+    public void onVisualisationPaletteValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onChange();
         }

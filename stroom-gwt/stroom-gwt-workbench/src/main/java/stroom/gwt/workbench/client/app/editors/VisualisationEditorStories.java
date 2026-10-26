@@ -121,11 +121,11 @@ public final class VisualisationEditorStories {
                     play.click(DocEditors.tab(play, "Assets"));
                     play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
                     play.expect(play.getByText("src")).toBeInTheDocument();
-                    // The tree holds the collapsed folder's items, hidden
-                    play.expect(play.getByText("main.js")).not().toBeVisible();
-                    // Expand the folder, then open the file in the editor.
-                    // GWT's Tree expands an item from its open/close image
-                    play.click(play.within(play.getByText("src").closest("tr")).querySelector("img"));
+                    // A collapsed folder's items aren't shown
+                    play.expect(play.queryByText("main.js")).toBeNull();
+                    // Expand the folder from its expander, then open the file in the editor
+                    play.click(play.within(play.getByText("src").closest("[role='treeitem']"))
+                            .querySelector(".explorerCell-expander"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
                     // Until a file is selected, the editor's area asks for one (it was blank)
                     final Query placeholder = play.getByText("Select a file to view or edit it");
@@ -133,14 +133,20 @@ public final class VisualisationEditorStories {
                     play.click(play.getByText("main.js"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.expect(placeholder).not().toBeVisible();
-                    // 'Add file' opens a menu (Add New Folder, Add New File, Upload File); 'Add New
-                    // File' opens the name dialog
-                    play.click(play.getByRole("button", "Add file"));
+                    // 'Add File or Folder' opens a menu (New Folder, New File, Upload File);
+                    // 'New File' opens the name dialog
+                    // It is a menu button, which says whether its menu is open
+                    final Query add = play.getByRole("button", "Add File or Folder");
+                    play.expect(add).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(add).toHaveAttribute("aria-expanded", "false");
+                    play.click(add);
                     // The menu's items, by their text
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents();
                     play.waitFor(() -> play.expect("the menu's items", items)
-                            .toEqual(List.of("Add New Folder", "Add New File", "Upload File")));
-                    play.click(screen.getByText("Add New File", StroomDom.MENU_ITEM_TEXT));
+                            .toEqual(List.of("New Folder", "New File", "Upload File")));
+                    play.waitFor(() -> play.expect(add).toHaveAttribute("aria-expanded", "true"));
+                    play.click(screen.getByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(add).toHaveAttribute("aria-expanded", "false"));
                     play.waitFor(() -> play.expect(screen.querySelector(ASSET_NAME)).not().toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
@@ -148,7 +154,7 @@ public final class VisualisationEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -175,7 +181,8 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
                     play.click(DocEditors.tab(play, "Assets"));
                     // GWT's toolbar, with no Save button of its own
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Revert changes")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Revert Asset Changes"))
+                            .toBeInTheDocument());
                     play.expect(play.queryByRole("button", "Save assets to live")).toBeNull();
                     play.expect(play.queryByRole("button", "Revert assets to live")).toBeNull();
 

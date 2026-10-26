@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.DestroyReason;
@@ -34,6 +32,8 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -68,7 +68,9 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
-        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>(this);
+        final DataGrid<ResultStoreInfo> dataGrid = new DataGrid<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(ResultStoreInfo::getQueryKey);
         dataGrid.setTableName("Result Stores");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -77,10 +79,10 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         terminateButton = view.getToolbar().button(SvgImage.STOP, "Terminate Search", this::onTerminate);
         terminateButton.setEnabled(false);
 
-        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Store", this::onDelete);
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Result Store", this::onDelete);
         deleteButton.setEnabled(false);
 
-        settingsButton = view.getToolbar().button(SvgImage.SETTINGS, "Store Settings", this::edit);
+        settingsButton = view.getToolbar().button(SvgImage.SETTINGS, "Edit Result Store Settings", this::edit);
         settingsButton.setEnabled(false);
 
         // User Id

@@ -396,7 +396,7 @@ class Structures {
                     uiConfig.getHelpUrl() +
                     uiConfig.getHelpSubPathStroomQueryLanguage() +
                     "#" + structureElement.title.toLowerCase().replace(' ', '-'),
-                    "Help Documentation");
+                    structureElement.title + " keyword documentation");
             detail.append(".");
         }
 

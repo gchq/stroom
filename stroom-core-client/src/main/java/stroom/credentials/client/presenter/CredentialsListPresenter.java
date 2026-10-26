@@ -24,8 +24,6 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -38,6 +36,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -74,7 +74,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * List of credentials
      */
-    private final MyDataGrid<CredentialWithPerms> dataGrid;
+    private final DataGrid<CredentialWithPerms> dataGrid;
 
     /**
      * What is selected in the list?
@@ -96,10 +96,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private final ButtonView btnEdit;
 
+    // Button in view to replace the secret of a credential
+    private final ButtonView btnReplaceSecret;
+
     /**
      * Dialog to edit the credentials
      */
     private final Provider<CredentialEditPresenter> credentialEditPresenterProvider;
+
+    // Dialog to replace the secret of the credentials
+    private final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider;
 
     /**
      * Permissions client
@@ -132,17 +138,19 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     final PagerView view,
                                     final CredentialClient credentialClient,
                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
+                                    final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext,
                                     final ExpiryFormatter expiryFormatter) {
         super(eventBus, view);
         this.credentialClient = credentialClient;
         this.credentialEditPresenterProvider = credentialEditPresenterProvider;
+        this.replaceSecretPresenterProvider = replaceSecretPresenterProvider;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
@@ -150,11 +158,17 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.getView().getToolbar().setName("Credential actions");
-        btnAdd = this.getView().getToolbar().button(SvgImage.ADD, "Add", this::handleAddButtonClick);
-        btnDelete = this.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::handleDeleteButtonClick);
+        btnAdd = this.getView().getToolbar().button(SvgImage.ADD, "New Credential", this::handleAddButtonClick);
+        btnDelete = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Credential",
+                this::handleDeleteButtonClick);
         btnDelete.setEnabled(false);
-        btnEdit = this.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::handleEditButtonClick);
+        btnEdit = this.getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Credential",
+                this::handleEditButtonClick);
         btnEdit.setEnabled(false);
+        btnReplaceSecret = this.getView().getToolbar().button(SvgImage.PASSWORD,
+                "Replace Selected Credential's Secret",
+                this::handleReplaceSecretButtonClick);
+        btnReplaceSecret.setEnabled(false);
 
         this.initColumns(dataGrid);
 
@@ -165,7 +179,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Initialise the columns in the data grid.
      */
-    private void initColumns(final MyDataGrid<CredentialWithPerms> grid) {
+    private void initColumns(final DataGrid<CredentialWithPerms> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
@@ -358,9 +372,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         if (cwp != null) {
             btnDelete.setEnabled(cwp.isDelete());
             btnEdit.setEnabled(cwp.isEdit());
+            btnReplaceSecret.setEnabled(cwp.isEdit());
         } else {
             btnDelete.setEnabled(false);
             btnEdit.setEnabled(false);
+            btnReplaceSecret.setEnabled(false);
         }
     }
 
@@ -426,6 +442,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);
+        }
+    }
+
+    // Opens the dialog to replace the secret of the selected credentials
+    private void handleReplaceSecretButtonClick() {
+        final CredentialWithPerms cwp = gridSelectionModel.getSelected();
+
+        // Check that the user can edit these credentials
+        if (cwp != null && cwp.isEdit()) {
+            replaceSecretPresenterProvider.get().show(cwp.getCredential(), this::afterEdit);
         }
     }
 }

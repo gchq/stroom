@@ -49,22 +49,56 @@ public final class FrameDocuments {
     public static Value<String> language(final Query frame) {
         final Value<Element> element = frame.element();
         return Value.of(frame.describe() + " document's lang", () -> {
-            final IFrameElement iFrameElement = IFrameElement.as(element.get());
-            final Element documentElement;
-            if (iFrameElement.hasAttribute(SOURCE_DOC_ATTRIBUTE)) {
-                documentElement = parseHtml(iFrameElement.getAttribute(SOURCE_DOC_ATTRIBUTE));
-            } else {
-                final Document document = iFrameElement.getContentDocument();
-                documentElement = document == null
-                        ? null
-                        : document.getDocumentElement();
-            }
+            final Element documentElement = documentElement(IFrameElement.as(element.get()));
             if (documentElement == null || !documentElement.hasAttribute("lang")) {
                 return null;
             }
             return documentElement.getAttribute("lang");
         });
     }
+
+    /// The links in the document in a frame that open in a new browser tab
+    /// (`a[target="_blank"]`), each as its text content (which includes visually hidden text, as a
+    /// screen reader reads it) and `rel`, e.g. `"count documentation (opens in new tab) | noopener
+    /// noreferrer"`, so a play can check that each one says it opens a new tab.
+    ///
+    /// The frame's document is read as [#language(Query)] reads it.
+    ///
+    /// @param frame The `<iframe>`, which must have a `srcdoc` or show a document of the page's
+    ///              origin.
+    /// @return The links, each as `text | rel` and separated by new lines, or null if the frame has
+    /// no document yet.
+    public static Value<String> newTabLinks(final Query frame) {
+        final Value<Element> element = frame.element();
+        return Value.of(frame.describe() + " document's new tab links", () -> {
+            final Element documentElement = documentElement(IFrameElement.as(element.get()));
+            if (documentElement == null) {
+                return null;
+            }
+            return describeNewTabLinks(documentElement);
+        });
+    }
+
+    // The frame's document's <html> element: its srcdoc parsed, as a sandboxed frame hides its
+    // document from the page, or else its loaded document's, or null if it has none yet
+    private static Element documentElement(final IFrameElement iFrameElement) {
+        if (iFrameElement.hasAttribute(SOURCE_DOC_ATTRIBUTE)) {
+            return parseHtml(iFrameElement.getAttribute(SOURCE_DOC_ATTRIBUTE));
+        }
+        final Document document = iFrameElement.getContentDocument();
+        return document == null
+                ? null
+                : document.getDocumentElement();
+    }
+
+    private static native String describeNewTabLinks(Element documentElement) /*-{
+        var links = documentElement.querySelectorAll('a[target="_blank"]');
+        var descriptions = [];
+        for (var i = 0; i < links.length; i++) {
+            descriptions.push(links[i].textContent + " | " + links[i].getAttribute("rel"));
+        }
+        return descriptions.join("\n");
+    }-*/;
 
     /// Parses HTML as a frame would, without running its scripts.
     private static native Element parseHtml(String html) /*-{

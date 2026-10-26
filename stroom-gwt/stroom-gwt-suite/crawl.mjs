@@ -113,9 +113,9 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
  * 13 button titles appear on >=95% of screens.
  */
 const CHROME = new Set([
-  'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
-  'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New', 'Delete',
+  'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
+  'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
+  'New Document', 'Delete Selected Documents',
 ]);
 const chromeDone = new Set();
 /** Types whose loose explorer-title match has already been reported. */
@@ -172,7 +172,7 @@ async function clickAffordance(label, timeout = 3000) {
   const candidates = [
     // A sortable column header: match the header cell by its name, without the sort index.
     ...(isColumnHeader(label)
-      ? [page.locator('.dataGridHeader, [role=columnheader], th').filter({ hasText: columnName(label) })]
+      ? [page.locator('[role=columnheader], th').filter({ hasText: columnName(label) })]
       : []),
     page.locator(`button[title="${label}"]:not([disabled])`),
     page.locator(`button[aria-label="${label}"]:not([disabled])`),
@@ -206,8 +206,8 @@ const signatureOf = (node, state) => [
   state.fingerprint ?? '',
 ].join(' :: ');
 
-/** Is a menu popup up? `.menuItem-outer` is the shared "menu is populated" measure. */
-const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menuItem-outer')]
+/** Is a menu popup up? `.menu__item` is the shared "menu is populated" measure. */
+const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menu__item')]
   .some((e) => e.offsetWidth > 0 && e.offsetHeight > 0)).catch(() => false);
 
 const idOf = (node) => [node.kind, ...node.path].join(' / ');
@@ -255,7 +255,7 @@ async function reset() {
  * closed folder away. `record.mjs` expands before every open for exactly this reason.
  */
 async function openDoc(name, type) {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
   await gwt.openDocByName(page, name, type);
   await waitForDocOpen();
@@ -339,7 +339,7 @@ async function navigate(node) {
       await waitUntil(page, async () => !(await menuIsOpen()), { budget: 1_500, label: `leaf:${step.leaf}`, kind: 'screen' })
         .catch(() => {});
       await waitForStableCount(page, () => page.evaluate(() =>
-        document.querySelectorAll('.dataGridRow, .dataGridCell, tr').length),
+        document.querySelectorAll('.data-grid__row, .data-grid__cell, tr').length),
       { budget: 1_500, poll: 150, stableFor: 2, label: `content:${step.leaf}`, kind: 'content', allowZero: true })
         .catch(() => {});
       // Leave no menu behind. A screen reached through the main menu is the screen, not the screen
@@ -356,7 +356,7 @@ async function navigate(node) {
       // mutation, the read-only guard aborts `explorer/v2/create`, and that route therefore reaches
       // the create dialog and never the editor behind it. The explorer already carries the type on
       // each row's icon, so an existing document is both reachable and read-only.
-      await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+      await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
       await settleExplorer(page, { label: 'expand' }).catch(() => {});
       // The mined type is the Java constant's stem (`XsltDoc.TYPE` -> `Xslt`); the explorer shows the
       // server's DISPLAY name (`XSL Translation`). Matching the two literally reported "no document of
@@ -394,7 +394,7 @@ async function navigate(node) {
       // The explorer tree is the biggest uncrawled surface in the application: Copy, Move, Rename,
       // Delete, Info and the whole document-type New submenu are reachable ONLY by right-click, so no
       // button-driven pass has ever seen them.
-      await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+      await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
       await settleExplorer(page, { label: 'expand' }).catch(() => {});
       // A multi-selection is built the way a user builds one: CLICK the first row, ctrl-click the
       // rest, then right-click inside the selection.
@@ -418,8 +418,8 @@ async function navigate(node) {
       }
       await page.waitForTimeout(600);
     } else if (step.via === 'tab-context') {
-      // The CONTENT TAB's own menu — Close / Close Others / Close Saved / Close All / Save / Save
-      // All / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
+      // The CONTENT TAB's own menu — Close / Close Other Tabs / Close Saved Tabs / Close All Tabs /
+      // Save / Save All Tabs / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
       // and is not reachable from the explorer at all.
       if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
         throw new Error(`no content tab "${step.label}" to right-click`);
@@ -479,17 +479,17 @@ async function survey() {
   // affordances that read as the application refusing input when it was the crawler asking the wrong
   // question. What is behind the glass is not an affordance of this node.
   const scope = await page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')]
+    const popups = [...document.querySelectorAll('.dialog')]
       .filter((e) => e.offsetWidth > 0);
     if (!popups.length) return 'body';
     popups[popups.length - 1].setAttribute('data-crawl-scope', '1');
     return '[data-crawl-scope="1"]';
   });
   // An open MENU is a scope too, and this is the second time that lesson has cost a run. Scoping to
-  // `.dialog-popup` alone fixed the 34 affordances read from behind a modal's glass; a menu is not a
+  // `.dialog` alone fixed the 34 affordances read from behind a modal's glass; a menu is not a
   // dialog, so `Add Column` and `History` were read from UNDER an open menu, reported as available, and
   // then failed their click — 13 `unclickable` that were the crawler's doing. `elementFromPoint` named
-  // the coverer as `div.menuItem-text`, which is what turned a theory into a fact.
+  // the coverer as `div.menu__text`, which is what turned a theory into a fact.
   //
   // Clicking a dashboard component tab in design mode opens that component's menu, so this is not an
   // artefact to suppress: those items are affordances, and the 27 `ShowMenuEvent` classes in the
@@ -511,10 +511,10 @@ async function survey() {
   // grid would be more precise and would also make every incidental re-render look like a change.
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.dataGridWidget')]
+    return [...document.querySelectorAll('.data-grid')]
       .filter((g) => g.offsetWidth > 0)
       .map((g) => {
-        const rows = [...g.querySelectorAll('tbody tr')];
+        const rows = [...g.querySelectorAll('[role=row][data-row]')];
         return { rows: rows.length, head: rows.slice(0, 3).map((r) => norm(r.textContent).slice(0, 80)) };
       });
   }).catch(() => []);

@@ -23,7 +23,9 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -32,7 +34,7 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -81,11 +83,21 @@ public final class DocumentCreatePermissionsGridStories {
                 .story("ToggleType", context -> render(context, "Dictionary"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Pipeline")).toBeInTheDocument());
-                    // GWT's grid tick is a TickBoxCell div, not a checkbox
-                    play.click(play.within(play.getByText("Pipeline").closest("tr")).querySelector(".tickBox"));
+                    // The columns come once the document types are fetched, and the Document Type
+                    // column (a fill column) still fills the grid (less its scroll bar)
+                    final Value<Double> lastRight = play.querySelector("[data-hcol=\"2\"]").right();
+                    final Value<Double> gridRight = play.querySelector(".data-grid").right();
+                    play.expect("the space right of the columns", () -> gridRight.get() - lastRight.get())
+                            .toBeLessThan(20);
+                    // Each tick box is a check box named for its row's permission, not its state
+                    final Query pipeline = play.getByRole("checkbox", "Create Pipeline");
+                    play.expect(pipeline).toHaveAttribute("aria-checked", "false");
+                    play.click(pipeline);
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
                             .toContain("Pipeline"));
+                    // Ticking it draws it again, still named
+                    play.expect(play.getByRole("checkbox", "Create Pipeline")).toHaveAttribute("aria-checked", "true");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The header tick toggles the '[ all ]' sentinel into the set
@@ -93,7 +105,7 @@ public final class DocumentCreatePermissionsGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Dictionary")).toBeInTheDocument());
                     // The header's tick box is the grid's first
-                    play.click(play.querySelector(".tickBox"));
+                    play.click(play.querySelector(".tick-box"));
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
                             .toContain(ExplorerConstants.ALL_CREATE_PERMISSIONS));
@@ -127,12 +139,13 @@ public final class DocumentCreatePermissionsGridStories {
             final Set<String> explicitTypes = new HashSet<>(List.of(explicit));
             presenter.setup(new DocumentUserPermissionsReport(null, explicitTypes, Collections.emptyMap(),
                     Map.of("Feed", List.of("/System"))));
-            // No change callback; the working set is reported once the grid
-            // has handled the click
+            // No change callback; the working set is reported once the grid has handled a press.
+            // A tick box acts on mousedown and redraws itself, so the element pressed is gone
+            // before the click, which then never reaches here
             harness.addRegistration(presenter.getWidget().addDomHandler(event ->
                             Scheduler.get().scheduleDeferred(() -> harness.spy(ON_CHANGE,
                                     String.join(",", new TreeSet<>(presenter.getExplicitCreatePermissions())))),
-                    ClickEvent.getType()));
+                    MouseDownEvent.getType()));
         });
         return harness.asWidget();
     }

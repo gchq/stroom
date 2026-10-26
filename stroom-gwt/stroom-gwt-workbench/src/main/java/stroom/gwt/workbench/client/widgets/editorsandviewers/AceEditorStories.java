@@ -19,8 +19,10 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -33,6 +35,7 @@ import stroom.util.shared.StoredError;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -48,8 +51,13 @@ public final class AceEditorStories {
     /// The name of the spy for the editor's text changes.
     static final String ON_CHANGE = "onChange";
 
+    // The name Ace gives the editor's tab stop in its keyboard accessibility mode
+    private static final String CONTENT = "Editor content, press Enter to start editing, press Escape to exit";
+
     private static final String WIDTH = "720px";
     private static final String HEIGHT = "380px";
+    private static final String ACE_CONTENT = ".ace_content";
+    private static final String MENU_ITEM = "menuitem";
 
     static final String SAMPLE_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -114,6 +122,52 @@ public final class AceEditorStories {
                     play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
                             .toMatch("hello world"));
                 })
+                // A right-click shows the edit items (gchq/stroom#5897), then Format and the editor's
+                // options in a sub menu
+                .story("ContextMenu", context -> menuEditor(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_CONTENT)).toBeInTheDocument());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    final Query menu = play.screen().findByRole("menu", "Editor");
+                    for (final String item : List.of("Undo", "Redo", "Cut", "Copy", "Paste", "Delete",
+                            "Select All", "Format", "Editor Options")) {
+                        play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing(item)))
+                                .toBeInTheDocument();
+                    }
+                    // Nothing is selected yet
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Copy")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Editor Options")))
+                            .toHaveAttribute("aria-haspopup", "menu");
+
+                    // Select All, then Delete, empties the editor; Undo puts the text back
+                    play.click(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Select All")));
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    play.click(play.screen().findByRole(MENU_ITEM, TextMatch.containing("Delete")));
+                    final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
+                    play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
+                            .toBe(""));
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    play.click(play.screen().findByRole(MENU_ITEM, TextMatch.containing("Undo")));
+                    play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
+                            .toMatch("<root>"));
+                })
+                // A read-only editor can only be copied from
+                .story("ReadOnlyContextMenu", context -> menuEditor(context, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_CONTENT)).toBeInTheDocument());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    final Query menu = play.screen().findByRole("menu", "Editor");
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Copy")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Select All")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(menu).queryByRole(MENU_ITEM, TextMatch.containing("Paste")))
+                            .toBeNull();
+                    play.expect(play.within(menu).queryByRole(MENU_ITEM, TextMatch.containing("Cut")))
+                            .toBeNull();
+                })
                 // Plain text, read-only, not wrapped (no syntax highlighting)
                 .story("PlainText", context -> {
                     final EditorPresenter editor = editor(context, SAMPLE_TEXT, AceEditorMode.TEXT, true);
@@ -133,7 +187,105 @@ public final class AceEditorStories {
                     final EditorPresenter editor = editor(context, SAMPLE_JAVASCRIPT, AceEditorMode.JAVASCRIPT,
                             false);
                     return framed(editor);
+                })
+                // The way out of an editable editor (Ace's keyboard accessibility mode): its content is
+                // the tab stop, Enter starts editing (where Tab indents), Escape stops, and Tab then
+                // leaves
+                .story("KeyboardWayOut", context -> StoryPanels.column(10,
+                        namedTextBox("Before"),
+                        framed(editor(context, SAMPLE_XML, AceEditorMode.XML, false)),
+                        namedTextBox("After")))
+                .withPlay(play -> {
+                    final Query before = play.getByRole("textbox", "Before");
+                    final Query content = play.getByRole("group", CONTENT);
+                    final Query input = play.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(content).toBeInTheDocument());
+                    // Ace's text input isn't a tab stop, and keeps Stroom's name before the cursor's row
+                    play.expect(input).toHaveAttribute("tabindex", "-1");
+                    play.expect(input).toHaveAttribute("aria-label", "Code editor, Cursor at row 1");
+                    // Nor is its gutter, which is hidden from screen readers, as without the mode
+                    play.expect(play.querySelector(".ace_gutter")).not().toHaveAttribute("tabindex");
+                    play.expect(play.querySelector(".ace_gutter")).toHaveAttribute("aria-hidden", "true");
+                    // One tab stop: the content
+                    play.run("focus the field before", () -> before.element().get().focus());
+                    play.tab();
+                    play.expect(content).toHaveFocus();
+                    // Enter starts editing, where Tab indents and keeps the focus
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.expect(input).toHaveFocus();
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
+                    // Escape stops editing, and Tab then leaves the editor
+                    play.keyboard("{Escape}");
+                    play.expect(content).toHaveFocus();
+                    play.tab();
+                    play.expect(play.getByRole("textbox", "After")).toHaveFocus();
+                    // Shift+Tab comes back to the content, not into the text
+                    play.tab(true);
+                    play.expect(content).toHaveFocus();
+                })
+                // With the gutter no tab stop, its errors and folds have keys while editing: Alt+E
+                // shows the next error's message under its line, and F2 folds the line's element
+                .story("KeyboardErrorsAndFolds", context -> {
+                    final EditorPresenter editor = editor(context, SAMPLE_XML, AceEditorMode.XML, false);
+                    editor.getIndicatorsOption().setAvailable(true);
+                    editor.getIndicatorsOption().setOn(true);
+                    editor.setIndicators(annotations());
+                    return framed(editor);
+                })
+                .withPlay(play -> {
+                    final Query content = play.getByRole("group", CONTENT);
+                    final Query input = play.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(content).toBeInTheDocument());
+                    play.run("focus the content", () -> content.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    play.keyboard("{Alt>}e{/Alt}");
+                    play.waitFor(() -> play.expect(play.querySelector(".error_widget"))
+                            .toHaveTextContent(TextMatch.containing("Unexpected element <EventTime>")));
+                    play.expect(input).toHaveFocus();
+                    // The cursor is on the error's line, 3, whose element F2 folds (its fold widget)
+                    play.keyboard("{F2}");
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_fold")).toBeInTheDocument());
+                })
+                // A read-only editor is reached the same way, Enter putting the caret in the text to
+                // move through it
+                .story("KeyboardReadOnly", context -> StoryPanels.column(10,
+                        namedTextBox("Before"),
+                        framed(editor(context, SAMPLE_XML, AceEditorMode.XML, true)),
+                        namedTextBox("After")))
+                .withPlay(play -> {
+                    final Query content = play.getByRole("group", CONTENT);
+                    final Query input = play.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(content).toBeInTheDocument());
+                    play.expect(input).toHaveAttribute("aria-readonly", "true");
+                    play.run("focus the content", () -> content.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.expect(content).toHaveFocus();
+                    play.tab();
+                    play.expect(play.getByRole("textbox", "After")).toHaveFocus();
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 });
+    }
+
+    private static TextBox namedTextBox(final String name) {
+        final TextBox textBox = new TextBox();
+        textBox.getElement().setAttribute("aria-label", name);
+        return textBox;
+    }
+
+    // An editor that shows Stroom's menus, as in Stroom
+    private static Widget menuEditor(final StoryContext context, final boolean readOnly) {
+        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        final EditorPresenter editor = EditorWidgets.editorPresenter(popups.getEventBus());
+        editor.setMode(AceEditorMode.XML);
+        editor.setReadOnly(readOnly);
+        editor.getFormatAction().setAvailable(!readOnly);
+        editor.setText("<root><a>1</a></root>");
+        return framed(editor);
     }
 
     private static Widget editableTyping(final StoryContext context) {

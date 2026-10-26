@@ -16,18 +16,19 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.query.api.ColumnValueSelection;
-import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class ColumnValueCell extends AbstractCell<ColumnValue> {
+
+    private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
 
     private final ColumnValueSelection.Builder columnValueSelection;
 
@@ -39,35 +40,30 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
     public void render(final Context context, final ColumnValue item, final SafeHtmlBuilder sb) {
         if (item != null) {
             final HtmlBuilder hb = new HtmlBuilder(sb);
-            final ColumnValueSelection selection = columnValueSelection.build();
-
-            final boolean selected;
-            if (selection.getValues().contains(item.getValue())) {
-                selected = !selection.isInvert();
-            } else {
-                selected = selection.isInvert();
-            }
-
             hb.div(outer -> {
 
-                final SafeHtml safeHtml;
-                if (selected) {
-                    safeHtml = SvgImageUtil.toSafeHtml(
-                            "Ticked",
-                            SvgImage.TICK,
-                            "tickBox",
-                            "tickBox-noBorder",
-                            "tickBox-tick");
-                    outer.append(safeHtml);
-
-                } else {
-                    outer.div("",
-                            Attribute.title("Not Ticked"),
-                            Attribute.className("tickBox tickBox-noBorder tickBox-untick"));
-                }
+                // The tick box (tick-box.css), showing whether the value is chosen, as a picture: the
+                // list's option says it (aria-checked), and is what is clicked to change it
+                outer.append(TICK_BOX.getPicture(stateOf(columnValueSelection, item)));
 
                 outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
             }, Attribute.className("columnValueCell"));
         }
+    }
+
+    /// @param columnValueSelection The values chosen.
+    /// @param item                 A value.
+    /// @return Whether the value is chosen, as a tick box shows it.
+    static TickBoxState stateOf(final ColumnValueSelection.Builder columnValueSelection, final ColumnValue item) {
+        final ColumnValueSelection selection = columnValueSelection.build();
+        final boolean selected;
+        if (selection.getValues().contains(item.getValue())) {
+            selected = !selection.isInvert();
+        } else {
+            selected = selection.isInvert();
+        }
+        return selected
+                ? TickBoxState.TICK
+                : TickBoxState.UNTICK;
     }
 }

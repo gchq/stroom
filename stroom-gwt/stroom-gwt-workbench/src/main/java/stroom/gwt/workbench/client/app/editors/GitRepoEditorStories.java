@@ -124,7 +124,8 @@ public final class GitRepoEditorStories {
                     // Settings shows the git fields, and (no commit) the Auto-push group and Push
                     play.waitFor(() -> play.expect(play.getByText("Git repository URL", "label")).toBeInTheDocument());
                     play.expect(play.getByText("Git branch", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Automatically push", "label")).toBeVisible();
+                    // The tick box (its check box is unseen, over the drawn box)
+                    play.expect(play.getByRole("checkbox", "Automatically push").closest(".tick-box")).toBeVisible();
                     play.expect(play.getByRole("button", StroomDom.button("Push to Git"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", StroomDom.button("Pull from Git"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", StroomDom.button("Check for updates"))).toBeInTheDocument();
@@ -248,7 +249,7 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     screen.findByText("Edit HTTP Client Configuration");
                     // Cancel: the document is untouched, so Save is still disabled
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
@@ -282,7 +283,7 @@ public final class GitRepoEditorStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     screen.findByText("Edit HTTP Client Configuration");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration")).toBeNull());
@@ -296,7 +297,7 @@ public final class GitRepoEditorStories {
                 // The configuration button has no URL precondition; the remote actions do
                 .story("HttpClientConfigEnabledWithoutAUrl", context -> render(context, new Fixtures().noUrl()))
                 .withPlay(play -> {
-                    play.expect(play.findByRole("button", StroomDom.button("Set Http Client Config")))
+                    play.expect(play.findByRole("button", StroomDom.button("Set HTTP Client Config")))
                             .not().toBeDisabled();
                     play.waitFor(() -> play.expect(play.getByRole("button", StroomDom.button("Pull from Git")))
                             .toBeDisabled());

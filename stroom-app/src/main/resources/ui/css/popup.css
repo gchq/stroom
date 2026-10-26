@@ -1,0 +1,46 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The popup (stroom.widget.popup.client.view.SimplePopup, and SimplePopupLayout inside another
+   popup panel such as a selection box's list): a menu, a chooser, a filter's list, a tooltip.
+   Named BEM style (block, block__element, block--modifier). Its look is on the block itself, its
+   content inside (in GWT's popupContent, for a SimplePopup).
+
+   --floating (a modifier with no ARIA attribute): a SimplePopup, a panel of its own, hidden until
+   PopupUtil has placed it (which sets its opacity to 1).
+*/
+
+.popup {
+    /* 4px in all, as the content was when the border was drawn behind it */
+    padding: 3px;
+    border: 1px solid var(--dialog__border-color);
+    border-radius: var(--dialog__border-radius);
+    box-shadow: var(--popup__shadow);
+    background-color: var(--popup__background-color);
+}
+
+/* The transparency theme option (a class on the page) */
+.transparency .popup {
+    background-color: var(--popup__background-color--transparent);
+    backdrop-filter: var(--transparency__backdrop-filter);
+}
+
+.popup--floating {
+    opacity: 0;
+    z-index: 100;
+}
+

@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -74,14 +73,6 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     }
 
     @Override
-    protected void onBind() {
-        registerHandler(getView().addWarningClickHandler(event -> {
-            event.getNativeEvent().stopPropagation();
-            AlertEvent.fireWarn(DocSelectionBoxPresenter.this, getErrorMsg(), null);
-        }));
-    }
-
-    @Override
     public void focus() {
         getView().focus();
     }
@@ -97,13 +88,6 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         this.itemType = itemType;
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-    // Local addition: a pass-through to ExplorerPopupPresenter.setCaption, which was already
-    // public but unreachable through this wrapper because explorerPopupPresenter is private.
-    // Callers holding an ExplorerPopupPresenter directly have always been able to title the
-    // chooser ("Choose Dictionary", "Choose Dashboard", ...); callers holding a
-    // DocSelectionBoxPresenter were stuck with the default "Choose item". Purely additive, so
-    // upstream's version of this file can be taken wholesale as long as this method survives.
     /**
      * Sets the caption of the chooser popup this box opens.
      *
@@ -213,6 +197,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                                            final Consumer<DocRef> onDocRefDecoration,
                                            final Runnable onDocRefNotFound) {
         if (docRef != null && decorateDocRef) {
+            // Selected as given at once, so that it is the value until decorating it is done, and if
+            // that fails (rather than the value before, or none, which whatever reads the value,
+            // e.g. a query expression's term editor, would save in its place)
+            explorerPopupPresenter.setSelectedEntityReference(docRef);
+            setFieldValue(docRef, null);
             // The docRef may have come from the data within a Doc so the name may be out of date,
             // so decorate it to ensure we have the right name
             restFactory
@@ -221,6 +210,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                             resource.decorate(DecorateRequest.createWithPermCheck(
                                     docRef, getRequiredPermissions())))
                     .onSuccess(decoratedDocRef -> {
+                        if (!Objects.equals(value, docRef)) {
+                            // Another has been selected since, e.g. by a term editor moving on to
+                            // another term: this one's reply is too late
+                            return;
+                        }
                         if (decoratedDocRef != null) {
                             explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
                             setFieldValue(decoratedDocRef, null);
@@ -255,6 +249,16 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         setFieldValue(docRef, errorMsg);
 
         NullSafe.run(onDocRefNotFound);
+    }
+
+    // The not-found problem in brief, as shown under the picker; the full message (with the id and
+    // what to do) is its tooltip and what screen readers read
+    private String buildShortNotFoundMessage(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        final String name = NullSafe.getOrElse(docRef.getName(), n -> "'" + n + "'", "It");
+        return name + " can't be found, or you don't have permission to see it.";
     }
 
     public String buildNotFoundMessage(final DocRef docRef) {
@@ -311,9 +315,13 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private void setFieldValue(final DocRef value, final String errorMsg) {
         this.value = value;
         this.errorMsg = errorMsg;
-        getView().setText(
-                NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE),
-                NullSafe.isNonBlankString(errorMsg));
+        getView().setText(NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE));
+        // A document that can't be found is shown as a problem with the field, under it
+        if (NullSafe.isNonBlankString(errorMsg)) {
+            getView().setProblem(buildShortNotFoundMessage(value), errorMsg);
+        } else {
+            getView().setProblem(null, null);
+        }
     }
 
     /// Makes the selection read only: it can be read and stays in the tab order, but the
@@ -328,9 +336,5 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         getView().setEnabled(enabled);
-    }
-
-    private String getErrorMsg() {
-        return errorMsg;
     }
 }

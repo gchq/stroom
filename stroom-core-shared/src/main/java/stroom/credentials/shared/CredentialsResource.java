@@ -68,7 +68,8 @@ public interface CredentialsResource extends RestResource, DirectRestService {
 
     /**
      * Stores a credential in the DB. Errors are indicated in the return value.
-     * Credential must already exist.
+     * A new credential must include its secret. When updating an existing credential
+     * any secret in the request is ignored; use {@link #replaceSecret} to change it.
      */
     @POST
     @Path("/store")
@@ -76,6 +77,17 @@ public interface CredentialsResource extends RestResource, DirectRestService {
             summary = "Stores the credential",
             operationId = "storeCredential")
     Credential storeCredential(PutCredentialRequest credential);
+
+    /// Replaces the secret held by an existing credential, discarding the old one.
+    ///
+    /// @param request The credential UUID, the new secret and its expiry.
+    /// @return The updated credential.
+    @POST
+    @Path("/replaceSecret")
+    @Operation(
+            summary = "Replaces the secret held by an existing credential",
+            operationId = "replaceCredentialSecret")
+    Credential replaceSecret(ReplaceSecretRequest request);
 
     /**
      * Gets one credential by UUID.

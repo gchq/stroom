@@ -22,7 +22,9 @@ import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
@@ -30,6 +32,20 @@ import com.google.gwt.user.client.ui.Widget;
 public class SpinnerLarge extends Composite implements TaskMonitorFactory {
 
     private static final Binder uiBinder = GWT.create(Binder.class);
+    // What a screen reader is told while the spinner shows
+    private static final String BUSY_TEXT = "Loading...";
+    // Its BEM modifiers (spinner.css): shown, and fading slowly
+    private static final String VISIBLE = "busy-spinner--active";
+    private static final String SOFT = "busy-spinner--soft";
+    /// The modifier that centres the spinner over what is loading, e.g. in UiBinder
+    /// `addStyleNames="busy-spinner--centred"`.
+    public static final String CENTRED = "busy-spinner--centred";
+
+    // The text of the spinner's status (a live region), empty while it is hidden. It is put in only
+    // once the spinner shows, as a live region that appears with its text already in it isn't
+    // reliably read
+    @UiField
+    SpanElement status;
 
     private int taskCount;
     private boolean visible = true;
@@ -37,6 +53,8 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
 
     public SpinnerLarge() {
         initWidget(uiBinder.createAndBindUi(this));
+        // Shown until hidden
+        status.setInnerText(BUSY_TEXT);
         hideTimer = new Timer() {
             @Override
             public void run() {
@@ -74,9 +92,15 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
             hideTimer.cancel();
             if (visible) {
                 super.setVisible(visible);
-                Scheduler.get().scheduleDeferred(() -> addStyleName("spinner__visible"));
+                Scheduler.get().scheduleDeferred(() -> {
+                    addStyleName(VISIBLE);
+                    if (this.visible) {
+                        status.setInnerText(BUSY_TEXT);
+                    }
+                });
             } else {
-                removeStyleName("spinner__visible");
+                status.setInnerText("");
+                removeStyleName(VISIBLE);
                 hideTimer.schedule(500);
             }
         }
@@ -84,9 +108,9 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
 
     public void setSoft(final boolean soft) {
         if (soft) {
-            addStyleName("soft");
+            addStyleName(SOFT);
         } else {
-            removeStyleName("soft");
+            removeStyleName(SOFT);
         }
     }
 

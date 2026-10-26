@@ -103,6 +103,29 @@ public final class ContentStoreScreenStories {
                     play.findAllByText("Community");
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // The licence and Git links say where they go, rather than being the bare URL
+                // (shown after them), and that they open a new tab. A pack with no URL has no link,
+                // rather than an empty one (gchq/stroom#5406)
+                .story("Links", ContentStoreScreenStories::render)
+                .withPlay(play -> {
+                    final Query licence = play.findByRole("link", "View licence (opens in new tab)");
+                    play.expect(licence).toHaveAttribute("href", "https://apache.org/licenses/LICENSE-2.0");
+                    play.expect(licence).toHaveAttribute("target", "_blank");
+                    play.expect(licence).toHaveAttribute("rel", "noopener noreferrer");
+                    play.expect(play.getByText("https://apache.org/licenses/LICENSE-2.0")).toBeVisible();
+                    final Query git = play.getByRole("link", "View Git repository (opens in new tab)");
+                    play.expect(git).toHaveAttribute("href", "https://github.com/example/core.git");
+                    play.expect(git).toHaveAttribute("target", "_blank");
+                    play.expect(play.getByText("Licence:")).toBeInTheDocument();
+                    // Selecting the second pack, which has no licence or Git URL, swaps the details
+                    play.click(play.getByText("Extra Pack"));
+                    play.findAllByText("Community");
+                    play.waitFor(() -> play.expect(play.queryByRole("link", "View licence (opens in new tab)"))
+                            .toBeNull());
+                    play.expect(play.queryByRole("link", "View Git repository (opens in new tab)")).toBeNull();
+                    play.expect(play.queryByText("https://github.com/example/core.git")).toBeNull();
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // After the list loads, a per-row upgrade check promotes an installed pack with a
                 // newer version to "Content upgradable", which enables Upgrade
                 .story("UpgradeCheckPromotesRow", ContentStoreScreenStories::render)

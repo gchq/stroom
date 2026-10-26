@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.rest;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,8 @@ import java.util.Objects;
 
 /// A small, strict JSON parser (RFC 8259), so that request bodies can be compared by value
 /// (ignoring white space and the order of object members), e.g. for
-/// [RequestMatcher#withJsonBody(String)]. It is plain Java, so works both in GWT and in JVM tests.
+/// [RequestMatcher#withJsonBody(String)], and a writer ([#toJson(Object)]). It is plain Java, so
+/// works both in GWT and in JVM tests.
 ///
 /// Objects become [Map]s, arrays [List]s, `true`/`false` [Boolean]s and `null` `null`. Numbers
 /// become [BigDecimal]s without trailing zeros, so they compare exactly: `1`, `1.0` and `10e-1` are
@@ -73,6 +75,98 @@ public final class JsonValues {
         } catch (final IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /// Writes a value as JSON: the reverse of [#parse(String)], for maps (whose keys are written as
+    /// strings), lists, strings, numbers, booleans and null. A whole `Double` is written without a
+    /// fraction (`12`, not `12.0`), as GWT writes it, so that the JSON is the same in GWT and on the
+    /// JVM.
+    ///
+    /// @param value The value.
+    /// @return The JSON.
+    public static String toJson(final Object value) {
+        final StringBuilder sb = new StringBuilder();
+        append(sb, value);
+        return sb.toString();
+    }
+
+    private static void append(final StringBuilder sb, final Object value) {
+        if (value == null) {
+            sb.append("null");
+        } else if (value instanceof String) {
+            appendString(sb, (String) value);
+        } else if (value instanceof Map) {
+            sb.append('{');
+            boolean first = true;
+            for (final Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                appendString(sb, String.valueOf(entry.getKey()));
+                sb.append(':');
+                append(sb, entry.getValue());
+            }
+            sb.append('}');
+        } else if (value instanceof Collection) {
+            sb.append('[');
+            boolean first = true;
+            for (final Object item : (Collection<?>) value) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                append(sb, item);
+            }
+            sb.append(']');
+        } else if (value instanceof BigDecimal) {
+            sb.append(((BigDecimal) value).toPlainString());
+        } else if (value instanceof Double && isWhole((Double) value)) {
+            sb.append(((Double) value).longValue());
+        } else {
+            sb.append(value);
+        }
+    }
+
+    // Whether a double is a whole number that a long holds exactly
+    private static boolean isWhole(final double value) {
+        return value == Math.rint(value) && Math.abs(value) < 1e15;
+    }
+
+    private static void appendString(final StringBuilder sb, final String value) {
+        sb.append('"');
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                default:
+                    if (c < 0x20) {
+                        final String hex = Integer.toHexString(c);
+                        sb.append("\\u");
+                        for (int j = hex.length(); j < 4; j++) {
+                            sb.append('0');
+                        }
+                        sb.append(hex);
+                    } else {
+                        sb.append(c);
+                    }
+            }
+        }
+        sb.append('"');
     }
 
     /// Whether a JSON value contains another, as Jest's `toMatchObject` compares: an expected

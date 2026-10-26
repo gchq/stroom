@@ -28,6 +28,7 @@ import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.Label;
@@ -35,8 +36,18 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
+/// Chooses a file to upload: a button that opens the browser's file dialog, and the name of the
+/// chosen file beside it. The BEM block `file-upload` (`file-upload.css`): its button
+/// (`file-upload__button`), the file's name (`file-upload__name`) and the hidden file input
+/// (`file-upload__input`).
+///
+/// In a form group the button is named by the group's label and its own text (e.g. "File, Choose
+/// File"), as a picker is, and described by the chosen file's name, which is announced when it
+/// changes.
 public class CustomFileUpload extends Composite {
 
+    private static final String NO_FILE = "No file chosen";
+    private static final String NO_FILE_MODIFIER = "file-upload__name--empty";
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final FileUploadTransport DEFAULT_TRANSPORT = FileUploadSubmitter::submit;
     private static FileUploadTransport uploadTransport = DEFAULT_TRANSPORT;
@@ -55,6 +66,15 @@ public class CustomFileUpload extends Composite {
     private CustomFileUpload() {
         widget = BINDER.createAndBindUi(this);
         fileUpload.setVisible(false);
+        // A picker, to a form group, which names it by its label and its own text
+        chooseFile.getElement().setAttribute("role", "button");
+        chooseFile.getElement().setAttribute("aria-haspopup", "dialog");
+        // Described by the chosen file, which is announced when it changes
+        final String fileNameId = DOM.createUniqueId();
+        fileName.getElement().setId(fileNameId);
+        fileName.getElement().setAttribute("aria-live", "polite");
+        FieldValidity.addDescribedBy(chooseFile.getElement(), fileNameId, false);
+        showFileName();
         initWidget(widget);
     }
 
@@ -134,7 +154,16 @@ public class CustomFileUpload extends Composite {
 
     @UiHandler("fileUpload")
     void onFileUpload(final ChangeEvent e) {
-        fileName.setText(getFilename());
+        showFileName();
+    }
+
+    private void showFileName() {
+        final String name = getFilename();
+        final boolean none = name.isEmpty();
+        fileName.setText(none
+                ? NO_FILE
+                : name);
+        fileName.setStyleName(NO_FILE_MODIFIER, none);
     }
 
     public interface Binder extends UiBinder<Widget, CustomFileUpload> {

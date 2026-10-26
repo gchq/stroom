@@ -186,7 +186,7 @@ await page.waitForTimeout(500);
 if (!(await clickMenuItem(page, 'Tools'))) throw new Error('no Tools menu');
 await page.waitForTimeout(600);
 if (!(await clickMenuItem(page, 'Import'))) throw new Error('no Import item');
-const d = page.locator('.resizableDialog-popup, .dialog-popup').last();
+const d = page.locator('.dialog').last();
 await d.waitFor({ state: 'visible', timeout: 20_000 });
 await page.waitForTimeout(1000);
 
@@ -197,23 +197,23 @@ await page.screenshot({ path: `${SUITE}/out/seed/import-step1.png` }).catch(() =
 
 // Step one uploads the file; step two is "Confirm Import", a grid of what the zip contains.
 await d.getByText('OK', { exact: true }).first().click();
-const confirm = page.locator('.resizableDialog-popup, .dialog-popup').last();
+const confirm = page.locator('.dialog').last();
 await confirm.getByText('Confirm Import', { exact: true }).first().waitFor({ state: 'visible', timeout: 30_000 });
 await page.waitForTimeout(1500);
 
 // Every row arrives UNTICKED, and OK on an all-unticked grid imports nothing while reporting
 // success — which is what the first run of this script did, silently.
 //
-// The tick is a `div.tickBox.tickBox-untick`, not a checkbox, so it is clicked as an element and its
+// The tick is a `div.tick-box--cell` (role=checkbox), not an input, so it is clicked as an element and its
 // state is read from the class. Clicking the header's select-all turns the HEADER tick blue and
 // leaves the rows untouched, so each row is ticked individually and the result is asserted.
-const rows = confirm.locator('.dataGridWidget tbody tr');
+const rows = confirm.locator('.data-grid [role=row][data-row]');
 const n = await rows.count();
 for (let i = 0; i < n; i += 1) {
-  await rows.nth(i).locator('.tickBox').first().click().catch(() => {});
+  await rows.nth(i).locator('.tick-box--cell').first().click().catch(() => {});
   await page.waitForTimeout(200);
 }
-const ticked = await confirm.locator('.dataGridWidget tbody .tickBox-tick').count();
+const ticked = await confirm.locator('.data-grid [data-row] .tick-box--cell[aria-checked="true"]').count();
 console.log(`confirm grid: ${ticked}/${n} rows ticked`);
 if (ticked < n) throw new Error(`only ${ticked} of ${n} import rows ticked — OK would import nothing`);
 await page.screenshot({ path: `${SUITE}/out/seed/import-ticked.png` }).catch(() => {});
@@ -227,7 +227,7 @@ await gwt.waitForApp(page);
 await closeDialogs(page);
 await dismissMenus(page).catch(() => {});
 await settleExplorer(page, { label: 'reload' }).catch(() => {});
-await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
 await settleExplorer(page, { label: 'expand' }).catch(() => {});
 const tree = await page.evaluate(() => {
   const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
