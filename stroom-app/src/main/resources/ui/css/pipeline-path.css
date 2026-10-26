@@ -15,7 +15,7 @@
  */
 
 /*
- * The stepping screen's pipeline bar (PipelinePathViewImpl): a row of chevrons. Named BEM style
+ * The stepping screen's pipeline bar (PipelinePathBar): a row of chevrons. Named BEM style
  * (block, block__element, block__element--modifier).
  *
  * A chevron is cut to shape with clip-path, which would also cut off a border, outline or box
@@ -31,7 +31,7 @@
  * modifiers; the chevron's shape takes the states of its button.
  * Its states use the toolbar buttons' colours (see toolbar.css) and the focus colours.
  * Warnings and worse have a thicker border in their colour; errors that a step has made new or
- * worse pulse it three times (see PipelinePathViewImpl.setSeverities).
+ * worse pulse it three times (see PipelinePathBar.setElementSeverities).
  */
 
 .pipeline-path {
@@ -355,10 +355,11 @@
 }
 
 /* A new or worse error pulses its border three times, to the usual border's colour and back
-   (PULSE_MILLIS in PipelinePathViewImpl). The view sets a negative delay to carry on a pulse when
-   it redraws the chevron */
+   (PULSE_MILLIS in PipelinePathBar). The bar sets a negative delay (--pipeline-path__pulse-delay)
+   to carry on a pulse when it redraws the chevron */
 .pipeline-path__segment--pulse .pipeline-path__shape {
     animation: pipeline-path-border-pulse 1.4s ease-in-out 3;
+    animation-delay: var(--pipeline-path__pulse-delay, 0ms);
 }
 
 @keyframes pipeline-path-border-pulse {
@@ -496,6 +497,7 @@
 /* A new or worse error in the branches not shown pulses their icon, as a border pulses */
 .pipeline-path__branch-severity--pulse {
     animation: pipeline-path-pulse 1.4s ease-in-out 3;
+    animation-delay: var(--pipeline-path__pulse-delay, 0ms);
 }
 
 /* Those who would rather not see movement see the borders and icons, but no pulse */

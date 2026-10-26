@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -55,6 +56,7 @@ import stroom.widget.util.client.Rect;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -86,7 +88,7 @@ public class PipelineStructurePresenter
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
     private final Provider<EditorPresenter> jsonEditorProvider;
-    private final PipelineTreePresenter pipelineTreePresenter;
+    private final PipelineTree pipelineTree;
     private PipelineElement selectedElement;
     private PipelineModel pipelineModel;
     private DocRef docRef;
@@ -100,7 +102,7 @@ public class PipelineStructurePresenter
     @Inject
     public PipelineStructurePresenter(final EventBus eventBus,
                                       final PipelineStructureView view,
-                                      final PipelineTreePresenter pipelineTreePresenter,
+                                      final PipelineTree pipelineTree,
                                       final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final NewElementPresenter newElementPresenter,
@@ -108,12 +110,11 @@ public class PipelineStructurePresenter
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
                                       final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
-        own(pipelineTreePresenter);
         own(pipelinePresenter);
         own(newElementPresenter);
         own(propertyListPresenter);
         own(pipelineReferenceListPresenter);
-        this.pipelineTreePresenter = pipelineTreePresenter;
+        this.pipelineTree = pipelineTree;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.newElementPresenter = newElementPresenter;
@@ -123,7 +124,7 @@ public class PipelineStructurePresenter
 
         getView().setUiHandlers(this);
         getView().setInheritanceTree(pipelinePresenter.getView());
-        getView().setTreeView(pipelineTreePresenter.getView());
+        getView().setTreeView(pipelineTree);
         getView().setProperties(propertyListPresenter.getView());
         getView().setPipelineReferences(pipelineReferenceListPresenter.getView());
 
@@ -155,8 +156,8 @@ public class PipelineStructurePresenter
             }
         }));
         own(
-                pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
-                    selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+                pipelineTree.getSelectionModel().addSelectionChangeHandler(event -> {
+                    selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
 
                     propertyListPresenter.setPipelineModel(pipelineModel);
                     propertyListPresenter.setCurrentElement(selectedElement);
@@ -168,15 +169,16 @@ public class PipelineStructurePresenter
                     enableButtons();
                 }));
         // The Delete key removes the selected element (which has the focus), as Remove does
-        pipelineTreePresenter.setRemoveHandler(element -> {
+        pipelineTree.setOnRemove(element -> {
             if (isRemoveEnabled()) {
                 onRemove(null);
             }
         });
-        own(pipelineTreePresenter.addContextMenuHandler(event -> {
+        pipelineTree.setOnMove(this::moveElement);
+        own(pipelineTree.addContextMenuHandler(event -> {
             // A right-click selects the element under the pointer just before the menu opens, and
             // the selection change event comes later, so take the element from the selection model
-            selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+            selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (NullSafe.hasItems(menuItems)) {
@@ -195,7 +197,7 @@ public class PipelineStructurePresenter
         pipelineReferenceListPresenter.setReadOnly(isReadOnly());
         // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
         // that can be changed
-        pipelineTreePresenter.setAllowDragging(advancedMode && !isReadOnly());
+        pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
         propertyListPresenter.setTableName(
                 "Pipeline '" + docRef.getName() + "' Properties");
         pipelineReferenceListPresenter.setTableName(
@@ -214,7 +216,7 @@ public class PipelineStructurePresenter
             }
             pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
 
-            pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+            pipelineTree.getSelectionModel().setSelected(previousSelection, true);
         }
     }
 
@@ -241,11 +243,11 @@ public class PipelineStructurePresenter
 
     private void refreshTree() {
         try {
-            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
-            pipelineTreePresenter.setModel(pipelineModel);
+            final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
+            pipelineTree.setModel(pipelineModel);
             // Keep the selection, unless the edit that triggered this removed the selected element.
             if (selectedElement == null || pipelineModel == null || pipelineModel.hasElement(selectedElement)) {
-                pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
+                pipelineTree.getSelectionModel().setSelected(selectedElement, true);
             }
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
@@ -289,7 +291,7 @@ public class PipelineStructurePresenter
     @Override
     public void onRemove(final ClickEvent event) {
         try {
-            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+            final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement)) {
                 ConfirmEvent.fire(this, "Are you sure you want to remove this element?", ok -> {
                     if (ok) {
@@ -297,7 +299,7 @@ public class PipelineStructurePresenter
                         // redraws the tree.
                         final PipelineElement parentElement = pipelineModel.getParentMap().get(selectedElement);
                         if (parentElement != null) {
-                            pipelineTreePresenter.getSelectionModel().setSelected(parentElement, true);
+                            pipelineTree.getSelectionModel().setSelected(parentElement, true);
                         }
                         pipelineModel.removeElement(selectedElement);
                     }
@@ -325,7 +327,7 @@ public class PipelineStructurePresenter
 
     @Override
     public void onEdit(final ClickEvent event) {
-        final PipelineElement selected = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        final PipelineElement selected = pipelineTree.getSelectionModel().getSelectedObject();
         if (selected != null) {
             final String currentName = selected.getName();
             final String currentDescription = selected.getDescription();
@@ -348,7 +350,7 @@ public class PipelineStructurePresenter
                             if (!Objects.equals(currentDescription, newDescription)) {
                                 renamedElement = pipelineModel.changeElementDescription(renamedElement, newDescription);
                             }
-                            pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
+                            pipelineTree.getSelectionModel().setSelected(renamedElement, true);
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(this, ex.getMessage(), null);
                         }
@@ -397,28 +399,28 @@ public class PipelineStructurePresenter
                 .build());
         // Moving an element (and those after it) to another parent, as dragging it does, and as
         // Ctrl+X and Ctrl+V do in the tree
-        final PipelineElement detached = pipelineTreePresenter.getDetached();
+        final PipelineElement detached = pipelineTree.getDetached();
         if (detached == null) {
             menuItems.add(new IconMenuItem.Builder()
                     .priority(4)
                     .icon(SvgImage.MOVE)
                     .text("Detach")
                     .enabled(isRemoveEnabled())
-                    .command(() -> pipelineTreePresenter.detach(selectedElement))
+                    .command(() -> pipelineTree.detach(selectedElement))
                     .build());
         } else {
             menuItems.add(new IconMenuItem.Builder()
                     .priority(4)
                     .icon(SvgImage.MOVE)
                     .text("Attach '" + detached.getDisplayName() + "' here")
-                    .enabled(pipelineTreePresenter.canAttach(selectedElement))
-                    .command(() -> pipelineTreePresenter.attach(selectedElement))
+                    .enabled(pipelineTree.canAttach(selectedElement))
+                    .command(() -> pipelineTree.attach(selectedElement))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(5)
                     .icon(SvgImage.UNDO)
                     .text("Put '" + detached.getDisplayName() + "' back")
-                    .command(pipelineTreePresenter::cancelDetach)
+                    .command(pipelineTree::cancelDetach)
                     .build());
         }
         return menuItems;
@@ -427,7 +429,7 @@ public class PipelineStructurePresenter
     private List<Item> getAddMenuItems() {
         final List<Item> menuItems = new ArrayList<>();
 
-        final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        final PipelineElement parent = pipelineTree.getSelectionModel().getSelectedObject();
         if (parent != null) {
             final PipelineElementType parentType = pipelineModel.getElementType(parent);
             int childCount = 0;
@@ -481,7 +483,7 @@ public class PipelineStructurePresenter
 
         final List<Item> menuItems = new ArrayList<>();
 
-        final PipelineElement parent = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+        final PipelineElement parent = pipelineTree.getSelectionModel().getSelectedObject();
         if (parent != null) {
             final PipelineElementType parentType = pipelineModel.getElementType(parent);
             int childCount = 0;
@@ -564,11 +566,11 @@ public class PipelineStructurePresenter
     public void setAdvancedMode(final boolean advancedMode) {
         this.advancedMode = advancedMode;
         // Dragging rearranges the pipeline, so a read-only document can't be dragged
-        pipelineTreePresenter.setAllowDragging(advancedMode && !isReadOnly());
+        pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
         if (advancedMode) {
-            pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
+            pipelineTree.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         } else {
-            pipelineTreePresenter.setPipelineTreeBuilder(new SimplePipelineTreeBuilder());
+            pipelineTree.setPipelineTreeBuilder(new SimplePipelineTreeBuilder());
         }
     }
 
@@ -709,6 +711,19 @@ public class PipelineStructurePresenter
         }
     }
 
+    // An element dragged, or moved with the keyboard, to another parent in the tree
+    private void moveElement(final PipelineElement parent, final PipelineElement child) {
+        if (pipelineModel != null && pipelineModel.getParentMap() != null) {
+            try {
+                // A successful move fires a change event from the model, which is what redraws the
+                // tree and re-evaluates whether the pipeline is dirty.
+                pipelineModel.moveElement(parent, child);
+            } catch (final RuntimeException e) {
+                AlertEvent.fireError(this, e.getMessage(), null);
+            }
+        }
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -716,7 +731,7 @@ public class PipelineStructurePresenter
 
         void setInheritanceTree(View view);
 
-        void setTreeView(View view);
+        void setTreeView(IsWidget view);
 
         void setProperties(View view);
 
@@ -745,7 +760,7 @@ public class PipelineStructurePresenter
 
         @Override
         public void execute() {
-            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+            final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
                 final HidePopupRequestEvent.Handler handler = e -> {
                     if (e.isOk()) {
@@ -764,7 +779,7 @@ public class PipelineStructurePresenter
                                     id,
                                     name,
                                     description);
-                            pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
+                            pipelineTree.getSelectionModel().setSelected(newElement, true);
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -776,7 +791,7 @@ public class PipelineStructurePresenter
                 };
 
                 // We need to suggest a unique name for the element
-                final Set<String> existingNames = pipelineTreePresenter.getNames();
+                final Set<String> existingNames = pipelineTree.getNames();
                 final String suggestedNameBase = elementType.getDisplayValue();
                 String suggestedName = suggestedNameBase;
 
@@ -806,11 +821,11 @@ public class PipelineStructurePresenter
 
         @Override
         public void execute() {
-            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+            final PipelineElement selectedElement = pipelineTree.getSelectionModel().getSelectedObject();
             if (selectedElement != null) {
                 try {
                     pipelineModel.addExistingElement(selectedElement, element);
-                    pipelineTreePresenter.getSelectionModel().setSelected(element, true);
+                    pipelineTree.getSelectionModel().setSelected(element, true);
                 } catch (final RuntimeException e) {
                     AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }

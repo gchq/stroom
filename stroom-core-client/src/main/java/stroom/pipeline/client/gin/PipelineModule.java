@@ -31,8 +31,6 @@ import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.pipeline.stepping.client.presenter.PipelinePathPresenter;
-import stroom.pipeline.stepping.client.presenter.PipelinePathPresenter.PipelinePathView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
@@ -42,7 +40,6 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
-import stroom.pipeline.stepping.client.view.PipelinePathViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
@@ -55,13 +52,10 @@ import stroom.pipeline.structure.client.presenter.NewPropertyPresenter;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.view.NewElementViewImpl;
 import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
-import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.client.presenter.EditFeedDependencyPresenter;
@@ -104,9 +98,6 @@ public class PipelineModule extends PluginModule {
         bindPlugin(PipelinePlugin.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(StepControlPresenter.class, StepControlView.class, StepControlViewImpl.class);
-
-        bindPresenterWidget(PipelineTreePresenter.class, PipelineTreeView.class, PipelineTreeViewImpl.class);
-        bindPresenterWidget(PipelinePathPresenter.class, PipelinePathView.class, PipelinePathViewImpl.class);
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
 

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.view;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.stepping.client.presenter.PipelinePathPresenter.PipelinePathView;
-import stroom.pipeline.stepping.client.presenter.PipelinePathUiHandlers;
+import stroom.pipeline.stepping.client.view.PipelinePath;
 import stroom.pipeline.stepping.client.view.PipelinePath.Step;
+import stroom.pipeline.stepping.client.view.PipelinePathCollapse;
+import stroom.pipeline.stepping.client.view.SeverityChanges;
+import stroom.pipeline.structure.client.component.AbstractPipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.view.PipelineElementBoxFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -34,13 +35,15 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -48,13 +51,11 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
@@ -79,7 +80,9 @@ import java.util.Set;
 /// chevron's list (from its button too); the context menu key or Shift+F10 opens the element's
 /// context menu. A control's states are its ARIA attributes (`aria-current`, `aria-disabled`,
 /// `aria-expanded`), which pipeline-path.css styles.
-public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelinePathView {
+public class PipelinePathBar extends AbstractPipelineTree {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final String BASE_CLASS = "pipeline-path";
     private static final String SEGMENT_CLASS = BASE_CLASS + "__segment";
@@ -127,11 +130,15 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     // How long an element pulses when a step gives it an error: three pulses of 1.4s, as the
     // pulse animations in pipeline-path.css
     private static final double PULSE_MILLIS = 3 * 1400;
+    // How far into its pulse a redrawn element is, as a negative delay (pipeline-path.css)
+    private static final String PULSE_DELAY = "--pipeline-path__pulse-delay";
 
-    private final FlowPanel root;
-    private final FlowPanel bar;
+    @UiField
+    DivElement bar;
     // Tells screen reader users which elements a step has given new or worse problems
-    private final Element liveRegion;
+    @UiField
+    DivElement liveRegion;
+
     // When each element with a new or worse error began pulsing, keyed by its ID
     private final Map<String, Double> pulseStarts = new HashMap<>();
     // The fork choices, keyed by the forking element's ID, each the ID of the child followed
@@ -142,11 +149,11 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private final Map<Element, List<Integer>> ellipses = new HashMap<>();
 
     private PipelineModel pipelineModel;
-    private SelectionModel<PipelineElement> selectionModel;
+    private MySingleSelectionModel<PipelineElement> selectionModel;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private Map<String, Severity> severities = Collections.emptyMap();
     private List<PipelineElement> disabledElements = Collections.emptyList();
-    private PipelinePathUiHandlers pathUiHandlers;
+    private ShowMenu onShowMenu;
     private PipelinePath path;
     private List<Step> steps = Collections.emptyList();
     // The selected element when the bar was last drawn
@@ -157,68 +164,51 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private boolean rendering;
     private boolean renderRequested;
 
-    @Inject
-    public PipelinePathViewImpl() {
-        bar = new FlowPanel();
-        bar.setStyleName(BASE_CLASS);
-        bar.getElement().setAttribute(ROLE, "toolbar");
-        bar.getElement().setAttribute(ARIA_LABEL, "Pipeline");
+    /// Makes the bar, with no pipeline yet.
+    public PipelinePathBar() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        bar.addDomHandler(this::onClick, ClickEvent.getType());
-        bar.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
-        bar.addDomHandler(this::onContextMenu, com.google.gwt.event.dom.client.ContextMenuEvent.getType());
-        bar.addAttachHandler(event -> {
+        // The bar's events bubble to its root
+        addDomHandler(this::onClick, ClickEvent.getType());
+        addDomHandler(this::onKeyDown, KeyDownEvent.getType());
+        addDomHandler(this::onContextMenu, com.google.gwt.event.dom.client.ContextMenuEvent.getType());
+        addAttachHandler(event -> {
             if (event.isAttached()) {
-                GlobalResizeObserver.addListener(bar.getElement(), element -> onResize());
+                GlobalResizeObserver.addListener(bar, element -> onResize());
                 Scheduler.get().scheduleDeferred(this::layout);
             } else {
-                GlobalResizeObserver.removeListener(bar.getElement());
+                GlobalResizeObserver.removeListener(bar);
             }
         });
+        initSelection(getSelectionModel());
+    }
 
-        liveRegion = Document.get().createDivElement();
-        liveRegion.setClassName("sr-only");
-        liveRegion.setAttribute(ROLE, "status");
-        liveRegion.setAttribute("aria-live", "polite");
-
-        root = new FlowPanel();
-        root.add(bar);
-        root.getElement().appendChild(liveRegion);
+    /// Sets what shows the bar's drop down menus, e.g. the branches at a fork: the bar's
+    /// controller ([PipelinePathBarController]).
+    ///
+    /// @param onShowMenu Shows a menu.
+    public void setOnShowMenu(final ShowMenu onShowMenu) {
+        this.onShowMenu = onShowMenu;
     }
 
     @Override
-    public Widget asWidget() {
-        return root;
-    }
-
-    @Override
-    public void setPathUiHandlers(final PipelinePathUiHandlers pathUiHandlers) {
-        this.pathUiHandlers = pathUiHandlers;
-    }
-
-    @Override
-    public void setPipelineModel(final PipelineModel pipelineModel) {
-        this.pipelineModel = pipelineModel;
-    }
-
-    @Override
-    public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
-        this.tree = tree;
-    }
-
-    @Override
-    public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
+    protected void initSelection(final MySingleSelectionModel<PipelineElement> selectionModel) {
         this.selectionModel = selectionModel;
     }
 
     @Override
-    public void refresh() {
-        render();
+    protected void showPipelineModel(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
     }
 
     @Override
-    public void setAllowDragging(final boolean allowDragging) {
-        // Elements can't be moved in the bar
+    protected void showTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
+        this.tree = tree;
+    }
+
+    @Override
+    public void redraw() {
+        render();
     }
 
     @Override
@@ -232,13 +222,13 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     }
 
     @Override
-    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+    protected void showDisabledElements(final List<PipelineElement> disabledElements) {
         this.disabledElements = NullSafe.list(disabledElements);
         render();
     }
 
     @Override
-    public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
+    public void setElementSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
         final Map<String, Severity> newSeverities = NullSafe.map(elementIdToSeveritiesMap);
         final Set<String> worsened = SeverityChanges.getWorsened(severities, newSeverities, Severity.WARNING);
 
@@ -328,12 +318,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     @Override
     public HandlerRegistration addContextMenuHandler(final Handler handler) {
-        return bar.addHandler(handler, ContextMenuEvent.getType());
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        bar.fireEvent(event);
+        return addHandler(handler, ContextMenuEvent.getType());
     }
 
     // Draws the path's chevrons, keeping the keyboard focus on the element that had it
@@ -376,7 +361,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         for (int i = 0; i < steps.size(); i++) {
             final Element segment = createSegment(steps.get(i), i);
             segments.add(segment);
-            bar.getElement().appendChild(segment);
+            bar.appendChild(segment);
         }
         laidOutWidth = -1;
         layout();
@@ -395,7 +380,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private void clearSegments() {
         segments.clear();
         ellipses.clear();
-        bar.getElement().removeAllChildren();
+        bar.removeAllChildren();
     }
 
     // A chevron: its shape, its button and, after a fork, its drop down chevron
@@ -505,7 +490,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             if (pulseElapsed >= 0) {
                 segment.addClassName(PULSE_CLASS);
                 final Element shape = segment.getFirstChildElement();
-                shape.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
+                CssProperties.set(shape, PULSE_DELAY, -Math.round(pulseElapsed) + "ms");
             }
         }
     }
@@ -528,7 +513,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             final double pulseElapsed = getHiddenPulseElapsed(step);
             if (pulseElapsed >= 0) {
                 badge.addClassName(BRANCH_SEVERITY_PULSE_CLASS);
-                badge.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
+                CssProperties.set(badge, PULSE_DELAY, -Math.round(pulseElapsed) + "ms");
             }
             arrow.appendChild(badge);
         }
@@ -627,10 +612,10 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     // Collapses the chevrons that don't fit into `…` chevrons
     private void layout() {
-        if (!bar.isAttached() || segments.isEmpty()) {
+        if (!isAttached() || segments.isEmpty()) {
             return;
         }
-        final int available = bar.getElement().getClientWidth();
+        final int available = bar.getClientWidth();
         if (available <= 0) {
             return;
         }
@@ -653,7 +638,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         }
 
         final Element measure = createEllipsis(Collections.emptyList());
-        bar.getElement().appendChild(measure);
+        bar.appendChild(measure);
         final int ellipsisWidth = getLayoutWidth(measure);
         measure.removeFromParent();
 
@@ -680,7 +665,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     // Adds a `…` chevron in place of a run of collapsed chevrons
     private void addEllipsis(final List<Integer> run) {
         final Element ellipsis = createEllipsis(run);
-        bar.getElement().insertBefore(ellipsis, segments.get(run.get(0)));
+        bar.insertBefore(ellipsis, segments.get(run.get(0)));
         ellipses.put(ellipsis, run);
     }
 
@@ -737,7 +722,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     }
 
     private void onResize() {
-        if (bar.getElement().getClientWidth() != laidOutWidth) {
+        if (bar.getClientWidth() != laidOutWidth) {
             final Element focused = getFocusedControl();
             layout();
             final Element tabStop = getTabStop();
@@ -861,7 +846,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private void showBranchMenu(final Element segment) {
         final int index = getIndex(segment);
         final Element caret = getCaret(segment);
-        if (index <= 0 || caret == null || pathUiHandlers == null) {
+        if (index <= 0 || caret == null || onShowMenu == null) {
             return;
         }
         final Step step = steps.get(index);
@@ -893,7 +878,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     // Lists the elements a `…` chevron collapses
     private void showEllipsisMenu(final Element ellipsis) {
-        if (pathUiHandlers == null) {
+        if (onShowMenu == null) {
             return;
         }
         final List<Item> items = new ArrayList<>();
@@ -935,7 +920,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
                 : segmentRect.getLeft()) - MENU_ICON_INSET;
         final Rect below = new Rect(segmentRect.getTop(), segmentRect.getBottom(), left, left + 1)
                 .growY(MENU_GAP);
-        pathUiHandlers.onShowMenu(
+        onShowMenu.show(
                 items,
                 new PopupPosition(below, PopupLocation.BELOW),
                 opener,
@@ -1072,7 +1057,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     // The controls of the chevrons shown, in order: each one's button, then its drop down chevron
     private List<Element> getShownControls() {
         final List<Element> controls = new ArrayList<>();
-        Element child = bar.getElement().getFirstChildElement();
+        Element child = bar.getFirstChildElement();
         while (child != null) {
             if (child.hasClassName(SEGMENT_CLASS) && !child.hasClassName(COLLAPSED_CLASS)) {
                 final Element button = getButton(child);
@@ -1115,7 +1100,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     private Element getFocusedControl() {
         final Element active = getActiveElement();
-        return active != null && bar.getElement().isOrHasChild(active)
+        return active != null && bar.isOrHasChild(active)
                 ? closest(active, BUTTON_SELECTOR)
                 : null;
     }
@@ -1210,8 +1195,8 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     }
 
     private PipelineElement getSelected() {
-        return selectionModel instanceof final MySingleSelectionModel<PipelineElement> singleSelectionModel
-                ? singleSelectionModel.getSelectedObject()
+        return selectionModel != null
+                ? selectionModel.getSelectedObject()
                 : null;
     }
 
@@ -1246,4 +1231,32 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static native Element getActiveElement() /*-{
         return $doc.activeElement;
     }-*/;
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Shows one of the bar's drop down menus, e.g. the branches at a fork.
+    @FunctionalInterface
+    public interface ShowMenu {
+
+        /// Shows a menu.
+        ///
+        /// @param items         The menu's items.
+        /// @param popupPosition Where to show the menu.
+        /// @param opener        The element that opened the menu, which clicking doesn't close it.
+        /// @param focusItem     The item to focus when the menu is shown, e.g. the current branch,
+        ///                      or null for the first.
+        /// @param onHide        Called when the menu is hidden.
+        void show(List<Item> items,
+                  PopupPosition popupPosition,
+                  Element opener,
+                  Item focusItem,
+                  Runnable onHide);
+    }
+
+
+    interface Binder extends UiBinder<Widget, PipelinePathBar> {
+
+    }
 }

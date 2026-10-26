@@ -416,6 +416,18 @@ public final class ScreenHarness {
         return fill(screen, true);
     }
 
+    /// Shows a component that needs no owner (one with no controller, e.g. the pipeline's tree) as
+    /// [#show] shows a screen, filling the story's canvas.
+    ///
+    /// @param component The component.
+    /// @param <W>       The component's type.
+    /// @return The component.
+    public <W extends Widget> W showWidget(final W component) {
+        fillWidget(component, component, true);
+        shown = this;
+        return component;
+    }
+
     /// Shows a page that Stroom shows on its own, not in a tab (e.g. the sign in page), filling the
     /// story's canvas and owned as [#show] does. The page decides where its focus goes itself, so
     /// the test runner's focus check, which focuses a screen as the tab pane does, doesn't apply.

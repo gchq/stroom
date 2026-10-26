@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -60,7 +61,7 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     }
 
     @Override
-    public void setTreeView(final View view) {
+    public void setTreeView(final IsWidget view) {
         treeContainer.setWidget(view.asWidget());
     }
 

@@ -147,6 +147,10 @@ public class DraggableTreePanel<E> extends Composite implements HasContextMenuHa
         }
         this.treePanel = Objects.requireNonNull(treePanel, "treePanel");
         this.subTreePanel = Objects.requireNonNull(subTreePanel, "subTreePanel");
+        // The copy of what is dragged, which follows the pointer, is for sight only: not a second
+        // tree for assistive technology, nor focusable
+        subTreePanel.getElement().setAttribute("aria-hidden", "true");
+        subTreePanel.getElement().setAttribute("inert", "");
         layoutPanel.addAndReplaceElement(treePanel, treeSlot);
     }
 

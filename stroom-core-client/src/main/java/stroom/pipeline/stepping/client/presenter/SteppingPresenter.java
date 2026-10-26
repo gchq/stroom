@@ -44,6 +44,8 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.client.component.PipelinePathBar;
+import stroom.pipeline.stepping.client.component.PipelinePathBarController;
 import stroom.pipeline.stepping.client.component.StepLocationLinkController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
@@ -83,6 +85,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -109,7 +112,7 @@ public class SteppingPresenter
     private static final String LOG_PANE_TITLE = "Log Pane";
 
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
-    private final PipelinePathPresenter pipelinePathPresenter;
+    private final PipelinePathBar pipelinePathBar;
     private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> elementPresenterProvider;
     private final SimplePanel stepMessage;
@@ -154,7 +157,8 @@ public class SteppingPresenter
     @Inject
     public SteppingPresenter(final EventBus eventBus,
                              final SteppingView view,
-                             final PipelinePathPresenter pipelinePathPresenter,
+                             final PipelinePathBar pipelinePathBar,
+                             final Provider<PipelinePathBarController> pathBarControllerProvider,
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> elementPresenterProvider,
@@ -166,14 +170,14 @@ public class SteppingPresenter
                              final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
                              final ExpressionValidator expressionValidator) {
         super(eventBus, view);
-        own(pipelinePathPresenter);
         own(sourcePresenter);
         own(stepLocationLink);
         own(stepControlPresenter);
         own(steppingFilterPresenter);
         this.restFactory = restFactory;
 
-        this.pipelinePathPresenter = pipelinePathPresenter;
+        this.pipelinePathBar = pipelinePathBar;
+        make(pathBarControllerProvider).attach(pipelinePathBar);
         this.sourcePresenter = sourcePresenter;
         this.elementPresenterProvider = elementPresenterProvider;
         this.stepLocationLink = stepLocationLink;
@@ -189,14 +193,14 @@ public class SteppingPresenter
         terminateButton.setEnabled(false);
         terminateButton.addStyleName("query-buttons__button query-buttons__button--stop");
 
-        view.setTreeView(pipelinePathPresenter.getView());
+        view.setTreeView(pipelinePathBar);
 
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
-        pipelinePathPresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
-        pipelinePathPresenter.setAllowNullSelection(false);
+        pipelinePathBar.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
+        pipelinePathBar.setAllowNullSelection(false);
 
         // Nothing can be stepped until a stream has been chosen (see beginStepping).
         stepControlPresenter.initButtons();
@@ -235,7 +239,7 @@ public class SteppingPresenter
         sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
 
         own(
-                pipelinePathPresenter.getSelectionModel().addSelectionChangeHandler(event -> {
+                pipelinePathBar.getSelectionModel().addSelectionChangeHandler(event -> {
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
@@ -280,7 +284,7 @@ public class SteppingPresenter
             updateStepControlButtons();
         });
 
-        own(pipelinePathPresenter.addContextMenuHandler(event -> {
+        own(pipelinePathBar.addContextMenuHandler(event -> {
             final PipelineElement selectedPipeElement = getSelectedPipeElement();
             if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
                 final List<Item> menuItems = buildContextMenu();
@@ -408,7 +412,7 @@ public class SteppingPresenter
 //                    .collect(Collectors.joining("\n")));
 
             // Make a note of the selected element as it is lost on refresh
-            final PipelineElement selectedObject = pipelinePathPresenter.getSelectionModel()
+            final PipelineElement selectedObject = pipelinePathBar.getSelectionModel()
                     .getSelectedObject();
             steppingFilterPresenter.show(
                     elements,
@@ -417,8 +421,8 @@ public class SteppingPresenter
                     stepFilterMap -> {
                         pipelineModel.setStepFilterMap(stepFilterMap);
                         // Need to refresh the view in case any elements need to reflect active filters
-                        pipelinePathPresenter.getView().refresh();
-                        pipelinePathPresenter.getSelectionModel().setSelected(selectedObject, true);
+                        pipelinePathBar.redraw();
+                        pipelinePathBar.getSelectionModel().setSelected(selectedObject, true);
                     });
         });
     }
@@ -464,7 +468,7 @@ public class SteppingPresenter
 
     private void clearAllFilters() {
         pipelineModel.setStepFilterMap(null);
-        pipelinePathPresenter.getView().refresh();
+        pipelinePathBar.redraw();
     }
 
     private void clearFiltersOnSelected() {
@@ -480,7 +484,7 @@ public class SteppingPresenter
                 pipelineModel.setStepFilterMap(newMap);
             }
         }
-        pipelinePathPresenter.getView().refresh();
+        pipelinePathBar.redraw();
     }
 
     private void showMenu(final String name,
@@ -495,7 +499,7 @@ public class SteppingPresenter
     }
 
     private PipelineElement getSelectedPipeElement() {
-        return pipelinePathPresenter.getSelectionModel().getSelectedObject();
+        return pipelinePathBar.getSelectionModel().getSelectedObject();
     }
 
     private void getDescendantFilters(final PipelineElement parent,
@@ -773,10 +777,10 @@ public class SteppingPresenter
 
     public void setPipelineModel(final PipelineModel model) {
         try {
-            final PipelineElement selectedElement = pipelinePathPresenter.getSelectionModel().getSelectedObject();
+            final PipelineElement selectedElement = pipelinePathBar.getSelectionModel().getSelectedObject();
 
             pipelineModel = model;
-            pipelinePathPresenter.setModel(pipelineModel);
+            pipelinePathBar.setModel(pipelineModel);
 
             // Remove elements from the elementPresenterMap if they no longer exist or the doc ref has changed
             // stops dirty elements being used in stepping when they are out of date
@@ -807,15 +811,15 @@ public class SteppingPresenter
             elementsToRemove.forEach(elementPresenterMap::remove);
 
             if (selectedElement == null || !pipelineModel.hasElement(selectedElement)) {
-                pipelinePathPresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
+                pipelinePathBar.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
             } else {
-                pipelinePathPresenter.getSelectionModel().setSelected(selectedElement, true);
+                pipelinePathBar.getSelectionModel().setSelected(selectedElement, true);
             }
 
             final List<PipelineElement> disabledElements = pipelineModel.getPipelineElements(e ->
                     !PipelineModel.SOURCE_ELEMENT.equals(e) &&
                     !pipelineModel.hasRole(e, PipelineElementType.VISABILITY_STEPPING));
-            pipelinePathPresenter.setDisabledElements(disabledElements);
+            pipelinePathBar.setDisabledElements(disabledElements);
 
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
@@ -1060,10 +1064,10 @@ public class SteppingPresenter
                     .collect(Collectors.toMap(
                             Entry::getKey,
                             Entry::getValue));
-            pipelinePathPresenter.setElementSeverities(elementIdToSeveritiesMap);
+            pipelinePathBar.setElementSeverities(elementIdToSeveritiesMap);
         } else {
             // No data so clear them all
-            pipelinePathPresenter.setElementSeverities(null);
+            pipelinePathBar.setElementSeverities(null);
         }
     }
 
@@ -1240,7 +1244,7 @@ public class SteppingPresenter
 
         void addWidgetRight(Widget widget);
 
-        void setTreeView(View view);
+        void setTreeView(IsWidget view);
 
         LayerContainer getLayerContainer();
     }

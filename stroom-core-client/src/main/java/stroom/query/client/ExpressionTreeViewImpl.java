@@ -40,7 +40,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
@@ -92,9 +91,6 @@ public class ExpressionTreeViewImpl
                 uiConfigCache);
         node.adopt(treePanel.getControllerNode());
         node.adopt(subTreePanel.getControllerNode());
-        // The copy of what is dragged, which is only to be seen
-        subTreePanel.getElement().setAttribute("aria-hidden", "true");
-        subTreePanel.getElement().setAttribute("inert", "");
 
         layoutPanel = new DraggableTreePanel<>();
         layoutPanel.setTreePanels(treePanel, subTreePanel);

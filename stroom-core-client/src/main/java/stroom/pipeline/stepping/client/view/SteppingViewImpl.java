@@ -18,13 +18,13 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.widget.presenter.client.LayerContainer;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -62,7 +62,7 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
     }
 
     @Override
-    public void setTreeView(final View view) {
+    public void setTreeView(final IsWidget view) {
         treeContainer.setWidget(view.asWidget());
     }
 

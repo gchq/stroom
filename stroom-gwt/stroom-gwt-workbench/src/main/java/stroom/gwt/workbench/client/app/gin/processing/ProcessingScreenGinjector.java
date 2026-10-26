@@ -41,9 +41,9 @@ import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorProfilePresenter;
@@ -141,7 +141,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     SteppingFilterPresenter getSteppingFilterPresenter();
 
     /// @return A pipeline's element tree, as `PipelineStructurePresenter` shows it.
-    PipelineTreePresenter getPipelineTreePresenter();
+    PipelineTree getPipelineTree();
 
     /// @return The cache of the pipeline element types (`GET /pipeline/v1/propertyTypes`).
     PipelineElementTypesFactory getPipelineElementTypesFactory();

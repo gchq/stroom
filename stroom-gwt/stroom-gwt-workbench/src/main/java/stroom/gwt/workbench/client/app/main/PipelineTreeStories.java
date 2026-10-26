@@ -21,7 +21,6 @@ import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
-import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -31,10 +30,11 @@ import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/PipelineTree`, showing Stroom's real [PipelineTreePresenter] (the pipeline
+/// Stories of `App/Main/PipelineTree`, showing Stroom's real [PipelineTree] (the pipeline
 /// structure's element tree) with the [PipelineModel] Stroom builds for an inheritance stack
 /// (`PipelineModelFactory`): a parent layer adding `parser` under `Source`, and the edited child
 /// layer adding `xslt` under `parser`. Each has an embedded document: `parser`'s from the parent,
@@ -222,7 +222,7 @@ public final class PipelineTreeStories {
                 .injector(injector)
                 .build();
         final Spy onSelect = harness.fn(ON_SELECT);
-        final PipelineTreePresenter tree = injector.getPipelineTreePresenter();
+        final PipelineTree tree = injector.getPipelineTree();
         tree.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         harness.addRegistration(tree.getSelectionModel().addSelectionChangeHandler(event -> {
             final PipelineElement selected = tree.getSelectionModel().getSelectedObject();
@@ -233,7 +233,9 @@ public final class PipelineTreeStories {
         final DocRef pipeline = DocRef.builder().type(PipelineDoc.TYPE).uuid("child").name("Child").build();
         final PipelineResource pipelineResource = GWT.create(PipelineResource.class);
         // As PipelineModelFactory builds the model, keeping the layers for the play's checks
-        harness.afterStartUp(() -> injector.getPipelineElementTypesFactory().get(tree, types ->
+        // The tree is a component, with no task monitor of its own, so the story's is used
+        final DefaultTaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(harness.getHasHandlers());
+        harness.afterStartUp(() -> injector.getPipelineElementTypesFactory().get(taskMonitorFactory, types ->
                 harness.getRestFactory()
                         .create(pipelineResource)
                         .method(res -> res.fetchPipelineLayers(pipeline))
@@ -243,9 +245,9 @@ public final class PipelineTreeStories {
                             renderedModel = newModel();
                             tree.setModel(renderedModel);
                         })
-                        .taskMonitorFactory(tree)
+                        .taskMonitorFactory(taskMonitorFactory)
                         .exec()));
-        harness.show(tree);
+        harness.showWidget(tree);
         return harness.asWidget();
     }
 }

@@ -22,7 +22,7 @@
 //   NavigationPresenter:337        explorerTree.addContextMenuHandler(…)   the explorer tree
 //   EditorPresenter               view's context menu                     an ACE editor
 //   ExpressionTreePresenter       getView()                               an expression term
-//   PipelineTreePresenter         getView()                               a pipeline element
+//   PipelineTree                  addContextMenuHandler(…)                a pipeline element
 //   QueryPresenter / EditExpressionPresenter / SteppingPresenter / PipelineStructurePresenter
 //
 // The oracle is the same for all of them and needs no source reading beyond the registration: a
