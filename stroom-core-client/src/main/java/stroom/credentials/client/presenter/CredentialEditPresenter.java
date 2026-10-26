@@ -16,12 +16,14 @@
 
 package stroom.credentials.client.presenter;
 
+import stroom.credentials.client.component.CredentialSettingsController;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.PutCredentialRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -52,7 +54,7 @@ public class CredentialEditPresenter
     /**
      * The details presenter tab
      */
-    final CredentialSettingsPresenter credentialSettingsPresenter;
+    final CredentialSettingsController credentialSettings;
 
     /**
      * The Permissions tab
@@ -90,17 +92,17 @@ public class CredentialEditPresenter
     @Inject
     public CredentialEditPresenter(final EventBus eventBus,
                                    final LinkTabsLayoutView view,
-                                   final CredentialSettingsPresenter credentialSettingsPresenter,
+                                   final CredentialSettingsController credentialSettings,
                                    final DocumentUserPermissionsPresenter permissionsPresenter,
                                    final CredentialClient credentialClient) {
         super(eventBus, view);
-        own(credentialSettingsPresenter);
+        own(credentialSettings);
         own(permissionsPresenter);
-        this.credentialSettingsPresenter = credentialSettingsPresenter;
+        this.credentialSettings = credentialSettings;
         this.permissionsPresenter = permissionsPresenter;
         this.credentialClient = credentialClient;
         getWidget().getElement().addClassName("default-min-sizes");
-        final TabData detailsTab = addTab("Settings", credentialSettingsPresenter);
+        final TabData detailsTab = addTab("Settings", new ControllerLayer(credentialSettings));
         changeSelectedTab(detailsTab);
         addTab("Permissions", permissionsPresenter);
 
@@ -137,10 +139,10 @@ public class CredentialEditPresenter
                 .modal(true)
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        credentialSettingsPresenter.onOk(valid -> {
+                        credentialSettings.onOk(valid -> {
                             if (valid) {
                                 // Store or update the secret
-                                final PutCredentialRequest request = credentialSettingsPresenter.write();
+                                final PutCredentialRequest request = credentialSettings.write();
                                 credentialClient.storeCredential(request,
                                         result -> {
                                             consumer.accept(result);
@@ -163,7 +165,7 @@ public class CredentialEditPresenter
 
     private void read(final DocRef docRef,
                       final CredentialWithPerms cwp) {
-        credentialSettingsPresenter.read(docRef, cwp);
+        credentialSettings.read(docRef, cwp);
         permissionsPresenter.setDocRef(docRef);
     }
 

@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.credentials.client.view;
+package stroom.credentials.client.component;
 
-import stroom.credentials.client.component.SecretForm;
-import stroom.credentials.client.presenter.CredentialSettingsPresenter.CredentialSettingsView;
-import stroom.credentials.client.presenter.CredentialSettingsUiHandlers;
 import stroom.credentials.shared.CredentialType;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -38,23 +34,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
+import java.util.function.Consumer;
 
-/**
- * Dialog showing all the information within Credentials, so user can add
- * or edit credentials.
- * Provides backing for CredentialsDetailsDialogView.ui.xml.
- */
-public class CredentialSettingsViewImpl
-        extends ViewWithUiHandlers<CredentialSettingsUiHandlers>
-        implements CredentialSettingsView {
+/// The Settings tab of the credentials' dialog: their name, whether and when they expire, their
+/// type and the form for their secret. Existing credentials' secrets are never shown: the tab says
+/// so instead of showing the form, and the type can't be changed.
+public class CredentialSettings extends Component {
 
-    /**
-     * Underlying Widget created by UiBinder
-     */
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -76,90 +63,90 @@ public class CredentialSettingsViewImpl
     Label keyStorePath;
     @UiField
     FormGroup storedSecretFormGroup;
-    @UiField
-    Label storedSecret;
 
-    /**
-     * Injected constructor.
-     */
-    @Inject
-    @SuppressWarnings("unused")
-    public CredentialSettingsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        final List<CredentialType> sortedCredentialType = Arrays
-                .stream(CredentialType.values())
+    private Consumer<CredentialType> onTypeChange;
+
+    /// Makes an empty tab.
+    public CredentialSettings() {
+        initWidget(BINDER.createAndBindUi(this));
+        Arrays.stream(CredentialType.values())
                 .sorted(Comparator.comparing(CredentialType::getDisplayValue))
-                .collect(Collectors.toList());
-        for (final CredentialType type : sortedCredentialType) {
-            credentialType.addItem(type);
-        }
+                .forEach(credentialType::addItem);
+
+        credentialType.addValueChangeHandler(e -> {
+            if (onTypeChange != null) {
+                onTypeChange.accept(credentialType.getValue());
+            }
+        });
+        credsExpire.addValueChangeHandler(e -> updateState());
     }
 
-    /**
-     * @return The underlying widget.
-     */
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The name entered.
     public String getName() {
         return name.getValue();
     }
 
-    @Override
+    /// @param name The credentials' name.
     public void setName(final String name) {
         this.name.setValue(name);
     }
 
-    @Override
+    /// @return The type chosen.
     public CredentialType getCredentialType() {
         return credentialType.getValue();
     }
 
-    @Override
+    /// @param credentialType The credentials' type.
     public void setCredentialType(final CredentialType credentialType) {
         this.credentialType.setValue(credentialType);
     }
 
-    @Override
+    /// @return True if the credentials are to expire.
     public boolean isCredExpire() {
         return credsExpire.getValue();
     }
 
-    @Override
+    /// @param expire True if the credentials expire; the expiry time is enabled only if they do.
     public void setCredExpire(final boolean expire) {
         this.credsExpire.setValue(expire);
         updateState();
     }
 
-    @Override
+    /// @return The expiry time's box, for its controller to attach to and to read and set.
     public DateTimeBox getExpiryTime() {
         return expiryTime;
     }
 
-    @Override
+    /// Shows the form for the secret of the credentials' type.
+    ///
+    /// @param form The form.
     public void setSecretForm(final SecretForm form) {
-        secret.setWidget(form.asWidget());
+        secret.setWidget(form);
     }
 
-    @Override
+    /// Sets whether existing credentials are being edited. If so the type is fixed and the
+    /// secret's form is replaced by a note that the secret can't be shown.
+    ///
+    /// @param existing True if editing existing credentials, false if creating new ones.
     public void setExistingCredential(final boolean existing) {
         credentialType.setEnabled(!existing);
         secretFormGroup.setVisible(!existing);
         storedSecretFormGroup.setVisible(existing);
     }
 
-    @Override
+    /// Shows the path of the key store file of existing key store file credentials.
+    ///
+    /// @param keyStorePath The path, or null to hide it.
     public void setKeyStorePath(final String keyStorePath) {
         this.keyStorePath.setText(keyStorePath);
         keyStorePathFormGroup.setVisible(!NullSafe.isBlankString(keyStorePath));
     }
 
-    /**
-     * Updates the state of the UI.
-     */
+    /// @param onTypeChange What to run, with the type now chosen, when the user changes the type.
+    public void setOnTypeChange(final Consumer<CredentialType> onTypeChange) {
+        this.onTypeChange = onTypeChange;
+    }
+
     private void updateState() {
         // Expiry is shown either way but only enabled if the tick box is ticked, as in the global
         // property dialog, so the dialog doesn't change shape
@@ -168,19 +155,11 @@ public class CredentialSettingsViewImpl
         expiryTimeFormGroup.setDisabled(!expires);
     }
 
-    @UiHandler("credentialType")
-    public void onCredentialType(final ValueChangeEvent<CredentialType> e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onTypeChange(credentialType.getValue());
-        }
-    }
 
-    @UiHandler("credsExpire")
-    public void onCredsExpire(final ValueChangeEvent<Boolean> e) {
-        updateState();
-    }
+    // --------------------------------------------------------------------------------
 
-    public interface Binder extends UiBinder<Widget, CredentialSettingsViewImpl> {
+
+    interface Binder extends UiBinder<Widget, CredentialSettings> {
 
     }
 }
