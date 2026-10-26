@@ -90,11 +90,9 @@ public class VisViewImpl extends ViewImpl implements VisView {
         widget.add(visContainer);
         widget.add(messagePanel);
         widget.add(toolbar);
-        // The chart's frame is placed over its container, which leaves room for the toolbar above it (set here as
-        // well as by the style, as for the toolbar itself).
+        // The chart's frame is placed over its container, which leaves room for the toolbar above it (see
+        // VisToolbar.layOut).
         widget.addStyleName("dashboardVis-outerLayout--toolbar");
-        visContainer.getElement().getStyle().setProperty("top", VisToolbar.HEIGHT + "px");
-        visContainer.getElement().getStyle().setProperty("height", "calc(100% - " + VisToolbar.HEIGHT + "px)");
     }
 
     @Override
@@ -115,6 +113,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Override
     public void onResize() {
+        toolbar.layOut(widget.getElement(), visContainer.getElement());
         if (visFrame != null) {
             final Element ref = visContainer.getElement();
             //getParentByClass(visContainer.getElement(), "tabLayout-contentOuter");
