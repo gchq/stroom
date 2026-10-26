@@ -101,13 +101,12 @@ import java.util.function.Consumer;
 /// * spies on the requests made, unhandled requests, alerts, confirmations, downloads and
 ///   uploads, which play functions check with `play.expect(play.spy(name))`.
 ///
-/// The story creates its presenter with `new`, passing it what the harness provides, then
-/// returns [#asWidget()], e.g.
+/// The story creates its controller or presenter with `new`, passing it what the harness provides,
+/// then returns [#asWidget()], e.g.
 /// ```
 /// final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
-/// final AboutPresenter presenter = new AboutPresenter(harness.getEventBus(), view,
-///         harness.getRestFactory(), harness.getUiConfigCache(), harness.getDateTimeFormatter());
-/// presenter.show();
+/// new AboutController(harness.getEventBus(), new About(), harness.getRestFactory(),
+///         harness.getUiConfigCache(), harness.getDateTimeFormatter()).show(harness.getAppRoot());
 /// return harness.asWidget();
 /// ```
 ///

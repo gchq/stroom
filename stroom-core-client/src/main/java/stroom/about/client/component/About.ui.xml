@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel styleName="dock-container-vertical about">
+        <div ui:field="logo" class="dock-min about__logo"></div>
+        <div class="dock-max about__body">
+            <div ui:field="html"></div>
+            <div class="about__build-info">
+                <div>
+                    <div>Build Version: <span ui:field="buildVersion"/></div>
+                    <div>Build Date: <span ui:field="buildDate"/></div>
+                    <div>Up Date: <span ui:field="upDate"/></div>
+                    <div>Node Name: <span ui:field="nodeName"/></div>
+                </div>
+            </div>
+        </div>
+    </g:HTMLPanel>
+</ui:UiBinder>

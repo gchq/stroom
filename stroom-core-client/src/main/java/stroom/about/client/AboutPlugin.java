@@ -16,13 +16,14 @@
 
 package stroom.about.client;
 
+import stroom.about.client.component.AboutController;
 import stroom.about.client.event.ShowAboutEvent;
 import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
-import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
@@ -35,12 +36,16 @@ import javax.inject.Singleton;
 @Singleton
 public class AboutPlugin extends Plugin implements ShowAboutHandler {
 
-    private final Provider<AboutPresenter> provider;
+    private final Provider<AboutController> provider;
+    private final AppRoot appRoot;
 
     @Inject
-    public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
+    public AboutPlugin(final EventBus eventBus,
+                       final Provider<AboutController> provider,
+                       final AppRoot appRoot) {
         super(eventBus);
         this.provider = provider;
+        this.appRoot = appRoot;
 
         getEventBus().addHandler(ShowAboutEvent.getType(), this);
     }
@@ -54,12 +59,17 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
                         .priority(11)
                         .icon(SvgImage.OO)
                         .text("About")
-                        .command(() -> provider.get().show())
+                        .command(this::showAbout)
                         .build());
     }
 
     @Override
     public void onShow(final ShowAboutEvent event) {
-        provider.get().show();
+        showAbout();
+    }
+
+    // The app owns the dialog while it is shown, as a plugin owns nothing
+    private void showAbout() {
+        provider.get().show(appRoot);
     }
 }

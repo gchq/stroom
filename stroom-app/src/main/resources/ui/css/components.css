@@ -384,13 +384,6 @@
     text-align: center;
 }
 
-.aboutViewImpl-layout {
-    width: 500px;
-    height: 288px;
-    display: flex;
-    flex-direction: column;
-}
-
 .aboutViewImpl-stroom-body {
     height: 50px;
     display: flex;
@@ -403,39 +396,10 @@
     height: 30px;
 }
 
-.aboutViewImpl-logo {
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.aboutViewImpl-logo svg {
-    width: 150px;
-    height: 40px;
-    color: var(--logo-color);
-}
-
-/* The details, framed as a control */
-.aboutViewImpl-body {
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    border: 1px solid var(--control__border-color);
-    border-radius: .25rem;
-    background-color: var(--control__background-color);
-}
-
 /* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
 .stroom-control.resultStoreViewImpl {
     padding: 0;
     overflow: hidden;
-}
-
-.aboutViewImpl-buildInfo {
-    display: flex;
-    justify-content: flex-end;
 }
 
 .subStreamNavigator {

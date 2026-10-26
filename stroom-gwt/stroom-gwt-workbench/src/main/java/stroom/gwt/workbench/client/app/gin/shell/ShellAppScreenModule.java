@@ -17,9 +17,6 @@
 
 package stroom.gwt.workbench.client.app.gin.shell;
 
-import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.presenter.AboutPresenter.AboutView;
-import stroom.about.client.view.AboutViewImpl;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
@@ -69,10 +66,6 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
                 NavigationViewImpl.class);
         bind(RecentItemsPresenter.class);
 
-        // AboutModule
-        bindPresenterWidget(AboutPresenter.class,
-                AboutView.class,
-                AboutViewImpl.class);
 
         // UserPreferencesModule
         bindPresenterWidget(UserPreferencesPresenter.class,

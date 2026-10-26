@@ -16,11 +16,13 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.view.AboutViewImpl;
+import stroom.about.client.component.About;
+import stroom.about.client.component.AboutController;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -28,10 +30,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.ui.config.client.UiConfigCache;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/AboutDialog`, showing Stroom's real [AboutPresenter] with fake REST
+/// Stories of `App/Main/AboutDialog`, showing Stroom's real [AboutController] with fake REST
 /// replies. It needs two endpoints, the session info and the UI config, which are both start-up
 /// fixtures, and through its [UiConfigCache] and [DateTimeFormatter] a small graph of Stroom
 /// services, which come from the harness's injector.
@@ -59,8 +60,10 @@ public final class AboutDialogStories {
                     // The dialog is shown on the page's body, as in Stroom
                     final Play screen = play.screen();
                     screen.findByText("About");
-                    screen.findByText("Build Version: v7.5-test");
-                    play.expect(screen.getByText("Node Name: node1a")).toBeInTheDocument();
+                    // Each value beside its label, which the template holds
+                    play.expect(screen.findByText("v7.5-test").closest("div"))
+                            .toHaveTextContent("Build Version: v7.5-test");
+                    play.expect(screen.getByText("node1a").closest("div")).toHaveTextContent("Node Name: node1a");
                     play.expect(screen.getByText("Stroom is a data processing platform.")).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY))
                             .toHaveBeenCalledWith(ValueMatcher.stringContaining("GET /sessionInfo/v1"));
@@ -68,6 +71,16 @@ public final class AboutDialogStories {
                             ValueMatcher.stringContaining("GET /config/v1/noauth/fetchExtendedUiConfig"));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Close closes it, and it is disposed (the leak check counts it if not)
+                .story("Close", AboutDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query dialog = screen.findByRole("dialog", "About");
+                    screen.findByText("v7.5-test");
+                    play.click(play.within(dialog).getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "About")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });
     }
 
@@ -78,13 +91,12 @@ public final class AboutDialogStories {
                 .uiConfig(UI_CONFIG)
                 .build();
 
-        final AboutPresenter presenter = new AboutPresenter(
+        new AboutController(
                 harness.getEventBus(),
-                new AboutViewImpl(GWT.create(AboutViewImpl.Binder.class)),
+                new About(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
-                harness.getDateTimeFormatter());
-        presenter.show();
+                harness.getDateTimeFormatter()).show(harness.getAppRoot());
         return harness.asWidget();
     }
 }
