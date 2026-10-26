@@ -957,7 +957,10 @@ if (!window.visualisations) {
         addDropped(report, "source and target the same", selfLinks);
         addDropped(report, (fields.column(valueId) || valueId) + " not a number or negative", badValue);
 
-        var nodeNames = Object.keys(nodeTotals).sort(function (a, b) {
+        // A node or link with nothing flowing through it has nothing to draw.
+        var nodeNames = Object.keys(nodeTotals).filter(function (name) {
+            return nodeTotals[name] > 0;
+        }).sort(function (a, b) {
             return nodeTotals[b] - nodeTotals[a];
         });
         var maxNodes = intSetting(settings, "maxNodes", 300, 2, 5000);
@@ -976,7 +979,7 @@ if (!window.visualisations) {
             links: linkKeys.map(function (key) {
                 return links[key];
             }).filter(function (link) {
-                return kept[link.source] && kept[link.target];
+                return link.value > 0 && kept[link.source] && kept[link.target];
             })
         };
     }
@@ -2011,11 +2014,18 @@ if (!window.visualisations) {
         var seriesNames = [];
         var seriesTotals = {};
         var bad = 0;
+        var badX = 0;
+        var badY = 0;
         ctx.rows.forEach(function (row) {
             var x = toNumber(fields.value(row, xId));
             var y = toNumber(fields.value(row, yId));
             if (isNaN(x) || isNaN(y)) {
                 bad++;
+                if (isNaN(x)) {
+                    badX++;
+                } else {
+                    badY++;
+                }
                 return;
             }
             var series = fields.has("series") ? fields.label(row, "series", ctx.prefs) : (fields.column(yId) || "y");
@@ -2044,7 +2054,7 @@ if (!window.visualisations) {
                 return a[0] - b[0];
             });
         });
-        return {names: seriesNames, bySeries: bySeries, bad: bad};
+        return {names: seriesNames, bySeries: bySeries, bad: bad, badX: badX, badY: badY};
     }
 
     // An x scale for a time or value axis, over the part of the data's range zoomed in on.
@@ -2078,7 +2088,9 @@ if (!window.visualisations) {
         }
         var time = xType === "time";
         var data = seriesPoints(ctx, "x", "y");
-        addDropped(ctx.report, "x not a number or date", data.bad);
+        // As ECharts' adapter says them: an x that isn't one first, else a y.
+        addDropped(ctx.report, "x not a number or date", data.badX);
+        addDropped(ctx.report, "y not a number", data.badY);
         var colours = paletteOf(ctx.options, data.names.length, ctx.style);
         var shown = data.names.filter(function (name) {
             return !ctx.hidden[name];
@@ -3141,7 +3153,8 @@ if (!window.visualisations) {
         drawScaleBar(ctx.svg, colours, min, max, ctx.format, ctx.size, ctx.style);
         ctx.geo = g;
         ctx.geoOrigin = [left, 24];
-        ctx.report.series = 1;
+        // A calendar a year, as ECharts counts them.
+        ctx.report.series = years.length;
         ctx.report.points = selectedDays;
         ctx.zoomKind = "geo";
     }
