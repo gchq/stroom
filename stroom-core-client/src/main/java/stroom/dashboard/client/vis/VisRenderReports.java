@@ -32,9 +32,9 @@ import java.util.Set;
 
 /// Keeps only what Stroom expects of a visualisation's render report (see `stroom.report` in `vis.js`), as any
 /// script in the frame can send one: its status, counts, sizes, the library, the reasons rows were left out (from
-/// a fixed set), short messages, each series' trend (direction, slope and fit), and what the user is looking at
-/// (the interval, the part zoomed in on, what is selected and the series hidden, which are cut short). Reports
-/// reach the chat's agent, so nothing else a script sends gets through.
+/// a fixed set), short messages, each series' trend (direction, slope and fit), a network's clusters, and what
+/// the user is looking at (the interval, the part zoomed in on, what is selected and the series hidden, which are
+/// cut short). Reports reach the chat's agent, so nothing else a script sends gets through.
 ///
 /// The filtering ([#sanitise(Map)]) works on plain Java values, so it can be tested on the JVM; [#sanitise(JSONObject)]
 /// only converts to and from the browser's JSON.
@@ -60,6 +60,10 @@ public final class VisRenderReports {
     static final int MAX_TRENDS = 10;
     private static final Set<String> TREND_METHODS = Set.of("linear", "moving average");
     private static final Set<String> TREND_DIRECTIONS = Set.of("rising", "falling", "flat");
+    // A network's clusters (Node Colours cluster): how many, how clear-cut (modularity), the largest (named after
+    // their most connected member, with their size, and the group most of each is in) and the bridges between them.
+    static final int MAX_CLUSTERS = 10;
+    static final int MAX_BRIDGES = 5;
     // Whether something is selected on the chart (never what is: that would be a data value), and whether its rows
     // reached its row limit, so the rest were left out.
     private static final List<String> BOOLEANS = List.of("selected", "truncated");
@@ -165,6 +169,9 @@ public final class VisRenderReports {
             }
             clean.put("trends", cleanTrends);
         }
+        if (report.get("clusters") instanceof final Map<?, ?> clusters) {
+            clean.put("clusters", clusters(clusters));
+        }
         final String error = text(report.get("error"), MAX_TEXT);
         if (error != null) {
             clean.put("error", error);
@@ -194,6 +201,58 @@ public final class VisRenderReports {
             clean.put("r2", Math.round(r2.doubleValue() * 100) / 100.0);
         }
         return clean;
+    }
+
+    // A network's clusters, only what is expected kept.
+    private static Map<String, Object> clusters(final Map<?, ?> clusters) {
+        final Map<String, Object> clean = new LinkedHashMap<>();
+        if (clusters.get("count") instanceof final Number count) {
+            clean.put("count", Math.round(count.doubleValue()));
+        }
+        if (clusters.get("modularity") instanceof final Number modularity
+            && modularity.doubleValue() >= -1 && modularity.doubleValue() <= 1) {
+            clean.put("modularity", Math.round(modularity.doubleValue() * 100) / 100.0);
+        }
+        final List<Object> top = new ArrayList<>();
+        if (clusters.get("top") instanceof final List<?> list) {
+            for (final Object item : list) {
+                if (item instanceof final Map<?, ?> cluster && top.size() < MAX_CLUSTERS) {
+                    final Map<String, Object> cleanCluster = new LinkedHashMap<>();
+                    putText(cleanCluster, "name", cluster.get("name"));
+                    putWhole(cleanCluster, "size", cluster.get("size"));
+                    putText(cleanCluster, "group", cluster.get("group"));
+                    putWhole(cleanCluster, "groupShare", cluster.get("groupShare"));
+                    top.add(cleanCluster);
+                }
+            }
+        }
+        clean.put("top", top);
+        final List<Object> bridges = new ArrayList<>();
+        if (clusters.get("bridges") instanceof final List<?> list) {
+            for (final Object item : list) {
+                if (item instanceof final Map<?, ?> bridge && bridges.size() < MAX_BRIDGES) {
+                    final Map<String, Object> cleanBridge = new LinkedHashMap<>();
+                    putText(cleanBridge, "name", bridge.get("name"));
+                    putWhole(cleanBridge, "otherClusters", bridge.get("otherClusters"));
+                    bridges.add(cleanBridge);
+                }
+            }
+        }
+        clean.put("bridges", bridges);
+        return clean;
+    }
+
+    private static void putText(final Map<String, Object> map, final String name, final Object value) {
+        final String text = text(value, MAX_SHORT_TEXT);
+        if (text != null) {
+            map.put(name, text);
+        }
+    }
+
+    private static void putWhole(final Map<String, Object> map, final String name, final Object value) {
+        if (value instanceof final Number number) {
+            map.put(name, Math.round(number.doubleValue()));
+        }
     }
 
     // A string value on one line, cut short; null if it isn't a string.
