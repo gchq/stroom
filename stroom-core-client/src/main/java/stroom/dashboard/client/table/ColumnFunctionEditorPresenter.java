@@ -27,7 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.query.api.Column;
-import stroom.query.client.presenter.QueryHelpPresenter;
+import stroom.query.client.component.QueryHelpController;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -40,6 +40,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -61,7 +62,7 @@ public class ColumnFunctionEditorPresenter
 
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
-    private final QueryHelpPresenter queryHelpPresenter;
+    private final QueryHelpController queryHelp;
     private TablePresenter tablePresenter;
     private Column column;
     private BiConsumer<Column, Column> columnChangeConsumer;
@@ -71,15 +72,15 @@ public class ColumnFunctionEditorPresenter
                                          final ColumnFunctionEditorView view,
                                          final RestFactory restFactory,
                                          final EditorPresenter editorPresenter,
-                                         final QueryHelpPresenter queryHelpPresenter) {
+                                         final QueryHelpController queryHelp) {
         super(eventBus, view);
         own(editorPresenter);
-        own(queryHelpPresenter);
+        own(queryHelp);
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
-        this.queryHelpPresenter = queryHelpPresenter;
+        this.queryHelp = queryHelp;
         view.setEditor(editorPresenter.getView());
-        view.setQueryHelp(queryHelpPresenter.getView());
+        view.setQueryHelp(queryHelp);
     }
 
     private void setupEditor() {
@@ -111,7 +112,7 @@ public class ColumnFunctionEditorPresenter
         if (searchModel != null) {
             final IndexLoader indexLoader = searchModel.getIndexLoader();
             if (indexLoader != null) {
-                queryHelpPresenter.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
+                queryHelp.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
             }
         }
 
@@ -128,11 +129,11 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
-        queryHelpPresenter.setIncludedTypes(EnumSet.of(
+        queryHelp.setIncludedTypes(EnumSet.of(
                 QueryHelpType.FIELD,
                 QueryHelpType.FUNCTION));
-        queryHelpPresenter.setTextType(TextType.EXPRESSION);
-        queryHelpPresenter.refresh();
+        queryHelp.setTextType(TextType.EXPRESSION);
+        queryHelp.refresh();
         editorPresenter.focus();
 
         // If this is done without the scheduler then we get weird behaviour when you click
@@ -141,7 +142,7 @@ public class ColumnFunctionEditorPresenter
         Scheduler.get().scheduleDeferred(() -> {
             setupEditor();
             // Needs to be called after the editor is setup
-            queryHelpPresenter.linkToEditor(this.editorPresenter);
+            queryHelp.linkToEditor(this.editorPresenter);
         });
     }
 
@@ -205,6 +206,6 @@ public class ColumnFunctionEditorPresenter
 
         void setEditor(final CodeEditor editor);
 
-        void setQueryHelp(View view);
+        void setQueryHelp(IsWidget queryHelp);
     }
 }

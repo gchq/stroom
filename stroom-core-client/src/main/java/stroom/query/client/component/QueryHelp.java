@@ -14,30 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.query.client.view;
+package stroom.query.client.component;
 
 import stroom.item.client.SelectionList;
-import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.client.presenter.QueryHelpSelectionItem;
-import stroom.query.client.presenter.QueryHelpUiHandlers;
 import stroom.query.shared.QueryHelpRow;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.component.client.Component;
 
-import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.function.Supplier;
 
-public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> implements QueryHelpView {
+/// A query's help: its contents (functions, fields and the like) above the details of the one
+/// selected, which can be inserted into the query or copied.
+public class QueryHelp extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
@@ -48,24 +46,17 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     @UiField
     ToolbarButton insertButton;
 
-    @Inject
-    public QueryHelpViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        // A list must be named; its quick filter is then named for it too
-        selectionList.setAccessibleName("Help contents");
+    /// Makes empty help.
+    public QueryHelp() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The contents' list, for its controller to give its model and follow.
     public SelectionList<QueryHelpRow, QueryHelpSelectionItem> getSelectionList() {
         return selectionList;
     }
 
-    @Override
+    /// @param details The details of the item selected, or null for none.
     public void setDetails(final SafeHtml details) {
         final String htmlStr = details != null
                 ? details.asString()
@@ -73,32 +64,32 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
         this.details.getElement().setInnerHTML(htmlStr);
     }
 
-    @Override
+    /// @param enable Whether Insert and Copy can be pressed.
     public void enableButtons(final boolean enable) {
         copyButton.setEnabled(enable);
         insertButton.setEnabled(enable);
     }
 
-    @Override
-    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+    /// @param popupTextSupplier Gives the quick filter's tooltip.
+    public void setQuickFilterTooltip(final Supplier<SafeHtml> popupTextSupplier) {
         selectionList.setPopupTextProvider(popupTextSupplier);
     }
 
-    @UiHandler("copyButton")
-    public void onCopyClick(final ClickEvent event) {
-        getUiHandlers().onCopy();
+    /// @param onCopy What to run when the user presses Copy.
+    public void setOnCopy(final Runnable onCopy) {
+        copyButton.setOnClick(onCopy);
     }
 
-    @UiHandler("insertButton")
-    public void onInsertClick(final ClickEvent event) {
-        getUiHandlers().onInsert();
+    /// @param onInsert What to run when the user presses Insert.
+    public void setOnInsert(final Runnable onInsert) {
+        insertButton.setOnClick(onInsert);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, QueryHelpViewImpl> {
+    interface Binder extends UiBinder<Widget, QueryHelp> {
 
     }
 }

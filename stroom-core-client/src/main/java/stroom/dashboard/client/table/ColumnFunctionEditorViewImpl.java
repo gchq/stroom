@@ -18,11 +18,11 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.editor.client.component.CodeEditor;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -56,8 +56,8 @@ public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunc
     }
 
     @Override
-    public void setQueryHelp(final View view) {
-        queryHelpContainer.setWidget(view.asWidget());
+    public void setQueryHelp(final IsWidget queryHelp) {
+        queryHelpContainer.setWidget(queryHelp);
     }
 
     public interface Binder extends UiBinder<Widget, ColumnFunctionEditorViewImpl> {

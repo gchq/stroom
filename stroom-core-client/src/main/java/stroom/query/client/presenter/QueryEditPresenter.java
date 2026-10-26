@@ -32,6 +32,7 @@ import stroom.query.api.Param;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
+import stroom.query.client.component.QueryHelpController;
 import stroom.query.client.component.QueryToolbarController;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
@@ -53,6 +54,7 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -77,7 +79,7 @@ public class QueryEditPresenter
     private static final TabData TABLE = new TabDataImpl("Table");
     private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
 
-    private final QueryHelpPresenter queryHelpPresenter;
+    private final QueryHelpController queryHelp;
     private final QueryToolbarController queryToolbar;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
@@ -99,7 +101,7 @@ public class QueryEditPresenter
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
                               final QueryEditView view,
-                              final QueryHelpPresenter queryHelpPresenter,
+                              final QueryHelpController queryHelp,
                               final QueryToolbarController queryToolbar,
                               final EditorPresenter editorPresenter,
                               final QueryResultTableSplitPresenter queryResultPresenter,
@@ -110,11 +112,11 @@ public class QueryEditPresenter
                               final QueryResultTabsView linkTabsLayoutView,
                               final QueryInfo queryInfo) {
         super(eventBus, view);
-        own(queryHelpPresenter);
+        own(queryHelp);
         own(queryToolbar);
         own(editorPresenter);
         own(queryResultPresenter);
-        this.queryHelpPresenter = queryHelpPresenter;
+        this.queryHelp = queryHelp;
         this.queryToolbar = queryToolbar;
         this.queryResultPresenter = queryResultPresenter;
         this.visPresenterProvider = visPresenterProvider;
@@ -231,13 +233,13 @@ public class QueryEditPresenter
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
         this.editorPresenter.getBasicAutoCompletionOption().setOff();
 
-//        // This glues the editor code completion to the QueryHelpPresenter's completion provider
+//        // This glues the editor code completion to the query help's completion provider
 //        // Need to do this via addAttachHandler so the editor is fully loaded
 //        // else it moans about the id not being a thing on the AceEditor
 //        this.editorPresenter.getWidget().addAttachHandler(event ->
-//                this.editorPresenter.registerCompletionProviders(queryHelpPresenter.getKeyedAceCompletionProvider()));
+//                this.editorPresenter.registerCompletionProviders(queryHelp.getKeyedAceCompletionProvider()));
 
-        view.setQueryHelp(queryHelpPresenter.getView());
+        view.setQueryHelp(queryHelp);
         view.setQueryEditor(this.editorPresenter.getView());
         view.setResultView(linkTabsLayoutView);
 
@@ -261,7 +263,7 @@ public class QueryEditPresenter
             run();
             onChange();
         });
-        queryHelpPresenter.linkToEditor(editorPresenter);
+        queryHelp.linkToEditor(editorPresenter);
 
         //noinspection unused event
         listen(WindowCloseEvent.getType(), event -> {
@@ -343,7 +345,7 @@ public class QueryEditPresenter
             public void run() {
                 if (!Objects.equals(currentQuery, query)) {
                     currentQuery = query;
-                    queryHelpPresenter.setQuery(query);
+                    queryHelp.setQuery(query);
                     queryResultPresenter.setQuery(query);
                 }
             }
@@ -534,7 +536,7 @@ public class QueryEditPresenter
 
     public interface QueryEditView extends View {
 
-        void setQueryHelp(View view);
+        void setQueryHelp(IsWidget queryHelp);
 
         void setQueryEditor(View view);
 

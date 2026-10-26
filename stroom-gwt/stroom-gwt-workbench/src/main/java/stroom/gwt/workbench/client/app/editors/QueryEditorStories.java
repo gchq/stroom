@@ -455,6 +455,21 @@ public final class QueryEditorStories {
                     play.expect(play.within(breadcrumb).queryByRole("button", "Help Contents")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Insert into Query puts the selected item's insert text into the query's editor, at
+                // its cursor (the start)
+                .story("QueryHelpInsert", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Functions", HELP_ITEM)).toBeInTheDocument());
+                    play.click(play.getByText("Functions", HELP_ITEM));
+                    play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
+                    play.click(play.getByText("count", HELP_ITEM));
+                    final Query insert = play.getByRole("button", "Insert into Query");
+                    play.waitFor(() -> play.expect(insert).not().toHaveAttribute("aria-disabled"));
+                    play.click(insert);
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_content").textContent())
+                            .toMatch("countfrom index"));
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query help pages each level: a full page (100 rows) offers the next page
                 .story("QueryHelpPaging", context -> render(context, PAGING_FIXTURES))
                 .withPlay(play -> {
