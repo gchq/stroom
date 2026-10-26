@@ -827,12 +827,18 @@ if (!window.visualisations) {
         return {categories: categories, series: seriesData};
     }
 
+    // Text cut short with an ellipsis when wider than this, as the D3 adapter shortens it: a long name would
+    // otherwise take a legend's, an axis's or a chart's room.
+    function shortened(width) {
+        return {width: width, overflow: "truncate", ellipsis: "…"};
+    }
+
     function legendOption(settings, show, style) {
         var position = textSetting(settings, "legend") || "top";
         if (!show || position === "none") {
             return {show: false};
         }
-        var legend = {show: true, type: "scroll", textStyle: {color: style.text}};
+        var legend = {show: true, type: "scroll", textStyle: merge({color: style.text}, shortened(160))};
         if (position === "bottom") {
             legend.bottom = 0;
         } else if (position === "right") {
@@ -868,7 +874,7 @@ if (!window.visualisations) {
         return {
             axisLine: {lineStyle: {color: style.border}},
             axisTick: {lineStyle: {color: style.border}},
-            axisLabel: {color: style.subtleText, hideOverlap: true},
+            axisLabel: merge({color: style.subtleText, hideOverlap: true}, shortened(120)),
             splitLine: {lineStyle: {color: style.border, opacity: 0.6}},
             nameTextStyle: {color: style.subtleText}
         };
@@ -1201,7 +1207,7 @@ if (!window.visualisations) {
                 sort: null,
                 emphasis: {focus: "ancestor"},
                 itemStyle: {borderColor: style.dark ? "#1b1e24" : "#ffffff", borderWidth: 1},
-                label: {show: showLabels, color: style.text, rotate: "radial", minAngle: 8},
+                label: merge({show: showLabels, color: style.text, rotate: "radial", minAngle: 8}, shortened(70)),
                 data: data(root, null),
                 flatData: [null].concat(nodes)
             }]
@@ -1270,7 +1276,7 @@ if (!window.visualisations) {
                 radius: doughnut ? ["40%", "70%"] : "70%",
                 center: ["50%", "52%"],
                 data: data,
-                label: {show: showLabels, color: style.text},
+                label: merge({show: showLabels, color: style.text}, shortened(130)),
                 itemStyle: {borderColor: style.dark ? "#1b1e24" : "#fff", borderWidth: 1}
             }]
         };
@@ -1315,6 +1321,16 @@ if (!window.visualisations) {
     }
 
     // A dial per row (or per name, when a name column is mapped: a name's values are added up), laid out in a grid.
+    // A gauge's scale's labels: large numbers made short (e.g. 3T), which round a small dial otherwise overlap,
+    // unless the Units setting says how they read.
+    function gaugeScaleLabel(format, min, max) {
+        return function (value) {
+            return Math.max(Math.abs(min), Math.abs(max)) >= 10000 && format === formatNumber
+                ? compact(value, ["", "k", "M", "B", "T"], 1000)
+                : format(value);
+        };
+    }
+
     function gaugeModel(rows, fields, settings, prefs, style, report) {
         requireFields(fields, ["value"]);
         var named = fields.has("name");
@@ -1390,9 +1406,10 @@ if (!window.visualisations) {
                     axisLine: {lineStyle: {width: 10, color: bands}},
                     axisTick: {lineStyle: {color: style.subtleText}},
                     splitLine: {lineStyle: {color: style.subtleText}},
-                    axisLabel: {color: style.subtleText, distance: 14, formatter: format},
+                    axisLabel: {color: style.subtleText, distance: 14,
+                        formatter: gaugeScaleLabel(prefs.formatValue, min, max)},
                     pointer: {itemStyle: {color: style.text}},
-                    title: {show: true, color: style.text, offsetCenter: [0, "70%"]},
+                    title: merge({show: true, color: style.text, offsetCenter: [0, "70%"]}, shortened(140)),
                     detail: {color: style.text, fontSize: 16, offsetCenter: [0, "40%"], formatter: format},
                     data: [{name: name, value: sums[name]}]
                 };
@@ -1749,7 +1766,7 @@ if (!window.visualisations) {
                 edgeSymbolSize: 6,
                 emphasis: {focus: "adjacency", lineStyle: {width: 4}},
                 lineStyle: {color: "source", opacity: 0.5, curveness: directed ? 0.1 : 0},
-                label: {color: style.text, position: "right"},
+                label: merge({color: style.text, position: "right"}, shortened(150)),
                 labelLayout: {hideOverlap: true},
                 data: nodeNames.map(function (name) {
                     var n = nodes[name];
@@ -1831,10 +1848,13 @@ if (!window.visualisations) {
         if (style.dark && name !== "heat") {
             colours[0] = "#26303b";
         }
+        // A single value (or all the same) at the top of the scale, so it shows.
+        var top = isFinite(max) ? max : (isFinite(min) ? min : 1);
+        var bottom = isFinite(min) && top > min ? min : top - 1;
         return {
             type: "continuous",
-            min: isFinite(min) ? min : 0,
-            max: isFinite(max) && max > min ? max : (isFinite(min) ? min + 1 : 1),
+            min: bottom,
+            max: top,
             orient: "horizontal",
             left: "center",
             bottom: 0,
@@ -2089,7 +2109,10 @@ if (!window.visualisations) {
         // Sturges' rule when not set.
         var bins = intSetting(settings, "bins", 0, 0, MAX_BINS) ||
             Math.min(50, Math.max(1, Math.ceil(Math.log(Math.max(1, values.length)) / Math.LN2 + 1)));
-        if (!(max > min)) {
+        // No values, no bars; one value (or all the same), one.
+        if (values.length === 0) {
+            bins = 0;
+        } else if (!(max > min)) {
             bins = 1;
         }
         var width = bins > 0 && max > min ? (max - min) / bins : 1;
@@ -2358,7 +2381,8 @@ if (!window.visualisations) {
                 nodeGap: 8,
                 emphasis: {focus: "adjacency"},
                 lineStyle: {color: "gradient", opacity: 0.35},
-                label: {show: showLabels, color: style.text, position: vertical ? "bottom" : "right"},
+                label: merge({show: showLabels, color: style.text, position: vertical ? "bottom" : "right"},
+                    shortened(150)),
                 data: network.nodeNames.map(function (name, i) {
                     return {name: name, itemStyle: {color: colours[i]}};
                 }),
@@ -2389,7 +2413,7 @@ if (!window.visualisations) {
                 left: 24,
                 right: STROOM_BUTTON_SPACE,
                 emphasis: {focus: "adjacency"},
-                label: {show: showLabels, color: style.text},
+                label: merge({show: showLabels, color: style.text}, shortened(150)),
                 lineStyle: {color: "source", opacity: 0.5},
                 data: network.nodeNames.map(function (name) {
                     return {name: name};
