@@ -64,6 +64,7 @@ import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -113,6 +114,11 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     private static final Set<String> LINK_ENDS = Set.of("source", "target");
     // A selection filter's id, as the dashboard file gives it.
     private static final Pattern SELECTION_FILTER_ID = Pattern.compile("\\[id ([^\\]\\s]+)]");
+    // A component's heading in the dashboard file, e.g. "## Table 'Events' (id table-1)".
+    private static final Pattern TABLE_HEADING = Pattern.compile("^## Table '(.*)' \\(id [^)]+\\)$");
+    // A column of a table in the dashboard file formatted as a date, e.g. "- Day: floorDay(${EventTime}) (grouped,
+    // level 1; format Date Time)".
+    private static final Pattern DATE_COLUMN = Pattern.compile("^- (.+?): .*[(;] ?format Date Time[;)].*$");
 
     private final TabSnapshots tabSnapshots;
     private final DocumentAccess documentAccess;
@@ -223,9 +229,12 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                 .required("field", "selection")
                                 .build())
                         .description("For add_selection_filter: each field and the selection it must equal. A "
-                                     + "term drops out while nothing is selected. Selection range (a time "
-                                     + "range dragged on a time-series chart) keeps a date field or column "
-                                     + "within the range.")
+                                     + "term drops out while nothing is selected. A date field or column "
+                                     + "given a date the chart selects (a time axis's x, a calendar's date, or "
+                                     + "any column the table formats as Date Time), or selection range, keeps "
+                                     + "it within the selected time: the range dragged along a time axis, or "
+                                     + "the time a clicked point stands for (e.g. its day, for floorDay() "
+                                     + "values).")
                         .build())
                 .addStringProperty("visualisation", "For add_vis: the UUID of the Visualisation document to show. "
                                                     + "For set_vis_settings: the UUID of one to switch to, if any.")
@@ -843,25 +852,27 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 continue;
             }
             final List<String> before = List.copyOf(problems);
-            checkSelectionFilter(prefix, change, target, chart, checked, searches, problems);
+            final Set<String> dateKeys = dateKeys(chart, dashboardText);
+            checkSelectionFilter(prefix, change, target, chart, dateKeys, checked, searches, problems);
             if (!problems.equals(before)) {
                 resolved.add(change);
                 continue;
             }
+            final Change ranged = withDatesAsRanges(change, dateKeys);
             // Stroom ANDs the terms of an operator that name the same component's selection, whatever the
             // operator, so for any of them to match, each is put in an operator of its own (seen in testing: a
             // filter on a sender or a recipient being the clicked node matched only messages to oneself).
-            final boolean any = "any".equals(change.filter());
+            final boolean any = "any".equals(ranged.filter());
             final ExpressionOperator.Builder filter = ExpressionOperator.builder().op(any
                     ? Op.OR
                     : Op.AND);
             // A clicked link's source and target terms stay together: both ends must match (the chart sends a link
             // that is the same either way round both ways, so it matches in either direction).
             final List<ExpressionTerm> linkTerms = new ArrayList<>();
-            final long termCount = change.settings().values().stream()
+            final long termCount = ranged.settings().values().stream()
                     .mapToLong(selections -> DashboardChanges.selectionsOf(selections).size())
                     .sum();
-            change.settings().forEach((field, selections) -> DashboardChanges.selectionsOf(selections)
+            ranged.settings().forEach((field, selections) -> DashboardChanges.selectionsOf(selections)
                     .forEach(key -> {
                         final List<ExpressionTerm> terms = selectionTerms(field, key, chart.id());
                         if (any && LINK_ENDS.contains(key)) {
@@ -875,9 +886,54 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             if (!linkTerms.isEmpty()) {
                 filter.addOperator(ExpressionOperator.builder().addTerms(linkTerms).build());
             }
-            resolved.add(change.toBuilder().targetId(target.id()).ref(chart.id()).query(filter.build()).build());
+            resolved.add(ranged.toBuilder().targetId(target.id()).ref(chart.id()).query(filter.build()).build());
         }
         return resolved;
+    }
+
+    // The filter with each term comparing a field with a date the chart selects (e.g. a time axis's x) made a
+    // range: equal to the date, it would match only the instant the clicked point starts at (seen in testing: a
+    // line chart of days filtered by its x matched nothing). The chart gives a clicked date's time as from and to
+    // (e.g. its day), as it does a range dragged along its time axis.
+    static Change withDatesAsRanges(final Change change, final Set<String> dateKeys) {
+        if (dateKeys.isEmpty()) {
+            return change;
+        }
+        final Map<String, String> settings = new LinkedHashMap<>();
+        change.settings().forEach((field, selections) -> settings.put(field, String.join(
+                DashboardChanges.SELECTIONS_SEPARATOR, DashboardChanges.selectionsOf(selections).stream()
+                        .map(key -> dateKeys.contains(key)
+                                ? RANGE_SELECTION
+                                : key)
+                        .distinct()
+                        .toList())));
+        return change.toBuilder().settings(settings).build();
+    }
+
+    // The keys of a chart's selection that are dates: each column it maps that a click picks out (e.g. a time
+    // axis's x) which its table formats as a date, by its id and by the column's name.
+    static Set<String> dateKeys(final Component chart, final String dashboardText) {
+        final Set<String> dateColumns = new HashSet<>();
+        boolean inTable = false;
+        for (final String line : NullSafe.string(dashboardText).split("\n")) {
+            if (line.startsWith("## ")) {
+                final Matcher heading = TABLE_HEADING.matcher(line);
+                inTable = heading.matches() && heading.group(1).equals(chart.table());
+            } else if (inTable) {
+                final Matcher column = DATE_COLUMN.matcher(line);
+                if (column.matches()) {
+                    dateColumns.add(column.group(1));
+                }
+            }
+        }
+        final Set<String> keys = new LinkedHashSet<>();
+        NullSafe.map(chart.settings()).forEach((key, column) -> {
+            if (SELECTED_ROLES.contains(key) && dateColumns.contains(column)) {
+                keys.add(key);
+                keys.add(column);
+            }
+        });
+        return keys;
     }
 
     // The terms comparing a field (or column) with what a chart's selection holds: equal to it, or, for a time range
@@ -953,6 +1009,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                       final Change change,
                                       final Component target,
                                       final Component chart,
+                                      final Set<String> dateKeys,
                                       final Checked checked,
                                       final List<AiTabSearch> searches,
                                       final List<String> problems) {
@@ -970,6 +1027,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             return;
         }
         final Set<String> keys = selectionKeys(chart);
+        if (!dateKeys.isEmpty()) {
+            keys.add(RANGE_SELECTION);
+        }
         change.settings().values().stream()
                 .flatMap(selections -> DashboardChanges.selectionsOf(selections).stream())
                 .filter(key -> !keys.isEmpty() && !keys.contains(key))
