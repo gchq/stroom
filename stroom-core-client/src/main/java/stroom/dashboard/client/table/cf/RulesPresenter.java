@@ -18,6 +18,7 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.component.RuleList;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -39,10 +40,10 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
         implements Focus {
 
-    private final RuleListPresenter listPresenter;
+    private final RuleList listPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<QueryField> fields;
@@ -73,14 +74,13 @@ public class RulesPresenter
     @Inject
     public RulesPresenter(final EventBus eventBus,
                           final RulesView view,
-                          final RuleListPresenter listPresenter,
+                          final RuleList listPresenter,
                           final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
-        own(listPresenter);
         this.listPresenter = listPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
 
-        getView().setTableView(listPresenter.getView());
+        getView().setTableView(listPresenter);
 
         listPresenter.getToolbar().setName("Conditional formatting rule actions");
         addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Formatting Rule", this::add);
@@ -103,7 +103,7 @@ public class RulesPresenter
                 this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-        listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+        listPresenter.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
 
@@ -434,6 +434,6 @@ public class RulesPresenter
 
     public interface RulesView extends View {
 
-        void setTableView(View view);
+        void setTableView(IsWidget view);
     }
 }

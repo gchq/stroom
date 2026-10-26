@@ -14,57 +14,59 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table.cf;
+package stroom.dashboard.client.component;
 
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class RuleListPresenter extends MyPresenterWidget<PagerPanel> {
+/// A table's conditional formatting rules, a row each (whether it is enabled, its expression, its
+/// style and whether it hides matching rows), faded where disabled; one can be selected. Ticking a
+/// rule's Enabled or Hide Row box changes the rule in the list given.
+public class RuleList extends Component {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<ConditionalFormattingRule> dataGrid;
+
+    private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
+    private List<ConditionalFormattingRule> currentData;
     private Runnable onChange = () -> {
     };
 
-    private final DataGrid<ConditionalFormattingRule> dataGrid;
-    private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
-    private List<ConditionalFormattingRule> currentData;
-
-    @Inject
-    public RuleListPresenter(final EventBus eventBus,
-                             final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public RuleList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ConditionalFormattingRule::getId);
-        dataGrid.setTableName("Conditional Formatting Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
+        addColumns();
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    private void addColumns() {
         addEnabledColumn();
 
         // Expression.
@@ -149,10 +151,11 @@ public class RuleListPresenter extends MyPresenterWidget<PagerPanel> {
             final int keyboardSelected = dataGrid.getKeyboardSelectedRow();
             refresh();
             dataGrid.setKeyboardSelectedRow(keyboardSelected);
-            setDirty(true);
+            onChange.run();
         }
     }
 
+    /// @param data The rules, changed in place when a rule's tick box is pressed.
     public void setData(final List<ConditionalFormattingRule> data) {
         this.currentData = data;
         refresh();
@@ -163,26 +166,26 @@ public class RuleListPresenter extends MyPresenterWidget<PagerPanel> {
         dataGrid.setRowCount(currentData.size());
     }
 
+    /// @return The selection, one rule at most.
     public MultiSelectionModel<ConditionalFormattingRule> getSelectionModel() {
         return selectionModel;
     }
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
+    /// @return The toolbar beside the pager, for the screen's own buttons.
     public Toolbar getToolbar() {
-        return getView().getToolbar();
+        return pager.getToolbar();
     }
 
-    /// @param onChange What to run when the user changes a rule in the list.
+    /// @param onChange What to run when the user ticks or unticks a rule's Enabled or Hide Row box.
     public void setOnChange(final Runnable onChange) {
         this.onChange = onChange;
     }
 
-    private void setDirty(final boolean dirty) {
-        if (dirty) {
-            onChange.run();
-        }
-    }
 
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, RuleList> {
+
+    }
 }
