@@ -17,6 +17,7 @@
 package stroom.cache.client.presenter;
 
 import stroom.cache.client.component.CacheListController;
+import stroom.cache.client.component.CacheNodeListController;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -31,31 +32,31 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
     public static final String TAB_TYPE = "Caches";
 
     private final CacheListController cacheList;
-    private final CacheNodeListPresenter cacheNodeListPresenter;
+    private final CacheNodeListController cacheNodeList;
 
     @Inject
     public CachePresenter(final EventBus eventBus,
                           final CacheView view,
                           final CacheListController cacheList,
-                          final CacheNodeListPresenter cacheNodeListPresenter) {
+                          final CacheNodeListController cacheNodeList) {
         super(eventBus, view);
         own(cacheList);
-        own(cacheNodeListPresenter);
+        own(cacheNodeList);
         this.cacheList = cacheList;
-        this.cacheNodeListPresenter = cacheNodeListPresenter;
+        this.cacheNodeList = cacheNodeList;
 
         getView().setCacheListView(cacheList);
-        getView().setCacheNodeListView(cacheNodeListPresenter.getView());
+        getView().setCacheNodeListView(cacheNodeList);
 
         own(
                 cacheList.getSelectionModel().addSelectionHandler(event -> {
                     final String cacheName = cacheList.getSelectionModel()
                             .getSelected()
                             .getCacheName();
-                    cacheNodeListPresenter.read(cacheName);
+                    cacheNodeList.read(cacheName);
                 }));
         // When a cache is cleared/evicted refresh the node list presenter
-        cacheList.setOnCacheCleared(cacheNodeListPresenter::read);
+        cacheList.setOnCacheCleared(cacheNodeList::read);
     }
 
     @Override
@@ -91,6 +92,6 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
         /// Shows the selected cache on each node.
         ///
         /// @param view Its view.
-        void setCacheNodeListView(View view);
+        void setCacheNodeListView(IsWidget view);
     }
 }

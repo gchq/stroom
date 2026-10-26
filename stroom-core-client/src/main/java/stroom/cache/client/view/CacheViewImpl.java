@@ -17,7 +17,6 @@
 package stroom.cache.client.view;
 
 import stroom.cache.client.presenter.CachePresenter.CacheView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,7 +50,7 @@ public class CacheViewImpl extends ViewImpl implements CacheView {
     }
 
     @Override
-    public void setCacheNodeListView(final View view) {
+    public void setCacheNodeListView(final IsWidget view) {
         cacheNodeList.setWidget(view.asWidget());
     }
 
