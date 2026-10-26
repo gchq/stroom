@@ -33,6 +33,8 @@ import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.vis.ChartLibrary;
+import stroom.ai.impl.vis.EChartsTemplate;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.TableExpression;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -75,6 +77,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /// `propose_dashboard_change` - offers the user a change to a table on the dashboard in their attached tab (group or
 /// ungroup, add, edit, hide or show a column, sort, or filter a column), shown as a plain-language list with an
@@ -678,6 +681,30 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         columns, NullSafe.nonBlankStringElse(visualisation.getName(), visualisation.getUuid()),
                         "table '" + table + "'")
                 .forEach(problem -> problems.add(prefix + problem));
+        NullSafe.consume(kindChangeProblem(settings, visualisation), problem -> problems.add(prefix + problem));
+    }
+
+    // A chart Stroom AI generated can't be made another kind by its pane's settings: its Visualisation's Data tab has
+    // the old kind's columns, so it would ask for columns it can't be given (seen in testing, a line chart made a
+    // bar chart asked for x and y). It is converted with propose_visualisation's replace instead.
+    static String kindChangeProblem(final Map<String, String> settings, final VisualisationDoc visualisation) {
+        if (ChartLibrary.forFunctionName(visualisation.getFunctionName()).isEmpty()) {
+            return null;
+        }
+        final Map<String, String> defaults = EChartsTemplate.defaults(visualisation.getSettings());
+        final List<String> changed = Stream.of(EChartsTemplate.KIND_CONTROL, EChartsTemplate.FIELDS_CONTROL)
+                .filter(id -> NullSafe.isNonBlankString(NullSafe.map(settings).get(id)))
+                .filter(id -> !NullSafe.map(settings).get(id).strip().equalsIgnoreCase(
+                        NullSafe.string(defaults.get(id)).strip()))
+                .toList();
+        if (changed.isEmpty()) {
+            return null;
+        }
+        return "a chart Stroom AI generated can't be made another kind by its settings (" + String.join(" and ",
+                changed) + "): its Visualisation has the " + NullSafe.nonBlankStringElse(defaults.get(
+                EChartsTemplate.KIND_CONTROL), "old") + " chart's columns. Convert it with propose_visualisation, "
+               + "replace (the pane's name), which rewrites the Visualisation for the new kind, clears the pane's "
+               + "settings and keeps the filters its clicks drive.";
     }
 
     // The columns of the table a Visualisation is linked to: as these changes leave them, for the proposal's table

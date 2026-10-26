@@ -17,12 +17,20 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.Automate;
+import stroom.dashboard.shared.ComponentSelectionHandler;
+import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -99,5 +107,55 @@ class TestComponentSettingChanges {
                 .isNull();
         assertThat(ComponentSettingChanges.text(TextComponentSettings.builder().build(), "pageSize", "1", null, null))
                 .isNull();
+    }
+
+    @Test
+    void aConvertedChartsFiltersFollowItWhereverTheyAre() {
+        // Seen in testing: a line chart converted to a bar chart left its filter on x, which a bar chart doesn't
+        // select, so it stopped filtering.
+        final ComponentSelectionHandler onX = handler("f1", "From", "${component.vis-1.selection.x}");
+        final ComponentSelectionHandler otherChart = handler("f2", "To", "${component.vis-2.selection.x}");
+        final Map<String, String> renamed = Map.of("x", "category");
+
+        final TableComponentSettings table = (TableComponentSettings) ComponentSettingChanges.withSelectionsRenamed(
+                TableComponentSettings.builder().selectionFilter(List.of(onX, otherChart)).build(), "vis-1",
+                renamed);
+        assertThat(table.getSelectionFilter()).extracting(ComponentSelectionHandler::getId)
+                .containsExactly("f1", "f2");
+        assertThat(table.getSelectionFilter().get(0).getExpression().toString())
+                .contains("${component.vis-1.selection.category}");
+        assertThat(table.getSelectionFilter().get(1)).isSameAs(otherChart);
+
+        final QueryComponentSettings query = (QueryComponentSettings) ComponentSettingChanges.withSelectionsRenamed(
+                QueryComponentSettings.builder().selectionQuery(List.of(onX)).build(), "vis-1", renamed);
+        assertThat(query.getSelectionQuery().getFirst().getExpression().toString())
+                .contains("selection.category}");
+
+        final EmbeddedQueryComponentSettings embedded = (EmbeddedQueryComponentSettings) ComponentSettingChanges
+                .withSelectionsRenamed(EmbeddedQueryComponentSettings.builder()
+                        .selectionQuery(List.of(otherChart))
+                        .selectionFilter(List.of(onX))
+                        .build(), "vis-1", renamed);
+        assertThat(embedded.getSelectionQuery()).containsExactly(otherChart);
+        assertThat(embedded.getSelectionFilter().getFirst().getExpression().toString())
+                .contains("selection.category}");
+
+        // Nothing to change.
+        assertThat(ComponentSettingChanges.withSelectionsRenamed(
+                TableComponentSettings.builder().selectionFilter(List.of(otherChart)).build(), "vis-1", renamed))
+                .isNull();
+        assertThat(ComponentSettingChanges.withSelectionsRenamed(TextComponentSettings.builder().build(), "vis-1",
+                renamed)).isNull();
+    }
+
+    private static ComponentSelectionHandler handler(final String id, final String field, final String value) {
+        return ComponentSelectionHandler.builder()
+                .id(id)
+                .enabled(true)
+                .expression(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field(field).condition(Condition.EQUALS).value(value)
+                                .build())
+                        .build())
+                .build();
     }
 }
