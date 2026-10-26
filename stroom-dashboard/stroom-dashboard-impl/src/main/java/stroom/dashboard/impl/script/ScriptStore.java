@@ -26,5 +26,12 @@ import java.util.Set;
 public interface ScriptStore extends DocumentStore<ScriptDoc> {
     List<ScriptDoc> fetchLinkedScripts(final DocRef script, final Set<DocRef> loadedScripts);
 
+    /// Reads a Script doc as Stroom serves it to a visualisation: with the content that comes with Stroom in place
+    /// of its own, for a Script whose content does (see [ScriptContentProvider]).
+    ///
+    /// @param docRef The Script doc.
+    /// @return The doc as served, or null if there is none.
+    ScriptDoc readServedDocument(DocRef docRef);
+
     List<DocRef> list();
 }

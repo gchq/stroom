@@ -105,11 +105,6 @@ class TestChartLibraries {
     }
 
     @Test
-    void normalisesLineEndingsAndOuterWhiteSpace() {
-        assertThat(ChartLibraries.normalise(" \r\nabc\r\ndef\n  \n")).isEqualTo("abc\ndef");
-    }
-
-    @Test
     void namesScriptsThatLookLikeEChartsButArentRecognised() {
         final DocRef older = script("ECharts", "1");
         final DocRef other = script("Library", "2");
@@ -159,57 +154,60 @@ class TestChartLibraries {
     }
 
     @Test
-    void createsTheAdapterBesideEChartsNamedForItsContent() {
+    void createsTheAdapterBesideECharts() {
         final DocRef echarts = script("ECharts", "1");
-        final String name = ChartLibraries.adapterName(ChartLibrary.ECHARTS, chartLibraries.adapterSource());
-        final DocRef created = script(name, "new");
+        final DocRef created = script(ChartLibraries.ADAPTER_NAME, "new");
         final ExplorerNode folderNode = folderOf(echarts, echarts);
-        Mockito.when(explorerService.create(eq(ScriptDoc.TYPE), eq(name), eq(folderNode),
+        Mockito.when(explorerService.create(eq(ScriptDoc.TYPE), eq(ChartLibraries.ADAPTER_NAME), eq(folderNode),
                 eq(PermissionInheritance.DESTINATION))).thenReturn(ExplorerNode.builder().docRef(created).build());
         Mockito.when(scriptStore.readDocument(created)).thenReturn(doc(created, null, null));
 
         assertThat(chartLibraries.ensureAdapter(new EChartsInstall(echarts, "6.1.0"))).isEqualTo(created);
 
-        assertThat(name).matches(ChartLibraries.ADAPTER_NAME + " [0-9a-f]{6}");
         final ArgumentCaptor<ScriptDoc> written = ArgumentCaptor.forClass(ScriptDoc.class);
         Mockito.verify(scriptStore).writeDocument(written.capture());
+        // What it holds is this release's adapter, as exported; what is served is each release's own.
         assertThat(written.getValue().getData()).isEqualTo(chartLibraries.adapterSource());
         assertThat(written.getValue().getDependencies()).containsExactly(echarts);
+        assertThat(written.getValue().getDescription()).contains("comes with Stroom");
         Mockito.verify(documentPermissionService).addDocumentPermissions(echarts, created);
     }
 
     @Test
-    void reusesTheAdapterWithThisContent() {
+    void reusesTheAdapterWhateverItHolds() {
+        // Stroom serves this release's adapter for it, so one from an earlier release (named for its content, as
+        // earlier releases named them) is used as it is.
         final DocRef echarts = script("ECharts", "1");
-        final DocRef adapter = script(ChartLibraries.ADAPTER_NAME, "a1");
-        folderOf(echarts, echarts, adapter);
-        Mockito.when(scriptStore.readDocument(adapter)).thenReturn(doc(adapter,
-                chartLibraries.adapterSource().replace("\n", "\r\n") + "\n\n", List.of(echarts)));
+        final DocRef earlier = script(ChartLibraries.ADAPTER_NAME + " 3fa2c1", "a1");
+        folderOf(echarts, echarts, earlier);
+        Mockito.when(scriptStore.readDocument(earlier)).thenReturn(doc(earlier,
+                "// " + ChartLibraries.ADAPTER_MARKER + " 0\nvar old;", List.of(echarts)));
 
-        assertThat(chartLibraries.ensureAdapter(new EChartsInstall(echarts, "6.1.0"))).isEqualTo(adapter);
+        assertThat(chartLibraries.ensureAdapter(new EChartsInstall(echarts, "6.1.0"))).isEqualTo(earlier);
         Mockito.verify(scriptStore, Mockito.never()).writeDocument(any());
         Mockito.verifyNoInteractions(explorerService);
         // Its permissions are kept in step with the library's.
-        Mockito.verify(documentPermissionService).addDocumentPermissions(echarts, adapter);
+        Mockito.verify(documentPermissionService).addDocumentPermissions(echarts, earlier);
     }
 
     @Test
-    void neverChangesAnAdapterButCreatesAnother() {
-        // Changing one would change the charts already drawn with it: one from an earlier (or later) version of
-        // Stroom, which a node of another version still uses; one edited by hand; one depending on more than the
-        // library.
+    void createsAnotherBesideScriptsThatArentStroomsAdapter() {
+        // A copy under another name is someone's own script; one depending on more than the library would load
+        // that too; one with no adapter banner isn't an adapter; D3's isn't ECharts'.
         final DocRef echarts = script("ECharts", "1");
-        final DocRef earlier = script(ChartLibraries.ADAPTER_NAME, "a1");
-        final DocRef edited = script(ChartLibraries.ADAPTER_NAME, "a2");
-        final DocRef planted = script(ChartLibraries.ADAPTER_NAME, "a3");
+        final DocRef copy = script("My ECharts Generic", "a1");
+        final DocRef planted = script(ChartLibraries.ADAPTER_NAME, "a2");
+        final DocRef other = script(ChartLibraries.ADAPTER_NAME, "a3");
+        final DocRef d3Adapter = script(ChartLibrary.D3.adapterName(), "a4");
         final DocRef created = script(ChartLibraries.ADAPTER_NAME, "new");
-        folderOf(echarts, echarts, earlier, edited, planted);
-        Mockito.when(scriptStore.readDocument(earlier)).thenReturn(doc(earlier,
-                "// " + ChartLibraries.ADAPTER_MARKER + " 0\n", List.of(echarts)));
-        Mockito.when(scriptStore.readDocument(edited)).thenReturn(doc(edited,
-                chartLibraries.adapterSource() + "\nfetch('/api/...')", List.of(echarts)));
+        folderOf(echarts, echarts, copy, planted, other, d3Adapter);
+        Mockito.when(scriptStore.readDocument(copy)).thenReturn(doc(copy, chartLibraries.adapterSource(),
+                List.of(echarts)));
         Mockito.when(scriptStore.readDocument(planted)).thenReturn(doc(planted, chartLibraries.adapterSource(),
                 List.of(script("Planted", "p"), echarts)));
+        Mockito.when(scriptStore.readDocument(other)).thenReturn(doc(other, "var mine;", List.of(echarts)));
+        Mockito.when(scriptStore.readDocument(d3Adapter)).thenReturn(doc(d3Adapter,
+                chartLibraries.adapterSource(ChartLibrary.D3), List.of(echarts)));
         Mockito.when(explorerService.create(eq(ScriptDoc.TYPE), any(), any(), any()))
                 .thenReturn(ExplorerNode.builder().docRef(created).build());
         Mockito.when(scriptStore.readDocument(created)).thenReturn(doc(created, null, null));
@@ -222,7 +220,7 @@ class TestChartLibraries {
     }
 
     @Test
-    void usesTheFirstByUuidOfTheSameAdapterCreatedTwice() {
+    void usesTheFirstByUuidOfAnAdapterCreatedTwice() {
         // Two nodes generating a chart at once can each create one.
         final DocRef echarts = script("ECharts", "1");
         final DocRef second = script(ChartLibraries.ADAPTER_NAME, "b2");
@@ -260,16 +258,27 @@ class TestChartLibraries {
     }
 
     @Test
-    void namesEachVersionOfAnAdapterForItsContent() {
-        final String source = chartLibraries.adapterSource();
-        assertThat(ChartLibraries.contentHash(source)).matches("[0-9a-f]{6}");
-        // As compared: line endings and outer white space don't count.
-        assertThat(ChartLibraries.contentHash(" \n" + source.replace("\n", "\r\n") + "\n"))
-                .isEqualTo(ChartLibraries.contentHash(source));
-        assertThat(ChartLibraries.contentHash(source + "\n// changed"))
-                .isNotEqualTo(ChartLibraries.contentHash(source));
-        assertThat(ChartLibraries.adapterName(ChartLibrary.D3, "x"))
-                .isEqualTo(ChartLibrary.D3.adapterName() + " " + ChartLibraries.contentHash("x"));
+    void servesThisReleasesAdapterForEachAdapterStroomPutInPlace() {
+        final AdapterScripts adapterScripts = new AdapterScripts(chartLibraries);
+        final String old = "// " + ChartLibraries.ADAPTER_MARKER + " 0\nvar old;";
+
+        assertThat(adapterScripts.content(scriptDoc(ChartLibraries.ADAPTER_NAME, old)))
+                .contains(chartLibraries.adapterSource());
+        // Named for its content by an earlier release.
+        assertThat(adapterScripts.content(scriptDoc(ChartLibraries.ADAPTER_NAME + " 3fa2c1", old)))
+                .contains(chartLibraries.adapterSource());
+        // Changed by hand: still Stroom's, so still served this release's.
+        assertThat(adapterScripts.content(scriptDoc(ChartLibraries.ADAPTER_NAME, old + "\nfetch('/x');")))
+                .contains(chartLibraries.adapterSource());
+        assertThat(adapterScripts.content(scriptDoc(ChartLibrary.D3.adapterName(),
+                "// " + ChartLibrary.D3.adapterMarker() + " 0\n"))).contains(
+                chartLibraries.adapterSource(ChartLibrary.D3));
+        // Someone's own copy, under another name, is served as it is.
+        assertThat(adapterScripts.content(scriptDoc("My charts", old))).isEmpty();
+        assertThat(adapterScripts.content(scriptDoc(ChartLibraries.ADAPTER_NAME + " (copy)", old))).isEmpty();
+        // Not an adapter, whatever its name.
+        assertThat(adapterScripts.content(scriptDoc(ChartLibraries.ADAPTER_NAME, "var lib;"))).isEmpty();
+        assertThat(adapterScripts.content(scriptDoc(null, old))).isEmpty();
     }
 
     @Test
@@ -362,7 +371,7 @@ class TestChartLibraries {
     @Test
     void createsTheD3AdapterBesideD3() {
         final DocRef d3 = script("D3", "3");
-        final String name = ChartLibraries.adapterName(ChartLibrary.D3, chartLibraries.adapterSource(ChartLibrary.D3));
+        final String name = ChartLibrary.D3.adapterName();
         final DocRef created = script(name, "new");
         // The ECharts adapter in the same folder isn't taken for D3's.
         final DocRef echartsAdapter = script(ChartLibraries.ADAPTER_NAME, "e");
@@ -394,6 +403,10 @@ class TestChartLibraries {
                 .toList());
         Mockito.when(scriptStore.readDocument(library)).thenReturn(doc(library, ECHARTS_6, List.of()));
         return folderNode;
+    }
+
+    private static ScriptDoc scriptDoc(final String name, final String data) {
+        return ScriptDoc.builder().uuid("s1").name(name).data(data).build();
     }
 
     private static DocRef script(final String name, final String uuid) {

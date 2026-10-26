@@ -18,6 +18,7 @@ package stroom.dashboard.impl.script;
 
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.script.shared.ScriptDoc;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 
@@ -32,6 +33,9 @@ public class ScriptModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 .bind(ScriptServlet.class);
+
+        // Content that comes with Stroom for some Script docs (e.g. Stroom AI's chart adapters); none by default.
+        GuiceUtil.buildMultiBinder(binder(), ScriptContentProvider.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ScriptResourceImpl.class);
