@@ -29,7 +29,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.component.NewProperty.ValueEditor;
-import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+import stroom.pipeline.structure.client.component.PropertyListController.Source;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;

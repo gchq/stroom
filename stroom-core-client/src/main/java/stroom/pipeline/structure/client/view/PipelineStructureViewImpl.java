@@ -76,7 +76,7 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     }
 
     @Override
-    public void setProperties(final View view) {
+    public void setProperties(final IsWidget view) {
         properties.setWidget(view.asWidget());
     }
 

@@ -17,7 +17,7 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+import stroom.pipeline.structure.client.component.PropertyListController.Source;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;

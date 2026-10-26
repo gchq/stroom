@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.presenter;
+package stroom.pipeline.structure.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.component.DocRefCell;
-import stroom.data.client.component.DocRefCell.Builder;
 import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
@@ -33,26 +31,16 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
-import stroom.pipeline.structure.client.component.NewPropertyController;
-import stroom.svg.shared.SvgImage;
-import stroom.util.client.DataGridUtil;
+import stroom.pipeline.structure.client.component.PropertyList.PropertyState;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -67,20 +55,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PropertyListPresenter
-        extends MyPresenterWidget<PagerPanel> {
+/// A pipeline element's properties ([PropertyList]) in a pipeline's model: its own, inherited or
+/// default values, each document's name fetched afresh. Edit opens the property's editor, unless the
+/// pipeline is read only ([Contexts#READ_ONLY]), and writes the change to the model, making an
+/// embedded document if asked.
+public class PropertyListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private static final String ADDED = "pipelineStructureViewImpl-property-added";
-    private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
-    private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
-    private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
-    private static final String EDIT_TITLE = "Edit Selected Property";
-
-    private final DataGrid<PipelineProperty> dataGrid;
-    private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
-    private final ButtonView editButton;
+    private final PropertyList view;
     private final Provider<NewPropertyController> newPropertyProvider;
     private final RestFactory restFactory;
     private final DocumentPluginRegistry documentPluginRegistry;
@@ -89,96 +72,38 @@ public class PropertyListPresenter
     private List<PipelineProperty> defaultProperties;
     private PipelineElement currentElement;
 
-    private boolean readOnly = true;
-
-    private final RefCellsController refCells;
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus               The application's event bus.
+    /// @param view                   The content.
+    /// @param newPropertyProvider    Makes a property's editor.
+    /// @param restFactory            Fetches the documents' names.
+    /// @param documentPluginRegistry Makes and saves embedded documents.
+    /// @param refCells               Lets the value cells open their documents.
     @Inject
-    public PropertyListPresenter(final EventBus eventBus,
-                                 final PagerPanel view,
-                                 final Provider<NewPropertyController> newPropertyProvider,
-                                 final RestFactory restFactory,
-                                 final DocumentPluginRegistry documentPluginRegistry,
-                                 final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
-
-        dataGrid = new DataGrid<>();
-        // Rows keyed by element and property name: an edit replaces the row
-        dataGrid.setKeyProvider(property -> property.getElement() + ":" + property.getName());
-        dataGrid.setTableName("Pipeline Properties");
-        dataGrid.setMultiLine(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
+    public PropertyListController(final EventBus eventBus,
+                                  final PropertyList view,
+                                  final Provider<NewPropertyController> newPropertyProvider,
+                                  final RestFactory restFactory,
+                                  final DocumentPluginRegistry documentPluginRegistry,
+                                  final RefCellsController refCells) {
+        super(eventBus);
+        this.view = view;
+        own(refCells);
         this.newPropertyProvider = newPropertyProvider;
         this.restFactory = restFactory;
         this.documentPluginRegistry = documentPluginRegistry;
+        initWidget(view);
 
-        view.getToolbar().setName("Property actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE,
-                () -> onEdit(selectionModel.getSelected(), readOnly));
-        editButton.setEnabled(false);
-
-        addColumns();
-        enableButtons();
-
-        own(selectionModel.addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(selectionModel.getSelected(), readOnly);
-            }
-        }));
-    }
-
-    private void addColumns() {
-        addNameColumn();
-        addValueColumn();
-        addDescriptionColumn();
-    }
-
-    private void addNameColumn() {
-        // Name.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                return getSafeHtmlWithState(property, property.getName(), false);
-            }
-        }, "Property Name", 300);
-    }
-
-    private void addValueColumn() {
-        // Value.
-        // Value could be a docRef, in which case it gets a hover link to open it) or a simple string
-        final DocRefCell.Builder<PipelineProperty> cellBuilder = new Builder<PipelineProperty>()
-                .showIcon(true)
-                .canOpenFunction(property -> property.getValue() != null &&
-                                             !property.getValue().isEmbedded())
-                .cssClassFunction(property1 -> getStateCssClass(property1, true))
-                .cellTextFunction(property -> {
-                    final PipelinePropertyValue propertyValue = NullSafe.get(
-                            property, PipelineProperty::getValue);
-                    if (propertyValue != null) {
-                        final DocRef entity = propertyValue.getEntity();
-                        if (entity != null) {
-                            return SafeHtmlUtils.fromString(entity.getDisplayValue(DisplayType.AUTO));
-                        } else {
-                            return getVal(propertyValue);
-                        }
-                    } else {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    }
-                })
-                .docRefFunction(pipelineProperty -> NullSafe.get(
-                        pipelineProperty,
-                        PipelineProperty::getValue,
-                        PipelinePropertyValue::getEntity));
-
-        final Column<PipelineProperty, PipelineProperty> valueCol = DataGridUtil.docRefColumnBuilder(
-                        refCells.configure(cellBuilder))
-                .build();
-
-        dataGrid.addAutoResizableColumn(valueCol, "Value", 30, 200);
+        view.addColumns(
+                this::getState,
+                property -> NullSafe.get(
+                        pipelineModel,
+                        pm -> pm.getPropertyType(currentElement, property),
+                        PipelinePropertyType::getDescription),
+                refCells.configure(new DocRefCell.Builder<>()));
+        view.setOnEdit(this::onEdit);
+        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
     private Source getSource(final PipelineProperty property) {
@@ -207,10 +132,6 @@ public class PropertyListPresenter
         return source;
     }
 
-    private SafeHtml getVal(final PipelinePropertyValue propertyValue) {
-        return SafeHtmlUtil.getSafeHtml(NullSafe.toString(propertyValue));
-    }
-
     private PipelineProperty getActualProperty(final List<PipelineProperty> properties,
                                                final PipelineProperty defaultProperty) {
         if (properties != null && !properties.isEmpty()) {
@@ -225,87 +146,32 @@ public class PropertyListPresenter
         return null;
     }
 
-    private void addDescriptionColumn() {
-        // Default Value.
-        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                return SafeHtmlUtil.getSafeHtml(NullSafe.get(
-                        pipelineModel,
-                        pm -> pm.getPropertyType(currentElement, property),
-                        PipelinePropertyType::getDescription));
-            }
-        }, "Description", 70, 200);
-    }
-
-    private SafeHtml getSafeHtmlWithState(final PipelineProperty property,
-                                          final String string,
-                                          final boolean showRemovedAsDefault) {
-        if (string == null) {
-            return SafeHtmlUtils.EMPTY_SAFE_HTML;
-        }
-
-        final String className;
+    // Where a property's value comes from
+    private PropertyState getState(final PipelineProperty property) {
         if (getActualProperty(pipelineModel.getPipelineData().getAddedProperties(), property) != null) {
-            className = ADDED;
+            return PropertyState.ADDED;
         } else if (getActualProperty(pipelineModel.getPipelineData().getRemovedProperties(), property) != null) {
-            if (showRemovedAsDefault) {
-                className = DEFAULT;
-            } else {
-                className = REMOVED;
-            }
+            return PropertyState.REMOVED;
+        } else if (getInheritedProperty(property) != null) {
+            return PropertyState.INHERITED;
         } else {
-            final PipelineProperty inheritedProperty = getInheritedProperty(property);
-            if (inheritedProperty != null) {
-                className = INHERITED;
-            } else {
-                className = DEFAULT;
-            }
+            return PropertyState.DEFAULT;
         }
-
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
-        builder.appendEscaped(string);
-        builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
-
-        return builder.toSafeHtml();
     }
 
-    private String getStateCssClass(final PipelineProperty property,
-                                    final boolean showRemovedAsDefault) {
-        final String className;
-        if (getActualProperty(pipelineModel.getPipelineData().getAddedProperties(), property) != null) {
-            className = ADDED;
-        } else if (getActualProperty(pipelineModel.getPipelineData().getRemovedProperties(), property) != null) {
-            if (showRemovedAsDefault) {
-                className = DEFAULT;
-            } else {
-                className = REMOVED;
-            }
-        } else {
-            final PipelineProperty inheritedProperty = getInheritedProperty(property);
-            if (inheritedProperty != null) {
-                className = INHERITED;
-            } else {
-                className = DEFAULT;
-            }
-        }
-        return className;
-    }
-
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
-    }
-
+    /// @param tableName The list's name, for assistive technology.
     public void setTableName(final String tableName) {
-        dataGrid.setTableName(tableName);
+        view.setTableName(tableName);
     }
 
+    /// @param pipelineModel The pipeline's model, whose properties are shown and changed.
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
     }
 
+    /// Shows an element's properties, with none selected.
+    ///
+    /// @param currentElement The element, or `null` for none.
     public void setCurrentElement(final PipelineElement currentElement) {
         this.currentElement = currentElement;
         final List<PipelineProperty> defaultProperties = new ArrayList<>();
@@ -324,7 +190,6 @@ public class PropertyListPresenter
         Collections.sort(defaultProperties);
         this.defaultProperties = defaultProperties;
 
-        enableButtons();
         refresh();
     }
 
@@ -332,8 +197,8 @@ public class PropertyListPresenter
         return new PipelineProperty(elementName, propertyType.getName(), getDefaultValue(propertyType));
     }
 
-    private void onEdit(final PipelineProperty property, final boolean readOnly) {
-        if (!readOnly && property != null) {
+    private void onEdit(final PipelineProperty property) {
+        if (!view.isReadOnly() && property != null) {
             // Get the current value for this property.
             PipelineProperty localProperty = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
                     property);
@@ -456,9 +321,10 @@ public class PropertyListPresenter
         documentPlugin.create(documentName, document -> {
             if (document instanceof final Embeddable embeddable) {
                 embeddable.setEmbeddedIn(parentDocRef);
-                documentPlugin.save(document.asDocRef(), document, callback, errorHandler, this);
+                documentPlugin.save(document.asDocRef(), document, callback, errorHandler,
+                        view.getTaskMonitor());
             }
-        }, errorHandler, this);
+        }, errorHandler, view.getTaskMonitor());
     }
 
     private void refresh() {
@@ -517,29 +383,13 @@ public class PropertyListPresenter
                             }
                             newList.add(builder.build());
                         }
-                        setData(newList);
+                        view.setData(newList);
                     })
-                    .taskMonitorFactory(getView())
+                    .owner(this)
+                    .taskMonitorFactory(view.getTaskMonitor())
                     .exec();
         } else {
-            setData(propertyList);
-        }
-    }
-
-    private void setData(final List<PipelineProperty> propertyList) {
-        selectionModel.clear();
-        dataGrid.setRowData(0, propertyList);
-        dataGrid.setRowCount(propertyList.size());
-    }
-
-    private void enableButtons() {
-        final PipelineProperty selected = selectionModel.getSelected();
-        editButton.setEnabled(!readOnly && selected != null);
-
-        if (readOnly) {
-            editButton.setTitle(EDIT_TITLE + " (read only)");
-        } else {
-            editButton.setTitle(EDIT_TITLE);
+            view.setData(propertyList);
         }
     }
 
@@ -569,6 +419,8 @@ public class PropertyListPresenter
         return new PipelinePropertyValue();
     }
 
+    /// @param property A property.
+    /// @return The value a parent pipeline gives it, or `null` if none does.
     public PipelineProperty getInheritedProperty(final PipelineProperty property) {
         if (property == null) {
             return null;
@@ -583,6 +435,8 @@ public class PropertyListPresenter
         return null;
     }
 
+    /// @param property A property.
+    /// @return The parent pipeline its inherited value comes from, or `null`.
     public DocRef getInheritedPropertySource(final PipelineProperty property) {
         if (property == null) {
             return null;
@@ -595,6 +449,7 @@ public class PropertyListPresenter
     // --------------------------------------------------------------------------------
 
 
+    /// Where an edited property's value is to come from.
     public enum Source implements HasDisplayValue {
         LOCAL("Local"),
         INHERIT("Inherit"),

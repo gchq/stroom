@@ -1010,7 +1010,7 @@ public final class DataGridStories {
     }
 
     /// The notes grid: Name fixed at 300, then Value and Description filling 30/70 with a minimum
-    /// of 200, as `PropertyListPresenter`'s.
+    /// of 200, as `PropertyList`'s.
     private static DataGrid<Note> noteGrid(final boolean multiLine) {
         final DataGrid<Note> grid = new DataGrid<>();
         grid.setWidth("100%");

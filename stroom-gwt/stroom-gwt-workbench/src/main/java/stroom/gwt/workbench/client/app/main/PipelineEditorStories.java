@@ -838,7 +838,7 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(property.getByDisplayValue("EMBEDDED XSLT (xslt)"))
                             .toBeInTheDocument());
                     // OK creates the embedded XSLT with the XSLT DocumentPlugin
-                    // (PropertyListPresenter.createEmbeddedDocument), which this story doesn't register
+                    // (PropertyListController.createEmbeddedDocument), which this story doesn't register
                     // (see StoryDocumentPlugins), so the story stops before OK
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
