@@ -88,7 +88,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     void generateDocumentsReference(final ScanResult scanResult) {
 
         final List<DocInfo> docInfoList = scanResult
-                .getSubclasses(AbstractDoc.class)
+                .getAllSubclasses(AbstractDoc.class)
                 .parallelStream()
                 // Not visible in UI currently
                 .filter(Predicate.not(ClassInfo::isInterface))
@@ -148,7 +148,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     }
 
     private DocInfo mapClass(final ClassInfo classInfo) {
-        final Class<?> clazz = classInfo.loadClass();
+        final Class<?> clazz = loadClass(classInfo.getName());
 
         if (!classInfo.isInterface() && classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
             final DocumentType docType;
@@ -169,7 +169,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
                 String description = null;
                 if (classInfo.hasAnnotation(Description.class)) {
-                    final Class<?> docClazz = classInfo.loadClass();
+                    final Class<?> docClazz = loadClass(classInfo.getName());
                     final Description descriptionAnno = docClazz.getAnnotation(Description.class);
                     description = NullSafe.trim(descriptionAnno.value());
                 } else {
@@ -253,6 +253,15 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 docInfo.icon.getRelativePathStr(),
                 docInfo.type,
                 description);
+    }
+
+
+    private static Class<?> loadClass(final String className) {
+        try {
+            return Class.forName(className, false, GenerateDocumentReferenceDoc.class.getClassLoader());
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

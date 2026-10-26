@@ -50,6 +50,8 @@ public class FunctionFactory {
 
         // Scan the class path to find all the classes with @FunctionDef
         try (final ScanResult result = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .acceptPackages(Function.class.getPackageName())
                 .enableAnnotationInfo()
                 .enableClassInfo()
@@ -59,7 +61,13 @@ public class FunctionFactory {
             result.getClassesWithAnnotation(FunctionDef.class.getName())
                     .forEach(classInfo -> {
 
-                        final Class<?> clazz = classInfo.loadClass();
+                        final Class<?> clazz;
+                        try {
+                            clazz = Class.forName(
+                                    classInfo.getName(), false, FunctionFactory.class.getClassLoader());
+                        } catch (final ClassNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
                         if (Function.class.isAssignableFrom(clazz)) {
                             final Class<? extends Function> functionClazz = (Class<? extends Function>) clazz;
 
