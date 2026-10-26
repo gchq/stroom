@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.DuplicateManagementListController;
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateNotificationConfig;
@@ -27,6 +28,7 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -37,12 +39,12 @@ import java.util.stream.Collectors;
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<DuplicateManagementView, D> {
 
-    private final DuplicateManagementListPresenter duplicateManagementListPresenter;
+    private final DuplicateManagementListController duplicateManagementListPresenter;
 
     @Inject
     public AbstractDuplicateManagementPresenter(final EventBus eventBus,
                                                 final DuplicateManagementView view,
-                                                final DuplicateManagementListPresenter
+                                                final DuplicateManagementListController
                                                         duplicateManagementListPresenter) {
         super(eventBus, view);
         // Read only as its document is
@@ -50,7 +52,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
         own(duplicateManagementListPresenter);
         view.setUiHandlers(this);
         this.duplicateManagementListPresenter = duplicateManagementListPresenter;
-        view.setListView(duplicateManagementListPresenter.getView());
+        view.setListView(duplicateManagementListPresenter);
     }
 
     @Override
@@ -103,7 +105,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
 
         String getColumns();
 
-        void setListView(View view);
+        void setListView(IsWidget view);
     }
 
 }

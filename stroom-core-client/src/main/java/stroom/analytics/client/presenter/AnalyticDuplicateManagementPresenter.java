@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.DuplicateManagementListController;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 
@@ -28,7 +29,7 @@ public class AnalyticDuplicateManagementPresenter
     @Inject
     public AnalyticDuplicateManagementPresenter(final EventBus eventBus,
                                                 final DuplicateManagementView view,
-                                                final DuplicateManagementListPresenter
+                                                final DuplicateManagementListController
                                                         duplicateManagementListPresenter) {
         super(eventBus, view, duplicateManagementListPresenter);
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
@@ -26,58 +26,48 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.component.client.Controller;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DuplicateManagementListPresenter
-        extends MyPresenterWidget<PagerPanel> {
+/// A rule's duplicate check rows ([DuplicateManagementList]), a page at a time; those selected can
+/// be deleted, unless the rule is read only.
+public class DuplicateManagementListController extends Controller {
 
     private static final DuplicateCheckResource DUPLICATE_CHECK_RESOURCE =
             GWT.create(DuplicateCheckResource.class);
 
-    private final DataGrid<DuplicateCheckRow> dataGrid;
-    private final MultiSelectionModelImpl<DuplicateCheckRow> selectionModel;
+    private final DuplicateManagementList view;
     private final RestFactory restFactory;
-    private final ButtonView deleteButton;
     private final FindDuplicateCheckCriteria criteria;
     private final RestDataProvider<DuplicateCheckRow, ResultPage<DuplicateCheckRow>> dataProvider;
     private boolean initialised;
     private boolean readOnly = true;
-    private final List<Column<DuplicateCheckRow, ?>> columns = new ArrayList<>();
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The content.
+    /// @param restFactory Finds and deletes the rows.
     @Inject
-    public DuplicateManagementListPresenter(final EventBus eventBus,
-                                            final PagerPanel view,
-                                            final RestFactory restFactory) {
-        super(eventBus, view);
+    public DuplicateManagementListController(final EventBus eventBus,
+                                             final DuplicateManagementList view,
+                                             final RestFactory restFactory) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Duplicate Management");
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-        view.getToolbar().setName("Duplicate check actions");
-        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Duplicate Check Rows",
-                this::onDelete);
-        deleteButton.setEnabled(false);
+        initWidget(view);
+        view.setOnDelete(this::onDelete);
+        view.setOnSelectionChange(this::enableButtons);
 
         criteria = new FindDuplicateCheckCriteria();
         //noinspection Convert2Diamond // cos GWT
@@ -93,57 +83,27 @@ public class DuplicateManagementListPresenter
                             .create(DUPLICATE_CHECK_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(result -> {
-                                updateColumns(result.getColumnNames());
+                                view.setColumns(result.getColumnNames());
                                 dataConsumer.accept(result.getResultPage());
                             })
                             .onFailure(errorHandler)
-                            .taskMonitorFactory(getView())
+                            .owner(DuplicateManagementListController.this)
+                            .taskMonitorFactory(view.getTaskMonitor())
                             .exec();
                 }
             }
         };
-
-        own(selectionModel.addSelectionHandler(event -> {
-            enableButtons();
-        }));
-    }
-
-    private void updateColumns(final List<String> columnNames) {
-        if (columnNames.size() != columns.size()) {
-            columns.forEach(dataGrid::removeColumn);
-            columns.clear();
-
-            for (int i = 0; i < columnNames.size(); i++) {
-                final int pos = i;
-                final String columnName = columnNames.get(pos);
-                //noinspection Convert2Diamond // cos GWT
-                final Column<DuplicateCheckRow, String> column = new Column<DuplicateCheckRow, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final DuplicateCheckRow duplicateCheckRow) {
-                        if (duplicateCheckRow != null &&
-                            duplicateCheckRow.getValues() != null &&
-                            duplicateCheckRow.getValues().size() > pos) {
-                            return duplicateCheckRow.getValues().get(pos);
-                        }
-                        return null;
-                    }
-                };
-                dataGrid.addResizableColumn(column, columnName, 200);
-                columns.add(column);
-            }
-        }
     }
 
     private void enableButtons() {
         // Deleting rows changes what the rule will notify on, so isn't allowed if the document is read only
-        final boolean enabled = !readOnly && NullSafe.hasItems(selectionModel.getSelectedItems());
-        deleteButton.setEnabled(enabled);
+        view.setDeleteEnabled(!readOnly && NullSafe.hasItems(view.getSelectedItems()));
     }
 
     /// Shows the duplicate check rows for a rule.
     ///
     /// @param docRef   The rule to show the duplicate check rows for.
-    protected void read(final DocRef docRef) {
+    public void read(final DocRef docRef) {
         // Read only as its document is
         this.readOnly = context(Contexts.READ_ONLY);
         enableButtons();
@@ -151,10 +111,11 @@ public class DuplicateManagementListPresenter
         refresh();
     }
 
+    /// Fetches the rows again; the first time, starts the list.
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(dataGrid);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }
@@ -164,7 +125,7 @@ public class DuplicateManagementListPresenter
         if (readOnly) {
             return;
         }
-        final List<DuplicateCheckRow> selected = selectionModel.getSelectedItems();
+        final List<DuplicateCheckRow> selected = view.getSelectedItems();
         if (NullSafe.hasItems(selected)) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected row" +
                                     (selected.size() > 1
@@ -179,7 +140,8 @@ public class DuplicateManagementListPresenter
                                     .create(DUPLICATE_CHECK_RESOURCE)
                                     .method(res -> res.delete(request))
                                     .onSuccess(r -> refresh())
-                                    .taskMonitorFactory(getView())
+                                    .owner(this)
+                                    .taskMonitorFactory(view.getTaskMonitor())
                                     .exec();
                         }
                     });
