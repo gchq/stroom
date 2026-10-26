@@ -2522,27 +2522,59 @@ if (!window.visualisations) {
     var LAYOUT_STEP_MS = 16;
     var LAYOUT_FRICTION = 0.6;
     var LAYOUT_FRICTION_DECAY = 0.992;
-    // The friction a layout that has (all but) settled starts again with when the chart is resized: enough to finish
-    // the layout at the new size within a second or two, while moving its nodes by a pixel or so.
-    var RESIZED_FRICTION = 0.02;
+    // The friction a layout that has (all but) settled starts again with when the chart is resized, or drawn again
+    // with the same nodes: enough to finish the layout within a second or two, while moving its nodes by a pixel or
+    // so. A settled layout keeps it, as ECharts starts a layout again at most of the friction it has when a node is
+    // dragged: with the friction it was first laid out with, a drag set the whole network moving hard, until a resize
+    // gave it this (seen in testing).
+    var STILL_FRICTION = 0.02;
     // The most a layout moves when it starts again from where its nodes are: resumed, or the network drawn again.
     var GENTLE_FRICTION = 0.1;
 
+    // The friction a network's layout starts with, a quarter of ECharts' own (0.6), from nodes on a circle: it
+    // unfolds smoothly, as it moves after a resize, rather than throwing nodes from random places about as it first
+    // draws (seen in testing).
+    var CALM_FRICTION = 0.15;
+    // The longest a network's new layout runs before the chart first shows (see warmUp): a small network shows
+    // settled, a large one all but settled, and the page never waits longer than this.
+    var WARM_UP_MS = 100;
+
     // The force layout's physics by the Physics setting: settled (as it settles quickly), lively (kept moving longer,
-    // with less friction and gravity) or spread (nodes pushed further apart, on longer links).
+    // with less gravity) or spread (nodes pushed further apart, on longer links). Each starts from nodes on a
+    // circle, calmly. One of more than 500 nodes isn't seen moving, as each step of its layout is too slow
+    // to show.
     function physicsOf(settings, nodeCount) {
         var repulsion = nodeCount > 500 ? 40 : (nodeCount > 100 ? 80 : 160);
         var edgeLength = nodeCount > 100 ? [20, 80] : [40, 140];
         var physics = String(textSetting(settings, "physics") || "settled").toLowerCase();
+        var animated = nodeCount <= 500;
         if (physics === "lively") {
-            return {repulsion: repulsion * 1.5, edgeLength: edgeLength, gravity: 0.05, friction: 0.15,
-                layoutAnimation: nodeCount <= 500};
+            return {repulsion: repulsion * 1.5, edgeLength: edgeLength, gravity: 0.05, friction: CALM_FRICTION,
+                initLayout: "circular", layoutAnimation: animated};
         }
         if (physics === "spread") {
             return {repulsion: repulsion * 3, edgeLength: [edgeLength[0] * 2, edgeLength[1] * 2], gravity: 0.03,
-                layoutAnimation: nodeCount <= 500};
+                friction: CALM_FRICTION, initLayout: "circular", layoutAnimation: animated};
         }
-        return {repulsion: repulsion, edgeLength: edgeLength, gravity: 0.1, layoutAnimation: nodeCount <= 500};
+        return {repulsion: repulsion, edgeLength: edgeLength, gravity: 0.1, friction: CALM_FRICTION,
+            initLayout: "circular", layoutAnimation: animated};
+    }
+
+    // Runs a network's force layout (ECharts' own, kept on its series model) step by step for up to a time, as the
+    // chart is first drawn, before it shows: its nodes then start near their places, so the layout moves on calmly,
+    // as after a resize, rather than throwing them about. Returns how many steps it ran, and whether the layout
+    // finished.
+    function warmUp(seriesModel, ms) {
+        var layout = seriesModel ? seriesModel.forceLayout : null;
+        var until = Date.now() + ms;
+        var result = {steps: 0, finished: false};
+        while (layout && !result.finished && Date.now() < until) {
+            layout.step(function (stopped) {
+                result.finished = !!stopped;
+            });
+            result.steps++;
+        }
+        return result;
     }
 
     // A network graph's series laid out by force, or null.
@@ -2559,8 +2591,9 @@ if (!window.visualisations) {
     }
 
     // A network drawn again with the same settings (e.g. as the table refreshes) starts from where its nodes were
-    // (places, by name), and moves them gently, new nodes finding places among them; unless fewer than half of them
-    // were drawn before. Returns the friction its layout starts with, or null if it has no force layout.
+    // (places, by name): barely moving them if they are the same nodes, or gently, new nodes finding places among
+    // them; unless fewer than half of them were drawn before. Returns the friction its layout starts with, or null if
+    // it has no force layout.
     function placeNodes(option, places) {
         var series = forceSeries(option);
         if (!series) {
@@ -2580,8 +2613,11 @@ if (!window.visualisations) {
                 node.y = at[1];
             }
         });
-        friction = Math.min(friction, GENTLE_FRICTION);
-        series.force = merge(merge({}, series.force || {}), {friction: friction});
+        friction = Math.min(friction, placed === series.data.length
+                ? STILL_FRICTION
+                : GENTLE_FRICTION);
+        // From where they were, not from a circle.
+        series.force = merge(merge({}, series.force || {}), {friction: friction, initLayout: "none"});
         return friction;
     }
 
@@ -4179,6 +4215,8 @@ if (!window.visualisations) {
         // rather than from where its nodes are.
         var layoutClock = null;
         var freshLayout = true;
+        // Gives a network's layout STILL_FRICTION once it has settled (see calmLayout).
+        var calmTimer = null;
         // The chart's size when the force layout last ran: the middle its gravity draws the nodes to.
         var layoutBox = null;
         // Auto Interval groups the rows again as the zoom changes, once it has settled.
@@ -4344,10 +4382,36 @@ if (!window.visualisations) {
         }
 
         // Notes that the force layout started moving (if it is animated) with the friction given; null if it stopped.
+        // One started with more than STILL_FRICTION is given it once it has settled (see calmLayout).
         function startLayoutClock(friction) {
             var series = built ? graphSeries(built.option) : null;
-            layoutClock = friction !== null && series && series.layout === "force" && series.force
-                && series.force.layoutAnimation ? {started: Date.now(), friction: friction} : null;
+            var force = friction !== null && series && series.layout === "force" && series.force;
+            layoutClock = force && series.force.layoutAnimation ? {started: Date.now(), friction: friction} : null;
+            if (calmTimer) {
+                clearTimeout(calmTimer);
+                calmTimer = null;
+            }
+            if (force && friction > STILL_FRICTION) {
+                // As ECharts cuts the friction step by step, until it stops at 0.01; at once if laid out in one go.
+                var steps = layoutClock
+                    ? Math.ceil(Math.log(0.01 / friction) / Math.log(LAYOUT_FRICTION_DECAY))
+                    : 0;
+                calmTimer = setTimeout(calmLayout, steps * LAYOUT_STEP_MS);
+            }
+        }
+
+        // Gives a settled network's layout STILL_FRICTION, so dragging a node moves the network gently, as it does
+        // after a resize. ECharts starts the layout again from where its nodes are, barely moving them.
+        function calmLayout() {
+            calmTimer = null;
+            var index = graphIndex();
+            if (index < 0 || layoutPaused || built.option.series[index].layout !== "force") {
+                return;
+            }
+            var series = [];
+            series[index] = {force: {friction: STILL_FRICTION}};
+            chart.setOption({series: series});
+            startLayoutClock(STILL_FRICTION);
         }
 
         // The friction the force layout has now, as ECharts cuts it step by step: how far it still moves the nodes.
@@ -4368,12 +4432,34 @@ if (!window.visualisations) {
             if (index < 0 || layoutPaused || built.option.series[index].layout !== "force") {
                 return;
             }
-            var friction = Math.max(layoutFriction(), RESIZED_FRICTION);
+            var friction = Math.max(layoutFriction(), STILL_FRICTION);
             centreLayout(chartElement.clientWidth, chartElement.clientHeight);
             var series = [];
             series[index] = {force: {friction: friction}};
             chart.setOption({series: series});
             startLayoutClock(friction);
+        }
+
+        // Runs a network's new, animated layout for up to WARM_UP_MS before the chart first shows (see warmUp), then
+        // starts it again from where that left its nodes, at the friction it had come down to, which draws them
+        // there before the browser shows the chart. Returns the friction the layout carries on with.
+        function warmUpLayout(friction) {
+            var index = graphIndex();
+            var series = index >= 0 ? built.option.series[index] : null;
+            if (!series || !series.force || !series.force.layoutAnimation) {
+                return friction;
+            }
+            var result = warmUp(chart.getModel().getSeriesByIndex(index), WARM_UP_MS);
+            if (result.steps === 0) {
+                return friction;
+            }
+            var left = result.finished
+                ? STILL_FRICTION
+                : Math.max(STILL_FRICTION, friction * Math.pow(LAYOUT_FRICTION_DECAY, result.steps));
+            var again = [];
+            again[index] = {force: {friction: left}};
+            chart.setOption({series: again});
+            return left;
         }
 
         // Moves the force layout's nodes with the middle of the chart, from where it was when they were laid out to
@@ -4773,6 +4859,9 @@ if (!window.visualisations) {
                 var friction = placeNodes(built.option, places);
                 var instance = ensureChart(prefs.theme);
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
+                if (friction !== null && friction === startingFriction(built.option)) {
+                    friction = warmUpLayout(friction);
+                }
                 // Drawn afresh, every series shown and the layout moving, at the zoom it had, and the range tool on
                 // again if it was.
                 hiddenSeries = false;
@@ -4801,6 +4890,10 @@ if (!window.visualisations) {
             } catch (e) {
                 built = null;
                 layoutClock = null;
+                if (calmTimer) {
+                    clearTimeout(calmTimer);
+                    calmTimer = null;
+                }
                 if (chart) {
                     chart.clear();
                 }
@@ -4884,6 +4977,10 @@ if (!window.visualisations) {
         };
 
         this.teardown = function () {
+            if (calmTimer) {
+                clearTimeout(calmTimer);
+                calmTimer = null;
+            }
             if (chart) {
                 chart.dispose();
                 chart = null;
@@ -4908,6 +5005,7 @@ if (!window.visualisations) {
         reversed: reversed,
         Fields: Fields,
         placeNodes: placeNodes,
+        warmUp: warmUp,
         version: ADAPTER_VERSION
     };
 })();
