@@ -177,6 +177,11 @@
     justify-content: space-between;
 }
 
+/* One of a pair of buttons side by side in a dialog's content, e.g. Run Now's */
+.dialog__button-cell {
+    width: 45%;
+}
+
 .dialog__buttons--start {
     justify-content: flex-start;
 }

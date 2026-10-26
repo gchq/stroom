@@ -37,8 +37,6 @@ import stroom.dashboard.client.table.IncludeExcludeFilterViewImpl;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.cf.CustomRowStylePresenter;
-import stroom.dashboard.client.table.cf.CustomRowStyleViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;
 import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -78,9 +76,6 @@ public class TableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(RulePresenter.class,
                 RulePresenter.RuleView.class,
                 RuleViewImpl.class);
-        bindPresenterWidget(CustomRowStylePresenter.class,
-                CustomRowStylePresenter.CustomRowStyleView.class,
-                CustomRowStyleViewImpl.class);
         bindPresenterWidget(ColumnValuesFilterPresenter.class,
                 ColumnValuesFilterView.class,
                 ColumnValuesFilterViewImpl.class);

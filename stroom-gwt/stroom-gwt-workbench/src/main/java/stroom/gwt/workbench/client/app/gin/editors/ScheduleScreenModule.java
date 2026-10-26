@@ -18,14 +18,11 @@ package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
-import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter;
-import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
-import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -49,9 +46,6 @@ public class ScheduleScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(BatchExecutionScheduleEditPresenter.class,
                 BatchExecutionScheduleEditView.class,
                 BatchExecutionScheduleEditViewImpl.class);
-        bindPresenterWidget(ExecutionScheduleRunNowPresenter.class,
-                ExecutionScheduleRunNowView.class,
-                ExecutionScheduleRunNowViewImpl.class);
     }
 }
 

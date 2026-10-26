@@ -18,6 +18,7 @@ package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPreferencesView;
+import stroom.preferences.client.component.KeyShortcutRecorderController;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.DataGridUtil;
@@ -35,6 +36,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public final class KeyBindingPreferencesPresenter
 
     private static final String NONE = "None";
 
-    private final KeyShortcutRecorderPresenter keyShortcutRecorderPresenter;
+    private final Provider<KeyShortcutRecorderController> keyShortcutRecorderProvider;
     private final DataGrid<KeyBindingRow> dataGrid;
     private final MultiSelectionModelImpl<KeyBindingRow> selectionModel;
     private final ButtonView addButton;
@@ -71,10 +73,9 @@ public final class KeyBindingPreferencesPresenter
     public KeyBindingPreferencesPresenter(final EventBus eventBus,
                                           final KeyBindingPreferencesView view,
                                           final PagerPanel pagerView,
-                                          final KeyShortcutRecorderPresenter keyShortcutRecorderPresenter) {
+                                          final Provider<KeyShortcutRecorderController> keyShortcutRecorderProvider) {
         super(eventBus, view);
-        own(keyShortcutRecorderPresenter);
-        this.keyShortcutRecorderPresenter = keyShortcutRecorderPresenter;
+        this.keyShortcutRecorderProvider = keyShortcutRecorderProvider;
         view.setUiHandlers(this);
 
         dataGrid = new DataGrid<>();
@@ -188,7 +189,7 @@ public final class KeyBindingPreferencesPresenter
     }
 
     private void record(final Action action, final KeyShortcut existing) {
-        keyShortcutRecorderPresenter.show(
+        keyShortcutRecorderProvider.get().show(this,
                 action,
                 existing,
                 bindings,

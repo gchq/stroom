@@ -46,6 +46,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.client.component.PipelinePathBar;
 import stroom.pipeline.stepping.client.component.PipelinePathBarController;
+import stroom.pipeline.stepping.client.component.StepControlController;
 import stroom.pipeline.stepping.client.component.StepLocationLinkController;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
@@ -120,7 +121,7 @@ public class SteppingPresenter
     // above changes too often, while searching, to be announced)
     private final Element stepAnnouncement;
     private final StepLocationLinkController stepLocationLink;
-    private final StepControlPresenter stepControlPresenter;
+    private final StepControlController stepControl;
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
@@ -163,7 +164,7 @@ public class SteppingPresenter
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> elementPresenterProvider,
                              final StepLocationLinkController stepLocationLink,
-                             final StepControlPresenter stepControlPresenter,
+                             final StepControlController stepControl,
                              final SteppingFilterPresenter steppingFilterPresenter,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
@@ -172,7 +173,7 @@ public class SteppingPresenter
         super(eventBus, view);
         own(sourcePresenter);
         own(stepLocationLink);
-        own(stepControlPresenter);
+        own(stepControl);
         own(steppingFilterPresenter);
         this.restFactory = restFactory;
 
@@ -181,7 +182,7 @@ public class SteppingPresenter
         this.sourcePresenter = sourcePresenter;
         this.elementPresenterProvider = elementPresenterProvider;
         this.stepLocationLink = stepLocationLink;
-        this.stepControlPresenter = stepControlPresenter;
+        this.stepControl = stepControl;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.steppingMetaListPresenter = make(metaListPresenterProvider);
@@ -203,7 +204,7 @@ public class SteppingPresenter
         pipelinePathBar.setAllowNullSelection(false);
 
         // Nothing can be stepped until a stream has been chosen (see beginStepping).
-        stepControlPresenter.initButtons();
+        stepControl.initButtons();
         stepLocationLink.setEnabled(false);
 
         logPaneButtons = new Toolbar("Log pane");
@@ -229,7 +230,7 @@ public class SteppingPresenter
         stepToolbar.getElement().appendChild(stepAnnouncement);
         view.addWidgetRight(stepToolbar);
         view.addWidgetRight(stepLocationLink.asWidget());
-        view.addWidgetRight(stepControlPresenter.getView().asWidget());
+        view.addWidgetRight(stepControl.asWidget());
         view.addWidgetRight(buttonPanel);
 
         steppingMetaListPresenter.getToolbar().setName("Stream actions");
@@ -249,8 +250,8 @@ public class SteppingPresenter
             steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
         });
         // The step controls step from the current location
-        stepControlPresenter.setOnStep(stepType -> step(stepType, null));
-        stepControlPresenter.setOnFilter(this::showChangeFiltersDialog);
+        stepControl.setOnStep(stepType -> step(stepType, null));
+        stepControl.setOnFilter(this::showChangeFiltersDialog);
 
         own(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             if (runStepping) {
@@ -549,8 +550,8 @@ public class SteppingPresenter
 
                 // Allow step refresh to be called from the editor
                 presenter.setStepRequestHandler(stepType -> {
-                    if (stepControlPresenter.isEnabled(stepType)) {
-                        stepControlPresenter.step(stepType);
+                    if (stepControl.isEnabled(stepType)) {
+                        stepControl.step(stepType);
                     }
                 });
 
@@ -756,7 +757,7 @@ public class SteppingPresenter
         findMetaCriteria.setExpression(steppingMetaListPresenter.getCriteria().getExpression());
         requestBuilder.criteria(findMetaCriteria);
         // A step request needs the criteria, so a refresh or new location is only possible from now.
-        stepControlPresenter.setRefreshEnabled(true);
+        stepControl.setRefreshEnabled(true);
         stepLocationLink.setEnabled(true);
 
         requestBuilder.childStreamType(childStreamType);
@@ -1167,7 +1168,7 @@ public class SteppingPresenter
             final ResultPage<MetaRow> metaResultPage = steppingMetaListPresenter.getResultPage();
             final boolean isFirstStream = metaResultPage != null && metaResultPage.isFirst(selectedRow);
             final boolean isLastStream = metaResultPage != null && metaResultPage.isLast(selectedRow);
-            stepControlPresenter.setEnabledButtons(
+            stepControl.setEnabledButtons(
                     requestBuilder.build().getStepType(),
                     foundRecord,
                     currentResult.hasActiveFilter(),

@@ -24,8 +24,6 @@ import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
-import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
@@ -33,7 +31,6 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
-import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
 import stroom.pipeline.stepping.client.view.XPathFilterViewImpl;
@@ -84,9 +81,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bind(TextConverterPresenter.class);
         bind(XsltPresenter.class);
         bind(PipelinePresenter.class);
-        bindPresenterWidget(StepControlPresenter.class,
-                StepControlView.class,
-                StepControlViewImpl.class);
         bindPresenterWidget(PipelineStructurePresenter.class,
                 PipelineStructureView.class,
                 PipelineStructureViewImpl.class);

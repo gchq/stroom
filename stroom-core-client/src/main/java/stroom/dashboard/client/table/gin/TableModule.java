@@ -38,8 +38,6 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.cf.CustomRowStylePresenter;
-import stroom.dashboard.client.table.cf.CustomRowStyleViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;
 import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -72,10 +70,6 @@ public class TableModule extends AbstractPresenterModule {
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
-        bindPresenterWidget(
-                CustomRowStylePresenter.class,
-                CustomRowStylePresenter.CustomRowStyleView.class,
-                CustomRowStyleViewImpl.class);
         bindPresenterWidget(
                 ColumnValuesFilterPresenter.class,
                 ColumnValuesFilterView.class,

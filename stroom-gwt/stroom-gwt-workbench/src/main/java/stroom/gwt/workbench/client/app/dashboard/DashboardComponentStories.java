@@ -497,6 +497,40 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(settings.getByTitle("New Formatting Rule")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // A new rule's Set Custom Style: the example shows the colours typed, and a colour
+                // that isn't one leaves the example's own
+                .story("TableConditionalFormattingCustomStyle", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "The Table");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    play.click(settings.getByText("Conditional Formatting", StroomDom.LINK_TAB_LABEL));
+                    play.click(settings.findByTitle("New Formatting Rule"));
+                    final Play rule = DashboardPlays.dialog(screen, "Add New Rule");
+                    play.click(rule.within(rule.getByText("Formatting Type", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Custom", ".selection-popup *"));
+                    // The button, not its form group's help button
+                    play.click(rule.within(rule.findByText("Custom Style", "label").closest(".form-group"))
+                            .querySelector("button:not(.form-group__help)"));
+                    final Play style = DashboardPlays.dialog(screen, "Edit Custom Row Style");
+                    final Query swatch = style.querySelector(".cf-light-example .cf-colour-swatch");
+                    play.type(style.getByLabelText("Light Background Colour"), "#ff0000");
+                    play.type(style.getByLabelText("Light Text Colour"), "not a colour");
+                    // A text box tells of its change when it loses the focus
+                    play.tab();
+                    play.waitFor(() -> play.expect(swatch).toHaveStyle("backgroundColor", "rgb(255, 0, 0)"));
+                    // The light example's own text colour
+                    play.expect(swatch).toHaveStyle("color", "rgb(21, 21, 21)");
+                    play.click(style.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Custom Row Style",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A visualisation's settings show the controls its settings define
                 .story("VisDynamicControls", DashboardSupport.story(DashboardDocs.VIS_DYNAMIC_DASHBOARD,
                         routes -> DocumentEditors.decorated(routes.get("/visualisation/v1/vis-1",

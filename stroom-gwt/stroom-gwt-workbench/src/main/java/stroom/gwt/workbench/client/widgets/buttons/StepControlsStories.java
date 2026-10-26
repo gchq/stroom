@@ -21,11 +21,10 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
-import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
-import stroom.pipeline.stepping.client.view.StepControlViewImpl;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.stepping.client.component.StepControl;
+import stroom.pipeline.stepping.client.component.StepControlController;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -33,7 +32,7 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-/// Stories for Stroom's stepping controls, [StepControlPresenter] and [StepControlViewImpl],
+/// Stories for Stroom's stepping controls, [StepControlController] and [StepControl],
 /// using the real presenter and view. Each story sets the view's per-button enabled state
 /// (`StepControlView.setStepXxxEnabled`), and the `onStep`/`onFilter` spies report the presenter's
 /// steps and filter requests it reports to its callbacks.
@@ -55,65 +54,66 @@ public final class StepControlsStories {
                 // All navigation buttons enabled; the last click is reported below
                 .story("AllEnabled", context -> {
                     final InlineLabel last = StoryPanels.note("—", "#dce4e5", "12px");
-                    final StepControlPresenter presenter = stepControls(context, false, last::setText);
-                    enableAll(presenter.getView());
-                    final Widget column = StoryPanels.column(8, presenter.getWidget(), last);
+                    final StepControl view = new StepControl();
+                    stepControls(context, view, false, last::setText);
+                    enableAll(view);
+                    final Widget column = StoryPanels.column(8, view, last);
                     column.getElement().getStyle().setProperty("alignItems", "center");
                     return column;
                 })
                 // Initial state - every step button disabled until a stream is chosen (GWT initButtons)
                 .story("Initial", context -> {
-                    final StepControlPresenter presenter = stepControls(context, false, report -> {
-                    });
+                    final StepControlController controller = stepControls(context, new StepControl(), false,
+                            report -> {
+                            });
                     // Refresh is disabled too, as there is nothing to step until a stream is chosen
                     // (gwt-bugs #36)
-                    presenter.initButtons();
-                    return presenter.getWidget();
+                    controller.initButtons();
+                    return controller.asWidget();
                 })
                 // Busy - every button suppresses clicks while a step is in flight
                 .story("Busy", context -> {
-                    final StepControlPresenter presenter = stepControls(context, true, report -> {
+                    final StepControl view = new StepControl();
+                    stepControls(context, view, true, report -> {
                     });
                     // The step controls have no busy state. While a step is in flight Stroom's
                     // SteppingPresenter ignores step events (busyTranslating), but the buttons stay
                     // enabled, and the filter button still works.
-                    enableAll(presenter.getView());
-                    return presenter.getWidget();
+                    enableAll(view);
+                    return view;
                 });
     }
 
-    /// Creates the real presenter and view, reporting the steps to the `onStep`/`onFilter` spies.
+    /// Creates the real controller for the buttons, reporting the steps to the `onStep`/`onFilter` spies.
     ///
     /// @param busy   True to ignore steps (not the filter), as `SteppingPresenter` does while it is
     ///               busy translating.
     /// @param report Also told each step ("step: forward") and filter request ("filter").
-    private static StepControlPresenter stepControls(final StoryContext context,
-                                                     final boolean busy,
+    private static StepControlController stepControls(final StoryContext context,
+                                                      final StepControl view,
+                                                      final boolean busy,
                                                      final Consumer<String> report) {
-        final StepControlViewImpl view = new StepControlViewImpl(GWT.create(StepControlViewImpl.Binder.class));
-        final StepControlPresenter presenter = new StepControlPresenter(new SimpleEventBus(), view);
+        final StepControlController controller = new StepControlController(new SimpleEventBus(), view);
         final Spy onStep = context.fn(ON_STEP);
         final Spy onFilter = context.fn(ON_FILTER);
-        presenter.setOnStep(stepType -> {
+        controller.setOnStep(stepType -> {
             report.accept("step: " + stepType.name().toLowerCase(Locale.ROOT));
             if (!busy) {
                 onStep.call(stepType.name().toLowerCase(Locale.ROOT));
             }
         });
         // Not guarded: SteppingPresenter opens the filter dialog even while it is busy
-        presenter.setOnFilter(() -> {
+        controller.setOnFilter(() -> {
             report.accept("filter");
             onFilter.call();
         });
-        return presenter;
+        return controller;
     }
 
     /// Enables every step button.
-    private static void enableAll(final StepControlView view) {
-        view.setStepFirstEnabled(true);
-        view.setStepBackwardEnabled(true);
-        view.setStepForwardEnabled(true);
-        view.setStepLastEnabled(true);
-        view.setStepRefreshEnabled(true);
+    private static void enableAll(final StepControl view) {
+        for (final StepType stepType : StepType.values()) {
+            view.setStepEnabled(stepType, true);
+        }
     }
 }

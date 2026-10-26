@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.preferences.client;
+package stroom.preferences.client.component;
 
-import stroom.preferences.client.KeyShortcutRecorderPresenter.KeyShortcutRecorderView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.KeyShortcut;
 import stroom.widget.util.client.KeyStroke;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -37,28 +34,34 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-/// A dialog in which the user presses the keys of a new keyboard shortcut for an action, as in
-/// the keyboard shortcut editors of e.g. VS Code. It says, as the user presses keys, whether the
-/// shortcut can be used, and whether it is already used by another action (in which case
-/// choosing OK moves it from that action).
-public final class KeyShortcutRecorderPresenter
-        extends MyPresenterWidget<KeyShortcutRecorderView>
-        implements KeyShortcutRecorderUiHandlers {
+/// A dialog ([KeyShortcutRecorder]), made for one use, in which the user presses the keys of a new
+/// keyboard shortcut for an action, as in the keyboard shortcut editors of e.g. VS Code. It says, as
+/// the user presses keys, whether the shortcut can be used, and whether it is already used by
+/// another action (in which case choosing OK moves it from that action).
+public final class KeyShortcutRecorderController extends Controller {
+
+    private final KeyShortcutRecorder view;
 
     private Action action;
     private Map<Action, List<KeyShortcut>> bindings;
     private boolean characterKeyShortcutsEnabled;
     private KeyShortcut recorded;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     The content.
     @Inject
-    public KeyShortcutRecorderPresenter(final EventBus eventBus,
-                                        final KeyShortcutRecorderView view) {
-        super(eventBus, view);
-        view.setUiHandlers(this);
+    public KeyShortcutRecorderController(final EventBus eventBus, final KeyShortcutRecorder view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        view.setOnKeyStroke(this::onKeyStroke);
     }
 
-    /// Shows the dialog.
+    /// Shows the dialog, owned by `opener` until it is closed.
     ///
+    /// @param opener                       What shows it.
     /// @param action                       The action to record a shortcut for.
     /// @param existing                     The shortcut being changed, or null to add one.
     /// @param bindings                     The shortcuts of the configurable actions, to check
@@ -68,7 +71,8 @@ public final class KeyShortcutRecorderPresenter
     /// @param consumer                     Called if the user chooses OK, with the new shortcut
     ///                                     and the shortcuts of other actions that clash with it,
     ///                                     which should be removed from them.
-    public void show(final Action action,
+    public void show(final HasControllerNode opener,
+                     final Action action,
                      final KeyShortcut existing,
                      final Map<Action, List<KeyShortcut>> bindings,
                      final boolean characterKeyShortcutsEnabled,
@@ -77,22 +81,22 @@ public final class KeyShortcutRecorderPresenter
         this.bindings = bindings;
         this.characterKeyShortcutsEnabled = characterKeyShortcutsEnabled;
         this.recorded = existing;
-        getView().setActionName(action.getDisplayName());
+        view.setActionName(action.getDisplayName());
         update();
 
         final String caption = existing == null
                 ? "Add Keyboard Shortcut"
                 : "Change Keyboard Shortcut";
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizableX(450))
                 .caption(caption)
-                .onShow(e -> getView().focus())
+                .onShow(e -> view.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         if (recorded == null || KeyBinding.findFixedClash(recorded) != null) {
                             // The view says what is wrong, so let the user try again
-                            getView().focus();
+                            view.focus();
                         } else {
                             consumer.accept(recorded, KeyBinding.findClashes(bindings, action, recorded));
                             e.hide();
@@ -105,18 +109,17 @@ public final class KeyShortcutRecorderPresenter
                 .fire();
     }
 
-    @Override
-    public void onKeyStroke(final KeyStroke keyStroke) {
+    private void onKeyStroke(final KeyStroke keyStroke) {
         recorded = KeyShortcut.record(recorded, keyStroke);
         update();
     }
 
     private void update() {
-        getView().setShortcut(recorded == null
+        view.setShortcut(recorded == null
                 ? null
                 : recorded.toString());
-        getView().setError(getError());
-        getView().setMessage(getMessage());
+        view.setError(getError());
+        view.setMessage(getMessage());
     }
 
     private String getError() {
@@ -163,24 +166,4 @@ public final class KeyShortcutRecorderPresenter
         return sb.toString();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface KeyShortcutRecorderView
-            extends View, Focus, HasUiHandlers<KeyShortcutRecorderUiHandlers> {
-
-        /// @param actionName The name of the action the shortcut is for.
-        void setActionName(String actionName);
-
-        /// @param shortcut The text form of the shortcut recorded so far, or null if none.
-        void setShortcut(String shortcut);
-
-        /// @param error Why the shortcut can't be used, or null if it can.
-        void setError(String error);
-
-        /// @param message What the user can do next, and anything they should know about the
-        ///                shortcut, or null for nothing.
-        void setMessage(String message);
-    }
 }

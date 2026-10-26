@@ -174,7 +174,7 @@ public final class SteppingScreenStories {
                     play.waitFor(() -> play.expect(play.getAllByText("[1:1:1]").count()).toBeGreaterThan(0));
                     play.waitFor(() -> play.expect(play.getByTitle("Step Forward"))
                             .not().toHaveAttribute("aria-disabled"));
-                    // StepControlPresenter only knows a record is the first of the first stream of the
+                    // StepControlController only knows a record is the first of the first stream of the
                     // stepper's stream list, which a stepper begun on one stream (as here) hasn't
                     // loaded, so the initial REFRESH leaves Back enabled
                     play.waitFor(() -> play.expect(play.getByTitle("Step Backward"))

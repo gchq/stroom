@@ -14,100 +14,57 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping.client.presenter;
+package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class StepControlPresenter
-        extends MyPresenterWidget<StepControlPresenter.StepControlView>
-        implements StepControlUIHandlers {
+/// The stepping screen's step buttons ([StepControl]): which steps can be taken, given where
+/// stepping has got to.
+public class StepControlController extends Controller {
 
+    private final StepControl view;
     private StepLocation endLocation = null;
 
     private Consumer<StepType> onStep = stepType -> {
     };
-    private Runnable onFilter = () -> {
-    };
 
+    /// Made by GIN, with its buttons.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     The buttons.
     @Inject
-    public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
-        super(eventBus, view);
-        view.setUiHandlers(this);
+    public StepControlController(final EventBus eventBus, final StepControl view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        view.setOnStep(stepType -> onStep.accept(stepType));
     }
 
-    @Override
-    public void filter() {
-        onFilter.run();
-    }
-
-    @Override
-    public void stepFirst() {
-        onStep.accept(StepType.FIRST);
-    }
-
-    @Override
-    public void stepBackward() {
-        onStep.accept(StepType.BACKWARD);
-    }
-
-    @Override
-    public void stepForward() {
-        onStep.accept(StepType.FORWARD);
-    }
-
-    @Override
-    public void stepLast() {
-        onStep.accept(StepType.LAST);
-    }
-
-    @Override
-    public void stepRefresh() {
-        onStep.accept(StepType.REFRESH);
-    }
-
+    /// Takes a step as if its button were pressed, e.g. from a keyboard shortcut.
+    ///
+    /// @param stepType The step.
     public void step(final StepType stepType) {
-        //noinspection EnhancedSwitchMigration // cos GWT
-        switch (stepType) {
-            case FIRST:
-                stepFirst();
-                break;
-            case BACKWARD:
-                stepBackward();
-                break;
-            case FORWARD:
-                stepForward();
-                break;
-            case LAST:
-                stepLast();
-                break;
-            case REFRESH:
-                stepRefresh();
-                break;
-            default:
-                throw new RuntimeException("Unknown type " + stepType);
-        }
+        onStep.accept(stepType);
     }
 
+    /// @param stepType A step.
+    /// @return Whether it can be taken now.
     public boolean isEnabled(final StepType stepType) {
-        return getView().isEnabled(stepType);
+        return view.isStepEnabled(stepType);
     }
 
     /// Disables every step button, as there is nothing to step until a stream has been chosen.
     public void initButtons() {
-        getView().setStepFirstEnabled(false);
-        getView().setStepBackwardEnabled(false);
-        getView().setStepForwardEnabled(false);
-        getView().setStepLastEnabled(false);
-        getView().setStepRefreshEnabled(false);
+        for (final StepType stepType : StepType.values()) {
+            view.setStepEnabled(stepType, false);
+        }
     }
 
     /// Sets whether the refresh button is enabled. It is enabled once a stream has been chosen to
@@ -115,7 +72,7 @@ public class StepControlPresenter
     ///
     /// @param enabled True to enable the refresh button.
     public void setRefreshEnabled(final boolean enabled) {
-        getView().setStepRefreshEnabled(enabled);
+        view.setStepEnabled(StepType.REFRESH, enabled);
     }
 
     public void setEnabledButtons(final StepType stepType,
@@ -139,32 +96,17 @@ public class StepControlPresenter
         final boolean canStepFurtherForward = foundRecord && !isLastRecord;
 
         if (stepType == StepType.FIRST) {
-            getView().setStepFirstEnabled(false);
-            getView().setStepBackwardEnabled(false);
-            getView().setStepForwardEnabled(true);
-            getView().setStepLastEnabled(true);
+            setEnabled(false, false, true, true);
         } else if (stepType == StepType.BACKWARD) {
-            getView().setStepFirstEnabled(canStepFurtherBack);
-            getView().setStepBackwardEnabled(canStepFurtherBack);
-            getView().setStepForwardEnabled(true);
-            getView().setStepLastEnabled(true);
+            setEnabled(canStepFurtherBack, canStepFurtherBack, true, true);
         } else if (stepType == StepType.FORWARD) {
             markEndLocation(foundRecord, isFiltered, stepLocation);
-            getView().setStepFirstEnabled(true);
-            getView().setStepBackwardEnabled(true);
-            getView().setStepForwardEnabled(canStepFurtherForward);
-            getView().setStepLastEnabled(canStepFurtherForward);
+            setEnabled(true, true, canStepFurtherForward, canStepFurtherForward);
         } else if (stepType == StepType.LAST) {
             markEndLocation(foundRecord, isFiltered, stepLocation);
-            getView().setStepFirstEnabled(true);
-            getView().setStepBackwardEnabled(true);
-            getView().setStepForwardEnabled(false);
-            getView().setStepLastEnabled(false);
+            setEnabled(true, true, false, false);
         } else if (stepType == StepType.REFRESH) {
-            getView().setStepFirstEnabled(canStepFurtherBack);
-            getView().setStepBackwardEnabled(canStepFurtherBack);
-            getView().setStepForwardEnabled(canStepFurtherForward);
-            getView().setStepLastEnabled(canStepFurtherForward);
+            setEnabled(canStepFurtherBack, canStepFurtherBack, canStepFurtherForward, canStepFurtherForward);
         }
     }
 
@@ -184,25 +126,13 @@ public class StepControlPresenter
 
     /// @param onFilter What to run when the user asks to change the step filters.
     public void setOnFilter(final Runnable onFilter) {
-        this.onFilter = onFilter;
+        view.setOnFilter(onFilter);
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {
-
-        void setStepFirstEnabled(boolean enabled);
-
-        void setStepBackwardEnabled(boolean enabled);
-
-        void setStepForwardEnabled(boolean enabled);
-
-        void setStepLastEnabled(boolean enabled);
-
-        void setStepRefreshEnabled(boolean enabled);
-
-        boolean isEnabled(final StepType stepType);
+    private void setEnabled(final boolean first, final boolean backward, final boolean forward, final boolean last) {
+        view.setStepEnabled(StepType.FIRST, first);
+        view.setStepEnabled(StepType.BACKWARD, backward);
+        view.setStepEnabled(StepType.FORWARD, forward);
+        view.setStepEnabled(StepType.LAST, last);
     }
 }

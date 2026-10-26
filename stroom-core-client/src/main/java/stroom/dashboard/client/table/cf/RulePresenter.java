@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.dashboard.client.component.CustomRowStyleEditorController;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
@@ -40,7 +41,7 @@ public class RulePresenter
         implements RuleUiHandlers, Focus {
 
     private final ExpressionEditorController expressionEditor;
-    private final Provider<CustomRowStylePresenter> customRowStylePresenterProvider;
+    private final Provider<CustomRowStyleEditorController> customRowStyleProvider;
     private CustomConditionalFormattingStyle customConditionalFormattingStyle;
     private ConditionalFormattingRule originalRule;
 
@@ -48,11 +49,11 @@ public class RulePresenter
     public RulePresenter(final EventBus eventBus,
                          final RuleView view,
                          final ExpressionEditorController expressionEditor,
-                         final Provider<CustomRowStylePresenter> customRowStylePresenterProvider) {
+                         final Provider<CustomRowStyleEditorController> customRowStyleProvider) {
         super(eventBus, view);
         own(expressionEditor);
         this.expressionEditor = expressionEditor;
-        this.customRowStylePresenterProvider = customRowStylePresenterProvider;
+        this.customRowStyleProvider = customRowStyleProvider;
         // The rule's form frames the expression's editor itself
         expressionEditor.setFramed(false);
         view.setExpressionView(expressionEditor);
@@ -61,16 +62,13 @@ public class RulePresenter
 
     @Override
     public void onEditCustomStyle() {
-        final CustomRowStylePresenter customRowStylePresenter = makeDialog(customRowStylePresenterProvider);
-        final TextAttributes textAttributes = writeTextAttributes();
-        customRowStylePresenter.read(customConditionalFormattingStyle, textAttributes);
-        customRowStylePresenter.show(e -> {
-            if (e.isOk()) {
-                customConditionalFormattingStyle = customRowStylePresenter.write();
-                getView().setCustomConditionalFormattingStyle(customConditionalFormattingStyle);
-            }
-            e.hide();
-        });
+        customRowStyleProvider.get().edit(this,
+                customConditionalFormattingStyle,
+                writeTextAttributes(),
+                style -> {
+                    customConditionalFormattingStyle = style;
+                    getView().setCustomConditionalFormattingStyle(customConditionalFormattingStyle);
+                });
     }
 
     void read(final ConditionalFormattingRule rule,

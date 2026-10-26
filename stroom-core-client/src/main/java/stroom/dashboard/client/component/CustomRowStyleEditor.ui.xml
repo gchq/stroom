@@ -36,7 +36,9 @@
                         identity="cfLightExample"
                         label="Light Example"
                         helpText="Preview of how matching rows will look in the light theme.">
-            <g:SimplePanel ui:field="lightExample" addStyleNames="cf-light-example" width="200px"/>
+            <g:HTMLPanel styleName="cf-light-example">
+                <div ui:field="lightSwatch" class="cf-colour-swatch cf-colour-swatch--custom">Custom</div>
+            </g:HTMLPanel>
         </form:FormGroup>
 
 
@@ -72,7 +74,9 @@
                         identity="cfDarkExample"
                         label="Dark Example"
                         helpText="Preview of how matching rows will look in the dark theme.">
-            <g:SimplePanel ui:field="darkExample" addStyleNames="cf-dark-example" width="200px"/>
+            <g:HTMLPanel styleName="cf-dark-example">
+                <div ui:field="darkSwatch" class="cf-colour-swatch cf-colour-swatch--custom">Custom</div>
+            </g:HTMLPanel>
         </form:FormGroup>
 
     </g:FlowPanel>

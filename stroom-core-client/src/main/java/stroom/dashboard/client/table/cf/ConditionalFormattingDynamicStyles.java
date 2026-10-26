@@ -39,17 +39,24 @@ public class ConditionalFormattingDynamicStyles {
 
         return styles.computeIfAbsent(formattingStyle, k -> {
             final String dynamicName = "cfDynamic" + (styles.size() + 1);
-            DynamicStyles.put(
-                    SafeHtmlUtils.fromTrustedString(".stroom-theme-light ." + dynamicName),
-                    makeStyleDeclarations(k.getLight()));
-            DynamicStyles.put(
-                    SafeHtmlUtils.fromTrustedString(".stroom-theme-dark ." + dynamicName),
-                    makeStyleDeclarations(k.getDark()));
+            // Only a theme with colours gets a style
+            final SafeStyles light = makeStyleDeclarations(k.getLight());
+            if (light != null) {
+                DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".stroom-theme-light ." + dynamicName), light);
+            }
+            final SafeStyles dark = makeStyleDeclarations(k.getDark());
+            if (dark != null) {
+                DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".stroom-theme-dark ." + dynamicName), dark);
+            }
             return dynamicName;
         });
     }
 
     private static SafeStyles makeStyleDeclarations(final CustomRowStyle customRowStyle) {
+        // A theme the rule gives no colours for, e.g. only the light theme's are set
+        if (customRowStyle == null) {
+            return null;
+        }
         // Custom row styles.
         final String backgroundColour = cleanValue(customRowStyle.getBackgroundColour());
         final String textColour = cleanValue(customRowStyle.getTextColour());

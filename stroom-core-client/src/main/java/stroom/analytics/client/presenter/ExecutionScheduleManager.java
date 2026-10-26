@@ -18,6 +18,8 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.analytics.client.component.ExecutionScheduleRunNow.RunNowAction;
+import stroom.analytics.client.component.ExecutionScheduleRunNowController;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleFields;
@@ -95,7 +97,7 @@ public class ExecutionScheduleManager
     private final ExecutionScheduleRequest request;
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
     private final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter;
-    private final ExecutionScheduleRunNowPresenter executionScheduleRunNowPresenter;
+    private final Provider<ExecutionScheduleRunNowController> runNowProvider;
     private final Provider<ExpressionPresenter> expressionPresenterProvider;
     private final ExpressionValidator expressionValidator;
 
@@ -117,7 +119,7 @@ public class ExecutionScheduleManager
                                     final RestFactory restFactory,
                                     final ScheduledProcessEditPresenter scheduledProcessEditPresenter,
                                     final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter,
-                                    final ExecutionScheduleRunNowPresenter executionScheduleRunNowPresenter,
+                                    final Provider<ExecutionScheduleRunNowController> runNowProvider,
                                     final Provider<ExpressionPresenter> expressionPresenterProvider,
                                     final ExpressionValidator expressionValidator,
                                     final RefCellsController refCells) {
@@ -125,12 +127,11 @@ public class ExecutionScheduleManager
         this.refCells = own(refCells);
         own(scheduledProcessEditPresenter);
         own(batchExecutionScheduleEditPresenter);
-        own(executionScheduleRunNowPresenter);
         this.restFactory = restFactory;
 
         this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
         this.batchExecutionScheduleEditPresenter = batchExecutionScheduleEditPresenter;
-        this.executionScheduleRunNowPresenter = executionScheduleRunNowPresenter;
+        this.runNowProvider = runNowProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.expressionValidator = expressionValidator;
 
@@ -194,14 +195,6 @@ public class ExecutionScheduleManager
                     });
                 }
         );
-
-        executionScheduleRunNowPresenter.getView().getApplySelectionButton().addClickHandler(
-                clickEvent -> onRunNow(false)
-        );
-
-        executionScheduleRunNowPresenter.getView().getApplyFilteredButton().addClickHandler(
-                clickEvent -> onRunNow(true)
-        );
     }
 
 
@@ -221,7 +214,8 @@ public class ExecutionScheduleManager
         clearFilterButton.setEnabled(false);
 
         runJobNowButton = this.getView().getToolbar().button(SvgImage.STEP_FORWARD, "Run Schedules Now",
-                () -> executionScheduleRunNowPresenter.show());
+                () -> runNowProvider.get().show(this, action ->
+                        onRunNow(action == RunNowAction.APPLY_TO_FILTERED)));
 
         deleteButton = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Schedules",
                 this::onDelete);
