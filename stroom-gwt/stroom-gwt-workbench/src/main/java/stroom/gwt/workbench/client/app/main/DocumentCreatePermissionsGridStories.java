@@ -29,12 +29,10 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter;
+import stroom.security.client.component.DocumentCreatePermissionsListController;
 import stroom.security.shared.DocumentUserPermissionsReport;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -46,14 +44,14 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// Stories of `App/Main/DocumentCreatePermissionsGrid`, showing Stroom's real
-/// [DocumentCreatePermissionsListPresenter] (the grid of document types a user may create in a
+/// [DocumentCreatePermissionsListController] (the grid of document types a user may create in a
 /// folder, in the 'Set Document Create Permissions' dialog) with fake REST replies.
 ///
 /// The user's create permissions report is given to the grid with `setup(report)`, as
 /// `DocumentUserCreatePermissionsEditPresenter` gives it, and the document types come from
-/// `GET /explorer/v2/fetchDocumentTypes` (three types here). The grid has no change callback
-/// (Stroom reads `getExplicitCreatePermissions()` when the dialog's OK is pressed), so the story
-/// reports the working set to the `onChange` spy after each click.
+/// `GET /explorer/v2/fetchDocumentTypes` (three types here). Stroom reads
+/// `getExplicitCreatePermissions()` when the dialog's OK is pressed; the story reports the working
+/// set to the `onChange` spy after each change.
 public final class DocumentCreatePermissionsGridStories {
 
     /// The name of the spy recording the working set (sorted) after each change.
@@ -133,19 +131,14 @@ public final class DocumentCreatePermissionsGridStories {
                 .build();
         harness.fn(ON_CHANGE);
         harness.afterStartUp(() -> {
-            final DocumentCreatePermissionsListPresenter presenter =
-                    harness.show(injector.getDocumentCreatePermissionsListPresenter());
+            final DocumentCreatePermissionsListController list =
+                    harness.show(injector.getDocumentCreatePermissionsListController());
             // The report: the explicit types, and Feed inherited from /System
             final Set<String> explicitTypes = new HashSet<>(List.of(explicit));
-            presenter.setup(new DocumentUserPermissionsReport(null, explicitTypes, Collections.emptyMap(),
+            list.setup(new DocumentUserPermissionsReport(null, explicitTypes, Collections.emptyMap(),
                     Map.of("Feed", List.of("/System"))));
-            // No change callback; the working set is reported once the grid has handled a press.
-            // A tick box acts on mousedown and redraws itself, so the element pressed is gone
-            // before the click, which then never reaches here
-            harness.addRegistration(presenter.getWidget().addDomHandler(event ->
-                            Scheduler.get().scheduleDeferred(() -> harness.spy(ON_CHANGE,
-                                    String.join(",", new TreeSet<>(presenter.getExplicitCreatePermissions())))),
-                    MouseDownEvent.getType()));
+            list.setOnChange(() -> harness.spy(ON_CHANGE,
+                    String.join(",", new TreeSet<>(list.getExplicitCreatePermissions()))));
         });
         return harness.asWidget();
     }

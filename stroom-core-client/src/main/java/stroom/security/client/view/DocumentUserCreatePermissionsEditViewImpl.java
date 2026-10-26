@@ -19,19 +19,16 @@ package stroom.security.client.view;
 import stroom.docref.DocRef;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditUiHandler;
-import stroom.security.client.presenter.DocumentUserPermissionsEditUiHandler;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
-import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -85,7 +82,7 @@ public final class DocumentUserCreatePermissionsEditViewImpl
     }
 
     @Override
-    public void setDocumentTypeView(final View view) {
+    public void setDocumentTypeView(final IsWidget view) {
         createPermissions.setWidget(view.asWidget());
     }
 

@@ -2,15 +2,18 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
-    <!-- The details below the rest (addStyleNames, as styleName would replace the
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <!-- The document types a user or group may create in a folder, and how they hold the
+         selected one, below. The details below the rest (addStyleNames, as styleName would replace the
          split pane's own class) -->
     <split:SplitPane vertical="true" sizes="*, 200px" names="Create permissions, Details"
                      addStyleNames="max default-min-sizes">
         <g:FlowPanel styleName="max dock-container-vertical">
             <form:FormGroup label="Document Create Permissions" addStyleNames="dock-max"
                             helpText="The document types that can be created in this folder. Tick a type to let the user or group create it here; tick the box in the column header to grant 'Create All'.">
-                <g:SimplePanel ui:field="dataGrid" styleName="max form-control-border form-control-background"/>
+                <dg:DataGrid ui:field="dataGrid" tableName="Document Create Permissions"
+                             addStyleNames="max form-control-border form-control-background"/>
             </form:FormGroup>
         </g:FlowPanel>
         <form:FormGroup label="Document Create Permission Details" addStyleNames="max"

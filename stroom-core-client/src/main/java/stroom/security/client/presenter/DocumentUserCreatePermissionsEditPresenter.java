@@ -25,6 +25,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.security.client.component.DocumentCreatePermissionsListController;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.AbstractDocumentPermissionsChange.AddAllDocumentUserCreatePermissions;
@@ -46,6 +47,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -57,24 +59,24 @@ public class DocumentUserCreatePermissionsEditPresenter
         extends MyPresenterWidget<DocumentUserCreatePermissionsEditView>
         implements DocumentUserCreatePermissionsEditUiHandler {
 
-    private final Provider<DocumentCreatePermissionsListPresenter>
-            documentCreatePermissionsListPresenterProvider;
+    private final Provider<DocumentCreatePermissionsListController>
+            documentCreatePermissionsListProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
 
     private UserRef relatedUser;
     private DocRef relatedDoc;
-    private DocumentCreatePermissionsListPresenter documentCreatePermissionsListPresenter;
+    private DocumentCreatePermissionsListController documentCreatePermissionsList;
 
     @Inject
     public DocumentUserCreatePermissionsEditPresenter(final EventBus eventBus,
                                                       final DocumentUserCreatePermissionsEditView view,
-                                                      final Provider<DocumentCreatePermissionsListPresenter>
-                                                              documentCreatePermissionsListPresenterProvider,
+                                                      final Provider<DocumentCreatePermissionsListController>
+                                                              documentCreatePermissionsListProvider,
                                                       final DocPermissionRestClient docPermissionClient,
                                                       final ExplorerClient explorerClient) {
         super(eventBus, view);
-        this.documentCreatePermissionsListPresenterProvider = documentCreatePermissionsListPresenterProvider;
+        this.documentCreatePermissionsListProvider = documentCreatePermissionsListProvider;
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
         getView().setUiHandlers(this);
@@ -98,9 +100,9 @@ public class DocumentUserCreatePermissionsEditPresenter
                         final Runnable onClose) {
         final PopupSize popupSize;
         if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
-            documentCreatePermissionsListPresenter = make(documentCreatePermissionsListPresenterProvider);
-            documentCreatePermissionsListPresenter.setup(report);
-            getView().setDocumentTypeView(documentCreatePermissionsListPresenter.getView());
+            documentCreatePermissionsList = make(documentCreatePermissionsListProvider);
+            documentCreatePermissionsList.setup(report);
+            getView().setDocumentTypeView(documentCreatePermissionsList);
             popupSize = PopupSize.builder()
                     .width(Size
                             .builder()
@@ -233,7 +235,7 @@ public class DocumentUserCreatePermissionsEditPresenter
 
     private AbstractDocumentPermissionsChange createChange() {
         final Set<String> explicitCreatePermissions =
-                documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
+                documentCreatePermissionsList.getExplicitCreatePermissions();
         if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
             return new AddAllDocumentUserCreatePermissions(relatedUser);
         } else if (explicitCreatePermissions.size() == 0) {
@@ -247,7 +249,7 @@ public class DocumentUserCreatePermissionsEditPresenter
 
     private String getPermissionChange() {
         final Set<String> explicitCreatePermissions =
-                documentCreatePermissionsListPresenter.getExplicitCreatePermissions();
+                documentCreatePermissionsList.getExplicitCreatePermissions();
         if (explicitCreatePermissions.contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
             return "[ all ]";
         } else if (explicitCreatePermissions.size() == 0) {
@@ -264,6 +266,6 @@ public class DocumentUserCreatePermissionsEditPresenter
 
         void setUser(UserRef userRef);
 
-        void setDocumentTypeView(View view);
+        void setDocumentTypeView(IsWidget view);
     }
 }

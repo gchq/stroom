@@ -45,7 +45,7 @@ import java.util.Set;
 /// ticked but not all, as `ColumnSelectionPresenter` builds them. Clicking the header ticks all the
 /// rows, or unticks them if they all are. A grid the user can't change has tick boxes with no border
 /// that can't be clicked, and no header tick box, as `DataGridUtil.updatableTickBoxColumnBuilder`
-/// and `DocumentCreatePermissionsListPresenter` build them.
+/// and `DocumentCreatePermissionsList` build them.
 public final class TickBoxCellStories {
 
     private static final String ON_CHANGE = "onChange";
