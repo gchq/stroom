@@ -83,6 +83,18 @@ class TestEChartsTemplate {
     }
 
     @Test
+    void noOptionsAreAnEmptyObject() {
+        final Map<String, Object> settings = JsonUtil.readValue(EChartsTemplate.settingsJson(ChartKind.CALENDAR,
+                Map.of("date", "Day", "value", "Messages"), Map.of(), "  "), Map.class);
+        final Map<String, Map<String, Object>> controls = controls((List<?>) settings.get("tabs"));
+
+        // Seen in testing: an empty editor on the Advanced tab looked like a fault.
+        assertThat(controls.get("options")).containsEntry("defaultValue", "{}");
+        assertThat(EChartsTemplate.defaults(EChartsTemplate.settingsJson(ChartKind.BAR, Map.of(), Map.of(), null)))
+                .containsEntry("options", "{}");
+    }
+
+    @Test
     void aThresholdIsATextControlOnTheStyleTab() {
         final Map<String, Object> settings = JsonUtil.readValue(EChartsTemplate.settingsJson(ChartKind.BAR,
                 Map.of("category", "C", "value", "V"), Map.of("threshold", "100"), null), Map.class);
