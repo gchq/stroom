@@ -522,4 +522,54 @@ class TestChartCheck {
 
         assertThat(result.problems()).singleElement().asString().contains("is blank");
     }
+
+    @Test
+    void autoIntervalCombinesAnIntervalsValuesAsTheMeasureColumnDoes() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Minute", "DATE_TIME", "floorMinute(${EventTime})"),
+                new TableColumn("Count", "NUMBER", "count()"),
+                new TableColumn("Peak", "NUMBER", "max(${Bytes})"),
+                new TableColumn("Low", "NUMBER", "Min(${Bytes})"),
+                new TableColumn("Mean", "NUMBER", "average(${Bytes})"),
+                new TableColumn("Raw", "NUMBER", "${Bytes}"));
+        final Map<String, String> on = Map.of("autoInterval", "true");
+
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), on, columns))
+                .containsEntry("intervalCombine", "Sum");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Peak"), on, columns))
+                .containsEntry("intervalCombine", "Max");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.BAR, Map.of("category", "Minute", "value", "Low"), on,
+                columns)).containsEntry("intervalCombine", "Min");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.BAR, Map.of("category", "Minute", "value", "Mean"), on,
+                columns)).containsEntry("intervalCombine", "Average");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Raw"), on, columns))
+                .containsEntry("intervalCombine", "Sum");
+        // As given, or off, or a kind without it: left alone.
+        final Map<String, String> given = Map.of("autoInterval", "true", "intervalCombine", "Average");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), given,
+                columns)).isEqualTo(given);
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), Map.of(),
+                columns)).isEmpty();
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.PIE, Map.of("name", "Minute", "value", "Count"), on,
+                columns)).isEqualTo(on);
+    }
+
+    @Test
+    void autoIntervalNeedsDatesInTimeOrder() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Minute", "DATE_TIME", "floorMinute(${EventTime})"),
+                new TableColumn("User", "TEXT", "${User}"),
+                new TableColumn("Count", "NUMBER", "count()"));
+
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"),
+                Map.of("autoInterval", "true"), columns, null).warnings())
+                .contains("Auto Interval groups the rows over time, so it does nothing here: category 'User' isn't "
+                          + "a Date Time column.");
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Minute", "value", "Count"),
+                Map.of("autoInterval", "true", "sort", "Descending"), columns, null).warnings())
+                .anyMatch(warning -> warning.startsWith("Auto Interval does nothing while the bars are sorted"));
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"),
+                Map.of("autoInterval", "true"), columns, null).warnings())
+                .noneMatch(warning -> warning.startsWith("Auto Interval"));
+    }
 }

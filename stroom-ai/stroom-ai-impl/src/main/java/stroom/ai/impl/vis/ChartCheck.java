@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Checks that a table's data can make a chart, before the chart is proposed: every required role is mapped to a
@@ -101,6 +102,8 @@ public final class ChartCheck {
                                 + "Run the table's query first if it hasn't run.");
         }
 
+        checkAutoInterval(kind, mapped, style, columns, sample, result);
+
         for (final Entry<String, String> entry : mapped.entrySet()) {
             final ChartRole role = kind.role(entry.getKey()).orElseThrow();
             final TableColumn column = findColumn(columns, entry.getValue()).orElseThrow();
@@ -112,6 +115,45 @@ public final class ChartCheck {
             checkTimeInterval(kind, mapped, style, columns, sample, result);
         }
         return result;
+    }
+
+    /// Gives a chart with Auto Interval on ([StyleSetting#AUTO_INTERVAL]) how it combines an interval's values, if
+    /// not given: as its measure column's expression does, so the counts in an interval are summed and the maximums
+    /// are the maximum (e.g. sum for count() or sum(), max for max(), average for average()).
+    ///
+    /// @param kind     The chart kind.
+    /// @param mappings The column mapped to each role, by role id.
+    /// @param style    The style settings chosen, normalised.
+    /// @param columns  The table's columns, with their expressions where known.
+    /// @return The style settings, with Interval Combine given if Auto Interval is on and it wasn't.
+    public static Map<String, String> withIntervalCombine(final ChartKind kind,
+                                                          final Map<String, String> mappings,
+                                                          final Map<String, String> style,
+                                                          final List<TableColumn> columns) {
+        if (!"true".equals(NullSafe.map(style).get(StyleSetting.AUTO_INTERVAL.id()))
+            || NullSafe.map(style).containsKey(StyleSetting.INTERVAL_COMBINE.id())
+            || kind.styleSetting(StyleSetting.INTERVAL_COMBINE.id()).isEmpty()) {
+            return style;
+        }
+        final String measure = NullSafe.map(mappings).get(kind == ChartKind.LINE
+                ? "y"
+                : "value");
+        final String expression = findColumn(columns, NullSafe.string(measure).strip())
+                .map(TableColumn::expression)
+                .orElse("");
+        final Matcher aggregate = AGGREGATE.matcher(NullSafe.string(expression));
+        final String function = aggregate.find()
+                ? aggregate.group(1).toLowerCase(Locale.ROOT)
+                : "";
+        final String combine = switch (function) {
+            case "max" -> "Max";
+            case "min" -> "Min";
+            case "average", "avg" -> "Average";
+            default -> "Sum";
+        };
+        final Map<String, String> filled = new LinkedHashMap<>(style);
+        filled.put(StyleSetting.INTERVAL_COMBINE.id(), combine);
+        return filled;
     }
 
     /// Says what a column holds, from its format, its expression and the values sampled, for choosing the
@@ -479,6 +521,33 @@ public final class ChartCheck {
                             + "aggregate the table first: a column " + floor.get() + "(" + time + "), formatted "
                             + "as Date Time and grouped, with count() (or the measure summed or averaged), then "
                             + "chart that column as x.");
+    }
+
+    // Auto Interval groups the rows over a line chart's x, or a bar chart's categories, which must be dates; and,
+    // for the bars, in time order, not sorted by value.
+    private static void checkAutoInterval(final ChartKind kind,
+                                          final Map<String, String> mapped,
+                                          final Map<String, String> style,
+                                          final List<TableColumn> columns,
+                                          final Sample sample,
+                                          final Result result) {
+        if (!"true".equals(NullSafe.map(style).get(StyleSetting.AUTO_INTERVAL.id()))) {
+            return;
+        }
+        final String role = kind == ChartKind.LINE
+                ? "x"
+                : "category";
+        final TableColumn column = findColumn(columns, mapped.get(role)).orElse(null);
+        final boolean dates = column != null
+                              && ("DATE_TIME".equals(NullSafe.string(column.format()).toUpperCase(Locale.ROOT))
+                                  || Values.of(column.name(), sample).dates > 0);
+        if (!dates) {
+            result.warnings.add("Auto Interval groups the rows over time, so it does nothing here: " + role + " '"
+                                + mapped.get(role) + "' isn't a Date Time column.");
+        } else if (NullSafe.isNonBlankString(NullSafe.map(style).get(StyleSetting.SORT.id()))) {
+            result.warnings.add("Auto Interval does nothing while the bars are sorted by value: they must be in time "
+                                + "order. Leave sort blank.");
+        }
     }
 
     // True if a column's expression already rounds its time to an interval (e.g. floorDay()).

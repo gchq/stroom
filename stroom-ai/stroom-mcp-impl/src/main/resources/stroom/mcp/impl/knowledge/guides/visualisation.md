@@ -223,6 +223,12 @@ table and chart. `current_results` snapshots its results by its name, as a table
   time range (a time axis, or bars of dates; then drag across the chart), Clear the selection, what is selected,
   and the refresh button. Charts have no title of their own: the dashboard shows the Visualisation pane's name
   above it, so name the pane well.
+- A line chart over a Date Time x, or a bar chart of dates (not sorted by value), takes `autoInterval`: the chart
+  groups the table's rows into an interval that suits the time shown, coarser zoomed out and finer zoomed in, and
+  says which in its toolbar. It can't be finer than the table's own grouping, so group the table finely (e.g.
+  `floorMinute()`) with a Max Rows that holds the span, and let the chart coarsen it. `intervalCombine` (Sum,
+  Average, Min, Max) is how an interval's values are combined; it follows the measure column (count() and sum()
+  Sum, max() Max) unless given. Offer it for a time series over a long or varying span.
 - Bar, line and scatter charts take `units` (count, bytes, percent, ms, seconds) for how values read, `logScale`,
   a `threshold` line (with `thresholdLabel`), `breakOutliers` to cut the axis when a few values dwarf the rest, and
   `zoomSlider`; bar and line charts an `averageLine`, a scatter plot `jitter`. Pie, heatmap, calendar and histogram

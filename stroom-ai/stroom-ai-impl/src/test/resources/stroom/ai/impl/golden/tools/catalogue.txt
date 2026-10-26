@@ -1856,6 +1856,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for area, as text.",
           "type" : "string"
         },
+        "autoInterval" : {
+          "description" : "The value for autoInterval, as text.",
+          "type" : "string"
+        },
         "averageLine" : {
           "description" : "The value for averageLine, as text.",
           "type" : "string"
@@ -1894,6 +1898,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "horizontal" : {
           "description" : "The value for horizontal, as text.",
+          "type" : "string"
+        },
+        "intervalCombine" : {
+          "description" : "The value for intervalCombine, as text.",
           "type" : "string"
         },
         "jitter" : {

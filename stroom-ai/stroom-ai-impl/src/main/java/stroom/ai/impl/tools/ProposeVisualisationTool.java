@@ -482,7 +482,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final Component replaced = NullSafe.isNonBlankString(replaceName) && !query && embedded == null
                 ? replacedChart(DashboardComponents.parse(part.text()), replaceName)
                 : null;
-        final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
+        // Auto Interval combines an interval's values as its measure column does (e.g. a count's are summed).
+        final Map<String, String> chartStyle = ChartCheck.withIntervalCombine(kind, mappings, style, columns);
+        final ChartCheck.Result check = ChartCheck.check(kind, mappings, chartStyle, columns, sample.sample());
         if (!check.ok()) {
             return ToolResult.text("No chart was offered: the table '" + chartTable + "' can't make this "
                                    + kind.displayName().toLowerCase(Locale.ROOT) + ":\n- "
@@ -558,7 +560,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         } else {
             notes.append(clickFilterNote(kind, mappings, expressions, formats, query, chartTable));
         }
-        return generate(chartLibrary, kind, mappings, style, options, target, query, embedded, table, chartTable,
+        return generate(chartLibrary, kind, mappings, chartStyle, options, target, query, embedded, table, chartTable,
                 part, name, summary, placement, replace, request, context, notes,
                 newTable == null
                         ? List.of()
@@ -875,7 +877,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                         .toList();
                 final SampleOutcome sample = samples.computeIfAbsent(tableName,
                         key -> sample(request, context, table));
-                final ChartCheck.Result check = ChartCheck.check(kind, mappings, style, columns, sample.sample());
+                final Map<String, String> chartStyle = ChartCheck.withIntervalCombine(kind, mappings, style, columns);
+                final ChartCheck.Result check = ChartCheck.check(kind, mappings, chartStyle, columns,
+                        sample.sample());
                 if (!check.ok()) {
                     problems.add(label + ": the table '" + tableName + "' can't make this "
                                  + kind.displayName().toLowerCase(Locale.ROOT) + ": "
@@ -885,9 +889,9 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                 final int onTable = perTable.merge(tableName, 1, Integer::sum) - 1;
                 final String componentName = NullSafe.nonBlankStringElse(
                         NullSafe.get(spec.get(COMPONENT_NAME_ARG), value -> String.valueOf(value).strip()), name);
-                final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, style, options, tableName,
-                        table.getComponentId(), componentName, placement(layout, onTable), snapshotHash, null, null,
-                        null, chartLibrary.id());
+                final VisualisationPlan plan = new VisualisationPlan(kind.id(), mappings, chartStyle, options,
+                        tableName, table.getComponentId(), componentName, placement(layout, onTable), snapshotHash,
+                        null, null, null, chartLibrary.id());
                 try {
                     plan.validate();
                 } catch (final IllegalArgumentException e) {
