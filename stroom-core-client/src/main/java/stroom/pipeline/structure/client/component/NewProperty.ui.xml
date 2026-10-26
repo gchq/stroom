@@ -3,6 +3,8 @@
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:i="urn:import:stroom.item.client"
+        xmlns:v="urn:import:stroom.widget.valuespinner.client"
+        xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newPropertyElementId"
@@ -52,15 +54,29 @@
                         label="Value"
                         helpText="The value of this property. Changing it sets Source to Local."
                         screenReaderText="Changing it sets Source to Local.">
-            <g:SimplePanel ui:field="value" addStyleNames="w-100"/>
+            <!--
+              One editor is shown, for the property's type. Each is named Value, as the label is
+              only for the one shown when the dialog opens (Embedded shows the text box after)
+            -->
+            <g:FlowPanel addStyleNames="w-100">
+                <i:SelectionBox ui:field="booleanValue" ariaLabel="Value" addStyleNames="w-100"/>
+                <v:ValueSpinner ui:field="numberValue" minValue="0" maxValue="10000000" ariaLabel="Value"
+                                addStyleNames="w-100"/>
+                <form:TextInput ui:field="textValue" ariaLabel="Value" addStyleNames="w-100"/>
+                <i:SelectionBox ui:field="streamTypeValue" ariaLabel="Value" addStyleNames="w-100"/>
+                <i:SelectionBox ui:field="volumeGroupValue" ariaLabel="Value" addStyleNames="w-100"/>
+                <dd:DropDownBox ui:field="documentValue" addStyleNames="w-100"/>
+            </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup ui:field="defaultValueGroup"
+                        visible="false"
                         identity="newPropertyDefaultValue"
                         label="Default Value"
                         helpText="The default value for this property on this pipeline element type.">
             <g:Label ui:field="defaultValue" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup ui:field="inheritedValueGroup"
+                        visible="false"
                         identity="newPropertyInheritedValue"
                         label="Inherited Value"
                         helpText="The value inherited from the parent pipeline.">

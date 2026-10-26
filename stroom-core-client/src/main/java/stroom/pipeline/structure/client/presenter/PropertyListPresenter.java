@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.pipeline.structure.client.component.NewPropertyController;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Document;
@@ -42,10 +43,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -84,7 +81,7 @@ public class PropertyListPresenter
     private final DataGrid<PipelineProperty> dataGrid;
     private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
     private final ButtonView editButton;
-    private final Provider<NewPropertyPresenter> newPropertyPresenter;
+    private final Provider<NewPropertyController> newPropertyProvider;
     private final RestFactory restFactory;
     private final DocumentPluginRegistry documentPluginRegistry;
 
@@ -99,7 +96,7 @@ public class PropertyListPresenter
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerPanel view,
-                                 final Provider<NewPropertyPresenter> newPropertyPresenter,
+                                 final Provider<NewPropertyController> newPropertyProvider,
                                  final RestFactory restFactory,
                                  final DocumentPluginRegistry documentPluginRegistry,
                                  final RefCellsController refCells) {
@@ -114,7 +111,7 @@ public class PropertyListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        this.newPropertyPresenter = newPropertyPresenter;
+        this.newPropertyProvider = newPropertyProvider;
         this.restFactory = restFactory;
         this.documentPluginRegistry = documentPluginRegistry;
 
@@ -363,8 +360,75 @@ public class PropertyListPresenter
             final PipelineProperty editing = PipelineProperty.builder(localProperty).build();
             final Source source = getSource(editing);
 
-            final NewPropertyPresenter editor = makeDialog(newPropertyPresenter);
-            editor.edit(
+            // The dialog isn't modal, so another element can be chosen, or this one removed, while
+            // it is open
+            final PipelineElement element = currentElement;
+            final NewPropertyController editor = newPropertyProvider.get();
+            final Consumer<HidePopupRequestEvent> onOk = e -> {
+                if (editor.isDirty() && !pipelineModel.hasElement(element)) {
+                    AlertEvent.fireWarn(this, "'" + element.getId() + "' was removed from the pipeline "
+                                              + "while its property was being edited, so the change "
+                                              + "can't be kept.", null);
+                } else if (editor.isDirty()) {
+
+                    final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
+
+                    // Remove the property locally (compare by element+name only).
+                    builder.getProperties().getAddList().removeIf(p ->
+                            p.getElement().equals(editing.getElement())
+                            && p.getName().equals(editing.getName()));
+                    builder.getProperties().getRemoveList().removeIf(p ->
+                            p.getElement().equals(editing.getElement())
+                            && p.getName().equals(editing.getName()));
+
+                    // Write new property.
+                    final PipelinePropertyValue value = editor.writeValue();
+                    final PipelineProperty newProperty = PipelineProperty.builder(editing)
+                            .value(value)
+                            .build();
+                    switch (editor.getSource()) {
+                        case LOCAL:
+                            builder.getProperties().getAddList().add(newProperty);
+                            break;
+
+                        case DEFAULT:
+                            builder.getProperties().getRemoveList().add(newProperty);
+                            break;
+
+                        case EMBEDDED:
+                            final String docType = pipelinePropertyType.getDocRefTypes()[0];
+                            final DocRef parentDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
+                            final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
+                                                                element.getId() + ")";
+
+                            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
+                                    Document.class);
+
+                            createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef, e,
+                                    document -> {
+                                        final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
+                                                .value(new PipelinePropertyValue(document.asDocRef(), true))
+                                                .build();
+                                        builder.getProperties().getAddList().add(embeddedProperty);
+
+                                        pipelineModel.update(builder.build());
+
+                                        refresh();
+                                        e.hide();
+                                    });
+                            return;
+
+                        case INHERIT:
+                            // Do nothing as we have already removed it.
+                    }
+
+                    pipelineModel.update(builder.build());
+
+                    refresh();
+                }
+                e.hide();
+            };
+            editor.edit(this,
                     currentElement,
                     pipelinePropertyType,
                     property,
@@ -373,93 +437,8 @@ public class PropertyListPresenter
                     source,
                     defaultValue,
                     inheritedValue,
-                    inheritedFrom);
-
-            // The dialog isn't modal, so another element can be chosen, or this one removed, while
-            // it is open
-            final PipelineElement element = currentElement;
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    if (editor.isDirty() && !pipelineModel.hasElement(element)) {
-                        AlertEvent.fireWarn(this, "'" + element.getId() + "' was removed from the pipeline "
-                                                  + "while its property was being edited, so the change "
-                                                  + "can't be kept.", null);
-                    } else if (editor.isDirty()) {
-
-                        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
-
-                        // Remove the property locally (compare by element+name only).
-                        builder.getProperties().getAddList().removeIf(p ->
-                                p.getElement().equals(editing.getElement())
-                                && p.getName().equals(editing.getName()));
-                        builder.getProperties().getRemoveList().removeIf(p ->
-                                p.getElement().equals(editing.getElement())
-                                && p.getName().equals(editing.getName()));
-
-                        // Write new property.
-                        final PipelinePropertyValue value = editor.writeValue();
-                        final PipelineProperty newProperty = PipelineProperty.builder(editing)
-                                .value(value)
-                                .build();
-                        switch (editor.getSource()) {
-                            case LOCAL:
-                                builder.getProperties().getAddList().add(newProperty);
-                                break;
-
-                            case DEFAULT:
-                                builder.getProperties().getRemoveList().add(newProperty);
-                                break;
-
-                            case EMBEDDED:
-                                final String docType = pipelinePropertyType.getDocRefTypes()[0];
-                                final DocRef parentDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
-                                final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
-                                                                    element.getId() + ")";
-
-                                final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
-                                        Document.class);
-
-                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef, e,
-                                        document -> {
-                                            final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
-                                                    .value(new PipelinePropertyValue(document.asDocRef(), true))
-                                                    .build();
-                                            builder.getProperties().getAddList().add(embeddedProperty);
-
-                                            pipelineModel.update(builder.build());
-
-                                            refresh();
-                                            e.hide();
-                                        });
-                                return;
-
-                            case INHERIT:
-                                // Do nothing as we have already removed it.
-                        }
-
-                        pipelineModel.update(builder.build());
-
-                        refresh();
-                    }
-                }
-                e.hide();
-            };
-
-            final PopupSize popupSize = PopupSize.builder()
-                    .width(Size.builder()
-                            .initial(600)
-                            .min(600)
-                            .resizable(true)
-                            .build())
-                    .build();
-
-            ShowPopupEvent.builder(editor)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Edit Property")
-                    .onShow(e -> editor.getView().focus())
-                    .onHideRequest(handler)
-                    .fire();
+                    inheritedFrom,
+                    onOk);
         }
     }
 

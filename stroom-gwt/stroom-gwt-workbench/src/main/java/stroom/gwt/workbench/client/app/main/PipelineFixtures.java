@@ -50,13 +50,17 @@ final class PipelineFixtures {
             {"type": "StreamAppender", "category": "DESTINATION", "roles": ["target", "destination", "stepping"],
               "icon": "PIPELINE_STREAM", "displayValue": "Stream Appender"}""";
 
-    /// The reply of `GET /pipeline/v1/propertyTypes`: Source, Combined Parser, XSLT Filter (with its
-    /// `xslt` document and `reference` pipeline reference properties), XML Writer and Stream
-    /// Appender.
+    /// The reply of `GET /pipeline/v1/propertyTypes`: Source, Combined Parser (with its boolean
+    /// `fixInvalidChars` property), XSLT Filter (with its `xslt` document and `reference` pipeline
+    /// reference properties), XML Writer and Stream Appender.
     static final String PROPERTY_TYPES = """
             [
               {"pipelineElementType": SOURCE, "propertyTypes": {}},
-              {"pipelineElementType": COMBINED_PARSER, "propertyTypes": {}},
+              {"pipelineElementType": COMBINED_PARSER, "propertyTypes": {
+                "fixInvalidChars": {"elementType": COMBINED_PARSER, "name": "fixInvalidChars", "type": "boolean",
+                  "description": "Fix invalid XML characters", "defaultValue": "false",
+                  "pipelineReference": false, "displayPriority": 1, "canEmbed": false}
+              }},
               {"pipelineElementType": XSLT_FILTER, "propertyTypes": {
                 "xslt": {"elementType": XSLT_FILTER, "name": "xslt", "type": "DocRef",
                   "description": "The XSLT to use", "defaultValue": "", "pipelineReference": false,

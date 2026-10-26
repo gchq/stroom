@@ -774,6 +774,27 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.queryByText("xslt")).toBeNull());
                     expectNoProblems(play);
                 })
+                // A boolean property is chosen from true and false; choosing one makes its Source
+                // Local, and OK sets it on the element
+                .story("BooleanProperty", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.click(play.findByText("parser"));
+                    play.dblClick(play.findByText("fixInvalidChars"));
+                    final Play property = dialog(screen, "Edit Property");
+                    play.expect(property.getByText("Fix invalid XML characters")).toBeInTheDocument();
+                    final Query value = property.getByRole("combobox", "Value");
+                    play.expect(value).toHaveValue("false");
+                    play.click(value);
+                    play.click(screen.findByText("true", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(property.getByRole("combobox", "Source")).toHaveValue("Local"));
+                    play.click(property.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Property", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("true")).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
                 // Setting a document property's Source to Embedded creates an embedded document
                 .story("EmbeddedProperty", context -> render(context, FIXTURES))
                 .withPlay(play -> {
