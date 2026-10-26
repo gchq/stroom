@@ -241,7 +241,7 @@ class TestUserActions {
         assertThat(userActions.check(null, List.of(createVisualisation("v1", "Dashboard", plan.toJson())), NOW))
                 .singleElement()
                 .satisfies(action -> assertThat(action.label())
-                        .isEqualTo("Replace visualisation 'Events line' with a bar chart of table 'Events by "
+                        .isEqualTo("Update visualisation 'Events line' to a bar chart of table 'Events by "
                                    + "hour', renamed 'Chat user connections' (saved at once), in pane 'Events over "
                                    + "time' of dashboard 'Events'"));
     }
