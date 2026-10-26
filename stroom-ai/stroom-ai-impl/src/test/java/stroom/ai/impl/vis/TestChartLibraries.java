@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.vis;
 
+import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
@@ -150,7 +151,8 @@ class TestChartLibraries {
     void findsNothingWhenNotInstalled() {
         final DocRef d3 = script("D3", "3");
         Mockito.when(scriptStore.list()).thenReturn(List.of(d3));
-        Mockito.when(scriptStore.readDocument(d3)).thenReturn(doc(d3, "var d3 = {version: \"3.4.8\"};", List.of()));
+        Mockito.when(scriptStore.readDocument(d3)).thenReturn(doc(d3, "var d3 = {version: \"3.4.8\"};",
+                List.of()));
 
         assertThat(chartLibraries.findECharts()).isEmpty();
     }
@@ -318,9 +320,127 @@ class TestChartLibraries {
         Mockito.when(visualisationStore.readDocument(force)).thenReturn(VisualisationDoc.builder()
                 .uuid(force.getUuid()).name("Force").functionName("visualisations.Force").build());
 
-        final Map<ChartKind, DocRef> found = chartLibraries.findD3();
+        final Map<ChartKind, DocRef> found = chartLibraries.findContentPackD3();
 
         assertThat(found).containsEntry(ChartKind.GRAPH, force).containsEntry(ChartKind.BAR, bar).hasSize(2);
+    }
+
+    @Test
+    void recognisesEachD3BuildFromThreeOn() {
+        assertThat(ChartLibraries.d3Version("!function() {\n  var d3 = {\n    version: \"3.4.8\"\n  };"))
+                .contains("3.4.8");
+        assertThat(ChartLibraries.d3Version("!function(){var ao={version:\"3.5.17\"};this.d3=ao}();"))
+                .contains("3.5.17");
+        assertThat(ChartLibraries.d3Version("// https://d3js.org Version 4.13.0. Copyright 2018 Mike Bostock.\n"))
+                .contains("4.13.0");
+        assertThat(ChartLibraries.d3Version("// https://d3js.org v7.9.0 Copyright 2010-2023 Mike Bostock\n"))
+                .contains("7.9.0");
+    }
+
+    @Test
+    void ignoresScriptsThatArentD3() {
+        // A version property alone isn't enough: it must be D3's.
+        assertThat(ChartLibraries.d3Version("var lib = {version: \"3.1.0\"};")).isEmpty();
+        assertThat(ChartLibraries.d3Version(ECHARTS_6)).isEmpty();
+        assertThat(ChartLibraries.d3Version(null)).isEmpty();
+        // Nor are Stroom's adapters D3, though the D3 one names the library.
+        assertThat(ChartLibraries.d3Version(chartLibraries.adapterSource(ChartLibrary.D3))).isEmpty();
+        assertThat(ChartLibraries.d3Version(
+                "// " + ChartLibrary.D3.adapterMarker() + " 1\n// https://d3js.org v7.9.0")).isEmpty();
+    }
+
+    @Test
+    void tellsTheAdaptersApart() {
+        assertThat(ChartLibraries.adapterLibrary(chartLibraries.adapterSource(ChartLibrary.ECHARTS)))
+                .contains(ChartLibrary.ECHARTS);
+        assertThat(ChartLibraries.adapterLibrary(chartLibraries.adapterSource(ChartLibrary.D3)))
+                .contains(ChartLibrary.D3);
+        assertThat(ChartLibraries.adapterLibrary("var common = {};")).isEmpty();
+        assertThat(ChartLibraries.adapterVersion(ChartLibrary.D3, chartLibraries.adapterSource(ChartLibrary.D3)))
+                .contains(1);
+    }
+
+    @Test
+    void findsTheNewestD3() {
+        final DocRef contentPack = script("D3", "3");
+        final DocRef installed = script("D3 7", "7");
+        final DocRef echarts = script("ECharts", "1");
+        Mockito.when(scriptStore.list()).thenReturn(List.of(contentPack, installed, echarts));
+        Mockito.when(scriptStore.readDocument(contentPack)).thenReturn(doc(contentPack,
+                "var d3 = {version: \"3.4.8\"};", List.of()));
+        Mockito.when(scriptStore.readDocument(installed)).thenReturn(doc(installed,
+                "// https://d3js.org v7.9.0 Copyright 2010-2023 Mike Bostock\n", List.of()));
+        Mockito.when(scriptStore.readDocument(echarts)).thenReturn(doc(echarts, ECHARTS_6, List.of()));
+
+        final Optional<D3Install> found = chartLibraries.findD3Library();
+
+        assertThat(found).contains(new D3Install(installed, "7.9.0"));
+        assertThat(found.orElseThrow().major()).isEqualTo(7);
+    }
+
+    @Test
+    void fallsBackToTheContentPacksD3() {
+        final DocRef contentPack = script("D3", "3");
+        Mockito.when(scriptStore.list()).thenReturn(List.of(contentPack));
+        Mockito.when(scriptStore.readDocument(contentPack)).thenReturn(doc(contentPack,
+                "var d3 = {version: \"3.4.8\"};", List.of()));
+
+        assertThat(chartLibraries.findD3Library()).contains(new D3Install(contentPack, "3.4.8"));
+    }
+
+    @Test
+    void findsNoD3WhenNotInstalled() {
+        final DocRef echarts = script("ECharts", "1");
+        Mockito.when(scriptStore.list()).thenReturn(List.of(echarts));
+        Mockito.when(scriptStore.readDocument(echarts)).thenReturn(doc(echarts, ECHARTS_6, List.of()));
+
+        assertThat(chartLibraries.findD3Library()).isEmpty();
+    }
+
+    @Test
+    void createsTheD3AdapterBesideD3() {
+        final DocRef d3 = script("D3", "3");
+        final DocRef folder = new DocRef("Folder", "f1", "Libraries");
+        final DocRef created = script(ChartLibrary.D3.adapterName(), "new");
+        final ExplorerNode folderNode = ExplorerNode.builder().docRef(folder).build();
+        Mockito.when(explorerNodeService.getParent(d3)).thenReturn(Optional.of(folderNode));
+        // The ECharts adapter in the same folder isn't taken for D3's.
+        final DocRef echartsAdapter = script(ChartLibraries.ADAPTER_NAME, "e");
+        Mockito.when(explorerNodeService.getChildren(folder)).thenReturn(List.of(
+                ExplorerNode.builder().docRef(d3).build(), ExplorerNode.builder().docRef(echartsAdapter).build()));
+        Mockito.when(scriptStore.readDocument(d3)).thenReturn(doc(d3, "var d3 = {version: \"3.4.8\"};",
+                List.of()));
+        Mockito.when(scriptStore.readDocument(echartsAdapter)).thenReturn(doc(echartsAdapter,
+                chartLibraries.adapterSource(ChartLibrary.ECHARTS), List.of()));
+        Mockito.when(explorerService.create(eq(ScriptDoc.TYPE), eq(ChartLibrary.D3.adapterName()), eq(folderNode),
+                eq(PermissionInheritance.DESTINATION))).thenReturn(ExplorerNode.builder().docRef(created).build());
+        Mockito.when(scriptStore.readDocument(created)).thenReturn(doc(created, null, null));
+
+        assertThat(chartLibraries.ensureAdapter(new D3Install(d3, "3.4.8"))).isEqualTo(created);
+
+        final ArgumentCaptor<ScriptDoc> written = ArgumentCaptor.forClass(ScriptDoc.class);
+        Mockito.verify(scriptStore).writeDocument(written.capture());
+        assertThat(written.getValue().getData()).isEqualTo(chartLibraries.adapterSource(ChartLibrary.D3));
+        assertThat(written.getValue().getDependencies()).containsExactly(d3);
+        Mockito.verify(documentPermissionService).addDocumentPermissions(d3, created);
+    }
+
+    @Test
+    void updatesEachLibrarysAdapterToItsOwnSource() {
+        final DocRef echartsAdapter = script(ChartLibraries.ADAPTER_NAME, "e");
+        final DocRef d3Adapter = script(ChartLibrary.D3.adapterName(), "d");
+        Mockito.when(scriptStore.list()).thenReturn(List.of(echartsAdapter, d3Adapter));
+        Mockito.when(scriptStore.readDocument(echartsAdapter)).thenReturn(doc(echartsAdapter,
+                "// " + ChartLibrary.ECHARTS.adapterMarker() + " 0\n", List.of()));
+        Mockito.when(scriptStore.readDocument(d3Adapter)).thenReturn(doc(d3Adapter,
+                "// " + ChartLibrary.D3.adapterMarker() + " 0\n", List.of()));
+
+        assertThat(chartLibraries.updateAdapters()).containsExactly(echartsAdapter, d3Adapter);
+
+        final ArgumentCaptor<ScriptDoc> written = ArgumentCaptor.forClass(ScriptDoc.class);
+        Mockito.verify(scriptStore, Mockito.times(2)).writeDocument(written.capture());
+        assertThat(written.getAllValues()).extracting(ScriptDoc::getData).containsExactly(
+                chartLibraries.adapterSource(ChartLibrary.ECHARTS), chartLibraries.adapterSource(ChartLibrary.D3));
     }
 
     private static DocRef script(final String name, final String uuid) {

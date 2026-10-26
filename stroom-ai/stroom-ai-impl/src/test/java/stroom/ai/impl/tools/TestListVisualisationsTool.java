@@ -19,8 +19,10 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.vis.ChartKind;
 import stroom.ai.impl.vis.ChartLibraries;
+import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
 import stroom.ai.impl.vis.ChartLibraries.InstalledVisualisation;
+import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.ChartRole;
 import stroom.ai.impl.vis.D3Visualisation;
 import stroom.ai.impl.vis.StyleSetting;
@@ -46,6 +48,7 @@ class TestListVisualisationsTool {
 
     private static final int CHAT = 3;
     private static final DocRef ECHARTS_SCRIPT = new DocRef("Script", "echarts-uuid", "ECharts");
+    private static final DocRef D3_SCRIPT = new DocRef("Script", "d3-uuid", "D3");
     private static final DocRef FORCE = new DocRef("Visualisation", D3Visualisation.GRAPH.uuid(), "Force");
     private static final DocRef SCATTER = new DocRef("Visualisation", D3Visualisation.SCATTER.uuid(), "Scatter");
 
@@ -61,7 +64,8 @@ class TestListVisualisationsTool {
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(chartLibraries.findECharts()).thenReturn(Optional.empty());
         Mockito.when(chartLibraries.findUnrecognisedECharts()).thenReturn(List.of());
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of());
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of());
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.empty());
         Mockito.when(chartLibraries.listVisualisations()).thenReturn(List.of());
         tool = new ListVisualisationsTool(workspace, chartLibraries);
     }
@@ -117,15 +121,55 @@ class TestListVisualisationsTool {
     }
 
     @Test
-    void installedD3KindsAreListedOrSaidToBeMissing() {
-        assertThat(run()).contains("- D3 (the visualisations content pack): not installed.");
+    void installedContentPackKindsAreListedOrSaidToBeMissing() {
+        assertThat(run()).contains("- The visualisations content pack's D3 charts: not installed.");
 
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.GRAPH, FORCE));
 
         assertThat(run())
-                .contains("- D3 (the visualisations content pack): graph ('Force'). Wires these existing "
-                          + "Visualisations to a table (library d3)")
+                .contains("- The visualisations content pack's D3 charts: graph ('Force'). Wires these existing "
+                          + "Visualisations to a table (library content-pack)")
                 .doesNotContain("not in the D3 one");
+    }
+
+    @Test
+    void installedD3IsListedWithItsVersionAndBothLibrariesAskWhichToUse() {
+        assertThat(run())
+                .contains("- D3: not installed. An administrator installs it as a Script doc holding a D3 build, "
+                          + "version 3 or later")
+                .doesNotContain("ask the user which to use");
+
+        Mockito.when(chartLibraries.findD3Library()).thenReturn(Optional.of(new D3Install(D3_SCRIPT, "7.9.0")));
+        Mockito.when(chartLibraries.currentUserCanUse(D3_SCRIPT)).thenReturn(false);
+
+        assertThat(run())
+                .contains("- D3 7.9.0: installed as Script 'D3' (d3-uuid), but the user doesn't have Use "
+                          + "permission on it")
+                .doesNotContain("ask the user which to use");
+
+        Mockito.when(chartLibraries.currentUserCanUse(D3_SCRIPT)).thenReturn(true);
+        Mockito.when(chartLibraries.findECharts()).thenReturn(Optional.of(new EChartsInstall(ECHARTS_SCRIPT,
+                "6.1.0")));
+
+        assertThat(run())
+                .contains("- D3 7.9.0: installed as Script 'D3' (d3-uuid). Generates any of the kinds below "
+                          + "(library d3)")
+                .contains("Both ECharts and D3 can generate charts: ask the user which to use (ask_user)");
+    }
+
+    @Test
+    void settingsOnlyEChartsDrawsAreMarked() {
+        assertThat(run())
+                .contains("zoomSlider (")
+                .contains("(echarts only)")
+                .contains("Options (d3): only color");
+        for (final ChartKind kind : ChartKind.values()) {
+            for (final StyleSetting setting : kind.styleSettings()) {
+                if (!ChartLibrary.D3.supports(setting)) {
+                    assertThat(run()).contains(": " + setting.description() + " (echarts only)");
+                }
+            }
+        }
     }
 
     @Test
@@ -150,7 +194,7 @@ class TestListVisualisationsTool {
 
     @Test
     void aRoleTheD3VisualisationLacksIsFlagged() {
-        Mockito.when(chartLibraries.findD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
+        Mockito.when(chartLibraries.findContentPackD3()).thenReturn(Map.of(ChartKind.SCATTER, SCATTER));
 
         final String result = run();
 
@@ -167,13 +211,16 @@ class TestListVisualisationsTool {
 
         Mockito.when(chartLibraries.listVisualisations()).thenReturn(List.of(
                 new InstalledVisualisation(new DocRef("Visualisation", "gen-uuid", "Message links"),
-                        "stroom.ai.EChartsGeneric", true),
+                        ChartLibrary.ECHARTS.functionName(), true),
+                new InstalledVisualisation(new DocRef("Visualisation", "gen-d3-uuid", "Event counts"),
+                        ChartLibrary.D3.functionName(), true),
                 new InstalledVisualisation(FORCE, D3Visualisation.GRAPH.functionName(), false),
                 new InstalledVisualisation(new DocRef("Visualisation", "own-uuid", "Home made"),
                         "my.Chart", false)));
 
         assertThat(run()).endsWith("# Visualisations in Stroom\n\n"
                                    + "- 'Message links' (gen-uuid): generated by Stroom AI (ECharts)\n"
+                                   + "- 'Event counts' (gen-d3-uuid): generated by Stroom AI (D3)\n"
                                    + "- 'Force' (" + FORCE.getUuid() + "): content pack D3 graph\n"
                                    + "- 'Home made' (own-uuid)");
     }
