@@ -2478,7 +2478,7 @@ public class AskStroomAiPresenter
                 // No button.
                 return;
             } else if (pending) {
-                row.elem(UserActionsUi.buttonText(action), BUTTON,
+                row.elem(UserActionsUi.buttonText(action, request), BUTTON,
                         Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
                         new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
                         new Attribute(USER_ACTION_ID_ATTRIBUTE,
