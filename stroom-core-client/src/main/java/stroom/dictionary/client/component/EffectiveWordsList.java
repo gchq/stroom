@@ -16,96 +16,94 @@
 
 package stroom.dictionary.client.component;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.CommandLink;
 import stroom.dictionary.shared.Word;
 import stroom.dictionary.shared.WordList;
-import stroom.dictionary.shared.WordListResource;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.OpenDocumentEvent;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /// The words a dictionary has once its imports are added (the dictionary's own and those of the
-/// dictionaries it imports, however deep), with where each comes from. Read only.
-public class EffectiveWordsList extends Controller {
+/// dictionaries it imports, however deep), a row each with where it comes from, in the order the
+/// user sorts them by. Read only.
+public class EffectiveWordsList extends Component {
 
-    private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final String FIELD_WORD = "Word";
     private static final String FIELD_SOURCE_NAME = "SourceName";
     private static final String FIELD_TYPE = "Types";
 
-    private final RestFactory restFactory;
-    private final PagerPanel pagerView;
-    private final DataGrid<Word> dataGrid;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<Word> dataGrid;
+
     private WordList wordList = WordList.EMPTY;
     private DocRef docRef;
     private CriteriaFieldSort fieldSort;
+    private Consumer<DocRef> onOpen = source -> {
+    };
 
-    @Inject
-    public EffectiveWordsList(final EventBus eventBus,
-                              final PagerPanel pagerView,
-                              final RestFactory restFactory) {
-        super(eventBus);
-        this.restFactory = restFactory;
-        this.pagerView = pagerView;
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public EffectiveWordsList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by word, so a row whose values change is still the same row
         dataGrid.setKeyProvider(Word::getWord);
-        dataGrid.setTableName("Words");
         dataGrid.addDefaultSelectionModel(false);
-        pagerView.setDataWidget(dataGrid);
         addColumns();
-        pagerView.getRefreshButton().setOnClick(this::refresh);
-        initWidget(pagerView.asWidget());
     }
 
-    /// Shows a dictionary's effective words, fetching them.
-    ///
-    /// @param docRef The dictionary, or null to show none.
+    /// @param docRef The dictionary whose words are shown, to name the list by and to tell its own
+    ///               words from those imported; or `null` for none.
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
         if (docRef != null && docRef.getName() != null) {
             dataGrid.setTableName("Dictionary '" + docRef.getName() + "' Words");
         }
-        refresh();
     }
 
-    /// Fetches the words again.
-    public void refresh() {
-        if (docRef == null) {
-            setWordList(WordList.EMPTY);
-        } else {
-            final String uuid = docRef.getUuid();
-            restFactory
-                    .create(WORD_LIST_RESOURCE)
-                    .method(resource -> resource.getWords(uuid))
-                    .onSuccess(this::setWordList)
-                    .onFailure(error -> AlertEvent.fireError(this, error.getMessage(), null))
-                    .owner(this)
-                    .taskMonitorFactory(pagerView)
-                    .exec();
-        }
+    /// Shows a dictionary's words, in the order the user chose.
+    ///
+    /// @param wordList The words.
+    public void setWordList(final WordList wordList) {
+        this.wordList = wordList;
+        showWords();
+    }
+
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @param onRefresh Run when the pager's refresh button is pressed.
+    public void setOnRefresh(final Runnable onRefresh) {
+        pager.getRefreshButton().setOnClick(onRefresh);
+    }
+
+    /// @param onOpen Given a source dictionary to open, when its link is pressed.
+    public void setOnOpen(final Consumer<DocRef> onOpen) {
+        this.onOpen = onOpen;
     }
 
     private void addColumns() {
@@ -159,11 +157,6 @@ public class EffectiveWordsList extends Controller {
                 showWords();
             }
         });
-    }
-
-    private void setWordList(final WordList wordList) {
-        this.wordList = wordList;
-        showWords();
     }
 
     private void showWords() {
@@ -230,7 +223,7 @@ public class EffectiveWordsList extends Controller {
                 .map(source -> new CommandLink(
                         source.getName(),
                         "Open " + source.getType() + " '" + source.getName() + "'.",
-                        () -> OpenDocumentEvent.fire(this, source, true)))
+                        () -> onOpen.accept(source)))
                 .orElse(null);
     }
 
@@ -245,5 +238,13 @@ public class EffectiveWordsList extends Controller {
                 .map(Optional::get)
                 .map(DocRef::getName)
                 .collect(Collectors.joining(", "));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, EffectiveWordsList> {
+
     }
 }

@@ -53,7 +53,7 @@ public class ImportsTab extends Controller {
     private static final String REMOVE_TITLE = "Remove Imported Dictionary";
 
     private final PresenterAdapter<DocRefListPresenter> importList;
-    private final EffectiveWordsList effectiveWords;
+    private final EffectiveWordsListController effectiveWords;
     private final Provider<ExplorerPopupController> docSelectionPopupProvider;
     private final ToolbarButton addButton;
     private final ToolbarButton removeButton;
@@ -73,7 +73,7 @@ public class ImportsTab extends Controller {
     @Inject
     public ImportsTab(final EventBus eventBus,
                       final Provider<DocRefListPresenter> docRefListPresenterProvider,
-                      final EffectiveWordsList effectiveWords,
+                      final EffectiveWordsListController effectiveWords,
                       final Provider<ExplorerPopupController> docSelectionPopupProvider) {
         super(eventBus);
         this.docSelectionPopupProvider = docSelectionPopupProvider;

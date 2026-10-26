@@ -72,7 +72,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                             final LinkTabPanelView view,
                             final Provider<WordsTabController> wordsTabProvider,
                             final Provider<ImportsTab> importsTabProvider,
-                            final Provider<EffectiveWordsList> effectiveWordsListProvider,
+                            final Provider<EffectiveWordsListController> effectiveWordsListProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final Provider<DocumentUserPermissionsPresenter> permissionsPresenterProvider,
                             final RestFactory restFactory,
