@@ -27,7 +27,6 @@ import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
-import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
 import stroom.data.client.presenter.SourcePresenter;
@@ -81,7 +80,6 @@ public class StreamStoreModule extends PluginModule {
         bind(MetaListPresenter.class);
         bind(SteppingMetaListPresenter.class);
 
-        bind(ProcessorTaskListPresenter.class);
 
     }
 }

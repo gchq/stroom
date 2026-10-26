@@ -527,9 +527,29 @@ public class DataGridUtil {
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction,
                                                final boolean hasOpenAndCopy) {
+        addDocRefColumn(refCells.configure(new DocRefCell.Builder<T_ROW>()),
+                dataGrid,
+                name,
+                docRefExtractionFunction,
+                hasOpenAndCopy);
+    }
+
+    /// Adds a resizable column of documents, e.g. in a component, which is given its cell's builder
+    /// configured by its controller (`refCells.configure(new DocRefCell.Builder<>())`).
+    ///
+    /// @param cell                     The cell's builder, configured to open its documents.
+    /// @param dataGrid                 The grid.
+    /// @param name                     The column's heading.
+    /// @param docRefExtractionFunction Gives a row's document.
+    /// @param hasOpenAndCopy           Whether a cell shows open and copy buttons.
+    /// @param <T_ROW>                  The type of a row.
+    public static <T_ROW> void addDocRefColumn(final DocRefCell.Builder<T_ROW> cell,
+                                               final DataGridView<T_ROW> dataGrid,
+                                               final String name,
+                                               final Function<T_ROW, DocRef> docRefExtractionFunction,
+                                               final boolean hasOpenAndCopy) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
-                () -> refCells
-                        .configure(new DocRefCell.Builder<T_ROW>())
+                () -> cell
                         .hasOpenAndCopy(hasOpenAndCopy)
                         .docRefFunction(docRefExtractionFunction)
                         .showIcon(true)
@@ -549,9 +569,23 @@ public class DataGridUtil {
                                              final DataGridView<T_ROW> dataGrid,
                                              final String name,
                                              final Function<T_ROW, String> nameExtractionFunction) {
+        addFeedColumn(refCells.configure(new FeedRefCell.Builder<T_ROW>()), dataGrid, name, nameExtractionFunction);
+    }
+
+    /// Adds a resizable column of feeds, e.g. in a component, which is given its cell's builder
+    /// configured by its controller (`refCells.configure(new FeedRefCell.Builder<>())`).
+    ///
+    /// @param cell                   The cell's builder, configured to open its feeds.
+    /// @param dataGrid               The grid.
+    /// @param name                   The column's heading.
+    /// @param nameExtractionFunction Gives a row's feed's name.
+    /// @param <T_ROW>                The type of a row.
+    public static <T_ROW> void addFeedColumn(final FeedRefCell.Builder<T_ROW> cell,
+                                             final DataGridView<T_ROW> dataGrid,
+                                             final String name,
+                                             final Function<T_ROW, String> nameExtractionFunction) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
-                () -> refCells
-                        .configure(new FeedRefCell.Builder<T_ROW>())
+                () -> cell
                         .nameFunction(nameExtractionFunction)
                         .showIcon(true)
                         .build())

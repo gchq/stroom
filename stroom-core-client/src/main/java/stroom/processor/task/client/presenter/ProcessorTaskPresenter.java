@@ -17,7 +17,7 @@
 package stroom.processor.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.client.presenter.ProcessorTaskListPresenter;
+import stroom.data.client.component.ProcessorTasksListController;
 import stroom.data.client.presenter.ProcessorTaskSummaryPresenter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTaskFields;
@@ -28,13 +28,14 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskView> {
 
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
-    private final ProcessorTaskListPresenter processorTaskListPresenter;
+    private final ProcessorTasksListController processorTaskList;
 
     private ProcessorFilter processorFilter;
 
@@ -42,24 +43,24 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
     public ProcessorTaskPresenter(final EventBus eventBus,
                                   final ProcessorTaskView view,
                                   final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter,
-                                  final ProcessorTaskListPresenter processorTaskListPresenter) {
+                                  final ProcessorTasksListController processorTaskList) {
         super(eventBus, view);
         own(processorTaskSummaryPresenter);
-        own(processorTaskListPresenter);
+        own(processorTaskList);
         this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
-        this.processorTaskListPresenter = processorTaskListPresenter;
+        this.processorTaskList = processorTaskList;
 
         getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
-        getView().setTaskListView(processorTaskListPresenter.getView());
+        getView().setTaskListView(processorTaskList);
 
         own(processorTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.
-            processorTaskListPresenter.clear();
+            processorTaskList.clear();
 
             final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                processorTaskListPresenter.setExpression(getExpression(row));
+                processorTaskList.setExpression(getExpression(row));
             }
         }));
     }
@@ -90,10 +91,10 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
     public void refresh() {
         final ExpressionOperator expressionOperator = getExpression(null);
         processorTaskSummaryPresenter.setExpression(expressionOperator);
-        processorTaskListPresenter.setExpression(expressionOperator);
+        processorTaskList.setExpression(expressionOperator);
 
         processorTaskSummaryPresenter.refresh();
-        processorTaskListPresenter.refresh();
+        processorTaskList.refresh();
     }
 
     public void setProcessorFilter(final ProcessorFilter processorFilter) {
@@ -126,6 +127,6 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
         /// Shows the tasks.
         ///
         /// @param view Its view.
-        void setTaskListView(View view);
+        void setTaskListView(IsWidget view);
     }
 }

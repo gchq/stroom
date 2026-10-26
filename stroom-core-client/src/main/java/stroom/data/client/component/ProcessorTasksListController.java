@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.client.presenter;
+package stroom.data.client.component;
 
-import stroom.cell.info.client.InfoColumn;
+import stroom.data.client.component.DocRefCell;
+import stroom.data.client.component.FeedRefCell;
 import stroom.data.client.component.RefCellsController;
+import stroom.data.client.presenter.CriteriaUtil;
+import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -36,23 +40,17 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.ExpressionOperator;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.OrderByColumn;
-import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -60,20 +58,18 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class ProcessorTaskListPresenter
-        extends MyPresenterWidget<PagerPanel>
-        implements HasDocumentRead<Object> {
+/// Processor tasks ([ProcessorTasksList]) of a pipeline, feed or folder, or matching an
+/// expression, a page at a time; a task's info (with its stream's) shown in a tooltip.
+public class ProcessorTasksListController extends Controller implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+    private final ProcessorTasksList view;
     private final RestFactory restFactory;
-    private final DataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final ExpressionCriteria criteria;
@@ -81,148 +77,64 @@ public class ProcessorTaskListPresenter
     // Counts the Info clicks, so that only the latest click's tooltip is shown
     private int infoRequestCount;
 
-    private final RefCellsController refCells;
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The content.
+    /// @param restFactory       Finds the tasks, and a task's stream for its info.
+    /// @param tooltipPresenter  Shows a task's info.
+    /// @param dateTimeFormatter Formats times in the user's preferences.
+    /// @param refCells          Lets the feed and pipeline cells open them.
     @Inject
-    public ProcessorTaskListPresenter(final EventBus eventBus,
-                                      final PagerPanel view,
-                                      final RestFactory restFactory,
-                                      final TooltipPresenter tooltipPresenter,
-                                      final DateTimeFormatter dateTimeFormatter,
-                                      final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
+    public ProcessorTasksListController(final EventBus eventBus,
+                                        final ProcessorTasksList view,
+                                        final RestFactory restFactory,
+                                        final TooltipPresenter tooltipPresenter,
+                                        final DateTimeFormatter dateTimeFormatter,
+                                        final RefCellsController refCells) {
+        super(eventBus);
+        this.view = view;
+        own(refCells);
         own(tooltipPresenter);
         this.restFactory = restFactory;
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Processor Tasks");
-        view.setDataWidget(dataGrid);
-
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+        initWidget(view);
 
         criteria = new ExpressionCriteria();
-        addColumns();
+        view.addColumns(dateTimeFormatter::format,
+                refCells.configure(new FeedRefCell.Builder<ProcessorTask>()),
+                refCells.configure(new DocRefCell.Builder<ProcessorTask>()));
+        view.setOnShowInfo(this::showInfo);
         own(OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget()));
-
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        view.setOnSortChange(this::refresh);
     }
 
-    private void addColumns() {
-        // Info column.
-        dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
-            @Override
-            protected void showInfo(final ProcessorTask row,
-                                    final PopupPosition popupPosition,
-                                    final Element anchor) {
-                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-                findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
-                final int requestCount = ++infoRequestCount;
+    private void showInfo(final ProcessorTask row, final PopupPosition popupPosition, final Element anchor) {
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
+        final int requestCount = ++infoRequestCount;
 
-                restFactory
-                        .create(META_RESOURCE)
-                        .method(res -> res.findMetaRow(findMetaCriteria))
-                        .onSuccess(metaRows -> {
-                            // Ignore the reply to an earlier click. Showing the tooltip again while
-                            // it is showing hides it, so the reply to the latest click would hide
-                            // the earlier click's tooltip rather than show its own
-                            if (requestCount != infoRequestCount) {
-                                return;
-                            }
-                            // Should only get one back
-                            final Meta meta = Optional.ofNullable(metaRows)
-                                    .map(ResultPage::getFirst)
-                                    .map(MetaRow::getMeta)
-                                    .orElse(null);
-                            showTooltip(popupPosition, anchor, row, meta);
-                        })
-                        .taskMonitorFactory(getView())
-                        .exec();
-            }
-        }, "<br/>", ColumnSizeConstants.ICON_COL);
-
-        dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(),
-                        ProcessorTaskFields.FIELD_CREATE_TIME,
-                        false) {
-                    @Override
-                    public String getValue(final ProcessorTask row) {
-                        return dateTimeFormatter.format(row.getCreateTimeMs());
+        restFactory
+                .create(META_RESOURCE)
+                .method(res -> res.findMetaRow(findMetaCriteria))
+                .onSuccess(metaRows -> {
+                    // Ignore the reply to an earlier click. Showing the tooltip again while
+                    // it is showing hides it, so the reply to the latest click would hide
+                    // the earlier click's tooltip rather than show its own
+                    if (requestCount != infoRequestCount) {
+                        return;
                     }
-                }, "Create", ColumnSizeConstants.DATE_COL);
-
-        dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(),
-                        ProcessorTaskFields.FIELD_STATUS,
-                        false) {
-                    @Override
-                    public String getValue(final ProcessorTask row) {
-                        return row.getStatus().getDisplayValue();
-                    }
-                }, "Status", 80);
-
-        dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_NODE, true) {
-                    @Override
-                    public String getValue(final ProcessorTask row) {
-                        if (row.getNodeName() != null) {
-                            return row.getNodeName();
-                        } else {
-                            return "";
-                        }
-                    }
-                }, "Node", ColumnSizeConstants.MEDIUM_COL);
-
-        final Function<ProcessorTask, String> feedExtractionFunction = row -> {
-            if (row.getFeedName() != null) {
-                return row.getFeedName();
-            } else {
-                return null;
-            }
-        };
-
-        DataGridUtil.addFeedColumn(refCells, dataGrid, "Feed", feedExtractionFunction);
-
-        dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
-                new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
-            @Override
-            public String getValue(final ProcessorTask row) {
-                if (row.getProcessorFilter() != null) {
-                    return String.valueOf(row.getProcessorFilter().getPriority());
-                }
-
-                return "";
-            }
-        }, "Priority", 60);
-        final Function<ProcessorTask, DocRef> pipelineExtractionFunction = row -> {
-            if (row.getProcessorFilter() != null) {
-                return row.getProcessorFilter().getPipeline();
-            }
-            return null;
-        };
-
-        DataGridUtil.addDocRefColumn(refCells, dataGrid, "Pipeline", pipelineExtractionFunction);
-
-        dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {
-                    @Override
-                    public String getValue(final ProcessorTask row) {
-                        return dateTimeFormatter.format(row.getStartTimeMs());
-                    }
-                }, "Start Time", ColumnSizeConstants.DATE_COL);
-        dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_END_TIME_DATE, false) {
-                    @Override
-                    public String getValue(final ProcessorTask row) {
-                        return dateTimeFormatter.format(row.getEndTimeMs());
-                    }
-                }, "End Time", ColumnSizeConstants.DATE_COL);
+                    // Should only get one back
+                    final Meta meta = Optional.ofNullable(metaRows)
+                            .map(ResultPage::getFirst)
+                            .map(MetaRow::getMeta)
+                            .orElse(null);
+                    showTooltip(popupPosition, anchor, row, meta);
+                })
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
+                .exec();
     }
 
     private void showTooltip(final PopupPosition popupPosition,
@@ -315,16 +227,20 @@ public class ProcessorTaskListPresenter
         }
     }
 
+    /// Shows the tasks matching an expression.
+    ///
+    /// @param expression The expression, or `null` for none.
     public void setExpression(final ExpressionOperator expression) {
         criteria.setExpression(expression);
         refresh();
     }
 
+    /// Empties the list.
     public void clear() {
-        dataGrid.setRowData(0, new ArrayList<>(0));
-        dataGrid.setRowCount(0, true);
+        view.clear();
     }
 
+    /// Fetches the tasks again; the first time, starts the list.
     public void refresh() {
         if (dataProvider == null) {
             dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(getEventBus()) {
@@ -334,18 +250,19 @@ public class ProcessorTaskListPresenter
                                     final RestErrorHandler errorHandler) {
                     if (criteria.getExpression() != null) {
                         CriteriaUtil.setRange(criteria, range);
-                        CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                        CriteriaUtil.setSortList(criteria, view.getSortList());
                         restFactory
                                 .create(PROCESSOR_TASK_RESOURCE)
                                 .method(res -> res.find(criteria))
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
-                                .taskMonitorFactory(getView())
+                                .owner(ProcessorTasksListController.this)
+                                .taskMonitorFactory(view.getTaskMonitor())
                                 .exec();
                     }
                 }
             };
-            dataProvider.addDataDisplay(dataGrid);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }

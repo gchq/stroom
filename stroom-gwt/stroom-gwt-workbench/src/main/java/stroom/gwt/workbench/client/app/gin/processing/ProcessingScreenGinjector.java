@@ -19,10 +19,10 @@ package stroom.gwt.workbench.client.app.gin.processing;
 import stroom.analytics.client.presenter.ExecutionScheduleManager;
 import stroom.dashboard.client.component.ProcessorLimitsController;
 import stroom.data.client.component.ProcessChoiceDialogController;
+import stroom.data.client.component.ProcessorTasksListController;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
-import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
@@ -103,7 +103,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorLimitsController getProcessorLimitsController();
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
-    ProcessorTaskListPresenter getProcessorTaskListPresenter();
+    ProcessorTasksListController getProcessorTasksListController();
 
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
     /// list), as `FolderPresenter`, `FeedPresenter` and `PipelinePresenter` create it.
