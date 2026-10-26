@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- Traces: a quick filter above a histogram of them over time and a page of them, with a pager -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:p="urn:import:stroom.pathways.client.presenter"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <v:QuickFilterPage ui:field="page" accessibleName="Filter traces">
+        <g:FlowPanel styleName="dock-container-vertical max">
+            <p:TraceHistogramChart ui:field="histogram" addStyleNames="dock-min"/>
+            <dg:PagerPanel ui:field="pager" addStyleNames="dock-max overflow-hidden">
+                <dg:DataGrid ui:field="dataGrid" tableName="Traces"/>
+            </dg:PagerPanel>
+        </g:FlowPanel>
+    </v:QuickFilterPage>
+</ui:UiBinder>

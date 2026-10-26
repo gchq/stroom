@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client.component;
 
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.pathways.shared.FindTraceCriteria;
-import stroom.pathways.shared.FindTracesWithHistogramCriteria;
-import stroom.pathways.shared.TracesResource;
+import stroom.pathways.client.presenter.TraceHistogramChart;
+import stroom.pathways.shared.TraceHistogram;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.TimeRange;
-import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
-import stroom.ui.config.client.UiConfigCache;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DurationUtil;
 import stroom.util.client.NumberUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.TokenError;
-import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -53,23 +39,26 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.RowStyles;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.view.client.AbstractDataProvider;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public class TracesListPresenter
-        extends MyPresenterWidget<QuickFilterPageView>
-        implements QuickFilterUiHandlers {
+/// Traces: a quick filter above a histogram of them over time and a page of them, a row each (its
+/// operation, with an icon for an error, a missing root, truncation or trailing activity, its id,
+/// start, root and trace durations, services, depth and spans), red where it has an errored span;
+/// several can be selected.
+public class TracesList extends Component {
 
-    private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     // A trace is flagged as having "trailing leaked activity" when spans keep arriving well after
     // the root span itself ended — e.g. a pooled/background thread that captured the trace's OTel
@@ -79,102 +68,89 @@ public class TracesListPresenter
     private static final long LEAK_ABSOLUTE_FLOOR_NANOS = 30L * 1_000_000_000L; // 30s
     private static final long LEAK_MULTIPLIER = 5L;
 
-    private static final int HISTOGRAM_BUCKETS = 80;
+    @UiField
+    QuickFilterPage page;
+    @UiField
+    TraceHistogramChart histogram;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<TraceRoot> dataGrid;
 
-    private final DateTimeFormatter dateTimeFormatter;
-    private final RestFactory restFactory;
-    private final PagerPanel pagerView;
-    private final TraceHistogramChart histogram;
-    private final DataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
-    private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
+    private Runnable onSortChange = () -> {
+    };
 
-    private DocRef dataSourceRef;
-    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
-    private String filter;
-    private Pathway pathway;
-    private TimeRange timeRange;
-
-    @Inject
-    public TracesListPresenter(final EventBus eventBus,
-                               final QuickFilterPageView view,
-                               final PagerPanel pagerView,
-                               final RestFactory restFactory,
-                               final DateTimeFormatter dateTimeFormatter,
-                               final UiConfigCache uiConfigCache,
-                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view);
-        getView().setAccessibleName("Filter traces");
-        this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
-        this.pagerView = pagerView;
-        this.histogram = new TraceHistogramChart();
-        histogram.setDateTimeFormatter(dateTimeFormatter);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list, with no columns until [#addColumns(Function)].
+    public TracesList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(TraceRoot::getTraceId);
-        dataGrid.setTableName("Traces");
-        pagerView.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        addColumns();
         dataGrid.setRowStyles(errorRowStyles());
-
-        uiConfigCache.get(uiConfig -> {
-            if (uiConfig != null) {
-                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                        "Traces Quick Filter",
-                        FindTraceCriteria.FIELD_DEFINITIONS,
-                        uiConfig.getHelpUrlQuickFilter()));
-            }
-        }, this);
-
-        // Data slot = histogram above the grid, so it sits between the quick-filter bar and the list.
-        final FlowPanel dataPanel = new FlowPanel();
-        dataPanel.addStyleName("dock-container-vertical");
-        dataPanel.addStyleName("max");
-        histogram.addStyleName("dock-min");
-        dataPanel.add(histogram);
-        final Widget pagerWidget = pagerView.asWidget();
-        pagerWidget.addStyleName("dock-max");
-        pagerWidget.addStyleName("overflow-hidden");
-        dataPanel.add(pagerWidget);
-        view.setDataView(new SimpleView(dataPanel));
-        view.setUiHandlers(this);
-        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
-
-        own(selectionModel.addSelectionHandler(event -> {
-
-        }));
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }
 
-    private static final class SimpleView extends ViewImpl {
-
-        private final Widget widget;
-
-        SimpleView(final Widget widget) {
-            this.widget = widget;
-        }
-
-        @Override
-        public Widget asWidget() {
-            return widget;
-        }
+    /// @param dataProvider Gives the list its rows, a page at a time.
+    public void setDataProvider(final AbstractDataProvider<TraceRoot> dataProvider) {
+        dataProvider.addDataDisplay(dataGrid);
     }
 
-    public void setHistogramZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
-        histogram.setOnZoom(zoomHandler);
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
     }
 
-    @Override
-    public void onFilterChange(final String text) {
-        setFilter(text);
-        refresh();
-    }
-
+    /// @return The selection.
     public MultiSelectionModelImpl<TraceRoot> getSelectionModel() {
         return selectionModel;
+    }
+
+    /// @return How the rows are sorted, for the request for them.
+    public ColumnSortList getSortList() {
+        return dataGrid.getColumnSortList();
+    }
+
+    /// @param data The histogram of the traces found over time, or `null` for none.
+    public void setHistogramData(final TraceHistogram data) {
+        histogram.setData(data);
+    }
+
+    /// @param dateTimeFormatter Formats the histogram's times.
+    public void setHistogramDateTimeFormatter(final DateTimeFormatter dateTimeFormatter) {
+        histogram.setDateTimeFormatter(dateTimeFormatter);
+    }
+
+    /// @param onZoom Given the start and end, in milliseconds since the epoch, of a part of the
+    ///               histogram the user zooms into.
+    public void setOnHistogramZoom(final BiConsumer<Long, Long> onZoom) {
+        histogram.setOnZoom(onZoom);
+    }
+
+    /// @param filterError Why the server rejected the filter, or `null` to clear it.
+    public void setFilterError(final String filterError) {
+        page.setFilterError(filterError);
+    }
+
+    /// @param popupTextSupplier Gives the filter's help popup its text.
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        page.registerPopupTextProvider(popupTextSupplier);
+    }
+
+    /// @param contextHandler Gives the filter its recent filters and remembers the ones used, or
+    ///                       `null` for none.
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        page.setQuickFilterContextHandler(contextHandler);
+    }
+
+    /// @param onFilterChange Given the filter's text when it changes.
+    public void setOnFilterChange(final Consumer<String> onFilterChange) {
+        page.setOnFilterChange(onFilterChange);
+    }
+
+    /// @param onSortChange Run when the user sorts by another column.
+    public void setOnSortChange(final Runnable onSortChange) {
+        this.onSortChange = onSortChange;
     }
 
     // Red-tints the whole row for a trace with any errored span (see pathways.css .trace-row--error).
@@ -184,10 +160,13 @@ public class TracesListPresenter
                 : "";
     }
 
-    private void addColumns() {
+    /// Adds the columns, once.
+    ///
+    /// @param dateTimeFormat Formats a time in milliseconds since the epoch.
+    public void addColumns(final Function<Long, String> dateTimeFormat) {
         addNameColumn();
         addIdColumn();
-        addTraceStartColumn();
+        addTraceStartColumn(dateTimeFormat);
         addDurationColumn();
         addTotalActivityColumn();
         addServicesColumn();
@@ -203,20 +182,14 @@ public class TracesListPresenter
         dataGrid.addResizableColumn(column, "Operation", 300);
     }
 
-    /**
-     * Renders the operation name, prefixed with a single status icon (and hover tooltip), in
-     * precedence order:
-     * <ul>
-     *   <li>an <b>error</b> icon when any span in the trace reported an error status
-     *       ({@link TraceRoot#isError()});</li>
-     *   <li>else an <b>error</b> icon + "No root span found" placeholder when the trace has no root
-     *       span (orphan-only — its root aged out or never arrived); see {@link TraceRoot#isOrphan()};</li>
-     *   <li>else a <b>warning</b> icon when the trace hit the store's per-trace span limit and so is
-     *       missing spans ({@link TraceRoot#isTruncated()});</li>
-     *   <li>else a <b>warning</b> icon when the trace has trailing leaked activity
-     *       ({@link #hasTrailingLeak(TraceRoot)}).</li>
-     * </ul>
-     */
+    // Renders the operation name, prefixed with a single status icon (and hover tooltip), in
+    // precedence order:
+    // - an error icon when any span in the trace reported an error status (TraceRoot.isError());
+    // - else an error icon + "No root span found" placeholder when the trace has no root span
+    //   (orphan-only: its root aged out or never arrived); see TraceRoot.isOrphan();
+    // - else a warning icon when the trace hit the store's per-trace span limit and so is missing
+    //   spans (TraceRoot.isTruncated());
+    // - else a warning icon when the trace has trailing leaked activity (hasTrailingLeak).
     private SafeHtml buildOperationCell(final TraceRoot trace) {
         final boolean orphan = trace != null && trace.isOrphan();
         final String rawName = trace == null
@@ -227,7 +200,7 @@ public class TracesListPresenter
                 : rawName;
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         sb.append(SafeHtmlUtil.getSafeHtmlFromTrustedString(
-                "<div style=\"display:flex;align-items:center;gap:4px;\">"));
+                "<div class=\"traces-list__operation\">"));
         if (trace != null && trace.isError()) {
             sb.append(SvgImageUtil.toSafeHtml(
                     "Trace contains one or more errored spans", SvgImage.ERROR, "svgIcon"));
@@ -248,12 +221,10 @@ public class TracesListPresenter
         return sb.toSafeHtml();
     }
 
-    /**
-     * A trace has trailing leaked activity when its last span ends significantly after the root
-     * span's own end — the gap must clear both an absolute floor and a multiple of the root's own
-     * duration. {@code endTime} is the max end across all spans; {@code rootEndTime} is the root
-     * span's own (fixed) end.
-     */
+    // A trace has trailing leaked activity when its last span ends significantly after the root
+    // span's own end: the gap must clear both an absolute floor and a multiple of the root's own
+    // duration. endTime is the max end across all spans; rootEndTime is the root span's own (fixed)
+    // end.
     private boolean hasTrailingLeak(final TraceRoot trace) {
         if (trace == null) {
             return false;
@@ -280,9 +251,9 @@ public class TracesListPresenter
     }
 
 
-    private void addTraceStartColumn() {
+    private void addTraceStartColumn(final Function<Long, String> dateTimeFormat) {
         final Function<TraceRoot, NanoTime> valueExtractor = TraceRoot::getStartTime;
-        addTimeColumn("Trace Start", 200, valueExtractor);
+        addTimeColumn("Trace Start", 200, valueExtractor, dateTimeFormat);
     }
 
     private void addDurationColumn() {
@@ -365,12 +336,13 @@ public class TracesListPresenter
 
     private void addTimeColumn(final String name,
                                final int width,
-                               final Function<TraceRoot, NanoTime> function) {
+                               final Function<TraceRoot, NanoTime> function,
+                               final Function<Long, String> dateTimeFormat) {
         final Function<TraceRoot, String> valueExtractor = pathway -> {
             final NanoTime nanoTime = function.apply(pathway);
             return nanoTime == null
                     ? ""
-                    : dateTimeFormatter.format(nanoTime.toEpochMillis());
+                    : dateTimeFormat.apply(nanoTime.toEpochMillis());
         };
         final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
@@ -383,78 +355,10 @@ public class TracesListPresenter
     }
 
 
-    public void refresh() {
-        if (dataProvider == null) {
-            dataProvider = new RestDataProvider<TraceRoot, ResultPage<TraceRoot>>(getEventBus()) {
-                @Override
-                protected void exec(final Range range,
-                                    final Consumer<ResultPage<TraceRoot>> dataConsumer,
-                                    final RestErrorHandler errorHandler) {
-                    if (dataSourceRef == null) {
-                        histogram.setData(null);
-                        dataConsumer.accept(ResultPage.empty());
-                    } else {
-                        // The histogram rides back on the page so the bars and the rows are counted
-                        // from one read of the store rather than from two requests that can see
-                        // different data.
-                        final FindTracesWithHistogramCriteria criteria =
-                                new FindTracesWithHistogramCriteria(new FindTraceCriteria(
-                                        CriteriaUtil.createPageRequest(range),
-                                        CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
-                                        dataSourceRef,
-                                        filter,
-                                        pathway,
-                                        SimpleDuration.ZERO,
-                                        timeRange),
-                                        HISTOGRAM_BUCKETS);
+    // --------------------------------------------------------------------------------
 
-                        restFactory
-                                .create(TRACES_RESOURCE)
-                                .method(res -> res.findTracesWithHistogram(criteria))
-                                .onSuccess(page -> {
-                                    // A rejected filter comes back as an empty page like any
-                                    // other, so surface the reason on the filter box. See
-                                    // ResultPage.filterError.
-                                    getView().setFilterError(
-                                            NullSafe.get(page.getFilterError(), TokenError::getText));
-                                    histogram.setData(page.getHistogram());
-                                    dataConsumer.accept(page);
-                                })
-                                .onFailure(error -> {
-                                    histogram.setData(null);
-                                    errorHandler.onError(error);
-                                })
-                                .taskMonitorFactory(pagerView)
-                                .exec();
-                    }
-                }
-            };
-            dataProvider.addDataDisplay(dataGrid);
 
-        } else {
-            dataProvider.refresh();
-        }
-    }
+    interface Binder extends UiBinder<Widget, TracesList> {
 
-    public void setDataSourceRef(final DocRef dataSourceRef) {
-        this.dataSourceRef = dataSourceRef;
-        // Operations and trace ids are particular to one Plan B document, so its recent filters
-        // are too.
-        getView().setQuickFilterContextHandler(dataSourceRef == null
-                ? null
-                : quickFilterContextHandlerFactory.create(
-                        FindTraceCriteria.QUICK_FILTER_CONTEXT.withDataSource(dataSourceRef), this, this));
-    }
-
-    public void setFilter(final String filter) {
-        this.filter = filter;
-    }
-
-    public void setPathway(final Pathway pathway) {
-        this.pathway = pathway;
-    }
-
-    public void setTimeRange(final TimeRange timeRange) {
-        this.timeRange = timeRange;
     }
 }

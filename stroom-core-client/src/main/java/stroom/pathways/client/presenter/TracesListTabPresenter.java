@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.pathways.client.component.TracesListController;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
@@ -37,6 +38,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,7 +53,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     // loaded whole; below it the whole trace is fetched and rendered as before.
     private static final int LARGE_TRACE_THRESHOLD = 10_000;
 
-    private final TracesListPresenter listPresenter;
+    private final TracesListController listPresenter;
     private final TraceOverviewWidget traceOverviewWidget;
     private final RestFactory restFactory;
     // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
@@ -63,7 +65,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     @Inject
     public TracesListTabPresenter(final EventBus eventBus,
                                   final TracesView view,
-                                  final TracesListPresenter listPresenter,
+                                  final TracesListController listPresenter,
                                   final RestFactory restFactory,
                                   final TimeRangeSelectorController timeRangeSelectorController) {
         super(eventBus, view);
@@ -76,7 +78,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);
 
-        view.setTopWidget(listPresenter.getView());
+        view.setTopWidget(listPresenter);
         view.setBottomWidget(traceOverviewWidget);
 
         own(timeRangeSelector.addValueChangeHandler(e -> {
@@ -199,7 +201,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
 
     public interface TracesView extends View {
 
-        void setTopWidget(View view);
+        void setTopWidget(IsWidget view);
 
         void setBottomWidget(Widget view);
     }
