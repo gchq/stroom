@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.importexport.client.component.DependencyListController;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.datasource.ConditionSet;
@@ -31,6 +32,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -40,19 +42,19 @@ public class DependenciesTabPresenter
 
     public static final String TAB_TYPE = "Dependencies";
 
-    private final DependenciesPresenter dependenciesPresenter;
+    private final DependencyListController dependenciesPresenter;
 
     @Inject
     public DependenciesTabPresenter(final EventBus eventBus,
                                     final DependenciesTabView view,
-                                    final DependenciesPresenter dependenciesPresenter,
+                                    final DependencyListController dependenciesPresenter,
                                     final UiConfigCache uiConfigCache,
                                     final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(dependenciesPresenter);
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
-        getView().setListView(dependenciesPresenter.getView());
+        getView().setListView(dependenciesPresenter);
         // A rejected filter comes back as an empty grid like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         dependenciesPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -122,7 +124,7 @@ public class DependenciesTabPresenter
         /// Shows the list of dependencies.
         ///
         /// @param view Its view.
-        void setListView(View view);
+        void setListView(IsWidget view);
 
         void setHelpTooltipText(final SafeHtml helpTooltipText);
 
