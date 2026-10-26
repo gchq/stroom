@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.client.presenter;
+package stroom.receive.rules.client.component;
 
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -22,69 +22,94 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.query.api.ExpressionOperator;
+import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.HeadingBuilder;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPanel> implements Focus {
+/// The data retention rules, a row each (whether it is enabled, its number, name, retention and
+/// expression, and an action menu), faded where disabled; one can be selected.
+public class DataRetentionPolicyList extends Component {
 
-    private final DataGrid<DataRetentionRule> dataGrid;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<DataRetentionRule> dataGrid;
+
     private final MultiSelectionModelImpl<DataRetentionRule> selectionModel;
-    private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
-    private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
+    private BiConsumer<DataRetentionRule, Boolean> onEnabledChange = (rule, enabled) -> {
+    };
+    private BiConsumer<DataRetentionRule, PopupPosition> onShowActionMenu = (rule, popupPosition) -> {
+    };
 
-    @Inject
-    public DataRetentionPolicyListPresenter(final EventBus eventBus,
-                                            final PagerPanel view) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list.
+    public DataRetentionPolicyList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by rule number (their position): a tick rebuilds them
         dataGrid.setKeyProvider(DataRetentionRule::getRuleNumber);
-        dataGrid.setTableName("Data Retention Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
+        addColumns();
     }
 
-    @Override
+    /// Puts the focus on the list.
     public void focus() {
         dataGrid.setFocus(true);
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// @param data The rules.
+    public void setData(final List<DataRetentionRule> data) {
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
+    }
+
+    /// @return The selection, one rule at most.
+    public MultiSelectionModel<DataRetentionRule> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
+    }
+
+    /// @param onEnabledChange Given a rule and whether it is now enabled, when its tick box is
+    ///                        pressed (not for the default rule).
+    public void setOnEnabledChange(final BiConsumer<DataRetentionRule, Boolean> onEnabledChange) {
+        this.onEnabledChange = onEnabledChange;
+    }
+
+    /// @param onShowActionMenu Given a rule and where to show its action menu, when its action button
+    ///                         is pressed.
+    public void setOnShowActionMenu(final BiConsumer<DataRetentionRule, PopupPosition> onShowActionMenu) {
+        this.onShowActionMenu = onShowActionMenu;
+    }
+
+    private void addColumns() {
 
         addEnabledCol(DataRetentionRule::isEnabled);
 
@@ -138,24 +163,10 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPan
         addActionButtonColumn(20);
     }
 
-    private void addColumn(final String name,
-                           final int width,
-                           final Function<DataRetentionRule, String> valueFunc) {
-
-        final Column<DataRetentionRule, SafeHtml> expressionColumn = new Column<DataRetentionRule, SafeHtml>(
-                new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DataRetentionRule rule) {
-                return getSafeHtml(valueFunc.apply(rule), rule);
-            }
-        };
-        dataGrid.addResizableColumn(expressionColumn, name, width);
-    }
-
     private void addActionButtonColumn(final int width) {
 
         final ActionCell<DataRetentionRule> actionCell = new ActionCell<>(this::showActionMenu,
-                DataRetentionPolicyListPresenter::getActionMenuName);
+                DataRetentionPolicyList::getActionMenuName);
 
         final Column<DataRetentionRule, DataRetentionRule> expressionColumn =
                 new Column<DataRetentionRule, DataRetentionRule>(actionCell) {
@@ -179,17 +190,12 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPan
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-        final List<Item> items = actionMenuItemProvider.apply(row);
-        ShowMenuEvent
-                .builder()
-                .name(getActionMenuName(row))
-                .items(items)
-                .popupPosition(popupPosition)
-                .fire(this);
+        onShowActionMenu.accept(row, popupPosition);
     }
 
-    // e.g. "Actions for rule 3 'My rule'"
-    private static String getActionMenuName(final DataRetentionRule row) {
+    /// @param row A rule.
+    /// @return The name of its action menu, e.g. "Actions for rule 3 'My rule'".
+    public static String getActionMenuName(final DataRetentionRule row) {
         final String name = row.getName();
         return "Actions for rule " + row.getRuleNumber()
                + (NullSafe.isBlankString(name)
@@ -212,8 +218,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPan
         };
 
         enabledColumn.setFieldUpdater((index, rule, value) -> {
-            if (enabledStateHandler != null && !isDefaultRule(rule)) {
-                enabledStateHandler.accept(rule, value.toBoolean());
+            if (!isDefaultRule(rule)) {
+                onEnabledChange.accept(rule, value.toBoolean());
             }
         });
         final Header<SafeHtml> heading = new HeadingBuilder("Enabled")
@@ -228,46 +234,11 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerPan
                 rule.getName());
     }
 
-    private SafeHtml getSafeHtml(final String string, final DataRetentionRule rule) {
-        if (isDefaultRule(rule)) {
-            return HtmlBuilder
-                    .builder()
-                    .span(hb ->
-                            hb.append(string), Attribute.className("dataRetention--defaultRule"))
-                    .toSafeHtml();
-        } else if (!rule.isEnabled()) {
-            return HtmlBuilder
-                    .builder()
-                    .span(hb ->
-                            hb.append(string), Attribute.className("dataRetention--disabledRule"))
-                    .toSafeHtml();
-        } else {
-            return SafeHtmlUtils.fromString(string);
-        }
-    }
 
-    public void setData(final List<DataRetentionRule> data) {
-        dataGrid.setRowData(0, data);
-        dataGrid.setRowCount(data.size());
+    // --------------------------------------------------------------------------------
 
-    }
 
-    public MultiSelectionModel<DataRetentionRule> getSelectionModel() {
-        return selectionModel;
-    }
+    interface Binder extends UiBinder<Widget, DataRetentionPolicyList> {
 
-    /// The toolbar beside the list's pager, for the screen's own buttons.
-    ///
-    /// @return The toolbar.
-    public Toolbar getToolbar() {
-        return getView().getToolbar();
-    }
-
-    public void setEnabledStateHandler(final BiConsumer<DataRetentionRule, Boolean> enabledStateHandler) {
-        this.enabledStateHandler = enabledStateHandler;
-    }
-
-    public void setActionMenuItemProvider(final Function<DataRetentionRule, List<Item>> actionMenuItemProvider) {
-        this.actionMenuItemProvider = actionMenuItemProvider;
     }
 }

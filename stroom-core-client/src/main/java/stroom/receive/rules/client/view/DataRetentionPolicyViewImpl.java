@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.view;
 
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,7 +46,7 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
     }
 
     @Override
-    public void setTableView(final View view) {
+    public void setTableView(final IsWidget view) {
         this.table.setWidget(view.asWidget());
     }
 

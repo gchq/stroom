@@ -25,6 +25,7 @@ import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionTreeController;
+import stroom.receive.rules.client.component.DataRetentionPolicyListController;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
@@ -69,7 +70,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     protected static final CellIcon MOVE_RULE_UP_ICON = CellIcon.of(SvgImage.UP, "Move rule up", false);
     protected static final CellIcon MOVE_RULE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move rule down", false);
 
-    private final DataRetentionPolicyListPresenter listPresenter;
+    private final DataRetentionPolicyListController listPresenter;
     private final ExpressionTreeController expressionTree;
     private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
     private final RestFactory restFactory;
@@ -91,7 +92,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     @Inject
     public DataRetentionPolicyPresenter(final EventBus eventBus,
                                         final DataRetentionPolicyView view,
-                                        final DataRetentionPolicyListPresenter listPresenter,
+                                        final DataRetentionPolicyListController listPresenter,
                                         final ExpressionTreeController expressionTree,
                                         final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
                                         final RestFactory restFactory) {
@@ -103,7 +104,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         this.editRulePresenterProvider = editRulePresenterProvider;
         this.restFactory = restFactory;
 
-        getView().setTableView(listPresenter.getView());
+        getView().setTableView(listPresenter);
         getView().setExpressionView(expressionTree);
 
         // Stop users from selecting expression items.
@@ -125,7 +126,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Rule Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
 
-        listPresenter.getView()
+        listPresenter
                 .asWidget()
                 .getElement()
                 .getStyle()
@@ -624,7 +625,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
     public interface DataRetentionPolicyView extends View {
 
-        void setTableView(View view);
+        void setTableView(IsWidget view);
 
         void setExpressionView(IsWidget view);
     }
