@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
+import stroom.dashboard.client.component.CurrentSelectionController;
 import stroom.dashboard.client.component.LayoutConstraintController;
 import stroom.dashboard.client.component.RenameTabController;
 import stroom.dashboard.client.flexlayout.FlexLayout;
@@ -33,7 +34,6 @@ import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
-import stroom.dashboard.client.query.CurrentSelectionPresenter;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -65,11 +65,11 @@ import stroom.util.shared.Version;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -115,9 +115,9 @@ public class DashboardPresenter
     private final QueryToolbarController queryToolbar;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintController> layoutConstraintControllerProvider;
-    private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
+    private final Provider<CurrentSelectionController> currentSelectionControllerProvider;
     private final Provider<ExplorerPopupController> dashboardSelection;
-    private CurrentSelectionPresenter currentSelectionPresenter;
+    private CurrentSelectionController currentSelection;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
@@ -151,7 +151,7 @@ public class DashboardPresenter
                               final Provider<RenameTabController> renameTabControllerProvider,
                               final QueryInfo queryInfo,
                               final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
-                              final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider,
+                              final Provider<CurrentSelectionController> currentSelectionControllerProvider,
                               final UrlParameters urlParameters,
                               final Provider<ExplorerPopupController> dashboardSelection) {
         super(eventBus, view);
@@ -162,7 +162,7 @@ public class DashboardPresenter
         components.setOwner(this);
         this.queryInfo = queryInfo;
         this.layoutConstraintControllerProvider = layoutConstraintControllerProvider;
-        this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;
+        this.currentSelectionControllerProvider = currentSelectionControllerProvider;
         this.dashboardSelection = dashboardSelection;
 
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbar);
@@ -267,14 +267,15 @@ public class DashboardPresenter
     }
 
     private void onSelectionInfo() {
-        if (currentSelectionPresenter == null) {
-            currentSelectionPresenter = make(currentSelectionPresenterProvider);
+        // Kept between showings, as it shows the selection as it changes
+        if (currentSelection == null) {
+            currentSelection = make(currentSelectionControllerProvider);
         }
 
-        currentSelectionPresenter.refresh(dashboardContext, false);
+        currentSelection.refresh(dashboardContext, false);
         final HandlerRegistration handlerRegistration = dashboardContext.addContextChangeListener(() ->
-                currentSelectionPresenter.refresh(dashboardContext, false));
-        ShowPopupEvent.builder(currentSelectionPresenter)
+                currentSelection.refresh(dashboardContext, false));
+        ControllerDialog.show(currentSelection)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(600, 800))
                 .caption("Current Selection")

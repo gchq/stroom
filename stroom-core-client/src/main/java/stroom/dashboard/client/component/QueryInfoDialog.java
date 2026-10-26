@@ -14,55 +14,50 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.query;
+package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.query.QueryInfoPresenter.QueryInfoView;
-import stroom.widget.form.client.AccessibleName;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
+import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextAreaInput;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class QueryInfoViewImpl extends ViewWithUiHandlers implements QueryInfoView {
+/// The query info dialog's content: why the query is being run, which a site may ask for.
+public class QueryInfoDialog extends Component {
 
-    public interface Binder extends UiBinder<Widget, QueryInfoViewImpl> {
-
-    }
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextArea queryInfo;
+    TextAreaInput queryInfo;
 
-    private final Widget widget;
-
-    @Inject
-    public QueryInfoViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        // The dialog's title (which a site can change) asks for it; this says what it is
-        AccessibleName.set(queryInfo, "Query Info");
-        widget.addAttachHandler(event -> focus());
+    /// Makes empty content, which has the focus when shown.
+    public QueryInfoDialog() {
+        initWidget(BINDER.createAndBindUi(this));
+        addAttachHandler(event -> focus());
     }
 
-    @Override
+    /// Puts the focus in the text.
     public void focus() {
         queryInfo.setFocus(true);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The text entered.
     public String getQueryInfo() {
         return queryInfo.getText();
     }
 
-    @Override
+    /// @param queryInfo The text to start with.
     public void setQueryInfo(final String queryInfo) {
         this.queryInfo.setText(queryInfo);
-        focus();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, QueryInfoDialog> {
+
     }
 }

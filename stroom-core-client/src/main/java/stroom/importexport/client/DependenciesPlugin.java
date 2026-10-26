@@ -20,17 +20,17 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.importexport.client.component.DependenciesInfoController;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -49,7 +49,8 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
                               final Provider<DependenciesTabPresenter> presenterProvider,
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry,
-                              final Provider<DependenciesInfoPresenter> dependenciesInfoPresenterProvider) {
+                              final Provider<DependenciesInfoController> dependenciesInfoControllerProvider,
+                              final AppRoot appRoot) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         // Open the Dependencies view, filtered by a particular DocRef
@@ -62,9 +63,9 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
             });
         });
 
-        // The screens it opens, made when first asked for
+        // The screens it opens, made when asked for; the app owns each while it is shown
         eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event ->
-                dependenciesInfoPresenterProvider.get().onShow(event));
+                dependenciesInfoControllerProvider.get().show(appRoot, event.getDocRef()));
     }
 
     @Override

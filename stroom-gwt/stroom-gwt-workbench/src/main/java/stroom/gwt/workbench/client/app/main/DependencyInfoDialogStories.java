@@ -27,18 +27,18 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.importexport.client.component.DependenciesInfoController;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/DependencyInfoDialog`, showing Stroom's real [DependenciesInfoPresenter]
+/// Stories of `App/Main/DependencyInfoDialog`, showing Stroom's real [DependenciesInfoController]
 /// (the Dependencies screen's 'Properties' dialog).
 ///
 /// In Stroom the Dependencies screen's action menu fires `ShowDependenciesInfoDialogEvent`, which
-/// the presenter's listener passes on to it. The story fires the event, with the presenter (from
-/// GIN) registered as its handler. The dialog makes no requests.
+/// `DependenciesPlugin` handles by showing the dialog. The story fires the event, with a handler
+/// that shows the dialog (from GIN) as the plugin does. The dialog makes no requests.
 public final class DependencyInfoDialogStories {
 
     private DependencyInfoDialogStories() {
@@ -90,9 +90,8 @@ public final class DependencyInfoDialogStories {
                 .withoutStartupFixtures()
                 .build();
         // As DependenciesPlugin would
-        final DependenciesInfoPresenter presenter = injector.getDependenciesInfoPresenter();
-        harness.addRegistration(harness.getEventBus()
-                .addHandler(ShowDependenciesInfoDialogEvent.getType(), presenter));
+        harness.addRegistration(harness.getEventBus().addHandler(ShowDependenciesInfoDialogEvent.getType(), event ->
+                injector.getDependenciesInfoController().show(harness.getAppRoot(), event.getDocRef())));
         ShowDependenciesInfoDialogEvent.fire(harness.getHasHandlers(), docRef);
         return harness.asWidget();
     }

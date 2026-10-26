@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.client.presenter;
+package stroom.entity.client.component;
 
 import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
@@ -25,91 +25,76 @@ import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
 
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
 
-public class InfoDocumentPresenter
-        extends MyPresenterWidget<InfoDocumentPresenter.InfoDocumentView>
-        implements ShowInfoDocumentDialogEvent.Handler {
+/// A document's Info dialog ([InfoDocument]), made for one use. It isn't modal, so Info on another
+/// document while it is shown shows that document in it ([#read]).
+public class InfoDocumentController extends Controller {
 
+    private final InfoDocument view;
     private final DateTimeFormatter dateTimeFormatter;
-    private boolean isShowing = false;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The content.
+    /// @param dateTimeFormatter Formats the audit entries' times.
     @Inject
-    public InfoDocumentPresenter(final EventBus eventBus,
-                                 final InfoDocumentView view,
-                                 final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view);
+    public InfoDocumentController(final EventBus eventBus,
+                                  final InfoDocument view,
+                                  final DateTimeFormatter dateTimeFormatter) {
+        super(eventBus);
+        this.view = view;
         this.dateTimeFormatter = dateTimeFormatter;
-
-        own(getView().asWidget().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
+        initWidget(view);
+        view.setOnMouseDown(event -> CopyTextUtil.onClick(event, this));
     }
 
-    private void show() {
-        // Popup is not modal so, allow the user to click Info for another doc
-        // which will just update the view and not need a new show event.
-        if (!isShowing) {
-            final PopupSize popupSize = PopupSize.resizable(500, 500);
-            ShowPopupEvent.builder(this)
-                    .popupType(PopupType.CLOSE_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Info")
-                    .onShow(e -> {
-                        getView().focus();
-                        isShowing = true;
-                    })
-                    .onHide(e -> isShowing = false)
-                    .fire();
-        }
+    /// Shows a document's details in a dialog, owned by `opener` until it is closed.
+    ///
+    /// @param opener What shows it.
+    /// @param event  The document's details, as the explorer's Info gives them.
+    public void show(final HasControllerNode opener, final ShowInfoDocumentDialogEvent event) {
+        read(event);
+        ControllerDialog.showOnce(opener, this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(PopupSize.resizable(500, 500))
+                .caption("Info")
+                .fire();
     }
 
-    @Override
-    public void onCreate(final ShowInfoDocumentDialogEvent event) {
+    /// Shows another document's details in the dialog.
+    ///
+    /// @param event The document's details, as the explorer's Info gives them.
+    public void read(final ShowInfoDocumentDialogEvent event) {
         final ExplorerNodeInfo explorerNodeInfo = event.getExplorerNodeInfo();
         final ResultPage<DocAuditEntry> auditEntryResultPage = event.getAuditEntries();
         final DocRef docRef = explorerNodeInfo.getExplorerNode().getDocRef();
         final ExplorerNode explorerNode = event.getExplorerNode();
 
         final HtmlBuilder hb = new HtmlBuilder();
-//        if (info.getOtherInfo() != null) {
-//            final int index = info.getOtherInfo().indexOf(":");
-//            if (index != -1) {
-//                appendLine(info.getOtherInfo().substring(0, index),
-//                        info.getOtherInfo().substring(index + 1),
-//                        hb);
-//            }
-//        }
-
         appendLine("UUID", docRef.getUuid(), hb);
         appendLine("Type", docRef.getType(), hb);
         appendLine("Name", docRef.getName(), hb);
 
         if (NullSafe.hasItems(explorerNode.getTags())) {
-//            final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
             appendLine("Tags", "", hb);
-//            appendKey("Tags", sbInner);
-
             final Set<String> tags = explorerNode.getTags();
             tags.stream()
                     .sorted()
-                    .forEach(tag ->
-                            appendLine("\t", tag, hb));
-//            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
+                    .forEach(tag -> appendLine("\t", tag, hb));
         }
 
         // Add audit information
@@ -128,9 +113,7 @@ public class InfoDocumentPresenter
             tableBuilder.write(hb);
         }
 
-        getView().setInfo(hb.toSafeHtml());
-
-        show();
+        view.setInfo(hb.toSafeHtml());
     }
 
     private void appendLine(final String key, final String value, final HtmlBuilder hb) {
@@ -146,17 +129,4 @@ public class InfoDocumentPresenter
             hb.append(": ");
         }
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface InfoDocumentView extends View, Focus {
-
-        void setInfo(SafeHtml info);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 }

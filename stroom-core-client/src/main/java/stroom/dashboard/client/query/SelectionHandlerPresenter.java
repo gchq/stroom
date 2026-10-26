@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.dashboard.client.component.CurrentSelectionController;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.dashboard.shared.ComponentSelectionHandler;
@@ -36,7 +37,7 @@ public class SelectionHandlerPresenter
         implements Focus {
 
     private final ExpressionEditorController expressionEditor;
-    private final CurrentSelectionPresenter currentSelectionPresenter;
+    private final CurrentSelectionController currentSelection;
     private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
 
@@ -44,18 +45,18 @@ public class SelectionHandlerPresenter
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
                                      final ExpressionEditorController expressionEditor,
-                                     final CurrentSelectionPresenter currentSelectionPresenter) {
+                                     final CurrentSelectionController currentSelection) {
         super(eventBus, view);
         own(expressionEditor);
-        own(currentSelectionPresenter);
+        own(currentSelection);
         this.expressionEditor = expressionEditor;
-        this.currentSelectionPresenter = currentSelectionPresenter;
+        this.currentSelection = currentSelection;
         // Its slot frames the expression's editor itself
         expressionEditor.setFramed(false);
         view.setExpressionView(expressionEditor);
-        view.setCurrentSelection(currentSelectionPresenter.getView());
+        view.setCurrentSelection(currentSelection);
 
-        currentSelectionPresenter.setInsertHandler(expressionEditor::insertValue);
+        currentSelection.setOnInsert(expressionEditor::insertValue);
     }
 
     @Override
@@ -80,7 +81,7 @@ public class SelectionHandlerPresenter
     }
 
     void refreshSelection(final DashboardContext dashboardContext) {
-        currentSelectionPresenter.refresh(dashboardContext, true);
+        currentSelection.refresh(dashboardContext, true);
     }
 
     ComponentSelectionHandler write() {
@@ -108,6 +109,6 @@ public class SelectionHandlerPresenter
 
         void setEnabled(boolean enabled);
 
-        void setCurrentSelection(final View view);
+        void setCurrentSelection(IsWidget currentSelection);
     }
 }

@@ -18,8 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.dashboard.client.query.QueryInfoPresenter;
-import stroom.dashboard.client.query.QueryInfoViewImpl;
+import stroom.dashboard.client.query.QueryInfo;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
@@ -28,23 +27,18 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/currentActivity`: whether a query needs the query info popup, given the
-/// current activity (GWT's `QueryInfoPresenter.isRequired`: required unless the activity has a
-/// `requireQueryInfo` property equal, ignoring case, to "false").
+/// current activity ([QueryInfo#isRequired]: required unless the activity has a `requireQueryInfo`
+/// property equal, ignoring case, to "false").
 ///
-/// Stroom's rule is a private method of [QueryInfoPresenter] (`isRequired`), used by its `show`
-/// method, so the story asks six real `QueryInfoPresenter`s (each with its own
-/// [CurrentActivity]) to show the popup, with the query info popup enabled in the UI config, and
-/// records, in the `requiresQueryInfo` spy, whether each shows the popup (required) or goes
-/// straight on (not required). The current activities are a sequence of replies to
-/// `GET /activity/v1/current`, in the order the presenters ask for them.
+/// The story asks six real [CurrentActivity]s for the current activity, and records, in the
+/// `requiresQueryInfo` spy, what Stroom's rule says of each. The current activities are a sequence
+/// of replies to `GET /activity/v1/current`, in the order they are asked for.
 public final class CurrentActivityStories {
 
     /// The name of the spy recording each case's result.
@@ -119,22 +113,9 @@ public final class CurrentActivityStories {
             for (final String name : CASES) {
                 final CurrentActivity currentActivity = new CurrentActivity(harness.getEventBus(), () -> null,
                         harness.getRestFactory(), harness.getAppRoot());
-                final QueryInfoPresenter presenter = new QueryInfoPresenter(harness.getEventBus(),
-                        new QueryInfoViewImpl(GWT.create(QueryInfoViewImpl.Binder.class)),
-                        harness.getUiConfigCache(),
-                        currentActivity);
-                // Required: the presenter shows its popup
-                harness.addRegistration(harness.getEventBus().addHandler(ShowPopupEvent.getType(), event -> {
-                    if (event.getPresenterWidget() == presenter) {
-                        harness.spy(REQUIRES_QUERY_INFO, name + ": true");
-                    }
-                }));
-                // Not required: the presenter goes straight on with no query info
-                presenter.show("", state -> {
-                    if (state.getQueryInfo() == null) {
-                        harness.spy(REQUIRES_QUERY_INFO, name + ": false");
-                    }
-                }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
+                currentActivity.getActivity(activity ->
+                                harness.spy(REQUIRES_QUERY_INFO, name + ": " + QueryInfo.isRequired(activity)),
+                        new DefaultTaskMonitorFactory(harness.getHasHandlers()));
             }
         });
         return harness.asWidget();

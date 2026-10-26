@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.gin;
 
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dictionary.client.component.DictionaryEditor;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
+import stroom.entity.client.component.InfoDocumentController;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
@@ -69,7 +69,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
     // Documents and the explorer
 
     /// @return The document 'Info' dialog, shown by firing `ShowInfoDocumentDialogEvent`.
-    InfoDocumentPresenter getInfoDocumentPresenter();
+    InfoDocumentController getInfoDocumentController();
 
     /// @return The 'Edit Tags' dialog, shown by firing `ShowEditNodeTagsDialogEvent`.
     ExplorerNodeEditTagsPresenter getExplorerNodeEditTagsPresenter();

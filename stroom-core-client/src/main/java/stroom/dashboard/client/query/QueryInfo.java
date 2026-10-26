@@ -16,37 +16,83 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.activity.client.CurrentActivity;
+import stroom.activity.shared.Activity;
+import stroom.dashboard.client.component.QueryInfoDialogController;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.component.client.AppRoot;
 
 import com.google.inject.Provider;
 
 import javax.inject.Inject;
 
+/// The info a query is run with: asks for it ([QueryInfoDialogController]) before a query is run,
+/// when the site asks for it and the current activity doesn't say it isn't needed, and keeps it.
 public class QueryInfo {
 
-    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
+    private final CurrentActivity currentActivity;
+    private final UiConfigCache uiConfigCache;
+    private final Provider<QueryInfoDialogController> queryInfoDialogProvider;
+    private final AppRoot appRoot;
     private String message;
 
-    private final AppRoot appRoot;
-
     @Inject
-    public QueryInfo(final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
+    public QueryInfo(final CurrentActivity currentActivity,
+                     final UiConfigCache uiConfigCache,
+                     final Provider<QueryInfoDialogController> queryInfoDialogProvider,
                      final AppRoot appRoot) {
+        this.currentActivity = currentActivity;
+        this.uiConfigCache = uiConfigCache;
+        this.queryInfoDialogProvider = queryInfoDialogProvider;
         this.appRoot = appRoot;
-        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
     }
 
+    /// Asks for the query info, if it is needed, then runs the query; Cancel doesn't run it.
+    ///
+    /// @param runnable           Runs the query.
+    /// @param taskMonitorFactory Shows the progress of the activity's and config's lookups.
     public void prompt(final Runnable runnable, final TaskMonitorFactory taskMonitorFactory) {
-        appRoot.makeDialog(queryInfoPresenterProvider).show(message, state -> {
-            if (state.isOk()) {
-                message = state.getQueryInfo();
-                runnable.run();
-            }
+        currentActivity.getActivity(activity -> {
+            final boolean required = isRequired(activity);
+            uiConfigCache.get(uiConfig -> {
+                if (uiConfig != null) {
+                    final QueryConfig queryConfig = uiConfig.getQuery();
+                    if (queryConfig.getInfoPopup().isEnabled() && required) {
+                        // The app owns the dialog while it is shown
+                        queryInfoDialogProvider.get().show(appRoot,
+                                queryConfig.getInfoPopup().getTitle(),
+                                queryConfig.getInfoPopup().getValidationRegex(),
+                                message,
+                                queryInfo -> {
+                                    message = queryInfo;
+                                    runnable.run();
+                                });
+                    } else {
+                        message = null;
+                        runnable.run();
+                    }
+                }
+            }, taskMonitorFactory);
         }, taskMonitorFactory);
     }
 
+    /// @return The query info last given, or null if none was asked for.
     public String getMessage() {
         return message;
+    }
+
+    /// Whether an activity needs query info: unless its `requireQueryInfo` property is "false",
+    /// ignoring case.
+    ///
+    /// @param activity The current activity, or null for none.
+    /// @return True if query info is needed.
+    public static boolean isRequired(final Activity activity) {
+        if (activity != null && activity.getDetails() != null) {
+            final String value = activity.getDetails().value("requireQueryInfo");
+            return value == null || !value.equalsIgnoreCase("false");
+        }
+        return true;
     }
 }

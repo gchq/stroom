@@ -44,7 +44,7 @@ import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter;
+import stroom.importexport.client.component.DependenciesInfoController;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigPresenter;
@@ -143,7 +143,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
 
     /// @return The Dependencies screen's information dialog, shown by firing
     /// `ShowDependenciesInfoDialogEvent`.
-    DependenciesInfoPresenter getDependenciesInfoPresenter();
+    DependenciesInfoController getDependenciesInfoController();
 
     // Documents and the explorer
 

@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
+import stroom.entity.client.component.InfoDocumentController;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
@@ -38,13 +38,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 
-/// Stories of `App/Main/DocInfoDialog`, showing Stroom's real [InfoDocumentPresenter] (a document's
+/// Stories of `App/Main/DocInfoDialog`, showing Stroom's real [InfoDocumentController] (a document's
 /// 'Info' dialog) with fake REST replies.
 ///
 /// In Stroom the explorer's Info menu item (`DocumentPluginEventManager`) fetches the document's
 /// `ExplorerNodeInfo` with `POST /explorer/v2/info` and fires `ShowInfoDocumentDialogEvent`, which
-/// the presenter's listener passes on to it; the story does both, with a fixture as the reply,
-/// and registers the presenter (from GIN) as the event's handler in place of the listener.
+/// `DocumentDialogScreens` handles by showing the dialog; the story does both, with a fixture as
+/// the reply, and a handler that shows the dialog (from GIN) as `DocumentDialogScreens` does.
 public final class DocInfoDialogStories {
 
     private static final DocRef DOC_REF = new DocRef("Dictionary", "dict-uuid-1", "Countries");
@@ -145,9 +145,8 @@ public final class DocInfoDialogStories {
                 .build();
 
         // As DocumentDialogScreens would
-        final InfoDocumentPresenter presenter = injector.getInfoDocumentPresenter();
-        harness.addRegistration(harness.getEventBus()
-                .addHandler(ShowInfoDocumentDialogEvent.getType(), presenter));
+        harness.addRegistration(harness.getEventBus().addHandler(ShowInfoDocumentDialogEvent.getType(), event ->
+                injector.getInfoDocumentController().show(harness.getAppRoot(), event)));
 
         // As the explorer's Info menu item (DocumentPluginEventManager) does
         final ExplorerResource explorerResource = GWT.create(ExplorerResource.class);

@@ -36,9 +36,9 @@ import stroom.dictionary.client.DictionaryPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.DocumentDialogScreens;
+import stroom.entity.client.component.InfoDocumentController;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
@@ -211,7 +211,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     MoveDocumentPresenter getMoveDocumentPresenter();
 
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
-    InfoDocumentPresenter getInfoDocumentPresenter();
+    InfoDocumentController getInfoDocumentController();
 
     /// @return The 'Export' dialog, shown for `ExportConfigEvent`.
     ExportConfigPresenter getExportConfigPresenter();

@@ -18,7 +18,6 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.docref.HasDisplayValue;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -75,8 +74,8 @@ public class SelectionHandlerViewImpl
     }
 
     @Override
-    public void setCurrentSelection(final View view) {
-        this.currentSelection.setWidget(view.asWidget());
+    public void setCurrentSelection(final IsWidget currentSelection) {
+        this.currentSelection.setWidget(currentSelection.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, SelectionHandlerViewImpl> {

@@ -23,10 +23,10 @@ import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
+import stroom.entity.client.component.InfoDocumentController;
 import stroom.entity.client.component.RenameDocumentController;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.component.client.AppRoot;
@@ -39,20 +39,22 @@ import com.google.web.bindery.event.shared.EventBus;
 /// app-wide events that open them, for the life of the app.
 public class DocumentDialogScreens {
 
+    private InfoDocumentController shownInfo;
+
     /// Adds the handlers of the events that open the screens.
     ///
     /// @param eventBus The application's event bus.
     /// @param copyDocumentPresenterProvider Makes the CopyDocumentPresenter.
     /// @param createDocumentPresenterProvider Makes the CreateDocumentPresenter.
-    /// @param infoDocumentPresenterProvider Makes the InfoDocumentPresenter.
+    /// @param infoDocumentControllerProvider Makes a document's Info dialog.
     /// @param moveDocumentPresenterProvider Makes the MoveDocumentPresenter.
     /// @param renameDocumentControllerProvider Makes a document's Rename dialog.
-    /// @param appRoot The app, which owns each Rename dialog while it is shown.
+    /// @param appRoot The app, which owns each Rename and Info dialog while it is shown.
     @Inject
     public DocumentDialogScreens(final EventBus eventBus,
                                  final Provider<CopyDocumentPresenter> copyDocumentPresenterProvider,
                                  final Provider<CreateDocumentPresenter> createDocumentPresenterProvider,
-                                 final Provider<InfoDocumentPresenter> infoDocumentPresenterProvider,
+                                 final Provider<InfoDocumentController> infoDocumentControllerProvider,
                                  final Provider<MoveDocumentPresenter> moveDocumentPresenterProvider,
                                  final Provider<RenameDocumentController> renameDocumentControllerProvider,
                                  final AppRoot appRoot) {
@@ -60,8 +62,15 @@ public class DocumentDialogScreens {
                 copyDocumentPresenterProvider.get().onCopy(event));
         eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event ->
                 createDocumentPresenterProvider.get().onCreate(event));
-        eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event ->
-                infoDocumentPresenterProvider.get().onCreate(event));
+        // The Info dialog isn't modal: Info on another document while it is shown shows that one
+        eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event -> {
+            if (shownInfo != null && !shownInfo.isDisposed()) {
+                shownInfo.read(event);
+            } else {
+                shownInfo = infoDocumentControllerProvider.get();
+                shownInfo.show(appRoot, event);
+            }
+        });
         eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event ->
                 moveDocumentPresenterProvider.get().onMove(event));
         eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event ->

@@ -19,17 +19,12 @@ package stroom.dashboard.client.query.gin;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
-import stroom.dashboard.client.query.CurrentSelectionPresenter;
-import stroom.dashboard.client.query.CurrentSelectionViewImpl;
 import stroom.dashboard.client.query.QueryFavouritesPresenter;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.client.query.QueryFavouritesViewImpl;
 import stroom.dashboard.client.query.QueryHistoryPresenter;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
 import stroom.dashboard.client.query.QueryHistoryViewImpl;
-import stroom.dashboard.client.query.QueryInfoPresenter;
-import stroom.dashboard.client.query.QueryInfoPresenter.QueryInfoView;
-import stroom.dashboard.client.query.QueryInfoViewImpl;
 import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
@@ -47,7 +42,6 @@ public class QueryModule extends AbstractPresenterModule {
         bind(QueryPlugin.class).asEagerSingleton();
         bindPresenterWidget(QueryHistoryPresenter.class, QueryHistoryView.class, QueryHistoryViewImpl.class);
         bindPresenterWidget(QueryFavouritesPresenter.class, QueryFavouritesView.class, QueryFavouritesViewImpl.class);
-        bindPresenterWidget(QueryInfoPresenter.class, QueryInfoView.class, QueryInfoViewImpl.class);
         bindPresenterWidget(QueryPresenter.class, QueryView.class, QueryViewImpl.class);
         bindPresenterWidget(BasicQuerySettingsPresenter.class, BasicQuerySettingsView.class,
                 BasicQuerySettingsViewImpl.class);
@@ -60,9 +54,5 @@ public class QueryModule extends AbstractPresenterModule {
                 SelectionHandlerPresenter.class,
                 SelectionHandlerPresenter.SelectionHandlerView.class,
                 SelectionHandlerViewImpl.class);
-        bindPresenterWidget(
-                CurrentSelectionPresenter.class,
-                CurrentSelectionPresenter.CurrentSelectionView.class,
-                CurrentSelectionViewImpl.class);
     }
 }
