@@ -19,6 +19,7 @@ package stroom.node.client.presenter;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.client.NodeGroupClient;
+import stroom.node.client.component.NodeGroupStateListController;
 import stroom.node.client.view.NodeGroupEditUiHandlers;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
@@ -34,6 +35,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -46,7 +48,7 @@ public class NodeGroupEditPresenter
         extends MyPresenterWidget<NodeGroupEditPresenter.NodeGroupEditView>
         implements NodeGroupEditUiHandlers {
 
-    private final NodeGroupStateListPresenter nodeGroupStateListPresenter;
+    private final NodeGroupStateListController nodeGroupStateList;
     private final NodeClient nodeClient;
     private final NodeGroupClient nodeGroupClient;
 
@@ -60,17 +62,17 @@ public class NodeGroupEditPresenter
     @Inject
     public NodeGroupEditPresenter(final EventBus eventBus,
                                   final NodeGroupEditView view,
-                                  final NodeGroupStateListPresenter nodeGroupStateListPresenter,
+                                  final NodeGroupStateListController nodeGroupStateList,
                                   final NodeClient nodeClient,
                                   final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
-        own(nodeGroupStateListPresenter);
-        this.nodeGroupStateListPresenter = nodeGroupStateListPresenter;
+        own(nodeGroupStateList);
+        this.nodeGroupStateList = nodeGroupStateList;
         this.nodeClient = nodeClient;
         this.nodeGroupClient = nodeGroupClient;
 
         getView().setUiHandlers(this);
-        view.setListView(nodeGroupStateListPresenter.getView());
+        view.setListView(nodeGroupStateList);
     }
 
     @Override
@@ -84,8 +86,8 @@ public class NodeGroupEditPresenter
                 }
             });
             invertSelection = getView().isInvertSelection();
-            nodeGroupStateListPresenter.setInvertSelection(invertSelection);
-            nodeGroupStateListPresenter.refresh();
+            nodeGroupStateList.setInvertSelection(invertSelection);
+            nodeGroupStateList.refresh();
         }
     }
 
@@ -102,16 +104,16 @@ public class NodeGroupEditPresenter
                         .map(Node::getId)
                         .collect(Collectors.toSet());
 
-                nodeGroupStateListPresenter.setAllNodes(allNodes);
-                nodeGroupStateListPresenter.setSelectedNodes(selected);
-                nodeGroupStateListPresenter.setInvertSelection(nodeGroup.isInvertSelection());
+                nodeGroupStateList.setAllNodes(allNodes);
+                nodeGroupStateList.setSelectedNodes(selected);
+                nodeGroupStateList.setInvertSelection(nodeGroup.isInvertSelection());
                 invertSelection = nodeGroup.isInvertSelection();
 
                 nodeGroupClient.getNodeGroupState(nodeGroup.getId(),
                         result -> {
                             selected.clear();
                             selected.addAll(result.getSelected());
-                            nodeGroupStateListPresenter.refresh();
+                            nodeGroupStateList.refresh();
                             open(nodeGroup, title, consumer);
                         },
                         this);
@@ -211,6 +213,6 @@ public class NodeGroupEditPresenter
 
         boolean isInvertSelection();
 
-        void setListView(View listView);
+        void setListView(IsWidget listView);
     }
 }

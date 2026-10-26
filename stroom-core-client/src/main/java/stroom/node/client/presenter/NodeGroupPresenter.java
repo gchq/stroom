@@ -20,10 +20,10 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.client.component.NewNodeGroupController;
+import stroom.node.client.component.NodeGroupListController;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.inject.Inject;
@@ -36,49 +36,34 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     public static final String TAB_TYPE = "NodeGroups";
 
-    private final NodeGroupListPresenter nodeGroupListPresenter;
+    private final NodeGroupListController nodeGroupList;
     private final Provider<NodeGroupEditPresenter> editProvider;
     private final NodeGroupClient nodeGroupClient;
     private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
-    private final ButtonView newButton;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
 
     @Inject
     public NodeGroupPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final NodeGroupListPresenter nodeGroupListPresenter,
+            final NodeGroupListController nodeGroupList,
             final Provider<NodeGroupEditPresenter> editProvider,
             final NodeGroupClient nodeGroupClient,
             final Provider<NewNodeGroupController> newNodeGroupControllerProvider) {
 
         super(eventBus, view);
-        own(nodeGroupListPresenter);
-        this.nodeGroupListPresenter = nodeGroupListPresenter;
+        own(nodeGroupList);
+        this.nodeGroupList = nodeGroupList;
         this.editProvider = editProvider;
         this.nodeGroupClient = nodeGroupClient;
         this.newNodeGroupControllerProvider = newNodeGroupControllerProvider;
 
-        nodeGroupListPresenter.getView().getToolbar().setName("Node group actions");
-        newButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Node Group", this::add);
-        openButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Node Group", this::edit);
-        openButton.setEnabled(false);
-        deleteButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Node Group", this::delete);
-        deleteButton.setEnabled(false);
+        nodeGroupList.setOnNew(this::add);
+        nodeGroupList.setOnEdit(this::edit);
+        nodeGroupList.setOnDelete(this::delete);
 
-        view.setView(nodeGroupListPresenter.getView());
+        view.setView(nodeGroupList);
         refresh();
-
-        own(nodeGroupListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                edit();
-            }
-        }));
     }
 
     private void add() {
@@ -89,7 +74,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit() {
-        final NodeGroup nodeGroup = nodeGroupListPresenter.getSelectionModel().getSelected();
+        final NodeGroup nodeGroup = nodeGroupList.getSelectionModel().getSelected();
         if (nodeGroup != null) {
             nodeGroupClient.fetchById(nodeGroup.getId(), this::edit, this);
         }
@@ -101,7 +86,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void delete() {
-        final List<NodeGroup> list = nodeGroupListPresenter.getSelectionModel().getSelectedItems();
+        final List<NodeGroup> list = nodeGroupList.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected node group?";
             if (list.size() > 1) {
@@ -110,7 +95,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
             ConfirmEvent.fire(NodeGroupPresenter.this, message,
                     result -> {
                         if (result) {
-                            nodeGroupListPresenter.getSelectionModel().clear();
+                            nodeGroupList.getSelectionModel().clear();
                             for (final NodeGroup nodeGroup : list) {
                                 nodeGroupClient.delete(nodeGroup.getId(), response -> refresh(), this);
                             }
@@ -119,14 +104,8 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
         }
     }
 
-    private void enableButtons() {
-        final boolean enabled = nodeGroupListPresenter.getSelectionModel().getSelected() != null;
-        openButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
-    }
-
     private void refresh() {
-        nodeGroupListPresenter.refresh();
+        nodeGroupList.refresh();
     }
 
     @Override

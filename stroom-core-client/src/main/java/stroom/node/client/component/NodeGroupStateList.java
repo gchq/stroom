@@ -14,76 +14,84 @@
  * limitations under the License.
  */
 
-package stroom.node.client.presenter;
+package stroom.node.client.component;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.node.client.NodeClient;
-import stroom.node.client.NodeGroupClient;
-import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
-public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerPanel> {
+/// The nodes, a row each with a tick box to include it in a node group (or, if the group is
+/// inverted, to exclude it), whether it is included, its name and endpoint; a tick box in the header
+/// ticks them all.
+public class NodeGroupStateList extends Component {
 
-    private final DataGrid<NodeStatusResult> dataGrid;
-    private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
-    private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<NodeStatusResult> dataGrid;
 
     private boolean invertSelection;
     private Set<Integer> allNodes = new HashSet<>();
     private Set<Integer> selectedNodes = new HashSet<>();
+    private Runnable onSortChange = () -> {
+    };
 
-    @Inject
-    public NodeGroupStateListPresenter(final EventBus eventBus,
-                                       final PagerPanel view,
-                                       final NodeClient nodeClient,
-                                       final NodeGroupClient nodeGroupClient) {
-        super(eventBus, view);
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Node Group State");
-        view.setDataWidget(dataGrid);
-
-        initTableColumns();
-        dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<FetchNodeStatusResponse> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setSortList(findNodeStatusCriteria, dataGrid.getColumnSortList());
-                nodeClient.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
-                        NodeGroupStateListPresenter.this);
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
-
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+    /// Makes an empty list.
+    public NodeGroupStateList() {
+        initWidget(BINDER.createAndBindUi(this));
+        addColumns();
+        dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// @param dataProvider Gives the list its rows.
+    public void setDataProvider(final AbstractDataProvider<NodeStatusResult> dataProvider) {
+        dataProvider.addDataDisplay(dataGrid);
+    }
+
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @return How the rows are sorted, for the request for them.
+    public ColumnSortList getSortList() {
+        return dataGrid.getColumnSortList();
+    }
+
+    /// Draws the header's tick box again.
+    public void redrawHeaders() {
+        dataGrid.redrawHeaders();
+    }
+
+    /// @param onSortChange Run when the user sorts by another column.
+    public void setOnSortChange(final Runnable onSortChange) {
+        this.onSortChange = onSortChange;
+    }
+
+    private void addColumns() {
         // Include/Exclude in group
         final Column<NodeStatusResult, TickBoxState> column = new Column<NodeStatusResult, TickBoxState>(
                 TickBoxCell.create(false, false)) {
@@ -172,20 +180,27 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerPanel> {
                 300);
     }
 
+    /// @param allNodes The ids of every node, for the header's tick box.
     public void setAllNodes(final Set<Integer> allNodes) {
         this.allNodes = allNodes;
     }
 
+    /// @param selectedNodes The ids of the nodes ticked, which ticking changes.
     public void setSelectedNodes(final Set<Integer> selectedNodes) {
         this.selectedNodes = selectedNodes;
     }
 
+    /// @param invertSelection Whether the group is the nodes not ticked.
     public void setInvertSelection(final boolean invertSelection) {
         this.invertSelection = invertSelection;
     }
 
-    public void refresh() {
-        dataProvider.refresh();
-        dataGrid.redrawHeaders();
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, NodeGroupStateList> {
+
     }
 }
