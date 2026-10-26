@@ -18,8 +18,9 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.component.FindDocResultList;
+import stroom.explorer.client.component.FindDocResultListController;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.presenter.FindDocResultListPresenter;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.view.FindViewImpl;
@@ -33,7 +34,6 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -154,9 +154,9 @@ public final class RecentItemsDialogStories {
         recentItems.getRecentItems().addAll(recent);
 
         // The presenter, with the views and child presenter that GIN would inject
-        final FindDocResultListPresenter resultList = new FindDocResultListPresenter(
+        final FindDocResultListController resultList = new FindDocResultListController(
                 eventBus,
-                new PagerPanel(),
+                new FindDocResultList(),
                 harness.getRestFactory());
         final RecentItemsPresenter presenter = new RecentItemsPresenter(
                 eventBus,

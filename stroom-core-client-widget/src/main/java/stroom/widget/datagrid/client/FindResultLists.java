@@ -55,6 +55,30 @@ public final class FindResultLists {
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(name);
         list.setStriped(true);
+        wire(list, cell, selectionModel, onOpen, onUpFromFirst);
+        return list;
+    }
+
+    /// Makes a list a template declares a list of results: its one column, drawn by `cell`, and how
+    /// it is selected and opened. The template gives it its page size ([#PAGE_SIZE]), profile
+    /// (`LISTBOX`), name and stripes:
+    ///
+    /// ```
+    /// <dg:DataGrid ui:field="resultList" pageSize="100" profile="LISTBOX"
+    ///              accessibleName="Documents found" striped="true"/>
+    /// ```
+    ///
+    /// @param list           The declared list.
+    /// @param cell           Draws a result.
+    /// @param selectionModel The selection model: the result with the focus is chosen.
+    /// @param onOpen         Opens a result (Enter, or a double click, on it).
+    /// @param onUpFromFirst  What Up on the first result does, e.g. focusing the filter, or null.
+    /// @param <T>            The type of a result.
+    public static <T> void wire(final DataGrid<T> list,
+                                final Cell<T> cell,
+                                final MultiSelectionModelImpl<T> selectionModel,
+                                final Consumer<T> onOpen,
+                                final Runnable onUpFromFirst) {
         list.addColumn(new Column<T, T>(cell) {
             @Override
             public T getValue(final T result) {
@@ -71,6 +95,5 @@ public final class FindResultLists {
                 onOpen.accept(selectionModel.getSelected());
             }
         });
-        return list;
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.explorer.client.component.FindDocResultListController;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -45,10 +46,10 @@ public class FindPresenter
     @Inject
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
-                         final FindDocResultListPresenter findResultListPresenter,
+                         final FindDocResultListController findResultList,
                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
                          final UiConfigCache uiConfigCache) {
-        super(eventBus, view, findResultListPresenter, quickFilterContextHandlerFactory);
+        super(eventBus, view, findResultList, quickFilterContextHandlerFactory);
 
         view.setFilterGuidance("Find by name", FILTER_DESCRIPTION);
         // The same fields as the explorer tree's filter
@@ -68,10 +69,10 @@ public class FindPresenter
             showing = true;
 
             // Make sure we are set to focus text next time we show.
-            getFindResultListPresenter().setFocusText(true);
+            getFindResultList().setFocusText(true);
 
             final ExplorerTreeFilter.Builder explorerTreeFilterBuilder =
-                    getFindResultListPresenter().getExplorerTreeFilterBuilder();
+                    getFindResultList().getExplorerTreeFilterBuilder();
             // Don't want favourites in the recent items as they are effectively duplicates
             explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM_TYPE);
             explorerTreeFilterBuilder.setNameFilter(

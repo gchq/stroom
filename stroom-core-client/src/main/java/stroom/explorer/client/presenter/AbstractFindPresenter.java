@@ -17,6 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.component.FindDocResultListController;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FindResult;
@@ -31,6 +32,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Supplier;
@@ -39,28 +41,27 @@ public abstract class AbstractFindPresenter
         extends MyPresenterWidget<FindView>
         implements FindUiHandlers, FindDocResultListHandler<FindResult> {
 
-    private final FindDocResultListPresenter findResultListPresenter;
+    private final FindDocResultListController findResultList;
 
     public AbstractFindPresenter(final EventBus eventBus,
                                  final FindView view,
-                                 final FindDocResultListPresenter findResultListPresenter,
+                                 final FindDocResultListController findResultList,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(findResultListPresenter);
-        this.findResultListPresenter = findResultListPresenter;
+        own(findResultList);
+        this.findResultList = findResultList;
         // The find dialog's text is parsed by NodeInclusionChecker against the explorer tree's
         // fields, so it shares the tree's history.
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
 
-        // Ensure list has a border in the popup view.
-        findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
-        view.setResultView(findResultListPresenter.getView());
+        view.setResultView(findResultList);
         view.setUiHandlers(this);
-        findResultListPresenter.setFindResultListHandler(this);
+        findResultList.setOnOpen(this::openDocument);
+        findResultList.setOnFocusFilter(this::focus);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box - and, through it, tell the history what was accepted.
-        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
+        findResultList.setOnFilterError(view::setFilterError);
     }
 
     @Override
@@ -79,7 +80,7 @@ public abstract class AbstractFindPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        if (findResultListPresenter.getExplorerTreeFilterBuilder().setNameFilter(name)) {
+        if (findResultList.getExplorerTreeFilterBuilder().setNameFilter(name)) {
             refresh();
         }
     }
@@ -87,22 +88,22 @@ public abstract class AbstractFindPresenter
     @Override
     public void onFilterKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            openDocument(findResultListPresenter.getSelected());
+            openDocument(findResultList.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            findResultListPresenter.setKeyboardSelectedRow(0, true);
+            findResultList.setKeyboardSelectedRow(0, true);
         }
     }
 
     public void refresh() {
-        findResultListPresenter.refresh();
+        findResultList.refresh();
     }
 
     private void hide() {
         HidePopupRequestEvent.builder(this).fire();
     }
 
-    public FindDocResultListPresenter getFindResultListPresenter() {
-        return findResultListPresenter;
+    public FindDocResultListController getFindResultList() {
+        return findResultList;
     }
 
     public interface FindView extends View, Focus, HasUiHandlers<FindUiHandlers> {
@@ -115,7 +116,7 @@ public abstract class AbstractFindPresenter
 
         void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
-        void setResultView(View view);
+        void setResultView(IsWidget view);
 
         void setDialogMode(boolean dialog);
 

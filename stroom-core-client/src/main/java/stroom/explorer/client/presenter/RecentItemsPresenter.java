@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.explorer.client.component.FindDocResultListController;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,10 +39,10 @@ public class RecentItemsPresenter
     @Inject
     public RecentItemsPresenter(final EventBus eventBus,
                                 final FindView view,
-                                final FindDocResultListPresenter findResultListPresenter,
+                                final FindDocResultListController findResultList,
                                 final RecentItems recentItems,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, findResultListPresenter, quickFilterContextHandlerFactory);
+        super(eventBus, view, findResultList, quickFilterContextHandlerFactory);
         this.recentItems = recentItems;
         view.setFilterGuidance("Filter recent items by name", null);
     }
@@ -52,10 +53,10 @@ public class RecentItemsPresenter
             showing = true;
 
             // Make sure we are set to focus text next time we show.
-            getFindResultListPresenter().setFocusText(true);
+            getFindResultList().setFocusText(true);
 
             final ExplorerTreeFilter.Builder explorerTreeFilterBuilder =
-                    getFindResultListPresenter().getExplorerTreeFilterBuilder();
+                    getFindResultList().getExplorerTreeFilterBuilder();
             explorerTreeFilterBuilder.recentItems(recentItems.getRecentItems());
             // Don't want favourites in the recent items as they are effectively duplicates
             explorerTreeFilterBuilder.includedRootTypes(ExplorerConstants.SYSTEM_TYPE);
