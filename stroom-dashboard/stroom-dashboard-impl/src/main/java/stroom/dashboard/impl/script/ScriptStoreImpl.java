@@ -37,11 +37,13 @@ class ScriptStoreImpl
         implements ScriptStore {
 
     private final SecurityContext securityContext;
+    private final Set<ScriptContentProvider> contentProviders;
 
     @Inject
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final SecurityContext securityContext,
-                    final ScriptSerialiser serialiser) {
+                    final ScriptSerialiser serialiser,
+                    final Set<ScriptContentProvider> contentProviders) {
         super(storeFactory,
                 securityContext,
                 serialiser,
@@ -49,6 +51,12 @@ class ScriptStoreImpl
                 ScriptDoc::builder,
                 ScriptDoc::copy);
         this.securityContext = securityContext;
+        this.contentProviders = contentProviders;
+    }
+
+    @Override
+    public ScriptDoc readServedDocument(final DocRef docRef) {
+        return ServedScripts.served(readDocument(docRef), contentProviders);
     }
 
     @Override
@@ -96,7 +104,7 @@ class ScriptStoreImpl
             loadedScripts.add(docRef);
 
 
-            final ScriptDoc loadedScript = readDocument(docRef);
+            final ScriptDoc loadedScript = readServedDocument(docRef);
             if (loadedScript != null) {
                 // Add required dependencies first.
                 if (loadedScript.getDependencies() != null) {
