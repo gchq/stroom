@@ -280,8 +280,69 @@ if (!window.visualisations) {
             subtleText: cssVar("--text-color--low-emphasis", dark ? "#9aa0a6" : "#5f6368"),
             border: cssVar("--border-color", dark ? "#353944" : "#d0d7de"),
             tooltipBackground: dark ? "rgba(32, 35, 42, 0.95)" : "rgba(255, 255, 255, 0.95)",
+            background: cssVar("--vis__background-color", dark ? "#1e2128" : "#ffffff"),
             fontFamily: cssVar("--regular-font-family", "Roboto, sans-serif")
         };
+    }
+
+    // The background a saved image is drawn on: the chart's own, as the theme gives it.
+    function backgroundOf(style) {
+        return style && style.background ? style.background : (style && !style.dark ? "#ffffff" : "#1e2128");
+    }
+
+    // A field of a CSV file: quoted if it holds a comma, quote or line break, its quotes doubled.
+    function csvField(value) {
+        var text = value === null || value === undefined ? "" : String(value);
+        return /[",\r\n]/.test(text) ? "\"" + text.replace(/"/g, "\"\"") + "\"" : text;
+    }
+
+    // The data a chart draws (after any Auto Interval grouping) as CSV: a column per field it was given, named as
+    // the table's column, in the order the fields come; dates as ISO 8601 text in UTC.
+    function dataCsv(settings, data) {
+        var ids = String(settings.fields || "").split(",").map(function (id) {
+            return id.trim();
+        });
+        var types = data && data.types ? data.types : [];
+        var columns = [];
+        ids.forEach(function (id, index) {
+            if (id.length > 0 && !isBlank(settings[id])) {
+                columns.push({index: index, name: String(settings[id]), date: types[index] === "DATE_TIME"});
+            }
+        });
+        var lines = [columns.map(function (column) {
+            return csvField(column.name);
+        }).join(",")];
+        dataRows(data).forEach(function (row) {
+            lines.push(columns.map(function (column) {
+                var value = row[column.index];
+                if (column.date && typeof value === "number" && isFinite(value)) {
+                    value = new Date(value).toISOString();
+                }
+                return csvField(value);
+            }).join(","));
+        });
+        return lines.join("\r\n") + "\r\n";
+    }
+
+    // Saves a file in the browser: from a URL (e.g. an image's data URL), or text.
+    function saveFile(name, url) {
+        var link = window.document.createElement("a");
+        link.href = url;
+        link.download = name;
+        link.style.display = "none";
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+    }
+
+    // Saves text as a file, e.g. CSV.
+    function saveText(name, text, type) {
+        var blob = new window.Blob([text], {type: type});
+        var url = window.URL.createObjectURL(blob);
+        saveFile(name, url);
+        setTimeout(function () {
+            window.URL.revokeObjectURL(url);
+        }, 1000);
     }
 
     function isPlainObject(value) {
@@ -468,11 +529,13 @@ if (!window.visualisations) {
     }
 
     // Auto Interval: a line chart's rows (or a bar chart's of dates) grouped into the interval that suits the time
-    // shown (the part zoomed in on, a fraction from start to end), their values combined as Interval Combine says
-    // (Sum, Average, Min or Max) for each time and series. Gives {data, interval}: the data as given, and the
-    // data's own bucket, if the setting is off, there is nothing to group, or the interval would be the data's own.
-    function autoInterval(kind, data, settings, prefs, zoom) {
-        var given = {data: data, interval: null};
+    // shown (the part zoomed in on, a fraction from start to end), or the one chosen in Stroom's toolbar (by its
+    // label; Auto or null for the one that suits), their values combined as Interval Combine says (Sum, Average, Min
+    // or Max) for each time and series. Gives {data, interval, intervals, choice}: the data as grouped, the interval
+    // used (null if not grouped: the setting is off, there is nothing to group, or it would be the data's own), the
+    // intervals that can be chosen (Auto first; none if the setting is off), and the one chosen.
+    function autoInterval(kind, data, settings, prefs, zoom, chosen) {
+        var given = {data: data, interval: null, intervals: [], choice: null};
         if (!boolSetting(settings, "autoInterval", false) || (kind !== "line" && kind !== "bar")
             || (kind === "bar" && !isBlank(settings.sort))) {
             return given;
@@ -501,9 +564,26 @@ if (!window.visualisations) {
         if (!isFinite(min)) {
             return given;
         }
-        var shown = zoom ? Math.max(0.001, Math.min(1, zoom.end - zoom.start)) : 1;
-        var span = Math.max(1, (max - min + intervalLength(finest)) * shown);
-        var interval = chooseInterval(span, AUTO_INTERVAL_TARGETS[kind], finest);
+        // Those no finer than the data's own, which rows can't be split into.
+        var floor = intervalLength(finest);
+        var choices = AUTO_INTERVALS.filter(function (interval) {
+            return intervalLength(interval) >= floor;
+        });
+        given.intervals = ["Auto"].concat(choices.map(function (interval) {
+            return interval.label;
+        }));
+        var fixed = choices.filter(function (interval) {
+            return interval.label === chosen;
+        })[0];
+        given.choice = fixed ? fixed.label : "Auto";
+        var interval;
+        if (fixed) {
+            interval = intervalLength(fixed) === floor ? null : fixed;
+        } else {
+            var shown = zoom ? Math.max(0.001, Math.min(1, zoom.end - zoom.start)) : 1;
+            var span = Math.max(1, (max - min + intervalLength(finest)) * shown);
+            interval = chooseInterval(span, AUTO_INTERVAL_TARGETS[kind], finest);
+        }
         if (!interval) {
             return given;
         }
@@ -540,7 +620,8 @@ if (!window.visualisations) {
                         : group.sum;
             return group.row;
         }).concat(kept);
-        return {data: merge(merge({}, data), {values: values}), interval: interval.label};
+        return {data: merge(merge({}, data), {values: values}), interval: interval.label,
+            intervals: given.intervals, choice: given.choice};
     }
 
     // Works out which value index each field control is at, from the 'fields' setting.
@@ -4262,7 +4343,7 @@ if (!window.visualisations) {
         var rows = dataRows(data);
         report.rows = rows.length;
         // Auto Interval: the rows grouped into an interval suiting the time shown (the part zoomed in on).
-        var grouped = autoInterval(kind, data, settings, prefs, state.zoom || null);
+        var grouped = autoInterval(kind, data, settings, prefs, state.zoom || null, state.interval || null);
         // Stroom sends at most Max Rows rows: at the limit, the rest of the table was left out, not summarised.
         var maxRows = Number(settings.maxValues);
         if (isFinite(maxRows) && maxRows > 0 && rows.length >= maxRows) {
@@ -4341,7 +4422,8 @@ if (!window.visualisations) {
         return {report: report, marks: marks, svg: svg, zoomKind: ctx.zoomKind || null, plot: ctx.plot || null,
             timeAxis: ctx.timeAxis || null, size: size, slider: slider, thumbnail: thumbnail,
             axisTooltip: ctx.axisTooltip || null, pointerLayer: pointerLayer,
-            categoriesDown: !!ctx.categoriesDown, interval: grouped.interval};
+            categoriesDown: !!ctx.categoriesDown, interval: grouped.interval, intervals: grouped.intervals,
+            intervalChoice: grouped.choice, data: data};
     }
 
     // A zoom slider along the plot, as ECharts draws one: the data's shape in a track, and the part zoomed in on
@@ -4546,7 +4628,7 @@ if (!window.visualisations) {
             }
             var report = lastReport || {};
             var notes = [];
-            if (drawn && drawn.interval) {
+            if (drawn && drawn.interval && drawn.intervalChoice === "Auto") {
                 notes.push("Interval: " + drawn.interval);
             }
             if (report.truncated) {
@@ -4559,6 +4641,13 @@ if (!window.visualisations) {
                 rangeMode: rangeMode && !!(drawn && drawn.timeAxis),
                 selectable: !!drawn,
                 selected: selected ? selectedLabel() : null,
+                download: !!drawn,
+                hiddenSeries: Object.keys(state.hidden || {}).length > 0,
+                intervals: drawn ? drawn.intervals || [] : [],
+                interval: drawn ? drawn.intervalChoice : null,
+                // Its network layout is worked out before it is drawn, so never moves.
+                layout: false,
+                layoutPaused: false,
                 note: notes.length ? notes.join(" · ") : null
             });
         }
@@ -4613,7 +4702,9 @@ if (!window.visualisations) {
 
         // A control in Stroom's toolbar above the chart was used: resetZoom, rangeMode (turns the range tool on
         // or off) or clearSelection.
-        this.command = function (name) {
+        // A control in Stroom's toolbar above the chart was used: resetZoom, rangeMode, clearSelection,
+        // showAllSeries, or downloadImage or downloadData (given the file's name), as the ECharts adapter takes them.
+        this.command = function (name, value) {
             if (name === "resetZoom") {
                 state.zoom = null;
                 state.geoZoom = null;
@@ -4625,8 +4716,51 @@ if (!window.visualisations) {
                 if (selected) {
                     clearSelection();
                 }
+            } else if (name === "zoomIn" || name === "zoomOut") {
+                // On the middle of the plot, or of the whole chart for a network graph.
+                var middle = drawn && drawn.plot && drawn.zoomKind !== "geo"
+                    ? [drawn.plot.left + drawn.plot.width / 2, drawn.plot.top + drawn.plot.height / 2]
+                    : [drawn ? drawn.size.width / 2 : 0, drawn ? drawn.size.height / 2 : 0];
+                zoomAt(name === "zoomIn" ? 1.5 : 1 / 1.5, middle);
+            } else if (name === "interval") {
+                state.interval = value && value !== "Auto" ? value : null;
+                render();
+            } else if (name === "showAllSeries") {
+                state.hidden = {};
+                render();
+            } else if (name === "downloadImage" && drawn) {
+                saveImage((value || "chart") + ".png");
+            } else if (name === "downloadData" && drawn && lastArgs) {
+                saveText((value || "chart") + ".csv", dataCsv(lastArgs.settings || {}, drawn.data),
+                    "text/csv;charset=utf-8");
             }
         };
+
+        // Saves the chart as a PNG image, twice its size on screen, on its background: its SVG drawn on a canvas.
+        function saveImage(name) {
+            var svg = chartElement.querySelector("svg");
+            if (!svg) {
+                return;
+            }
+            var width = svg.getAttribute("width") || chartElement.clientWidth;
+            var height = svg.getAttribute("height") || chartElement.clientHeight;
+            var copy = svg.cloneNode(true);
+            copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            var source = new window.XMLSerializer().serializeToString(copy);
+            var image = new window.Image();
+            image.onload = function () {
+                var canvas = window.document.createElement("canvas");
+                canvas.width = width * 2;
+                canvas.height = height * 2;
+                var context = canvas.getContext("2d");
+                context.fillStyle = backgroundOf(lastStyle);
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.scale(2, 2);
+                context.drawImage(image, 0, 0);
+                saveFile(name, canvas.toDataURL("image/png"));
+            };
+            image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+        }
 
         // A click on a mark selects it (or clears the selection, if it was all that was selected). Ctrl-click,
         // Cmd-click or Shift-click adds it to what is selected, or takes it away.
@@ -4893,8 +5027,15 @@ if (!window.visualisations) {
                 return;
             }
             event.preventDefault();
-            var factor = event.deltaY < 0 ? 1.2 : 1 / 1.2;
-            var at = pointerIn(event);
+            zoomAt(event.deltaY < 0 ? 1.2 : 1 / 1.2, pointerIn(event));
+        }
+
+        // Zooms in (a factor over 1) or out, keeping the point at a position where it is: a network graph's zoom, or
+        // the axis's zoom window.
+        function zoomAt(factor, at) {
+            if (!drawn || !drawn.zoomKind) {
+                return;
+            }
             if (drawn.zoomKind === "geo") {
                 var zoom = state.geoZoom || {k: 1, x: 0, y: 0};
                 var k = Math.max(0.2, Math.min(20, zoom.k * factor));

@@ -141,10 +141,16 @@ var postControls = function(controls) {
     //   zoom: it can zoom (shows Reset zoom, enabled while zoomed: true)
     //   range: it has a range tool (shows Select a time range, on while rangeMode: true)
     //   selectable: a click selects an item (shows Clear the selection, enabled while selected names it)
+    //   download: it can be saved as an image and its data as CSV (shows Download)
+    //   hiddenSeries: some of its series are hidden, e.g. from its legend (shows Show all series)
+    //   intervals: the intervals its time can be grouped by, Auto first (shows Interval, set to interval)
+    //   layout: its layout moves, e.g. a network graph settling (shows Pause layout, on while layoutPaused: true)
     //   note: a short note, e.g. that rows were left out
     // e.g. `stroom.controls({zoom: true, zoomed: false, range: true, rangeMode: false, selectable: true,
     //     selected: '2026-10-24', note: null})`
-    // The commands are resetZoom, rangeMode (turns the range tool on or off) and clearSelection.
+    // The commands are resetZoom, zoomIn, zoomOut, rangeMode (turns the range tool on or off), clearSelection,
+    // showAllSeries, pauseLayout (pauses or resumes it), interval (given the interval chosen), and downloadImage and
+    // downloadData (each given the file's name, without its extension).
     stroom.controls = function(controls) {
         postControls(controls || null);
     };
@@ -434,10 +440,10 @@ function VisualisationManager() {
   };
 
   // A button in Stroom's toolbar under the visualisation was used (see stroom.controls).
-  this.command = function(name, callback) {
+  this.command = function(name, value, callback) {
     if (vis && typeof vis.command === "function") {
       try {
-        vis.command(String(name));
+        vis.command(String(name), value === undefined || value === null ? null : String(value));
       } catch (ex) {
         console.error(ex);
       }

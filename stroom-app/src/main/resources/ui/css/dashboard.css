@@ -562,6 +562,12 @@
     opacity: 0.7;
 }
 
+/* The interval Auto Interval groups a chart's time by. */
+.dashboardVis-toolbarInterval {
+    width: 130px;
+    flex-shrink: 0;
+}
+
 /* The refresh button on the right, as a table's pager has it. */
 .dashboardVis-toolbarRight {
     margin-left: auto;

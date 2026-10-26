@@ -16,12 +16,14 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisContextFactory;
 import stroom.dashboard.client.vis.VisFrame;
 import stroom.dashboard.client.vis.VisRenderReportEvent;
 import stroom.dashboard.client.vis.VisSelectionModel;
+import stroom.dashboard.client.vis.VisToolbar;
 import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,6 +39,8 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.NullSafe;
@@ -63,6 +67,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class QueryResultVisPresenter
         extends MyPresenterWidget<QueryResultVisView>
@@ -106,7 +111,8 @@ public class QueryResultVisPresenter
                                    final QueryResultVisView view,
                                    final RestFactory restFactory,
                                    final CurrentPreferences currentPreferences,
-                                   final VisContextFactory visContextFactory) {
+                                   final VisContextFactory visContextFactory,
+                                   final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.visContextFactory = visContextFactory;
         this.visFunctionCache = new VisFunctionCache(eventBus);
@@ -116,11 +122,27 @@ public class QueryResultVisPresenter
 
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
+        // The toolbar above the chart: its data as CSV for those who may download search results.
+        view.getToolbar().setHandlers(this);
+        view.getToolbar().setDataDownloadAllowed(securityContext.hasAppPermission(
+                AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         visFrame.setReportHandler(this::onRenderReport);
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
+    }
+
+    /// Shows Ask Stroom AI in the chart's toolbar, which attaches the query's results the chart draws to the chat.
+    ///
+    /// @param askAiContext Gives the search behind the results, or null if it hasn't run.
+    public void setAskAiContext(final Supplier<AskStroomAiContext> askAiContext) {
+        getView().getToolbar().setAskAiContext(askAiContext);
+    }
+
+    /// @param fileName Gives the name of a file the chart is saved to, without its extension.
+    public void setFileName(final Supplier<String> fileName) {
+        getView().getToolbar().setFileName(fileName);
     }
 
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
@@ -694,5 +716,8 @@ public class QueryResultVisPresenter
         void hideMessage();
 
         void setVisFrame(VisFrame visFrame);
+
+        /// @return The toolbar above the chart.
+        VisToolbar getToolbar();
     }
 }

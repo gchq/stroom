@@ -507,6 +507,10 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setTaskMonitorFactory(this);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
+            // Saved under the pane's name; Ask Stroom AI about the results the chart draws.
+            currentVisPresenter.setFileName(() -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
+            currentVisPresenter.setAskAiContext(() -> NullSafe.get(currentTablePresenter,
+                    QueryResultTablePresenter::getResultsContext));
 
             if (currentTablePresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
