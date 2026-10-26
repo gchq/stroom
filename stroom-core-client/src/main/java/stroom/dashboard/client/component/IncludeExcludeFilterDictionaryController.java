@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dictionary.client.component.DocRefListController;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.WrapperView;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;
@@ -35,42 +31,39 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<WrapperView> {
+/// Fills a filter's dictionaries ([IncludeExcludeFilterDictionary]), a list its owner's template
+/// declares: Add picks a dictionary to add, Remove removes those selected once confirmed.
+///
+/// ```java
+/// make(dictionariesProvider).attach(view.getIncludeDictionaries());
+/// ```
+public class IncludeExcludeFilterDictionaryController extends Controller {
 
-    private final DocRefListController docRefList;
     private final Provider<ExplorerPopupController> dictionarySelection;
-    private final ButtonView addButton;
-    private final ButtonView removeButton;
-
+    private IncludeExcludeFilterDictionary view;
     private List<DocRef> dictionaries = new ArrayList<>();
 
+    /// Made by GIN.
+    ///
+    /// @param eventBus            The application's event bus.
+    /// @param dictionarySelection Makes the popup that picks a dictionary to add.
     @Inject
-    public IncludeExcludeFilterDictionaryPresenter(final EventBus eventBus,
-                                                   final WrapperView view,
-                                                   final DocRefListController docRefList,
-                                                   final Provider<ExplorerPopupController> dictionarySelection) {
-        super(eventBus, view);
-        own(docRefList);
-        this.docRefList = docRefList;
+    public IncludeExcludeFilterDictionaryController(final EventBus eventBus,
+                                                    final Provider<ExplorerPopupController> dictionarySelection) {
+        super(eventBus);
         this.dictionarySelection = dictionarySelection;
+    }
 
-        view.setView(docRefList);
-
-        docRefList.getToolbar().setName("Dictionary actions");
-        addButton = docRefList.getToolbar().button(SvgImage.ADD, "Add Dictionary", this::onAdd);
-
-        removeButton = docRefList.getToolbar().button(SvgImage.DELETE, "Remove Dictionary",
-                this::onRemove);
-        removeButton.setEnabled(false);
-
-        docRefList.setRefreshVisible(false);
-        docRefList.initTableColumns("Dictionary Name", false);
-
-        addButton.setEnabled(true);
-        enableButtons();
-
-        own(docRefList.getSelectionModel().addSelectionHandler(event -> enableButtons()));
+    /// Attaches this to the list it fills.
+    ///
+    /// @param view The list, e.g. one a template declares.
+    public void attach(final IncludeExcludeFilterDictionary view) {
+        this.view = Objects.requireNonNull(view, "view");
+        view.setOnAdd(this::onAdd);
+        view.setOnRemove(this::onRemove);
+        refresh();
     }
 
     private void onAdd() {
@@ -87,8 +80,8 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
         });
     }
 
-    public void onRemove() {
-        final MultiSelectionModel<DocRef> selectionModel = docRefList.getSelectionModel();
+    private void onRemove() {
+        final MultiSelectionModel<DocRef> selectionModel = view.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {
             String message = "Are you sure you want to remove this dictionary?";
@@ -108,21 +101,22 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
         }
     }
 
-    private void enableButtons() {
-        final MultiSelectionModel<DocRef> selectionModel = docRefList.getSelectionModel();
-        removeButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
-    }
-
+    /// @param dictionaries The dictionaries to show, or `null` for none.
     public void setDictionaries(final List<DocRef> dictionaries) {
-        this.dictionaries = dictionaries == null ? new ArrayList<>() : new ArrayList<>(dictionaries);
+        this.dictionaries = dictionaries == null
+                ? new ArrayList<>()
+                : new ArrayList<>(dictionaries);
         refresh();
     }
 
+    /// @return The dictionaries shown.
     public List<DocRef> getDictionaries() {
         return dictionaries;
     }
 
     private void refresh() {
-        docRefList.setData(dictionaries);
+        if (view != null) {
+            view.setData(dictionaries);
+        }
     }
 }

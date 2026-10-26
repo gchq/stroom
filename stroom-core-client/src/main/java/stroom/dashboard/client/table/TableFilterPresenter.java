@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.component.ColumnFilterEditorController;
+import stroom.dashboard.client.component.IncludeExcludeFilterEditorController;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.IncludeExcludeFilter;
@@ -45,14 +46,14 @@ public class TableFilterPresenter
 
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final ColumnFilterEditorController columnFilterEditor;
-    private final IncludeExcludeFilterPresenter includeExcludeFilterPresenter;
+    private final IncludeExcludeFilterEditorController includeExcludeFilterPresenter;
     private TabData selectedTab;
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
                                 final LinkTabsLayoutView view,
                                 final ColumnFilterEditorController columnFilterEditor,
-                                final IncludeExcludeFilterPresenter includeExcludeFilterPresenter) {
+                                final IncludeExcludeFilterEditorController includeExcludeFilterPresenter) {
         super(eventBus, view);
         own(columnFilterEditor);
         own(includeExcludeFilterPresenter);
@@ -61,7 +62,7 @@ public class TableFilterPresenter
         getWidget().getElement().addClassName("default-min-sizes");
 
         final TabData tabData = addTab("Filter", new ControllerLayer(columnFilterEditor));
-        addTab("Include Exclude", includeExcludeFilterPresenter);
+        addTab("Include Exclude", new ControllerLayer(includeExcludeFilterPresenter));
         changeSelectedTab(tabData);
 
         own(getView().getTabBar().addSelectionHandler(event -> {
