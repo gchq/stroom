@@ -37,6 +37,8 @@ public class VisViewImpl extends ViewImpl implements VisView {
     private final SimplePanel visContainer;
     private final MessagePanelImpl messagePanel;
     private final RefreshButton refreshButton;
+    // The chart's controls, under it.
+    private final VisToolbar toolbar;
 
     private VisFrame visFrame;
 
@@ -48,8 +50,10 @@ public class VisViewImpl extends ViewImpl implements VisView {
         visContainer.setStyleName("dashboardVis-innerLayout");
 
         refreshButton = new RefreshButton();
-        refreshButton.addStyleName("dashboardVis-refresh");
         refreshButton.setAllowPause(true);
+
+        // The refresh button is on the toolbar's right, as a table's is.
+        toolbar = new VisToolbar(refreshButton);
 
         widget = new FlowPanel() {
             @Override
@@ -84,8 +88,10 @@ public class VisViewImpl extends ViewImpl implements VisView {
         };
         widget.setStyleName("dashboardVis-outerLayout");
         widget.add(visContainer);
-        widget.add(refreshButton);
         widget.add(messagePanel);
+        widget.add(toolbar);
+        // The chart's frame is placed over its container, which leaves room for the toolbar under it.
+        widget.addStyleName("dashboardVis-outerLayout--toolbar");
     }
 
     @Override
@@ -100,6 +106,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     public void setVisFrame(final VisFrame visFrame) {
         this.visFrame = visFrame;
+        toolbar.setVisFrame(visFrame);
         onResize();
     }
 
