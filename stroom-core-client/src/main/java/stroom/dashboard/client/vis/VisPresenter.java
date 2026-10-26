@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.vis;
 
-import stroom.ai.shared.AskStroomAiContext;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -132,6 +131,8 @@ public class VisPresenter
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
+    // The settings last drawn with, as the data is: a redraw put off (see update) is still made if they change.
+    private JavaScriptObject lastSettings;
     private TableSettings currentLinkedTableSettings;
 
     private final VisSelectionModel visSelectionModel;
@@ -160,13 +161,14 @@ public class VisPresenter
         visFrame = new VisFrame(eventBus);
 
         // The toolbar above the chart: saved under the pane's name, its data as CSV for those who may download
-        // search results, and Ask Stroom AI about the linked table's data, as the table's own button does.
+        // search results, and Ask Stroom AI about the chart, its Visualisation attached to the chat.
         final VisToolbar toolbar = view.getToolbar();
         toolbar.setHandlers(this);
         toolbar.setFileName(() -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
         toolbar.setDataDownloadAllowed(securityContext.hasAppPermission(
                 AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
-        toolbar.setAskAiContext(this::linkedTableContext);
+        toolbar.setAskAiContext(() -> VisToolbar.chartContext(NullSafe.get(getVisSettings(),
+                VisComponentSettings::getVisualisation)));
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(visSelectionModel);
         visFrame.setReportHandler(this::onRenderReport);
@@ -616,13 +618,16 @@ public class VisPresenter
         if (now > nextUpdate) {
             nextUpdate = now + UPDATE_INTERVAL;
             lastData = currentData;
+            lastSettings = currentSettings;
             refreshVisualisation();
         } else {
             if (updateTimer == null) {
                 updateTimer = new Timer() {
                     @Override
                     public void run() {
-                        if (lastData != currentData) {
+                        // Seen in testing: a chart replaced by the AI chat kept its old look until its query was
+                        // run again, as its new Visualisation's settings arrived with the same data.
+                        if (lastData != currentData || lastSettings != currentSettings) {
                             update();
                         }
                     }
@@ -707,15 +712,6 @@ public class VisPresenter
 
     private void refreshVisualisation() {
         visFrame.setData(visContextFactory.create(), currentSettings, currentData);
-    }
-
-    // The search behind the linked table's rows, which the chart draws, or null if it hasn't run.
-    private AskStroomAiContext linkedTableContext() {
-        final String tableId = NullSafe.get(getVisSettings(), VisComponentSettings::getTableId);
-        return tableId != null && getDashboardContext() != null
-               && getDashboardContext().getComponents().get(tableId) instanceof final TablePresenter table
-                ? table.getResultsContext()
-                : null;
     }
 
     private void onRenderReport(final String reportJson) {

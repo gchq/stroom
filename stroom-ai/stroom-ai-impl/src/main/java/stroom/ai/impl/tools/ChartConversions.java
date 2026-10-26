@@ -24,6 +24,7 @@ import stroom.ai.impl.vis.ChartCheck.TableColumn;
 import stroom.ai.impl.vis.ChartKind;
 import stroom.ai.impl.vis.ChartRole;
 import stroom.ai.impl.vis.EChartsTemplate;
+import stroom.ai.impl.vis.StyleSetting;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -92,6 +93,26 @@ final class ChartConversions {
             }
         }));
         return mappings;
+    }
+
+    /// The style settings a chart keeps when it is replaced: those the new kind has, as the old chart draws with
+    /// them (other than their defaults), unless given. Seen in testing: a network graph replaced by one weighted by
+    /// a count lost its colours, its nodes coloured each their own (nodeColours node) going back to one colour.
+    ///
+    /// @param old   The chart replaced, its settings those it draws with ([#drawnWith(Component, Map)]).
+    /// @param kind  The new chart's kind.
+    /// @param style The style settings given for the new chart, normalised.
+    /// @return The settings kept from the old chart, by setting id, that the new chart is given too.
+    static Map<String, String> styleKept(final Component old, final ChartKind kind, final Map<String, String> style) {
+        final Map<String, String> kept = new LinkedHashMap<>();
+        for (final StyleSetting setting : kind.styleSettings()) {
+            final String value = NullSafe.map(old.settings()).get(setting.id());
+            if (!NullSafe.map(style).containsKey(setting.id()) && NullSafe.isNonBlankString(value)
+                && !value.strip().equals(setting.defaultValue())) {
+                setting.normalise(value).ifPresent(normalised -> kept.put(setting.id(), normalised));
+            }
+        }
+        return kept;
     }
 
     /// @param dashboardText The dashboard's description.
