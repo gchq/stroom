@@ -1980,6 +1980,14 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for thumbnail, as text.",
           "type" : "string"
         },
+        "trendLine" : {
+          "description" : "The value for trendLine, as text.",
+          "type" : "string"
+        },
+        "trendWindow" : {
+          "description" : "The value for trendWindow, as text.",
+          "type" : "string"
+        },
         "units" : {
           "description" : "The value for units, as text.",
           "type" : "string"
