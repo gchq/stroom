@@ -1418,18 +1418,13 @@ if (!window.visualisations) {
                 : labelOf(value, fields.type(id), prefs);
         }
 
+        // Each row's path (see pathOf) is a link from each step to the next: its source to its target, then on
+        // through any further levels.
+        var nodeRoles = {};
         rows.forEach(function (row) {
-            var sourceValue = fields.value(row, "source");
-            var targetValue = fields.value(row, "target");
-            if (sourceValue === null || sourceValue === undefined || sourceValue === "" ||
-                targetValue === null || targetValue === undefined || targetValue === "") {
+            var path = pathOf(row, fields, prefs);
+            if (!path) {
                 missing++;
-                return;
-            }
-            var source = fields.label(row, "source", prefs);
-            var target = fields.label(row, "target", prefs);
-            if (source === target) {
-                selfLinks++;
                 return;
             }
             var weight = 1;
@@ -1440,22 +1435,36 @@ if (!window.visualisations) {
                     return;
                 }
             }
-            var sourceNode = node(source, groupOf(row, "sourceGroup"));
-            var targetNode = node(target, groupOf(row, "targetGroup"));
-            sourceNode.neighbours[target] = true;
-            targetNode.neighbours[source] = true;
-            sourceNode.weight += weight;
-            targetNode.weight += weight;
+            for (var i = 0; i < path.length - 1; i++) {
+                var source = path[i].label;
+                var target = path[i + 1].label;
+                if (source === target) {
+                    selfLinks++;
+                    continue;
+                }
+                var sourceNode = node(source, path[i].role === "source" ? groupOf(row, "sourceGroup") : null);
+                var targetNode = node(target, path[i + 1].role === "target" ? groupOf(row, "targetGroup") : null);
+                [path[i], path[i + 1]].forEach(function (step) {
+                    if (nodeRoles[step.label] === undefined) {
+                        nodeRoles[step.label] = step.role;
+                    }
+                });
+                sourceNode.neighbours[target] = true;
+                targetNode.neighbours[source] = true;
+                sourceNode.weight += weight;
+                targetNode.weight += weight;
 
-            // An undirected graph draws A to B and B to A as one link.
-            var key = directed || source < target
-                ? source + "\u0000" + target
-                : target + "\u0000" + source;
-            if (links[key]) {
-                links[key].value += weight;
-            } else {
-                links[key] = {source: source, target: target, value: weight};
-                linkKeys.push(key);
+                // An undirected graph draws A to B and B to A as one link.
+                var key = directed || source < target
+                    ? source + "\u0000" + target
+                    : target + "\u0000" + source;
+                if (links[key]) {
+                    links[key].value += weight;
+                } else {
+                    links[key] = {source: source, target: target, value: weight, fromRole: path[i].role,
+                        toRole: path[i + 1].role};
+                    linkKeys.push(key);
+                }
             }
         });
         addDropped(report, "source or target empty", missing);
@@ -1569,19 +1578,14 @@ if (!window.visualisations) {
                 height: "22%",
                 itemStyle: {borderColor: style.border}
             } : undefined,
-            // A node selects itself (node); a link its two ends (source and target).
+            // A node selects itself (node); a link its two ends (by the columns they are from).
             selectAt: function (seriesIndex, dataIndex, dataType) {
                 if (dataType === "edge") {
                     var link = links[linkKeys[dataIndex]];
-                    return link ? fields.selection([["source", fields.rawOf("source", link.source)],
-                        ["target", fields.rawOf("target", link.target)]]) : null;
+                    return link ? linkSelection(fields, link) : null;
                 }
                 var name = nodeNames[dataIndex];
-                if (name === undefined) {
-                    return null;
-                }
-                var raw = fields.rawOf("source", name);
-                return fields.selection([["node", raw === name ? fields.rawOf("target", name) : raw]]);
+                return name === undefined ? null : nodeSelection(fields, {nodeRoles: nodeRoles}, name);
             },
             color: colourEachNode ? distinctColours(groups.length, style) : undefined,
             tooltip: {
@@ -1615,7 +1619,7 @@ if (!window.visualisations) {
                 categories: groups.map(function (group) {
                     return {name: group};
                 }),
-                force: physicsOfShown(settings, nodeCount),
+                force: physicsOf(settings, nodeCount),
                 edgeSymbol: directed ? ["none", "arrow"] : ["none", "none"],
                 edgeSymbolSize: 6,
                 emphasis: {focus: "adjacency", lineStyle: {width: 4}},
@@ -1647,16 +1651,6 @@ if (!window.visualisations) {
                 })
             }]
         };
-    }
-
-    // The force layout's physics (see physicsOf), always laid out moving when the thumbnail shows: without, ECharts
-    // 6 recurses until it runs out of stack (seen in testing, on a graph too large to lay out moving).
-    function physicsOfShown(settings, nodeCount) {
-        var physics = physicsOf(settings, nodeCount);
-        if (boolSetting(settings, "thumbnail", false)) {
-            physics.layoutAnimation = true;
-        }
-        return physics;
     }
 
     // The force layout's physics by the Physics setting: settled (as it settles quickly), lively (kept moving longer,
@@ -2033,27 +2027,55 @@ if (!window.visualisations) {
     // Flows and links: Sankey and chord diagrams
     // ------------------------------------------------------------------------------------------
 
-    // Links between nodes from the rows: their values added up (1 a row if there is no value column), links from a
-    // node to itself left out, and only the maxNodes nodes with the most flowing through them kept.
-    function linkTotals(rows, fields, settings, prefs, report, valueId) {
+    // The columns of a network's path, in order: source, target, then the further levels after it (Level 3 to 6).
+    var PATH_ROLES = ["source", "target", "level3", "level4", "level5", "level6"];
+    // What tells a Sankey diagram's node at one level from the same value at another: a number of zero-width
+    // spaces after its name, one for each level after the first, so it reads the same.
+    var LEVEL_MARK = "\u200b";
+
+    // A row's path through a network's columns, each step a mapped column's role, label and value: its source and
+    // target, then each further level mapped, up to the first the row leaves empty. Null if its source or target
+    // is empty.
+    function pathOf(row, fields, prefs) {
+        var steps = [];
+        for (var i = 0; i < PATH_ROLES.length; i++) {
+            var role = PATH_ROLES[i];
+            if (!fields.has(role)) {
+                continue;
+            }
+            var value = fields.value(row, role);
+            if (isBlank(value)) {
+                if (i < 2) {
+                    return null;
+                }
+                break;
+            }
+            steps.push({role: role, level: i, label: fields.label(row, role, prefs), raw: value});
+        }
+        return steps.length >= 2 ? steps : null;
+    }
+
+    // A node's name without the marks that tell its level (see LEVEL_MARK).
+    function nodeLabel(name) {
+        return String(name).replace(/\u200b+$/, "");
+    }
+
+    // The links of a Sankey or chord diagram from the rows, each row's path (see pathOf) a link from each step to
+    // the next, added up per pair, with the column (role) each end is from. A Sankey diagram's nodes are per level
+    // (perLevel), so a value at two levels is two nodes (and its flows can't loop); a chord diagram's are per value.
+    function linkTotals(rows, fields, settings, prefs, report, valueId, perLevel) {
         var hasValue = fields.has(valueId);
         var links = {};
         var linkKeys = [];
         var nodeTotals = {};
+        var nodeRoles = {};
         var missing = 0;
         var selfLinks = 0;
         var badValue = 0;
         rows.forEach(function (row) {
-            var sourceValue = fields.value(row, "source");
-            var targetValue = fields.value(row, "target");
-            if (isBlank(sourceValue) || isBlank(targetValue)) {
+            var path = pathOf(row, fields, prefs);
+            if (!path) {
                 missing++;
-                return;
-            }
-            var source = fields.label(row, "source", prefs);
-            var target = fields.label(row, "target", prefs);
-            if (source === target) {
-                selfLinks++;
                 return;
             }
             var value = hasValue ? toNumber(fields.value(row, valueId)) : 1;
@@ -2061,14 +2083,30 @@ if (!window.visualisations) {
                 badValue++;
                 return;
             }
-            var key = source + "\u0000" + target;
-            if (!links[key]) {
-                links[key] = {source: source, target: target, value: 0};
-                linkKeys.push(key);
+            var names = path.map(function (step) {
+                var name = perLevel ? step.label + new Array(step.level + 1).join(LEVEL_MARK) : step.label;
+                if (nodeRoles[name] === undefined) {
+                    nodeRoles[name] = step.role;
+                }
+                return name;
+            });
+            for (var i = 0; i < path.length - 1; i++) {
+                var source = names[i];
+                var target = names[i + 1];
+                if (source === target) {
+                    selfLinks++;
+                    continue;
+                }
+                var key = source + "\u0000" + target;
+                if (!links[key]) {
+                    links[key] = {source: source, target: target, value: 0, fromRole: path[i].role,
+                        toRole: path[i + 1].role};
+                    linkKeys.push(key);
+                }
+                links[key].value += value;
+                nodeTotals[source] = (nodeTotals[source] || 0) + value;
+                nodeTotals[target] = (nodeTotals[target] || 0) + value;
             }
-            links[key].value += value;
-            nodeTotals[source] = (nodeTotals[source] || 0) + value;
-            nodeTotals[target] = (nodeTotals[target] || 0) + value;
         });
         addDropped(report, "source or target empty", missing);
         addDropped(report, "source and target the same", selfLinks);
@@ -2089,6 +2127,7 @@ if (!window.visualisations) {
         });
         return {
             nodeNames: nodeNames,
+            nodeRoles: nodeRoles,
             links: linkKeys.map(function (key) {
                 return links[key];
             }).filter(function (link) {
@@ -2097,26 +2136,41 @@ if (!window.visualisations) {
         };
     }
 
+    // A network's node as a click selects it (node): its value as the column it is from has it.
+    function nodeSelection(fields, network, name) {
+        var role = (network.nodeRoles && network.nodeRoles[name]) || "source";
+        var label = nodeLabel(name);
+        var raw = fields.rawOf(role, label);
+        if (raw === label && role === "source") {
+            raw = fields.rawOf("target", label);
+        }
+        return fields.selection([["node", raw]]);
+    }
+
+    // A network's link as a click selects it: its two ends, by the columns they are from (source and target, or a
+    // further level).
+    function linkSelection(fields, link) {
+        var from = link.fromRole || "source";
+        var to = link.toRole || "target";
+        return fields.selection([[from, fields.rawOf(from, nodeLabel(link.source))],
+            [to, fields.rawOf(to, nodeLabel(link.target))]]);
+    }
+
     // What a click on a node or link selects: the node itself (node), or the link's two ends.
     function networkSelectAt(fields, network) {
         return function (seriesIndex, dataIndex, dataType) {
             if (dataType === "edge") {
                 var link = network.links[dataIndex];
-                return link ? fields.selection([["source", fields.rawOf("source", link.source)],
-                    ["target", fields.rawOf("target", link.target)]]) : null;
+                return link ? linkSelection(fields, link) : null;
             }
             var name = network.nodeNames[dataIndex];
-            if (name === undefined) {
-                return null;
-            }
-            var raw = fields.rawOf("source", name);
-            return fields.selection([["node", raw === name ? fields.rawOf("target", name) : raw]]);
+            return name === undefined ? null : nodeSelection(fields, network, name);
         };
     }
 
     function sankeyModel(rows, fields, settings, prefs, style, report) {
         requireFields(fields, ["source", "target"]);
-        var network = linkTotals(rows, fields, settings, prefs, report, "value");
+        var network = linkTotals(rows, fields, settings, prefs, report, "value", true);
         // A Sankey diagram can't draw a loop: the strongest flows are kept, and one that would close a loop left
         // out.
         var next = {};

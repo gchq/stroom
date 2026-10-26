@@ -129,7 +129,9 @@ class TestListVisualisationsTool {
         assertThat(run())
                 .contains("- The visualisations content pack's D3 charts: graph ('Force'). Wires these existing "
                           + "Visualisations to a table (library content-pack)")
-                .doesNotContain("not in the D3 one");
+                // Its own inputs are a generated graph's, but for the further levels.
+                .doesNotContainPattern("- (source|target|weight)[^\n]*not in the D3 one")
+                .containsPattern("- level3 \\(optional[^\n]*\\(not in the D3 one\\)");
     }
 
     @Test

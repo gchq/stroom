@@ -91,7 +91,11 @@ public enum ChartKind {
                     new ChartRole("sourceGroup", "Source Group (Optional)", false, ChartRole.Values.ANY,
                             "colours the source node by this column"),
                     new ChartRole("targetGroup", "Target Group (Optional)", false, ChartRole.Values.ANY,
-                            "colours the target node by this column")),
+                            "colours the target node by this column"),
+                    level(3, "a further node the target links to, e.g. a port after a destination IP"),
+                    level(4, "a further node level 3 links to"),
+                    level(5, "a further node level 4 links to"),
+                    level(6, "a further node level 5 links to")),
             List.of(StyleSetting.LEGEND, StyleSetting.DIRECTED, StyleSetting.NODE_COLOURS,
                     StyleSetting.SHOW_LABELS_AUTO, StyleSetting.PHYSICS, StyleSetting.THUMBNAIL,
                     StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
@@ -132,7 +136,12 @@ public enum ChartKind {
                     new ChartRole("target", "Target", true, ChartRole.Values.ANY,
                             "where it goes, e.g. a destination port"),
                     new ChartRole("value", "Value (Optional)", false, ChartRole.Values.NUMBER,
-                            "how much flows, e.g. a count() column; each row counts once if not given")),
+                            "how much flows, e.g. a count() column; each row counts once if not given"),
+                    level(3, "where it goes after the target, e.g. a port after a destination IP; each level's "
+                             + "nodes are its own"),
+                    level(4, "where it goes after level 3"),
+                    level(5, "where it goes after level 4"),
+                    level(6, "where it goes after level 5")),
             List.of(StyleSetting.ORIENT, StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES,
                     StyleSetting.MAX_VALUES)),
 
@@ -144,7 +153,11 @@ public enum ChartKind {
                             "the other end, e.g. the recipient"),
                     new ChartRole("weight", "Weight (Optional)", false, ChartRole.Values.NUMBER,
                             "how strong each link is, e.g. a count() of messages; each row counts once if not "
-                            + "given")),
+                            + "given"),
+                    level(3, "a further thing the target links to"),
+                    level(4, "a further thing level 3 links to"),
+                    level(5, "a further thing level 4 links to"),
+                    level(6, "a further thing level 5 links to")),
             List.of(StyleSetting.SHOW_LABELS_ON, StyleSetting.MAX_NODES, StyleSetting.MAX_VALUES)),
 
     GAUGE("gauge", "Gauge", "a dial showing a value against its range; one per name, when a name column is mapped",
@@ -197,6 +210,13 @@ public enum ChartKind {
     /// @return The style settings a user can change.
     public List<StyleSetting> styleSettings() {
         return styleSettings;
+    }
+
+    // A further level of a flow or network after its target (3 to 6): a row links each level it gives to the next,
+    // up to the first it leaves empty.
+    private static ChartRole level(final int level, final String description) {
+        return new ChartRole("level" + level, "Level " + level + " (Optional)", false, ChartRole.Values.ANY,
+                description + "; a row's links stop at the first level it leaves empty");
     }
 
     /// @param roleId A role's id.
