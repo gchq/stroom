@@ -22,6 +22,7 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
+import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.component.SelectionSummaryController;
 import stroom.data.shared.DataResource;
@@ -103,7 +104,7 @@ public abstract class AbstractMetaListPresenter
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryController> selectionSummaryControllerProvider;
-    private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
+    private final Provider<ProcessChoiceDialogController> processChoiceDialogProvider;
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
@@ -126,7 +127,7 @@ public abstract class AbstractMetaListPresenter
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
-                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
+                              final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
                               final Provider<ExplorerPopupController> pipelineSelection,
                               final ExpressionValidator expressionValidator,
                               final boolean allowSelectAll,
@@ -137,7 +138,7 @@ public abstract class AbstractMetaListPresenter
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
         this.selectionSummaryControllerProvider = selectionSummaryControllerProvider;
-        this.processChoicePresenterProvider = processChoicePresenterProvider;
+        this.processChoiceDialogProvider = processChoiceDialogProvider;
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
@@ -596,15 +597,13 @@ public abstract class AbstractMetaListPresenter
     public void process() {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
-            final ProcessChoicePresenter processChoicePresenter = makeDialog(processChoicePresenterProvider);
-            final ProcessChoiceUiHandler processChoiceUiHandler = choice -> {
+            processChoiceDialogProvider.get().show(this, selection, choice -> {
                 if (choice.isReprocess()) {
                     doReprocess(choice);
                 } else {
                     doProcess(choice);
                 }
-            };
-            processChoicePresenter.show(selection, processChoiceUiHandler);
+            });
         } else {
             AlertEvent.fireError(
                     AbstractMetaListPresenter.this,

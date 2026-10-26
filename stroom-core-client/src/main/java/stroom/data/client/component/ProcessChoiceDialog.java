@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.data.client.view;
+package stroom.data.client.component;
 
-import stroom.data.client.presenter.ProcessChoicePresenter;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePresenter.ProcessChoiceView {
+/// The Create Processors dialog's content, for streams chosen in the data browser: the new
+/// processor filters' priority, whether to reprocess, whether they start enabled, and the range
+/// of stream create times they take.
+public class ProcessChoiceDialog extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final int DEFAULT_PRIORITY = 10;
 
     @UiField
     ValueSpinner priority;
@@ -44,87 +49,81 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @UiField
     DateTimeBox maxMetaCreateTimeMs;
 
-    private final Widget widget;
+    private Runnable onReprocessChange = () -> {
+    };
 
-    @Inject
-    public ProcessChoiceViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-
-        priority.setMax(100);
-        priority.setMin(1);
-        priority.setValue(10);
-
-        autoPriority.setValue(true);
-
-        enabled.setValue(true);
+    /// Makes the content.
+    public ProcessChoiceDialog() {
+        initWidget(BINDER.createAndBindUi(this));
+        // setValue is overloaded, so it can't be set in the template
+        priority.setValue(DEFAULT_PRIORITY);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus in the priority.
     public void focus() {
         priority.focus();
     }
 
-    @Override
+    /// @return The new filters' priority.
     public int getPriority() {
         return priority.getIntValue();
     }
 
-    @Override
+    /// @return Whether the priority is taken from the pipeline's existing filter.
     public boolean isAutoPriority() {
         return autoPriority.getValue();
     }
 
-    @Override
+    /// @return Whether the data is reprocessed.
     public boolean isReprocess() {
         return reprocess.getValue();
     }
 
-    @Override
+    /// @return Whether the new filters start enabled.
     public boolean isEnabled() {
         return enabled.getValue();
     }
 
-    @Override
+    /// @return The earliest stream create time, or null for no lower limit.
     public Long getMinMetaCreateTimeMs() {
         return minMetaCreateTimeMs.getValue();
     }
 
-    @Override
-    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setValue(minMetaCreateTimeMs);
-    }
-
-    @Override
+    /// @return The latest stream create time, or null for no upper limit.
     public Long getMaxMetaCreateTimeMs() {
         return maxMetaCreateTimeMs.getValue();
     }
 
-    @Override
+    /// @param maxMetaCreateTimeMs The latest stream create time, or null for no upper limit.
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setValue(maxMetaCreateTimeMs);
     }
 
-    @UiHandler("reprocess")
-    public void onChange(final ValueChangeEvent<Boolean> event) {
-        setMaxMetaCreateTimeMs(System.currentTimeMillis());
-    }
-
-    @Override
+    /// @return The earliest stream create time box, for its controller to attach to.
     public DateTimeBox getMinMetaCreateTimeBox() {
         return minMetaCreateTimeMs;
     }
 
-    @Override
+    /// @return The latest stream create time box, for its controller to attach to.
     public DateTimeBox getMaxMetaCreateTimeBox() {
         return maxMetaCreateTimeMs;
     }
 
-    public interface Binder extends UiBinder<Widget, ProcessChoiceViewImpl> {
+    /// @param onReprocessChange Run when Reprocess data is ticked or unticked.
+    public void setOnReprocessChange(final Runnable onReprocessChange) {
+        this.onReprocessChange = onReprocessChange;
+    }
+
+    @UiHandler("reprocess")
+    void onReprocess(final ValueChangeEvent<Boolean> event) {
+        onReprocessChange.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ProcessChoiceDialog> {
 
     }
 }

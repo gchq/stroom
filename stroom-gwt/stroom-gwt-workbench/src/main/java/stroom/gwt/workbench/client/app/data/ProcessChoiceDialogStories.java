@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.app.data;
 
+import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.presenter.ProcessChoice;
-import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.HashMap;
 import java.util.Map;
 
-/// The `App/Data/ProcessChoiceDialog` stories, showing Stroom's real [ProcessChoicePresenter] (the
+/// The `App/Data/ProcessChoiceDialog` stories, showing Stroom's real [ProcessChoiceDialogController] (the
 /// 'Create Processors' dialog), as the data browser's meta list (`AbstractMetaListPresenter`) shows
 /// it for a selection of streams.
 ///
@@ -131,10 +131,9 @@ public final class ProcessChoiceDialogStories {
                 .injector(injector)
                 .build();
         final Spy onOk = harness.fn(ON_OK);
-        final ProcessChoicePresenter presenter = injector.getProcessChoicePresenter();
         // A selection of all the streams, as the meta list's 'Process' item gives it
         final Selection<Long> selection = Selection.selectAll();
-        presenter.show(selection, choice -> {
+        injector.getProcessChoiceDialogController().show(harness.getAppRoot(), selection, choice -> {
             final Map<String, Object> map = choice(
                     choice.getPriority(), choice.isAutoPriority(), choice.isReprocess(), choice.isEnabled());
             map.put("minMetaCreateTimeMs", choice.getMinMetaCreateTimeMs());

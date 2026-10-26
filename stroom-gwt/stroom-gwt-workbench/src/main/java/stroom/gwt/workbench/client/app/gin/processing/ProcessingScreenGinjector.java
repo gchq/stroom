@@ -18,10 +18,10 @@ package stroom.gwt.workbench.client.app.gin.processing;
 
 import stroom.analytics.client.presenter.ExecutionScheduleManager;
 import stroom.dashboard.client.component.ProcessorLimitsController;
+import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
-import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
@@ -121,7 +121,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     SourceTabPresenter getSourceTabPresenter();
 
     /// @return The 'Create Processors' dialog, as the data browser's meta list shows it.
-    ProcessChoicePresenter getProcessChoicePresenter();
+    ProcessChoiceDialogController getProcessChoiceDialogController();
 
     /// @return A feed's 'Upload' dialog, as the data browser shows it.
     DataUploadPresenter getDataUploadPresenter();

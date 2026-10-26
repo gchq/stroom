@@ -23,8 +23,6 @@ import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
-import stroom.data.client.presenter.ProcessChoicePresenter;
-import stroom.data.client.presenter.ProcessChoicePresenter.ProcessChoiceView;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
@@ -36,7 +34,6 @@ import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.MetaViewImpl;
-import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
@@ -63,9 +60,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorTaskPresenter.class,
                 StreamTaskView.class,
                 StreamTaskViewImpl.class);
-        bindPresenterWidget(ProcessChoicePresenter.class,
-                ProcessChoiceView.class,
-                ProcessChoiceViewImpl.class);
         bindPresenterWidget(SourceTabPresenter.class,
                 SourceTabView.class,
                 SourceTabViewImpl.class);
