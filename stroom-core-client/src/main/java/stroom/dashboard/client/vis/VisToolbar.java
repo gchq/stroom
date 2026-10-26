@@ -23,6 +23,9 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -33,6 +36,9 @@ import com.google.gwt.user.client.ui.Label;
 /// note (e.g. that rows were left out); and, on the right as a table's toolbar has it, the refresh button that
 /// shows the visualisation's data loading. A visualisation without controls has only the refresh button.
 public class VisToolbar extends Composite {
+
+    /// The toolbar's height, in pixels: the chart's container stops this far above the pane's bottom.
+    public static final int HEIGHT = 28;
 
     private final FlowPanel toolbar;
     private final InlineSvgToggleButton rangeButton;
@@ -64,6 +70,14 @@ public class VisToolbar extends Composite {
 
         toolbar = new FlowPanel();
         toolbar.setStyleName("dashboardVis-toolbar dock-container-horizontal align-center");
+        // Placed here as well as by its style, so it is under the chart even with a style sheet the browser cached
+        // from before the toolbar (it would otherwise sit under the chart's frame, which floats over the pane).
+        final Style style = toolbar.getElement().getStyle();
+        style.setPosition(Position.ABSOLUTE);
+        style.setLeft(0, Unit.PX);
+        style.setRight(0, Unit.PX);
+        style.setBottom(0, Unit.PX);
+        style.setHeight(HEIGHT, Unit.PX);
         toolbar.add(buttons);
         toolbar.add(selectedLabel);
         toolbar.add(noteLabel);

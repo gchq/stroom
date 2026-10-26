@@ -83,8 +83,10 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         widget.add(visContainer);
         widget.add(messagePanel);
         widget.add(toolbar);
-        // The chart's frame is placed over its container, which leaves room for the toolbar under it.
+        // The chart's frame is placed over its container, which leaves room for the toolbar under it (set here as
+        // well as by the style, as for the toolbar itself).
         widget.addStyleName("dashboardVis-outerLayout--toolbar");
+        visContainer.getElement().getStyle().setProperty("height", "calc(100% - " + VisToolbar.HEIGHT + "px)");
     }
 
     @Override
