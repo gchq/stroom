@@ -20,6 +20,7 @@ import stroom.query.api.token.TokenException;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -64,6 +65,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         "'it\\'s a string'",
                         "50",
                         "stringLength('it\\'s a string')",
+                        "shannonEntropy('it\\'s a string')",
                         "upperCase('it\\'s a string')",
                         "lowerCase('it\\'s a string')",
                         "encodeUrl('http://www.example.com')",
@@ -387,6 +389,37 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("stringLength(${val1})",
                 Val.of("this"),
                 ValAssertions.valInteger(4));
+    }
+
+    @Test
+    void testShannonEntropy() {
+        compute("shannonEntropy(${val1})",
+                Val.of("password"),
+                out -> assertThat(out.toDouble()).isCloseTo(2.75, Offset.offset(0.0001)));
+    }
+
+    @Test
+    void testShannonEntropy_null() {
+        compute("shannonEntropy(${val1})",
+                Val.of(ValNull.INSTANCE),
+                ValAssertions.valNull());
+    }
+
+    @Test
+    void testShannonEntropy_error() {
+        compute("shannonEntropy(${val1})",
+                Val.of(ValErr.create("Some error")),
+                ValAssertions.valErrContainsIgnoreCase("Some error"));
+    }
+
+    @Test
+    void testShannonEntropy_threshold() {
+        compute("shannonEntropy(lowerCase(${val1})) > 3.5",
+                Val.of("aGVsbG8gd29ybGQgdGhpcyBpcyBiYXNlNjQ="),
+                ValAssertions.valTrue());
+        compute("shannonEntropy(lowerCase(${val1})) > 3.5",
+                Val.of("google"),
+                ValAssertions.valFalse());
     }
 
     @Test
