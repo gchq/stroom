@@ -612,6 +612,16 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
+### Document Permissions' Edit button stays disabled until a document is opened (on master too)
+
+**Open; found 26 October 2026 in wave 10.** On the Document Permissions tab
+(`BatchDocumentPermissionsPresenter`), 'Edit Permissions For Selected Document' is enabled only when
+a document is opened (Enter or a double click on it), which opens its permissions anyway. Choosing a
+document leaves Edit disabled: the selection handler that enabled it is commented out. Wave 10
+(`DocumentList`) keeps this as it is, so the screenshots match; the fix is to enable Edit on
+selection (the list chooses its first document when the filter changes, so Edit would then be
+enabled in the screenshots).
+
 ### Menus that didn't open in the standalone dashboard (on master too)
 
 **Fixed (25 October 2026), confirmed in the code.** Widgets with no event bus ask for their menus

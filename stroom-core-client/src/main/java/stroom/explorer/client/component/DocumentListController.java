@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.explorer.client.component;
 
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
@@ -29,11 +28,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.component.client.Controller;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
@@ -44,48 +40,37 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class DocumentListPresenter extends MyPresenterWidget<PagerPanel> {
+/// The documents found ([DocumentList]) by an expression and a quick filter, a page at a time, the
+/// first chosen when the filter changes. Its owner acts on its buttons and sets whether they can be
+/// pressed.
+public class DocumentListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final DataGrid<FindResult> resultList;
+    private final DocumentList view;
     private final RestDataProvider<FindResult, ResultPage<FindResult>> dataProvider;
-    private final MultiSelectionModelImpl<FindResult> selectionModel;
     private final AdvancedDocumentFindRequest.Builder criteriaBuilder = new AdvancedDocumentFindRequest.Builder();
-    private Consumer<String> filterErrorConsumer;
-    private ExpressionCriteria currentQuery = criteriaBuilder.build();
     private ExpressionOperator lastFilter;
     private boolean initialised;
-    private boolean focusText;
-    private Consumer<ResultPage<FindResult>> currentResulthandler;
-    private FindDocResultListHandler<FindResult> findResultListHandler = new FindDocResultListHandler<FindResult>() {
-        @Override
-        public void openDocument(final FindResult match) {
-
-        }
-
-        @Override
-        public void focus() {
-
-        }
+    private Consumer<String> onFilterError = error -> {
+    };
+    private Consumer<ResultPage<FindResult>> onResultPage = resultPage -> {
     };
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The content.
+    /// @param restFactory Finds the documents.
     @Inject
-    public DocumentListPresenter(final EventBus eventBus,
-                                 final PagerPanel view,
-                                 final RestFactory restFactory) {
-        super(eventBus, view);
+    public DocumentListController(final EventBus eventBus,
+                                  final DocumentList view,
+                                  final RestFactory restFactory) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
 
-        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
-        // click, opens it, and Up on the first goes back to the filter
-        selectionModel = new MultiSelectionModelImpl<>();
-        resultList = FindResultLists.create(
-                "Documents",
-                new FindResultCell(),
-                selectionModel,
-                doc -> findResultListHandler.openDocument(doc),
-                () -> findResultListHandler.focus());
-
+        final MultiSelectionModel<FindResult> selectionModel = view.getSelectionModel();
         dataProvider = new RestDataProvider<FindResult, ResultPage<FindResult>>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -105,15 +90,10 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerPanel> {
                         .onSuccess(resultPage -> {
                             // A rejected filter comes back as an empty page like any other, so surface
                             // the reason on whichever quick filter drives this list.
-                            if (filterErrorConsumer != null) {
-                                filterErrorConsumer.accept(
-                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
-                            }
-                            if (currentResulthandler != null) {
-                                currentResulthandler.accept(resultPage);
-                            }
-                            if (resultPage.getPageStart() != resultList.getPageStart()) {
-                                resultList.setPageStart(resultPage.getPageStart());
+                            onFilterError.accept(NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            onResultPage.accept(resultPage);
+                            if (resultPage.getPageStart() != view.getPageStart()) {
+                                view.setPageStart(resultPage.getPageStart());
                             }
                             dataConsumer.accept(resultPage);
 
@@ -124,74 +104,83 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerPanel> {
                                     selectionModel.clear();
                                 }
                             }
-
-                            resetFocus();
                         })
                         .onFailure(errorHandler)
-                        .taskMonitorFactory(view)
+                        .owner(DocumentListController.this)
+                        .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
         };
-
-        view.setDataWidget(resultList);
     }
 
-    private void resetFocus() {
-        if (focusText) {
-            focusText = false;
-            findResultListHandler.focus();
-        }
-    }
-
+    /// Finds the documents again; the first time, starts the list.
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(resultList);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }
     }
 
-    public void setFindResultListHandler(final FindDocResultListHandler findResultListHandler) {
-        this.findResultListHandler = findResultListHandler;
-    }
-
+    /// @param quickFilter The quick filter's text, sent to Stroom as it is.
     public void setQuickFilter(final String quickFilter) {
         criteriaBuilder.quickFilter(quickFilter);
     }
 
+    /// @param expression What the documents must match.
     public void setExpression(final ExpressionOperator expression) {
         criteriaBuilder.expression(expression);
     }
 
+    /// @param requiredPermissions The permissions the user must have on a document to see it.
     public void setRequiredPermissions(final Set<DocumentPermission> requiredPermissions) {
         criteriaBuilder.requiredPermissions(requiredPermissions);
     }
 
+    /// @return The document with the focus, or `null`.
     public FindResult getSelected() {
-        return selectionModel.getSelected();
+        return view.getSelectionModel().getSelected();
     }
 
-    public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
-        resultList.setKeyboardSelectedRow(row, stealFocus);
+    /// @param enabled Whether Edit can be pressed.
+    public void setEditEnabled(final boolean enabled) {
+        view.setEditEnabled(enabled);
     }
 
-    public void setFocusText(final boolean focusText) {
-        this.focusText = focusText;
+    /// @param enabled Whether Batch Edit can be pressed.
+    public void setBatchEditEnabled(final boolean enabled) {
+        view.setBatchEditEnabled(enabled);
     }
 
-    public MultiSelectionModelImpl<FindResult> getSelectionModel() {
-        return selectionModel;
+    /// @param onOpen Given a document to open (Enter, or a double click, on it).
+    public void setOnOpen(final Consumer<FindResult> onOpen) {
+        view.setOnOpen(onOpen);
     }
 
-    public void setCurrentResulthandler(final Consumer<ResultPage<FindResult>> currentResulthandler) {
-        this.currentResulthandler = currentResulthandler;
+    /// @param onFilter Run when Filter is pressed.
+    public void setOnFilter(final Runnable onFilter) {
+        view.setOnFilter(onFilter);
     }
 
-    /**
-     * Receives the reason the server rejected the current filter, or null when it was applied.
-     */
-    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
-        this.filterErrorConsumer = filterErrorConsumer;
+    /// @param onEdit Run when Edit is pressed.
+    public void setOnEdit(final Runnable onEdit) {
+        view.setOnEdit(onEdit);
+    }
+
+    /// @param onBatchEdit Run when Batch Edit is pressed.
+    public void setOnBatchEdit(final Runnable onBatchEdit) {
+        view.setOnBatchEdit(onBatchEdit);
+    }
+
+    /// @param onFilterError Given why the filter was rejected after each find, or `null` if it
+    ///                      wasn't.
+    public void setOnFilterError(final Consumer<String> onFilterError) {
+        this.onFilterError = onFilterError;
+    }
+
+    /// @param onResultPage Given each page found, e.g. to say how many documents there are.
+    public void setOnResultPage(final Consumer<ResultPage<FindResult>> onResultPage) {
+        this.onResultPage = onResultPage;
     }
 }

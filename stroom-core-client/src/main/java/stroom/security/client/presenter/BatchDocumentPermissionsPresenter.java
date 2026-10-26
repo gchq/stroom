@@ -21,8 +21,7 @@ import stroom.data.client.component.ExpressionDialogController;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.explorer.client.presenter.DocumentListPresenter;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
+import stroom.explorer.client.component.DocumentListController;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -34,7 +33,6 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -56,11 +54,8 @@ public class BatchDocumentPermissionsPresenter
     public static final String TAB_TYPE = "DocumentPermissions";
 
     private final Provider<ExpressionDialogController> filterDialogProvider;
-    private final DocumentListPresenter documentListPresenter;
+    private final DocumentListController documentList;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
-    private final ButtonView docFilter;
-    private final ButtonView docEdit;
-    private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResult> docs;
@@ -69,64 +64,43 @@ public class BatchDocumentPermissionsPresenter
     public BatchDocumentPermissionsPresenter(final EventBus eventBus,
                                              final QuickFilterPageView view,
                                              final Provider<ExpressionDialogController> filterDialogProvider,
-                                             final DocumentListPresenter documentListPresenter,
+                                             final DocumentListController documentList,
                                              final Provider<BatchDocumentPermissionsEditPresenter>
                                                      batchDocumentPermissionsEditPresenterProvider,
                                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(documentListPresenter);
+        own(documentList);
         getView().setAccessibleName("Filter documents");
-        this.documentListPresenter = documentListPresenter;
+        this.documentList = documentList;
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        documentListPresenter.setFilterErrorConsumer(view::setFilterError);
+        documentList.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.filterDialogProvider = filterDialogProvider;
 
-        view.setDataView(documentListPresenter.getView());
+        view.setDataView(documentList);
         getView().setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
 
-        // Filter
-        documentListPresenter.getView().getToolbar().setName("Document permission actions");
-        docFilter = documentListPresenter.getView().getToolbar().button(
-                SvgImage.FILTER,
-                "Filter Documents to Apply Permission Changes To",
-                this::onFilter);
-        docEdit = documentListPresenter.getView().getToolbar().button(
-                SvgImage.EDIT,
-                "Edit Permissions For Selected Document",
-                this::onEdit);
-        docEdit.setEnabled(false);
-        batchEdit = documentListPresenter.getView().getToolbar().button(
-                SvgImage.GENERATE,
-                "Batch Edit Permissions For Filtered Documents",
-                this::onBatchEdit);
-        batchEdit.setEnabled(false);
-
-        documentListPresenter.setFindResultListHandler(new FindDocResultListHandler<FindResult>() {
-            @Override
-            public void openDocument(final FindResult match) {
-                docEdit.setEnabled(documentListPresenter.getSelected() != null);
-                onEdit();
-            }
-
-            @Override
-            public void focus() {
-
-            }
+        documentList.setOnFilter(this::onFilter);
+        documentList.setOnEdit(this::onEdit);
+        documentList.setOnBatchEdit(this::onBatchEdit);
+        // Edit is enabled only once a document is opened (see ISSUES.md)
+        documentList.setOnOpen(match -> {
+            documentList.setEditEnabled(documentList.getSelected() != null);
+            onEdit();
         });
 
-        documentListPresenter.setCurrentResulthandler(resultPage -> {
+        documentList.setOnResultPage(resultPage -> {
             docs = resultPage;
-            batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
+            documentList.setBatchEditEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
 
-//        own(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
-//            docEdit.setEnabled(documentListPresenter.getSelected() != null);
+//        own(documentList.getSelectionModel().addSelectionHandler(e -> {
+//            docEdit.setEnabled(documentList.getSelected() != null);
 //            if (e.getSelectionType().isDoubleSelect()) {
 //                onEdit();
 //            }
@@ -148,7 +122,7 @@ public class BatchDocumentPermissionsPresenter
     }
 
     private void onEdit() {
-        final FindResult selected = documentListPresenter.getSelected();
+        final FindResult selected = documentList.getSelected();
         if (selected != null) {
 //            ShowDocumentPermissionsEvent.fire(this, selected.getDocRef());
             OpenDocumentEvent.builder(this, selected.getDocRef())
@@ -161,7 +135,7 @@ public class BatchDocumentPermissionsPresenter
         final BatchDocumentPermissionsEditPresenter presenter =
                 makeDialog(batchDocumentPermissionsEditPresenterProvider);
         presenter.show(combinedExpression, NullSafe.get(docs, ResultPage::getPageResponse), () ->
-                documentListPresenter.refresh());
+                documentList.refresh());
     }
 
     private void refresh() {
@@ -171,14 +145,14 @@ public class BatchDocumentPermissionsPresenter
         }
 
         combinedExpression = builder.build();
-        documentListPresenter.setExpression(combinedExpression);
-        documentListPresenter.refresh();
+        documentList.setExpression(combinedExpression);
+        documentList.refresh();
     }
 
     @Override
     public void onFilterChange(final String text) {
         // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest.
-        documentListPresenter.setQuickFilter(text);
+        documentList.setQuickFilter(text);
         refresh();
     }
 
@@ -228,7 +202,7 @@ public class BatchDocumentPermissionsPresenter
 
         // We only want to see documents tha the current user is effectively the owner of as they can't change
         // permissions on anything else.
-        documentListPresenter.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
+        documentList.setRequiredPermissions(Set.of(DocumentPermission.OWNER));
         refresh();
     }
 

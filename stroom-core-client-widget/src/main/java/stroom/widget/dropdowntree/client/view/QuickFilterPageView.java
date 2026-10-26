@@ -21,6 +21,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 
 import java.util.function.Supplier;
 
@@ -32,7 +33,7 @@ public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFil
 
     void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
-    void setDataView(View view);
+    void setDataView(IsWidget view);
 
     void setQuickFilterText(String quickFilterText);
 

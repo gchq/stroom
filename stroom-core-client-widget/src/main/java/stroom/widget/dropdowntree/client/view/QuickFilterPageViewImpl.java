@@ -17,7 +17,6 @@
 package stroom.widget.dropdowntree.client.view;
 
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -25,6 +24,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -71,7 +71,7 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
     }
 
     @Override
-    public void setDataView(final View view) {
+    public void setDataView(final IsWidget view) {
         data.setWidget(view.asWidget());
     }
 
