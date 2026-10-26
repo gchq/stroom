@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The stories answer Stroom's `AccountResource`: `PUT /account/v1/{id}` (an update; the changes
 /// sent are checked on the request spy), `GET /account/v1/{id}` (the re-read after
 /// Unlock/Reactivate) and `POST /account/v1/` (a create). The account is given to the dialog as
-/// `AccountsListPresenter` gives it (the selected row), and `onChanged` is a spy on the dialog's
+/// `AccountsListController` gives it (the selected row), and `onChanged` is a spy on the dialog's
 /// change handler (which Stroom gives the grid's `refresh`). The presenter comes from GIN.
 public final class EditAccountDialogStories {
 

@@ -18,6 +18,7 @@ package stroom.security.identity.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.security.identity.client.component.AccountsListController;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
@@ -32,17 +33,17 @@ public class AccountsPresenter
         implements Refreshable {
 
     public static final String TAB_TYPE = "Accounts";
-    private final AccountsListPresenter listPresenter;
+    private final AccountsListController listPresenter;
 
     @Inject
     public AccountsPresenter(final EventBus eventBus,
                              final AccountsView view,
-                             final AccountsListPresenter listPresenter,
+                             final AccountsListController listPresenter,
                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         own(listPresenter);
         this.listPresenter = listPresenter;
-        view.setList(listPresenter.getWidget());
+        view.setList(listPresenter.asWidget());
     }
 
     public void focus() {
