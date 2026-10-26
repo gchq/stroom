@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.index.client.component.IndexVolumeStatusListController;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
@@ -42,6 +43,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -57,7 +59,7 @@ public class IndexVolumeGroupEditPresenter
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
-    private final IndexVolumeStatusListPresenter volumeStatusListPresenter;
+    private final IndexVolumeStatusListController volumeStatusListPresenter;
     private final Provider<IndexVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -76,7 +78,7 @@ public class IndexVolumeGroupEditPresenter
     @Inject
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
                                          final IndexVolumeGroupEditView view,
-                                         final IndexVolumeStatusListPresenter volumeStatusListPresenter,
+                                         final IndexVolumeStatusListController volumeStatusListPresenter,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
                                          final NodeClient nodeClient) {
@@ -87,19 +89,19 @@ public class IndexVolumeGroupEditPresenter
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+        volumeStatusListPresenter.getToolbar().setName("Volume actions");
+        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
                 "New Index Volume", this::create);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Index Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Index Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes",
+        rescanButton = volumeStatusListPresenter.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes",
                 this::onRescan);
 
-        view.setListView(volumeStatusListPresenter.getView());
+        view.setListView(volumeStatusListPresenter);
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
 
         own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
@@ -301,6 +303,6 @@ public class IndexVolumeGroupEditPresenter
 
         void setName(String name);
 
-        void setListView(View listView);
+        void setListView(IsWidget listView);
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.client.presenter;
+package stroom.index.client.component;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -24,43 +24,38 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
-public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel> {
+/// The index volume groups ([IndexVolumeGroupList]), a page at a time.
+public class IndexVolumeGroupListController extends Controller {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
-    private final DataGrid<IndexVolumeGroup> dataGrid;
-    private final MultiSelectionModelImpl<IndexVolumeGroup> selectionModel;
+    private final IndexVolumeGroupList view;
     private final RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>> dataProvider;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The content.
+    /// @param restFactory Finds the groups.
     @Inject
-    public IndexVolumeGroupListPresenter(final EventBus eventBus,
-                                         final PagerPanel view,
-                                         final RestFactory restFactory) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Index Volume Groups");
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-        getWidget().getElement().addClassName("default-min-sizes");
-
-        initTableColumns();
+    public IndexVolumeGroupListController(final EventBus eventBus,
+                                          final IndexVolumeGroupList view,
+                                          final RestFactory restFactory) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
         dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus) {
@@ -74,31 +69,27 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerPanel>
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-                        .taskMonitorFactory(view)
+                        .owner(IndexVolumeGroupListController.this)
+                        .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
         };
-        dataProvider.addDataDisplay(dataGrid);
+        view.setDataProvider(dataProvider);
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
-        // Name.
-        final Column<IndexVolumeGroup, String> volumeColumn = new Column<IndexVolumeGroup, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolumeGroup volume) {
-                return volume.getName();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Name", 400);
-    }
-
+    /// @return The selection.
     public MultiSelectionModel<IndexVolumeGroup> getSelectionModel() {
-        return selectionModel;
+        return view.getSelectionModel();
     }
 
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return view.getToolbar();
+    }
+
+    /// Finds the groups again.
     public void refresh() {
         dataProvider.refresh();
     }

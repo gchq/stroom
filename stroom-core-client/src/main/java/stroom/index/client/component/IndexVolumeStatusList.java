@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,76 +14,59 @@
  * limitations under the License.
  */
 
-package stroom.index.client.presenter;
+package stroom.index.client.component;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.RestDataProvider;
-import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
-import stroom.index.shared.IndexVolumeResource;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractDataProvider;
 
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel> {
+/// An index volume group's volumes, a row each (its node, path and status, its total, limit, used and
+/// free space, how full it is and when it was last written to), faded unless active; several can be
+/// selected.
+public class IndexVolumeStatusList extends Component {
 
-    private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final DataGrid<IndexVolume> dataGrid;
+    @UiField
+    PagerPanel pager;
+    @UiField
+    DataGrid<IndexVolume> dataGrid;
+
     private final MultiSelectionModelImpl<IndexVolume> selectionModel;
-    private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
 
-    private Consumer<ResultPage<IndexVolume>> consumer;
-    private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
-
-    @Inject
-    public IndexVolumeStatusListPresenter(final EventBus eventBus,
-                                          final PagerPanel view,
-                                          final RestFactory restFactory,
-                                          final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
+    /// Makes an empty list, with no columns until [#addColumns(Function)].
+    public IndexVolumeStatusList() {
+        initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(IndexVolume::getId);
-        dataGrid.setTableName("Index Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
-
-        this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
-
-        initTableColumns();
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
+    /// Adds the columns, once.
+    ///
+    /// @param dateTimeFormat Formats a time in milliseconds since the epoch, with how long ago it was.
+    public void addColumns(final Function<Long, String> dateTimeFormat) {
         // Node.
         dataGrid.addResizableColumn(DataGridUtil.textWithTooltipColumnBuilder(IndexVolume::getNodeName)
                         .enabledWhen(this::isEnabled)
@@ -196,7 +179,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel
         // Usage Date.
         dataGrid.addResizableColumn(
                 DataGridUtil.textWithTooltipColumnBuilder((IndexVolume vol) ->
-                                        dateTimeFormatter.formatWithDuration(vol.getUpdateTimeMs()),
+                                        dateTimeFormat.apply(vol.getUpdateTimeMs()),
                                 Function.identity())
                         .enabledWhen(this::isEnabled)
                         .build(),
@@ -204,6 +187,26 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
+    }
+
+    /// @param dataProvider Gives the list its rows, a page at a time.
+    public void setDataProvider(final AbstractDataProvider<IndexVolume> dataProvider) {
+        dataProvider.addDataDisplay(dataGrid);
+    }
+
+    /// @return The task monitor that spins the pager's refresh button.
+    public TaskMonitorFactory getTaskMonitor() {
+        return pager;
+    }
+
+    /// @return The selection.
+    public MultiSelectionModel<IndexVolume> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return pager.getToolbar();
     }
 
     private Number getUsePercentage(final IndexVolume volume) {
@@ -219,7 +222,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel
         return VolumeUseState.ACTIVE == volumeUseState;
     }
 
-    public String getLimitAsStr(final IndexVolume volume) {
+    private String getLimitAsStr(final IndexVolume volume) {
         if (volume.getBytesLimit() == null) {
             return "";
         }
@@ -235,41 +238,11 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerPanel
                 : "?";
     }
 
-    public MultiSelectionModel<IndexVolume> getSelectionModel() {
-        return selectionModel;
-    }
 
-    public void refresh() {
-        this.consumer = null;
-        dataProvider.refresh();
-    }
+    // --------------------------------------------------------------------------------
 
-    public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> c) {
-        this.consumer = c;
-        dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus()) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<IndexVolume>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setRange(criteria, range);
-                restFactory
-                        .create(INDEX_VOLUME_RESOURCE)
-                        .method(res -> res.find(criteria))
-                        .onSuccess(result -> {
-                            dataConsumer.accept(result);
-                            if (consumer != null) {
-                                consumer.accept(result);
-                            }
-                        })
-                        .onFailure(errorHandler)
-                        .taskMonitorFactory(getView())
-                        .exec();
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
-    }
 
-    public TaskMonitorFactory getTaskListener() {
-        return getView();
+    interface Binder extends UiBinder<Widget, IndexVolumeStatusList> {
+
     }
 }

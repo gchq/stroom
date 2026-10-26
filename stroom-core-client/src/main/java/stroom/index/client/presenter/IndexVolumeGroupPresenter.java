@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.index.client.component.IndexVolumeGroupListController;
 import stroom.index.client.component.NewIndexVolumeGroupController;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
@@ -40,7 +41,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
-    private final IndexVolumeGroupListPresenter volumeStatusListPresenter;
+    private final IndexVolumeGroupListController volumeStatusListPresenter;
     private final Provider<IndexVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider;
@@ -53,7 +54,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     public IndexVolumeGroupPresenter(
             final EventBus eventBus,
             final WrapperView view,
-            final IndexVolumeGroupListPresenter volumeStatusListPresenter,
+            final IndexVolumeGroupListController volumeStatusListPresenter,
             final Provider<IndexVolumeGroupEditPresenter> editProvider,
             final RestFactory restFactory,
             final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider) {
@@ -65,17 +66,17 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         this.restFactory = restFactory;
         this.newIndexVolumeGroupControllerProvider = newIndexVolumeGroupControllerProvider;
 
-        volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+        volumeStatusListPresenter.getToolbar().setName("Volume group actions");
+        newButton = volumeStatusListPresenter.getToolbar().button(SvgImage.ADD,
                 "New Index Volume Group", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+        openButton = volumeStatusListPresenter.getToolbar().button(SvgImage.EDIT,
                 "Edit Selected Index Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+        deleteButton = volumeStatusListPresenter.getToolbar().button(SvgImage.DELETE,
                 "Delete Selected Index Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
-        view.setView(volumeStatusListPresenter.getView());
+        view.setView(volumeStatusListPresenter);
 
         own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
