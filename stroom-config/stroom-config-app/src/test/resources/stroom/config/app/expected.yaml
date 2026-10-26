@@ -249,6 +249,7 @@ appConfig:
     urls:
     - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
   credentials:
+    allowedKeyStoreFileDirs: []
     db:
       connection:
         jdbcDriverClassName: null
@@ -266,6 +267,9 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     keyStoreCachePath: "${stroom.home}/keystores"
+    keyStoreFiles: []
+    keyStoreFilesOwnerSubjectId: "Administrators"
+    keyStoreFilesOwnerType: "GROUP"
   crossModule:
     db:
       connection:
@@ -764,7 +768,7 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
-      refreshAfterWrite: null
+      refreshAfterWrite: "PT10M"
       statisticsMode: "INTERNAL"
     parser:
       cache:
@@ -1088,7 +1092,7 @@ appConfig:
           tls: null
           userAgent: null
           validateAfterInactivityPeriod: "PT0S"
-        maxNumberOfMessages: 1000
+        maxNumberOfMessages: 10
         pollMaxWaitTime: "PT10S"
         queueUrl: null
         visibilityTimeout: "PT3M"
