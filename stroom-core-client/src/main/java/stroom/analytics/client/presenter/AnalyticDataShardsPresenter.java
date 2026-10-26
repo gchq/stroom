@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticDataShardListController;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticDataShardResource;
@@ -34,6 +35,7 @@ import stroom.util.shared.Severity;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +51,7 @@ public class AnalyticDataShardsPresenter
             GWT.create(AnalyticDataShardResource.class);
 
     private final QueryToolbarController queryToolbar;
-    private final AnalyticDataShardListPresenter analyticDataShardListPresenter;
+    private final AnalyticDataShardListController analyticDataShardListPresenter;
     private final QueryResultTablePresenter tablePresenter;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
@@ -61,7 +63,7 @@ public class AnalyticDataShardsPresenter
     public AnalyticDataShardsPresenter(final EventBus eventBus,
                                        final AnalyticDataShardsView view,
                                        final QueryToolbarController queryToolbar,
-                                       final AnalyticDataShardListPresenter analyticDataShardListPresenter,
+                                       final AnalyticDataShardListController analyticDataShardListPresenter,
                                        final QueryResultTablePresenter tablePresenter,
                                        final RestFactory restFactory,
                                        final DateTimeSettingsFactory dateTimeSettingsFactory) {
@@ -74,7 +76,7 @@ public class AnalyticDataShardsPresenter
         this.tablePresenter = tablePresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
-        view.setListView(analyticDataShardListPresenter.getView());
+        view.setListView(analyticDataShardListPresenter);
         view.setTable(tablePresenter.getView());
         tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
         tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
@@ -138,7 +140,7 @@ public class AnalyticDataShardsPresenter
 
     public interface AnalyticDataShardsView extends View {
 
-        void setListView(View view);
+        void setListView(IsWidget view);
 
         void setTable(View view);
     }
