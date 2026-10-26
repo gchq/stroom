@@ -17,9 +17,6 @@
 package stroom.preferences.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.preferences.client.KeyboardShortcutsPresenter;
-import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
-import stroom.preferences.client.KeyboardShortcutsViewImpl;
 import stroom.preferences.client.UserPreferencesPlugin;
 import stroom.preferences.client.UserPreferencesPresenter;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
@@ -33,10 +30,6 @@ public class UserPreferencesModule extends PluginModule {
                 UserPreferencesPresenter.class,
                 UserPreferencesView.class,
                 UserPreferencesViewImpl.class);
-        bindPresenterWidget(
-                KeyboardShortcutsPresenter.class,
-                KeyboardShortcutsView.class,
-                KeyboardShortcutsViewImpl.class);
 
         bindPlugin(UserPreferencesPlugin.class);
     }

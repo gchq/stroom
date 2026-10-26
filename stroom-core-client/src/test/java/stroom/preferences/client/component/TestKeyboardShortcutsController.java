@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.preferences.client;
+package stroom.preferences.client.component;
 
-import stroom.preferences.client.KeyboardShortcutsPresenter.ShortcutRow;
+import stroom.preferences.client.component.KeyboardShortcutsController.ShortcutRow;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -30,7 +30,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestKeyboardShortcutsPresenter {
+class TestKeyboardShortcutsController {
 
     @BeforeEach
     void setUp() {
@@ -45,7 +45,7 @@ class TestKeyboardShortcutsPresenter {
 
     @Test
     void listsTheActionsWithShortcutsInTheirGroupsThenTheBuiltInOnes() {
-        final List<ShortcutRow> rows = KeyboardShortcutsPresenter.getRows(null);
+        final List<ShortcutRow> rows = KeyboardShortcutsController.getRows(null);
 
         assertThat(rows).contains(
                 new ShortcutRow("Save", "Ctrl+S", "General"),
@@ -58,15 +58,15 @@ class TestKeyboardShortcutsPresenter {
                 new ShortcutRow("Close saved tabs", "Alt+Shift+S", "General"),
                 new ShortcutRow("Go to Properties", "G P", "Go to"),
                 // Enter once, not also its other key codes (MacEnter, a line feed)
-                new ShortcutRow("OK, or run a query", "Ctrl+Enter", KeyboardShortcutsPresenter.BUILT_IN),
-                new ShortcutRow("Close, or stop a query", "Esc", KeyboardShortcutsPresenter.BUILT_IN),
-                new ShortcutRow("Open", "Enter", KeyboardShortcutsPresenter.BUILT_IN));
+                new ShortcutRow("OK, or run a query", "Ctrl+Enter", KeyboardShortcutsController.BUILT_IN),
+                new ShortcutRow("Close, or stop a query", "Esc", KeyboardShortcutsController.BUILT_IN),
+                new ShortcutRow("Open", "Enter", KeyboardShortcutsController.BUILT_IN));
         // An action with no shortcut isn't listed
         assertThat(rows).noneMatch(row -> row.action().equals(Action.GOTO_USERS.getDisplayName()));
         // The groups in order: General, Lists, Explorer, Go to, Create, then built in
         assertThat(rows.stream().map(ShortcutRow::group).distinct())
                 .containsExactly("General", "Lists", "Explorer", "Go to", "Create",
-                        KeyboardShortcutsPresenter.BUILT_IN);
+                        KeyboardShortcutsController.BUILT_IN);
     }
 
     @Test
@@ -75,7 +75,7 @@ class TestKeyboardShortcutsPresenter {
         userBindings.put(Action.REFRESH.name(), List.of("Alt+Shift+R"));
         KeyBinding.applyUserBindings(userBindings, false);
 
-        final List<ShortcutRow> rows = KeyboardShortcutsPresenter.getRows(null);
+        final List<ShortcutRow> rows = KeyboardShortcutsController.getRows(null);
 
         assertThat(rows).contains(new ShortcutRow("Refresh list", "Alt+Shift+R", "General"));
         // Character key shortcuts are turned off: '?' and the 'Go to' sequences aren't listed
@@ -86,15 +86,15 @@ class TestKeyboardShortcutsPresenter {
 
     @Test
     void filtersByActionShortcutOrGroupIgnoringCase() {
-        assertThat(KeyboardShortcutsPresenter.getRows("  REFRESH "))
+        assertThat(KeyboardShortcutsController.getRows("  REFRESH "))
                 .containsExactly(new ShortcutRow("Refresh list", "Alt+R", "General"));
-        assertThat(KeyboardShortcutsPresenter.getRows("alt+page"))
+        assertThat(KeyboardShortcutsController.getRows("alt+page"))
                 .extracting(ShortcutRow::action)
                 .containsExactly("Go to next tab", "Go to previous tab");
-        assertThat(KeyboardShortcutsPresenter.getRows("create"))
+        assertThat(KeyboardShortcutsController.getRows("create"))
                 .allMatch(row -> row.group().equals("Create"))
                 .isNotEmpty();
-        assertThat(KeyboardShortcutsPresenter.getRows("no such thing")).isEmpty();
-        assertThat(KeyboardShortcutsPresenter.getRows(" ")).hasSameSizeAs(KeyboardShortcutsPresenter.getRows(null));
+        assertThat(KeyboardShortcutsController.getRows("no such thing")).isEmpty();
+        assertThat(KeyboardShortcutsController.getRows(" ")).hasSameSizeAs(KeyboardShortcutsController.getRows(null));
     }
 }

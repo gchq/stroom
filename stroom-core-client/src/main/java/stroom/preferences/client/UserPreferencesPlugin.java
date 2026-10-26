@@ -19,6 +19,7 @@ package stroom.preferences.client;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.preferences.client.component.KeyboardShortcutsController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -35,19 +36,19 @@ import javax.inject.Singleton;
 public class UserPreferencesPlugin extends Plugin {
 
     private final Provider<UserPreferencesPresenter> preferencesPresenterProvider;
-    private final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider;
+    private final Provider<KeyboardShortcutsController> keyboardShortcutsProvider;
 
     private final AppRoot appRoot;
 
     @Inject
     public UserPreferencesPlugin(final EventBus eventBus,
                                  final Provider<UserPreferencesPresenter> preferencesPresenterProvider,
-                                 final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider,
+                                 final Provider<KeyboardShortcutsController> keyboardShortcutsProvider,
                                  final AppRoot appRoot) {
         super(eventBus);
         this.appRoot = appRoot;
         this.preferencesPresenterProvider = preferencesPresenterProvider;
-        this.keyboardShortcutsPresenterProvider = keyboardShortcutsPresenterProvider;
+        this.keyboardShortcutsProvider = keyboardShortcutsProvider;
 
         KeyBinding.addCommand(getOpenAction(), this::open);
         KeyBinding.addCommand(Action.SHOW_KEY_BINDS, this::showKeyboardShortcuts);
@@ -63,7 +64,7 @@ public class UserPreferencesPlugin extends Plugin {
 
     private void showKeyboardShortcuts() {
         // Made for one use, and disposed once it is closed
-        appRoot.makeDialog(keyboardShortcutsPresenterProvider).show();
+        keyboardShortcutsProvider.get().show(appRoot);
     }
 
     @Override

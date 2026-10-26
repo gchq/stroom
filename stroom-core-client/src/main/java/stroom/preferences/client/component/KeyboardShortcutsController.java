@@ -14,38 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.preferences.client;
+package stroom.preferences.client.component;
 
-import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.KeyBinding.Category;
 import stroom.widget.util.client.KeyShortcut;
 
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/// A dialog listing the keyboard shortcuts as the user has them, for reference
+/// A dialog, for one use, listing the keyboard shortcuts as the user has them, for reference
 /// ([Action#SHOW_KEY_BINDS], `?` by default): each action with its shortcuts and its group. The
 /// shortcuts are changed in the user preferences (`KeyBindingPreferencesController`), not here.
-public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortcutsView> {
+public class KeyboardShortcutsController extends Controller {
 
     /// The group of actions whose shortcuts are built in, which the user can't change.
     static final String BUILT_IN = "Built in";
@@ -54,50 +48,40 @@ public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortc
     // The key code some browsers give Enter, as KeyBinding binds it
     private static final int LINE_FEED = '\n';
 
-    private final DataGrid<ShortcutRow> dataGrid;
+    private final KeyboardShortcuts view;
     private String filter;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     The content.
     @Inject
-    public KeyboardShortcutsPresenter(final EventBus eventBus,
-                                      final KeyboardShortcutsView view) {
-        super(eventBus, view);
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName(CAPTION);
-        dataGrid.addDefaultSelectionModel(false);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ShortcutRow::action).build(),
-                "Action",
-                270);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ShortcutRow::shortcuts).build(),
-                "Shortcut",
-                180);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ShortcutRow::group).build(),
-                "Group",
-                100);
-        view.setList(dataGrid);
-        view.setFilterHandler(value -> {
+    public KeyboardShortcutsController(final EventBus eventBus,
+                                       final KeyboardShortcuts view) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        view.setOnFilterChange(value -> {
             filter = value;
             refresh();
         });
     }
 
     /// Shows the dialog.
-    public void show() {
+    ///
+    /// @param opener What shows it, which owns it until it is hidden.
+    public void show(final HasControllerNode opener) {
         refresh();
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(600, 560))
                 .caption(CAPTION)
-                .onShow(e -> getView().focus())
+                .onShow(e -> view.focus())
                 .fire();
     }
 
     private void refresh() {
-        final List<ShortcutRow> rows = getRows(filter);
-        dataGrid.setRowData(0, rows);
-        dataGrid.setRowCount(rows.size(), true);
+        view.setRows(getRows(filter));
     }
 
     /// The rows the dialog shows: every action that has a shortcut, the configurable ones in their
@@ -151,20 +135,6 @@ public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortc
                 .stream()
                 .anyMatch(keyStroke -> keyStroke.getKeyCode() == KeyCodes.KEY_MAC_ENTER
                                        || keyStroke.getKeyCode() == LINE_FEED);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// The dialog's view: a filter above the list of shortcuts.
-    public interface KeyboardShortcutsView extends View, Focus {
-
-        /// @param widget The list of shortcuts.
-        void setList(Widget widget);
-
-        /// @param handler Told the filter's text each time it changes.
-        void setFilterHandler(Consumer<String> handler);
     }
 
 
