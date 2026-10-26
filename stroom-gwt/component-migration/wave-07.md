@@ -6,6 +6,90 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert the regular stacks in one pass each: the 17 Plan B leaf settings widgets and their 8 type-settings presenters become dumb components (no controller); the floor map leaf panels are converted together with their ViewImpls; the five credential secret forms move behind a shared SecretForm; the pipeline and pathway trees; and the expression tree (TermEditor, then ExpressionTreePanel, then ExpressionTreePresenter, then both EditExpressionPresenters).
 
+## Done (26 October 2026)
+
+All 52 units, in 13 commits, and wave 11's `FloorMapLayerStylePresenter` with its view, which the
+layer style unit here needed. Each commit ran its stories with the leak check and the screenshot
+diff; the last ran all of them (1,632 passed; the 41 screenshots that differed are the force graphs' (39), the data grid's spinner column and, once, the query editor's `AddToAnnotation`, unchanged in 4 runs alone; all recorded as noise in ISSUES.md), and the app and the standalone dashboard GWT
+compile. One bug fixed on the way, on master too, with a changelog entry and a story: a press on
+a row in the floor map's Groups, Tracking, cluster and fact time lists selected nothing, so a
+group could never be edited (`FloorMapMap.EditGroup`; see ISSUES.md). What was decided on the
+way, where it differs from the plans below:
+
+- **Plan B.**
+  - The 17 leaves are components with their own `setOnChange`, `onReadOnlyChange` and templates
+    beside their Java; `AbstractSettingsWidget`, `HttpStoreSettingsView` and the view interfaces
+    are gone.
+  - The Histogram and Metric key schemas declare their `TimeZoneBox` inside the
+    `<g:SimplePanel addStyleNames="form-group">` it had: on the box itself, `form-group` made the
+    pages 7px taller.
+  - The 8 type settings editors are `PlanBTypeSettingsEditor`s (`read`, `write`, `setOnChange`,
+    their common settings' getters), with templates, in `stroom.planb.client.component`.
+    `PlanBSettingsPresenter` (wave 12's) makes them with `new` and keeps the common settings
+    across a change of type; its read-only watch is `showReadOnly`, as `setReadOnly` is
+    `DocPresenter`'s.
+- **The secrets.** A sealed `SecretForm` (`getSecret`, `validate`, `focus`, `submit`), with the
+  username and password, access token, SSH key and key store file forms as components and the key
+  store's as `KeyStoreSecretForm` with a `KeyStoreSecretFormController`, which uploads in `submit`
+  (its task monitor is the one it is given, else its own). `SecretForms` keeps one of each;
+  `CredentialSettingsPresenter` and `ReplaceSecretPresenter` show `validate`'s message.
+- **The floor map.**
+  - `ControllerDialog.show(controller)` is new: it shows a controller made once (Timeline
+    Settings, the layer appearance) again and again through one host, which the controller owns
+    and which isn't disposed when hidden, so a second press of the settings button closes it, as
+    the popup manager does.
+  - Set Scale and the group edit are one-use (`showOnce`), with their parsing and the members'
+    roster merge as static methods with JUnit tests.
+  - `FloorMapDockController.addTab` takes any `IsWidget` (a `ControllerLayer` for one that isn't
+    a `Layer`). `FloorMapLayers` is one component with no controller, its rows' states classes
+    (`--dragging`, `--drop-above`, `--drop-below`, `--locked`, `--off`, `--dim`) and its grips
+    and swatches `LinkButton`s with their own classes in place of GWT's `Button`.
+  - The canvas is `FloorMapCanvas` with `FloorMapCanvasController`, its gesture code unchanged:
+    the component offers `add...Handler`, `getSurfaceElement`, `focus` and `setCrosshair` in
+    place of `getFocusPanel()`, its readout, tooltip and scale bar are placed by custom
+    properties, and the grid's and the measuring line's colours are classes.
+    `FloorMapImageSizeCache` moved with it.
+  - The new classes stay in `stroom-floormap.css`, as the notes below say; its older names
+    (`floormap-group-edit-fields`, `floormap-layer-row`, `stroom-floormap-*`) aren't BEM yet.
+  - `SingleSelectionEventManager` (beside `DataGrid`) makes a press, Space or Enter select a row
+    of a grid given one of GWT's selection models, the selection following the focus; the four
+    floor map grids use it. `DataGrid`'s one-argument `setSelectionModel` still adds nothing.
+  - `FloorMapAria.labelledByInnerControl` names a composite's inner control from an id; the
+    `Grid` helpers (`labelledByCell`, `labelledByCellInnerControl`, `layoutTable`) have no callers
+    now, recorded in ISSUES.md for the removals.
+- **The pipeline trees.** `PipelineTree` and `PipelinePathBar` share an abstract
+  `AbstractPipelineTree` (the selection that refuses disabled elements, the model, the tree
+  builder, the disabled elements and `getNames`), rather than the shared model object the plan
+  suggests: both draw from the same state and their owners use them alike, so one base is
+  simpler. `PipelineTree` has no controller (its owner moves an element and alerts, through
+  `setOnMove`); `PipelinePathBarController` attaches to the bar (`setOnShowMenu`), as a
+  `MenuRequest` can't carry the item to focus. `DraggableTreePanel.setTreePanels` hides its drag
+  copy from assistive technology itself, for both trees. `ScreenHarness.showWidget` shows a
+  component with no controller as `show` shows a screen.
+- **The pathway tree** keeps its buttons as they were: New, Edit and Delete have no command, and
+  the read-only state shows on them only once a node is chosen (ISSUES.md). Its path pruning is a
+  static method with a JUnit test.
+- **The expression tree.**
+  - `TermEditor` keeps its reading and writing of a term, and is given a `TermEditor.Pickers`
+    (its `TermEditorController`, which attaches the document and user pickers and the date boxes'
+    controllers, and fetches the suggestions with an owner): the plan's controller doing the
+    reading would have needed the editor's every box.
+  - `AsyncSuggestOracle` fetches through a callback, so it makes no REST calls itself.
+  - `ExpressionTreePanel`'s canvas goes into a slot in its template, as it is made only where
+    the browser has one; its items are placed by `--expression-item__left` and `__top`.
+  - `ExpressionTreeController` attaches a `TermEditorController` to each of the tree's two term
+    editors; `init` takes no `RestFactory`, and `setOnChange` and `setOnSearch` replace
+    `ExpressionUiHandlers`, which is gone.
+  - The two `EditExpressionPresenter`s are one `ExpressionEditor`, framed as a control
+    (`stroom-control`) unless its owner frames it (`setFramed(false)`: the dashboard's rule and
+    selection handler, whose slots do; their `dock-max` did nothing in a `SimplePanel`). Its focus
+    is Add Term (the dashboard's was Add Operator). The tree goes into a slot, as its controller
+    is made with it. The old view's `onResize` cast a `FlowPanel` to `RequiresResize`, so nothing
+    called it, and it is gone. `editExpressionViewImpl-expressionTree` is
+    `expression-editor__tree`, in `expression-editor.css`.
+  - The term editor's classes (`termEditor-*`, `TermEditor.css`) and the tree's
+    (`expression-tree-view`) aren't BEM yet.
+
 ## CSS and template notes for the wave
 
 - Reuse max (stroom.css:793, width and height 100%) for FloorMapLayersViewImpl.java:40 and PipelineTreeViewImpl.java:95-96.

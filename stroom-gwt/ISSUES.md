@@ -1604,6 +1604,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   never shown: the overview bar (`RightBar`) shows one of its own, which hides itself on a click
   (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,
   does nothing. Unused code, kept until removals are allowed.
+* `App/Editors/QueryEditor` `AddToAnnotation`'s screenshot differed once in wave 7's full run
+  (26 October 2026): the table's Add to Annotation button kept a focus ring when the shot was
+  taken. Unchanged in 4 runs of it alone, and nothing in wave 7 touches it: timing, a guess.
 * `Widgets/Editors & Viewers/AceEditorFeatures` `Snippet` failed its first attempt in a 70 story
   run (found 25 October 2026, in wave 6's editor unit): `apply ` hadn't become
   `xsl:apply-templates`. It passed its second, and 4 runs of 4 alone; Ace's completion timing under
