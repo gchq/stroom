@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.query;
 
 import stroom.analytics.client.presenter.ReportPresenter;
-import stroom.analytics.client.presenter.ReportSettingsPresenter;
-import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
-import stroom.analytics.client.view.ReportSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ReportModule`
@@ -32,9 +29,6 @@ public class ReportScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ReportPresenter.class);
-        bindPresenterWidget(ReportSettingsPresenter.class,
-                ReportSettingsView.class,
-                ReportSettingsViewImpl.class);
     }
 }
 

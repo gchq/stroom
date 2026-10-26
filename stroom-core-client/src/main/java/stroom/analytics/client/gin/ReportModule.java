@@ -18,9 +18,6 @@ package stroom.analytics.client.gin;
 
 import stroom.analytics.client.ReportPlugin;
 import stroom.analytics.client.presenter.ReportPresenter;
-import stroom.analytics.client.presenter.ReportSettingsPresenter;
-import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
-import stroom.analytics.client.view.ReportSettingsViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class ReportModule extends PluginModule {
@@ -30,6 +27,5 @@ public class ReportModule extends PluginModule {
         bindPlugin(ReportPlugin.class);
         bind(ReportPresenter.class);
 
-        bindPresenterWidget(ReportSettingsPresenter.class, ReportSettingsView.class, ReportSettingsViewImpl.class);
     }
 }

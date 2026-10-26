@@ -16,8 +16,10 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.ReportSettingsTabController;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -51,7 +53,7 @@ public class ReportPresenter
     public ReportPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final ReportQueryEditPresenter reportQueryEditPresenter,
-                           final Provider<ReportSettingsPresenter> reportSettingsPresenterProvider,
+                           final Provider<ReportSettingsTabController> reportSettingsProvider,
                            final Provider<ReportNotificationPresenter> notificationPresenterProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
@@ -69,7 +71,9 @@ public class ReportPresenter
         this.reportNotificationPresenter = make(notificationPresenterProvider);
 
         addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
-        addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, reportSettingsProvider::get,
+                ReportSettingsTabController::read,
+                ReportSettingsTabController::write));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(markdownEditPresenterProvider) {

@@ -16,9 +16,11 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticSettingsController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -54,7 +56,7 @@ public class AnalyticRulePresenter
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
-                                 final Provider<AnalyticSettingsPresenter> settingsPresenterProvider,
+                                 final Provider<AnalyticSettingsController> settingsProvider,
                                  final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
@@ -77,7 +79,9 @@ public class AnalyticRulePresenter
         analyticProcessingPresenter.setOnProcessingTypeChange(this::setRuleType);
 
         addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                AnalyticSettingsController::read,
+                AnalyticSettingsController::write));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));

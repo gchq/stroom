@@ -4,7 +4,8 @@
              xmlns:list="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticRuleLevel"
                         label="Level"
@@ -30,9 +31,13 @@
                         label="Feed For Errors"
                         helpText="Feed that errors from running this rule are written to. If the rule has none, the default error feed is shown and used. A schedule cannot be enabled without an error feed. Administrators can select Set Default to make this feed the default for all rules.">
             <g:FlowPanel styleName="button-group">
-                <g:SimplePanel ui:field="errorFeed"/>
+                <!-- In a panel, so the button group doesn't stretch it to the button's height -->
+                <g:SimplePanel>
+                    <dd:DropDownBox ui:field="errorFeed"/>
+                </g:SimplePanel>
                 <b:Button ui:field="setDefaultErrorFeed"
                           text="Set Default"
+                          title="Set as the default error feed for all users"
                           addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
