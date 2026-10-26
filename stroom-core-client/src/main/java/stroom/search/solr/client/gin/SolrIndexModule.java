@@ -18,12 +18,9 @@ package stroom.search.solr.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.search.solr.client.SolrIndexPlugin;
-import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter;
-import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
-import stroom.search.solr.client.view.SolrIndexFieldListViewImpl;
 import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
 
 public class SolrIndexModule extends PluginModule {
@@ -35,8 +32,5 @@ public class SolrIndexModule extends PluginModule {
         bindPresenterWidget(SolrIndexSettingsPresenter.class,
                 SolrIndexSettingsView.class,
                 SolrIndexSettingsViewImpl.class);
-        bindPresenterWidget(SolrIndexFieldListPresenter.class,
-                SolrIndexFieldListView.class,
-                SolrIndexFieldListViewImpl.class);
     }
 }

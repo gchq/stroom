@@ -18,10 +18,12 @@ package stroom.search.solr.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.search.solr.client.component.SolrIndexFieldListController;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -43,13 +45,15 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
                               final Provider<SolrIndexSettingsPresenter> indexSettingsPresenterProvider,
-                              final Provider<SolrIndexFieldListPresenter> indexFieldListPresenterProvider,
+                              final Provider<SolrIndexFieldListController> indexFieldListProvider,
                               final Provider<MarkdownEditController> markdownEditProvider,
                               final DocumentUserPermissionsTabProvider<SolrIndexDoc>
                                       documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(FIELDS, new ControllerTabProvider<>(eventBus, indexFieldListProvider::get,
+                SolrIndexFieldListController::read,
+                SolrIndexFieldListController::write));
         addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
