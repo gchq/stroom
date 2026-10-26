@@ -73,7 +73,8 @@ public final class ContentStoreScreenStories {
                     RestReply.json("{\"ok\": true, \"value\": true}"))
             .post("/contentstore/checkContentUpgradeAvailable", RestReply.json("{\"ok\": true, \"value\": false}"))
             .post("/contentstore/create", RestReply.json("{\"status\": \"OK\", \"message\": \"Installed.\"}"))
-            .post("/contentstore/upgradeContentPack", RestReply.json("{\"status\": \"OK\"}"))
+            .post("/contentstore/upgradeContentPack",
+                    RestReply.json("{\"status\": \"OK\", \"message\": \"Upgraded.\"}"))
             // The details panel's credential picker (for packs needing authentication) loads the
             // credentials: none
             .post("/credentials/findCredentialsWithPermissions", RestReply.json(
@@ -139,6 +140,23 @@ public final class ContentStoreScreenStories {
                                     .withJsonBodyContaining("{\"id\": \"core\"}")
                                     .toSpyMatcher());
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Upgrade upgrades the upgradable pack, which is then installed: the list shows it so
+                // and Upgrade is no longer available
+                .story("Upgrade", ContentStoreScreenStories::render)
+                .withPlay(play -> {
+                    final Query upgrade = play.findByRole("button", StroomDom.button("Upgrade"));
+                    play.waitFor(() -> play.expect(upgrade).toBeEnabled());
+                    play.click(upgrade);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/contentstore/upgradeContentPack")
+                                    .withJsonBodyContaining("{\"id\": \"core\"}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("INFO: Content pack upgrade success"));
+                    play.waitFor(() -> play.expect(upgrade).toBeDisabled());
+                    play.expect(play.queryByText("Content upgradable")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // A NOT_INSTALLED pack enables Install; clicking it installs the pack
                 .story("Install", ContentStoreScreenStories::render)

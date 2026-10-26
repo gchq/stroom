@@ -62,7 +62,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
 
     // Credentials
 
-    /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsPresenter` is
+    /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsController` is
     /// given.
     CredentialsManagerDialogPresenter getCredentialsManagerDialogPresenter();
 

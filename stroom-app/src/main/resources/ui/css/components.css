@@ -1539,6 +1539,11 @@
 .contentstore-details .contentstore-details-list > * {
     padding: 5px;
 }
+/* Its links are underlined, so they are told apart from the URL beside them by more than colour
+   (WCAG 1.4.1) */
+.contentstore-details .contentstore-details-list a {
+    text-decoration: underline;
+}
 /* The URL shown after a link to it */
 .contentstore-details .contentstore-details-url {
     margin-left: 0.5em;

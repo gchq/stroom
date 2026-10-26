@@ -17,6 +17,7 @@
 package stroom.contentstore.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.contentstore.client.component.ContentStoreContentPackDetailsController;
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
@@ -47,22 +48,22 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
 
     private final ContentStoreContentPackListPresenter contentPackListPresenter;
 
-    public final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter;
+    private final ContentStoreContentPackDetailsController contentPackDetails;
 
     @SuppressWarnings("unused")
     @Inject
     public ContentStorePresenter(final EventBus eventBus,
                                  final ContentStoreView view,
                                  final ContentStoreContentPackListPresenter contentPackListPresenter,
-                                 final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter) {
+                                 final ContentStoreContentPackDetailsController contentPackDetails) {
         super(eventBus, view);
         own(contentPackListPresenter);
         this.contentPackListPresenter = contentPackListPresenter;
         this.contentPackListPresenter.setContentStorePresenter(this);
-        this.contentPackDetailsPresenter = contentPackDetailsPresenter;
-        this.contentPackDetailsPresenter.setContentStorePresenter(this);
+        this.contentPackDetails = own(contentPackDetails);
+        contentPackDetails.setOnInstalled(this::updateState);
         getView().setContentPackListView(contentPackListPresenter.getView());
-        view.getContentPackDetailsPanel().add(contentPackDetailsPresenter);
+        view.getContentPackDetailsPanel().add(contentPackDetails);
 
         // Add in the handler for the list selection
         contentPackListPresenter.getSelectionModel()
@@ -109,7 +110,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     private void contentPackListSelectionHandler(final MultiSelectEvent event) {
         final ContentStoreContentPackWithDynamicState cpws =
                 contentPackListPresenter.getSelectionModel().getSelected();
-        contentPackDetailsPresenter.setContentPack(cpws);
+        contentPackDetails.setContentPack(cpws);
     }
 
     /**
@@ -134,7 +135,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
      */
     public void updateState() {
         this.contentPackListPresenter.redraw();
-        this.contentPackDetailsPresenter.setState();
+        this.contentPackDetails.updateState();
     }
 
 }

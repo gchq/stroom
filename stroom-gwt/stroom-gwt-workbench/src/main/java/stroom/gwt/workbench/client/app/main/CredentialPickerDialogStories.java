@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// [CredentialsManagerDialogPresenter] (the 'Credentials' picker) with fake REST replies.
 ///
 /// The presenter comes from GIN ([AppScreenGinjector]), as Stroom injects it into
-/// `ContentStoreContentPackDetailsPresenter`, and the story shows it as that presenter does. The
+/// `ContentStoreContentPackDetailsController`, and the story shows it as that presenter does. The
 /// credentials come from `POST /credentials/findCredentialsWithPermissions`, and `onPick` is a spy
 /// called from the dialog's OK handler.
 public final class CredentialPickerDialogStories {
@@ -105,7 +105,7 @@ public final class CredentialPickerDialogStories {
                 .build();
         harness.fn(ON_PICK);
 
-        // Shown as ContentStoreContentPackDetailsPresenter shows it, with no help text and nothing
+        // Shown as ContentStoreContentPackDetailsController shows it, with no help text and nothing
         // selected
         final CredentialsManagerDialogPresenter dialog = injector.getCredentialsManagerDialogPresenter();
         final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(dialog);
