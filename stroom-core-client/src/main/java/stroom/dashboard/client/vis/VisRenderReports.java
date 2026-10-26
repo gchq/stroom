@@ -32,9 +32,9 @@ import java.util.Set;
 
 /// Keeps only what Stroom expects of a visualisation's render report (see `stroom.report` in `vis.js`), as any
 /// script in the frame can send one: its status, counts, sizes, the library, the reasons rows were left out (from
-/// a fixed set), short messages, and what the user is looking at (the interval, the part zoomed in on, what is
-/// selected and the series hidden, which are cut short). Reports reach the chat's agent, so nothing else a script
-/// sends gets through.
+/// a fixed set), short messages, each series' trend (direction, slope and fit), and what the user is looking at
+/// (the interval, the part zoomed in on, what is selected and the series hidden, which are cut short). Reports
+/// reach the chat's agent, so nothing else a script sends gets through.
 ///
 /// The filtering ([#sanitise(Map)]) works on plain Java values, so it can be tested on the JVM; [#sanitise(JSONObject)]
 /// only converts to and from the browser's JSON.
@@ -55,6 +55,11 @@ public final class VisRenderReports {
     private static final List<String> VIEW_TEXTS = List.of("shown", "selection");
     // The series hidden from the legend, by name.
     static final int MAX_HIDDEN_SERIES = 10;
+    // Each series' trend (Trend Line): its series' name, how it is drawn, which way it goes, its slope as text and
+    // its R² (from 0 to 1).
+    static final int MAX_TRENDS = 10;
+    private static final Set<String> TREND_METHODS = Set.of("linear", "moving average");
+    private static final Set<String> TREND_DIRECTIONS = Set.of("rising", "falling", "flat");
     // Whether something is selected on the chart (never what is: that would be a data value), and whether its rows
     // reached its row limit, so the rest were left out.
     private static final List<String> BOOLEANS = List.of("selected", "truncated");
@@ -148,9 +153,45 @@ public final class VisRenderReports {
                 clean.put("hiddenSeries", cleanHidden);
             }
         }
+        if (report.get("trends") instanceof final List<?> trends) {
+            final List<Object> cleanTrends = new ArrayList<>();
+            for (final Object trend : trends) {
+                if (trend instanceof final Map<?, ?> map && cleanTrends.size() < MAX_TRENDS) {
+                    final Map<String, Object> cleanTrend = trend(map);
+                    if (cleanTrend != null) {
+                        cleanTrends.add(cleanTrend);
+                    }
+                }
+            }
+            clean.put("trends", cleanTrends);
+        }
         final String error = text(report.get("error"), MAX_TEXT);
         if (error != null) {
             clean.put("error", error);
+        }
+        return clean;
+    }
+
+    // A series' trend, only what is expected kept; null without a known method and direction.
+    private static Map<String, Object> trend(final Map<?, ?> trend) {
+        final String method = text(trend.get("method"), MAX_SHORT_TEXT);
+        final String direction = text(trend.get("direction"), MAX_SHORT_TEXT);
+        if (!TREND_METHODS.contains(method) || !TREND_DIRECTIONS.contains(direction)) {
+            return null;
+        }
+        final Map<String, Object> clean = new LinkedHashMap<>();
+        final String series = text(trend.get("series"), MAX_SHORT_TEXT);
+        if (series != null) {
+            clean.put("series", series);
+        }
+        clean.put("method", method);
+        clean.put("direction", direction);
+        final String slope = text(trend.get("slope"), MAX_SHORT_TEXT);
+        if (slope != null) {
+            clean.put("slope", slope);
+        }
+        if (trend.get("r2") instanceof final Number r2 && r2.doubleValue() >= 0 && r2.doubleValue() <= 1) {
+            clean.put("r2", Math.round(r2.doubleValue() * 100) / 100.0);
         }
         return clean;
     }

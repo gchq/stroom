@@ -103,6 +103,10 @@ public final class ChartCheck {
         }
 
         checkAutoInterval(kind, mapped, style, columns, sample, result);
+        checkTrendLine(kind, mapped, style, columns, result);
+        if (!result.problems.isEmpty()) {
+            return result;
+        }
 
         for (final Entry<String, String> entry : mapped.entrySet()) {
             final ChartRole role = kind.role(entry.getKey()).orElseThrow();
@@ -548,6 +552,49 @@ public final class ChartCheck {
             result.warnings.add("Auto Interval does nothing while the bars are sorted by value: they must be in time "
                                 + "order. Leave sort blank.");
         }
+    }
+
+    // A trend follows a bar or line chart's x (its categories), which must be dates or numbers in their own order, and
+    // a scatter plot's y, which must be numbers: otherwise the chart would draw none, so it is refused. A column whose
+    // format isn't known is let through, as the chart says why it drew none.
+    private static void checkTrendLine(final ChartKind kind,
+                                       final Map<String, String> mapped,
+                                       final Map<String, String> style,
+                                       final List<TableColumn> columns,
+                                       final Result result) {
+        final String trend = NullSafe.map(style).get(StyleSetting.TREND_LINE.id());
+        if (NullSafe.isBlankString(trend) || "none".equals(trend)
+            || kind.styleSetting(StyleSetting.TREND_LINE.id()).isEmpty()) {
+            return;
+        }
+        if (kind == ChartKind.SCATTER) {
+            final TableColumn y = findColumn(columns, mapped.get("y")).orElse(null);
+            if (y != null && "DATE_TIME".equals(formatOf(y))) {
+                result.problems.add("Trend Line needs a y of numbers, but '" + y.name() + "' is a Date Time column. "
+                                    + "Map a number to y, or leave Trend Line as none.");
+            }
+            return;
+        }
+        final String role = kind == ChartKind.BAR
+                ? "category"
+                : "x";
+        final TableColumn column = findColumn(columns, mapped.get(role)).orElse(null);
+        final String format = column == null
+                ? ""
+                : formatOf(column);
+        if (!format.isEmpty() && !"DATE_TIME".equals(format) && !"NUMBER".equals(format)) {
+            result.problems.add("Trend Line needs " + role + " to be dates or numbers, as a trend across text "
+                                + "means nothing, but '" + column.name() + "' is formatted as " + format + ". Map a "
+                                + "Date Time or Number column to " + role + ", or leave Trend Line as none.");
+        } else if (kind == ChartKind.BAR
+                   && NullSafe.isNonBlankString(NullSafe.map(style).get(StyleSetting.SORT.id()))) {
+            result.problems.add("Trend Line needs the bars in their own order, not sorted by value. Leave sort blank, "
+                                + "or leave Trend Line as none.");
+        }
+    }
+
+    private static String formatOf(final TableColumn column) {
+        return NullSafe.string(column.format()).strip().toUpperCase(Locale.ROOT);
     }
 
     // True if a column's expression already rounds its time to an interval (e.g. floorDay()).

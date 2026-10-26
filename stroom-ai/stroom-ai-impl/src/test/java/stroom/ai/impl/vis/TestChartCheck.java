@@ -572,4 +572,40 @@ class TestChartCheck {
                 Map.of("autoInterval", "true"), columns, null).warnings())
                 .noneMatch(warning -> warning.startsWith("Auto Interval"));
     }
+
+    @Test
+    void aTrendLineNeedsAnXItCanFollow() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Day", "DATE_TIME", "floorDay(${EventTime})"),
+                new TableColumn("Size", "NUMBER", "${Bytes}"),
+                new TableColumn("User", "TEXT", "${User}"),
+                new TableColumn("Count", "NUMBER", "count()"),
+                new TableColumn("Unknown", null, "${Other}"));
+        final Map<String, String> linear = Map.of("trendLine", "linear");
+
+        // Dates or numbers, in their own order: drawn.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Day", "value", "Count"), linear, columns,
+                null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "Size", "y", "Count"),
+                Map.of("trendLine", "moving average"), columns, null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.SCATTER, Map.of("x", "Size", "y", "Count"), linear, columns, null)
+                .problems()).isEmpty();
+        // Text, sorted bars, or a y of dates: none could be drawn, so refused.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"), linear, columns,
+                null).problems()).singleElement().asString()
+                .startsWith("Trend Line needs category to be dates or numbers")
+                .contains("'User' is formatted as TEXT");
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "User", "y", "Count"), linear, columns, null)
+                .problems()).singleElement().asString().startsWith("Trend Line needs x to be dates or numbers");
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Day", "value", "Count"),
+                Map.of("trendLine", "linear", "sort", "Descending"), columns, null).problems())
+                .singleElement().asString().startsWith("Trend Line needs the bars in their own order");
+        assertThat(ChartCheck.check(ChartKind.SCATTER, Map.of("x", "Size", "y", "Day"), linear, columns, null)
+                .problems()).singleElement().asString().startsWith("Trend Line needs a y of numbers");
+        // Off, or a format not known: let through.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"),
+                Map.of("trendLine", "none"), columns, null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Unknown", "value", "Count"), linear, columns,
+                null).problems()).isEmpty();
+    }
 }
