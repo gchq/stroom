@@ -506,16 +506,20 @@ class TestProposeVisualisationTool {
     }
 
     @Test
-    void anEChartsOnlySettingOrOptionIsRefusedForD3() {
+    void d3DrawsEverySettingButTakesOnlyColourOptions() {
         d3Installed();
         final Map<String, Object> args = graphArgs();
         args.put(ProposeVisualisationTool.LIBRARY_ARG, ProposeVisualisationTool.D3);
         args.put(ProposeVisualisationTool.KIND_ARG, "line");
         args.put(ProposeVisualisationTool.COLUMNS_ARG, mapOf("x", "Count", "y", "Count"));
-        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("zoomSlider", "true"));
+        args.put(ProposeVisualisationTool.STYLE_ARG, mapOf("zoomSlider", "true", "breakOutliers", "true"));
 
-        assertThat(call(args)).startsWith("Error: ").contains("drawn only with ECharts, not D3");
+        assertThat(call(args)).doesNotStartWith("Error: ");
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
+                assertThat(VisualisationPlan.fromJson((String) action.get("plan")).style())
+                        .containsEntry("zoomSlider", "true").containsEntry("breakOutliers", "true"));
 
+        // Its options are ECharts' (here, its grid), which D3 doesn't draw.
         args.put(ProposeVisualisationTool.STYLE_ARG, mapOf());
         args.put(ProposeVisualisationTool.OPTIONS_ARG, "{\"grid\": {\"left\": 10}}");
 

@@ -158,18 +158,11 @@ class TestListVisualisationsTool {
     }
 
     @Test
-    void settingsOnlyEChartsDrawsAreMarked() {
+    void bothLibrariesDrawEverySettingAndD3TakesOnlyColourOptions() {
         assertThat(run())
                 .contains("zoomSlider (")
-                .contains("(echarts only)")
+                .doesNotContain("(echarts only)")
                 .contains("Options (d3): only color");
-        for (final ChartKind kind : ChartKind.values()) {
-            for (final StyleSetting setting : kind.styleSettings()) {
-                if (!ChartLibrary.D3.supports(setting)) {
-                    assertThat(run()).contains(": " + setting.description() + " (echarts only)");
-                }
-            }
-        }
     }
 
     @Test

@@ -19,19 +19,17 @@ package stroom.ai.impl.vis;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 /// A charting library Stroom AI generates charts with. An administrator installs the library as a Script doc; Stroom
 /// ships an adapter for it (a Script doc it puts beside the library's), whose vis class each generated Visualisation
-/// names as its function. The chart kinds, their roles and the settings templates are shared by both; a few settings
-/// only ECharts draws.
+/// names as its function. The chart kinds, their roles, the settings and their templates are shared by both, and both
+/// adapters draw every setting.
 public enum ChartLibrary {
 
     ECHARTS("echarts", "ECharts", "visualisations.EChartsGeneric", "/stroom/ai/impl/vis/echarts-generic.js",
-            "ECharts Generic", "stroom-echarts-generic-version:", Set.of()),
+            "ECharts Generic", "stroom-echarts-generic-version:"),
     D3("d3", "D3", "visualisations.D3Generic", "/stroom/ai/impl/vis/d3-generic.js",
-            "D3 Generic", "stroom-d3-generic-version:",
-            Set.of(StyleSetting.BREAK_OUTLIERS, StyleSetting.THUMBNAIL, StyleSetting.ZOOM_SLIDER));
+            "D3 Generic", "stroom-d3-generic-version:");
 
     private final String id;
     private final String displayName;
@@ -39,22 +37,19 @@ public enum ChartLibrary {
     private final String adapterResource;
     private final String adapterName;
     private final String adapterMarker;
-    private final Set<StyleSetting> unsupported;
 
     ChartLibrary(final String id,
                  final String displayName,
                  final String functionName,
                  final String adapterResource,
                  final String adapterName,
-                 final String adapterMarker,
-                 final Set<StyleSetting> unsupported) {
+                 final String adapterMarker) {
         this.id = id;
         this.displayName = displayName;
         this.functionName = functionName;
         this.adapterResource = adapterResource;
         this.adapterName = adapterName;
         this.adapterMarker = adapterMarker;
-        this.unsupported = unsupported;
     }
 
     /// @return Its id, as the agent names it, e.g. `d3`.
@@ -85,12 +80,6 @@ public enum ChartLibrary {
     /// @return The marker in its adapter's banner, followed by the adapter's version.
     public String adapterMarker() {
         return adapterMarker;
-    }
-
-    /// @param setting A style setting.
-    /// @return True if its adapter draws the setting.
-    public boolean supports(final StyleSetting setting) {
-        return !unsupported.contains(setting);
     }
 
     /// @param id A library's id, ignoring case.
