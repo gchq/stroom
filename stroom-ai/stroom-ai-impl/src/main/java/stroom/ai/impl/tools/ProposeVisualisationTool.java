@@ -129,6 +129,10 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     static final int MAX_CHARTS = 12;
     // A column whose expression reads a data source field as it is, e.g. ${user.name}.
     private static final Pattern PLAIN_FIELD = Pattern.compile("\\$\\{([^}]+)}");
+    // A column reading a date field rounded down to the start of its period, e.g. floorDay(${EventTime}): a time
+    // it holds stands for the period, so filtering the field by the period matches what it counts.
+    private static final Pattern FLOORED_FIELD = Pattern.compile(
+            "floor(?:Year|Month|Week|Day|Hour|Minute|Second)\\(\\s*\\$\\{([^}]+)}\\s*\\)");
 
     private final TabSnapshots tabSnapshots;
     private final DocumentAccess documentAccess;
@@ -743,26 +747,45 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
                + rangeNote(kind, mappings, expressions, formats);
     }
 
-    // For a chart with a time axis (a line chart's or a scatter plot's x, a Date Time column), how its range tool
-    // can filter by a time range; empty otherwise.
+    // For a chart that selects dates (a column it picks out formatted as Date Time, e.g. a time axis's x or a
+    // calendar's date), how a filter keeps a date field or column within the selected time; and, for a time axis
+    // (a line chart's or a scatter plot's x), its range tool. Empty otherwise.
     private static String rangeNote(final ChartKind kind,
                                     final Map<String, String> mappings,
                                     final Map<String, String> expressions,
                                     final Map<String, String> formats) {
-        final String x = NullSafe.get(mappings, map -> map.get("x"));
-        if ((kind != ChartKind.LINE && kind != ChartKind.SCATTER) || NullSafe.isBlankString(x)
-            || !"DATE_TIME".equals(NullSafe.get(formats, map -> map.get(x)))) {
+        final List<String> dates = new ArrayList<>();
+        final List<String> fields = new ArrayList<>();
+        NullSafe.map(mappings).forEach((role, column) -> {
+            if (ProposeDashboardChangeTool.SELECTED_ROLES.contains(role) && NullSafe.isNonBlankString(column)
+                && "DATE_TIME".equals(NullSafe.get(formats, map -> map.get(column)))) {
+                dates.add(role + " (column '" + column + "')");
+                final String expression = NullSafe.string(NullSafe.get(expressions, map -> map.get(column))).strip();
+                final Matcher plain = PLAIN_FIELD.matcher(expression);
+                final Matcher floored = FLOORED_FIELD.matcher(expression);
+                if (plain.matches()) {
+                    fields.add(plain.group(1));
+                } else if (floored.matches()) {
+                    fields.add(floored.group(1));
+                }
+            }
+        });
+        if (dates.isEmpty()) {
             return "";
         }
-        final Matcher matcher = PLAIN_FIELD.matcher(NullSafe.string(NullSafe.get(expressions,
-                map -> map.get(x))).strip());
-        return " Its time axis has a range tool: dragging along it selects a time range, which a term with "
-               + "selection " + ProposeDashboardChangeTool.RANGE_SELECTION + " keeps what is within ("
-               + (matcher.matches()
-                ? "the query's field " + matcher.group(1) + ", or "
+        final String x = NullSafe.get(mappings, map -> map.get("x"));
+        final boolean timeAxis = (kind == ChartKind.LINE || kind == ChartKind.SCATTER) && NullSafe.isNonBlankString(x)
+                                 && "DATE_TIME".equals(NullSafe.get(formats, map -> map.get(x)));
+        return " Dates: a term giving a date field (or a table's date column) the selection "
+               + String.join(" or ", dates) + " keeps it within the selected time, never equal to it: "
+               + (timeAxis
+                ? "a range dragged along its time axis (its range tool), or "
                 : "")
-               + "a table's date column, e.g. '" + x + "'). Offer that too: e.g. to narrow the dashboard to a "
-               + "period.";
+               + "the time a clicked point stands for (e.g. its whole day, for floorDay() values)"
+               + (fields.isEmpty()
+                ? ""
+                : ", e.g. the query's field " + String.join(" or ", fields.stream().distinct().toList()))
+               + ". Offer that too: e.g. to narrow the dashboard to a period.";
     }
 
     // Why an embedded query's chart can't be offered, or null if it can.

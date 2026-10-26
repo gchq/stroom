@@ -707,15 +707,25 @@ class TestProposeVisualisationTool {
         assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.LINE,
                 Map.of("x", "Time", "y", "Count", "series", "Host"), Map.of("Time", "${EventTime}"),
                 Map.of("Time", "DATE_TIME"), false, "Events"))
-                .contains("Its time axis has a range tool")
-                .contains("selection range keeps what is within (the query's field EventTime, or a table's date "
-                          + "column, e.g. 'Time')");
+                .contains("Dates: a term giving a date field (or a table's date column) the selection x (column "
+                          + "'Time') keeps it within the selected time, never equal to it: a range dragged along "
+                          + "its time axis (its range tool), or the time a clicked point stands for (e.g. its "
+                          + "whole day, for floorDay() values), e.g. the query's field EventTime.");
 
-        // Not when x isn't a date (a category axis has no range tool).
+        // A calendar of floorDay() values: a clicked day filters the field it rounds, with no range tool.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.CALENDAR,
+                Map.of("date", "Day", "value", "Count"), Map.of("Day", "floorDay(${EventTime})"),
+                Map.of("Day", "DATE_TIME"), false, "Events"))
+                .contains("the selection date (column 'Day') keeps it within the selected time, never equal to it: "
+                          + "the time a clicked point stands for")
+                .contains("e.g. the query's field EventTime.")
+                .doesNotContain("range tool");
+
+        // Not when x isn't a date.
         assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.LINE,
                 Map.of("x", "Day", "y", "Count", "series", "Host"), Map.of("Day", "${Day}"),
                 Map.of("Day", "TEXT"), false, "Events"))
-                .doesNotContain("range tool");
+                .doesNotContain("Dates:");
     }
 
     @Test
