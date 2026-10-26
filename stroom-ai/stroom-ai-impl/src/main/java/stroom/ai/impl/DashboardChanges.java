@@ -70,12 +70,17 @@ public final class DashboardChanges {
     public static final String ADD_VIS = "add_vis";
     /// Changes the control values of a Visualisation component, and optionally the Visualisation it shows.
     public static final String SET_VIS_SETTINGS = "set_vis_settings";
-    /// Where add_vis puts the Visualisation: in a new pane below the table (the default).
+    /// Where add_vis puts the Visualisation: as a tab with the dashboard's charts, or at the bottom of the dashboard
+    /// if it has none (the default).
+    public static final String CHARTS = "charts";
+    /// Where add_vis puts the Visualisation: in a new pane at the bottom of the dashboard.
+    public static final String BOTTOM = "bottom";
+    /// Where add_vis puts the Visualisation: in a new pane below the table.
     public static final String BELOW = "below";
     /// Where add_vis puts the Visualisation: as a tab beside the table.
     public static final String TAB = "tab";
     /// Where add_vis can put the Visualisation.
-    public static final List<String> PLACEMENTS = List.of(BELOW, TAB);
+    public static final List<String> PLACEMENTS = List.of(CHARTS, BOTTOM, BELOW, TAB);
     /// The type of a Visualisation control whose value is a column of the linked table.
     public static final String FIELD_CONTROL = "field";
     /// The most settings one add_vis or set_vis_settings may give.
@@ -1076,8 +1081,8 @@ public final class DashboardChanges {
     ///                   it in `position` (default the end).
     /// @param settings   For add_vis and set_vis_settings, the Visualisation's settings: each control's id and
     ///                   value (for set_vis_settings, empty to go back to the control's default). Null for others.
-    /// @param placement  For add_vis, where to put it: [#BELOW] the table (the default, if null) or as a [#TAB]
-    ///                   beside it.
+    /// @param placement  For add_vis, where to put it: as a tab with the dashboard's charts ([#CHARTS], the default,
+    ///                   if null), at the [#BOTTOM] of the dashboard, [#BELOW] the table or as a [#TAB] beside it.
     public record Change(String op,
                          String column,
                          Integer level,
@@ -1208,12 +1213,10 @@ public final class DashboardChanges {
                 case ADD_TEXT -> "Add a Text widget '" + name + "' below " + (table == null
                         ? "this table"
                         : "table '" + table + "'") + ", showing the event of its selected row";
-                case ADD_VIS -> "Add a visualisation '" + name + "' (" + describeVisualisation() + ") "
-                                + (TAB.equals(placement)
-                        ? "as a tab beside "
-                        : "below ") + (table == null
+                case ADD_VIS -> "Add a visualisation '" + name + "' (" + describeVisualisation() + ") of "
+                                + (table == null
                         ? "this table"
-                        : "table '" + table + "'") + (NullSafe.map(settings).isEmpty()
+                        : "table '" + table + "'") + " " + describePlacement() + (NullSafe.map(settings).isEmpty()
                         ? ""
                         : ", with " + describeVisSettings());
                 case SET_VIS_SETTINGS -> {
@@ -1269,6 +1272,20 @@ public final class DashboardChanges {
                         : ExpressionDescriber.describe(query), "everything");
                 default -> op + " '" + column + "'";
             };
+        }
+
+        // Where add_vis puts the Visualisation, e.g. "as a tab with the dashboard's charts".
+        private String describePlacement() {
+            if (BELOW.equals(placement)) {
+                return "in a new pane below the table";
+            }
+            if (TAB.equals(placement)) {
+                return "as a tab beside the table";
+            }
+            if (BOTTOM.equals(placement)) {
+                return "at the bottom of the dashboard";
+            }
+            return "as a tab with the dashboard's charts (at the bottom of the dashboard if it has none)";
         }
 
         // The Visualisation it shows, by name if known, else its UUID.
@@ -1506,7 +1523,7 @@ public final class DashboardChanges {
                 return this;
             }
 
-            /// @param placement For add_vis, where to put it: [#BELOW] or [#TAB].
+            /// @param placement For add_vis, where to put it: [#CHARTS], [#BOTTOM], [#BELOW] or [#TAB].
             /// @return This builder.
             public Builder placement(final String placement) {
                 this.placement = placement;
