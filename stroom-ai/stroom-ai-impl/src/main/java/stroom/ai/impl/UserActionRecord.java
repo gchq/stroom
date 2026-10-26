@@ -175,12 +175,16 @@ public record UserActionRecord(String id,
     /// @param editable     True if the user could edit the dashboard when it was proposed.
     /// @param operations   The operations, as the browser applies them.
     /// @param changes      Each operation in plain language, written by Stroom.
+    /// @param charts       The charts Stroom AI generated whose Visualisations are given the settings added to
+    ///                     Stroom since they were generated, as the change is applied (as a setting it changes may
+    ///                     be one of them); none if null, as in a change proposed before there were any.
     public record DashboardChange(String component,
                                   String componentId,
                                   String snapshotHash,
                                   boolean editable,
                                   List<Map<String, Object>> operations,
-                                  List<String> changes) {
+                                  List<String> changes,
+                                  List<DocRef> charts) {
 
     }
 

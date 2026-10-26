@@ -224,10 +224,10 @@ A detail that isn't a column of the chart's table (e.g. a person's organisation,
 charted until it is one. If it is in the events but not indexed, it comes from the table's extraction pipeline
 (or from reference data); say so rather than inventing it.
 
-A chart keeps the version of Stroom's adapter it was generated with. One generated before a setting or choice was
-added (e.g. `trendLine`, or `nodeColours` cluster) can't take it: `propose_dashboard_change` says so. Regenerate it
-with `propose_visualisation`, `replace` (its pane's name), the same kind and columns, which gives it every current
-setting, then set it.
+Every chart Stroom AI generated draws with this version of Stroom's adapter, so it can take every current setting
+and choice, even one added since it was generated (e.g. `trendLine`, or `nodeColours` cluster): set it with
+`propose_dashboard_change` as usual. Applying the change gives the chart's Visualisation the settings added since,
+keeping what it shows; the button says so.
 
 ### Reading the report's analysis
 
@@ -286,8 +286,6 @@ table and chart. `current_results` snapshots its results by its name, as a table
   what it lacks (e.g. a time field rounded with `floorHour()`, formatted Date Time and grouped, with
   `propose_dashboard_change`), then the conversion.
 - The content pack's D3 Visualisations take only their own settings, by their own ids.
-- A setting a chart's Visualisation doesn't have (one generated before the setting was added, e.g. `nodeColours`)
-  can't be set on its pane: replace the chart (`replace`, the same kind) to regenerate it with every setting.
 - A network graph of one row per message (or event) needs no new table to show magnitude: without a `weight`
   column each row counts once, so each link is as wide as its rows (e.g. a pair's messages), and `nodeSize`
   total sizes each node by its links' total (the messages a person sent and received). Map `weight` only for a

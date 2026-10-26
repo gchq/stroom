@@ -475,6 +475,20 @@ public class UserActionService {
             auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
+        // Charts generated before a setting the change uses was added are given it first, as the browser's dashboard
+        // reads the Visualisation's settings for the controls it may set. What they show is kept; this is saved.
+        for (final DocRef chart : NullSafe.list(change.charts())) {
+            final String problem = visualisationActions.updateSettings(chart);
+            auditLog.processed(ToolSession.chat(chatId), chart, APPLY_DASHBOARD_COMMAND,
+                    "Visualisation '" + chart.getName() + "' for " + target,
+                    problem == null
+                            ? "Gave it the settings added to Stroom since it was generated, saved"
+                            : problem,
+                    problem == null);
+            if (problem != null) {
+                return new AiUserActionResult(false, problem, null);
+            }
+        }
         if (update(message, result, action.withStatus(Status.DONE, APPLIED_DASHBOARD)) == null) {
             return new AiUserActionResult(false, "This has already been done.", null);
         }

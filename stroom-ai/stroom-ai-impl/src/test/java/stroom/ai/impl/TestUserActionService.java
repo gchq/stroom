@@ -397,6 +397,38 @@ class TestUserActionService {
     }
 
     @Test
+    void aDashboardChangeGivesTheChartsItNamesTheirCurrentSettingsFirst() {
+        final DocRef chart = new DocRef("Visualisation", "6d1c2f0a-1b2c-4d3e-8f90-a1b2c3d4e5f6", "People");
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        storeResult(dashboardChange(List.of(chart)));
+
+        assertThat(service.doUserAction(CHAT, MESSAGE, "dash-1").isDone()).isTrue();
+
+        Mockito.verify(visualisationActions).updateSettings(chart);
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(chart),
+                Mockito.eq(UserActionService.APPLY_DASHBOARD_COMMAND), Mockito.contains("Visualisation 'People'"),
+                Mockito.contains("saved"), Mockito.eq(true));
+    }
+
+    @Test
+    void aDashboardChangeIsNotAppliedIfItsChartCantBeGivenItsSettings() {
+        final DocRef chart = new DocRef("Visualisation", "6d1c2f0a-1b2c-4d3e-8f90-a1b2c3d4e5f6", "People");
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        Mockito.when(visualisationActions.updateSettings(chart)).thenReturn("needs Edit permission on it");
+        storeResult(dashboardChange(List.of(chart)));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "dash-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("needs Edit permission on it");
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.any(),
+                Mockito.any());
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
     void aDashboardChangeIsAppliedOnce() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
         Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
@@ -747,12 +779,16 @@ class TestUserActionService {
     }
 
     private static UserActionRecord dashboardChange() {
+        return dashboardChange(null);
+    }
+
+    private static UserActionRecord dashboardChange(final List<DocRef> charts) {
         return new UserActionRecord("dash-1", UserActions.APPLY_DASHBOARD_CHANGE,
                 "Change to table 'Events' on dashboard 'Logons': 1 change(s)", null, null, null, DASHBOARD, null,
                 List.of(), Long.MAX_VALUE, Status.PENDING, null, null, null,
                 new UserActionRecord.DashboardChange("Events", "table-1", "abc", true,
                         List.of(Map.of("op", "group", "column", "EventType", "level", 1)),
-                        List.of("Group by 'EventType' (level 1)")));
+                        List.of("Group by 'EventType' (level 1)"), charts));
     }
 
     private static ProcessorFilter filter(final boolean enabled) {
