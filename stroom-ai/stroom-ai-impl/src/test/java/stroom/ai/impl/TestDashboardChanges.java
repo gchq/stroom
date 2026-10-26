@@ -496,10 +496,12 @@ class TestDashboardChanges {
         // An empty value is the control's default, which a new component has anyway; numbers are text.
         assertThat(named.settings()).containsExactly(Map.entry("category", "UserId"), Map.entry("limit", "10"));
         assertThat(named.describe())
-                .isEqualTo("Add a visualisation 'Users' (Bar chart) below this table, with category 'UserId', "
+                .isEqualTo("Add a visualisation 'Users' (Bar chart) of this table as a tab with the dashboard's "
+                           + "charts (at the bottom of the dashboard if it has none), with category 'UserId', "
                            + "limit '10'");
         assertThat(checked.changes().get(2).describe())
-                .isEqualTo("Add a visualisation 'Logon chart' (vis-uuid) as a tab beside table 'Logons'");
+                .isEqualTo("Add a visualisation 'Logon chart' (vis-uuid) of table 'Logons' as a tab beside the "
+                           + "table");
         assertThat(checked.columnsOf(null)).isEqualTo(COLUMNS);
         assertThat(checked.columnsOf("events")).isEqualTo(COLUMNS);
         assertThat(checked.columnsOf("Logons")).isEmpty();
@@ -523,7 +525,7 @@ class TestDashboardChanges {
                 .hasMessageContaining("add_vis needs visualisation");
         assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_vis", "name", "Chart",
                 "visualisation", "v", "placement", "above"))))
-                .hasMessageContaining("placement must be one of below, tab");
+                .hasMessageContaining("placement must be one of charts, bottom, below, tab");
         assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_vis", "name", "Chart",
                 "visualisation", "v", "settings", "category=UserId"))))
                 .hasMessageContaining("settings must be an object");

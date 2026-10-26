@@ -262,9 +262,13 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                      + "of the linked table. For set_vis_settings, only the controls to change; an "
                                      + "empty value puts a control back to its default.")
                         .build())
-                .addEnumProperty("placement", DashboardChanges.PLACEMENTS, "For add_vis: below (the default) for a "
-                                                                          + "new pane below the table, or tab for "
-                                                                          + "a tab beside it.")
+                .addEnumProperty("placement", DashboardChanges.PLACEMENTS, "For add_vis: charts (the default) for "
+                                                                          + "a tab with the dashboard's charts, or "
+                                                                          + "at its bottom if it has none; bottom "
+                                                                          + "for a new pane at the bottom of the "
+                                                                          + "dashboard; below for a new pane below "
+                                                                          + "the table; tab for a tab beside it. "
+                                                                          + "Give one only if the user asks.")
                 .addStringProperty("setting", "For set_setting: the setting. " + settingsHelp())
                 .addStringProperty("value", "For set_setting: its value (true or false, a number, a pipeline's "
                                             + "UUID, a data source's name or UUID, a component's name, or none "
