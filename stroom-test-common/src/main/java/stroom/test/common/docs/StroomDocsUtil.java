@@ -233,7 +233,12 @@ public class StroomDocsUtil {
     public static void doWithClassScanResult(final Consumer<ScanResult> scanResultConsumer) {
         try (final ScanResult scanResult =
                 new ClassGraph()
-                        .enableAllInfo()             // Scan classes, methods, fields, annotations
+                        .enableClasspath()
+                        .enableNonSystemModules()
+                        .enableClassInfo()
+                        .enableMethodInfo()
+                        .enableFieldInfo()
+                        .enableAnnotationInfo()      // Scan classes, methods, fields, annotations
                         .acceptPackages(STROOM_PACKAGE_NAME)  // Scan com.xyz and subpkgs (omit to scan all packages)
                         .scan()) {                   // Start the scan
 
@@ -247,7 +252,12 @@ public class StroomDocsUtil {
 //                if (classInfoList == null) {
 //                    try (final ScanResult scanResult =
 //                            new ClassGraph()
-//                                    .enableAllInfo()   // Scan classes, methods, fields, annotations
+//                                    .enableClasspath()
+//                                    .enableNonSystemModules()
+//                                    .enableClassInfo()
+//                                    .enableMethodInfo()
+//                                    .enableFieldInfo()
+//                                    .enableAnnotationInfo() // Scan classes, methods, fields, annotations
 //                                    .acceptPackages(STROOM_PACKAGE_NAME)
 //                                    .scan()) {
 //                        classInfoList = scanResult.getAllClasses();

@@ -271,6 +271,7 @@ dependencies {
     swaggerBuild libs.swagger.annotations
     swaggerBuild libs.swagger.core
     swaggerBuild libs.swagger.jaxrs
+    swaggerBuild libs.classgraph.legacy
     swaggerBuild libs.ws.rs.api
 }
 
@@ -472,6 +473,7 @@ tasks.register('copyFilesForStroomDockerBuild') {
 //    }
 //}
 
+// Task from swagger-gradle-plugin that generates the swagger spec files
 resolve {
     outputFileName = 'stroom'
     outputFormat = 'JSONANDYAML'
@@ -482,7 +484,11 @@ resolve {
     // deps which includes logback-classic.  In the absence of a logback.xml logback will output
     // DEBUG which makes for a LOT of output. Thus provide it with a logback.xml to use
     // so we have control.
-    classpath = configurations.runtimeClasspath + files("../config/swagger-plugin")
+    // Exclude classgraph because the swagger plugin requires v4 while we have v6 on the main stroom
+    // classpath
+    classpath = configurations.runtimeClasspath - configurations.runtimeClasspath.filter {
+        it.name.startsWith('classgraph-')
+    } + files("../config/swagger-plugin")
 
     // We need to use specific deps for the plugin itself so it knows how to handle jakarta annos
     buildClasspath = configurations.swaggerBuild
