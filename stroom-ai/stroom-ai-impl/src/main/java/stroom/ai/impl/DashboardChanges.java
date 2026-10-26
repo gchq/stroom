@@ -1235,7 +1235,8 @@ public final class DashboardChanges {
                         .flatMap(term -> selectionsOf(term.getValue()).stream()
                                 .map(selection -> "range".equals(selection)
                                         ? term.getKey() + " within its selected time (a range dragged along "
-                                          + "its time axis, or the time a clicked point stands for)"
+                                          + "its time axis or across its bars of dates, or the time a clicked "
+                                          + "point stands for)"
                                         : term.getKey() + " = its " + selection))
                         .toList());
                 case REMOVE_SELECTION_FILTER -> "Remove the selection filter " + filter + " from '" + target + "'";
