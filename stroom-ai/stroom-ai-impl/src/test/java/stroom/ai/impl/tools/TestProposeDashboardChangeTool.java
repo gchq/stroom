@@ -420,8 +420,8 @@ class TestProposeDashboardChangeTool {
         final String result = run(List.of(Map.of("op", "add_vis", "name", "Users", "visualisation", "vis-uuid",
                 "settings", Map.of("category", "UserId"), "placement", "tab")));
 
-        assertThat(result).contains("- Add a visualisation 'Users' (Bar chart) as a tab beside this table, with "
-                                    + "category 'UserId'");
+        assertThat(result).contains("- Add a visualisation 'Users' (Bar chart) of this table as a tab beside the "
+                                    + "table, with category 'UserId'");
         assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action.get("changes"))
                 .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .singleElement()
