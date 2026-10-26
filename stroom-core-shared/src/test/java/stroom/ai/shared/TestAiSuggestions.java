@@ -210,14 +210,16 @@ class TestAiSuggestions {
         // then the model's suggestions about the conversation (e.g. to apply changes already offered).
         final DocRef chart = new DocRef("Visualisation", "vis-uuid", "Chat flows");
 
+        // What can be done with it first: the agent offers the analyses its kind allows (e.g. clusters).
         assertThat(AiSuggestions.forDocument(chart)).containsExactly(
+                "What can I do with the chart 'Chat flows'?",
                 "What stands out in the chart 'Chat flows'?",
-                "Explain what I've selected or zoomed into on 'Chat flows'",
-                "Is 'Chat flows' the best chart for its data?");
+                "Explain what I've selected or zoomed into on 'Chat flows'");
         assertThat(AiSuggestions.documentHint(chart))
                 .startsWith("The user has attached a chart, Visualisation 'Chat flows', from its pane on the "
                             + "dashboard they are looking at.\nWith it, the assistant can explain what the chart "
                             + "shows")
+                .contains("the clusters in a network graph")
                 .doesNotContain("Explorer");
     }
 
