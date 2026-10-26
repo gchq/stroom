@@ -18,6 +18,7 @@ package stroom.contentstore.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.contentstore.client.component.ContentStoreContentPackDetailsController;
+import stroom.contentstore.client.component.ContentStoreContentPackListController;
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
@@ -27,6 +28,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -46,7 +48,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     /** Label for the content */
     private static final String LABEL = "Content Store";
 
-    private final ContentStoreContentPackListPresenter contentPackListPresenter;
+    private final ContentStoreContentPackListController contentPackList;
 
     private final ContentStoreContentPackDetailsController contentPackDetails;
 
@@ -54,19 +56,19 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     @Inject
     public ContentStorePresenter(final EventBus eventBus,
                                  final ContentStoreView view,
-                                 final ContentStoreContentPackListPresenter contentPackListPresenter,
+                                 final ContentStoreContentPackListController contentPackList,
                                  final ContentStoreContentPackDetailsController contentPackDetails) {
         super(eventBus, view);
-        own(contentPackListPresenter);
-        this.contentPackListPresenter = contentPackListPresenter;
-        this.contentPackListPresenter.setContentStorePresenter(this);
+        own(contentPackList);
+        this.contentPackList = contentPackList;
+        this.contentPackList.setOnStateChange(this::updateState);
         this.contentPackDetails = own(contentPackDetails);
         contentPackDetails.setOnInstalled(this::updateState);
-        getView().setContentPackListView(contentPackListPresenter.getView());
+        getView().setContentPackListView(contentPackList);
         view.getContentPackDetailsPanel().add(contentPackDetails);
 
         // Add in the handler for the list selection
-        contentPackListPresenter.getSelectionModel()
+        contentPackList.getSelectionModel()
                 .addSelectionHandler(this::contentPackListSelectionHandler);
     }
 
@@ -109,7 +111,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
      */
     private void contentPackListSelectionHandler(final MultiSelectEvent event) {
         final ContentStoreContentPackWithDynamicState cpws =
-                contentPackListPresenter.getSelectionModel().getSelected();
+                contentPackList.getSelectionModel().getSelected();
         contentPackDetails.setContentPack(cpws);
     }
 
@@ -121,7 +123,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
         /// Shows the list of content packs.
         ///
         /// @param view Its view.
-        void setContentPackListView(View view);
+        void setContentPackListView(IsWidget view);
 
         /**
          * Returns the details panel so stuff can be put into it
@@ -134,7 +136,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
      * in the state of a content pack.
      */
     public void updateState() {
-        this.contentPackListPresenter.redraw();
+        this.contentPackList.redraw();
         this.contentPackDetails.updateState();
     }
 
