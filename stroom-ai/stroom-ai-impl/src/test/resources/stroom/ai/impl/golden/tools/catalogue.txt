@@ -1633,7 +1633,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Plans a chart of a table on the dashboard, or of the StroomQL query, the user attached, checks the table's rows can make it, and offers it. With library echarts or d3 it offers a 'Create visualisation' button: the user names it and picks its folder (the dashboard's, by default) in Stroom's own dialog, and it is then added to the dashboard below the table (or to the query's show clause), unsaved, updating as the table does. With library content-pack it gives the change that wires the content pack's existing D3 Visualisation to the table, for you to propose. Call list_visualisations first to see which libraries are installed and each kind's inputs, and ask the user which library to use (ask_user) when more than one is. If the data can't make the chart, nothing is offered: tell the user why and suggest the fix the result gives. When the table already has a chart Stroom AI generated (e.g. the user asks for it as another kind of chart), ask the user (ask_user) whether to replace it or add a new one, unless they have said, and give replace or addNew. You never write the chart's code or settings JSON: Stroom builds them.
+Plans a chart of a table on the dashboard, or of the StroomQL query, the user attached, checks the table's rows can make it, and offers it. With library echarts or d3 it offers a 'Create visualisation' button: the user names it and picks its folder (the dashboard's, by default) in Stroom's own dialog, and it is then added to the dashboard below the table (or to the query's show clause), unsaved, updating as the table does. With library content-pack it gives the change that wires the content pack's existing D3 Visualisation to the table, for you to propose. Call list_visualisations first to see which libraries are installed and each kind's inputs, and ask the user which library to use (ask_user) when more than one is. If the data can't make the chart, nothing is offered: tell the user why and suggest the fix the result gives. When the table already has a chart Stroom AI generated (e.g. the user asks for it as another kind of chart), ask the user (ask_user) whether to replace it or add a new one, unless they have said, and give replace or addNew. Before proposing a chart on a dashboard, ask the user (ask_user) how its clicks should filter the dashboard (the whole dashboard, one table, or nothing), unless they have said, and give filter: it is added with the chart. When no table has the columns the chart needs, give newTable: the chart's button adds the table with it, so don't propose the table first. You never write the chart's code or settings JSON: Stroom builds them.
 
 ### Parameters
 
@@ -1749,6 +1749,44 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
       "description" : "Optional. The name of the chart's pane on the dashboard; the Visualisation's name by default.",
       "type" : "string"
     },
+    "filter" : {
+      "description" : "Optional, echarts or d3 on a dashboard. How a click on the new chart filters the dashboard (a selection filter on a query's search or a table's rows), added with the chart by its button. As propose_dashboard_change's add_selection_filter, without chart. Before proposing a chart that can filter, ask the user (ask_user) how its clicks should: the whole dashboard (the query), one table, or nothing; give it unless they choose nothing.",
+      "properties" : {
+        "match" : {
+          "description" : "All its terms must hold (the default), or any.",
+          "enum" : [ "all", "any" ],
+          "type" : "string"
+        },
+        "mode" : {
+          "description" : "query filters the target's search; table the target table's rows.",
+          "enum" : [ "query", "table" ],
+          "type" : "string"
+        },
+        "target" : {
+          "description" : "The query, embedded query or table to filter (or the new table).",
+          "type" : "string"
+        },
+        "terms" : {
+          "items" : {
+            "properties" : {
+              "field" : {
+                "description" : "A query field (mode query) or a column of the target table (mode table).",
+                "type" : "string"
+              },
+              "selection" : {
+                "description" : "What the chart selects to compare it with: an input (e.g. category, series, x) or its column's name.",
+                "type" : "string"
+              }
+            },
+            "required" : [ "field", "selection" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "mode", "target", "terms" ],
+      "type" : "object"
+    },
     "kind" : {
       "description" : "The chart kind: bar (one bar per category, grouped or stacked by series); line (one line per series over x; a time axis when x is a date); pie (slices of a whole; a doughnut as an option); scatter (points placed by two numbers or dates, optionally sized by a third); graph (a force-directed graph of links between things; each node is sized by its number of connections); heatmap (a grid with a cell for each x and y pair, coloured by its value); calendar (a calendar of days, each coloured by its value); histogram (how a number is spread: bars counting the rows in each range of it); sankey (flows from one thing to the next, each as wide as how much flows); chord (links between things round a circle, each as wide as its weight); gauge (a dial showing a value against its range; one per name, when a name column is mapped).",
       "enum" : [ "bar", "line", "pie", "scatter", "graph", "heatmap", "calendar", "histogram", "sankey", "chord", "gauge" ],
@@ -1767,6 +1805,16 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
     "name" : {
       "description" : "Echarts or d3. The name to suggest for the new Visualisation, saying what it shows, e.g. 'Chat user connections'. The user confirms or changes it.",
       "type" : "string"
+    },
+    "newTable" : {
+      "description" : "Optional, echarts or d3 on a dashboard. When no table has the columns the chart needs: a new table to chart, added beside table (fed by the same query): add_table (copy false) first, then its columns (add_column, group, sort, ... each with table set to its name). One button adds the table, the chart (and its filter) together, so don't propose the table first. Its rows aren't known until its query runs, so only its columns are checked. The changes are as propose_dashboard_change takes them.",
+      "items" : {
+        "description" : "A change to the dashboard. As propose_dashboard_change takes them.",
+        "properties" : { },
+        "required" : [ ],
+        "type" : "object"
+      },
+      "type" : "array"
     },
     "options" : {
       "description" : "Optional, echarts or d3. Option overrides as a JSON object, for what the style settings can't do, e.g. {\"color\": [\"#5470c6\", \"#91cc75\"]}: ECharts option keys, or for d3 only color. Only plain JSON: no functions, HTML or URLs.",

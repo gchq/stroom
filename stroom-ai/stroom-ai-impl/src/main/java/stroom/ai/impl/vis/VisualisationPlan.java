@@ -55,6 +55,10 @@ import java.util.Set;
 /// @param replace      For a chart replacing one Stroom AI generated earlier on the dashboard, which one; else null
 ///                     for a new chart. [#componentName()] is then the vis component's name once replaced.
 /// @param library      The id of the library it is drawn with (see [ChartLibrary]); null for ECharts.
+/// @param tableChanges For a chart of a table it adds, the dashboard changes that add the table (beside the one with
+///                     componentId), as the browser applies them; else null. [#table()] is the new table's name.
+/// @param filterChanges For a chart whose clicks filter the dashboard, its selection filter's change, as the browser
+///                     applies it, naming the chart by componentName; else null.
 @JsonInclude(Include.NON_NULL)
 public record VisualisationPlan(@JsonProperty("kind") String kind,
                                 @JsonProperty("mappings") Map<String, String> mappings,
@@ -68,7 +72,9 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                                 @JsonProperty("query") Boolean query,
                                 @JsonProperty("baseQuery") String baseQuery,
                                 @JsonProperty("replace") Replace replace,
-                                @JsonProperty("library") String library) {
+                                @JsonProperty("library") String library,
+                                @JsonProperty("tableChanges") List<Map<String, Object>> tableChanges,
+                                @JsonProperty("filterChanges") List<Map<String, Object>> filterChanges) {
 
     /// Places a new vis component in a new pane below its table.
     public static final String BELOW = "below";
@@ -83,6 +89,8 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     static final Set<String> PLACEMENTS = Set.of(BELOW, TAB, RIGHT, UNDER, WITH);
     static final int MAX_TEXT = 1_000;
     static final int MAX_OPTIONS = 20_000;
+    /// The most dashboard changes a plan may carry, to add its table or its filter.
+    static final int MAX_CHANGES = 100;
 
     /// The top-level ECharts option keys the adapter accepts as overrides (kept in step with
     /// `ALLOWED_TOP_LEVEL_KEYS` in `echarts-generic.js`).
@@ -95,6 +103,38 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     /// Reads a plan from JSON, by its components.
     @JsonCreator
     public VisualisationPlan {
+    }
+
+    /// A chart planned without a table or filter of its own (see the canonical constructor for each parameter).
+    ///
+    /// @param kind          The chart kind's id.
+    /// @param mappings      The column mapped to each role, by role id.
+    /// @param style         The style settings chosen, by setting id.
+    /// @param options       Option overrides as a JSON object, or null.
+    /// @param table         The name of the table it draws, or null for a StroomQL query.
+    /// @param componentId   The dashboard table's (or embedded query's) component id, or null for a StroomQL query.
+    /// @param componentName The name of the new vis component, or null for a StroomQL query.
+    /// @param placement     Where it goes on the dashboard.
+    /// @param snapshotHash  The hash of what it was planned against.
+    /// @param query         True if it is for a StroomQL query's `show` clause.
+    /// @param baseQuery     For a StroomQL query, its text when the chart was planned, else null.
+    /// @param replace       For a chart replacing another, which one; else null.
+    /// @param library       The id of the library it is drawn with.
+    public VisualisationPlan(final String kind,
+                             final Map<String, String> mappings,
+                             final Map<String, String> style,
+                             final String options,
+                             final String table,
+                             final String componentId,
+                             final String componentName,
+                             final String placement,
+                             final String snapshotHash,
+                             final Boolean query,
+                             final String baseQuery,
+                             final Replace replace,
+                             final String library) {
+        this(kind, mappings, style, options, table, componentId, componentName, placement, snapshotHash, query,
+                baseQuery, replace, library, null, null);
     }
 
     /// A plan for a chart drawn with ECharts.
@@ -224,6 +264,14 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
         if (!isQuery() && (NullSafe.isBlankString(componentId) || NullSafe.isBlankString(componentName))) {
             throw new IllegalArgumentException("A dashboard's visualisation needs its table and a component "
                                                + "name.");
+        }
+        if (NullSafe.list(tableChanges).size() > MAX_CHANGES || NullSafe.list(filterChanges).size() > MAX_CHANGES) {
+            throw new IllegalArgumentException("A chart's table or filter may take at most " + MAX_CHANGES
+                                               + " changes.");
+        }
+        if ((!NullSafe.isEmptyCollection(tableChanges) || !NullSafe.isEmptyCollection(filterChanges))
+            && (isQuery() || replace != null)) {
+            throw new IllegalArgumentException("Only a new chart on a dashboard comes with a table or a filter.");
         }
         if (replace != null) {
             if (isQuery()) {

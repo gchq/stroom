@@ -1467,9 +1467,20 @@ public class DashboardPresenter
                             : prefix + problem;
                 }
             } else if (TableChange.ADD_SELECTION_FILTER.equals(change.getOp())) {
-                final Component target = change.getTargetId() == null
+                // What it filters, and the chart whose clicks filter it, may be added by these changes (a chart and
+                // its table): found by name, the chart's own id put in its terms in place of the one planned.
+                final Component existing = change.getTargetId() == null
                         ? null
                         : components.get(change.getTargetId());
+                final Component target = existing != null || change.getTarget() == null
+                        ? existing
+                        : added.get(change.getTarget().toLowerCase());
+                final Component chart = change.getName() == null
+                        ? null
+                        : added.get(change.getName().toLowerCase());
+                final ExpressionOperator filter = chart != null && change.getRef() != null
+                        ? DashboardDescriptions.withChartId(change.getQuery(), change.getRef(), chart.getId())
+                        : change.getQuery();
                 if (target == null) {
                     failed = prefix + "there is no component '" + NullSafe.string(change.getTarget()) + "'.";
                 } else {
@@ -1477,7 +1488,7 @@ public class DashboardPresenter
                         configsBefore.put(target.getId(), ComponentSettingChanges.snapshot(target));
                     }
                     final String problem = ComponentSettingChanges.addSelectionFilter(target, change.getValue(),
-                            change.getQuery());
+                            filter);
                     failed = problem == null
                             ? null
                             : prefix + problem;

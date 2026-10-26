@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 
@@ -89,5 +90,28 @@ class TestDashboardDescriptions {
                 .build())).isFalse();
         assertThat(DashboardDescriptions.sameExpression(proposed, null)).isFalse();
         assertThat(DashboardDescriptions.sameExpression(AiTabSnapshotPart.hashLines("null"), null)).isTrue();
+    }
+
+    @Test
+    void aFilterAddedWithItsChartNamesTheChartByItsIdOnceAdded() {
+        final ExpressionOperator planned = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("Day").condition(Condition.GREATER_THAN_OR_EQUAL_TO)
+                        .value("${component.new-chart.selection.from}").build())
+                .addOperator(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field("User").condition(Condition.EQUALS)
+                                .value("${component.new-chart.selection.series}").build())
+                        .build())
+                .build();
+
+        final ExpressionOperator added = DashboardDescriptions.withChartId(planned, "new-chart", "vis-AB12C");
+
+        assertThat(added.toString())
+                .contains("${component.vis-AB12C.selection.from}")
+                .contains("${component.vis-AB12C.selection.series}")
+                .doesNotContain("new-chart");
+        assertThat(added.op()).isEqualTo(Op.OR);
+        assertThat(DashboardDescriptions.withChartId(planned, "vis-1", "vis-1")).isSameAs(planned);
+        assertThat(DashboardDescriptions.withChartId(null, "new-chart", "vis-1")).isNull();
     }
 }

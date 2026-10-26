@@ -64,8 +64,11 @@ alternative.
 
 Asked for a chart described in words, map the description to a kind and its settings, and say which variant you
 chose and which you didn't. For example, "a calendar-like heatmap of user activity" is either a calendar of counts
-by day, or a heatmap of weekday by hour of day. If the table lacks the columns the kind needs, propose that change
-to the table first, then the chart:
+by day, or a heatmap of weekday by hour of day. If no table has the columns the kind needs, give
+`propose_visualisation` a `newTable`: the changes that add one (as `propose_dashboard_change` takes them:
+`add_table`, then its columns, each with `table` set to its name). The chart's button adds the table, the chart
+and its filter together, so don't propose the table first. Its rows aren't known until its query runs, so only its
+columns are checked. Columns for the common kinds:
 
 - A day for a calendar or line: `floorDay(${EventTime})` formatted as Date Time. Text from `formatDate()` isn't
   read as a date.
@@ -83,9 +86,9 @@ Keep it short, and offer the likeliest.
 
 A chart over time should have a row per interval, not per event. The chart is sent at most its Max Rows rows; the
 rest are left out, not summarised, and the chart says "First N rows". When `propose_visualisation` warns that a
-time column is raw, offer to aggregate the table first: group it by a rounded time (`floorMonth()`,
-`floorWeek()`, `floorDay()`, `floorHour()` or `floorMinute()`, as the warning suggests, formatted as Date Time)
-with a `count()`, or the measure summed or averaged, then chart that column.
+time column is raw, offer a chart of a new table that aggregates it (`newTable`): grouped by a rounded time
+(`floorMonth()`, `floorWeek()`, `floorDay()`, `floorHour()` or `floorMinute()`, as the warning suggests, formatted
+as Date Time) with a `count()`, or the measure summed or averaged.
 
 ## Several charts at once
 
@@ -116,8 +119,10 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
 - `mode` table filters one table's rows (or an Embedded Query's results) and the chart stays whole, e.g. clicking
   a slice to list its events in a detail table. Its fields are the table's columns.
 - Unless the user has said which, ask them (`ask_user`), saying what each does.
-- A new chart isn't given a filter. When `propose_visualisation` says its clicks could filter the dashboard (and
-  by which fields or columns), offer it in one line, and propose it once the user has created the chart.
+- Before proposing a chart on a dashboard, ask the user (`ask_user`, not a question in your answer) how its
+  clicks should filter it: the whole dashboard (the query), one table, or nothing. Give their choice as
+  `propose_visualisation`'s `filter` (as `add_selection_filter` takes it, without `chart`): the chart's button
+  adds the filter with the chart. For a chart already on the dashboard, propose `add_selection_filter`.
 - A network graph's node selects `node`: to filter by it at either end of a link, give a term for each end with
   `match` any. A link selects its `source` and `target`: add a term for each (the source's field with `source`,
   the target's with `target`), which are kept together, so a link filters by both its ends. An undirected graph
