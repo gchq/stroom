@@ -17,12 +17,14 @@
 package stroom.sqlstore.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -44,12 +46,13 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<SqlTemporalStoreDataPresenter> sqlTemporalStoreDataPresenterProvider,
-            final Provider<SqlTemporalStoreSettingsPresenter> sqlStoreSettingsPresenterProvider,
+            final Provider<SqlTemporalStoreSettingsController> sqlStoreSettingsProvider,
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<SqlTemporalStoreDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(sqlStoreSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, sqlStoreSettingsProvider::get,
+                SqlTemporalStoreSettingsController::read));
         addTab(DATA, new DocTabProvider<>(sqlTemporalStoreDataPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override

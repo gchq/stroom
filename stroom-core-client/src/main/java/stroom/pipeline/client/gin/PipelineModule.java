@@ -24,11 +24,8 @@ import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.DocRefSelectionViewImpl;
-import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -89,8 +86,6 @@ public class PipelineModule extends PluginModule {
     protected void configure() {
         bindPlugin(TextConverterPlugin.class);
         bind(TextConverterPresenter.class);
-        bindPresenterWidget(TextConverterSettingsPresenter.class, TextConverterSettingsView.class,
-                TextConverterSettingsViewImpl.class);
 
         bindPlugin(XsltPlugin.class);
         bind(XsltPresenter.class);

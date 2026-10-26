@@ -22,9 +22,6 @@ import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserV
 import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
 import stroom.xmlschema.client.XMLSchemaPlugin;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
-import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter;
-import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
-import stroom.xmlschema.client.view.XMLSchemaSettingsViewImpl;
 
 public class XMLSchemaModule extends PluginModule {
 
@@ -33,8 +30,6 @@ public class XMLSchemaModule extends PluginModule {
         bindPlugin(XMLSchemaPlugin.class);
 
         bind(XMLSchemaPresenter.class);
-        bindPresenterWidget(XMLSchemaSettingsPresenter.class, XMLSchemaSettingsView.class,
-                XMLSchemaSettingsViewImpl.class);
         bindPresenterWidget(XSDBrowserPresenter.class, XSDBrowserView.class, XSDBrowserViewImpl.class);
     }
 }

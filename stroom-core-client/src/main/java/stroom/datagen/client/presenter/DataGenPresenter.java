@@ -16,8 +16,10 @@
 
 package stroom.datagen.client.presenter;
 
+import stroom.datagen.client.component.DataGenSettingsController;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -46,7 +48,7 @@ public class DataGenPresenter
     @Inject
     public DataGenPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final Provider<DataGenSettingsPresenter> dataGenSettingsPresenterProvider,
+                            final Provider<DataGenSettingsController> dataGenSettingsProvider,
                             final Provider<DataGenProcessingPresenter> dataGenProcessingPresenterProvider,
                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                             final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
@@ -55,7 +57,9 @@ public class DataGenPresenter
         final DataGenProcessingPresenter dataGenProcessingPresenter = make(dataGenProcessingPresenterProvider);
         dataGenProcessingPresenter.setDocumentEditPresenter(this);
 
-        addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, dataGenSettingsProvider::get,
+                DataGenSettingsController::read,
+                DataGenSettingsController::write));
         addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override

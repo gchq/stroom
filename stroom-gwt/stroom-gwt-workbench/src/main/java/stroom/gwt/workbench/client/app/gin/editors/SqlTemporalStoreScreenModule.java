@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter;
-import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter.SqlTemporalStoreSettingsView;
-import stroom.sqlstore.client.view.SqlTemporalStoreSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The settings tab's binding from Stroom's `SqlTemporalStoreModule`
@@ -28,8 +25,5 @@ public class SqlTemporalStoreScreenModule extends AbstractPresenterModule {
     /// Binds the presenter and view.
     @Override
     protected void configure() {
-        bindPresenterWidget(SqlTemporalStoreSettingsPresenter.class,
-                SqlTemporalStoreSettingsView.class,
-                SqlTemporalStoreSettingsViewImpl.class);
     }
 }

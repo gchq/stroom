@@ -104,6 +104,16 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
     width: 100%;
 }
 
+/* A narrow field, e.g. for a short number */
+.text-field.text-field--narrow {
+    width: 80px;
+}
+
+/* A wide field, e.g. for a name, path or URI */
+.text-field.text-field--wide {
+    width: 400px;
+}
+
 /* A text area: several lines, scrolling when there are more, at a fixed height a screen can change */
 .text-field--multiline {
     display: block;

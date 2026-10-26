@@ -60,7 +60,7 @@ public final class CodeDocumentEditorStories {
     private static final String ACE_INPUT = ".ace_text-input";
 
     // A FormGroup gives its control the group's identity as its id
-    // (XMLSchemaSettingsViewImpl.ui.xml)
+    // (XMLSchemaSettings.ui.xml)
     private static final String NAMESPACE_URI = "#xmlSchemaSettingsNamespaceURI";
 
     private static final String DOWNLOAD_REPLY = """

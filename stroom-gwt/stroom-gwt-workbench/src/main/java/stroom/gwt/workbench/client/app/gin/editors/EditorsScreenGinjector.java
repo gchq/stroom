@@ -47,7 +47,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
-import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter;
+import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
@@ -145,7 +145,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     DocumentAssetSelectionController getDocumentAssetSelectionController();
 
     /// @return A SQL temporal store's 'Settings' tab (its entry count and Reset Store).
-    SqlTemporalStoreSettingsPresenter getSqlTemporalStoreSettingsPresenter();
+    SqlTemporalStoreSettingsController getSqlTemporalStoreSettingsController();
 
     // Code documents
 

@@ -29,9 +29,6 @@ import stroom.document.asset.client.view.DocumentAssetEditAssetDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
 import stroom.document.asset.client.view.DocumentAssetViewImpl;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
-import stroom.visualisation.client.presenter.VisualisationSettingsPresenter;
-import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.visualisation.client.view.VisualisationSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `VisualisationModule`
@@ -46,9 +43,6 @@ public class VisualisationScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(VisualisationPresenter.class);
-        bindPresenterWidget(VisualisationSettingsPresenter.class,
-                VisualisationSettingsView.class,
-                VisualisationSettingsViewImpl.class);
         bindPresenterWidget(DocumentAssetPresenter.class,
                 DocumentAssetView.class,
                 DocumentAssetViewImpl.class);

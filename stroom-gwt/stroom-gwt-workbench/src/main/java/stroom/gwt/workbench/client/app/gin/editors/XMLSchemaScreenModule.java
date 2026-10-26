@@ -21,9 +21,6 @@ import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
-import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter;
-import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
-import stroom.xmlschema.client.view.XMLSchemaSettingsViewImpl;
 
 /// The presenter and view bindings of Stroom's `XMLSchemaModule`
 /// (`stroom/xmlschema/client/gin/XMLSchemaModule.java`),
@@ -36,9 +33,6 @@ public class XMLSchemaScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(XMLSchemaPresenter.class);
-        bindPresenterWidget(XMLSchemaSettingsPresenter.class,
-                XMLSchemaSettingsView.class,
-                XMLSchemaSettingsViewImpl.class);
         bindPresenterWidget(XSDBrowserPresenter.class,
                 XSDBrowserView.class,
                 XSDBrowserViewImpl.class);

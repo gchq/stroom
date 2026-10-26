@@ -17,10 +17,7 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
-import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.client.presenter.EditFeedDependencyPresenter;
@@ -55,9 +52,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(TextConverterPresenter.class);
-        bindPresenterWidget(TextConverterSettingsPresenter.class,
-                TextConverterSettingsView.class,
-                TextConverterSettingsViewImpl.class);
         bind(XsltPresenter.class);
         bindPresenterWidget(ProcessorPresenter.class,
                 ProcessorView.class,

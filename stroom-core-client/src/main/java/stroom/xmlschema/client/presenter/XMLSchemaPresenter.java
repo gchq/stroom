@@ -22,8 +22,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -35,6 +35,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
+import stroom.xmlschema.client.component.XMLSchemaSettingsController;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 import stroom.xmlschema.shared.XmlSchemaValidationResponse;
@@ -76,7 +77,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     @Inject
     public XMLSchemaPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final Provider<XMLSchemaSettingsPresenter> settingsPresenterProvider,
+                              final Provider<XMLSchemaSettingsController> settingsProvider,
                               final Provider<XSDBrowserPresenter> xsdBrowserPresenterProvider,
                               final Provider<EditorPresenter> codePresenterProvider,
                               final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
@@ -148,7 +149,9 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                 return document.copy().data(presenter.getText().trim()).build();
             }
         });
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                XMLSchemaSettingsController::read,
+                XMLSchemaSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

@@ -20,11 +20,8 @@ import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
-import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.DocRefSelectionViewImpl;
-import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -88,9 +85,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(TextConverterPresenter.class);
-        bindPresenterWidget(TextConverterSettingsPresenter.class,
-                TextConverterSettingsView.class,
-                TextConverterSettingsViewImpl.class);
         bind(XsltPresenter.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(StepControlPresenter.class,

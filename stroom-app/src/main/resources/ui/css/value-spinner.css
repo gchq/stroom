@@ -36,6 +36,15 @@
     width: 104px;
 }
 
+/* A narrow spinner, and a wide one, e.g. for a large number; at any text size */
+.value-spinner.value-spinner--narrow {
+    width: 80px;
+}
+
+.value-spinner.value-spinner--wide {
+    width: 200px;
+}
+
 /* The field and the arrows over its end */
 .value-spinner__field {
     position: relative;

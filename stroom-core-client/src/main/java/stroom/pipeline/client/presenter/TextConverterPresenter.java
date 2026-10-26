@@ -19,11 +19,12 @@ package stroom.pipeline.client.presenter;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.pipeline.client.component.TextConverterSettingsController;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -48,7 +49,7 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
     @Inject
     public TextConverterPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final Provider<TextConverterSettingsPresenter> settingsPresenterProvider,
+                                  final Provider<TextConverterSettingsController> settingsProvider,
                                   final Provider<EditorPresenter> editorPresenterProvider,
                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                   final DocumentUserPermissionsTabProvider<TextConverterDoc>
@@ -91,7 +92,9 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
             }
         });
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                TextConverterSettingsController::read,
+                TextConverterSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

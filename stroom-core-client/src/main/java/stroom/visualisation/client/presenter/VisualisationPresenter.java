@@ -18,12 +18,14 @@ package stroom.visualisation.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.visualisation.client.component.VisualisationSettingsController;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
@@ -48,7 +50,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final Provider<VisualisationSettingsPresenter> settingsPresenterProvider,
+                                  final Provider<VisualisationSettingsController> settingsProvider,
                                   final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter,
                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
@@ -57,7 +59,9 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
         own(documentAssetPresenter);
         this.documentAssetPresenter = documentAssetPresenter;
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                VisualisationSettingsController::read,
+                VisualisationSettingsController::write));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override

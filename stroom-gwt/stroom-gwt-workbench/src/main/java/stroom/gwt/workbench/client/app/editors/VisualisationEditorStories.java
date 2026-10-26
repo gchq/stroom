@@ -70,7 +70,7 @@ public final class VisualisationEditorStories {
     private static final String SAVE_TO_LIVE = "/visualisationAssets/saveDraftToLive/vis-1";
 
     // A FormGroup gives its control the group's identity as its id
-    // (VisualisationSettingsViewImpl.ui.xml)
+    // (VisualisationSettings.ui.xml)
     private static final String FUNCTION_NAME = "#visualisationSettingsFunctionName";
     private static final String ASSET_NAME = "#visualisationAssetsName";
 

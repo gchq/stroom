@@ -21,10 +21,7 @@ import stroom.datagen.client.DataGenPlugin;
 import stroom.datagen.client.presenter.DataGenPresenter;
 import stroom.datagen.client.presenter.DataGenProcessingPresenter;
 import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
-import stroom.datagen.client.presenter.DataGenSettingsPresenter;
-import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
 import stroom.datagen.client.view.DataGenProcessingViewImpl;
-import stroom.datagen.client.view.DataGenSettingsViewImpl;
 
 /**
  * GIN bindings for the data generator's client-side plugin, presenters and views.
@@ -37,9 +34,6 @@ public class DataGenModule extends PluginModule {
 
         bind(DataGenPresenter.class);
 
-        bindPresenterWidget(DataGenSettingsPresenter.class,
-                DataGenSettingsView.class,
-                DataGenSettingsViewImpl.class);
         bindPresenterWidget(DataGenProcessingPresenter.class,
                 DataGenProcessingView.class,
                 DataGenProcessingViewImpl.class);
