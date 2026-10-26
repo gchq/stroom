@@ -41,11 +41,9 @@ if (!window.visualisations) {
         "gauge", "sunburst"];
     // A gauge's bands: below the first band's start, then the first band, then above the second.
     var GAUGE_BAND_COLOURS = ["#3ba272", "#fac858", "#ee6666"];
-    // Stroom puts its own refresh button over the top-right corner of a dashboard's visualisation, so nothing
-    // that can be clicked or read is put within this many pixels of the right edge at the top.
-    var STROOM_BUTTON_SPACE = 36;
-    // The size of the reset zoom button.
-    var TOOLBOX_ITEM_SIZE = 14;
+    // The space kept clear at the chart's right edge. Stroom's refresh button and the chart's controls are in the
+    // toolbar under the chart, so this is only a margin.
+    var STROOM_BUTTON_SPACE = 16;
     // A scatter plot with more points than this is drawn in ECharts' large mode, a batch at a time.
     var LARGE_THRESHOLD = 2000;
     // A selected item's border, and the solid line drawn either side of a selected link (half as thick).
@@ -2514,8 +2512,8 @@ if (!window.visualisations) {
     // Builds the full ECharts option for the data and settings. Throws an Error a user can act on when the
     // data can't make the chart. Exposed for testing.
     // Zooming: the mouse wheel zooms and dragging pans a bar or line chart's category or x axis, both axes of a
-    // scatter plot, and a network graph (which roams). A reset zoom button at the top right of the chart's plot
-    // area puts it back. A pie chart doesn't zoom.
+    // scatter plot, and a network graph (which roams). The reset zoom button in Stroom's toolbar under the
+    // chart puts it back. A pie chart doesn't zoom.
     // ------------------------------------------------------------------------------------------
     // Value settings: units, log scale, threshold and average lines, outlier breaks
     // ------------------------------------------------------------------------------------------
@@ -2756,13 +2754,9 @@ if (!window.visualisations) {
         });
     }
 
+    // Zooming, put back with the toolbar under the chart: a network graph zooms and pans itself (roam).
     function addZoom(kind, option, style, settings, rangeAt) {
-        var top;
-        var right;
-        if (kind === "graph") {
-            top = 4;
-            right = STROOM_BUTTON_SPACE;
-        } else if (option.grid && option.xAxis && option.yAxis) {
+        if (kind !== "graph" && option.grid && option.xAxis && option.yAxis) {
             if (kind === "scatter") {
                 option.dataZoom = [
                     {type: "inside", xAxisIndex: 0, filterMode: "none"},
@@ -2803,31 +2797,15 @@ if (!window.visualisations) {
                 }
                 option.dataZoom.push(slider);
             }
-            // Just inside the plot area's top-right corner.
-            top = option.grid.top + 4;
-            right = option.grid.right + 4;
-        } else {
-            return;
+            addRangeSelect(kind, option, style, rangeAt);
         }
-        option.toolbox = {
-            show: true,
-            top: top,
-            right: right,
-            itemSize: TOOLBOX_ITEM_SIZE,
-            feature: {
-                restore: {title: "Reset zoom"}
-            },
-            iconStyle: {borderColor: style.subtleText},
-            emphasis: {iconStyle: {borderColor: style.text, textFill: style.text}}
-        };
-        addRangeSelect(kind, option, style, rangeAt);
     }
 
     // A tool to select a time range by dragging across the chart: along a time axis (a line chart's, or a scatter
     // plot's), or across bars of dates in time order (down them, for a horizontal bar chart). The range is the
     // chart's selection (from and to), for the dashboard's filters.
     function addRangeSelect(kind, option, style, rangeAt) {
-        if (!option.toolbox || !option.xAxis || !option.yAxis) {
+        if (!option.xAxis || !option.yAxis) {
             return;
         }
         var timeAxis = (kind === "line" || kind === "scatter") && option.xAxis.type === "time";
@@ -2849,10 +2827,7 @@ if (!window.visualisations) {
             outOfBrush: {colorAlpha: 0.35}
         };
         option.brush[down ? "yAxisIndex" : "xAxisIndex"] = 0;
-        var types = {};
-        types[brushType] = "Select a time range";
-        types.clear = "Clear the time range";
-        option.toolbox.feature.brush = {type: [brushType, "clear"], title: types};
+        // Turned on and off with the toolbar under the chart (see setRangeMode), not ECharts' toolbox in it.
     }
 
     // The range tool's area for a selected time range: along the time axis, or across the bars it covers (by
@@ -3007,50 +2982,6 @@ if (!window.visualisations) {
         messageElement.style.display = "none";
         element.appendChild(messageElement);
 
-        // Says the chart shows only the first rows, when Stroom sent as many as the row limit allows.
-        var truncationNote = window.document.createElement("div");
-        truncationNote.style.position = "absolute";
-        truncationNote.style.right = "8px";
-        truncationNote.style.bottom = "8px";
-        truncationNote.style.fontSize = "11px";
-        truncationNote.style.zIndex = "2";
-        truncationNote.style.display = "none";
-        element.appendChild(truncationNote);
-
-        // What is selected, with a button to clear it, shown whenever something is: a filter that uses the
-        // selection may leave the chart with nothing to click to clear it.
-        var selectionBar = window.document.createElement("div");
-        selectionBar.style.position = "absolute";
-        selectionBar.style.left = "8px";
-        selectionBar.style.bottom = "8px";
-        selectionBar.style.maxWidth = "calc(100% - 16px)";
-        selectionBar.style.boxSizing = "border-box";
-        selectionBar.style.padding = "2px 4px 2px 8px";
-        selectionBar.style.borderRadius = "4px";
-        selectionBar.style.fontSize = "12px";
-        selectionBar.style.alignItems = "center";
-        selectionBar.style.zIndex = "2";
-        selectionBar.style.display = "none";
-        var selectionText = window.document.createElement("span");
-        selectionText.style.overflow = "hidden";
-        selectionText.style.textOverflow = "ellipsis";
-        selectionText.style.whiteSpace = "nowrap";
-        selectionBar.appendChild(selectionText);
-        var clearButton = window.document.createElement("button");
-        clearButton.type = "button";
-        clearButton.textContent = "\u2715";
-        clearButton.title = "Clear the selection";
-        clearButton.setAttribute("aria-label", "Clear the selection");
-        clearButton.style.marginLeft = "6px";
-        clearButton.style.border = "none";
-        clearButton.style.background = "none";
-        clearButton.style.cursor = "pointer";
-        clearButton.style.font = "inherit";
-        clearButton.style.color = "inherit";
-        clearButton.style.padding = "0 4px";
-        selectionBar.appendChild(clearButton);
-        element.appendChild(selectionBar);
-
         var chart = null;
         var chartTheme = null;
         var lastArgs = null;
@@ -3098,10 +3029,6 @@ if (!window.visualisations) {
             }
         }
 
-        clearButton.addEventListener("click", function () {
-            clearSelection();
-        });
-
         function selectedLabel() {
             if (!selected) {
                 return "";
@@ -3115,27 +3042,56 @@ if (!window.visualisations) {
                 : items[0].label + " and " + (items.length - 1) + " more";
         }
 
-        // Shows what is selected, if anything, in the selection bar.
-        function showSelectionBar() {
-            if (!selected) {
-                selectionBar.style.display = "none";
-                selectionText.textContent = "";
+        // Whether the chart is zoomed in, and whether its range tool is on (dragging selects a time range).
+        var zoomed = false;
+        var rangeMode = false;
+
+        // Tells Stroom which of the chart's controls apply, for the toolbar it shows under the chart (reset zoom,
+        // select a time range, clear the selection), with what is selected and whether rows were left out.
+        function sendControls() {
+            if (!window.stroom || typeof window.stroom.controls !== "function") {
                 return;
             }
-            var label = selectedLabel();
-            selectionText.textContent = "Selected: " + label;
-            selectionBar.title = "Selected: " + (selected.items
-                ? selected.items.map(function (item) {
-                    return item.label;
-                }).join("; ")
-                : label);
-            if (lastStyle) {
-                selectionBar.style.color = lastStyle.text;
-                selectionBar.style.background = lastStyle.tooltipBackground;
-                selectionBar.style.border = "1px solid " + lastStyle.border;
-                selectionBar.style.fontFamily = lastStyle.fontFamily;
+            var option = built ? built.option : null;
+            var report = lastReport || {};
+            window.stroom.controls({
+                zoom: !!(option && (option.dataZoom || (option.series || []).some(function (series) {
+                    return series.roam;
+                }))),
+                zoomed: zoomed,
+                range: !!(option && option.brush),
+                rangeMode: rangeMode && !!(option && option.brush),
+                selectable: !!option,
+                selected: selected ? selectedLabel() : null,
+                note: report.truncated ? "First " + report.rows + " rows (the table has more than Max Rows)" : null
+            });
+        }
+
+        // Turns the range tool on or off: while on, dragging across the chart selects a time range.
+        function setRangeMode(on) {
+            rangeMode = on;
+            if (chart && built && built.option.brush) {
+                chart.dispatchAction({type: "takeGlobalCursor", key: "brush", brushOption: {
+                    brushType: on ? built.option.brush.brushType : false,
+                    brushMode: "single"
+                }});
             }
-            selectionBar.style.display = "flex";
+            sendControls();
+        }
+
+        // Puts the chart's zoom back: its axes' zoom, or a network graph's zoom and pan.
+        function resetZoom() {
+            if (!chart || !built) {
+                return;
+            }
+            if (built.option.dataZoom) {
+                chart.dispatchAction({type: "dataZoom", start: 0, end: 100});
+            } else {
+                chart.dispatchAction({type: "restore"});
+                reselect();
+            }
+            zoomed = false;
+            sendControls();
         }
 
         // Tells Stroom what is selected, for the dashboard's filters that use this chart's selection: a list of
@@ -3183,7 +3139,7 @@ if (!window.visualisations) {
 
         function send() {
             sendSelection(selections());
-            showSelectionBar();
+            sendControls();
             reportSelection();
         }
 
@@ -3437,11 +3393,19 @@ if (!window.visualisations) {
             chart.on("click", onItemClick);
             chart.on("brushEnd", onBrushEnd);
             chart.on("brush", onBrush);
+            chart.on("datazoom", function () {
+                zoomed = true;
+                sendControls();
+            });
+            chart.on("graphroam", function () {
+                zoomed = true;
+                sendControls();
+            });
             linkOutlines = {};
             chart.on("rendered", syncLinkOutlines);
             chart.getZr().on("click", function (event) {
-                // A click on no item clears the selection; a time range is cleared with the range tool or the
-                // selection bar, as dragging one ends with a click.
+                // A click on no item clears the selection; a time range is cleared with the toolbar's button, as
+                // dragging one ends with a click.
                 if (!event.target && selected && !selected.range) {
                     clearSelection();
                 }
@@ -3470,6 +3434,11 @@ if (!window.visualisations) {
                 report = built.report;
                 var instance = ensureChart(prefs.theme);
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
+                // Drawn afresh: not zoomed, and the range tool on again if it was.
+                zoomed = false;
+                if (rangeMode) {
+                    setRangeMode(true);
+                }
                 reselect();
                 report.width = instance.getWidth();
                 report.height = instance.getHeight();
@@ -3481,17 +3450,6 @@ if (!window.visualisations) {
                         Object.keys(report.droppedRows).join(", "), style);
                 } else {
                     hideMessage();
-                }
-                // Kept while what was selected isn't drawn (e.g. filtered out), so it can still be cleared.
-                showSelectionBar();
-                if (report.truncated) {
-                    truncationNote.textContent = "First " + report.rows + " rows";
-                    truncationNote.title = "The table has more rows than this chart's Max Rows, which were left "
-                        + "out. Group the table (e.g. by a rounded time) or raise Max Rows.";
-                    truncationNote.style.color = style.subtleText;
-                    truncationNote.style.display = "block";
-                } else {
-                    truncationNote.style.display = "none";
                 }
             } catch (e) {
                 built = null;
@@ -3506,6 +3464,8 @@ if (!window.visualisations) {
             report.selected = !!selected;
             lastReport = report;
             sendReport(report);
+            // What is selected is kept while it isn't drawn (e.g. filtered out), so it can still be cleared.
+            sendControls();
         }
 
         this.setData = function (context, settings, data) {
@@ -3520,6 +3480,20 @@ if (!window.visualisations) {
                 var prefs = readPreferences(lastArgs ? lastArgs.context : null, element);
                 if (prefs.theme !== chartTheme) {
                     render();
+                }
+            }
+        };
+
+        // A control in Stroom's toolbar under the chart was used: resetZoom, rangeMode (turns the range tool on
+        // or off) or clearSelection.
+        this.command = function (name) {
+            if (name === "resetZoom") {
+                resetZoom();
+            } else if (name === "rangeMode") {
+                setRangeMode(!rangeMode);
+            } else if (name === "clearSelection") {
+                if (selected) {
+                    clearSelection();
                 }
             }
         };

@@ -123,6 +123,28 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
         messageSupport.setReportHandler(reportHandler);
     }
 
+    /// Sets what receives the controls the visualisation sends with `stroom.controls`, for its toolbar.
+    ///
+    /// @param controlsHandler Receives each set of controls ([VisControls#NONE] for none).
+    public void setControlsHandler(final Consumer<VisControls> controlsHandler) {
+        messageSupport.setControlsHandler(controlsHandler);
+    }
+
+    /// Sends the visualisation a command from its toolbar, e.g. [VisControls#RESET_ZOOM]. A visualisation without
+    /// a `command` function ignores it.
+    ///
+    /// @param name The command.
+    public void command(final String name) {
+        final JSONArray params = new JSONArray();
+        params.set(0, new JSONString(name));
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.command"));
+        message.put("params", params);
+
+        messageSupport.postMessage(message);
+    }
+
     @Override
     public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
