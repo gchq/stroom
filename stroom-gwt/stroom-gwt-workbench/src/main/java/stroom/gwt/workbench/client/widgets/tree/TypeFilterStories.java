@@ -102,7 +102,8 @@ public final class TypeFilterStories {
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.builder().build())
                 .withoutStartupFixtures()
                 .build();
-        final TypeFilterController presenter = harness.own(new TypeFilterController(harness.getEventBus(), new TypeFilter()));
+        final TypeFilterController presenter = harness.own(
+                new TypeFilterController(harness.getEventBus(), new TypeFilter()));
         final List<DocumentType> types = new ArrayList<>();
         for (final String type : FIXTURE_DOC_TYPES) {
             types.add(DocumentTypeRegistry.get(type));

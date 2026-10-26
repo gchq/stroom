@@ -22,6 +22,7 @@ import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -45,7 +46,7 @@ public class CacheViewImpl extends ViewImpl implements CacheView {
     }
 
     @Override
-    public void setCacheListView(final View view) {
+    public void setCacheListView(final IsWidget view) {
         cacheList.setWidget(view.asWidget());
     }
 

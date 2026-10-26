@@ -16,11 +16,13 @@
 
 package stroom.cache.client.presenter;
 
+import stroom.cache.client.component.CacheListController;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -28,32 +30,32 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
     public static final String TAB_TYPE = "Caches";
 
-    private final CacheListPresenter cacheListPresenter;
+    private final CacheListController cacheList;
     private final CacheNodeListPresenter cacheNodeListPresenter;
 
     @Inject
     public CachePresenter(final EventBus eventBus,
                           final CacheView view,
-                          final CacheListPresenter cacheListPresenter,
+                          final CacheListController cacheList,
                           final CacheNodeListPresenter cacheNodeListPresenter) {
         super(eventBus, view);
-        own(cacheListPresenter);
+        own(cacheList);
         own(cacheNodeListPresenter);
-        this.cacheListPresenter = cacheListPresenter;
+        this.cacheList = cacheList;
         this.cacheNodeListPresenter = cacheNodeListPresenter;
 
-        getView().setCacheListView(cacheListPresenter.getView());
+        getView().setCacheListView(cacheList);
         getView().setCacheNodeListView(cacheNodeListPresenter.getView());
 
         own(
-                cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
-                    final String cacheName = cacheListPresenter.getSelectionModel()
+                cacheList.getSelectionModel().addSelectionHandler(event -> {
+                    final String cacheName = cacheList.getSelectionModel()
                             .getSelected()
                             .getCacheName();
                     cacheNodeListPresenter.read(cacheName);
                 }));
         // When a cache is cleared/evicted refresh the node list presenter
-        cacheListPresenter.setCacheUpdateHandler(cacheNodeListPresenter::read);
+        cacheList.setOnCacheCleared(cacheNodeListPresenter::read);
     }
 
     @Override
@@ -84,7 +86,7 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
         /// Shows the list of caches.
         ///
         /// @param view Its view.
-        void setCacheListView(View view);
+        void setCacheListView(IsWidget view);
 
         /// Shows the selected cache on each node.
         ///
