@@ -22,6 +22,7 @@ import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.SpecialColumns;
+import stroom.query.client.component.QueryTextPaneController;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.widget.layout.client.SplitPane;
@@ -32,7 +33,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -42,7 +42,7 @@ public class QueryResultTableSplitPresenter
         implements ResultComponent {
 
     private final QueryResultTablePresenter tablePresenter;
-    private final TextPresenter textPresenter;
+    private final QueryTextPaneController textPane;
     private SimplePanel tableContainer;
     private SplitPane splitLayoutPanel;
     private boolean showingSplit = true;
@@ -52,12 +52,12 @@ public class QueryResultTableSplitPresenter
     public QueryResultTableSplitPresenter(final EventBus eventBus,
                                           final QueryResultTableSplitView view,
                                           final QueryResultTablePresenter tablePresenter,
-                                          final TextPresenter textPresenter) {
+                                          final QueryTextPaneController textPane) {
         super(eventBus, view);
         own(tablePresenter);
-        own(textPresenter);
+        own(textPane);
         this.tablePresenter = tablePresenter;
-        this.textPresenter = textPresenter;
+        this.textPane = textPane;
 
         view.setWidget(tablePresenter.getWidget());
         showSplit(false);
@@ -94,7 +94,7 @@ public class QueryResultTableSplitPresenter
                             .withPartIndex(0L)
                             .withRecordIndex(evtId - 1)
                             .build();
-                    textPresenter.show(
+                    textPane.show(
                             sourceLocation,
                             () -> showSplit(true),
                             () -> showSplit(false));
@@ -125,7 +125,7 @@ public class QueryResultTableSplitPresenter
                     splitLayoutPanel.setNames("Table, Source");
                     splitLayoutPanel.addStyleName("max");
                     splitLayoutPanel.add(tableContainer);
-                    splitLayoutPanel.add(textPresenter.getWidget());
+                    splitLayoutPanel.add(textPane);
                 }
 
                 tableContainer.setWidget(tablePresenter.getWidget());

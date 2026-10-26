@@ -117,7 +117,7 @@ public final class QueryEditorStories {
 
     // The FetchDataResult of a row's source
     private static final String SOURCE_RESULT = """
-            {"type": "FetchDataResult", "feedName": "TEST_FEED", "streamTypeName": "Events",
+            {"type": "data", "feedName": "TEST_FEED", "streamTypeName": "Events",
               "sourceLocation": {"metaId": 1001, "partIndex": 0, "recordIndex": 4},
               "itemRange": {"offset": 0, "length": 1}, "totalItemCount": {"count": 1, "exact": true},
               "totalCharacterCount": {"count": 18, "exact": true}, "data": "sample source data",
@@ -481,6 +481,16 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/data/v1/fetch").withJsonBodyContaining(
                                     "{\"sourceLocation\": {\"metaId\": 1001, \"recordIndex\": 4}}").toSpyMatcher()));
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The source pane opens beside the results for the selected row; Close closes it
+                .story("SourcePreviewCloses", context -> render(context, SOURCE_FIXTURES))
+                .withPlay(play -> {
+                    execute(play);
+                    play.click(play.findByText("alpha"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Close Text Pane")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Close Text Pane"));
+                    play.waitFor(() -> play.expect(play.queryByRole("button", "Close Text Pane")).toBeNull());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // A null search reply ends the search without an error
