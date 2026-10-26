@@ -528,8 +528,14 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final Component replaced = NullSafe.isNonBlankString(replaceName) && !query && embedded == null
                 ? replacedChart(DashboardComponents.parse(part.text()), replaceName)
                 : null;
+        // A chart replaced keeps its style (e.g. its node colours), unless given another.
+        final Map<String, String> kept = replaced == null
+                ? Map.of()
+                : ChartConversions.styleKept(replaced, kind, style);
+        final Map<String, String> givenStyle = new LinkedHashMap<>(style);
+        givenStyle.putAll(kept);
         // Auto Interval combines an interval's values as its measure column does (e.g. a count's are summed).
-        final Map<String, String> chartStyle = ChartCheck.withIntervalCombine(kind, mappings, style, columns);
+        final Map<String, String> chartStyle = ChartCheck.withIntervalCombine(kind, mappings, givenStyle, columns);
         final ChartCheck.Result check = ChartCheck.check(kind, mappings, chartStyle, columns, sample.sample());
         if (!check.ok()) {
             return ToolResult.text("No chart was offered: the table '" + chartTable + "' can't make this "
@@ -583,6 +589,12 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         if (!check.warnings().isEmpty()) {
             notes.append("\nWarnings (tell the user the ones that matter):\n- ")
                     .append(String.join("\n- ", check.warnings()));
+        }
+        if (!kept.isEmpty()) {
+            notes.append("\nKept from the chart it replaces (give another value in style to change one): ")
+                    .append(kept.entrySet().stream()
+                            .map(entry -> entry.getKey() + " " + entry.getValue())
+                            .collect(Collectors.joining(", "))).append('.');
         }
         if (conversion != null) {
             conversion.notes().forEach(note -> notes.append('\n').append(note));
