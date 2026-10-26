@@ -239,6 +239,9 @@ Quote the figures the render report gives; never work them out from the picture.
     values vary too much to call it rising or falling, rather than claiming a trend.
 
   A moving average's entry is from the same straight-line fit; the line drawn follows the values more closely.
+  A trend is of the values as drawn. With Auto Interval on, they are per interval (e.g. an hour's or a day's
+  sum), so the slope changes with the interval the zoom chooses, and a part-filled first or last interval can
+  pull the line down: say which interval it was read at (the report's `interval`).
 - `clusters`:
   - `count`: how many clusters.
   - `modularity`: how clear-cut they are. Below about 0.3 they are weak; above about 0.5 they are clear.

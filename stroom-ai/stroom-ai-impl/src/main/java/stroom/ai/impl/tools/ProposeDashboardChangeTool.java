@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.EChartsTemplate;
+import stroom.ai.impl.vis.StyleSetting;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.TableExpression;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -65,6 +66,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -690,6 +692,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
 
     // A chart Stroom AI generated draws with the adapter it was generated with, which has only the choices its
     // settings offer: one added since (e.g. a nodeColours of cluster) would do nothing, so it is regenerated first.
+    // A value no version offers (e.g. a typo) is said to be one, as regenerating wouldn't help.
     static List<String> newChoiceProblems(final Map<String, String> settings,
                                           final VisualisationDoc visualisation) {
         if (ChartLibrary.forFunctionName(visualisation.getFunctionName()).isEmpty()) {
@@ -699,19 +702,40 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final List<String> problems = new ArrayList<>();
         NullSafe.map(settings).forEach((id, value) -> {
             final List<String> offered = choices.get(id);
-            if (offered != null && NullSafe.isNonBlankString(value)
-                && offered.stream().noneMatch(choice -> choice.equalsIgnoreCase(value.strip()))) {
-                problems.add("this chart's " + id + " offers " + String.join(", ", offered.stream()
-                        .map(choice -> choice.isEmpty()
-                                ? "'' (blank)"
-                                : choice)
-                        .toList()) + ", not '" + value.strip() + "': it was generated before that was added, "
-                             + "and draws with the version of Stroom's adapter it was made with. Regenerate it "
-                             + "first with propose_visualisation, replace (its pane's name), the same kind and "
-                             + "columns, which gives it every current setting; then set it.");
+            if (offered == null || NullSafe.isBlankString(value) || offersChoice(offered, value)) {
+                return;
+            }
+            final List<String> current = Arrays.stream(StyleSetting.values())
+                    .filter(setting -> setting.id().equals(id))
+                    .flatMap(setting -> setting.choices().stream())
+                    .distinct()
+                    .toList();
+            if (offersChoice(current, value)) {
+                problems.add("this chart's " + id + " offers " + choiceList(offered) + ", not '" + value.strip()
+                             + "': it was generated before that was added, and draws with the version of Stroom's "
+                             + "adapter it was made with. Regenerate it first with propose_visualisation, replace "
+                             + "(its pane's name), the same kind and columns, which gives it every current "
+                             + "setting; then set it.");
+            } else {
+                problems.add("'" + value.strip() + "' isn't a choice of " + id + ": "
+                             + choiceList(current.isEmpty()
+                        ? offered
+                        : current) + ".");
             }
         });
         return problems;
+    }
+
+    private static boolean offersChoice(final List<String> choices, final String value) {
+        return choices.stream().anyMatch(choice -> choice.equalsIgnoreCase(value.strip()));
+    }
+
+    private static String choiceList(final List<String> choices) {
+        return String.join(", ", choices.stream()
+                .map(choice -> choice.isEmpty()
+                        ? "'' (blank)"
+                        : choice)
+                .toList());
     }
 
     // A chart Stroom AI generated can't be made another kind by its pane's settings: its Visualisation's Data tab has
