@@ -251,7 +251,7 @@ public final class SourceViewerStories {
                 new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
                 new ClassificationWrapper(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
-                EditorWidgets.textPresenter(eventBus),
+                EditorWidgets.dataTextPane(eventBus),
                 new SourceProgressBar(),
                 new MarkerListPresenter(eventBus, new WrapperViewImpl()),
                 // Only used to open the source in a new tab, which the workbench doesn't have

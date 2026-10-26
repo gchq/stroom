@@ -39,8 +39,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
-import stroom.data.client.presenter.TextPresenter;
-import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.DataPreviewTabViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
@@ -49,7 +47,6 @@ import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
-import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 
 public class StreamStoreModule extends PluginModule {
@@ -75,10 +72,6 @@ public class StreamStoreModule extends PluginModule {
                 DataPresenter.class,
                 DataView.class,
                 DataViewImpl.class);
-        bindPresenterWidget(
-                TextPresenter.class,
-                TextView.class,
-                TextViewImpl.class);
         bindPresenterWidget(
                 ProcessorTaskPresenter.class,
                 StreamTaskView.class,

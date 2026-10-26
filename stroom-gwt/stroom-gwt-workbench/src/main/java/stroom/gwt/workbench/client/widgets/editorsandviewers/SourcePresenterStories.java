@@ -216,7 +216,7 @@ public final class SourcePresenterStories {
                 new ClassificationWrapper(),
                 new ClassificationLabelController(harness.getUiConfigCache()),
                 sourceProgressBar,
-                EditorWidgets.textPresenter(eventBus),
+                EditorWidgets.dataTextPane(eventBus),
                 characterNavigator,
                 harness.getUiConfigCache(),
                 harness.getRestFactory(),

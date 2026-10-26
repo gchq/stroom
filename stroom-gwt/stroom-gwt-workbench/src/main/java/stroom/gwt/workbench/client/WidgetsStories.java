@@ -63,11 +63,11 @@ import stroom.gwt.workbench.client.widgets.display.LogoStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorFeatureStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorThemeStories;
+import stroom.gwt.workbench.client.widgets.editorsandviewers.DataTextPaneStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.ItemNavigatorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.MarkdownEditorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourcePresenterStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories;
-import stroom.gwt.workbench.client.widgets.editorsandviewers.TextPresenterStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.XsdBrowserStories;
 import stroom.gwt.workbench.client.widgets.entitychecktree.EntityCheckTreeStories;
 import stroom.gwt.workbench.client.widgets.feedback.SourceProgressBarStories;
@@ -156,7 +156,7 @@ public final class WidgetsStories {
         // Widgets/Editors & Viewers/SourceViewer
         SourceViewerStories.addTo(registry);
         // Widgets/Editors & Viewers/TextPresenter
-        TextPresenterStories.addTo(registry);
+        DataTextPaneStories.addTo(registry);
         // Widgets/Editors & Viewers/XsdBrowser
         XsdBrowserStories.addTo(registry);
         // Widgets/AceEditor/format

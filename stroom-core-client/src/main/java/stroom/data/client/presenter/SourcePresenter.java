@@ -19,6 +19,7 @@ package stroom.data.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.component.CharacterNavigatorController;
 import stroom.data.client.component.ClassificationWrapper;
+import stroom.data.client.component.DataTextPaneController;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.view.ClassificationLabelController;
 import stroom.data.shared.DataResource;
@@ -68,7 +69,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> implements
-        TextUiHandlers,
         Focus {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -77,7 +77,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     private final ClassificationWrapper classificationWrapper;
     private final SourceProgressBar sourceProgressBar;
-    private final TextPresenter textPresenter;
+    private final DataTextPaneController textPane;
     private final CharacterNavigatorController characterNavigator;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
@@ -102,18 +102,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                            final ClassificationWrapper classificationWrapper,
                            final ClassificationLabelController classificationLabelController,
                            final SourceProgressBar sourceProgressBar,
-                           final TextPresenter textPresenter,
+                           final DataTextPaneController textPane,
                            final CharacterNavigatorController characterNavigator,
                            final UiConfigCache uiConfigCache,
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        own(textPresenter);
+        own(textPane);
         own(characterNavigator);
         own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
         this.classificationWrapper = classificationWrapper;
         this.sourceProgressBar = sourceProgressBar;
-        this.textPresenter = textPresenter;
+        this.textPane = textPane;
         this.characterNavigator = characterNavigator;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
@@ -121,17 +121,17 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         setEditorOptions();
 
-        classificationWrapper.setContent(textPresenter.getView());
+        classificationWrapper.setContent(textPane);
         view.setTextView(classificationWrapper);
         view.setNavigatorView(characterNavigator);
 
         setupProgressBar(view, sourceProgressBar);
 
-        textPresenter.setUiHandlers(this);
+        textPane.setOnBeginStepping(this::beginStepping);
 
-        setDataNavigator(textPresenter.getViewAsHexOption().isOnAndAvailable());
+        setDataNavigator(textPane.getOptions().getViewAsHexOption().isOnAndAvailable());
 
-        textPresenter.getViewAsHexOption().setChangeHandler(this::onHexModeChange);
+        textPane.getOptions().getViewAsHexOption().setChangeHandler(this::onHexModeChange);
     }
 
     private void onHexModeChange(final boolean isHexModeOn) {
@@ -170,7 +170,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     @Override
     public void focus() {
-        textPresenter.focus();
+        textPane.focus();
     }
 
     private void setupProgressBar(final SourceView view,
@@ -180,26 +180,26 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
     private void setEditorOptions() {
-        textPresenter.setReadOnly(true);
+        textPane.setReadOnly(true);
 
         // Default to wrapped lines
-        textPresenter.getLineWrapOption().setOn();
-        textPresenter.getLineNumbersOption().setOn();
-        textPresenter.getStylesOption().setOn();
+        textPane.getOptions().getLineWrapOption().setOn();
+        textPane.getOptions().getLineNumbersOption().setOn();
+        textPane.getOptions().getStylesOption().setOn();
 
-        textPresenter.getUseVimBindingsOption().setAvailable();
+        textPane.getOptions().getUseVimBindingsOption().setAvailable();
 
-        textPresenter.getBasicAutoCompletionOption().setUnavailable();
-        textPresenter.getFormatAction().setUnavailable();
+        textPane.getOptions().getBasicAutoCompletionOption().setUnavailable();
+        textPane.getFormatAction().setUnavailable();
         // Allowing hex view while stepping is fiddly so not doing it for now
-        textPresenter.getViewAsHexOption().setAvailable(!isSteppingSource);
+        textPane.getOptions().getViewAsHexOption().setAvailable(!isSteppingSource);
     }
 
     private void updateStepControlVisibility() {
         final boolean hasStepPermission = clientSecurityContext.hasAppPermission(
                 AppPermission.STEPPING_PERMISSION);
 
-        textPresenter.setControlsVisible(hasStepPermission && !isSteppingSource);
+        textPane.setControlsVisible(hasStepPermission && !isSteppingSource);
     }
 
     /**
@@ -261,7 +261,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 // that contains the highlight.
                 doWithConfig(sourceConfig -> {
                     final DataRange newDataRange;
-                    if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                    if (textPane.getOptions().getViewAsHexOption().isOnAndAvailable()) {
                         newDataRange = buildNewSourceLocationFromHighlightForHexDump(
                                 sourceLocation, highlight, sourceConfig);
                     } else {
@@ -379,9 +379,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         return lastResult != null
                 && (
                 (FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode())
-                        && !textPresenter.getViewAsHexOption().isOnAndAvailable()
+                        && !textPane.getOptions().getViewAsHexOption().isOnAndAvailable()
                 ) || (FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
-                        && textPresenter.getViewAsHexOption().isOnAndAvailable()));
+                        && textPane.getOptions().getViewAsHexOption().isOnAndAvailable()));
     }
 
     private boolean isCurrentSourceSuitable(final SourceLocation sourceLocation) {
@@ -421,7 +421,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         // Allowing hex view while stepping is fiddly so not doing it for now. The hex view has totally
         // different line/col for the same source byte, so position and highlights need to be translated
         // into hex dump terms.
-        textPresenter.getViewAsHexOption().setAvailable(!isSteppingSource);
+        textPane.getOptions().getViewAsHexOption().setAvailable(!isSteppingSource);
     }
 
     private void doWithConfig(final Consumer<SourceConfig> action) {
@@ -436,7 +436,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 
-        if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+        if (textPane.getOptions().getViewAsHexOption().isOnAndAvailable()) {
             request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
         } else {
             request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
@@ -474,7 +474,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 currentTextHighlight = null;
             }
 
-            if (!textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+            if (!textPane.getOptions().getViewAsHexOption().isOnAndAvailable()) {
                 recordDecoratedHighlight(receivedSourceLocation);
             }
 
@@ -584,13 +584,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         if (lastResult.hasErrors()) {
             showErrors(lastResult);
         } else {
-            textPresenter.setText(lastResult.getData());
+            textPane.setText(lastResult.getData());
             final int firstLineNo = receivedSourceLocation.getOptDataRange()
                     .flatMap(DataRange::getOptLocationFrom)
                     .map(Location::getLineNo)
                     .orElse(1);
 
-            textPresenter.setFirstLineNumber(firstLineNo);
+            textPane.setFirstLineNumber(firstLineNo);
             setEditorMode(lastResult);
             updateEditorHighlights(lastResult.getSourceLocation().getHighlights());
         }
@@ -606,7 +606,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 + childStreamText;
 
         final String errorText = String.join("\n", lastResult.getErrors());
-        textPresenter.setErrorText(title, errorText);
+        textPane.setErrorText(title, errorText);
     }
 
     private void updateEditorHighlights(final List<DataRange> highlights) {
@@ -642,9 +642,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 }
                 textRanges.add(editorHighlight);
             }
-            textPresenter.setHighlights(textRanges);
+            textPane.setHighlights(textRanges);
         } else {
-            textPresenter.setHighlights(null);
+            textPane.setHighlights(null);
         }
     }
 
@@ -681,7 +681,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         } else { // We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
             mode = AceEditorMode.XML;
         }
-        textPresenter.setMode(mode);
+        textPane.setMode(mode);
     }
 
     private boolean isCurrentDataSegmented() {
@@ -723,12 +723,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         this.onClassification = onClassification;
     }
 
-    @Override
+    /// Clears what is shown; nothing, as yet.
     public void clear() {
         // TODO @AT Not sure if I need to implement this
     }
 
-    @Override
+    /// Starts stepping through the stream shown.
     public void beginStepping() {
         BeginPipelineSteppingEvent.fire(
                 this,

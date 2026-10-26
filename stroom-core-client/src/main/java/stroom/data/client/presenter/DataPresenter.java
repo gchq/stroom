@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.component.ClassificationWrapper;
+import stroom.data.client.component.DataTextPaneController;
 import stroom.data.client.component.ItemNavigatorController;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.client.view.ClassificationLabelController;
@@ -88,7 +89,7 @@ import java.util.stream.Stream;
 
 public class DataPresenter
         extends MyPresenterWidget<ClassificationWrapper>
-        implements TextUiHandlers, Focus {
+        implements Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
     private static final MetaResource META_RESOURCE = com.google.gwt.core.shared.GWT.create(MetaResource.class);
@@ -116,7 +117,8 @@ public class DataPresenter
     private final HtmlPane htmlPane;
     // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
     private final ControllerLayer htmlLayer;
-    private final TextPresenter textPresenter;
+    private final DataTextPaneController textPane;
+    private final ControllerLayer textPaneLayer;
     private final ItemNavigatorController itemNavigator;
     private final SourceProgressBar sourceProgressBar;
     private final MarkerListPresenter markerListPresenter;
@@ -166,7 +168,7 @@ public class DataPresenter
                          final DataView dataView,
                          final ClassificationWrapper classificationWrapper,
                          final ClassificationLabelController classificationLabelController,
-                         final TextPresenter textPresenter,
+                         final DataTextPaneController textPane,
                          final SourceProgressBar sourceProgressBar,
                          final MarkerListPresenter markerListPresenter,
                          final SourceTabPlugin sourceTabPlugin,
@@ -175,7 +177,7 @@ public class DataPresenter
                          final RestFactory restFactory) {
         super(eventBus, classificationWrapper);
         own(itemNavigator);
-        own(textPresenter);
+        own(textPane);
         own(markerListPresenter);
         own(classificationLabelController).attach(classificationWrapper.getClassificationLabel());
         classificationWrapper.setContent(dataView);
@@ -184,7 +186,8 @@ public class DataPresenter
         this.htmlPane = htmlPane;
         this.htmlLayer = new ControllerLayer(htmlPane);
         this.itemNavigator = itemNavigator;
-        this.textPresenter = textPresenter;
+        this.textPane = textPane;
+        textPaneLayer = new ControllerLayer(textPane);
         this.sourceProgressBar = sourceProgressBar;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
@@ -194,9 +197,9 @@ public class DataPresenter
         markerListPresenter.getWidget().addStyleName("max");
         markerListPresenter.setDataPresenter(this);
 
-        textPresenter.setUiHandlers(this);
-        textPresenter.setWrapLines(true);
-        textPresenter.getViewAsHexOption().setChangeHandler((isOn) ->
+        textPane.setOnBeginStepping(this::beginStepping);
+        textPane.setWrapLines(true);
+        textPane.getOptions().getViewAsHexOption().setChangeHandler((isOn) ->
                 update(false));
 
         addTab(infoTab);
@@ -279,7 +282,7 @@ public class DataPresenter
         if (!steppingSource) {
             if (tab != null) {
                 // Clear the text presenter while we wait for the new data to come down
-                textPresenter.setText(null);
+                textPane.setText(null);
 
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {
                     setActiveTab(infoTab, null);
@@ -331,7 +334,7 @@ public class DataPresenter
         } else {
             editorMode = AceEditorMode.XML;
         }
-        textPresenter.setOptionsToDefaultAvailability();
+        textPane.setOptionsToDefaultAvailability();
 
         // Set up hex viewing availability and state
         // If the source location has a data range then it means we are viewing a preview of
@@ -340,10 +343,10 @@ public class DataPresenter
         if (INFO_TAB_NAME.equals(currentTabName)
             || ERROR_TAB_NAME.equals(currentTabName)
             || currentSourceLocation.getDataRange() != null) {
-            textPresenter.getViewAsHexOption().setOff();
-            textPresenter.getViewAsHexOption().setUnavailable();
+            textPane.getOptions().getViewAsHexOption().setOff();
+            textPane.getOptions().getViewAsHexOption().setUnavailable();
         } else {
-            textPresenter.getViewAsHexOption().setAvailable();
+            textPane.getOptions().getViewAsHexOption().setAvailable();
         }
 
         if (lastResult != null && lastResult.hasErrors()) {
@@ -353,13 +356,13 @@ public class DataPresenter
                                              && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
                                              && AceEditorMode.XML.equals(editorMode);
 
-            textPresenter.getViewAsHexOption()
+            textPane.getOptions().getViewAsHexOption()
                     .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult != null
                             ? lastResult.getDisplayMode()
                             : FetchDataRequest.DisplayMode.TEXT));
-            textPresenter.setMode(editorMode);
-            textPresenter.setText(data, shouldFormatData);
-            textPresenter.setControlsVisible(playButtonVisible);
+            textPane.setMode(editorMode);
+            textPane.setText(data, shouldFormatData);
+            textPane.setControlsVisible(playButtonVisible);
         }
     }
 
@@ -430,7 +433,7 @@ public class DataPresenter
         }
     }
 
-    @Override
+    /// Clears what is shown.
     public void clear() {
         clear(true);
     }
@@ -444,7 +447,7 @@ public class DataPresenter
         currentSourceLocation = null;
     }
 
-    @Override
+    /// Starts stepping through the stream shown, from the record shown.
     public void beginStepping() {
         if (beginSteppingHandler != null && getCurrentMetaId() != null) {
             final StepLocation stepLocation = new StepLocation(getCurrentMetaId(),
@@ -617,7 +620,7 @@ public class DataPresenter
         final Long currentMetaId = getCurrentMetaId();
         final long currentPartNo = getCurrentPartIndex() + 1;
         final long currentRecordNo = getCurrentRecordIndex() + 1;
-        textPresenter.setErrorText("Error: Invalid stream ID "
+        textPane.setErrorText("Error: Invalid stream ID "
                                    + (currentMetaId != null
                 ? currentMetaId
                 : "null")
@@ -706,7 +709,7 @@ public class DataPresenter
                 && isInErrorMarkerMode()) {
                 request.setDisplayMode(FetchDataRequest.DisplayMode.MARKER);
             } else {
-                if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                if (textPane.getOptions().getViewAsHexOption().isOnAndAvailable()) {
                     request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
                 } else {
                     request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
@@ -879,7 +882,7 @@ public class DataPresenter
                 curDataType = fetchDataResult.getDataType();
 
                 if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-                    textPresenter.setWrapLines(false);
+                    textPane.setWrapLines(false);
                 } else {
                     final int lineCount = result.getSourceLocation().getOptDataRange()
                             .flatMap(DataRange::getLineCount)
@@ -888,12 +891,12 @@ public class DataPresenter
                     // This may conflict with what the user has selected with the right click menu
                     if (lineCount == 1) {
                         // No line breaks so we need to wrap else the line could be massive
-                        textPresenter.setWrapLines(true);
+                        textPane.setWrapLines(true);
                     } else {
                         // probably one record per line so for csv type data easier to read non-wrapped
-                        textPresenter.setWrapLines(false);
+                        textPane.setWrapLines(false);
                     }
-                    textPresenter.setWrapLines(lineCount == 1);
+                    textPane.setWrapLines(lineCount == 1);
                 }
             }
 
@@ -989,7 +992,7 @@ public class DataPresenter
 
     private void showTextPresenter() {
         itemNavigator.setDisplay(navigatorData);
-        dataView.getLayerContainer().show(textPresenter);
+        dataView.getLayerContainer().show(textPaneLayer);
     }
 
     private void showMarkerPresenter() {
@@ -1042,38 +1045,38 @@ public class DataPresenter
                     : "text");
             final String errorText = String.join("\n", lastResult.getErrors());
             setErrorText(title, errorText);
-            textPresenter.setControlsVisible(playButtonVisible);
+            textPane.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
                                              && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
                                              && AceEditorMode.XML.equals(editorMode);
 
-            textPresenter.setMode(editorMode);
-            textPresenter.setText(data, shouldFormatData);
+            textPane.setMode(editorMode);
+            textPane.setText(data, shouldFormatData);
             // The data may be a range of the stream, so number its lines from the range's first
             // line, as SourcePresenter does (a highlight is placed by these numbers)
-            textPresenter.setFirstLineNumber(getFirstLineNo(lastResult));
-            textPresenter.setControlsVisible(playButtonVisible);
+            textPane.setFirstLineNumber(getFirstLineNo(lastResult));
+            textPane.setControlsVisible(playButtonVisible);
             // Resets the context menu states to default
-            textPresenter.setOptionsToDefaultAvailability();
+            textPane.setOptionsToDefaultAvailability();
         }
     }
 
     private void setErrorText(final String title, final String errorText) {
-        textPresenter.setErrorText(title, errorText);
+        textPane.setErrorText(title, errorText);
         // Hide a load of the editor options that make no sense for an error msg
-        textPresenter.setReadOnly(true);
-        textPresenter.getShowIndentGuides().setUnavailable();
-        textPresenter.getIndicatorsOption().setUnavailable();
-        textPresenter.getLineNumbersOption().setUnavailable();
-        textPresenter.getLineWrapOption().setUnavailable();
-        textPresenter.getShowActiveLineOption().setUnavailable();
-        textPresenter.getShowInvisiblesOption().setUnavailable();
-        textPresenter.getStylesOption().setUnavailable();
-        textPresenter.getUseVimBindingsOption().setUnavailable();
+        textPane.setReadOnly(true);
+        textPane.getOptions().getShowIndentGuides().setUnavailable();
+        textPane.getOptions().getIndicatorsOption().setUnavailable();
+        textPane.getOptions().getLineNumbersOption().setUnavailable();
+        textPane.getOptions().getLineWrapOption().setUnavailable();
+        textPane.getOptions().getHighlightActiveLineOption().setUnavailable();
+        textPane.getOptions().getShowInvisiblesOption().setUnavailable();
+        textPane.getOptions().getStylesOption().setUnavailable();
+        textPane.getOptions().getUseVimBindingsOption().setUnavailable();
 
         // Need to be able to view as hex to diagnose what the data is
-        textPresenter.getViewAsHexOption().setAvailable();
+        textPane.getOptions().getViewAsHexOption().setAvailable();
     }
 
     private void refreshMetaInfoPresenterContent(final Long metaId) {
@@ -1104,11 +1107,11 @@ public class DataPresenter
             && isSameChildType(result.getSourceLocation().getChildType(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
-            textPresenter.setHighlights(highlights);
+            textPane.setHighlights(highlights);
         } else {
             // Set the content to be displayed in the source view without a
             // highlight.
-            textPresenter.setHighlights(null);
+            textPane.setHighlights(null);
         }
     }
 
