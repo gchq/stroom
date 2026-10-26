@@ -28,7 +28,7 @@ public class TestClientDateUtil {
     @Test
     void testConvertJavaFormatToJs() {
 
-        // Formats copied from FormatViewImpl
+        // Formats copied from ColumnFormat
         doConversionTest("yyyy-MM-dd'T'HH:mm:ss.SSSXX", "YYYY-MM-DD'T'HH:mm:ss.SSSZZ");
         doConversionTest("yyyy-MM-dd'T'HH:mm:ss.SSS xx", "YYYY-MM-DD'T'HH:mm:ss.SSS ZZ");
         doConversionTest("yyyy-MM-dd'T'HH:mm:ss.SSS xxx", "YYYY-MM-DD'T'HH:mm:ss.SSS Z");

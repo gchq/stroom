@@ -38,6 +38,12 @@ public class QueryInfo {
     private final AppRoot appRoot;
     private String message;
 
+    /// Made by GIN, as one for the app.
+    ///
+    /// @param currentActivity         Says whether the current activity needs query info.
+    /// @param uiConfigCache           Says whether the site asks for query info, and how.
+    /// @param queryInfoDialogProvider Makes the dialog that asks for it.
+    /// @param appRoot                 Owns the dialog while it is shown.
     @Inject
     public QueryInfo(final CurrentActivity currentActivity,
                      final UiConfigCache uiConfigCache,

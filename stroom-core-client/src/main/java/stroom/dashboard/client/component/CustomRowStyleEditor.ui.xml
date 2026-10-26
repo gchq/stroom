@@ -15,7 +15,7 @@
                     Hexadecimal form (e.g. <code>#FF0000</code>).
                 </p>
             </form:HelpHTML>
-            <g:TextBox ui:field="lightBackgroundColour"/>
+            <form:TextInput ui:field="lightBackgroundColour"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
@@ -29,7 +29,7 @@
                     Hexadecimal form (e.g. <code>#FF0000</code>).
                 </p>
             </form:HelpHTML>
-            <g:TextBox ui:field="lightTextColour"/>
+            <form:TextInput ui:field="lightTextColour"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
@@ -53,7 +53,7 @@
                     Hexadecimal form (e.g. <code>#FF0000</code>).
                 </p>
             </form:HelpHTML>
-            <g:TextBox ui:field="darkBackgroundColour"/>
+            <form:TextInput ui:field="darkBackgroundColour"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
@@ -67,7 +67,7 @@
                     Hexadecimal form (e.g. <code>#FF0000</code>).
                 </p>
             </form:HelpHTML>
-            <g:TextBox ui:field="darkTextColour"/>
+            <form:TextInput ui:field="darkTextColour"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

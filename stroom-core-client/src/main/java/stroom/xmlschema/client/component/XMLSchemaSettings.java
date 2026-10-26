@@ -18,6 +18,7 @@ package stroom.xmlschema.client.component;
 
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -25,7 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An XML schema's Settings tab: its namespace, system id and group, and whether it is deprecated.
@@ -34,11 +34,11 @@ public class XMLSchemaSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox namespaceURI;
+    TextInput namespaceURI;
     @UiField
-    TextBox systemId;
+    TextInput systemId;
     @UiField
-    TextBox schemaGroup;
+    TextInput schemaGroup;
     @UiField
     TickBox deprecated;
 

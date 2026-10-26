@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -147,6 +148,32 @@ public final class ProcessorProfilesScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // A start time that isn't a time is refused, and the period dialog stays open;
+                // Cancel then adds no period
+                .story("PeriodInvalidTime", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Nightly"));
+                    final Play profile = screen.within(screen.findByText(
+                            TextMatch.containing("Edit Processor Profile")).closest(StroomDom.DIALOG));
+                    play.click(profile.getByTitle("New Profile Period"));
+                    final Play period = screen.within(screen.findByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query start = period.getByLabelText("Start Time");
+                    play.clear(start);
+                    play.type(start, "not a time");
+                    play.click(period.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("Invalid start time")));
+                    play.click(screen.within(screen.findByText("Invalid start time").closest(StroomDom.DIALOG))
+                            .getByRole("button", StroomDom.button("Close")));
+                    play.expect(screen.getByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(period.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(profile.queryByText("Mon-Mon")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // The Processing Schedule sub-grid opens a period on double click, not on Enter
                 .story("PeriodOpensOnDoubleClickOnly", ProcessorProfilesScreenStories::render)
                 .withPlay(play -> {
@@ -243,10 +270,18 @@ public final class ProcessorProfilesScreenStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, false);
+    }
+
+    // With real alerts, shown as Stroom shows them, for a story that closes one
+    private static Widget render(final StoryContext context, final boolean realAlerts) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
-                .injector(injector)
-                .build();
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, FIXTURES)
+                .injector(injector);
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         harness.afterStartUp(() -> {
             final ProcessorProfilePresenter presenter = injector.getProcessorProfilePresenter();
             harness.show(presenter);

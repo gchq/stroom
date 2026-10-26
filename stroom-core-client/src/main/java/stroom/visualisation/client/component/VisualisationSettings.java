@@ -20,12 +20,12 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.editor.client.component.CodeEditor;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A visualisation's Settings tab: its function's name, the script that defines it, and the JSON
@@ -36,7 +36,7 @@ public class VisualisationSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox functionName;
+    TextInput functionName;
     @UiField
     DropDownBox script;
     @UiField

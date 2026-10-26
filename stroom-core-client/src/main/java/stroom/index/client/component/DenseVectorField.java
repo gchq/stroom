@@ -22,12 +22,12 @@ import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A dense vector index field's options: the models that make and rerank its vectors, how its text
@@ -53,7 +53,7 @@ public class DenseVectorField extends Component {
     @UiField
     ValueSpinner rerankBatchSize;
     @UiField
-    TextBox rerankScoreMinimum;
+    TextInput rerankScoreMinimum;
 
     /// Makes empty options.
     public DenseVectorField() {

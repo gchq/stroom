@@ -44,8 +44,8 @@ public class LayoutConstraint extends Component {
     /// Makes the content with neither ticked.
     public LayoutConstraint() {
         initWidget(BINDER.createAndBindUi(this));
-        fitWidth.addValueChangeHandler(e -> onChange.accept(getConstraints()));
-        fitHeight.addValueChangeHandler(e -> onChange.accept(getConstraints()));
+        fitWidth.setOnChange(value -> onChange.accept(getConstraints()));
+        fitHeight.setOnChange(value -> onChange.accept(getConstraints()));
     }
 
     /// Puts the focus on Fit Width.

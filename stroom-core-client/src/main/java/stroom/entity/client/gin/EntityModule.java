@@ -43,6 +43,5 @@ public class EntityModule extends AbstractPresenterModule {
         bindPresenter(MoveDocumentPresenter.class,
                 MoveDocumentView.class,
                 MoveDocumentViewImpl.class);
-
     }
 }

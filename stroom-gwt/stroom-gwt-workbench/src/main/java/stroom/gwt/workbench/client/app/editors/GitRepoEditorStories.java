@@ -170,6 +170,26 @@ public final class GitRepoEditorStories {
                                     .toSpyMatcher());
                     DocEditors.expectNoUnhandledRequests(play);
                 })
+                // A commit message of only spaces is refused as none is (it was accepted); Cancel
+                // then pushes nothing
+                .story("PushBlankMessageAndCancel", context -> render(context, new Fixtures()
+                        .reply("/gitRepo/v1/pushToGit", "{\"ok\": true, \"message\": \"Pushed 5 files.\"}")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByRole("button", StroomDom.button("Push to Git")));
+                    screen.findByText("Git Push", StroomDom.DIALOG_TITLE);
+                    play.type(screen.querySelector(COMMIT_MESSAGE), "   ");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Please enter a commit message"))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Git Push", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/gitRepo/v1/pushToGit").toSpyMatcher());
+                    DocEditors.expectNoUnhandledRequests(play);
+                })
                 // Pull shows the result, and closing the alert refreshes the explorer tree
                 .story("PullSuccess", context -> render(context, new Fixtures()
                         .reply("/gitRepo/v1/pullFromGit", "{\"ok\": true, \"message\": \"Pulled 7 files.\"}")))

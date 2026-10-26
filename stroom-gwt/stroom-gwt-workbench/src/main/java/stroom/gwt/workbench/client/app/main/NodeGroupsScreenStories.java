@@ -133,8 +133,8 @@ public final class NodeGroupsScreenStories {
                     // The 'New Node Group' button is an icon button titled 'New Node Group'
                     play.click(play.getByTitle("New Node Group"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
-                    // The name field is Stroom's shared NameEntry ('nameDocumentName')
-                    play.type(screen.querySelector("#nameDocumentName"), "Reporting");
+                    // The name field is Stroom's shared NameEntry ('nameEntryName')
+                    play.type(screen.querySelector("#nameEntryName"), "Reporting");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/node/nodeGroup/v2").withBodyContaining("Reporting")
@@ -142,6 +142,21 @@ public final class NodeGroupsScreenStories {
                     play.findByText("Reporting");
                     // GWT then opens the new group's members dialog
                     screen.findByText("Edit Node Group - Reporting");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Cancel creates nothing
+                .story("NewGroupCancel", NodeGroupsScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("All Nodes");
+                    play.click(play.getByTitle("New Node Group"));
+                    screen.findByText("New", StroomDom.DIALOG_TITLE);
+                    play.type(screen.querySelector("#nameEntryName"), "Reporting");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New", StroomDom.DIALOG_TITLE)).toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/node/nodeGroup/v2").toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
@@ -153,7 +168,7 @@ public final class NodeGroupsScreenStories {
                     play.findByText("All Nodes");
                     play.click(play.getByTitle("New Node Group"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
-                    play.type(screen.querySelector("#nameDocumentName"), "A/B nodes");
+                    play.type(screen.querySelector("#nameEntryName"), "A/B nodes");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith(ValueMatcher.stringContaining("contain")));

@@ -21,12 +21,12 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -43,7 +43,7 @@ public class FeedSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox classification;
+    TextInput classification;
     @UiField
     SelectionBox<String> dataEncoding;
     @UiField
@@ -57,9 +57,9 @@ public class FeedSettings extends Component {
     @UiField
     SelectionBox<String> contextFormat;
     @UiField
-    TextBox schema;
+    TextInput schema;
     @UiField
-    TextBox schemaVersion;
+    TextInput schemaVersion;
     @UiField
     TickBox reference;
     @UiField

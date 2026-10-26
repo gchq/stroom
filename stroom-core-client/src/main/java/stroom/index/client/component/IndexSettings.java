@@ -24,12 +24,12 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class IndexSettings extends Component {
     @UiField
     ValueSpinner shardsPerPartition;
     @UiField
-    TextBox timeField;
+    TextInput timeField;
     @UiField
     SelectionBox<SupportedRetentionAge> retentionAge;
     @UiField

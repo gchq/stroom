@@ -16,8 +16,6 @@
 
 package stroom.entity.client;
 
-import java.util.ArrayList;
-import java.util.List;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
@@ -34,6 +32,9 @@ import stroom.widget.component.client.AppRoot;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /// The document dialogs (create, copy, move, rename, info), made when first asked for. Hears the
 /// app-wide events that open them, for the life of the app.

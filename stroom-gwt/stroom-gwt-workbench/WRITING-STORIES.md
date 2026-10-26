@@ -405,7 +405,7 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
   `expectNoProblems`),
   and confirmations (`ConfirmEvent`) by `CONFIRM_SPY`. They are not shown, and a confirmation is
   never answered, unless the harness is built with `realAlerts()`, which shows Stroom's real alert
-  dialog (`AlertPlugin`/`CommonAlertPresenter`). Use it for a story that answers a confirmation
+  dialog (`AlertPlugin`/`CommonAlertController`). Use it for a story that answers a confirmation
   (e.g. 'Run Now', 'Remove Imported Dictionary', terminating a task) or closes an alert: alerts are shown in a
   `CLOSE_DIALOG` (caption 'Alert', closed with its 'Close' button); confirmations have OK and
   Cancel.
@@ -855,7 +855,7 @@ Also:
   `required="true"` marks the control `aria-required`.
 * **Text boxes report their change** (and so make a document dirty) when they lose the focus: type,
   then `play.tab()`.
-* **Read-only text in a text area** (e.g. `DependenciesInfoViewImpl`) is checked with
+* **Read-only text in a text area** (e.g. `DependenciesInfo`) is checked with
   `querySelector("textarea...").value()`, not `getByText`.
 * **Ace editors**: click `.ace_content` then `play.keyboard(text)`, and wait for the text in
   `.ace_content` before pressing OK.

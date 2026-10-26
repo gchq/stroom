@@ -19,13 +19,13 @@ package stroom.receive.rules.client.component;
 import stroom.item.client.SelectionBox;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class RuleEditor extends Component {
     @UiField
     SimplePanel expression;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<ReceiveAction> action;
 

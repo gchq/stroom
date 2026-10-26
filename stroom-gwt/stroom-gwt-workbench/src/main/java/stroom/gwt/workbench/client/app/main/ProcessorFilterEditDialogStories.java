@@ -259,7 +259,7 @@ public final class ProcessorFilterEditDialogStories {
                     final Play alert = screen.within(
                             screen.findByText("You must specify a feed to use.").closest(StroomDom.DIALOG));
                     play.click(alert.getByRole("button", StroomDom.button("Close")));
-                    // The feed is a document picker (DocSelectionBoxPresenter): open it and choose
+                    // The feed is a document picker (a DocSelectionController): open it and choose
                     // MY_FEED from the explorer tree
                     play.fireEvent().mouseDown(editor.querySelector(".drop-down"), EventInit.create());
                     final Play picker = dialog(screen, "Choose item");

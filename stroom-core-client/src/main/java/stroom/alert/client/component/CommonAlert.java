@@ -102,7 +102,7 @@ public class CommonAlert extends Component {
     public void setDetail(final SafeHtml html) {
         if (html != null && !html.asString().isEmpty()) {
             final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-            builder.appendHtmlConstant("<div class=\"alert-detail-text\">");
+            builder.appendHtmlConstant("<div class=\"common-alert__detail-text\">");
             builder.append(html);
             builder.appendHtmlConstant("</div>");
             detail.getElement().setInnerHTML(builder.toSafeHtml().asString());

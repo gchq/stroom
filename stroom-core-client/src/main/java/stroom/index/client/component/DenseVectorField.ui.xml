@@ -60,7 +60,7 @@
                         label="Minimum Rerank Score"
                         helpText="Results scoring below this value are removed after reranking. Enter a decimal number; anything else is treated as the default. Applies to Jina and Cohere models only. Default is 0.8."
                         screenReaderText="Decimal number. Jina and Cohere only. Default is 0.8.">
-            <g:TextBox ui:field="rerankScoreMinimum"/>
+            <form:TextInput ui:field="rerankScoreMinimum"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

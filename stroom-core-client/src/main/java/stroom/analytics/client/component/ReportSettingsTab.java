@@ -23,12 +23,12 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A report's Settings tab: the type of file it sends, whether it is sent when empty, its AI
@@ -47,7 +47,7 @@ public class ReportSettingsTab extends Component {
     @UiField
     DropDownBox aiSummaryModel;
     @UiField
-    TextArea aiSummaryPrompt;
+    TextAreaInput aiSummaryPrompt;
     @UiField
     DropDownBox errorFeed;
     @UiField

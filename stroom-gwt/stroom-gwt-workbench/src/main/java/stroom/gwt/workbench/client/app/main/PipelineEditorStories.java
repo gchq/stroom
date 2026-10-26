@@ -795,6 +795,34 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("true")).toBeInTheDocument());
                     expectNoProblems(play);
                 })
+                // A changed value makes the Source Local; choosing Default again then shows the
+                // default value (the changed value stayed, under Default, and choosing Local by
+                // hand threw the change away)
+                .story("PropertySourceAfterChange", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.click(play.findByText("parser"));
+                    play.dblClick(play.findByText("fixInvalidChars"));
+                    final Play property = dialog(screen, "Edit Property");
+                    final Query value = property.getByRole("combobox", "Value");
+                    final Query source = property.getByRole("combobox", "Source");
+                    play.click(value);
+                    play.click(screen.findByText("true", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(source).toHaveValue("Local"));
+                    play.click(source);
+                    play.click(screen.findByText("Default", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(source).toHaveValue("Default"));
+                    play.waitFor(() -> play.expect(value).toHaveValue("false"));
+                    play.click(property.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Property", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // Another element, as a default value on the property grid's selected row fails
+                    // contrast (see ISSUES.md)
+                    play.click(play.getByText("Source"));
+                    play.waitFor(() -> play.expect(play.queryByText("fixInvalidChars")).toBeNull());
+                    expectNoProblems(play);
+                })
                 // Setting a document property's Source to Embedded creates an embedded document
                 .story("EmbeddedProperty", context -> render(context, FIXTURES))
                 .withPlay(play -> {
@@ -1009,7 +1037,6 @@ public final class PipelineEditorStories {
                             .toHaveClass("pipelineStructureViewImpl-property-inherited"));
                     expectNoProblems(play);
                 })
-                // A structure edit dirties the document
                 // Edit Pipeline Reference shows the reference and Cancel keeps it; New with no
                 // pipeline chosen is refused, saying so
                 .story("EditPipelineReference", context -> render(context, FIXTURES))
@@ -1064,6 +1091,7 @@ public final class PipelineEditorStories {
                             .toHaveValue("Turns XML into events");
                     expectNoProblems(play);
                 })
+                // A structure edit dirties the document
                 .story("StructureEditDirtiesTheDocument", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();

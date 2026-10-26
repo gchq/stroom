@@ -20,12 +20,12 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An Elasticsearch index's Settings tab: its cluster, index name and date field, how it is
@@ -37,7 +37,7 @@ public class ElasticIndexSettings extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox indexName;
+    TextInput indexName;
     @UiField
     ValueSpinner searchSlices;
     @UiField
@@ -47,17 +47,17 @@ public class ElasticIndexSettings extends Component {
     @UiField
     Button testConnection;
     @UiField
-    TextBox timeField;
+    TextInput timeField;
     @UiField
     DropDownBox vectorGenerationModel;
     @UiField
     DropDownBox rerankModel;
     @UiField
-    TextBox rerankTextFieldSuffix;
+    TextInput rerankTextFieldSuffix;
     @UiField
-    TextBox rerankScoreFieldSuffix;
+    TextInput rerankScoreFieldSuffix;
     @UiField
-    TextBox rerankScoreMinimum;
+    TextInput rerankScoreMinimum;
     @UiField
     DropDownBox defaultExtractionPipeline;
 

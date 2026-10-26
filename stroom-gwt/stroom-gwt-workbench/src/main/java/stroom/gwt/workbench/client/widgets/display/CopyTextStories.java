@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 /// Stories for Stroom's copyable text ([CopyTextUtil], as rendered by `CopyTextCell` and in
 /// e.g. the dashboard's current selection panel).
 ///
-/// There is no copy text widget in GWT: Stroom's `CurrentSelectionPresenter` renders
+/// There is no copy text widget in GWT: Stroom's `CurrentSelectionController` renders
 /// [CopyTextUtil#render] into an `HTML` widget and passes its mouse downs to
 /// [CopyTextUtil#onClick], as the stories do. A left click on the copy icon copies the value,
 /// on the insert icon inserts it, and a right click shows Stroom's menu (Copy, and Insert into
@@ -108,7 +108,7 @@ public final class CopyTextStories {
         return new MenuController(eventBus, new Menu(), () -> menuController(eventBus));
     }
 
-    /// The copyable text, as `CurrentSelectionPresenter` shows it.
+    /// The copyable text, as `CurrentSelectionController` shows it.
     private static Widget copyText(final ScreenHarness harness,
                                    final String value,
                                    final boolean showInsert,

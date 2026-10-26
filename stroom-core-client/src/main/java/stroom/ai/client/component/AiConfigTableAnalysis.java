@@ -20,12 +20,12 @@ import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Table Analysis tab of the Ask Stroom AI settings: how much of a table is sent to the AI
@@ -41,11 +41,11 @@ public class AiConfigTableAnalysis extends Component {
     @UiField
     ValueSpinner maxParallelBatches;
     @UiField
-    TextArea tableQuerySystemPrompt;
+    TextAreaInput tableQuerySystemPrompt;
     @UiField
-    TextArea tableQueryUserPrompt;
+    TextAreaInput tableQueryUserPrompt;
     @UiField
-    TextArea multiSummaryMergePrompt;
+    TextAreaInput multiSummaryMergePrompt;
     @UiField
     ValueSpinner attachmentDownloadTimeoutMs;
 

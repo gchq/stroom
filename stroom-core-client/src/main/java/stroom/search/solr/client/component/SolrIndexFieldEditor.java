@@ -20,12 +20,12 @@ import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -39,11 +39,11 @@ public class SolrIndexFieldEditor extends Component {
     @UiField
     SelectionBox<FieldType> type;
     @UiField
-    TextBox fieldName;
+    TextInput fieldName;
     @UiField
     SelectionBox<String> fieldType;
     @UiField
-    TextBox defaultValue;
+    TextInput defaultValue;
     @UiField
     TickBox stored;
     @UiField
@@ -81,7 +81,6 @@ public class SolrIndexFieldEditor extends Component {
 
         type.addItems(LuceneFieldTypes.FIELD_TYPES);
     }
-
 
     /// Puts the focus on the type.
     public void focus() {
@@ -284,11 +283,8 @@ public class SolrIndexFieldEditor extends Component {
         this.fieldType.addItems(fieldTypes);
     }
 
-
     // --------------------------------------------------------------------------------
 
-
     interface Binder extends UiBinder<Widget, SolrIndexFieldEditor> {
-
     }
 }

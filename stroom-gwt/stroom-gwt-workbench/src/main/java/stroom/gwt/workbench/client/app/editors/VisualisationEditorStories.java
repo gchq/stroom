@@ -74,6 +74,8 @@ public final class VisualisationEditorStories {
     // (VisualisationSettings.ui.xml)
     private static final String FUNCTION_NAME = "#visualisationSettingsFunctionName";
     private static final String ASSET_NAME = "#visualisationAssetsName";
+    private static final String NEW_FILE = "/visualisationAssets/updateNewFile/vis-1";
+    private static final String RENAME = "/visualisationAssets/updateRename/vis-1";
 
     // Stroom's Ace editor's text area
     private static final String ACE_INPUT = ".ace_text-input";
@@ -170,6 +172,56 @@ public final class VisualisationEditorStories {
                             ValueMatcher.stringContaining("File names must not contain the character")));
                     play.expect(screen.getByText("New File", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                 })
+                // New File: OK with a name adds it; Cancel adds nothing
+                .story("NewFile", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play cancelled = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.type(cancelled.querySelector(ASSET_NAME), "unwanted.css");
+                    play.click(cancelled.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New File", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.click(play.getByRole("button", "Add File or Folder"));
+                    play.click(screen.findByText("New File", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("New File", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.querySelector(ASSET_NAME)).toHaveFocus());
+                    play.type(dialog.querySelector(ASSET_NAME), "extra.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(NEW_FILE).withBodyContaining("extra.css").toSpyMatcher()));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(NEW_FILE).withBodyContaining("unwanted.css").toSpyMatcher());
+                    play.waitFor(() -> play.expect(screen.queryByText("New File", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Rename Selected Asset starts with its name; OK renames it
+                .story("RenameAsset", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Assets"));
+                    play.click(play.findByText("style.css"));
+                    play.click(play.getByRole("button", "Rename Selected Asset"));
+                    final Play dialog = screen.within(screen.findByText("Edit", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query name = dialog.getByLabelText("Name");
+                    play.expect(name).toHaveValue("style.css");
+                    play.clear(name);
+                    play.type(name, "main.css");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(RENAME).withBodyContaining("main.css").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit", StroomDom.DIALOG_TITLE)).toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
@@ -244,6 +296,8 @@ public final class VisualisationEditorStories {
                 .get("/visualisation/v1/vis-1", RestReply.json(DOC))
                 .put("/visualisation/v1/vis-1", request -> RestReply.json(request.getBody()))
                 .get("/visualisationAssets/fetchDraftAssets/vis-1", RestReply.json(ASSETS))
+                .put(NEW_FILE, RestReply.json("true"))
+                .put(RENAME, RestReply.json("true"))
                 .get("/visualisationAssets/getContent/vis-1", RestReply.json(
                         "{\"content\": \"// src/main.js\\nconsole.log(1);\", \"editorMode\": \"JAVASCRIPT\"}"))
                 // Publishing: true, then false for the second save

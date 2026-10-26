@@ -99,7 +99,13 @@ public class CreateNewGroupController extends Controller implements Focus {
                 .onShow(e -> view.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final String name = view.getName();
+                        final String name = NullSafe.trim(view.getName());
+                        if (name.isEmpty()) {
+                            // As for a new group: said under the field, and the dialog stays open
+                            view.setNameInvalid("You must provide a name for the group");
+                            e.reset();
+                            return;
+                        }
                         update(group.copy()
                                 .subjectId(name)
                                 .displayName(name)
@@ -139,6 +145,7 @@ public class CreateNewGroupController extends Controller implements Focus {
                     }
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
+                .owner(this)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -172,6 +179,7 @@ public class CreateNewGroupController extends Controller implements Focus {
                     event.hide();
                 })
                 .onFailure(RestErrorHandler.forPopup(this, event))
+                .owner(this)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

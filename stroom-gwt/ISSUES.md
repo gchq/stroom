@@ -80,11 +80,11 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 ### A rejected column rename may still change conditional formatting
 
-**Reported.** `RenameColumnPresenter` renames the column's references in conditional formatting
+**Reported.** `RenameColumnController` renames the column's references in conditional formatting
 rules before checking whether the new name is already used, so a rename that is then rejected may
 already have changed those rules.
 
-* `stroom-core-client/src/main/java/stroom/dashboard/client/table/RenameColumnPresenter.java`
+* `stroom-core-client/src/main/java/stroom/dashboard/client/component/RenameColumnController.java`
 
 ### Layout Density can be set to an option that doesn't exist
 
@@ -172,10 +172,9 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 * Batch execution schedule edit: the Run As User picker offers users you can't run as; the server
   only refuses when the change is applied (`BatchExecutionScheduleEditPresenter`).
 * Process data: Max Create Time is set to now whenever the Reprocess data tick box changes
-  (`ProcessChoicePresenter`).
+  (`ProcessChoiceDialogController`).
 * Date boxes fill in local time (without a Z) unless the user's time zone preference is UTC; the data
   upload's Effective Date never uses UTC.
-* Git commit: a message of only spaces is accepted (`GitRepoCommitDialogPresenter`).
 * Plan B: the condense widget falls back to 1 year, but a new store's default is 1 day
   (`DurationSetting`); only cosmetic, as the model always supplies a value.
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
@@ -913,6 +912,15 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 
 ## Accessibility
 
+### A pipeline property's default value is too faint on its selected row
+
+**Reported** (found in wave 9's audit, 26 October 2026). The pipeline's property grid greys a
+property's default (and inherited) value (`pipelineStructureViewImpl-property-default`, and a
+document's `docRefLinkText`); on the selected row's blue it fails axe's `color-contrast`. A story that
+leaves a default property selected fails for it, so `PipelineEditor.PropertySourceAfterChange`
+chooses another element before it ends. Fix: a selected row's default value in the row's own text
+colour, kept distinct by its style (e.g. italic), not by a fainter colour.
+
 ### Controls that can't be reached with the keyboard
 
 **Reported.**
@@ -1450,7 +1458,6 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 **Reported.**
 
 * Misleading `identity` values (copied from other views, though unique in their own):
-  * `AddEventLinkViewImpl.ui.xml`: the Event group is `searchDownloadFileType`.
   * `BasicListInputSettingsViewImpl.ui.xml`: Use Dictionary is `basicListInputSettingsExtractValues`.
   * `BasicTextInputSettingsViewImpl.ui.xml`: the Id and Name groups use `basicListInputSettings*`.
 * `VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
@@ -1762,8 +1769,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
     `MarkdownEditController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
     `iFramePresenter`), `AnalyticEmailDestinationController` (the old `EditorPresenter` code). To go
     with the other removals.
-* `XPathFilterViewImpl` sets Equals as the default condition, but new filters use Exists; harmless, as
-  the presenter overwrites it.
+* `XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
+  the controller overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
@@ -1893,9 +1900,9 @@ These were found by the review and fixed in the same change:
   * HTTP TLS settings: with no TLS config yet, the dialog left Verify Host Name unticked and OK
     saved it as false, though it defaults to true. It now shows the defaults
     (`TestHttpTlsConfigPresenter`).
-  * Column format: one `FormatPresenter` serves all a table's columns, and a column with no format
+  * Column format: one `FormatPresenter` served all a table's columns, and a column with no format
     showed the last column's number and date settings. It now shows the defaults
-    (`TestFormatPresenter`).
+    (`TestFormatPresenter`, now `TestColumnFormatController`).
   * Table settings: ticking Use Default Extraction Pipeline only disabled Extraction Pipeline, so
     the table kept its old pipeline until its query's data source changed. It now puts the data
     source's default pipeline in (`TestBasicTableSettingsPresenter`).
@@ -2323,7 +2330,8 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   disabled and no message: `IndexFieldEditPresenter.write()` threw a `ValidationException` that
   `IndexFieldListPresenter.onAdd()` didn't catch. `IndexFieldEditPresenter` now handles OK itself
   (`onHideRequest`): it shows the error and lets the dialog be used again once the error is closed,
-  and passes only a valid field to `onAdd()` and `onEdit()` (`TestIndexFieldEditPresenter`, the
+  and passes only a valid field to `onAdd()` and `onEdit()` (`TestIndexFieldEditPresenter`, now
+  `TestIndexFieldEditorController`, the
   workbench's `App/Index/IndexEditor` `NewFieldWithoutName`).
 * #41: the batch edit dialogs' validation messages were never shown, so OK did nothing and said
   nothing for Batch Edit Current Processors with no change, no Run As user or no processors in the

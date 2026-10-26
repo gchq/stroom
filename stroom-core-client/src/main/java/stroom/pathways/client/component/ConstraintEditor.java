@@ -19,12 +19,12 @@ package stroom.pathways.client.component;
 import stroom.item.client.SelectionBox;
 import stroom.pathways.shared.pathway.ConstraintValueType;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The New and Edit Constraint dialog's content, for a node of a pathway: the constraint's
@@ -34,11 +34,11 @@ public class ConstraintEditor extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<ConstraintValueType> type;
     @UiField
-    TextBox value;
+    TextInput value;
     @UiField
     TickBox optional;
 

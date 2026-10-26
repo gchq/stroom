@@ -17,11 +17,11 @@
 package stroom.document.asset.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of the dialog that renames a file or folder in a document's assets: its name.
@@ -30,7 +30,7 @@ public class DocumentAssetEditAssetDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox txtAssetName;
+    TextInput txtAssetName;
 
     /// Makes empty content.
     public DocumentAssetEditAssetDialog() {

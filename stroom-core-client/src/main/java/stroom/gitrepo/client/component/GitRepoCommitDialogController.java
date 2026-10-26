@@ -17,6 +17,7 @@
 package stroom.gitrepo.client.component;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -62,7 +63,8 @@ public class GitRepoCommitDialogController extends Controller {
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final String message = view.getCommitMessage();
-                        if (message.isEmpty()) {
+                        // A message of only spaces says nothing
+                        if (NullSafe.isBlankString(message)) {
                             AlertEvent.fireWarn(this, "Please enter a commit message", e::reset);
                         } else {
                             e.hide();

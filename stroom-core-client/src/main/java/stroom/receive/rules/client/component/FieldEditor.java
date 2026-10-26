@@ -19,11 +19,11 @@ package stroom.receive.rules.client.component;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collection;
@@ -37,7 +37,7 @@ public class FieldEditor extends Component {
     @UiField
     SelectionBox<FieldType> type;
     @UiField
-    TextBox name;
+    TextInput name;
 
     public FieldEditor() {
         initWidget(BINDER.createAndBindUi(this));

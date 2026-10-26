@@ -88,6 +88,17 @@ class TestConstraintValueText {
     }
 
     @Test
+    void testTextKeptAsTyped() {
+        // Spaces can matter in text and patterns, so they aren't trimmed (they were, for a while)
+        assertThat(ConstraintValueText.toText(ConstraintValueText.fromText(ConstraintValueType.STRING, " a ")))
+                .isEqualTo(" a ");
+        assertThat(ConstraintValueText.toText(ConstraintValueText.fromText(ConstraintValueType.REGEX, "a\\s+ ")))
+                .isEqualTo("a\\s+ ");
+        assertThat(ConstraintValueText.toText(ConstraintValueText.fromText(ConstraintValueType.STRING_SET, " a")))
+                .isEqualTo(" a");
+    }
+
+    @Test
     void testBadNumberRefused() {
         assertThatThrownBy(() -> ConstraintValueText.fromText(ConstraintValueType.INTEGER, "abc"))
                 .isInstanceOf(IllegalArgumentException.class);

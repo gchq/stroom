@@ -54,12 +54,12 @@ public class StepControl extends Component {
     /// Makes the buttons, every step disabled.
     public StepControl() {
         initWidget(BINDER.createAndBindUi(this));
-        filterButton.addClickHandler(e -> onFilter.run());
-        firstButton.addClickHandler(e -> onStep.accept(StepType.FIRST));
-        backwardButton.addClickHandler(e -> onStep.accept(StepType.BACKWARD));
-        forwardButton.addClickHandler(e -> onStep.accept(StepType.FORWARD));
-        lastButton.addClickHandler(e -> onStep.accept(StepType.LAST));
-        refreshButton.addClickHandler(e -> onStep.accept(StepType.REFRESH));
+        filterButton.setOnClick(() -> onFilter.run());
+        firstButton.setOnClick(() -> onStep.accept(StepType.FIRST));
+        backwardButton.setOnClick(() -> onStep.accept(StepType.BACKWARD));
+        forwardButton.setOnClick(() -> onStep.accept(StepType.FORWARD));
+        lastButton.setOnClick(() -> onStep.accept(StepType.LAST));
+        refreshButton.setOnClick(() -> onStep.accept(StepType.REFRESH));
     }
 
     /// @param stepType A step.

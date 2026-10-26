@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.alert-layout {
+.common-alert {
     display: flex;
     flex-direction: row;
     overflow: hidden;
@@ -23,7 +23,7 @@
     height: 100%;
 }
 
-.alert-message-area {
+.common-alert__message-area {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -31,7 +31,7 @@
     overflow: hidden;
 }
 
-.alert-message {
+.common-alert__message {
     -webkit-user-select: text;  /* Chrome 49+ */
     -moz-user-select: text;     /* Firefox 43+ */
     -ms-user-select: text;      /* No support yet */
@@ -44,7 +44,7 @@
 
 /* A LinkButton that shows and hides the detail, drawn as a link with an arrow that points right
    while the detail is hidden and down while it is shown */
-.alert-showHide {
+.common-alert__show-hide {
     align-self: flex-start;
     display: inline-flex;
     align-items: center;
@@ -52,7 +52,7 @@
     color: var(--link__text-color);
 }
 
-.alert-showHide-arrow {
+.common-alert__show-hide-arrow {
     width: 0;
     height: 0;
     border-top: 0.3rem solid transparent;
@@ -61,11 +61,11 @@
     transition: transform 0.1s;
 }
 
-.alert-showHide[aria-expanded="true"] .alert-showHide-arrow {
+.common-alert__show-hide[aria-expanded="true"] .common-alert__show-hide-arrow {
     transform: rotate(90deg);
 }
 
-.alert-detail {
+.common-alert__detail {
     display: flex;
     padding: 5px;
     overflow: auto;
@@ -79,13 +79,13 @@
 }
 
 /* It takes the focus, so that the keyboard can scroll it */
-.alert-detail:focus-visible {
+.common-alert__detail:focus-visible {
     outline: none;
     border-color: var(--focus-border);
     box-shadow: var(--focus-shadow);
 }
 
-.alert-detail-text {
+.common-alert__detail-text {
     font-family: monospace, Courier New;
     white-space: pre;
 
@@ -95,11 +95,11 @@
     user-select: text;          /* Likely future */
 }
 
-.alert-icon {
+.common-alert__icon {
     flex-shrink: 0;
 }
 
-.alert-icon svg {
+.common-alert__icon svg {
     width: 32px;
     height: 32px;
 }

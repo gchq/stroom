@@ -17,13 +17,13 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A pipeline element's name and description, as the Edit Element dialog shows them.
@@ -32,9 +32,9 @@ public class NewElement extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
-    TextArea description;
+    TextAreaInput description;
 
     private Runnable onEnter = () -> {
     };

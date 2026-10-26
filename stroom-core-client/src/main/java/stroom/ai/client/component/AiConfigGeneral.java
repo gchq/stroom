@@ -24,13 +24,13 @@ import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -48,9 +48,9 @@ public class AiConfigGeneral extends Component {
     @UiField
     SelectionBox<DockLocation> dockLocation;
     @UiField
-    TextArea chatSystemPrompt;
+    TextAreaInput chatSystemPrompt;
     @UiField
-    TextArea historySummaryPrompt;
+    TextAreaInput historySummaryPrompt;
     @UiField
     ValueSpinner maxHistorySafetyCapMessages;
     @UiField

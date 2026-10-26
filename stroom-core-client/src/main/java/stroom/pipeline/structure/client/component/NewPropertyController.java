@@ -140,7 +140,6 @@ public class NewPropertyController extends Controller {
         view.setInherited(inheritedFrom, inheritedValue);
         view.setSource(source);
         view.showValueEditor(editorFor(propertyType));
-        startEdit(source);
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size.builder()
@@ -162,6 +161,8 @@ public class NewPropertyController extends Controller {
                     }
                 })
                 .fire();
+        // Once shown, so the stream types or volume groups are fetched with the dialog's monitor
+        startEdit(source);
     }
 
     /// @return Whether the user changed the source or the value.
@@ -221,6 +222,7 @@ public class NewPropertyController extends Controller {
     // A change to the value makes the source Local
     private void onValueChange() {
         dirty = true;
+        source = Source.LOCAL;
         view.setSource(Source.LOCAL);
     }
 

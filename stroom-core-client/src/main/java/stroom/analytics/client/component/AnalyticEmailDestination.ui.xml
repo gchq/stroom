@@ -9,21 +9,21 @@
                         label="To"
                         helpText="Email addresses to send the notification to. Separate several addresses with semicolons, e.g. a@example.com; b@example.com. At least one of To, Cc or Bcc must be given."
                         screenReaderText="Separate addresses with semicolons. At least one of To, Cc or Bcc is required.">
-            <g:TextBox ui:field="to"/>
+            <form:TextInput ui:field="to"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationCc"
                         label="Cc"
                         helpText="Email addresses to copy the notification to. Separate several addresses with semicolons. Can be left blank if To or Bcc is set."
                         screenReaderText="Separate addresses with semicolons. Can be blank if To or Bcc is set.">
-            <g:TextBox ui:field="cc"/>
+            <form:TextInput ui:field="cc"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationBcc"
                         label="Bcc"
                         helpText="Email addresses to send a blind copy to; other recipients cannot see them. Separate several addresses with semicolons. Can be left blank if To or Cc is set."
                         screenReaderText="Hidden from other recipients. Separate addresses with semicolons.">
-            <g:TextBox ui:field="bcc"/>
+            <form:TextInput ui:field="bcc"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationSubjectTemplate"

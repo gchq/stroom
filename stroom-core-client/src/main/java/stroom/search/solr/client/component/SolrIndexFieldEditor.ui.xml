@@ -13,7 +13,7 @@
         <form:FormGroup identity="solrIndexFieldName" label="Field Name"
                         helpText="Name of the field in Solr. Must start with a letter or underscore and contain only letters, digits and underscores. Must be unique in this index."
                         screenReaderText="Letters, digits and underscores; must not start with a digit.">
-            <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>
+            <form:TextInput ui:field="fieldName" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexFieldType" label="Field Type"
                         helpText="Solr field type to use for this field, as defined in the collection's schema. The list is read from Solr."
@@ -23,7 +23,7 @@
         <form:FormGroup identity="solrIndexDefaultValue" label="Default Value"
                         helpText="Value Solr stores for this field when a document does not supply one. Leave blank for no default."
                         screenReaderText="Used when a document has no value.">
-            <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
+            <form:TextInput ui:field="defaultValue" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Whether the field's value is stored in Solr, so it can be returned in search results without extracting it from the original data."
                         screenReaderText="Stored values can be returned in results.">
@@ -85,6 +85,5 @@
                         screenReaderText="Documents without a value sort last.">
             <tickbox:TickBox ui:field="sortMissingLast" identity="solrIndexSortMissingLast" label="Sort Missing Last"/>
         </form:FormGroup>
-
     </g:FlowPanel>
 </ui:UiBinder>

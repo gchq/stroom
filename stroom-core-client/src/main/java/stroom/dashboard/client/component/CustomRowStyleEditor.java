@@ -19,6 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.query.api.TextAttributes;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -27,7 +28,6 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Edit Custom Row Style dialog's content: a rule's background and text colours in the light
@@ -40,15 +40,15 @@ public class CustomRowStyleEditor extends Component {
     private static final String TEXT_COLOUR = "--cf-swatch__color";
 
     @UiField
-    TextBox lightBackgroundColour;
+    TextInput lightBackgroundColour;
     @UiField
-    TextBox lightTextColour;
+    TextInput lightTextColour;
     @UiField
     DivElement lightSwatch;
     @UiField
-    TextBox darkBackgroundColour;
+    TextInput darkBackgroundColour;
     @UiField
-    TextBox darkTextColour;
+    TextInput darkTextColour;
     @UiField
     DivElement darkSwatch;
 

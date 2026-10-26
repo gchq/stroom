@@ -22,12 +22,12 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.dropdowntree.client.DropDownBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A pathways document's Settings tab: its trace store and info feed, whose pickers its controller
@@ -52,7 +52,7 @@ public class PathwaysSettings extends Component {
     @UiField
     TickBox allowConstraintMutation;
     @UiField
-    TextBox processingNode;
+    TextInput processingNode;
 
     private Runnable onChange = () -> {
     };

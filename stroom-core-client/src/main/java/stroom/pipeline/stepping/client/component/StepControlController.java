@@ -75,6 +75,15 @@ public class StepControlController extends Controller {
         view.setStepEnabled(StepType.REFRESH, enabled);
     }
 
+    /// Enables the buttons for where a step has got to: back unless at the first record, forward
+    /// unless at the last (a step forward that finds nothing marks the end, when not filtered).
+    ///
+    /// @param stepType      The step taken.
+    /// @param foundRecord   Whether the step found a record.
+    /// @param isFiltered    Whether a filter is in place, which makes the last record unknown.
+    /// @param stepLocation  Where the step got to, or null.
+    /// @param isFirstStream Whether the stream is the first.
+    /// @param isLastStream  Whether the stream is the last.
     public void setEnabledButtons(final StepType stepType,
                                   final boolean foundRecord,
                                   final boolean isFiltered,

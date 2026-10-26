@@ -782,17 +782,6 @@
     overflow: hidden;
 }
 
-/* The keys of a keyboard shortcut being recorded */
-.keyShortcutRecorder-keys {
-    font-family: monospace;
-}
-
-/* What the user can do next while recording a keyboard shortcut, kept the same height as it changes */
-.keyShortcutRecorder-message {
-    min-height: 4.5em;
-    white-space: normal;
-}
-
 .default-min-sizes {
     min-width: 200px;
     min-height: 200px;

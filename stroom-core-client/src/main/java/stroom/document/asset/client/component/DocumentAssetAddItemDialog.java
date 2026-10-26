@@ -17,12 +17,12 @@
 package stroom.document.asset.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The content of the dialog that adds a new, empty file or folder to a document's assets: the
@@ -32,7 +32,7 @@ public class DocumentAssetAddItemDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox txtName;
+    TextInput txtName;
     @UiField
     Label lblPath;
 

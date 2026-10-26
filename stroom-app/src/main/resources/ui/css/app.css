@@ -87,7 +87,8 @@
 @import url("shared-file-store-settings.css");
 @import url("CommandLinkCell.css");
 @import url("TermEditor.css");
-@import url("alert.css");
+@import url("common-alert.css");
+@import url("key-shortcut-recorder.css");
 @import url("busy-spinner.css");
 @import url("task-spinner.css");
 @import url("draggable-tree.css");

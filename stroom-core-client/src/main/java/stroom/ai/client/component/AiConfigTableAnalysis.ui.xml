@@ -31,17 +31,17 @@
         <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt"
                         helpText="Instructions sent to the AI model when answering questions about table data. A default prompt is provided."
                         screenReaderText="Sent to the model with each table query.">
-            <g:TextArea ui:field="tableQuerySystemPrompt" addStyleNames="w-100" visibleLines="4"/>
+            <form:TextAreaInput ui:field="tableQuerySystemPrompt" addStyleNames="w-100" visibleLines="4"/>
         </form:FormGroup>
         <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt"
                         helpText="Template for the message sent with each batch of table data. Use {{{{query}} for the user's question, {{{{table}} for the table data and {{{{context}} for earlier conversation."
                         screenReaderText="Placeholders: {{{{query}}, {{{{table}}, {{{{context}}.">
-            <g:TextArea ui:field="tableQueryUserPrompt" addStyleNames="w-100" visibleLines="6"/>
+            <form:TextAreaInput ui:field="tableQueryUserPrompt" addStyleNames="w-100" visibleLines="6"/>
         </form:FormGroup>
         <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt"
                         helpText="Template used to merge the answers from several batches into one. Use {{{{summaries}} for the numbered list of answers to merge."
                         screenReaderText="Placeholder: {{{{summaries}}.">
-            <g:TextArea ui:field="multiSummaryMergePrompt" addStyleNames="w-100" visibleLines="5"/>
+            <form:TextAreaInput ui:field="multiSummaryMergePrompt" addStyleNames="w-100" visibleLines="5"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

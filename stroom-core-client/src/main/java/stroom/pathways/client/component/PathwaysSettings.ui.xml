@@ -29,7 +29,7 @@
             <tickbox:TickBox ui:field="allowConstraintMutation"/>
         </form:FormGroup>
         <form:FormGroup identity="pathwaysProcessingNode" label="Processing Node">
-            <g:TextBox ui:field="processingNode"/>
+            <form:TextInput ui:field="processingNode"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

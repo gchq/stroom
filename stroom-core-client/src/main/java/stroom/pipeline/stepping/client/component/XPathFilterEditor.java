@@ -21,14 +21,14 @@ import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The XPath filter dialog's content, for stepping: where to look in the output, and what
@@ -42,7 +42,7 @@ public class XPathFilterEditor extends Component {
     @UiField
     FormGroup ignoreCaseContainer;
     @UiField
-    TextBox xPath;
+    TextInput xPath;
     @UiField
     FormGroup xPathContainer;
     @UiField
@@ -50,7 +50,7 @@ public class XPathFilterEditor extends Component {
     @UiField
     SelectionBox<SearchType> searchType;
     @UiField
-    TextBox value;
+    TextInput value;
     @UiField
     TickBox ignoreCase;
 

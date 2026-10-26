@@ -35,6 +35,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
@@ -49,7 +50,9 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final SplashScreen splashScreen;
+    // A provider, as the splash screen needs the UI config, which needs the security context this
+    // is part of
+    private final Provider<SplashScreen> splashScreenProvider;
     private final CurrentActivity currentActivity;
     private UserRef userRef;
     private Set<AppPermission> permissions;
@@ -57,11 +60,11 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     @Inject
     public CurrentUser(final EventBus eventBus,
                        final RestFactory restFactory,
-                       final SplashScreen splashScreen,
+                       final Provider<SplashScreen> splashScreenProvider,
                        final CurrentActivity currentActivity) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.splashScreen = splashScreen;
+        this.splashScreenProvider = splashScreenProvider;
         this.currentActivity = currentActivity;
     }
 
@@ -143,7 +146,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     private void showSplash() {
-        splashScreen.show(this, ok -> {
+        splashScreenProvider.get().show(this, ok -> {
             if (ok) {
                 currentActivity.showInitialActivityChooser(activity -> CurrentUserChangedEvent.fire(CurrentUser.this));
             }

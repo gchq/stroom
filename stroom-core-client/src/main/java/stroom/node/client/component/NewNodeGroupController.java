@@ -95,7 +95,11 @@ public class NewNodeGroupController extends Controller {
     private void checkNameAndCreate(final String name,
                                     final HidePopupRequestEvent e,
                                     final Consumer<NodeGroup> onCreated) {
+        // NodeGroupClient takes no owner: a name checked after the dialog is cancelled creates nothing
         nodeGroupClient.checkNodeGroupName(name, result -> {
+            if (isDisposed()) {
+                return;
+            }
             if (result != null) {
                 AlertEvent.fireError(this,
                         "Group name '" + name + "' is already in use by another group.",

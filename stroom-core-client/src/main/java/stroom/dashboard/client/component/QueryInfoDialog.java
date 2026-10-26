@@ -35,7 +35,6 @@ public class QueryInfoDialog extends Component {
     /// Makes empty content, which has the focus when shown.
     public QueryInfoDialog() {
         initWidget(BINDER.createAndBindUi(this));
-        addAttachHandler(event -> focus());
     }
 
     /// Puts the focus in the text.

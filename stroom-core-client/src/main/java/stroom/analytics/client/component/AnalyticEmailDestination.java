@@ -20,11 +20,11 @@ import stroom.editor.client.component.CodeEditor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An analytic notification's email settings: who it goes to, and the templates of its subject
@@ -34,11 +34,11 @@ public class AnalyticEmailDestination extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox to;
+    TextInput to;
     @UiField
-    TextBox cc;
+    TextInput cc;
     @UiField
-    TextBox bcc;
+    TextInput bcc;
     @UiField
     CodeEditor subjectTemplate;
     @UiField

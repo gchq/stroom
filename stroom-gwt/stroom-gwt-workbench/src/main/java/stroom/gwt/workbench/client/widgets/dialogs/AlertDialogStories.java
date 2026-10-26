@@ -145,11 +145,8 @@ public final class AlertDialogStories {
     /// @param context The story's context.
     /// @return The story's widget.
     static Widget prompt(final StoryContext context) {
-        final StoryPopups popups = StoryPopups.create(context);
-        // As Stroom's AlertPlugin handles the event
-        popups.addCleanUp(popups.getEventBus().addHandler(PromptEvent.getType(), event ->
-                event.getCallback().onResult(Window.prompt(event.getMessage(), event.getInitialValue())))
-                ::removeHandler);
+        // Stroom's own AlertPlugin handles the event
+        final StoryPopups popups = StoryPopups.create(context).withAlerts();
         final HasHandlers handlers = DialogWidgets.handlers(popups.getEventBus());
 
         final InlineLabel result = DialogWidgets.result();

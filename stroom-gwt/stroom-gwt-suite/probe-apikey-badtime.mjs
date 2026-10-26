@@ -102,7 +102,7 @@ if (!(await press('OK'))) { console.log('OK would not take a click'); await brow
 const now = await caps();
 const feed = await readFeedback(page);
 const alertText = await page.evaluate(() => {
-  const a = [...document.querySelectorAll('.alert-message')].filter((e) => e.offsetWidth > 0).pop();
+  const a = [...document.querySelectorAll('.common-alert__message')].filter((e) => e.offsetWidth > 0).pop();
   return a ? String(a.textContent ?? '').replace(/\s+/g, ' ').trim() : null;
 });
 const blocked = guard.violations.slice(vBefore).map((v) => `${v.method} ${v.path}`);

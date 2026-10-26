@@ -223,6 +223,32 @@ public final class DashboardComponentStories {
                             ValueMatcher.stringContaining("resourcestore/results")));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Sample Size is enabled by Sample Only, and the sample is in the request
+                .story("TableDownloadSample", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> routes.route(RequestMatcher.post("/dashboard/v1/downloadSearchResults/"
+                                                                   + RequestMatcher.PATH_WILDCARD),
+                                RestReply.json("{\"resourceKey\": {\"name\": \"results\", \"key\": \"k1\"}, "
+                                               + "\"messageList\": []}"))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Download Table Results")).toBeEnabled());
+                    play.click(play.getByRole("button", "Download Table Results"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Download Options");
+                    final Query size = dialog.getByLabelText("Sample Size (%)");
+                    play.expect(size).toBeDisabled();
+                    play.expect(size).toHaveValue("100");
+                    play.click(dialog.getByRole("checkbox", "Sample Only"));
+                    play.waitFor(() -> play.expect(size).toBeEnabled());
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/dashboard/v1/downloadSearchResults/" + RequestMatcher.PATH_WILDCARD)
+                                    .withJsonBodyContaining("{\"sample\": true, \"percent\": 100}")
+                                    .toSpyMatcher()));
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // Rename starts with the column's name; Enter renames it
                 .story("TableColumnRename", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))
@@ -241,6 +267,28 @@ public final class DashboardComponentStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(DashboardPlays.header(play, "Label")).toBeInTheDocument());
                     play.expect(screen.queryByText("Rename Field", StroomDom.DIALOG_TITLE)).toBeNull();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Rename's Cancel keeps the column's name
+                .story("TableColumnRenameCancel", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Field");
+                    final Query name = rename.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Label");
+                    play.click(rename.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Rename Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(DashboardPlays.header(play, "Name")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The column menu has Rename, Expression, Group, Duplicate and Remove, in GWT's order
@@ -695,6 +743,24 @@ public final class DashboardComponentStories {
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The Query's history recalls a past query, and its favourites save the current one
+                // A favourite needs a name: OK with none says so, and the dialog stays open
+                .story("FavouriteNoName", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        DashboardComponentStories::storedQueryRoutes))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    play.click(play.getByRole("button", "Show Favourite Queries"));
+                    final Play favourites = DashboardPlays.dialog(screen, "Query Favourites");
+                    play.click(favourites.getByTitle("Create Favourite From Current Query"));
+                    final Play name = DashboardPlays.dialog(screen, "Create New Favourite");
+                    play.click(name.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("You must provide a name")));
+                    play.expect(screen.getByText("Create New Favourite", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/storedQuery/v1/create").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 .story("QueryHistoryAndFavourites", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         DashboardComponentStories::storedQueryRoutes))
                 .withPlay(play -> {

@@ -9,7 +9,7 @@
                         label="Classification"
                         helpText="The classification or protective marking of the data in this feed, e.g. OFFICIAL. It is shown in upper case when the data is viewed."
                         screenReaderText="Shown in upper case when viewing the feed's data.">
-            <g:TextBox ui:field="classification" addStyleNames="text-field--wide"/>
+            <form:TextInput ui:field="classification" addStyleNames="text-field--wide"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReferenceFeed"
                         helpText="Tick if this feed contains reference data, used for reference data lookups.">
@@ -54,12 +54,12 @@
         <form:FormGroup identity="feedSettingsSchema"
                         label="Data Schema"
                         helpText="The name of the schema that the data conforms to, if applicable.">
-            <g:TextBox ui:field="schema"/>
+            <form:TextInput ui:field="schema"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsSchemaVersion"
                         label="Data Schema Version"
                         helpText="The version of the schema that the data conforms to, if applicable.">
-            <g:TextBox ui:field="schemaVersion"/>
+            <form:TextInput ui:field="schemaVersion"/>
         </form:FormGroup>
         <form:FormGroup identity="feedVolumeGroup"
                         label="Volume Group"

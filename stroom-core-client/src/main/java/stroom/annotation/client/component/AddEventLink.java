@@ -17,12 +17,12 @@
 package stroom.annotation.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Link An Event dialog's content: the event's id, as stream id and event id.
@@ -31,7 +31,7 @@ public class AddEventLink extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox event;
+    TextInput event;
 
     private Runnable onEnter = () -> {
     };
@@ -54,11 +54,6 @@ public class AddEventLink extends Component {
     /// @return The event id entered.
     public String getText() {
         return event.getText();
-    }
-
-    /// @param text The event id to start with.
-    public void setText(final String text) {
-        event.setText(text);
     }
 
     /// @param onEnter What Enter in the event id does, e.g. press the dialog's OK.

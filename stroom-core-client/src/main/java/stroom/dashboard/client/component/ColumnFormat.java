@@ -21,6 +21,7 @@ import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -29,7 +30,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -91,7 +91,7 @@ public class ColumnFormat extends Component {
     @UiField
     TickBox custom;
     @UiField
-    TextBox text;
+    TextInput text;
     @UiField
     SelectionBox<Use> timeZoneUse;
     @UiField

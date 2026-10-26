@@ -129,6 +129,20 @@ public final class DataVolumesScreenStories {
                     play.expect(screen.queryByText(NEW_GROUP, StroomDom.DIALOG_TITLE)).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Cancel creates nothing
+                .story("NewGroupCancel", context -> render(context, NEW_GROUP_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    play.type(screen.findByLabelText("Name"), "Archive");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(NEW_GROUP, StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/fsVolume/volumeGroup/v2").toSpyMatcher());
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // A name another group has is refused, and the dialog stays open
                 .story("NewGroupNameInUse", DataVolumesScreenStories::render)
                 .withPlay(play -> {

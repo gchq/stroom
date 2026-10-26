@@ -21,6 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.FieldType;
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.core.client.GWT;
@@ -30,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The New and Edit Field dialog's content, for a Lucene index: the field's type, name, how it
@@ -42,7 +42,7 @@ public class IndexFieldEditor extends Component {
     @UiField
     SelectionBox<FieldType> type;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     TickBox stored;
     @UiField

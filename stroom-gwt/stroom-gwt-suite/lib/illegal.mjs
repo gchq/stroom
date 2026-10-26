@@ -36,12 +36,12 @@
 // form whose name is blank and whose start time is bad reports the START TIME: filling every box at
 // once walks past the blank-check row (already covered) and onto the row underneath it.
 
-/** The topmost popup that is a FORM (an alert has `.alert-message`), and its fillable text boxes. */
+/** The topmost popup that is a FORM (an alert has `.common-alert__message`), and its fillable text boxes. */
 export function readFields(page) {
   return page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
-    const form = [...popups].reverse().find((p) => !p.querySelector('.alert-message'));
+    const form = [...popups].reverse().find((p) => !p.querySelector('.common-alert__message'));
     if (!form) return null;
     const caption = norm(form.querySelector('.dialog__title')?.textContent);
     const boxes = [...form.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), .text-field, textarea')]

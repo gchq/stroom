@@ -104,6 +104,34 @@ public final class StepFilterDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // A filter added and then cancelled isn't kept; Edit shows a filter and OK changes it
+                .story("EditFilterAndCancel", StepFilterDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
+                    final Play xpathList = screen.within(screen.querySelector("#steppingConditions"));
+                    play.click(screen.getByTitle("New XPath Filter"));
+                    play.click(dialog(screen, "Add XPath Filter").getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add XPath Filter", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(xpathList.queryByText("Exists")).toBeNull();
+                    play.click(screen.getByTitle("New XPath Filter"));
+                    play.click(dialog(screen, "Add XPath Filter").getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(xpathList.getByText("Exists")).toBeInTheDocument());
+                    play.click(xpathList.getByText("Exists"));
+                    play.click(screen.getByTitle("Edit Selected XPath Filter"));
+                    final Play edit = dialog(screen, "Edit XPath Filter");
+                    play.click(edit.within(edit.getByText("Condition", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Equals", ".selection-popup *"));
+                    final Query value = edit.getByLabelText("Value");
+                    play.type(value, "abc");
+                    play.click(edit.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(xpathList.getByText("abc")).toBeInTheDocument());
+                    play.expect(xpathList.queryByText("Exists")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // The elements are a list (listbox) that has the focus when the dialog opens, the
                 // first element chosen; the arrows choose the element whose filters are shown
                 .story("ElementsByKeyboard", StepFilterDialogStories::render)

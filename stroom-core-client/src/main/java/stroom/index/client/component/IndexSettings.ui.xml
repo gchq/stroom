@@ -33,7 +33,7 @@
         <form:FormGroup identity="indexSettingsTimeField" label="Main Time Field Name"
                         helpText="The name of the date field that holds each event's time. It is used to choose the event's partition and as the time field for queries. Default is EventTime."
                         screenReaderText="Date field used for partitioning and query time ranges. Default is EventTime.">
-            <g:TextBox ui:field="timeField"/>
+            <form:TextInput ui:field="timeField"/>
         </form:FormGroup>
         <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period"
                         helpText="How long to keep indexed data. Shards in partitions that ended longer ago than this are deleted. Choose Forever to keep all data."

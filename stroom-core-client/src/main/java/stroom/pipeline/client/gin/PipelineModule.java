@@ -76,7 +76,6 @@ public class PipelineModule extends PluginModule {
 
         bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
 
-
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
         bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterView.class,
                 SteppingFilterViewImpl.class);
@@ -102,6 +101,5 @@ public class PipelineModule extends PluginModule {
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,
                 ProcessorTaskViewImpl.class);
-
     }
 }

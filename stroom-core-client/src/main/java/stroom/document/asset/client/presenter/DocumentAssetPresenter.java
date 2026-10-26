@@ -139,14 +139,10 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      */
     private final DocumentAssetUploadFileDialogPresenter uploadFileDialog;
 
-    /**
-     * Dialog that appears when user wants to add a folder
-     */
+    // Makes the dialog that adds a file or folder
     private final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider;
 
-    /**
-     * Dialog that appears when user wants to edit the tree item
-     */
+    // Makes the dialog that renames the tree item
     private final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider;
 
     /**

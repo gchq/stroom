@@ -17,11 +17,11 @@
 package stroom.gitrepo.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextAreaInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Git Push dialog's content: the message recorded with the commit the push makes.
@@ -30,7 +30,7 @@ public class GitRepoCommitDialog extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextArea txtCommitMessage;
+    TextAreaInput txtCommitMessage;
 
     /// Makes the content with no message.
     public GitRepoCommitDialog() {

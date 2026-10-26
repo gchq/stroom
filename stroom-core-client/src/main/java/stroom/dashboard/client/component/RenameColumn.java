@@ -17,12 +17,12 @@
 package stroom.dashboard.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The Rename Field dialog's content: the column's new name.
@@ -31,7 +31,7 @@ public class RenameColumn extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    TextBox name;
+    TextInput name;
 
     private Runnable onEnter = () -> {
     };

@@ -105,9 +105,11 @@ public final class ConstraintValueText {
         if (type == null) {
             throw new IllegalArgumentException("A constraint must have a type");
         }
-        final String value = text == null
+        // Text and patterns are kept as typed; numbers and the like are read without spaces
+        final String raw = text == null
                 ? ""
-                : text.trim();
+                : text;
+        final String value = raw.trim();
         return switch (type) {
             case ANY -> new AnyTypeValue();
             case DURATION_VALUE -> new NanoTimeValue(NanoTime.ofNanos(Long.parseLong(value)));
@@ -116,9 +118,9 @@ public final class ConstraintValueText {
                 yield new NanoTimeRange(NanoTime.ofNanos(Long.parseLong(list.get(0))),
                         NanoTime.ofNanos(Long.parseLong(list.get(1))));
             }
-            case STRING -> new StringValue(value);
-            case STRING_SET -> new StringSet(split(value).collect(Collectors.toSet()));
-            case REGEX -> new Regex(value);
+            case STRING -> new StringValue(raw);
+            case STRING_SET -> new StringSet(Arrays.stream(raw.split(",")).collect(Collectors.toSet()));
+            case REGEX -> new Regex(raw);
             case BOOLEAN -> new BooleanValue(Boolean.parseBoolean(value));
             case ANY_BOOLEAN -> new AnyBoolean();
             case INTEGER -> new IntegerValue(Integer.parseInt(value));

@@ -10,10 +10,10 @@
                         screenReaderText="Press the keys of the shortcut, then Enter to accept or Escape to cancel.">
             <!-- Read only, so that a screen reader reads the keys as its value: they are recorded
                  from key presses, not typed -->
-            <form:TextInput ui:field="keys" addStyleNames="w-100 keyShortcutRecorder-keys" readOnly="true"
+            <form:TextInput ui:field="keys" addStyleNames="w-100 key-shortcut-recorder__keys" readOnly="true"
                             placeholder="Press keys"/>
         </form:FormGroup>
         <!-- Polite, as it changes with each key press while the keys keep the focus -->
-        <c:AriaPanel ui:field="message" styleName="keyShortcutRecorder-message" ariaLive="polite"/>
+        <c:AriaPanel ui:field="message" styleName="key-shortcut-recorder__message" ariaLive="polite"/>
     </g:FlowPanel>
 </ui:UiBinder>

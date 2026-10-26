@@ -13,7 +13,7 @@
             <tbody>
                 <tr>
                     <td ui:field="nameLabel">Name</td>
-                    <td><g:TextBox ui:field="nameBox"/></td>
+                    <td><form:TextInput ui:field="nameBox"/></td>
                 </tr>
                 <tr>
                     <td ui:field="colourLabel">Colour</td>

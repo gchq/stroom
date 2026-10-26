@@ -30,7 +30,5 @@ public class GitRepoModule extends PluginModule {
         bindPlugin(GitRepoPlugin.class);
         bind(GitRepoPresenter.class);
         bindPresenterWidget(GitRepoSettingsPresenter.class, GitRepoSettingsView.class, GitRepoSettingsViewImpl.class);
-
-        // Tie up the commit message dialog
     }
 }

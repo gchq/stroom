@@ -13,7 +13,7 @@
         <form:FormGroup ui:field="xPathContainer" identity="xPathFilterPath" label="XPath"
                         helpText="An XPath expression that selects the nodes to test, e.g. //Event/EventDetail/User/Id. Elements in the output's default namespace need no prefix."
                         screenReaderText="For example //Event/EventDetail/User/Id.">
-            <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
+            <form:TextInput ui:field="xPath" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="xPathFilterCondition" label="Condition"
                         helpText="How the selected nodes are tested: Exists, Does not exist, Contains, Does not contain, Equals or Not equals. Unique values stops at each record with a value not seen before. Default is Exists."
@@ -23,7 +23,7 @@
         <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value"
                         helpText="The text to compare with the selected nodes. For Equals and Not equals, numeric and boolean XPath results are compared as values rather than text."
                         screenReaderText="Text to compare with the selected nodes.">
-            <g:TextBox ui:field="value" addStyleNames="w-100"/>
+            <form:TextInput ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="ignoreCaseContainer"
                         helpText="Treats upper and lower case letters as the same when comparing with Value. Only used when Condition is Contains, Does not contain, Equals or Not equals. Default is ticked.">

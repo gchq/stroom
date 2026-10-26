@@ -30,6 +30,7 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -153,6 +154,51 @@ public final class AnnotationEditorStories {
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"linkEvents\", "
                                             + "\"events\": [{\"streamId\": 1234, \"eventId\": 5}]}}")
                                     .toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Link An Event refuses an id that isn't streamId:eventId, and stays open; Cancel
+                // then links nothing
+                .story("AddEventLinkInvalid", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(tab(play, "Events"));
+                    play.click(play.findByTitle("Add Event Link"));
+                    final Play dialog = screen.within(screen.findByText(TextMatch.containing("Link An Event"))
+                            .closest(StroomDom.DIALOG));
+                    play.type(dialog.getByRole("textbox"), "1234");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("Invalid event id")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("Invalid event id"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Close")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Link An Event")))
+                            .toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Set Retention Period: kept for ever, Retain For disabled; unticking Keep Forever
+                // offers 5 years, which OK sets
+                .story("RetentionPeriod", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByRole("button", "Change Retention Period"));
+                    final Play dialog = screen.within(screen.findByText("Set Retention Period", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    final Query forever = dialog.getByRole("checkbox", "Keep Forever");
+                    play.expect(forever).toBeChecked();
+                    play.click(forever);
+                    play.expect(forever).not().toBeChecked();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withBodyContaining("retentionPeriod")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Retention Period", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Events tab preview: the first linked event is selected and its data shown (record

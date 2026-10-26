@@ -6,13 +6,13 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form dock-container-vertical">
         <form:FormGroup identity="constraintName" label="Name">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="constraintType" label="Type">
             <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="constraintValue" label="Value">
-            <g:TextBox ui:field="value" addStyleNames="w-100"/>
+            <form:TextInput ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="constraintOptional" label="Optional">
             <tickbox:TickBox ui:field="optional"/>

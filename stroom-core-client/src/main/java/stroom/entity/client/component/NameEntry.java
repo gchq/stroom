@@ -18,12 +18,12 @@ package stroom.entity.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A dialog's name field (e.g. renaming a document, or a new group's name): the name, which must
@@ -35,7 +35,7 @@ public class NameEntry extends Component {
     @UiField
     FormGroup nameGroup;
     @UiField
-    TextBox name;
+    TextInput name;
 
     private Runnable onEnter = () -> {
     };
@@ -43,7 +43,11 @@ public class NameEntry extends Component {
     /// Makes an empty name field.
     public NameEntry() {
         initWidget(BINDER.createAndBindUi(this));
-        addAttachHandler(event -> focus());
+        addAttachHandler(event -> {
+            if (event.isAttached()) {
+                focus();
+            }
+        });
         name.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 onEnter.run();

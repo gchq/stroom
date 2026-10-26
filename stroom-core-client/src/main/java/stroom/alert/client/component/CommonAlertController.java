@@ -54,11 +54,16 @@ public class CommonAlertController extends Controller {
     public void show(final HasControllerNode opener,
                      final CommonAlertEvent<?> event,
                      final Consumer<Boolean> onHidden) {
-        switch (event.getLevel()) {
-            case INFO -> view.setInfo(event.getMessage());
-            case QUESTION -> view.setQuestion(event.getMessage());
-            case WARN -> view.setWarn(event.getMessage());
-            default -> view.setError(event.getMessage());
+        // One with no level is an error, as it always was
+        if (event.getLevel() == null) {
+            view.setError(event.getMessage());
+        } else {
+            switch (event.getLevel()) {
+                case INFO -> view.setInfo(event.getMessage());
+                case QUESTION -> view.setQuestion(event.getMessage());
+                case WARN -> view.setWarn(event.getMessage());
+                default -> view.setError(event.getMessage());
+            }
         }
         view.setDetail(event.getDetail());
 

@@ -63,7 +63,6 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
                 NavigationViewImpl.class);
         bind(RecentItemsPresenter.class);
 
-
         // UserPreferencesModule
         bindPresenterWidget(UserPreferencesPresenter.class,
                 UserPreferencesView.class,
