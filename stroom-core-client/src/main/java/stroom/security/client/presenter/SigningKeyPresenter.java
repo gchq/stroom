@@ -22,6 +22,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.client.component.SigningKeyListController;
 import stroom.security.client.presenter.SigningKeyPresenter.SigningKeyView;
 import stroom.security.identity.shared.SigningKeyResource;
 import stroom.security.identity.shared.SigningKeyRow;
@@ -32,6 +33,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -49,7 +51,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
     public static final String TAB_TYPE = "SigningKeys";
 
-    private final SigningKeyListPresenter listPresenter;
+    private final SigningKeyListController listPresenter;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final ButtonView revokeButton;
@@ -58,7 +60,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
     @Inject
     public SigningKeyPresenter(final EventBus eventBus,
                                final SigningKeyView view,
-                               final SigningKeyListPresenter listPresenter,
+                               final SigningKeyListController listPresenter,
                                final RestFactory restFactory,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
@@ -67,7 +69,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        view.setList(listPresenter.getView());
+        view.setList(listPresenter);
 
         listPresenter.getToolbar().setName("Signing key actions");
         revokeButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
@@ -214,6 +216,6 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
         void focus();
 
-        void setList(View view);
+        void setList(IsWidget view);
     }
 }
