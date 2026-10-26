@@ -33,6 +33,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -988,6 +989,32 @@ public final class PipelineEditorStories {
                     expectNoProblems(play);
                 })
                 // A structure edit dirties the document
+                // Edit Pipeline Reference shows the reference and Cancel keeps it; New with no
+                // pipeline chosen is refused, saying so
+                .story("EditPipelineReference", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.click(play.findByText("xslt"));
+                    play.click(play.findByText("Ref Pipeline"));
+                    play.click(play.getByTitle("Edit Selected Pipeline Reference"));
+                    final Play edit = dialog(screen, "Edit Pipeline Reference");
+                    play.expect(edit.getByText("xslt")).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(edit.getByText("Ref Pipeline")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(edit.getByText("MY_FEED")).toBeInTheDocument());
+                    play.click(edit.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Pipeline Reference",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    play.expect(play.getByText("Ref Pipeline")).toBeInTheDocument();
+                    play.click(play.getByTitle("New Pipeline Reference"));
+                    final Play add = dialog(screen, "New Pipeline Reference");
+                    play.click(add.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("You must specify a pipeline")));
+                    play.expect(screen.getByText("New Pipeline Reference", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // Edit Element shows the element's own description: one typed and cancelled isn't
                 // shown again (the dialog kept it, and OK then gave it to whichever element was
                 // edited), and one saved is
@@ -1188,6 +1215,8 @@ public final class PipelineEditorStories {
                                 "{\"pipeline\": {\"type\": \"Pipeline\", \"uuid\": \"child\", "
                                         + "\"name\": \"My Pipeline\"}, \"json\": \"{ \\\"elements\\\": {} }\"}"))
                         .post("/meta/v1/find", RestReply.json(streams))
+                        // The stream types a reference can load from
+                        .get("/meta/v1/getTypes", RestReply.json("[\"Reference\", \"Context\"]"))
                         .post("/processorFilter/v1/find", RestReply.json(processorRows))
                         .post("/expression/v1/validate", RestReply.json("{\"ok\": true}"))
                         .addAll(PipelineFixtures.stepping("xslt"))

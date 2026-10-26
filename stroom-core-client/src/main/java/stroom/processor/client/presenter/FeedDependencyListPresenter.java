@@ -20,13 +20,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.shared.StreamTypeNames;
+import stroom.processor.client.component.FeedDependencyEditorController;
 import stroom.processor.shared.FeedDependency;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -55,7 +55,7 @@ public class FeedDependencyListPresenter
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private final List<FeedDependency> feedDependencies = new ArrayList<>();
-    private final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter;
+    private final Provider<FeedDependencyEditorController> feedDependencyEditorProvider;
 
     private boolean readOnly = false;
 
@@ -64,7 +64,7 @@ public class FeedDependencyListPresenter
     @Inject
     public FeedDependencyListPresenter(final EventBus eventBus,
                                        final PagerPanel view,
-                                       final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter,
+                                       final Provider<FeedDependencyEditorController> feedDependencyEditorProvider,
                                        final RefCellsController refCells) {
         super(eventBus, view);
         this.refCells = own(refCells);
@@ -76,7 +76,7 @@ public class FeedDependencyListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        this.newFeedDependencyPresenter = newFeedDependencyPresenter;
+        this.feedDependencyEditorProvider = feedDependencyEditorProvider;
 
         addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
         view.getToolbar().setName("Feed dependency actions");
@@ -182,47 +182,28 @@ public class FeedDependencyListPresenter
     private void showEditor(final FeedDependency feedDependency,
                             final boolean isNew) {
         if (feedDependency != null) {
-            final EditFeedDependencyPresenter editor = makeDialog(newFeedDependencyPresenter);
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    final FeedDependency updated = editor.write();
-
-                    if (updated.getFeedName() == null) {
-                        AlertEvent.fireError(FeedDependencyListPresenter.this,
-                                "You must specify a feed to use.",
-                                e::reset);
-                    } else if (updated.getStreamType() == null) {
-                        AlertEvent.fireError(FeedDependencyListPresenter.this,
-                                "You must specify a stream type to use.", e::reset);
-                    } else {
-                        final int index = feedDependencies.indexOf(updated);
-                        if (index == -1) {
-                            feedDependencies.add(updated);
-                        } else {
-                            feedDependencies.remove(index);
-                            feedDependencies.add(index, updated);
-                        }
-                        refresh();
-                        e.hide();
-                    }
-                } else {
-                    e.hide();
-                }
-            };
-
-            final PopupSize popupSize = PopupSize.resizableX();
-            ShowPopupEvent.builder(editor)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(isNew
+            feedDependencyEditorProvider.get().edit(this,
+                    isNew
                             ? "New Feed Dependency"
-                            : "Edit Feed Dependency")
-                    .onShow(e -> {
-                        editor.read(feedDependency);
-                        editor.focus();
-                    })
-                    .onHideRequest(handler)
-                    .fire();
+                            : "Edit Feed Dependency",
+                    feedDependency,
+                    (updated, e) -> {
+                        if (updated.getFeedName() == null) {
+                            AlertEvent.fireError(this, "You must specify a feed to use.", e::reset);
+                        } else if (updated.getStreamType() == null) {
+                            AlertEvent.fireError(this, "You must specify a stream type to use.", e::reset);
+                        } else {
+                            final int index = feedDependencies.indexOf(updated);
+                            if (index == -1) {
+                                feedDependencies.add(updated);
+                            } else {
+                                feedDependencies.remove(index);
+                                feedDependencies.add(index, updated);
+                            }
+                            refresh();
+                            e.hide();
+                        }
+                    });
         }
     }
 

@@ -31,6 +31,7 @@ import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.structure.client.component.NewPipelineReferenceController;
 import stroom.planb.shared.PlanBDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.svg.shared.SvgImage;
@@ -39,10 +40,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -85,7 +82,7 @@ public class PipelineReferenceListPresenter
     private final ButtonView removeButton;
     private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
     private final List<PipelineReference> references = new ArrayList<>();
-    private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
+    private final Provider<NewPipelineReferenceController> newPipelineReferenceProvider;
     private final RestFactory restFactory;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
@@ -101,7 +98,7 @@ public class PipelineReferenceListPresenter
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final PagerPanel view,
-                                          final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
+                                          final Provider<NewPipelineReferenceController> newPipelineReferenceProvider,
                                           final RestFactory restFactory,
                                           final PipelineElementTypesFactory pipelineElementTypesFactory,
                                           final RefCellsController refCells) {
@@ -114,7 +111,7 @@ public class PipelineReferenceListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        this.newPipelineReferencePresenter = newPipelineReferencePresenter;
+        this.newPipelineReferenceProvider = newPipelineReferenceProvider;
         this.restFactory = restFactory;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
@@ -320,62 +317,37 @@ public class PipelineReferenceListPresenter
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
             builder.getReferences().getAddList().remove(pipelineReference);
 
-            final NewPipelineReferencePresenter editor = makeDialog(newPipelineReferencePresenter);
-
-            final HidePopupRequestEvent.Handler handler = e -> {
-                if (e.isOk()) {
-                    final PipelineReference updated = editor.write();
-
-                    if (updated.getPipeline() == null) {
-                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a pipeline to use.", e::reset);
-                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               !SqlTemporalStoreDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               updated.getFeed() == null) {
-                        AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
-                                e::reset);
-                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               !SqlTemporalStoreDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               updated.getStreamType() == null) {
-                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                "You must specify a stream type to use.", e::reset);
-                    } else {
-                        if (!builder.getReferences().getAddList().contains(updated)) {
-                            builder.getReferences().getAddList().add(updated);
+            newPipelineReferenceProvider.get().edit(this,
+                    isNew
+                            ? "New Pipeline Reference"
+                            : "Edit Pipeline Reference",
+                    pipelineReference,
+                    (updated, e) -> {
+                        // A Plan B or SQL temporal store needs no feed or stream type
+                        final String type = NullSafe.get(updated.getPipeline(), DocRef::getType);
+                        final boolean isStore = PlanBDoc.TYPE.equals(type) || SqlTemporalStoreDoc.TYPE.equals(type);
+                        if (updated.getPipeline() == null) {
+                            AlertEvent.fireError(this, "You must specify a pipeline to use.", e::reset);
+                        } else if (!isStore && updated.getFeed() == null) {
+                            AlertEvent.fireError(this, "You must specify a feed to use.", e::reset);
+                        } else if (!isStore && updated.getStreamType() == null) {
+                            AlertEvent.fireError(this, "You must specify a stream type to use.", e::reset);
+                        } else {
+                            if (!builder.getReferences().getAddList().contains(updated)) {
+                                builder.getReferences().getAddList().add(updated);
+                            }
+                            setPipelineData(builder.build());
+                            refresh();
+                            e.hide();
                         }
-
-                        setPipelineData(builder.build());
-
-                        refresh();
-                        e.hide();
-                    }
-                } else {
-                    // User has cancelled edit so add the reference back to
-                    // the list if this was an existing reference
-                    if (!isNew) {
-                        if (!builder.getReferences().getAddList().contains(pipelineReference)) {
+                    },
+                    () -> {
+                        // An existing reference cancelled is put back in the list
+                        if (!isNew && !builder.getReferences().getAddList().contains(pipelineReference)) {
                             builder.getReferences().getAddList().add(pipelineReference);
                         }
-                    }
-                    setPipelineData(builder.build());
-
-                    e.hide();
-                }
-            };
-
-            final PopupSize popupSize = PopupSize.resizableX();
-            ShowPopupEvent.builder(editor)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption(isNew
-                            ? "New Pipeline Reference"
-                            : "Edit Pipeline Reference")
-                    .onShow(e -> {
-                        editor.read(pipelineReference);
-                        editor.focus();
-                    })
-                    .onHideRequest(handler)
-                    .fire();
+                        setPipelineData(builder.build());
+                    });
         }
     }
 

@@ -31,19 +31,14 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
 import stroom.pipeline.stepping.client.view.SteppingViewImpl;
-import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter;
-import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter;
 import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
-import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
-import stroom.processor.client.presenter.EditFeedDependencyPresenter;
-import stroom.processor.client.presenter.EditFeedDependencyPresenter.EditFeedDependencyView;
 import stroom.processor.client.presenter.FeedDependencyPresenter;
 import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
@@ -53,7 +48,6 @@ import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
-import stroom.processor.client.view.EditFeedDependencyViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorProfileEditViewImpl;
@@ -84,9 +78,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(NewPropertyPresenter.class,
                 NewPropertyView.class,
                 NewPropertyViewImpl.class);
-        bindPresenterWidget(NewPipelineReferencePresenter.class,
-                NewPipelineReferenceView.class,
-                NewPipelineReferenceViewImpl.class);
         bindPresenterWidget(SteppingPresenter.class,
                 SteppingView.class,
                 SteppingViewImpl.class);
@@ -108,9 +99,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FeedDependencyPresenter.class,
                 FeedDependencyView.class,
                 FeedDependencyViewImpl.class);
-        bindPresenterWidget(EditFeedDependencyPresenter.class,
-                EditFeedDependencyView.class,
-                EditFeedDependencyViewImpl.class);
         bindPresenterWidget(ProcessorProfileEditPresenter.class,
                 ProcessorProfileEditView.class,
                 ProcessorProfileEditViewImpl.class);
