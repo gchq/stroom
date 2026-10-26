@@ -19,8 +19,10 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.vis.ChartKind;
 import stroom.ai.impl.vis.ChartLibraries;
+import stroom.ai.impl.vis.ChartLibraries.D3Install;
 import stroom.ai.impl.vis.ChartLibraries.EChartsInstall;
 import stroom.ai.impl.vis.ChartLibraries.InstalledVisualisation;
+import stroom.ai.impl.vis.ChartLibrary;
 import stroom.ai.impl.vis.ChartRole;
 import stroom.ai.impl.vis.D3Visualisation;
 import stroom.ai.impl.vis.StyleSetting;
@@ -110,15 +112,34 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
             sb.append(". Generates any of the kinds below (library echarts), drawn by Stroom's own adapter.\n");
         }
 
-        final Map<ChartKind, DocRef> d3 = chartLibraries.findD3();
-        if (d3.isEmpty()) {
-            sb.append("- D3 (the visualisations content pack): not installed.\n");
+        final D3Install d3Library = chartLibraries.findD3Library().orElse(null);
+        if (d3Library == null) {
+            sb.append("- D3: not installed. An administrator installs it as a Script doc holding a D3 build, "
+                      + "version 3 or later (the visualisations content pack includes D3 3).\n");
         } else {
-            sb.append("- D3 (the visualisations content pack): ").append(d3.entrySet().stream()
+            sb.append("- D3 ").append(d3Library.version()).append(": installed as Script '")
+                    .append(d3Library.script().getName()).append("' (").append(d3Library.script().getUuid())
+                    .append(")");
+            if (!chartLibraries.currentUserCanUse(d3Library.script())) {
+                sb.append(", but the user doesn't have Use permission on it, so its charts won't load for them");
+            }
+            sb.append(". Generates any of the kinds below (library d3), drawn by Stroom's own adapter; not the "
+                      + "settings marked echarts only. The newest D3 installed is used.\n");
+        }
+
+        final Map<ChartKind, DocRef> d3 = chartLibraries.findContentPackD3();
+        if (d3.isEmpty()) {
+            sb.append("- The visualisations content pack's D3 charts: not installed.\n");
+        } else {
+            sb.append("- The visualisations content pack's D3 charts: ").append(d3.entrySet().stream()
                     .map(entry -> entry.getKey().id() + " ('" + entry.getValue().getName() + "')")
                     .collect(Collectors.joining(", ")))
-                    .append(". Wires these existing Visualisations to a table (library d3); nothing is "
-                            + "generated, and only their own inputs apply.\n");
+                    .append(". Wires these existing Visualisations to a table (library content-pack); nothing "
+                            + "is generated, and only their own inputs apply.\n");
+        }
+        if (echarts != null && d3Library != null) {
+            sb.append("Both ECharts and D3 can generate charts: ask the user which to use (ask_user) unless they "
+                      + "have said.\n");
         }
 
         sb.append("\n# Chart kinds\n");
@@ -136,22 +157,25 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
                 }
                 sb.append("\n");
             }
-            sb.append("Style settings (echarts): ").append(kind.styleSettings().stream()
-                    .map(ListVisualisationsTool::describe)
+            sb.append("Style settings: ").append(kind.styleSettings().stream()
+                    .map(setting -> describe(setting) + (ChartLibrary.D3.supports(setting)
+                            ? ""
+                            : " (echarts only)"))
                     .collect(Collectors.joining("; "))).append("\n");
             NullSafe.consume(TUNING.get(kind), tuning -> sb.append(tuning).append("\n"));
         }
-        sb.append("\nClicks (echarts): clicking a slice, bar, point, cell, link or node selects it (clicking it "
-                  + "again, or empty space, clears it). The selection holds each column id it maps (e.g. category "
-                  + "and series) and the same value under the table column's name, dates as ISO 8601 text; a network "
-                  + "graph's node gives node, and its link source and target. A query or table is filtered by it "
-                  + "with an add_selection_filter change (propose_dashboard_change).\n");
+        sb.append("\nClicks (echarts and d3): clicking a slice, bar, point, cell, link or node selects it "
+                  + "(clicking it again, or empty space, clears it). The selection holds each column id it maps "
+                  + "(e.g. category and series) and the same value under the table column's name, dates as ISO "
+                  + "8601 text; a network graph's node gives node, and its link source and target. A query or "
+                  + "table is filtered by it with an add_selection_filter change (propose_dashboard_change).\n");
         sb.append("\nOptions (echarts): for what the style settings can't do, ECharts option overrides as a JSON "
                   + "object, with top-level keys ").append(String.join(", ", VisualisationPlan.OPTION_KEYS.stream()
                         .sorted()
                         .toList()))
                 .append(" (seriesDefaults is merged into every series). They are one setting: giving options "
-                        + "again replaces all of them, so keep the ones wanted.\n");
+                        + "again replaces all of them, so keep the ones wanted.\n")
+                .append("Options (d3): only color, a list of colours for the series or categories.\n");
 
         final List<InstalledVisualisation> installed = chartLibraries.listVisualisations();
         sb.append("\n# Visualisations in Stroom\n\n");
@@ -161,7 +185,9 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
             installed.stream().limit(MAX_LISTED).forEach(vis -> sb.append("- '").append(vis.docRef().getName())
                     .append("' (").append(vis.docRef().getUuid()).append(")")
                     .append(vis.generated()
-                            ? ": generated by Stroom AI (ECharts)"
+                            ? ": generated by Stroom AI" + ChartLibrary.forFunctionName(vis.functionName())
+                                    .map(library -> " (" + library.displayName() + ")")
+                                    .orElse("")
                             : D3Visualisation.forFunctionName(vis.functionName())
                                     .map(d3Vis -> ": content pack D3 " + d3Vis.kind().id())
                                     .orElse(""))
