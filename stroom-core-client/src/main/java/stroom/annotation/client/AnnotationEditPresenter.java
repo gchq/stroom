@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.component.ChooserController;
 import stroom.annotation.client.component.ChooserController.DataSupplier;
+import stroom.annotation.client.component.CommentEditController;
 import stroom.annotation.client.component.MultiChooserController;
 import stroom.annotation.client.component.OpenChooser;
 import stroom.annotation.shared.AddTag;
@@ -70,11 +71,8 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.Clipboard;
@@ -160,7 +158,7 @@ public class AnnotationEditPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private final DurationPresenter retentionDurationProvider;
     private final DurationLabel durationLabel;
-    private final Provider<CommentEditPresenter> commentEditPresenterProvider;
+    private final Provider<CommentEditController> commentEditProvider;
 
     private DocRef annotationRef;
     private AnnotationIdentity annotationIdentity;
@@ -193,7 +191,7 @@ public class AnnotationEditPresenter
                                    final DateTimeFormatter dateTimeFormatter,
                                    final DurationPresenter retentionDurationProvider,
                                    final DurationLabel durationLabel,
-                                   final Provider<CommentEditPresenter> commentEditPresenterProvider) {
+                                   final Provider<CommentEditController> commentEditProvider) {
         super(eventBus, view);
         own(assignedToPresenter);
         own(retentionDurationProvider);
@@ -205,7 +203,7 @@ public class AnnotationEditPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.retentionDurationProvider = retentionDurationProvider;
         this.durationLabel = durationLabel;
-        this.commentEditPresenterProvider = commentEditPresenterProvider;
+        this.commentEditProvider = commentEditProvider;
 
         getView().setUiHandlers(this);
         assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
@@ -643,25 +641,8 @@ public class AnnotationEditPresenter
         final FetchAnnotationEntryRequest request = new FetchAnnotationEntryRequest(annotationRef, id);
         annotationResourceClient.fetchAnnotationEntry(request, annotationEntry -> {
             if (annotationEntry.getEntryValue() instanceof final StringEntryValue value) {
-                final CommentEditPresenter commentEditPresenter = makeDialog(commentEditPresenterProvider);
-                commentEditPresenter.setText(value.getValue());
-                final PopupSize popupSize = PopupSize.resizable(600, 600);
-                ShowPopupEvent.builder(commentEditPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .popupSize(popupSize)
-                        .caption("Edit Comment")
-                        .onShow(e -> commentEditPresenter.focus())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                changeComment(id,
-                                        commentEditPresenter.getText(),
-                                        annotationEntry.getEntryType(),
-                                        e);
-                            } else {
-                                e.hide();
-                            }
-                        })
-                        .fire();
+                commentEditProvider.get().edit(this, value.getValue(), (text, e) ->
+                        changeComment(id, text, annotationEntry.getEntryType(), e));
             }
         }, this);
     }

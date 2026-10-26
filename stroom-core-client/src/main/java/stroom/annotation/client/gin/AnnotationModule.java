@@ -41,9 +41,6 @@ import stroom.annotation.client.ChangeAssignedToViewImpl;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChangeStatusViewImpl;
-import stroom.annotation.client.CommentEditPresenter;
-import stroom.annotation.client.CommentEditPresenter.CommentEditView;
-import stroom.annotation.client.CommentEditViewImpl;
 import stroom.annotation.client.DurationPresenter;
 import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.annotation.client.DurationViewImpl;
@@ -80,7 +77,6 @@ public class AnnotationModule extends PluginModule {
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
         bindPresenterWidget(DurationPresenter.class, DurationView.class, DurationViewImpl.class);
-        bindPresenterWidget(CommentEditPresenter.class, CommentEditView.class, CommentEditViewImpl.class);
         bindSharedView(AbstractFindPresenter.FindView.class, FindViewImpl.class);
 
 
