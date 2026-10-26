@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.config.global.client.presenter;
+package stroom.config.global.client.component;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -24,20 +25,15 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -54,15 +50,14 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class ManageGlobalPropertyListPresenter
-        extends MyPresenterWidget<PagerPanel>
-        implements ColumnSortEvent.Handler {
+/// The global properties ([ManageGlobalPropertyList]) as one node has them, then each node's values
+/// and sources fetched to show where they differ across the cluster; filtered by name.
+public class ManageGlobalPropertyListController extends Controller {
 
     private static final String NODES_UNAVAILABLE_MSG = "[Error getting values]";
     private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
-    private static final String MULTIPLE_VALUES_MSG = "[Multiple values]";
-    private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
-    private static final String ERROR_CSS_COLOUR = "var(--text-color--red)";
+    private static final String MULTIPLE_VALUES_MSG = ManageGlobalPropertyList.MULTIPLE_VALUES_MSG;
+    private static final String MULTIPLE_SOURCES_MSG = ManageGlobalPropertyList.MULTIPLE_SOURCES_MSG;
 
     // This is the delay between getting the list of props and hitting all the other nodes
     // to get their specific values.  Too low and we pepper the nodes for each key press of the filter.
@@ -73,8 +68,7 @@ public class ManageGlobalPropertyListPresenter
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
-    private final DataGrid<ConfigPropertyRow> dataGrid;
-    private final MultiSelectionModelImpl<ConfigPropertyRow> selectionModel;
+    private final ManageGlobalPropertyList view;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -109,31 +103,32 @@ public class ManageGlobalPropertyListPresenter
     private Consumer<String> onErrors = errors -> {
     };
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The content.
+    /// @param restFactory Fetches the properties.
+    /// @param nodeClient  Lists the nodes.
     @Inject
-    public ManageGlobalPropertyListPresenter(final EventBus eventBus,
-                                             final PagerPanel view,
-                                             final RestFactory restFactory,
-                                             final NodeClient nodeClient) {
-        super(eventBus, view);
-
-        dataGrid = new DataGrid<>();
-        // Rows keyed by name: each node's reply rebuilds the rows
-        dataGrid.setKeyProvider(ConfigPropertyRow::getNameAsString);
-        dataGrid.setTableName("Properties");
-        dataGrid.setMultiLine(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
+    public ManageGlobalPropertyListController(final EventBus eventBus,
+                                              final ManageGlobalPropertyList view,
+                                              final RestFactory restFactory,
+                                              final NodeClient nodeClient) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
-
-        initColumns();
+        initWidget(view);
 
         dataProvider = new ListDataProvider<>();
-        dataProvider.addDataDisplay(dataGrid);
+        view.setDataProvider(dataProvider);
         dataProvider.setListUpdater(this::refreshTable);
 
-        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        view.setOnSortChange(this::refresh);
+        // Timers stop with the list
+        onDispose(refreshAllNodesTimer::reset);
+        onDispose(updateChildMapsTimer::reset);
+        onDispose(nameFilterTimer::cancel);
     }
 
     private void resetLocalState() {
@@ -150,7 +145,7 @@ public class ManageGlobalPropertyListPresenter
     private void refreshTable(final Range range) {
 
         CriteriaUtil.setRange(criteria, range);
-        CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+        CriteriaUtil.setSortList(criteria, view.getSortList());
 
         resetLocalState();
 
@@ -191,10 +186,11 @@ public class ManageGlobalPropertyListPresenter
                 })
                 .onFailure(caught ->
                         AlertEvent.fireError(
-                                ManageGlobalPropertyListPresenter.this,
+                                ManageGlobalPropertyListController.this,
                                 caught.getMessage(),
                                 null))
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
     }
 
@@ -212,14 +208,14 @@ public class ManageGlobalPropertyListPresenter
                         showError(
                                 error.getException(),
                                 "Error getting list of all nodes. Only properties for one node will be shown"),
-                getView());
+                view.getTaskMonitor());
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
 //        GWT.log("Refreshing " + nodeName);
         criteria.setPageRequest(new PageRequest(
-                dataGrid.getVisibleRange().getStart(),
-                dataGrid.getVisibleRange().getLength()));
+                view.getVisibleRange().getStart(),
+                view.getVisibleRange().getLength()));
 
         restFactory
                 .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
@@ -245,7 +241,8 @@ public class ManageGlobalPropertyListPresenter
                     // unless another node has already kicked it off
                     updateChildMapsTimer.update();
                 })
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
     }
 
@@ -329,7 +326,7 @@ public class ManageGlobalPropertyListPresenter
                 })
                 .collect(Collectors.toList());
         // We are not changing the total so re-use the existing one
-        dataProvider.setPartialList(newRows, dataGrid.getRowCount());
+        dataProvider.setPartialList(newRows, view.getRowCount());
     }
 
     private void updatePropertyKeyedMaps() {
@@ -361,78 +358,40 @@ public class ManageGlobalPropertyListPresenter
         onErrors.accept(errors);
     }
 
-    private void initColumns() {
-        // Name.
-        dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder((ConfigPropertyRow row) ->
-                                row.getNameAsString())
-                        .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
-                        .build(),
-                GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
-                450);
-
-        // Effective Value
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getEffectiveValueAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
-                                        ERROR_CSS_COLOUR))
-                        .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
-                        .build(),
-                GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
-                300);
-
-        // Source
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(
-                                DataGridUtil.highlightedCellExtractor(
-                                        ConfigPropertyRow::getSourceAsString,
-                                        (ConfigPropertyRow row) ->
-                                                MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
-                                        ERROR_CSS_COLOUR))
-                        .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
-                        .build(),
-                GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
-                75);
-
-        // Description
-        dataGrid.addAutoResizableColumn(
-                DataGridUtil.htmlColumnBuilder(
-                                (ConfigPropertyRow row) ->
-                                        SafeHtmlUtils.fromString(row.getDescription()))
-                        .build(),
-                GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
-                750);
-    }
-
     /// The toolbar beside the list's pager, for the screen's own buttons.
     ///
     /// @return The toolbar.
     public Toolbar getToolbar() {
-        return getView().getToolbar();
+        return view.getToolbar();
     }
 
+    /// @param filterErrorConsumer Given why the filter was rejected after each fetch, or `null` if
+    ///                            it wasn't.
     public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
         this.filterErrorConsumer = filterErrorConsumer;
     }
 
+    /// Fetches the properties again.
     public void refresh() {
         dataProvider.refresh(false);
     }
 
+    /// @return The property selected.
     public ConfigProperty getSelectedItem() {
-        return selectionModel.getSelected().getConfigProperty();
+        return view.getSelectionModel().getSelected().getConfigProperty();
     }
 
-    void setPartialName(final String partialName) {
+    /// Filters the properties by name, after a pause for typing.
+    ///
+    /// @param partialName Part of a property's name.
+    public void setPartialName(final String partialName) {
         nameFilterTimer.setName(partialName);
         nameFilterTimer.cancel();
         nameFilterTimer.schedule(400);
     }
 
-    void clearFilter() {
+    /// Shows every property again.
+    public void clearFilter() {
         this.criteria.setQuickFilter(null);
 
         if (!(lastNodeName == null || lastNodeName.isEmpty())) {
@@ -443,15 +402,10 @@ public class ManageGlobalPropertyListPresenter
 
     private void showError(final Throwable throwable, final String message) {
         AlertEvent.fireError(
-                ManageGlobalPropertyListPresenter.this,
+                ManageGlobalPropertyListController.this,
                 message + " - " + throwable.getMessage(),
                 null,
                 null);
-    }
-
-    @Override
-    public void onColumnSort(final ColumnSortEvent event) {
-        // TODO implement sorting for Name and Source
     }
 
     /// @param onErrors What to run with the errors (the nodes that couldn't be reached, one per
@@ -460,53 +414,9 @@ public class ManageGlobalPropertyListPresenter
         this.onErrors = onErrors;
     }
 
+    /// @return The selection, one property at most.
     public MultiSelectionModelImpl<ConfigPropertyRow> getSelectionModel() {
-        return selectionModel;
-    }
-
-    public static class ConfigPropertyRow {
-
-        private final ConfigProperty configProperty;
-        private final String effectiveValue;
-        private final String source;
-
-        public ConfigPropertyRow(final ConfigProperty configProperty,
-                                 final String effectiveValue,
-                                 final String source) {
-            this.configProperty = configProperty;
-            this.effectiveValue = effectiveValue;
-            this.source = source;
-        }
-
-        public ConfigPropertyRow(final ConfigProperty configProperty) {
-            this.configProperty = configProperty;
-            this.effectiveValue = null;
-            this.source = null;
-        }
-
-        public ConfigProperty getConfigProperty() {
-            return configProperty;
-        }
-
-        public String getEffectiveValueAsString() {
-            return effectiveValue != null
-                    ? effectiveValue
-                    : configProperty.getEffectiveValueMasked().orElse(null);
-        }
-
-        public String getSourceAsString() {
-            return source != null
-                    ? source
-                    : configProperty.getSource().getName();
-        }
-
-        public String getNameAsString() {
-            return configProperty.getNameAsString();
-        }
-
-        public String getDescription() {
-            return configProperty.getDescription();
-        }
+        return view.getSelectionModel();
     }
 
     private class NameFilterTimer extends Timer {
@@ -526,8 +436,7 @@ public class ManageGlobalPropertyListPresenter
             if (!Objects.equals(filter, criteria.getQuickFilter())) {
                 criteria.setQuickFilter(filter);
                 // Need to reset the range else the name criteria can push us outside the page we are on
-                final Range range = dataGrid.getVisibleRange();
-                dataGrid.setVisibleRange(0, range.getLength());
+                view.resetRange();
                 refresh();
             }
         }

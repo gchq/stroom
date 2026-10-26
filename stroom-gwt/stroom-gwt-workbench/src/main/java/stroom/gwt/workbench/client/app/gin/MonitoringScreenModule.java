@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.gin;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
-import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
 import stroom.config.global.client.view.ConfigPropertyClusterValuesViewImpl;
 import stroom.config.global.client.view.GlobalPropertyEditViewImpl;
 import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
@@ -55,7 +54,6 @@ public class MonitoringScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(JobPresenter.class,
                 JobView.class,
                 JobViewImpl.class);
-        bind(ManageGlobalPropertyListPresenter.class);
         bindPresenterWidget(GlobalPropertyTabPresenter.class,
                 GlobalPropertyTabPresenter.GlobalPropertyTabView.class,
                 GlobalPropertyTabViewImpl.class);

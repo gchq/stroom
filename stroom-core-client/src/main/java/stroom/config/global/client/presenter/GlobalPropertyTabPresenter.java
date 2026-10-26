@@ -17,6 +17,7 @@
 package stroom.config.global.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.client.component.ManageGlobalPropertyListController;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -32,6 +33,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,7 +46,7 @@ public class GlobalPropertyTabPresenter
 
     public static final String TAB_TYPE = "Caches";
 
-    private final ManageGlobalPropertyListPresenter listPresenter;
+    private final ManageGlobalPropertyListController listPresenter;
     private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
     private final ButtonView openButton;
     private final ButtonView warningsButton;
@@ -53,7 +55,7 @@ public class GlobalPropertyTabPresenter
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
                                       final GlobalPropertyTabView view,
-                                      final ManageGlobalPropertyListPresenter listPresenter,
+                                      final ManageGlobalPropertyListController listPresenter,
                                       final Provider<ManageGlobalPropertyEditPresenter> editProvider,
                                       final UiConfigCache uiConfigCache,
                                       final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
@@ -62,7 +64,7 @@ public class GlobalPropertyTabPresenter
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         view.setUiHandlers(this);
-        getView().setListView(listPresenter.getView());
+        getView().setListView(listPresenter);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -169,7 +171,7 @@ public class GlobalPropertyTabPresenter
         /// Shows the list of properties.
         ///
         /// @param view Its view.
-        void setListView(View view);
+        void setListView(IsWidget view);
 
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
