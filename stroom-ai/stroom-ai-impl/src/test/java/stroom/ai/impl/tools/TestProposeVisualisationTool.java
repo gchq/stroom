@@ -796,6 +796,14 @@ class TestProposeVisualisationTool {
                           + "its time axis (its range tool), or the time a clicked point stands for (e.g. its "
                           + "whole day, for floorDay() values), e.g. the query's field EventTime.");
 
+        // Bars of days: a range is dragged across them.
+        assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.BAR,
+                Map.of("category", "Day", "value", "Count"), Map.of("Day", "floorDay(${EventTime})"),
+                Map.of("Day", "DATE_TIME"), false, "Events"))
+                .contains("never equal to it: a range dragged across its bars of dates (its range tool, while they "
+                          + "are in time order rather than sorted by value), or the time a clicked point stands "
+                          + "for");
+
         // A calendar of floorDay() values: a clicked day filters the field it rounds, with no range tool.
         assertThat(ProposeVisualisationTool.clickFilterNote(ChartKind.CALENDAR,
                 Map.of("date", "Day", "value", "Count"), Map.of("Day", "floorDay(${EventTime})"),

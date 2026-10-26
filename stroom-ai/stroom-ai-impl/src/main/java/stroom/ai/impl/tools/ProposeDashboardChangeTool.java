@@ -244,7 +244,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                      + "term drops out while nothing is selected. A date field or column "
                                      + "given a date the chart selects (a time axis's x, a calendar's date, or "
                                      + "any column the table formats as Date Time), or selection range, keeps "
-                                     + "it within the selected time: the range dragged along a time axis, or "
+                                     + "it within the selected time: the range dragged along a time axis (or "
+                                     + "across bars of dates), or "
                                      + "the time a clicked point stands for (e.g. its day, for floorDay() "
                                      + "values).")
                         .build())
@@ -1144,7 +1145,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         if (keys.contains("source")) {
             keys.add("node");
         }
-        // A time-series chart's range tool selects a range of its x axis.
+        // A time-series chart's range tool selects a range of its x axis (bars of dates have one too, which
+        // the filter's check adds as their category is a date).
         if (keys.contains("x")) {
             keys.add(RANGE_SELECTION);
         }
