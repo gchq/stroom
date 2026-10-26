@@ -1086,7 +1086,7 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
 
     // For a chart that selects dates (a column it picks out formatted as Date Time, e.g. a time axis's x or a
     // calendar's date), how a filter keeps a date field or column within the selected time; and, for a time axis
-    // (a line chart's or a scatter plot's x), its range tool. Empty otherwise.
+    // (a line chart's or a scatter plot's x) or bars of dates, its range tool. Empty otherwise.
     private static String rangeNote(final ChartKind kind,
                                     final Map<String, String> mappings,
                                     final Map<String, String> expressions,
@@ -1113,11 +1113,17 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         final String x = NullSafe.get(mappings, map -> map.get("x"));
         final boolean timeAxis = (kind == ChartKind.LINE || kind == ChartKind.SCATTER) && NullSafe.isNonBlankString(x)
                                  && "DATE_TIME".equals(NullSafe.get(formats, map -> map.get(x)));
+        final String category = NullSafe.get(mappings, map -> map.get("category"));
+        final boolean dateBars = kind == ChartKind.BAR && NullSafe.isNonBlankString(category)
+                                 && "DATE_TIME".equals(NullSafe.get(formats, map -> map.get(category)));
         return " Dates: a term giving a date field (or a table's date column) the selection "
                + String.join(" or ", dates) + " keeps it within the selected time, never equal to it: "
                + (timeAxis
                 ? "a range dragged along its time axis (its range tool), or "
-                : "")
+                : dateBars
+                        ? "a range dragged across its bars of dates (its range tool, while they are in time "
+                          + "order rather than sorted by value), or "
+                        : "")
                + "the time a clicked point stands for (e.g. its whole day, for floorDay() values)"
                + (fields.isEmpty()
                 ? ""

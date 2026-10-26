@@ -721,6 +721,56 @@ if (!window.visualisations) {
         return {categories: categories, series: seriesData};
     }
 
+    // What a click on a category chart's bar or point selects: its category, and its series if one is mapped.
+    // For a chart whose categories are dates in time order (e.g. a bar per day), what a range dragged across them
+    // stands for: from the start of the first to the end of the last (e.g. the whole of its day). Null if they
+    // aren't dates in order (e.g. sorted by value), as a range across them would mean nothing.
+    function categoryTimes(fields, id, categories, prefs) {
+        if (fields.type(id) !== "DATE_TIME" || categories.length === 0) {
+            return null;
+        }
+        var times = categories.map(function (label) {
+            return Number(fields.rawOf(id, label));
+        });
+        var rising = true;
+        var falling = true;
+        for (var i = 0; i < times.length; i++) {
+            if (!isFinite(times[i])) {
+                return null;
+            }
+            if (i > 0) {
+                rising = rising && times[i] > times[i - 1];
+                falling = falling && times[i] < times[i - 1];
+            }
+        }
+        if (!rising && !falling) {
+            return null;
+        }
+        var bucket = fields.bucket(id);
+        var last = times.length - 1;
+        return {
+            // The time from the first category's start to the last's end, of those between two (by index).
+            range: function (first, second) {
+                var a = Math.max(0, Math.min(last, Math.round(Math.min(first, second))));
+                var b = Math.max(0, Math.min(last, Math.round(Math.max(first, second))));
+                var start = Math.min(times[a], times[b]);
+                var latest = Math.max(times[a], times[b]);
+                var end = bucketEnd(latest, bucket, prefs.timeZone);
+                return [start, end > latest ? end - 1 : latest];
+            },
+            // The indices of the first and last categories within a time range, or null if none are.
+            indices: function (start, end) {
+                var found = null;
+                times.forEach(function (time, index) {
+                    if (time >= start && time <= end) {
+                        found = found ? [found[0], index] : [index, index];
+                    }
+                });
+                return found;
+            }
+        };
+    }
+
     // The rings of a sunburst, inner first: its name, then each further level.
     var RING_ROLES = ["name", "level2", "level3", "level4", "level5", "level6"];
 
@@ -1466,6 +1516,47 @@ if (!window.visualisations) {
         };
     }
 
+    // An axis a time range is dragged along (see the range tool), by pixels from the plot's start along it: a
+    // time scale's (a line chart's, or a scatter plot's).
+    function timeRangeAxis(scale, plot, group) {
+        return {
+            plot: plot,
+            group: group,
+            down: false,
+            range: function (a, b) {
+                var from = scale.invert(Math.min(a, b));
+                var to = scale.invert(Math.max(a, b));
+                return [from instanceof Date ? from.getTime() : Number(from),
+                    to instanceof Date ? to.getTime() : Number(to)];
+            },
+            pixels: function (start, end) {
+                return [scale(new Date(start)), scale(new Date(end))];
+            }
+        };
+    }
+
+    // Bars of dates in time order, a time range dragged across them (down them, for a horizontal bar chart): from
+    // the first bar's time to the end of the last's (see categoryTimes).
+    function barRangeAxis(times, band, count, plot, group, down) {
+        function indexAt(at) {
+            return Math.max(0, Math.min(count - 1, Math.floor((at - band.position(0) + band.step * 0.1) /
+                band.step)));
+        }
+        return {
+            plot: plot,
+            group: group,
+            down: down,
+            range: function (a, b) {
+                return times.range(indexAt(a), indexAt(b));
+            },
+            pixels: function (start, end) {
+                var indices = times.indices(start, end);
+                return indices ? [band.position(indices[0]) - band.step * 0.1,
+                    band.position(indices[1]) + band.width + band.step * 0.1] : null;
+            }
+        };
+    }
+
     // Points along an axis for a number of categories, the first at its start and the last at its end (as ECharts
     // places a line chart's), and the part of them zoomed in on.
     function pointPositions(count, length, zoom) {
@@ -1938,6 +2029,11 @@ if (!window.visualisations) {
         ctx.report.points = points;
         ctx.zoomKind = "axis";
         ctx.plot = plot;
+        // Bars of dates in time order: a time range is dragged across them.
+        var times = categoryTimes(fields, "category", matrix.categories, ctx.prefs);
+        if (times) {
+            ctx.timeAxis = barRangeAxis(times, band, matrix.categories.length, plot, groups.axes, horizontal);
+        }
         ctx.sliderShadow = matrix.categories.map(function (category, i) {
             return [matrix.categories.length > 1 ? i / (matrix.categories.length - 1) : 0.5,
                 shown.reduce(function (sum, series) {
@@ -2234,7 +2330,7 @@ if (!window.visualisations) {
         ctx.zoomKind = "axis";
         ctx.plot = plot;
         if (time) {
-            ctx.timeAxis = {scale: x, plot: plot, group: groups.axes};
+            ctx.timeAxis = timeRangeAxis(x, plot, groups.axes);
         }
         var span = extent[1] - extent[0] || 1;
         ctx.sliderShadow = lines.length ? lines[0].points.map(function (point) {
@@ -2521,7 +2617,7 @@ if (!window.visualisations) {
             return [(point[0] - extent[0]) / xSpan, point[1]];
         }) : [];
         if (time) {
-            ctx.timeAxis = {scale: x, plot: plot, group: groups.axes};
+            ctx.timeAxis = timeRangeAxis(x, plot, groups.axes);
         }
     }
 
@@ -4665,7 +4761,8 @@ if (!window.visualisations) {
             }
             drag.last = now;
             if (drag.range) {
-                showRangeDrag(drag.start[0], now[0]);
+                var along = drawn.timeAxis.down ? 1 : 0;
+                showRangeDrag(drag.start[along], now[along]);
                 return;
             }
             if (drawn.zoomKind === "geo") {
@@ -4693,7 +4790,8 @@ if (!window.visualisations) {
             drag = null;
             dragged = ended.moved;
             if (ended.range && ended.moved && drawn && drawn.timeAxis) {
-                selectRange(ended.start[0], pointerIn(event)[0]);
+                var down = drawn.timeAxis.down ? 1 : 0;
+                selectRange(ended.start[down], pointerIn(event)[down]);
             }
         }
 
@@ -4738,24 +4836,39 @@ if (!window.visualisations) {
             render();
         }
 
-        // The time range being dragged out, shown over the plot until the mouse is let go.
-        function showRangeDrag(fromX, toX) {
-            var plot = drawn.timeAxis.plot;
-            var group = drawn.timeAxis.group;
-            group.selectAll(".range-drag").remove();
-            var a = Math.max(0, Math.min(plot.width, Math.min(fromX, toX) - plot.left));
-            var b = Math.max(0, Math.min(plot.width, Math.max(fromX, toX) - plot.left));
-            group.append("rect").attr("class", "range-drag").attr("x", a).attr("y", 0)
-                .attr("width", Math.max(1, b - a)).attr("height", plot.height)
-                .attr("fill", "rgba(120, 140, 180, 0.2)").attr("stroke", lastStyle ? lastStyle.subtleText : "#999");
+        // The time range being dragged out, shown over the plot until the mouse is let go: along the time axis,
+        // or across (or down) bars of dates.
+        function showRangeDrag(from, to) {
+            var axis = drawn.timeAxis;
+            axis.group.selectAll(".range-drag").remove();
+            drawRangeRect(axis, from - (axis.down ? axis.plot.top : axis.plot.left),
+                to - (axis.down ? axis.plot.top : axis.plot.left), "range-drag", 0.2);
         }
 
-        function selectRange(fromX, toX) {
+        // A band across the plot between two pixels along its range axis, clamped to the plot.
+        function drawRangeRect(axis, a, b, className, opacity) {
+            var length = axis.down ? axis.plot.height : axis.plot.width;
+            var from = Math.max(0, Math.min(length, Math.min(a, b)));
+            var to = Math.max(0, Math.min(length, Math.max(a, b)));
+            var rect = axis.group.append("rect")
+                .attr("x", axis.down ? 0 : from).attr("y", axis.down ? from : 0)
+                .attr("width", axis.down ? axis.plot.width : Math.max(1, to - from))
+                .attr("height", axis.down ? Math.max(1, to - from) : axis.plot.height)
+                .attr("fill", "rgba(120, 140, 180, " + opacity + ")")
+                .attr("stroke", lastStyle ? lastStyle.subtleText : "#999").attr("pointer-events", "none");
+            if (className) {
+                rect.attr("class", className);
+            }
+        }
+
+        function selectRange(fromAt, toAt) {
             var axis = drawn.timeAxis;
-            var a = axis.scale.invert(Math.max(0, Math.min(axis.plot.width, Math.min(fromX, toX) - axis.plot.left)));
-            var b = axis.scale.invert(Math.max(0, Math.min(axis.plot.width, Math.max(fromX, toX) - axis.plot.left)));
-            var start = a instanceof Date ? a.getTime() : Number(a);
-            var end = b instanceof Date ? b.getTime() : Number(b);
+            var origin = axis.down ? axis.plot.top : axis.plot.left;
+            var length = axis.down ? axis.plot.height : axis.plot.width;
+            var times = axis.range(Math.max(0, Math.min(length, fromAt - origin)),
+                Math.max(0, Math.min(length, toAt - origin)));
+            var start = times[0];
+            var end = times[1];
             if (!isFinite(start) || !isFinite(end) || end <= start) {
                 return;
             }
@@ -4767,19 +4880,15 @@ if (!window.visualisations) {
             send();
         }
 
-        // The selected time range, drawn over the plot.
+        // The selected time range, drawn over the plot (over the bars it covers, for bars of dates).
         function showRange() {
             if (!selected || !selected.range || !drawn || !drawn.timeAxis) {
                 return;
             }
-            var axis = drawn.timeAxis;
-            var a = axis.scale(new Date(selected.range[0]));
-            var b = axis.scale(new Date(selected.range[1]));
-            var from = Math.max(0, Math.min(axis.plot.width, Math.min(a, b)));
-            var to = Math.max(0, Math.min(axis.plot.width, Math.max(a, b)));
-            axis.group.append("rect").attr("x", from).attr("y", 0).attr("width", Math.max(1, to - from))
-                .attr("height", axis.plot.height).attr("fill", "rgba(120, 140, 180, 0.15)")
-                .attr("stroke", lastStyle ? lastStyle.subtleText : "#999").attr("pointer-events", "none");
+            var pixels = drawn.timeAxis.pixels(selected.range[0], selected.range[1]);
+            if (pixels) {
+                drawRangeRect(drawn.timeAxis, pixels[0], pixels[1], null, 0.15);
+            }
         }
 
         element.addEventListener("mousedown", onMouseDown);

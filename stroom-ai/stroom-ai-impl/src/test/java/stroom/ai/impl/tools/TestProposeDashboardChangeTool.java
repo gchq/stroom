@@ -643,8 +643,8 @@ class TestProposeDashboardChangeTool {
                 "mode", "query", "terms", List.of(Map.of("field", "EventType", "selection", "x"),
                         Map.of("field", "UserId", "selection", "series"))))))
                 .contains("by what is selected in chart 'Trend': EventType within its selected time (a range "
-                          + "dragged along its time axis, or the time a clicked point stands for) and UserId = "
-                          + "its series");
+                          + "dragged along its time axis or across its bars of dates, or the time a clicked point "
+                          + "stands for) and UserId = its series");
         assertThat(takeUserActions()).singleElement().satisfies(action -> {
             final Map<String, Object> query = asMap(asMap(((List<?>) action.get("changes")).getFirst())
                     .get("query"));

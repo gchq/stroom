@@ -140,8 +140,8 @@ selection holds (e.g. `{"field": "event.code", "selection": "category"}`).
 - Ctrl-click (or Shift-click) selects several items, and the filter matches any of them.
 - Dates are filtered by time, never by equality. A term giving a date field (or a table's date column) a date
   the chart selects (a time axis's x, a calendar's date, any Date Time column) keeps it within the selected
-  time: the range dragged along a line chart's or scatter plot's time axis (its range tool), or the time a
-  clicked point stands for (its whole day, for `floorDay()` values; its hour, for `floorHour()`). E.g.
+  time: the range dragged along a line chart's or scatter plot's time axis, or across a bar chart's bars of
+  dates in time order (its range tool), or the time a clicked point stands for (its whole day, for `floorDay()` values; its hour, for `floorHour()`). E.g.
   `{"field": "EventTime", "selection": "x"}` (or `"range"`, the same) narrows the dashboard to a period. It
   becomes two terms (on or after the start, on or before the end); `between` isn't used, as its value would be a
   bare comma while nothing is selected. Say so as it is: the result reads "within its selected time".
