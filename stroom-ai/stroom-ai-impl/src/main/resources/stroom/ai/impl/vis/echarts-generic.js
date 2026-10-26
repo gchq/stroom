@@ -2237,7 +2237,10 @@ if (!window.visualisations) {
         addDropped(report, "source and target the same", selfLinks);
         addDropped(report, (fields.column(valueId) || valueId) + " not a number or negative", badValue);
 
-        var nodeNames = Object.keys(nodeTotals).sort(function (a, b) {
+        // A node or link with nothing flowing through it has nothing to draw.
+        var nodeNames = Object.keys(nodeTotals).filter(function (name) {
+            return nodeTotals[name] > 0;
+        }).sort(function (a, b) {
             return nodeTotals[b] - nodeTotals[a];
         });
         var maxNodes = intSetting(settings, "maxNodes", 300, 2, 5000);
@@ -2256,7 +2259,7 @@ if (!window.visualisations) {
             links: linkKeys.map(function (key) {
                 return links[key];
             }).filter(function (link) {
-                return kept[link.source] && kept[link.target];
+                return link.value > 0 && kept[link.source] && kept[link.target];
             })
         };
     }
@@ -2587,6 +2590,8 @@ if (!window.visualisations) {
             if (notPositive > 0) {
                 report.warnings.push(notPositive + " values of 0 or less can't be shown on a log scale and were " +
                     "left out");
+                // Those left out aren't drawn.
+                report.points = Math.max(0, report.points - notPositive);
             }
         } else if (boolSetting(settings, "breakOutliers", false)) {
             var values = [];
