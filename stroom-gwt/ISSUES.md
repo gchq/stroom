@@ -396,6 +396,10 @@ run of 22 October 2026 (1,538 stories).
   the probe page, with an uncaught `TypeError` (`Cannot read properties of null`) before the delete
   confirmation appeared. It passed alone and with the other 54 AppShell stories, with the leak
   check. Not yet traced; a pretty compile would name the null.
+* `App/Index/ElasticIndexEditor` `FieldsReadOnly` screenshot (flaky; found 26 October 2026, in
+  wave 10): in a run of 37 stories with 24 workers the Fields tab had lost its focus ring (161
+  pixels differed); it matched its baseline when its six stories were run again alone. A guess:
+  under load the focus moves before the screenshot is taken.
 * Screenshots that differ from run to run, whatever changed (found 24 October 2026, comparing two
   diffs against one baseline): the force layout visualisations (`App/Visualisations/Force`,
   `Force2d`, `Force3d`; 39 to 70 of them, by different amounts each time, as their layouts are
