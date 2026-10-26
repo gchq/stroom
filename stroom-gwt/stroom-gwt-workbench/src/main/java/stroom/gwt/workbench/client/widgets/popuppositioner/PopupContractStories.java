@@ -109,7 +109,7 @@ public final class PopupContractStories {
                 .panel(".popup--floating:has([role='listbox'][aria-label='Document types'])")
                 .insideTarget(".popup--floating:has([role='listbox'][aria-label='Document types']) .popupContent")
                 .placement(".type-filter-trigger", PopupLocation.RIGHT, 3,
-                        "TypeFilterPresenter.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
+                        "TypeFilterController.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
         cases.add(PopupCase.of("Popover (SettingBlock)", PopupHarnesses::settingBlock)
                 .opener(".setting-block")
                 // The block and the label inside it

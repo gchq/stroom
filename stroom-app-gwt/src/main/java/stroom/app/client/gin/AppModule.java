@@ -42,9 +42,6 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.presenter.TabSessionChooserPresenter;
 import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
@@ -107,7 +104,6 @@ public class AppModule extends AbstractPresenterModule {
                 NavigationViewImpl.class);
         bindPresenter(ContentTabPanePresenter.class);
 
-        bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
         bindPresenter(

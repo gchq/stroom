@@ -21,9 +21,6 @@ import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -37,9 +34,6 @@ public class ExplorerScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(TypeFilterPresenter.class,
-                TypeFilterView.class,
-                TypeFilterViewImpl.class);
         bindPresenterWidget(ExplorerNodeEditTagsPresenter.class,
                 ExplorerNodeEditTagsView.class,
                 ExplorerNodeEditTagsViewImpl.class);

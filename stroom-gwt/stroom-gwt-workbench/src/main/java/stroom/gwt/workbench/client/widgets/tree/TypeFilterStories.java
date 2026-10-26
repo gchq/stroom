@@ -19,8 +19,8 @@ package stroom.gwt.workbench.client.widgets.tree;
 
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
+import stroom.explorer.client.component.TypeFilter;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -31,7 +31,6 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.button.client.Button;
-import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -43,7 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/// Stories for Stroom's [TypeFilterPresenter]: the explorer's popup of document types to show, each
+/// Stories for Stroom's [TypeFilterController]: the explorer's popup of document types to show, each
 /// with a tick box, under an "All / None" row.
 public final class TypeFilterStories {
 
@@ -103,7 +102,7 @@ public final class TypeFilterStories {
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.builder().build())
                 .withoutStartupFixtures()
                 .build();
-        final TypeFilterPresenter presenter = new TypeFilterPresenter(harness.getEventBus(), new TypeFilterViewImpl());
+        final TypeFilterController presenter = harness.own(new TypeFilterController(harness.getEventBus(), new TypeFilter()));
         final List<DocumentType> types = new ArrayList<>();
         for (final String type : FIXTURE_DOC_TYPES) {
             types.add(DocumentTypeRegistry.get(type));
@@ -113,7 +112,7 @@ public final class TypeFilterStories {
             // Stroom starts with every type ticked, so untick the others
             for (final DocumentType type : types) {
                 if (!included.contains(type.getType())) {
-                    presenter.execute(type);
+                    presenter.toggle(type);
                 }
             }
         }
@@ -154,12 +153,10 @@ public final class TypeFilterStories {
         // As NavigationPresenter shows it: by its button, hidden by clicking outside it or (here)
         // the button
         final boolean[] showing = {false};
-        harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
-            if (event.getPresenterWidget() == presenter) {
-                showing[0] = false;
-                onClose.call();
-            }
-        }));
+        presenter.setOnHidden(() -> {
+            showing[0] = false;
+            onClose.call();
+        });
         final Runnable show = () -> {
             showing[0] = true;
             presenter.show(button.getElement(), hasActiveFilter -> {
@@ -168,7 +165,7 @@ public final class TypeFilterStories {
         };
         button.addClickHandler(event -> {
             if (showing[0]) {
-                presenter.escape();
+                presenter.hide();
             } else {
                 show.run();
             }

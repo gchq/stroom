@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.EntityCheckTreeController;
 import stroom.explorer.client.component.ExplorerTree;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.client.presenter.DocumentTypeCache;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -66,7 +66,7 @@ public class ExportConfigPresenter
 
     private final LocationManager locationManager;
     private final EntityCheckTreeController tree;
-    private final TypeFilterPresenter typeFilterPresenter;
+    private final TypeFilterController typeFilter;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
 
@@ -78,15 +78,15 @@ public class ExportConfigPresenter
                                  final ExportConfigView view,
                                  final LocationManager locationManager,
                                  final Provider<EntityCheckTreeController> entityCheckTreeControllerProvider,
-                                 final TypeFilterPresenter typeFilterPresenter,
+                                 final TypeFilterController typeFilter,
                                  final RestFactory restFactory,
                                  final DocumentTypeCache documentTypeCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(typeFilterPresenter);
+        own(typeFilter);
         this.locationManager = locationManager;
         this.tree = make(entityCheckTreeControllerProvider).attach(view.getTree());
-        this.typeFilterPresenter = typeFilterPresenter;
+        this.typeFilter = typeFilter;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
 
@@ -101,8 +101,8 @@ public class ExportConfigPresenter
         // Only show the System node at the root for export
         tree.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
 
-        own(typeFilterPresenter.addSelectionListener(event -> tree.setIncludedTypeSet(
-                typeFilterPresenter.getIncludedTypes().orElse(null))));
+        own(typeFilter.addSelectionListener(includedTypes -> tree.setIncludedTypeSet(
+                includedTypes.orElse(null))));
 
         own(filter.addClickHandler((e) ->
                 showTypeFilter(filter.getElement())));
@@ -112,7 +112,7 @@ public class ExportConfigPresenter
         // Override the default behaviour of the toggle button as we only want
         // it to be ON if a filter has been set, not just when clicked
         filter.setState(hasActiveFilter);
-        typeFilterPresenter.show(target, this::setFilterState);
+        typeFilter.show(target, this::setFilterState);
     }
 
     private void setFilterState(final boolean hasActiveFilter) {
@@ -152,7 +152,7 @@ public class ExportConfigPresenter
     private void onShow() {
         documentTypeCache.clear();
         // Set the data for the type filter.
-        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, this);
+        documentTypeCache.fetch(typeFilter::setDocumentTypes, this);
 
         tree.setRequiredPermissions(DocumentPermission.VIEW);
         tree.refresh();
@@ -199,7 +199,7 @@ public class ExportConfigPresenter
     public void showTypeFilter(final MouseDownEvent event,
                                final Consumer<Boolean> filterStateConsumer) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-        typeFilterPresenter.show(target, filterStateConsumer);
+        typeFilter.show(target, filterStateConsumer);
     }
 
     // --------------------------------------------------------------------------------

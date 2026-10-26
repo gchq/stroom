@@ -33,6 +33,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerEndTaskEvent;
 import stroom.explorer.client.event.ExplorerStartTaskEvent;
@@ -106,7 +107,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         FocusExplorerTreeEvent.Handler {
 
     private final DocumentTypeCache documentTypeCache;
-    private final TypeFilterPresenter typeFilterPresenter;
+    private final TypeFilterController typeFilter;
     private final CurrentActivity currentActivity;
     private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private final ExplorerTree explorerTree;
@@ -138,16 +139,16 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
                                final Provider<ExplorerTreeController> explorerTreeControllerProvider,
                                final DocumentTypeCache documentTypeCache,
                                final DocumentPluginRegistry documentPluginRegistry,
-                               final TypeFilterPresenter typeFilterPresenter,
+                               final TypeFilterController typeFilter,
                                final CurrentActivity currentActivity,
                                final UiConfigCache uiConfigCache,
                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
-        own(typeFilterPresenter);
+        own(typeFilter);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;
-        this.typeFilterPresenter = typeFilterPresenter;
+        this.typeFilter = typeFilter;
         this.currentActivity = currentActivity;
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
@@ -260,8 +261,8 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         listen(ExplorerEndTaskEvent.getType(), e ->
                 taskMonitor.onEnd(e.getTask()));
 
-        own(typeFilterPresenter.addSelectionListener(event -> {
-            treeController.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes().orElse(null));
+        own(typeFilter.addSelectionListener(includedTypes -> {
+            treeController.setIncludedTypeSet(includedTypes.orElse(null));
             treeController.refresh();
         }));
 
@@ -383,7 +384,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         // Override the default behaviour of the toggle button as we only want
         // it to be ON if a filter has been set, not just when clicked
         filter.setPressed(hasActiveFilter);
-        typeFilterPresenter.show(target, this::setFilterState);
+        typeFilter.show(target, this::setFilterState);
     }
 
     private void setFilterState(final boolean hasActiveFilter) {
@@ -395,7 +396,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
     public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
-        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes, getView().getTaskListener());
+        documentTypeCache.fetch(typeFilter::setDocumentTypes, getView().getTaskListener());
 
         treeController.reset();
         treeController.setRequiredPermissions(DocumentPermission.VIEW);

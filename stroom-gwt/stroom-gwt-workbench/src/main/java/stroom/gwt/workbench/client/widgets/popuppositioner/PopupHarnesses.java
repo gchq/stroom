@@ -20,14 +20,15 @@ package stroom.gwt.workbench.client.widgets.popuppositioner;
 import stroom.annotation.client.SettingBlock;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
-import stroom.explorer.client.presenter.TypeFilterPresenter;
-import stroom.explorer.client.presenter.TypeFilterViewImpl;
+import stroom.explorer.client.component.TypeFilter;
+import stroom.explorer.client.component.TypeFilterController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.gwt.workbench.client.widgets.ContentPresenter;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
@@ -89,12 +90,16 @@ final class PopupHarnesses {
         return formGroup;
     }
 
-    /// A button that shows Stroom's `TypeFilterPresenter`, as the explorer's filter button does.
+    /// A button that shows Stroom's `TypeFilterController`, as the explorer's filter button does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget typeFilter(final StoryPopups popups) {
-        final TypeFilterPresenter presenter = new TypeFilterPresenter(popups.getEventBus(), new TypeFilterViewImpl());
+        final TypeFilterController presenter = new TypeFilterController(popups.getEventBus(), new TypeFilter());
+        // Owned by a root of its own, disposed when the story goes
+        final ControllerNode root = ControllerNode.root("typeFilter");
+        root.adopt(presenter.getControllerNode());
+        popups.addCleanUp(root::dispose);
         final List<DocumentType> types = Arrays.asList(
                 new DocumentType(DocumentTypeGroup.DATA_PROCESSING, "Feed", "Feed", SvgImage.DOCUMENT_FEED),
                 new DocumentType(DocumentTypeGroup.CONFIGURATION, "Dictionary", "Dictionary",

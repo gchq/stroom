@@ -44,7 +44,7 @@ import java.util.Map;
 
 /// Stories for Stroom's [DocumentTypeCell].
 ///
-/// The cell is shown as Stroom's type filter (`TypeFilterPresenter`) shows it: as the one column of
+/// The cell is shown as Stroom's type filter (`TypeFilterController`) shows it: as the one column of
 /// a [DataGrid] list ([DataGridProfile#LISTBOX]), one row per type, whose tick boxes Space, Enter or
 /// a press toggles. The cell's [DocumentTypeSelectionModel] gives each type's tick box state; a null
 /// state renders no tick box.
@@ -69,7 +69,7 @@ public final class DocumentTypeCellStories {
                         .typeName("DocumentType | string"))
                 // No tick state, toggle or divider args: the tick box state comes from the selection
                 // model (see WithTickBoxes), and the divider is only drawn
-                // for TypeFilterPresenter's own 'Select all or none' type
+                // for TypeFilterController's own 'Select all or none' type
                 .args(Args.of(DOCUMENT_TYPE, "Feed"))
                 // A single document type resolved from its API type-key string
                 .story("SingleType", DocumentTypeCellStories::fromArgs)
@@ -126,7 +126,7 @@ public final class DocumentTypeCellStories {
         return new DocumentType(DocumentTypeGroup.SEARCH, key, key, SvgImage.DOCUMENT_SEARCHABLE);
     }
 
-    /// The types in a [DataGrid] list, as `TypeFilterPresenter` shows them.
+    /// The types in a [DataGrid] list, as `TypeFilterController` shows them.
     ///
     /// @param states    Each type's tick box state, or null for no tick box.
     /// @param toggleable True if a click toggles a type's tick box, reporting it to `onToggle`.
