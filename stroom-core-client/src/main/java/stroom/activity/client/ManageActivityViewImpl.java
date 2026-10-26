@@ -19,7 +19,6 @@ package stroom.activity.client;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -27,13 +26,13 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Supplier;
-
 
 public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiHandlers> implements ManageActivityView {
 
@@ -94,7 +93,7 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
     }
 
     @Override
-    public void setListView(final View view) {
+    public void setListView(final IsWidget view) {
         dataGrid.setWidget(view.asWidget());
     }
 }

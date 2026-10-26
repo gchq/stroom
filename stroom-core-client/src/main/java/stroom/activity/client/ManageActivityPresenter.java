@@ -17,6 +17,7 @@
 package stroom.activity.client;
 
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
+import stroom.activity.client.component.ActivityListController;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
@@ -43,6 +44,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -57,7 +59,7 @@ public class ManageActivityPresenter
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
-    private final ActivityListPresenter listPresenter;
+    private final ActivityListController listPresenter;
     private final Provider<ActivityEditPresenter> editProvider;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
@@ -74,7 +76,7 @@ public class ManageActivityPresenter
     @Inject
     public ManageActivityPresenter(final EventBus eventBus,
                                    final ManageActivityView view,
-                                   final ActivityListPresenter listPresenter,
+                                   final ActivityListController listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
                                    final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
@@ -92,7 +94,7 @@ public class ManageActivityPresenter
 
         getView().setUiHandlers(this);
 
-        getView().setListView(listPresenter.getView());
+        getView().setListView(listPresenter);
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -309,7 +311,7 @@ public class ManageActivityPresenter
         /// Shows the list of activities.
         ///
         /// @param view Its view.
-        void setListView(View view);
+        void setListView(IsWidget view);
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
 
