@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dictionary.client.presenter.DocRefListPresenter;
+import stroom.dictionary.client.component.DocRefListController;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.ExplorerPopupController;
@@ -38,7 +38,7 @@ import java.util.List;
 
 public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<WrapperView> {
 
-    private final DocRefListPresenter docRefListPresenter;
+    private final DocRefListController docRefList;
     private final Provider<ExplorerPopupController> dictionarySelection;
     private final ButtonView addButton;
     private final ButtonView removeButton;
@@ -48,29 +48,29 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     @Inject
     public IncludeExcludeFilterDictionaryPresenter(final EventBus eventBus,
                                                    final WrapperView view,
-                                                   final DocRefListPresenter docRefListPresenter,
+                                                   final DocRefListController docRefList,
                                                    final Provider<ExplorerPopupController> dictionarySelection) {
         super(eventBus, view);
-        own(docRefListPresenter);
-        this.docRefListPresenter = docRefListPresenter;
+        own(docRefList);
+        this.docRefList = docRefList;
         this.dictionarySelection = dictionarySelection;
 
-        view.setView(docRefListPresenter.getView());
+        view.setView(docRefList);
 
-        docRefListPresenter.getView().getToolbar().setName("Dictionary actions");
-        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Dictionary", this::onAdd);
+        docRefList.getToolbar().setName("Dictionary actions");
+        addButton = docRefList.getToolbar().button(SvgImage.ADD, "Add Dictionary", this::onAdd);
 
-        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Remove Dictionary",
+        removeButton = docRefList.getToolbar().button(SvgImage.DELETE, "Remove Dictionary",
                 this::onRemove);
         removeButton.setEnabled(false);
 
-        docRefListPresenter.getView().getRefreshButton().setVisible(false);
-        docRefListPresenter.initTableColumns("Dictionary Name", false);
+        docRefList.setRefreshVisible(false);
+        docRefList.initTableColumns("Dictionary Name", false);
 
         addButton.setEnabled(true);
         enableButtons();
 
-        own(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        own(docRefList.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void onAdd() {
@@ -88,7 +88,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     }
 
     public void onRemove() {
-        final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
+        final MultiSelectionModel<DocRef> selectionModel = docRefList.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {
             String message = "Are you sure you want to remove this dictionary?";
@@ -109,7 +109,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     }
 
     private void enableButtons() {
-        final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
+        final MultiSelectionModel<DocRef> selectionModel = docRefList.getSelectionModel();
         removeButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
     }
 
@@ -123,6 +123,6 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     }
 
     private void refresh() {
-        docRefListPresenter.setData(dictionaries);
+        docRefList.setData(dictionaries);
     }
 }

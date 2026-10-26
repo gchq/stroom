@@ -17,7 +17,6 @@
 package stroom.dictionary.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dictionary.client.presenter.DocRefListPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.ExplorerPopupController;
@@ -28,7 +27,6 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -52,7 +50,7 @@ public class ImportsTab extends Controller {
     private static final String ADD_TITLE = "Add Imported Dictionary";
     private static final String REMOVE_TITLE = "Remove Imported Dictionary";
 
-    private final PresenterAdapter<DocRefListPresenter> importList;
+    private final DocRefListController importList;
     private final EffectiveWordsListController effectiveWords;
     private final Provider<ExplorerPopupController> docSelectionPopupProvider;
     private final ToolbarButton addButton;
@@ -72,17 +70,16 @@ public class ImportsTab extends Controller {
 
     @Inject
     public ImportsTab(final EventBus eventBus,
-                      final Provider<DocRefListPresenter> docRefListPresenterProvider,
+                      final Provider<DocRefListController> docRefListProvider,
                       final EffectiveWordsListController effectiveWords,
                       final Provider<ExplorerPopupController> docSelectionPopupProvider) {
         super(eventBus);
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.effectiveWords = own(effectiveWords);
-        importList = own(PresenterAdapter.of(docRefListPresenterProvider::get));
+        importList = make(docRefListProvider);
 
-        final DocRefListPresenter importListPresenter = importList.getPresenter();
-        importListPresenter.initTableColumns("Document Name", true);
-        final Toolbar toolbar = importListPresenter.getView().getToolbar();
+        importList.initTableColumns("Document Name", true);
+        final Toolbar toolbar = importList.getToolbar();
         toolbar.setName("Dictionary actions");
         addButton = toolbar.button(SvgImage.ADD, ADD_TITLE, this::addImport);
         removeButton = toolbar.button(SvgImage.DELETE, REMOVE_TITLE, this::removeSelected);
@@ -117,7 +114,7 @@ public class ImportsTab extends Controller {
     public void read(final DocRef dictionary, final DictionaryDoc doc) {
         this.dictionary = dictionary;
         if (dictionary.getName() != null) {
-            importList.getPresenter().setTableName("Dictionary '" + dictionary.getName() + "' Imports");
+            importList.setTableName("Dictionary '" + dictionary.getName() + "' Imports");
         }
         imports = new ArrayList<>(NullSafe.list(doc.getImports()));
         showImports();
@@ -173,7 +170,7 @@ public class ImportsTab extends Controller {
     }
 
     private void showImports() {
-        importList.getPresenter().setData(imports);
+        importList.setData(imports);
         enableButtons();
     }
 
@@ -189,7 +186,7 @@ public class ImportsTab extends Controller {
     }
 
     private MultiSelectionModel<DocRef> getSelectionModel() {
-        return importList.getPresenter().getSelectionModel();
+        return importList.getSelectionModel();
     }
 
     interface Binder extends UiBinder<Widget, ImportsTab> {
