@@ -20,10 +20,8 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.tools.BuiltInToolsModule;
-import stroom.ai.impl.vis.ChartLibraries;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.lifecycle.api.LifecycleBinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.language.functions.AiProvider;
 import stroom.util.RunnableWrapper;
@@ -71,11 +69,6 @@ public class AiModule extends AbstractModule {
                                      + "chats, memory and sample upload commands of deleted users")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
 
-        // Brings the charts Stroom AI already generated up to date with this version's ECharts adapter and options
-        // control. After the content packs are imported (which start earlier).
-        LifecycleBinder.create(binder())
-                .bindStartupTaskTo(ChartAdapterStartup.class, 4);
-
         // Stops agent runs when the session that started them ends.
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(AiChatRunSessionListener.class);
@@ -90,21 +83,6 @@ public class AiModule extends AbstractModule {
         @Inject
         AiRetentionJob(final AiRetention aiRetention) {
             super(aiRetention::exec);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ChartAdapterStartup extends RunnableWrapper {
-
-        @Inject
-        ChartAdapterStartup(final ChartLibraries chartLibraries) {
-            super(() -> {
-                chartLibraries.updateAdapters();
-                chartLibraries.updateGeneratedVisualisations();
-            });
         }
     }
 }

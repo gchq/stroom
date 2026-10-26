@@ -61,27 +61,6 @@ class TestEChartsTemplate {
                 .containsEntry("label", "Chart Options (JSON)");
     }
 
-    @Test
-    void aChartGeneratedEarlierGetsTheCurrentOptionsControl() {
-        // Generated with the options as a one-line text box: brought up to date, keeping what was set.
-        final String earlier = EChartsTemplate.settingsJson(ChartKind.BAR, Map.of("category", "User"), Map.of(),
-                        "{\"color\":[\"#5470c6\"]}")
-                .replace("\"json\"", "\"text\"")
-                .replace("Chart Options (JSON)", "ECharts Options (JSON)");
-
-        final String updated = EChartsTemplate.withCurrentOptionsControl(earlier);
-
-        final Map<String, Map<String, Object>> controls = controls(
-                (List<?>) JsonUtil.readValue(updated, Map.class).get("tabs"));
-        assertThat(controls.get("options")).containsEntry("type", "json")
-                .containsEntry("label", "Chart Options (JSON)")
-                .containsEntry("defaultValue", "{\"color\":[\"#5470c6\"]}");
-        assertThat(controls.get("category")).containsEntry("defaultValue", "User");
-        // Already current, or not settings at all: left as they are.
-        assertThat(EChartsTemplate.withCurrentOptionsControl(updated)).isSameAs(updated);
-        assertThat(EChartsTemplate.withCurrentOptionsControl("not json")).isEqualTo("not json");
-    }
-
     @ParameterizedTest
     @EnumSource(ChartKind.class)
     void everyTemplateReadsAsVisSettingsWithEveryReferenceDeclared(final ChartKind kind) {

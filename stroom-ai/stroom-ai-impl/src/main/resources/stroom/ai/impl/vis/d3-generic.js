@@ -290,6 +290,11 @@ if (!window.visualisations) {
         return style && style.background ? style.background : (style && !style.dark ? "#ffffff" : "#1e2128");
     }
 
+    // A library's major version, from its version text (e.g. 6 from "6.1.0"); 0 if it has none.
+    function majorVersion(version) {
+        return parseInt(String(version || "0").split(".")[0], 10) || 0;
+    }
+
     // A field of a CSV file: quoted if it holds a comma, quote or line break, its quotes doubled.
     function csvField(value) {
         var text = value === null || value === undefined ? "" : String(value);
@@ -1393,12 +1398,15 @@ if (!window.visualisations) {
     // D3 across its versions
     // ------------------------------------------------------------------------------------------
 
+    // The oldest D3 major version the adapter draws with.
+    var MIN_D3_MAJOR = 3;
+
     // The few D3 calls whose names differ between D3 3 (d3.scale.linear, d3.svg.line, ...) and D3 4 to 7
     // (d3.scaleLinear, d3.line, ...). Everything else the adapter uses (selections, scales' domain, range, ticks,
     // nice and invert, and the path generators' accessors) is the same in all of them. Events are the browser's own,
     // as D3 6 changed how its listeners are called.
     function compat(d3) {
-        var major = parseInt(String(d3.version || "0").split(".")[0], 10) || 0;
+        var major = majorVersion(d3.version);
         var v3 = major < 4;
         return {
             major: major,
@@ -5240,6 +5248,10 @@ if (!window.visualisations) {
                     throw new Error("The D3 library hasn't loaded. Check that the D3 Script doc is installed and is " +
                         "a dependency of this visualisation's script.");
                 }
+                if (majorVersion(window.d3.version) < MIN_D3_MAJOR) {
+                    throw new Error("This chart needs D3 " + MIN_D3_MAJOR + " or later, but D3 " +
+                        window.d3.version + " has loaded. Install a newer D3 build in its Script doc.");
+                }
                 drawn = drawChart(window.d3, chartElement, settings, lastArgs.data, prefs, style, state);
                 report = drawn.report;
                 showRange();
@@ -5253,9 +5265,10 @@ if (!window.visualisations) {
                 }
             } catch (e) {
                 drawn = null;
-                if (window.d3) {
-                    window.d3.select(chartElement).selectAll("svg").remove();
-                }
+                // Without D3, as it may not have loaded, or be too old to draw with.
+                Array.prototype.slice.call(chartElement.querySelectorAll("svg")).forEach(function (svg) {
+                    svg.parentNode.removeChild(svg);
+                });
                 report = newReport(String(settings.kind || ""), window.d3);
                 report.status = "error";
                 report.error = e && e.message ? e.message : String(e);
@@ -5294,6 +5307,7 @@ if (!window.visualisations) {
 
     // Exposed for testing.
     visualisations.D3Generic.internals = {
+        majorVersion: majorVersion,
         drawChart: drawChart,
         compat: compat,
         lttb: lttb,
