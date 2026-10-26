@@ -1466,6 +1466,19 @@ public class DashboardPresenter
                             ? null
                             : prefix + problem;
                 }
+            } else if (TableChange.REMAP_SELECTION.equals(change.getOp())) {
+                // Every filter the chart's clicks drive, wherever it is.
+                final Map<String, String> renamed = DashboardDescriptions.renamedKeys(change.getValue());
+                for (final Component each : components) {
+                    final ComponentConfig config = added.containsValue(each)
+                                                   || configsBefore.containsKey(each.getId())
+                            ? null
+                            : ComponentSettingChanges.snapshot(each);
+                    if (ComponentSettingChanges.renameSelections(each, change.getTargetId(), renamed)
+                        && config != null) {
+                        configsBefore.put(each.getId(), config);
+                    }
+                }
             } else if (TableChange.ADD_SELECTION_FILTER.equals(change.getOp())) {
                 // What it filters, and the chart whose clicks filter it, may be added by these changes (a chart and
                 // its table): found by name, the chart's own id put in its terms in place of the one planned.

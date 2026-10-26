@@ -194,6 +194,16 @@ table and chart. `current_results` snapshots its results by its name, as a table
   table already has a chart Stroom AI generated. Replacing rewrites that chart's Visualisation for the new one and
   renames it to `name`, saved at once (the user needs Edit permission on it), keeping its pane and place; the pane
   keeps its name unless you give `componentName`. Only charts Stroom AI generated can be replaced.
+- Converting a chart to another kind (`replace`): the pane's own column and style settings are cleared for the new
+  chart's, and the selection filters its clicks drive follow it where the new chart selects the same column under
+  another key (e.g. a line chart's `x` becomes a bar chart's `category`). The result says what follows and what is
+  lost: a filter on a selection the new kind doesn't make (e.g. a time range, once a line chart is a bar chart),
+  a column it no longer shows, or a time axis. Tell the user before they click, and offer the fix it names.
+- A conversion that can't work, or would mislead (e.g. a pie chart of event types as a time series, when the table
+  has no Date Time column): don't force the columns to fit. Explain why, and recommend what would work: the kinds
+  the table can make as it is (the tool lists them when a chart can't be made), or the table change that gives it
+  what it lacks (e.g. a time field rounded with `floorHour()`, formatted Date Time and grouped, with
+  `propose_dashboard_change`), then the conversion.
 - The content pack's D3 Visualisations take only their own settings, by their own ids.
 - A setting a chart's Visualisation doesn't have (one generated before the setting was added, e.g. `nodeColours`)
   can't be set on its pane: replace the chart (`replace`, the same kind) to regenerate it with every setting.
