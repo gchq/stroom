@@ -79,6 +79,11 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
                                 @JsonProperty("tableChanges") List<Map<String, Object>> tableChanges,
                                 @JsonProperty("filterChanges") List<Map<String, Object>> filterChanges) {
 
+    /// Places a new vis component as a tab with the dashboard's charts (one linked to the same table if any), or in
+    /// a new pane at the bottom of the dashboard if it has none: the default.
+    public static final String CHARTS = "charts";
+    /// Places a new vis component in a new pane at the bottom of the dashboard.
+    public static final String BOTTOM = "bottom";
     /// Places a new vis component in a new pane below its table.
     public static final String BELOW = "below";
     /// Places a new vis component as a tab beside its table.
@@ -89,7 +94,7 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
     public static final String UNDER = "under";
     /// Of several charts created together, places one as a tab in the pane of the one before it (stacked tabs).
     public static final String WITH = "with";
-    static final Set<String> PLACEMENTS = Set.of(BELOW, TAB, RIGHT, UNDER, WITH);
+    static final Set<String> PLACEMENTS = Set.of(CHARTS, BOTTOM, BELOW, TAB, RIGHT, UNDER, WITH);
     static final int MAX_TEXT = 1_000;
     static final int MAX_OPTIONS = 20_000;
     /// The most dashboard changes a plan may carry, to add its table or its filter.
@@ -264,8 +269,8 @@ public record VisualisationPlan(@JsonProperty("kind") String kind,
         checkText("the table's name", table);
         checkText("the component's name", componentName);
         if (placement != null && !PLACEMENTS.contains(placement)) {
-            throw new IllegalArgumentException("Placement must be one of " + BELOW + ", " + TAB + ", " + RIGHT + ", "
-                                               + UNDER + " or " + WITH + ".");
+            throw new IllegalArgumentException("Placement must be one of " + CHARTS + ", " + BOTTOM + ", " + BELOW
+                                               + ", " + TAB + ", " + RIGHT + ", " + UNDER + " or " + WITH + ".");
         }
         if (!isQuery() && (NullSafe.isBlankString(componentId) || NullSafe.isBlankString(componentName))) {
             throw new IllegalArgumentException("A dashboard's visualisation needs its table and a component "

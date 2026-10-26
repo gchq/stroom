@@ -20,8 +20,10 @@ Stroom builds the Visualisation from a fixed template, drawn by its own reviewed
 5. Call `propose_visualisation` with the library, the kind, the columns for each input, a name saying what it shows,
    and any style. It checks the table's rows can make the chart.
    - With `echarts` or `d3` it offers a "Create visualisation" button. The user names it and picks its folder (the
-     dashboard's, by default) in Stroom's own dialog; it is then added below the table (or as a tab beside it), or
-     put in the query's `show` clause, unsaved. It redraws whenever the table updates.
+     dashboard's, by default) in Stroom's own dialog; it is then added as a tab with the dashboard's charts (or at
+     the bottom of the dashboard if it has none), or put in the query's `show` clause, unsaved. It redraws whenever
+     the table updates. Give `placement` only if the user asks for the chart somewhere else: `bottom`, `below` (the
+     table) or `tab` (beside the table).
    - With `content-pack` it gives the `add_vis` change (or the `show` clause) that wires the content pack's
      existing D3 Visualisation to the table, for you to propose.
    - If it says the data can't make the chart, tell the user why and suggest the fix it gives. Don't propose it
