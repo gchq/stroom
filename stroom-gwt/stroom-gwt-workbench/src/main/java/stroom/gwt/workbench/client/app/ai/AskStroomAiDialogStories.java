@@ -35,8 +35,6 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.main.client.view.MainToolbar;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -230,6 +228,31 @@ public final class AskStroomAiDialogStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Configure Ask Stroom AI",
                             StroomDom.DIALOG_TITLE)).toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // Set As Default sends the settings both tabs show
+                .story("SetAsDefaultSendsSettings", AskStroomAiDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText(CAPTION, StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByTitle("Configure"));
+                    play.waitFor(() -> play.expect(screen.getByText("Configure Ask Stroom AI", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument());
+                    play.clear(screen.querySelector("#chatSystemPrompt"));
+                    play.type(screen.querySelector("#chatSystemPrompt"), "Be brief.");
+                    play.click(screen.getByText("Table Analysis", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(screen.getByText("Max Total Rows", "label")).toBeInTheDocument());
+                    play.clear(screen.querySelector("#tableQueryUserPrompt"));
+                    play.type(screen.querySelector("#tableQueryUserPrompt"), "Analyse the table.");
+                    play.click(screen.getByRole("button", StroomDom.button("Set As Default")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/ai/v1/setDefaultAskStroomAIConfig")
+                                    .withJsonBodyContaining("{\"chatSystemPrompt\": \"Be brief.\","
+                                                            + " \"tableAnalysis\":"
+                                                            + " {\"tableQueryUserPrompt\": \"Analyse the table.\"}}")
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("INFO: Default config updated"));
+                    DocEditors.expectNoUnhandledRequests(play);
                 });
     }
 

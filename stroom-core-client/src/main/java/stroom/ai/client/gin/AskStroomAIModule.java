@@ -19,12 +19,6 @@ package stroom.ai.client.gin;
 import stroom.ai.client.AiChatHistoryPresenter;
 import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
 import stroom.ai.client.AiChatHistoryViewImpl;
-import stroom.ai.client.AiConfigGeneralPresenter;
-import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
-import stroom.ai.client.AiConfigGeneralViewImpl;
-import stroom.ai.client.AiConfigTableAnalysisPresenter;
-import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
-import stroom.ai.client.AiConfigTableAnalysisViewImpl;
 import stroom.ai.client.AskStroomAiConfigPresenter;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
@@ -51,14 +45,6 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AskStroomAiConfigPresenter.class,
                 AskStroomAiConfigView.class,
                 AskStroomAiConfigViewImpl.class);
-        bindPresenterWidget(
-                AiConfigGeneralPresenter.class,
-                AiConfigGeneralView.class,
-                AiConfigGeneralViewImpl.class);
-        bindPresenterWidget(
-                AiConfigTableAnalysisPresenter.class,
-                AiConfigTableAnalysisView.class,
-                AiConfigTableAnalysisViewImpl.class);
         bindPresenterWidget(
                 AiChatHistoryPresenter.class,
                 AiChatHistoryView.class,

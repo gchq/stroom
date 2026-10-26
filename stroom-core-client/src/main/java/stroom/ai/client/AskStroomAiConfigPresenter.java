@@ -18,12 +18,15 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.client.component.AiConfigGeneralController;
+import stroom.ai.client.component.AiConfigTableAnalysisController;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -49,8 +52,10 @@ public class AskStroomAiConfigPresenter
     // ---------------------------------------------------------------------
 
     private final AskStroomAiClient askStroomAiClient;
-    private final AiConfigGeneralPresenter generalPresenter;
-    private final AiConfigTableAnalysisPresenter tableAnalysisPresenter;
+    private final AiConfigGeneralController general;
+    private final ControllerLayer generalLayer;
+    private final AiConfigTableAnalysisController tableAnalysis;
+    private final ControllerLayer tableAnalysisLayer;
     private final ClientSecurityContext clientSecurityContext;
 
     // ---------------------------------------------------------------------
@@ -60,18 +65,20 @@ public class AskStroomAiConfigPresenter
                                       final AskStroomAiConfigView view,
                                       final AskStroomAiClient askStroomAiClient,
                                       final ClientSecurityContext clientSecurityContext,
-                                      final AiConfigGeneralPresenter generalPresenter,
-                                      final AiConfigTableAnalysisPresenter tableAnalysisPresenter) {
+                                      final AiConfigGeneralController general,
+                                      final AiConfigTableAnalysisController tableAnalysis) {
         super(eventBus, view);
-        own(generalPresenter);
-        own(tableAnalysisPresenter);
+        own(general);
+        own(tableAnalysis);
         this.askStroomAiClient = askStroomAiClient;
         this.clientSecurityContext = clientSecurityContext;
-        this.generalPresenter = generalPresenter;
-        this.tableAnalysisPresenter = tableAnalysisPresenter;
+        this.general = general;
+        generalLayer = new ControllerLayer(general);
+        this.tableAnalysis = tableAnalysis;
+        tableAnalysisLayer = new ControllerLayer(tableAnalysis);
 
-        addTab(GENERAL, generalPresenter);
-        addTab(TABLE_ANALYSIS, tableAnalysisPresenter);
+        addTab(GENERAL);
+        addTab(TABLE_ANALYSIS);
         view.getTabBar().selectTab(GENERAL);
         switchTab(GENERAL);
 
@@ -81,16 +88,16 @@ public class AskStroomAiConfigPresenter
 
     // ---------------------------------------------------------------------
 
-    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
+    private void addTab(final TabData tabData) {
         getView().getTabBar().addTab(tabData);
     }
 
     private void switchTab(final TabData tabData) {
         getView().getTabBar().selectTab(tabData);
         if (Objects.equals(GENERAL, tabData)) {
-            getView().getLayerContainer().show(generalPresenter);
+            getView().getLayerContainer().show(generalLayer);
         } else if (Objects.equals(TABLE_ANALYSIS, tabData)) {
-            getView().getLayerContainer().show(tableAnalysisPresenter);
+            getView().getLayerContainer().show(tableAnalysisLayer);
         }
     }
 
@@ -101,8 +108,8 @@ public class AskStroomAiConfigPresenter
                      final DockBehaviour snapshotDockBehaviour,
                      final Consumer<DockBehaviour> dockBehaviourConsumer) {
 
-        // Wire the dock behaviour callback through to the General sub-presenter.
-        generalPresenter.setDockBehaviourChangeHandler(dockBehaviourConsumer);
+        // Wire the dock behaviour callback through to the General tab.
+        general.setOnDockBehaviourChange(dockBehaviourConsumer);
 
         final boolean isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
         getView().setRestoreFromDefaults(this::onRestoreFromDefaults);
@@ -116,12 +123,12 @@ public class AskStroomAiConfigPresenter
                 .caption("Configure Ask Stroom AI")
                 .onShow(e -> {
                     read(currentConfig, snapshotDockBehaviour);
-                    generalPresenter.getView().focus();
+                    general.focus();
                 })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AskStroomAiConfig config = write();
-                        dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
+                        dockBehaviourConsumer.accept(general.getDockBehaviour());
                         configConsumer.accept(config);
                     } else {
                         if (dockBehaviourConsumer != null && snapshotDockBehaviour != null) {
@@ -150,20 +157,20 @@ public class AskStroomAiConfigPresenter
 
     private void read(final AskStroomAiConfig config,
                       final DockBehaviour dockBehaviour) {
-        generalPresenter.read(config, dockBehaviour);
+        general.read(config, dockBehaviour);
         final TableAnalysisConfig tableConfig = config != null
                 ? config.getTableAnalysis()
                 : null;
-        tableAnalysisPresenter.read(
+        tableAnalysis.read(
                 tableConfig != null ? tableConfig : new TableAnalysisConfig(),
                 config);
     }
 
     private AskStroomAiConfig write() {
         final AskStroomAiConfig.Builder builder = AskStroomAiConfig.builder();
-        generalPresenter.write(builder);
-        builder.tableAnalysisConfig(tableAnalysisPresenter.write());
-        builder.attachmentDownloadTimeoutMs(tableAnalysisPresenter.getAttachmentDownloadTimeoutMs());
+        general.write(builder);
+        builder.tableAnalysisConfig(tableAnalysis.write());
+        builder.attachmentDownloadTimeoutMs(tableAnalysis.getAttachmentDownloadTimeoutMs());
         return builder.build();
     }
 
