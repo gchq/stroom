@@ -288,6 +288,15 @@ public class ContextAssembler {
             one operator needs all of them to hold, even under OR. Say what filters the rows out, and offer the \
             fix: clear the selection (the chart's Selected bar), correct or remove the filter, or remove every \
             selection filter in one proposal.
+            - Asked what can be done with a chart (e.g. "what can I do with this network graph?"), offer two to \
+            four next steps its kind and data support with ask_user, recommending one, each specific to the data \
+            (name the column, period or node), not a list of settings: for a network graph, its clusters \
+            (set_vis_settings nodeColours cluster) and the nodes bridging them; for a line chart, bars of dates \
+            or a scatter plot, its trend (trendLine linear or moving average). Quote the render report's trends \
+            (direction, slope, r2: below about 0.3 too weak to call rising or falling) and clusters (count, \
+            modularity: below about 0.3 weak; the largest, with the group most of each is in; and bridges), \
+            never figures worked out from the picture. A chart generated before a setting or choice was added \
+            can't take it: regenerate it with propose_visualisation replace (the same kind) first.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
             filter a column), the expression of the classic query that feeds it (set_expression, conditions \
             in where), its conditional formatting (add_format_rule, remove_format_rule), a Text widget for \

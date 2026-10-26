@@ -190,6 +190,63 @@ Say what is filtering the rows out, and offer the fix:
 - correct the filter or remove it;
 - or remove every selection filter, in one proposal.
 
+## Analysing a chart
+
+Asked what can be done with a chart (e.g. "what can I do with this network graph?"), or after drawing one, don't
+list every setting. Look at the chart's kind, its table's columns and its render report, then offer two to four
+next steps it supports with `ask_user`, recommending one. Make each specific to the data: name the column, the
+period or the node, e.g. "Find the groups among the 42 people messaging each other, and who links them".
+
+- **Network graph**
+  - Clusters: `nodeColours` cluster, a `set_vis_settings` change. It colours the groups of nodes more linked to
+    each other than to the rest (found with the Leiden method), names each after its most connected member (e.g.
+    `mchen +11`) and greys the links between them (`clusterLinks`).
+  - Who links the clusters: the report's bridges (see below).
+  - Clusters against a known grouping: map the grouping (e.g. a department) to `sourceGroup` and `targetGroup`;
+    the report then gives the group most of each cluster is in. A cluster mixing groups, or a group split across
+    clusters, is often the finding.
+  - How much: `nodeSize` total (messages sent and received), and `directed` for who starts.
+  - Narrow the dashboard to a person: a selection filter on their node (see Filtering by a chart).
+- **Line chart, bars of dates, scatter plot**
+  - The trend: `trendLine` linear (a straight-line fit) or moving average (a centred average; `trendWindow`
+    points, about a tenth by default). A stacked chart has one trend, of its total.
+  - Against a level: `averageLine`, `threshold`.
+  - Detail as the user zooms: `autoInterval`.
+  - A spike or dip: read its rows (see What the user is looking at).
+- **Any chart**: whether a better kind suits the data, and filtering the dashboard by what is clicked.
+
+A trend needs an x it can follow: dates or numbers, not text, and bars in their own order, not sorted by value.
+`propose_visualisation` refuses one that couldn't be drawn, and says why.
+
+A detail that isn't a column of the chart's table (e.g. a person's organisation, for a network's groups) can't be
+charted until it is one. If it is in the events but not indexed, it comes from the table's extraction pipeline
+(or from reference data); say so rather than inventing it.
+
+A chart keeps the version of Stroom's adapter it was generated with. One generated before a setting or choice was
+added (e.g. `trendLine`, or `nodeColours` cluster) can't take it: `propose_dashboard_change` says so. Regenerate it
+with `propose_visualisation`, `replace` (its pane's name), the same kind and columns, which gives it every current
+setting, then set it.
+
+### Reading the report's analysis
+
+Quote the figures the render report gives; never work them out from the picture.
+
+- `trends`, one per series (or `Total`, stacked), each with:
+  - `direction`: rising, falling or flat. Flat means it changes by less than 5% of the series' average size over
+    the time shown.
+  - `slope`: per a unit suiting the time shown, e.g. `+12/day`.
+  - `r2`: how well a straight line fits, from 0 to 1. Below about 0.3 the trend is weak (drawn fainter): say the
+    values vary too much to call it rising or falling, rather than claiming a trend.
+
+  A moving average's entry is from the same straight-line fit; the line drawn follows the values more closely.
+- `clusters`:
+  - `count`: how many clusters.
+  - `modularity`: how clear-cut they are. Below about 0.3 they are weak; above about 0.5 they are clear.
+  - `top`: the largest, each with its `name`, `size`, and, when groups are mapped, the `group` most of it is in
+    with its share (`groupShare`, a percentage).
+  - `bridges`: the nodes linked to the most other clusters (`otherClusters`). These are the go-betweens, often the
+    people or hosts worth a closer look.
+
 ## Embedded queries
 
 A dashboard's Embedded Query component runs StroomQL (shown in the dashboard's description) with its own results
@@ -230,8 +287,8 @@ table and chart. `current_results` snapshots its results by its name, as a table
   column each row counts once, so each link is as wide as its rows (e.g. a pair's messages), and `nodeSize`
   total sizes each node by its links' total (the messages a person sent and received). Map `weight` only for a
   column of counts or amounts (e.g. a grouped table's `count()`).
-- A network graph's node colours: `nodeColours` group (by its `sourceGroup`/`targetGroup` columns) or node (each
-  node its own colour). Its links are drawn in their source node's colour: don't override that (e.g. with a
+- A network graph's node colours: `nodeColours` group (by its `sourceGroup`/`targetGroup` columns), node (each
+  node its own colour) or cluster (see Analysing a chart). Its links are drawn in their source node's colour: don't override that (e.g. with a
   `lineStyle` colour in options), which leaves every link one colour.
 - A chart replaced (`replace`) keeps the old chart's style settings that the new one has (e.g. `nodeColours`),
   unless you give others; the result says which were kept. Its layout animates by default; `list_visualisations` gives the `seriesDefaults.force`

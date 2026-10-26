@@ -685,6 +685,33 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         "table '" + table + "'")
                 .forEach(problem -> problems.add(prefix + problem));
         NullSafe.consume(kindChangeProblem(settings, visualisation), problem -> problems.add(prefix + problem));
+        newChoiceProblems(settings, visualisation).forEach(problem -> problems.add(prefix + problem));
+    }
+
+    // A chart Stroom AI generated draws with the adapter it was generated with, which has only the choices its
+    // settings offer: one added since (e.g. a nodeColours of cluster) would do nothing, so it is regenerated first.
+    static List<String> newChoiceProblems(final Map<String, String> settings,
+                                          final VisualisationDoc visualisation) {
+        if (ChartLibrary.forFunctionName(visualisation.getFunctionName()).isEmpty()) {
+            return List.of();
+        }
+        final Map<String, List<String>> choices = EChartsTemplate.choices(visualisation.getSettings());
+        final List<String> problems = new ArrayList<>();
+        NullSafe.map(settings).forEach((id, value) -> {
+            final List<String> offered = choices.get(id);
+            if (offered != null && NullSafe.isNonBlankString(value)
+                && offered.stream().noneMatch(choice -> choice.equalsIgnoreCase(value.strip()))) {
+                problems.add("this chart's " + id + " offers " + String.join(", ", offered.stream()
+                        .map(choice -> choice.isEmpty()
+                                ? "'' (blank)"
+                                : choice)
+                        .toList()) + ", not '" + value.strip() + "': it was generated before that was added, "
+                             + "and draws with the version of Stroom's adapter it was made with. Regenerate it "
+                             + "first with propose_visualisation, replace (its pane's name), the same kind and "
+                             + "columns, which gives it every current setting; then set it.");
+            }
+        });
+        return problems;
     }
 
     // A chart Stroom AI generated can't be made another kind by its pane's settings: its Visualisation's Data tab has
