@@ -17,7 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
@@ -67,7 +67,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private final QueryResultTablePresenter tablePresenter;
     private final FormatPresenter formatPresenter;
     private final Provider<RulesPresenter> rulesPresenterProvider;
-    private final ColumnFilterPresenter columnFilterPresenter;
+    private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
     private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
@@ -78,13 +78,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                     final QueryResultTablePresenter tablePresenter,
                                     final FormatPresenter formatPresenter,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
-                                    final ColumnFilterPresenter columnFilterPresenter,
+                                    final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.formatPresenter = formatPresenter;
         this.rulesPresenterProvider = rulesPresenterProvider;
-        this.columnFilterPresenter = columnFilterPresenter;
+        this.columnFilterEditorProvider = columnFilterEditorProvider;
         this.columnValuesFilterPresenter = columnValuesFilterPresenter;
     }
 
@@ -285,8 +285,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     }
 
     private void filterColumn(final Column column) {
-        columnFilterPresenter.setColumnFilter(column.getColumnFilter());
-        columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
+        // Made for this use, and owned by the table while it is shown
+        columnFilterEditorProvider.get().edit(tablePresenter, column, (oldColumn, newColumn) -> {
             // The dialog isn't modal, so the column may have been changed or removed while it was
             // open: the filter goes on the column as it is now
             final Column current = findColumn(getColumns(), oldColumn.getId());

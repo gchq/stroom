@@ -24,9 +24,9 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
@@ -173,13 +173,12 @@ public class QueryResultTablePresenter
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
-                                     final ColumnFilterPresenter columnFilterPresenter,
+                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         own(downloadPresenter);
         own(formatPresenter);
-        own(columnFilterPresenter);
         own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
@@ -206,7 +205,7 @@ public class QueryResultTablePresenter
                 this,
                 formatPresenter,
                 () -> makeDialog(rulesPresenterProvider),
-                columnFilterPresenter,
+                columnFilterEditorProvider,
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);

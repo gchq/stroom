@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.dashboard.client.table.ColumnFilterPresenter;
-import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
-import stroom.dashboard.client.table.ColumnFilterViewImpl;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
 import stroom.dashboard.client.table.ColumnValuesFilterViewImpl;
@@ -54,9 +51,6 @@ public class QueryResultTableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FormatPresenter.class,
                 FormatView.class,
                 FormatViewImpl.class);
-        bindPresenterWidget(ColumnFilterPresenter.class,
-                ColumnFilterView.class,
-                ColumnFilterViewImpl.class);
         bindPresenterWidget(ColumnValuesFilterPresenter.class,
                 ColumnValuesFilterView.class,
                 ColumnValuesFilterViewImpl.class);

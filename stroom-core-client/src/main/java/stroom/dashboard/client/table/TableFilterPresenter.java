@@ -16,9 +16,11 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.IncludeExcludeFilter;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -42,23 +44,23 @@ public class TableFilterPresenter
         implements Focus {
 
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
-    private final ColumnFilterPresenter columnFilterPresenter;
+    private final ColumnFilterEditorController columnFilterEditor;
     private final IncludeExcludeFilterPresenter includeExcludeFilterPresenter;
     private TabData selectedTab;
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
                                 final LinkTabsLayoutView view,
-                                final ColumnFilterPresenter columnFilterPresenter,
+                                final ColumnFilterEditorController columnFilterEditor,
                                 final IncludeExcludeFilterPresenter includeExcludeFilterPresenter) {
         super(eventBus, view);
-        own(columnFilterPresenter);
+        own(columnFilterEditor);
         own(includeExcludeFilterPresenter);
-        this.columnFilterPresenter = columnFilterPresenter;
+        this.columnFilterEditor = columnFilterEditor;
         this.includeExcludeFilterPresenter = includeExcludeFilterPresenter;
         getWidget().getElement().addClassName("default-min-sizes");
 
-        final TabData tabData = addTab("Filter", columnFilterPresenter);
+        final TabData tabData = addTab("Filter", new ControllerLayer(columnFilterEditor));
         addTab("Include Exclude", includeExcludeFilterPresenter);
         changeSelectedTab(tabData);
 
@@ -73,7 +75,7 @@ public class TableFilterPresenter
 
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
-        columnFilterPresenter.setColumnFilter(column.getColumnFilter());
+        columnFilterEditor.setColumnFilter(column.getColumnFilter());
         includeExcludeFilterPresenter.setFilter(column.getFilter());
 
         final PopupSize popupSize = PopupSize.resizable(1085, 500, 1085, 500);
@@ -84,7 +86,7 @@ public class TableFilterPresenter
                 .onShow(e -> focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ColumnFilter columnFilter = columnFilterPresenter.getColumnFilter(column);
+                        final ColumnFilter columnFilter = columnFilterEditor.getColumnFilter(column);
                         final IncludeExcludeFilter includeExcludeFilter = includeExcludeFilterPresenter.getFilter();
                         if ((!Objects.equals(columnFilter, column.getColumnFilter()) ||
                              (!Objects.equals(includeExcludeFilter, column.getFilter())))) {
