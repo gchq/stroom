@@ -98,6 +98,11 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         return refreshButton;
     }
 
+    public VisToolbar getToolbar() {
+        return toolbar;
+    }
+
+    @Override
     public void setVisFrame(final VisFrame visFrame) {
         this.visFrame = visFrame;
         toolbar.setVisFrame(visFrame);
