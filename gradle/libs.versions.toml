@@ -211,7 +211,7 @@ download = { id = "de.undercouch.download", version = "4.1.2" }
 task-tree = { id = "com.dorongold.task-tree", version = "4.0.1" }
 
 # Plugin for producing fat jars and/or shaded jars
-shadow = { id = "com.gradleup.shadow", version = "9.3.0" }
+shadow = { id = "com.gradleup.shadow", version = "9.6.1" }
 
 # Plugin for producing the the Jooq generated code for 'writing' SQL in java.
 jooq = { id = "nu.studer.jooq", version = "10.2.1" }
