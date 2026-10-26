@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.ai.shared.AskStroomAiContext;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -49,8 +50,11 @@ import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
+import stroom.util.shared.NullSafe;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -140,7 +144,8 @@ public class VisPresenter
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
                         final RestFactory restFactory,
                         final CurrentPreferences currentPreferences,
-                        final VisContextFactory visContextFactory) {
+                        final VisContextFactory visContextFactory,
+                        final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
         this.visContextFactory = visContextFactory;
         this.visFunctionCache = new VisFunctionCache(eventBus);
@@ -153,6 +158,15 @@ public class VisPresenter
                 getDashboardContext().fireComponentChangeEvent(VisPresenter.this));
 
         visFrame = new VisFrame(eventBus);
+
+        // The toolbar above the chart: saved under the pane's name, its data as CSV for those who may download
+        // search results, and Ask Stroom AI about the linked table's data, as the table's own button does.
+        final VisToolbar toolbar = view.getToolbar();
+        toolbar.setHandlers(this);
+        toolbar.setFileName(() -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
+        toolbar.setDataDownloadAllowed(securityContext.hasAppPermission(
+                AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
+        toolbar.setAskAiContext(this::linkedTableContext);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(visSelectionModel);
         visFrame.setReportHandler(this::onRenderReport);
@@ -695,6 +709,15 @@ public class VisPresenter
         visFrame.setData(visContextFactory.create(), currentSettings, currentData);
     }
 
+    // The search behind the linked table's rows, which the chart draws, or null if it hasn't run.
+    private AskStroomAiContext linkedTableContext() {
+        final String tableId = NullSafe.get(getVisSettings(), VisComponentSettings::getTableId);
+        return tableId != null && getDashboardContext() != null
+               && getDashboardContext().getComponents().get(tableId) instanceof final TablePresenter table
+                ? table.getResultsContext()
+                : null;
+    }
+
     private void onRenderReport(final String reportJson) {
         lastRenderReport = reportJson;
         final DashboardContext dashboardContext = getDashboardContext();
@@ -829,5 +852,8 @@ public class VisPresenter
         void hideMessage();
 
         void setVisFrame(VisFrame visFrame);
+
+        /// @return The toolbar above the chart.
+        VisToolbar getToolbar();
     }
 }

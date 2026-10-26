@@ -29,6 +29,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
@@ -133,10 +134,14 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
     /// Sends the visualisation a command from its toolbar, e.g. [VisControls#RESET_ZOOM]. A visualisation without
     /// a `command` function ignores it.
     ///
-    /// @param name The command.
-    public void command(final String name) {
+    /// @param name  The command.
+    /// @param value What it is given, e.g. a file's name, or null.
+    public void command(final String name, final String value) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(name));
+        params.set(1, value == null
+                ? JSONNull.getInstance()
+                : new JSONString(value));
 
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.command"));
