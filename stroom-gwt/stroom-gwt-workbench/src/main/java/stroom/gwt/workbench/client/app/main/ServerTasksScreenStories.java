@@ -253,7 +253,7 @@ public final class ServerTasksScreenStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(filteredFind());
                     expectNoProblems(play);
                 })
-                // TaskManagerListPresenter details visible on one flat page: '?' for a task with no
+                // TaskManagerListController details visible on one flat page: '?' for a task with no
                 // node, and no expander column when no row is a parent
                 .story("FlatListDetails", context -> render(context, ORPHAN_FIXTURES, null))
                 .withPlay(play -> {

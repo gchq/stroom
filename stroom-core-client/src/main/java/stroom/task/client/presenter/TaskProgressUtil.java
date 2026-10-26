@@ -38,14 +38,22 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class TaskProgressUtil {
+/// Combines the tasks each node reports into one tree, sorted and paged.
+public class TaskProgressUtil {
 
     public static final String DEAD_TASK_NAME = "<<dead>>";
 
     private TaskProgressUtil() {
     }
 
-    static ResultPage<TaskProgress> combine(final Range range,
+    /// Combines the nodes' tasks into one page of a tree.
+    ///
+    /// @param range      The page asked for.
+    /// @param criteria   How they are sorted and filtered.
+    /// @param input      Each node's tasks.
+    /// @param treeAction Which rows are expanded.
+    /// @return The page.
+    public static ResultPage<TaskProgress> combine(final Range range,
                                             final FindTaskProgressCriteria criteria,
                                             final Collection<List<TaskProgress>> input,
                                             final TaskManagerTreeAction treeAction) {

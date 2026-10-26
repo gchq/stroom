@@ -58,20 +58,23 @@ public class TaskManagerTreeAction implements TreeAction<TaskProgress> {
         this.expandedRows = expandedRows;
     }
 
-    void reset() {
+    /// Forgets which rows are expanded or collapsed.
+    public void reset() {
         expandedRows.clear();
         collapsedRows.clear();
         expandAllRequested = false;
     }
 
-    void expandAll() {
+    /// Asks for every row to be expanded.
+    public void expandAll() {
         expandedRows.addAll(collapsedRows);
         collapsedRows.clear();
         expandAllRequested = true;
 
     }
 
-    void resetExpandAllRequestState() {
+    /// Forgets a request to expand every row, once it has been met.
+    public void resetExpandAllRequestState() {
         expandAllRequested = false;
     }
 
@@ -79,17 +82,20 @@ public class TaskManagerTreeAction implements TreeAction<TaskProgress> {
         return expandAllRequested;
     }
 
-    void collapseAll() {
+    /// Collapses every row.
+    public void collapseAll() {
         collapsedRows.addAll(expandedRows);
         expandedRows.clear();
         expandAllRequested = false;
     }
 
-    boolean hasExpandedRows() {
+    /// @return Whether any row is expanded.
+    public boolean hasExpandedRows() {
         return !expandedRows.isEmpty();
     }
 
-    boolean hasCollapsedRows() {
+    /// @return Whether any row is collapsed.
+    public boolean hasCollapsedRows() {
         return !collapsedRows.isEmpty();
     }
 

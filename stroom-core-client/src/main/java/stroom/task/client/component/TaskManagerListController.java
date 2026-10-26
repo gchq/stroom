@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.task.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.InfoColumn;
-import stroom.cell.tickbox.client.TickBoxCell;
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.component.RefCellsController;
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.component.UserRefCell;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
@@ -33,7 +29,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.feed.client.FeedClient;
 import stroom.node.client.NodeClient;
 import stroom.node.shared.FindNodeStatusCriteria;
@@ -45,7 +40,10 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.presenter.TaskInfoParser;
 import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
+import stroom.task.client.presenter.TaskManagerTreeAction;
+import stroom.task.client.presenter.TaskProgressUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -54,36 +52,22 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
-import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
-import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
-import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -98,19 +82,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class TaskManagerListPresenter
-        extends MyPresenterWidget<PagerPanel>
-        implements Refreshable {
+/// The tasks running on every node ([TaskManagerList]): each node asked for its tasks, which are
+/// combined into one tree once the replies are in; the tasks ticked terminated. Refreshes only
+/// while auto refresh is on; filtered by name, after a pause for typing.
+public class TaskManagerListController extends Controller implements Refreshable {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final DateTimeFormatter dateTimeFormatter;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
-    private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -120,16 +103,9 @@ public class TaskManagerListPresenter
     private final Map<String, List<String>> errorMap = new HashMap<>();
     private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
-    private final DataGrid<TaskProgress> dataGrid;
-
-    private final ButtonView expandAllButton;
-    private final ButtonView collapseAllButton;
-    private final ButtonView warningsButton;
-    private final ToolbarToggleButton autoRefreshButton;
-    private final ToolbarToggleButton wrapToggleButton;
+    private final TaskManagerList view;
 
     private String currentWarnings;
-    private Column<TaskProgress, Expander> expanderColumn;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
     private final DelayedUpdate delayedUpdate;
@@ -139,54 +115,57 @@ public class TaskManagerListPresenter
     private Consumer<String> filterErrorConsumer;
     private boolean autoRefresh = true;
 
-    private final RefCellsController refCells;
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The content.
+    /// @param tooltipPresenter  Shows a task's info.
+    /// @param restFactory       Fetches and terminates the tasks.
+    /// @param nodeClient        Lists the nodes.
+    /// @param feedClient        Finds a feed by name, to open it.
+    /// @param dateTimeFormatter Formats times in the user's preferences.
+    /// @param refCells          Lets the user cells open their users.
     @Inject
-    public TaskManagerListPresenter(final EventBus eventBus,
-                                    final PagerPanel view,
-                                    final TooltipPresenter tooltipPresenter,
-                                    final RestFactory restFactory,
-                                    final NodeClient nodeClient,
-                                    final FeedClient feedClient,
-                                    final DateTimeFormatter dateTimeFormatter,
-                                    final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
+    public TaskManagerListController(final EventBus eventBus,
+                                     final TaskManagerList view,
+                                     final TooltipPresenter tooltipPresenter,
+                                     final RestFactory restFactory,
+                                     final NodeClient nodeClient,
+                                     final FeedClient feedClient,
+                                     final DateTimeFormatter dateTimeFormatter,
+                                     final RefCellsController refCells) {
+        super(eventBus);
+        this.view = view;
+        own(refCells);
         own(tooltipPresenter);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
         this.dateTimeFormatter = dateTimeFormatter;
+        initWidget(view);
 
-        dataGrid = new DataGrid<>(1000);
-        dataGrid.setTableName("Server Tasks");
-        view.setDataWidget(dataGrid);
-
-        getView().getToolbar().setName("Task actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
-                pressed -> onAutoRefreshToggled());
-        autoRefreshButton.setState(autoRefresh);
-
-        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Selected Tasks",
-                this::endSelectedTask);
-
-        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All Tasks",
-                this::onExpandAll);
-        expandAllButton.setEnabled(false);
-        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All Tasks",
-                this::onCollapseAll);
-        collapseAllButton.setEnabled(false);
-
-        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Wrap Text",
-                this::onWrapToggled);
-
-        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Task Warnings", this::showWarnings);
-        warningsButton.setVisible(false);
+        view.setOnAutoRefreshToggle(pressed -> onAutoRefreshToggled());
+        view.setOnTerminate(this::endSelectedTask);
+        view.setOnExpandAll(this::onExpandAll);
+        view.setOnCollapseAll(this::onCollapseAll);
+        view.setOnShowWarnings(this::showWarnings);
+        view.setOnShowInfo((row, popupPosition, anchor) ->
+                tooltipPresenter.show(buildTooltipHtml(row), popupPosition, anchor));
+        view.setOnExpand((row, expanded) -> {
+            treeAction.setRowExpanded(row, expanded);
+            // As we get data async from all nodes we can't be sure when we have finished so
+            // need to clear the expandAllRequestState prior to fetching
+            treeAction.resetExpandAllRequestState();
+            updateButtonStates();
+            internalRefresh();
+        });
+        view.addColumns(this::getNodeName,
+                dateTimeFormatter::format,
+                refCells.configure(new UserRefCell.Builder<TaskProgress>()),
+                this::getContextMenus);
 
         updateButtonStates();
-
-        initTableColumns();
 
         delayedUpdate = new DelayedUpdate(this::update);
         dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
@@ -194,24 +173,27 @@ public class TaskManagerListPresenter
             protected void exec(final Range range,
                                 final Consumer<TaskProgressResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
-                TaskManagerListPresenter.this.range = range;
-                TaskManagerListPresenter.this.dataConsumer = dataConsumer;
+                CriteriaUtil.setSortList(criteria, view.getSortList());
+                TaskManagerListController.this.range = range;
+                TaskManagerListController.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
                 fetchNodes(range, dataConsumer, errorHandler);
             }
         };
-        dataProvider.addDataDisplay(dataGrid);
+        view.setDataProvider(dataProvider);
 
         // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
+        dataProvider.setTreeRowHandler(view.createTreeRowHandler(treeAction));
 
-        own(dataGrid.addColumnSortHandler(event -> {
+        view.setOnSortChange(() -> {
             // As we get data async from all nodes we can't be sure when we have finished so
             // need to clear the expandAllRequestState prior to fetching
             treeAction.resetExpandAllRequestState();
             dataProvider.refresh();
-        }));
+        });
+        // Timers stop with the list
+        onDispose(delayedUpdate::reset);
+        onDispose(timer::cancel);
     }
 
     private void onAutoRefreshToggled() {
@@ -219,10 +201,6 @@ public class TaskManagerListPresenter
         if (autoRefresh) {
             internalRefresh();
         }
-    }
-
-    private void onWrapToggled(final boolean wrap) {
-        dataGrid.setMultiLine(wrap);
     }
 
     private void onExpandAll() {
@@ -244,129 +222,13 @@ public class TaskManagerListPresenter
         }
     }
 
-    public void setErrors(final String errors) {
+    private void setErrors(final String errors) {
         currentWarnings = errors;
-        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
+        view.setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
 
     private void updateButtonStates() {
-        expandAllButton.setEnabled(treeAction.hasCollapsedRows());
-        collapseAllButton.setEnabled(treeAction.hasExpandedRows());
-    }
-
-    /**
-     * Add the columns to the table.
-     */
-    private void initTableColumns() {
-        // Select Column
-        final Column<TaskProgress, TickBoxState> checkBoxColumn = new Column<TaskProgress, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final TaskProgress taskProgress) {
-                if (TaskProgressUtil.DEAD_TASK_NAME.equals(taskProgress.getTaskName())) {
-                    // Dead tasks cannot be deleted so don't show a checkbox
-                    // They are only there to show that an orphaned child task was a child of something
-                    return null;
-                } else {
-                    return TickBoxState.fromBoolean(selectedTaskProgress.contains(taskProgress));
-                }
-            }
-        };
-
-        dataGrid.addColumn(checkBoxColumn, "", ColumnSizeConstants.CHECKBOX_COL);
-
-        // Expander column.
-        expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
-            @Override
-            public Expander getValue(final TaskProgress row) {
-                return buildExpander(row);
-            }
-        };
-        dataGrid.addColumn(expanderColumn, "");
-
-        expanderColumn.setFieldUpdater((index, row, value) -> {
-            treeAction.setRowExpanded(row, !value.isExpanded());
-            // As we get data async from all nodes we can't be sure when we have finished so
-            // need to clear the expandAllRequestState prior to fetching
-            treeAction.resetExpandAllRequestState();
-            updateButtonStates();
-            internalRefresh();
-        });
-
-        final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
-            @Override
-            protected void showInfo(final TaskProgress row,
-                                    final PopupPosition popupPosition,
-                                    final Element anchor) {
-                final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, popupPosition, anchor);
-            }
-        };
-        dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
-
-        // Add Handlers
-        checkBoxColumn.setFieldUpdater((index, object, value) -> {
-            if (value.toBoolean()) {
-                selectedTaskProgress.add(object);
-            } else {
-                // De-selecting one and currently matching all ?
-                selectedTaskProgress.remove(object);
-            }
-//            setButtonsEnabled();
-        });
-
-        // Node.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(this::getNodeName))
-                        .withSorting(FindTaskProgressCriteria.FIELD_NODE)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_NODE,
-                150);
-
-        // Name.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskName))
-                        .withSorting(FindTaskProgressCriteria.FIELD_NAME)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_NAME,
-                250);
-
-        // User.
-        dataGrid.addResizableColumn(
-                DataGridUtil.userRefColumnBuilder(
-                                TaskProgress::getUserRef, refCells, DisplayType.AUTO)
-                        .enabledWhen(taskProgress -> NullSafe
-                                .getOrElse(taskProgress, TaskProgress::getUserRef, UserRef::isEnabled, false))
-                        .withSorting(FindTaskProgressCriteria.FIELD_USER)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_USER,
-                100);
-
-        // Submit Time.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                dateTimeFormatter.format(taskProgress.getSubmitTimeMs())))
-                        .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
-                ColumnSizeConstants.DATE_COL);
-
-        // Age. The oldest first, unless another sort is chosen
-        final Column<TaskProgress, SafeHtml> ageColumn = DataGridUtil.htmlColumnBuilder(getColouredCellFunc(
-                        taskProgress -> ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
-                .withSorting(FindTaskProgressCriteria.FIELD_AGE)
-                .build();
-        dataGrid.addResizableColumn(ageColumn, FindTaskProgressCriteria.FIELD_AGE, ColumnSizeConstants.SMALL_COL);
-        dataGrid.setDefaultSort(new ColumnSortInfo(ageColumn, false));
-
-        // Info
-        dataGrid.addAutoResizableColumn(
-                DataGridUtil.hasContextMenusColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo),
-                                this::getContextMenus)
-                        .withSorting(FindTaskProgressCriteria.FIELD_INFO)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_INFO,
-                200);
+        view.setExpandCollapseEnabled(treeAction.hasCollapsedRows(), treeAction.hasExpandedRows());
     }
 
     private String getNodeName(final TaskProgress taskProgress) {
@@ -410,37 +272,10 @@ public class TaskManagerListPresenter
         return htmlBuilder.toSafeHtml();
     }
 
-    private Function<TaskProgress, SafeHtml> getColouredCellFunc(final Function<TaskProgress, String> extractor) {
-        return DataGridUtil.highlightedCellExtractor(
-                extractor,
-                TaskProgress::isMatchedInFilter);
-    }
-
-    private Function<TaskProgress, SafeHtml> getWrapableColouredCellFunc(
-            final Function<TaskProgress, String> extractor) {
-        final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
-
-        return (final TaskProgress row) -> {
-            final SafeHtml colouredText = colouredCellFunc.apply(row);
-            if (wrapToggleButton.isOn()) {
-                return HtmlBuilder.builder()
-                        .div(htmlBuilder -> htmlBuilder.append(colouredText))
-                        .toSafeHtml();
-            } else {
-                return colouredText;
-            }
-        };
-    }
-
-    private List<Item> getContextMenus(final Context context, final SafeHtml safeHtml) {
+    // The menu of a task's info, from its text
+    private List<Item> getContextMenus(final String taskInfo) {
         final List<Item> menuItems = new ArrayList<>();
-
-        // strip any html tags caused by line wrap
-        final DivElement tempDiv = Document.get().createDivElement();
-        tempDiv.setInnerHTML(safeHtml.asString());
-        final String taskInfo = tempDiv.getInnerText();
-
-        if (taskInfo != null) {
+        {
             int priority = 1;
             final TaskInfoParser parser = new TaskInfoParser(taskInfo);
 
@@ -503,10 +338,6 @@ public class TaskManagerListPresenter
         return menuItems;
     }
 
-    private Expander buildExpander(final TaskProgress row) {
-        return row.getExpander();
-    }
-
     @Override
     public void refresh() {
         if (autoRefresh) {
@@ -519,7 +350,7 @@ public class TaskManagerListPresenter
         dataProvider.refresh();
     }
 
-    public void fetchNodes(final Range range,
+    private void fetchNodes(final Range range,
                            final Consumer<TaskProgressResponse> dataConsumer,
                            final RestErrorHandler errorConsumer) {
         nodeClient.fetchNodeStatus(
@@ -542,7 +373,7 @@ public class TaskManagerListPresenter
                 },
                 errorConsumer,
                 new FindNodeStatusCriteria(),
-                TaskManagerListPresenter.this);
+                view.getTaskMonitor());
     }
 
     private void fetchTasksForNodes(final Range range,
@@ -581,7 +412,8 @@ public class TaskManagerListPresenter
                         }
                         delayedUpdate.update();
                     })
-                    .taskMonitorFactory(getView())
+                    .owner(this)
+                    .taskMonitorFactory(view.getTaskMonitor())
                     .exec();
         }
     }
@@ -594,8 +426,10 @@ public class TaskManagerListPresenter
                 responseMap.values(),
                 treeAction);
 
-        final Set<TaskProgress> currentTaskSet = new HashSet<>(resultPage.getValues());
-        selectedTaskProgress.retainAll(currentTaskSet);
+        if (isDisposed()) {
+            return;
+        }
+        view.retainSelectedTasks(new HashSet<>(resultPage.getValues()));
 
         final String allErrors = errorMap.entrySet()
                 .stream()
@@ -612,26 +446,22 @@ public class TaskManagerListPresenter
         updateButtonStates();
     }
 
-    /**
-     * This sets the name filter to be used when fetching items. This method
-     * returns false is the filter is set to the same value that is already set.
-     *
-     * @param name
-     * @return
-     */
+    /// Filters the tasks by name, after a pause for typing.
+    ///
+    /// @param name Part of a task's name, info and so on.
     public void setNameFilter(final String name) {
         timer.setName(name);
         timer.cancel();
         timer.schedule(300);
     }
 
+    /// @param filterErrorConsumer Given why a node rejected the filter, or `null` before each fetch.
     public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
         this.filterErrorConsumer = filterErrorConsumer;
     }
 
     private void endSelectedTask() {
-        final Set<TaskProgress> cloneSelectedTaskProgress = new HashSet<>(selectedTaskProgress);
-        for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
+        for (final TaskProgress taskProgress : view.getSelectedTasks()) {
             doTerminate(taskProgress);
         }
         internalRefresh();
@@ -644,7 +474,8 @@ public class TaskManagerListPresenter
         restFactory
                 .create(TASK_RESOURCE)
                 .method(res -> res.terminate(taskProgress.getNodeName(), request))
-                .taskMonitorFactory(getView())
+                .owner(this)
+                .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
     }
 
@@ -656,7 +487,7 @@ public class TaskManagerListPresenter
             } else {
                 AlertEvent.fireError(this, "Unable to find feed '" + feedName + "'", null);
             }
-        }, getView());
+        }, view.getTaskMonitor());
     }
 
 

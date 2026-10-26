@@ -21,6 +21,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.component.TaskManagerListController;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
@@ -44,19 +45,19 @@ public class TaskManagerPresenter
         implements Refreshable, TaskManagerUiHandlers {
 
     public static final String TAB_TYPE = "ServerTasks";
-    private final TaskManagerListPresenter listPresenter;
+    private final TaskManagerListController listPresenter;
 
     @Inject
     public TaskManagerPresenter(final EventBus eventBus,
                                 final TaskManagerView view,
-                                final TaskManagerListPresenter listPresenter,
+                                final TaskManagerListController listPresenter,
                                 final UiConfigCache uiConfigCache,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(listPresenter);
         this.listPresenter = listPresenter;
         view.setUiHandlers(this);
-        view.setList(listPresenter.getWidget());
+        view.setList(listPresenter.asWidget());
         // A rejected filter comes back as an empty list like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
