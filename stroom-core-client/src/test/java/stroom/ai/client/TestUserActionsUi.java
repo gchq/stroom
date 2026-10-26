@@ -74,6 +74,11 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.buttonText(UserActionsUi.DISABLE_PROCESSOR_FILTER)).isEqualTo("Disable");
         assertThat(UserActionsUi.buttonText(UserActionsUi.OPEN_DOCUMENT)).isEqualTo("Open");
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_QUERY)).isEqualTo("Create query…");
+        // A chart that replaces one updates it.
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_VISUALISATION, "{\"kind\":\"bar\"}"))
+                .isEqualTo("Create visualisation…");
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_VISUALISATION,
+                "{\"kind\":\"bar\",\"replace\":{\"componentId\":\"vis-1\"}}")).isEqualTo("Update visualisation…");
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_DASHBOARD)).isEqualTo("Create dashboard…");
         assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_CODE_CHANGE)).isEqualTo("Review and apply…");
         assertThat(UserActionsUi.buttonText("something_else")).isEqualTo("Do it");
