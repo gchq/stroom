@@ -30,6 +30,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -103,7 +104,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         expression.setWidget(view.asWidget());
     }
 

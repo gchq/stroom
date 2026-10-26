@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.presenter.DocSelectionController;
 import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -108,6 +109,28 @@ public final class SelectorWidgets {
         return new UserRefSelectionBoxPresenter(harness.getEventBus(),
                 new DropDownBox(),
                 new UserRefSelectionController(popup));
+    }
+
+    /// @param harness The story's harness.
+    /// @return A provider of document pickers' controllers, each with its explorer popup, e.g. for a
+    ///         term editor.
+    public static Provider<DocSelectionController> docSelectionControllerProvider(final ScreenHarness harness) {
+        return () -> new DocSelectionController(harness.getEventBus(),
+                explorerPopup(harness),
+                harness.getRestFactory());
+    }
+
+    /// @param harness The story's harness.
+    /// @return A provider of user pickers' controllers, each with its user popup, e.g. for a term
+    ///         editor.
+    public static Provider<UserRefSelectionController> userRefSelectionControllerProvider(
+            final ScreenHarness harness) {
+        return () -> new UserRefSelectionController(new UserRefPopupPresenter(harness.getEventBus(),
+                new QuickFilterDialogViewImpl(GWT.create(QuickFilterDialogViewImpl.Binder.class)),
+                new PagerPanel(),
+                harness.getRestFactory(),
+                harness.getUiConfigCache(),
+                quickFilterContextHandlerFactory(harness)));
     }
 
     /// @param harness The story's harness.

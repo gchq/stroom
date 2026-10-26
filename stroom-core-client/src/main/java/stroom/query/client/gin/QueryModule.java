@@ -17,9 +17,6 @@
 package stroom.query.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
-import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.query.client.QueryPlugin;
 import stroom.query.client.ResultStorePlugin;
 import stroom.query.client.presenter.QueryDocPresenter;
@@ -93,11 +90,6 @@ public class QueryModule extends PluginModule {
                 TextPresenter.class,
                 TextView.class,
                 TextViewImpl.class);
-
-        bindPresenterWidget(
-                ExpressionTreePresenter.class,
-                ExpressionTreeView.class,
-                ExpressionTreeViewImpl.class);
 
         bindPresenterWidget(
                 ResultStorePresenter.class,

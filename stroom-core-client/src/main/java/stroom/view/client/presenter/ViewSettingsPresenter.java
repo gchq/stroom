@@ -35,6 +35,7 @@ import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -130,7 +131,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
 
         void setDataSourceSelectionView(View view);
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         void setPipelineSelectionView(View view);
     }

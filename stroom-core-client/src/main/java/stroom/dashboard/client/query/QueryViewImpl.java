@@ -19,12 +19,12 @@ package stroom.dashboard.client.query;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.query.client.view.QueryButtons;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -69,7 +69,7 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         expressionTree.add(view.asWidget());
     }
 

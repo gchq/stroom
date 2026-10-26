@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.component.RuleSetSettings.RuleAction;
 import stroom.receive.rules.client.presenter.RuleSetListPresenter;
@@ -51,7 +51,7 @@ public class RuleSetSettingsController extends Controller {
 
     private final RuleSetSettings view;
     private final RuleSetListPresenter listPresenter;
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private final Provider<RuleEditorController> ruleEditorProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
     private final List<ReceiveDataRule> rules = new ArrayList<>();
@@ -65,7 +65,7 @@ public class RuleSetSettingsController extends Controller {
     public RuleSetSettingsController(final EventBus eventBus,
                                      final RuleSetSettings view,
                                      final RuleSetListPresenter listPresenter,
-                                     final ExpressionTreePresenter expressionPresenter,
+                                     final ExpressionTreeController expressionPresenter,
                                      final Provider<RuleEditorController> ruleEditorProvider) {
         super(eventBus);
         this.view = view;
@@ -75,7 +75,7 @@ public class RuleSetSettingsController extends Controller {
 
         initWidget(view);
         view.setRuleList(listPresenter.getWidget(), listPresenter.getToolbar());
-        view.setExpression(expressionPresenter.getWidget());
+        view.setExpression(expressionPresenter.asWidget());
         view.setOnAction(this::onAction);
 
         // Stop users from selecting expression items.

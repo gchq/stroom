@@ -29,12 +29,12 @@ import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -136,7 +136,7 @@ public class ContentTemplateEditPresenter
 
         void focus();
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         String getName();
 

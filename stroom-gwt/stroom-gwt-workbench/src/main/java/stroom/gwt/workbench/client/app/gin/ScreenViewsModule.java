@@ -24,9 +24,6 @@ import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
-import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
 import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
@@ -79,7 +76,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
         // QueryModule, PolicyModule and TableModule
-        bindPresenterWidget(ExpressionTreePresenter.class, ExpressionTreeView.class, ExpressionTreeViewImpl.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
 
         // DashboardModule

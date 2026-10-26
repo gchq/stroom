@@ -21,7 +21,7 @@
 //
 //   NavigationPresenter:337        explorerTree.addContextMenuHandler(…)   the explorer tree
 //   EditorPresenter               view's context menu                     an ACE editor
-//   ExpressionTreePresenter       getView()                               an expression term
+//   ExpressionTreeController      addContextMenuHandler(…)                an expression term
 //   PipelineTree                  addContextMenuHandler(…)                a pipeline element
 //   QueryPresenter / EditExpressionPresenter / SteppingPresenter / PipelineStructurePresenter
 //

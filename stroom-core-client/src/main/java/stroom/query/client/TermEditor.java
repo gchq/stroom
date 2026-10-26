@@ -16,10 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -28,184 +25,183 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.security.shared.DocumentPermission;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.Suggestions;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
-import stroom.widget.component.client.ControllerNode;
-import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.DateTimeBox;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class TermEditor extends Composite implements HasControllerNode {
+/// A term's editor: its field, its condition, and the boxes for the value the condition takes (a
+/// text, a range, a date or a range of dates, a document or a user). Its controller
+/// ([stroom.query.client.component.TermEditorController]) attaches the document and user pickers
+/// and the date boxes' dialogs, gives it the [Pickers] it reads and writes them through, and
+/// fetches the values it suggests.
+public class TermEditor extends Component {
 
-    private static final String ITEM_CLASS_NAME = "termEditor-item";
-    private static final String DROPDOWN_CLASS_NAME = "dropdown";
-    private static final String WIDE_CLASS_NAME = "wide";
-    private static final String NARROW_CLASS_NAME = "narrow";
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final FlowPanel layout;
-    // The row of its fields
-    private final FlowPanel inner;
-    private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
-    private final SelectionBox<Condition> conditionListBox;
-    private final Label andLabel;
-    private final SuggestBox value;
-    private final SuggestBox valueFrom;
-    private final SuggestBox valueTo;
-    private final DateTimeBox date;
-    private final DateTimeBox dateFrom;
-    private final DateTimeBox dateTo;
-    private final Widget docRefWidget;
-    private final Widget userRefWidget;
-    private final Label fieldTypeLabel;
-    // Owns the selection boxes' presenters, so whatever owns this editor's view disposes them
-    private final ControllerNode node = new ControllerNode("TermEditor");
-    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
-    private final Provider<DateTimeBoxController> dateTimeBoxControllerProvider;
-    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    @UiField
+    FlowPanel inner;
+    @UiField
+    BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
+    @UiField
+    SelectionBox<Condition> conditionListBox;
+    @UiField
+    Label andLabel;
+    @UiField
+    SuggestBox value;
+    @UiField
+    SuggestBox valueFrom;
+    @UiField
+    SuggestBox valueTo;
+    @UiField
+    DateTimeBox date;
+    @UiField
+    DateTimeBox dateFrom;
+    @UiField
+    DateTimeBox dateTo;
+    @UiField
+    DropDownBox docRefBox;
+    @UiField
+    DropDownBox userRefBox;
+    @UiField
+    Label fieldTypeLabel;
+
+    private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
     private Term term;
     private boolean reading;
     private boolean editing;
-    private ExpressionUiHandlers uiHandlers;
+    private Pickers pickers;
+    private Runnable onChange = () -> {
+    };
+    private Runnable onSearch = () -> {
+    };
 
-    private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
     // Narrows what the condition list offers beyond the field's own ConditionSet. The quick
     // filter's Advanced Query dialog uses it to offer only conditions its syntax can write back.
     private Predicate<Condition> conditionFilter = condition -> true;
 
-    public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                      final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                      final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
-                      final UiConfigCache uiConfigCache) {
-        this.dateTimeBoxControllerProvider = dateTimeBoxControllerProvider;
-        final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
-        docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
-        docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
-        suggestOracle = new AsyncSuggestOracle(docRefPresenter);
-
-        this.docSelectionBoxPresenter = docRefPresenter;
-        this.userRefSelectionBoxPresenter = userRefProvider.get();
-        node.adopt(docRefPresenter.getControllerNode());
-        if (userRefSelectionBoxPresenter != null) {
-            node.adopt(userRefSelectionBoxPresenter.getControllerNode());
-        }
-        docRefWidget = docSelectionBoxPresenter.getWidget();
-        docRefWidget.addStyleName(ITEM_CLASS_NAME);
-        docRefWidget.addStyleName("docRef");
-        docRefWidget.setVisible(false);
-
-        if (userRefSelectionBoxPresenter != null) {
-            userRefWidget = userRefSelectionBoxPresenter.getWidget();
-        } else {
-            userRefWidget = new Label();
-        }
-
-        userRefWidget.addStyleName(ITEM_CLASS_NAME);
-        userRefWidget.addStyleName("docRef");
-        userRefWidget.setVisible(false);
-
-        fieldListBox = createFieldBox(uiConfigCache);
-        conditionListBox = createConditionBox();
-
-        andLabel = createLabel(" and ");
-        andLabel.setVisible(false);
-
+    /// Makes the editor, hidden until a term is edited.
+    public TermEditor() {
+        initWidget(BINDER.createAndBindUi(this));
         // A term's parts have no labels, so each is named for what it is
-        value = createTextBox(WIDE_CLASS_NAME, "Value");
-        value.setVisible(false);
-        valueFrom = createTextBox(NARROW_CLASS_NAME, "From");
-        valueFrom.setVisible(false);
-        valueTo = createTextBox(NARROW_CLASS_NAME, "To");
-        valueTo.setVisible(false);
-
-        date = createDateBox(NARROW_CLASS_NAME, "Date");
-        date.setVisible(false);
-        dateFrom = createDateBox(NARROW_CLASS_NAME, "From");
-        dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_CLASS_NAME, "To");
-        dateTo.setVisible(false);
-
-        fieldTypeLabel = createFieldTypeLabel();
-
-        inner = new FlowPanel();
-        inner.setStyleName("termEditor-inner");
-        inner.add(fieldListBox);
-        inner.add(conditionListBox);
-        inner.add(value);
-        inner.add(valueFrom);
-        inner.add(date);
-        inner.add(dateFrom);
-        inner.add(andLabel);
-        inner.add(valueTo);
-        inner.add(dateTo);
-        inner.add(docRefWidget);
-        inner.add(userRefWidget);
-
-        layout = new FlowPanel();
-        layout.add(inner);
-        layout.add(fieldTypeLabel);
-        layout.setVisible(false);
-        layout.setStyleName("termEditor-outer");
-
-        initWidget(layout);
+        AccessibleName.set(fieldListBox, "Field");
+        AccessibleName.set(conditionListBox, "Condition");
+        initTextBox(value, "Value");
+        initTextBox(valueFrom, "From");
+        initTextBox(valueTo, "To");
+        // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
+        AccessibleName.set(date, "Date");
+        AccessibleName.set(dateFrom, "From");
+        AccessibleName.set(dateTo, "To");
     }
 
-    @Override
-    public ControllerNode getControllerNode() {
-        return node;
+    @UiFactory
+    SuggestBox createSuggestBox() {
+        return new SuggestBox(suggestOracle);
     }
 
-    public void init(final RestFactory restFactory,
-                     final DocRef dataSource,
+    /// @param pickers The document and user pickers, which its controller attached to the boxes.
+    public void setPickers(final Pickers pickers) {
+        this.pickers = pickers;
+    }
+
+    /// @param fetcher Fetches the values to suggest for what is typed (see [AsyncSuggestOracle]).
+    public void setSuggestionFetcher(final BiConsumer<FetchSuggestionsRequest, Consumer<Suggestions>> fetcher) {
+        suggestOracle.setFetcher(fetcher);
+    }
+
+    /// @param helpUrl Where the field filter's help is, which its tooltip links to.
+    public void setFieldFilterHelpUrl(final String helpUrl) {
+        fieldListBox.registerPopupTextProvider(() ->
+                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl));
+    }
+
+    /// @return The document picker's box, for its controller to attach to.
+    public DropDownBox getDocRefBox() {
+        return docRefBox;
+    }
+
+    /// @return The user picker's box, for its controller to attach to.
+    public DropDownBox getUserRefBox() {
+        return userRefBox;
+    }
+
+    /// @return The date boxes, whose dialogs its controller opens.
+    public List<DateTimeBox> getDateBoxes() {
+        return Arrays.asList(date, dateFrom, dateTo);
+    }
+
+    /// @param onChange Run when the user changes the term.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    /// @param onSearch Run when Enter is pressed in a value, to run the query.
+    public void setOnSearch(final Runnable onSearch) {
+        this.onSearch = onSearch;
+    }
+
+    /// Sets what the term's field is chosen from, and its values suggested from.
+    ///
+    /// @param dataSource              The data source.
+    /// @param fieldSelectionListModel The data source's fields.
+    public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        suggestOracle.setRestFactory(restFactory);
         suggestOracle.setDataSource(dataSource);
 
         this.fieldSelectionListModel = fieldSelectionListModel;
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
+    /// @param conditionFilter Which conditions are offered, beyond the field's own.
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
         this.conditionFilter = Objects.requireNonNullElse(conditionFilter, condition -> true);
     }
 
+    /// Edits a term, showing the editor once it is laid out.
+    ///
+    /// @param term The term.
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
             read(term);
             Scheduler.get().scheduleDeferred(() -> {
                 bind();
-                layout.setVisible(true);
+                asWidget().setVisible(true);
             });
             editing = true;
         }
@@ -226,11 +222,12 @@ public class TermEditor extends Composite implements HasControllerNode {
         valueTo.hideSuggestionList();
     }
 
+    /// Stops editing, writing what was entered into the term, and hides the editor.
     public void endEdit() {
         if (editing) {
             write(term);
             unbind();
-            layout.setVisible(false);
+            asWidget().setVisible(false);
             editing = false;
         }
     }
@@ -260,6 +257,7 @@ public class TermEditor extends Composite implements HasControllerNode {
         reading = false;
     }
 
+    /// Writes what is entered into the term being edited, if one is.
     public void write() {
         if (editing) {
             write(term);
@@ -283,17 +281,17 @@ public class TermEditor extends Composite implements HasControllerNode {
                 } else if (widget instanceof DateTimeBox) {
                     sb.append(((DateTimeBox) widget).getText());
                     sb.append(",");
-                } else if (widget.equals(docRefWidget)) {
-                    if (docSelectionBoxPresenter != null) {
-                        docRef = docSelectionBoxPresenter.getSelectedEntityReference();
+                } else if (widget.equals(docRefBox)) {
+                    if (pickers != null) {
+                        docRef = pickers.getDocRef();
                         if (docRef != null) {
                             sb.append(docRef.getName());
                         }
                     }
                     sb.append(",");
-                } else if (widget.equals(userRefWidget)) {
-                    if (userRefSelectionBoxPresenter != null) {
-                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
+                } else if (widget.equals(userRefBox)) {
+                    if (pickers != null) {
+                        final UserRef userRef = pickers.getUserRef();
                         if (userRef != null) {
                             docRef = UserDocRefUtil.createDocRef(userRef);
                             sb.append(docRef.getName());
@@ -413,7 +411,7 @@ public class TermEditor extends Composite implements HasControllerNode {
                      USER_HAS_EDIT,
                      USER_HAS_VIEW,
                      USER_HAS_USE:
-                    enterUserRefMode(field, condition);
+                    enterUserRefMode();
                     break;
                 default:
                     enterTextMode();
@@ -459,31 +457,16 @@ public class TermEditor extends Composite implements HasControllerNode {
     }
 
     private void enterDocRefMode(final QueryField field, final Condition condition) {
-        setActiveWidgets(docRefWidget);
-
-        if (docSelectionBoxPresenter != null) {
-            docSelectionBoxPresenter.setAllowFolderSelection(false);
-            if (Condition.IN_DICTIONARY.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes("Dictionary");
-            } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes(ExplorerConstants.FOLDER_LIKE);
-                docSelectionBoxPresenter.setAllowFolderSelection(true);
-            } else if (FieldType.DOC_REF.equals(field.getFldType())) {
-                if (field.getDocRefType() != null) {
-                    docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
-                } else {
-                    docSelectionBoxPresenter.setAllowFolderSelection(true);
-                }
-            }
-            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef(), true);
+        setActiveWidgets(docRefBox);
+        if (pickers != null) {
+            pickers.showDocRef(field, condition, term.getDocRef());
         }
     }
 
-    private void enterUserRefMode(final QueryField field, final Condition condition) {
-        setActiveWidgets(userRefWidget);
-
-        if (userRefSelectionBoxPresenter != null) {
-            userRefSelectionBoxPresenter.setSelected(UserDocRefUtil.createUserRef(term.getDocRef()));
+    private void enterUserRefMode() {
+        setActiveWidgets(userRefBox);
+        if (pickers != null) {
+            pickers.showUserRef(UserDocRefUtil.createUserRef(term.getDocRef()));
         }
     }
 
@@ -503,17 +486,11 @@ public class TermEditor extends Composite implements HasControllerNode {
             // Set the current data.
             final String[] vals = term.getValue().split(",");
             if (vals.length > 0) {
-                if (value != null) {
-                    value.setValue(vals[0]);
-                }
-                if (valueFrom != null) {
-                    valueFrom.setValue(vals[0]);
-                }
+                value.setValue(vals[0]);
+                valueFrom.setValue(vals[0]);
             }
             if (vals.length > 1) {
-                if (valueTo != null) {
-                    valueTo.setValue(vals[1]);
-                }
+                valueTo.setValue(vals[1]);
             }
         }
     }
@@ -523,17 +500,11 @@ public class TermEditor extends Composite implements HasControllerNode {
             // Set the current data.
             final String[] vals = term.getValue().split(",");
             if (vals.length > 0) {
-                if (date != null) {
-                    date.setText(vals[0]);
-                }
-                if (dateFrom != null) {
-                    dateFrom.setText(vals[0]);
-                }
+                date.setText(vals[0]);
+                dateFrom.setText(vals[0]);
             }
             if (vals.length > 1) {
-                if (dateTo != null) {
-                    dateTo.setText(vals[1]);
-                }
+                dateTo.setText(vals[1]);
             }
         }
     }
@@ -541,9 +512,7 @@ public class TermEditor extends Composite implements HasControllerNode {
     private void bind() {
         final KeyDownHandler keyDownHandler = event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                if (uiHandlers != null) {
-                    uiHandlers.search();
-                }
+                onSearch.run();
             }
         };
 
@@ -562,9 +531,9 @@ public class TermEditor extends Composite implements HasControllerNode {
         registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
-        if (docSelectionBoxPresenter != null) {
-            registerHandler(docSelectionBoxPresenter.addSelectionListener(event -> {
-                final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
+        if (pickers != null) {
+            registerHandler(pickers.addDocRefListener(() -> {
+                final DocRef selection = pickers.getDocRef();
                 if (!Objects.equals(term.getDocRef(), selection)) {
                     write(term);
                     fireDirty();
@@ -599,78 +568,20 @@ public class TermEditor extends Composite implements HasControllerNode {
         registrations.add(handlerRegistration);
     }
 
-    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
-        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
-                new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
-        fieldListBox.addStyleName(ITEM_CLASS_NAME);
-        fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
-        fieldListBox.addStyleName("field");
-        fieldListBox.addStyleName("termEditor-item");
-        AccessibleName.set(fieldListBox, "Field");
-        uiConfigCache.get(uiConfig ->
-                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
-                        fieldListBox.registerPopupTextProvider(() ->
-                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
-        return fieldListBox;
-    }
-
-    private SelectionBox<Condition> createConditionBox() {
-        final SelectionBox<Condition> conditionListBox = new SelectionBox<>();
-        conditionListBox.addStyleName(ITEM_CLASS_NAME);
-        conditionListBox.addStyleName(DROPDOWN_CLASS_NAME);
-        conditionListBox.addStyleName("condition");
-        AccessibleName.set(conditionListBox, "Condition");
-        return conditionListBox;
-    }
-
-    private SuggestBox createTextBox(final String widthClassName, final String name) {
-        final SuggestBox textBox = new SuggestBox(suggestOracle);
+    // A value's box shows its suggestions when it is clicked
+    private static void initTextBox(final SuggestBox textBox, final String name) {
         AccessibleName.set(textBox, name);
         textBox.addDomHandler(e -> {
             if (!textBox.isSuggestionListShowing()) {
                 textBox.showSuggestionList();
             }
         }, ClickEvent.getType());
-        textBox.addStyleName(ITEM_CLASS_NAME);
-        textBox.addStyleName(widthClassName);
-        textBox.addStyleName("textBox");
-        return textBox;
-    }
-
-    private DateTimeBox createDateBox(final String widthClassName, final String name) {
-        // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
-        final DateTimeBox dateBox = new DateTimeBox();
-        // Its dialog is opened by a controller this owns
-        final DateTimeBoxController controller = dateTimeBoxControllerProvider.get();
-        node.adopt(controller.getControllerNode());
-        controller.attach(dateBox);
-        dateBox.setExpressionsAllowed(true);
-        AccessibleName.set(dateBox, name);
-        dateBox.addStyleName(ITEM_CLASS_NAME);
-        dateBox.addStyleName(widthClassName);
-        return dateBox;
-    }
-
-    private Label createLabel(final String text) {
-        final Label label = new Label(text, false);
-        label.addStyleName("termEditor-label");
-        return label;
-    }
-
-    private Label createFieldTypeLabel() {
-        final Label label = new Label("", false);
-        label.addStyleName("termEditor-label");
-        label.addStyleName("fieldType");
-        label.setVisible(false);
-        return label;
     }
 
     private void fireDirty() {
         if (!reading) {
             write(term);
-            if (uiHandlers != null) {
-                uiHandlers.onChange();
-            }
+            onChange.run();
         }
     }
 
@@ -680,7 +591,37 @@ public class TermEditor extends Composite implements HasControllerNode {
         return inner.getElement();
     }
 
-    public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The document and user pickers a term's value may be chosen with, which the editor's
+    /// controller attaches to its boxes.
+    public interface Pickers {
+
+        /// Shows a document in the document picker, offering the documents the condition takes.
+        ///
+        /// @param field     The term's field.
+        /// @param condition The term's condition.
+        /// @param docRef    The document, or null for none.
+        void showDocRef(QueryField field, Condition condition, DocRef docRef);
+
+        /// @return The document chosen, or null for none.
+        DocRef getDocRef();
+
+        /// @param listener Told when the user chooses a document.
+        /// @return The registration.
+        HandlerRegistration addDocRefListener(Runnable listener);
+
+        /// @param userRef The user to show in the user picker, or null for none.
+        void showUserRef(UserRef userRef);
+
+        /// @return The user chosen, or null for none.
+        UserRef getUserRef();
+    }
+
+
+    interface Binder extends UiBinder<Widget, TermEditor> {
+
     }
 }

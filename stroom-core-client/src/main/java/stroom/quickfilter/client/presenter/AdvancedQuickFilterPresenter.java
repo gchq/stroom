@@ -31,7 +31,6 @@ import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.TokenError;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -39,6 +38,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -210,7 +210,7 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
 
     public interface AdvancedQuickFilterView extends View {
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         /**
          * A message shown above the tree, or hidden when passed null.

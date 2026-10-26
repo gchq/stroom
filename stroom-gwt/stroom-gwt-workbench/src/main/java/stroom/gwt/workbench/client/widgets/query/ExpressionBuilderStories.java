@@ -44,8 +44,9 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.client.ExpressionTreeViewImpl;
+import stroom.query.client.component.ExpressionTree;
+import stroom.query.client.component.ExpressionTreeController;
+import stroom.query.client.component.TermEditorController;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
@@ -57,7 +58,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for Stroom's [EditExpressionPresenter] (an [ExpressionTreePresenter] under a toolbar):
+/// Stories for Stroom's [EditExpressionPresenter] (an [ExpressionTreeController] under a toolbar):
 /// the editor of a query expression, a tree of operators and terms, each term edited (when
 /// selected) with a field picker, a condition and a value editor for the field's type.
 ///
@@ -921,7 +922,7 @@ public final class ExpressionBuilderStories {
                                  final boolean dynamicFields,
                                  final RestHandler decorate) {
         final ScreenHarness harness = harness(context, decorate);
-        final ExpressionTreePresenter treePresenter = treePresenter(harness);
+        final ExpressionTreeController treePresenter = treeController(harness);
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
@@ -937,13 +938,13 @@ public final class ExpressionBuilderStories {
 
     private static Widget readOnly(final StoryContext context) {
         final ScreenHarness harness = harness(context);
-        final ExpressionTreePresenter treePresenter = treePresenter(harness);
+        final ExpressionTreeController treePresenter = treeController(harness);
         harness.own(treePresenter);
         // As Stroom's read only views of an expression (e.g. ProcessorPresenter) do
         treePresenter.setSelectionModel(null);
-        treePresenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
+        treePresenter.init(DATA_SOURCE, fieldModel(harness, false));
         treePresenter.read(populatedExpression());
-        harness.add(frame(treePresenter.getWidget()));
+        harness.add(frame(treePresenter.asWidget()));
         return harness.asWidget();
     }
 
@@ -955,7 +956,7 @@ public final class ExpressionBuilderStories {
     /// @param readOnly Whether the expression is read only.
     /// @return The editor's widget.
     public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
-        final ExpressionTreePresenter treePresenter = treePresenter(harness);
+        final ExpressionTreeController treePresenter = treeController(harness);
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
@@ -967,13 +968,14 @@ public final class ExpressionBuilderStories {
         return presenter.getWidget();
     }
 
-    private static ExpressionTreePresenter treePresenter(final ScreenHarness harness) {
-        final ExpressionTreeViewImpl view = new ExpressionTreeViewImpl(
-                SelectorWidgets.docSelectionBoxProvider(harness),
-                SelectorWidgets.userRefSelectionBoxProvider(harness),
-                DateTimeWidgets.dateTimeBoxControllers(harness),
-                harness.getUiConfigCache());
-        return new ExpressionTreePresenter(harness.getEventBus(), view);
+    private static ExpressionTreeController treeController(final ScreenHarness harness) {
+        return new ExpressionTreeController(harness.getEventBus(), new ExpressionTree(), () ->
+                new TermEditorController(harness.getEventBus(),
+                        harness.getRestFactory(),
+                        harness.getUiConfigCache(),
+                        SelectorWidgets.docSelectionControllerProvider(harness),
+                        SelectorWidgets.userRefSelectionControllerProvider(harness),
+                        DateTimeWidgets.dateTimeBoxControllers(harness)));
     }
 
     private static FieldSelectionListModel fieldModel(final ScreenHarness harness, final boolean dynamic) {

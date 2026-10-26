@@ -18,11 +18,11 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -49,7 +49,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         bottom.setWidget(view.asWidget());
     }
 

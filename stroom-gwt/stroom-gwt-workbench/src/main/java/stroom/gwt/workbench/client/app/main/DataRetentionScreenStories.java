@@ -99,7 +99,7 @@ public final class DataRetentionScreenStories {
     private static final String SET_FILTER = "Set Query Filter";
 
     // The expression panel has no class of its own; it is the expression tree's
-    // view (ExpressionTreeViewImpl)
+    // view (ExpressionTree)
     private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataRetentionScreenStories() {
@@ -145,7 +145,7 @@ public final class DataRetentionScreenStories {
                 .story("ExpressionPanel", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     play.findByText("Keep 30 days");
-                    // The panel is the ExpressionTreePresenter's view under the
+                    // The panel is the ExpressionTreeController's tree under the
                     // grid (DataRetentionPolicyViewImpl's split panel), with no class of its own
                     final Play panel = play.within(play.querySelector(EXPRESSION_PANEL));
                     // Nothing selected -> no term is shown

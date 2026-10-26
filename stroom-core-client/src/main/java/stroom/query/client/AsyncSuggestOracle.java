@@ -16,15 +16,12 @@
 
 package stroom.query.client;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
-import stroom.query.shared.SuggestionsResource;
-import stroom.task.client.TaskMonitorFactory;
+import stroom.query.shared.Suggestions;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -33,32 +30,35 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
+/// Suggests a term's values as they are typed: True and False for a boolean field, else what its
+/// data source suggests for the field, fetched (by whatever [#setFetcher] is given, e.g. a term
+/// editor's controller) once typing pauses, and kept if the source says it may be.
 public class AsyncSuggestOracle extends SuggestOracle {
 
-    private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
     private static final int DEBOUNCE_PERIOD_MILLIS = 400;
 
     private static final Map<FetchSuggestionsRequest, List<String>> CACHE = new HashMap<>();
 
-    private RestFactory restFactory;
+    private BiConsumer<FetchSuggestionsRequest, Consumer<Suggestions>> fetcher;
     private DocRef dataSource;
     private QueryField field;
     private Timer requestTimer;
-    private final TaskMonitorFactory taskMonitorFactory;
 
-    public AsyncSuggestOracle(final TaskMonitorFactory taskMonitorFactory) {
-        this.taskMonitorFactory = taskMonitorFactory;
+    /// @param fetcher Fetches a request's suggestions and gives them to the consumer, or null to
+    ///                suggest nothing but a boolean's values.
+    public void setFetcher(final BiConsumer<FetchSuggestionsRequest, Consumer<Suggestions>> fetcher) {
+        this.fetcher = fetcher;
     }
 
-    public void setRestFactory(final RestFactory restFactory) {
-        this.restFactory = restFactory;
-    }
-
+    /// @param dataSource The data source whose values are suggested.
     public void setDataSource(final DocRef dataSource) {
         this.dataSource = dataSource;
     }
 
+    /// @param field The field whose values are suggested.
     public void setField(final QueryField field) {
         this.field = field;
     }
@@ -89,7 +89,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
             return;
         }
 
-        if (restFactory != null && dataSource != null) {
+        if (fetcher != null && dataSource != null) {
             // Debounce requests so we don't spam the backend
             if (requestTimer != null) {
                 requestTimer.cancel();
@@ -105,18 +105,13 @@ public class AsyncSuggestOracle extends SuggestOracle {
                         returnSuggestions(request, callback, cachedSuggestions);
 
                     } else {
-                        restFactory
-                                .create(SUGGESTIONS_RESOURCE)
-                                .method(res -> res.fetch(fetchSuggestionsRequest))
-                                .onSuccess(result -> {
-                                    if (result.isCacheable()) {
-                                        CACHE.put(fetchSuggestionsRequest, result.getList());
-                                    }
+                        fetcher.accept(fetchSuggestionsRequest, result -> {
+                            if (result.isCacheable()) {
+                                CACHE.put(fetchSuggestionsRequest, result.getList());
+                            }
 
-                                    returnSuggestions(request, callback, result.getList());
-                                })
-                                .taskMonitorFactory(taskMonitorFactory)
-                                .exec();
+                            returnSuggestions(request, callback, result.getList());
+                        });
                     }
                 }
             };

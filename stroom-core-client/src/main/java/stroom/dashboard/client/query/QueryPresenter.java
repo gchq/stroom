@@ -49,8 +49,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultStoreInfo;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.ResultStoreModel;
@@ -62,7 +61,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
@@ -82,6 +80,7 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -103,7 +102,7 @@ public class QueryPresenter
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
 
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<DocSelectionPopup> pipelineSelection;
@@ -134,7 +133,7 @@ public class QueryPresenter
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
-                          final ExpressionTreePresenter expressionPresenter,
+                          final ExpressionTreeController expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<DocSelectionPopup> pipelineSelection,
@@ -165,20 +164,11 @@ public class QueryPresenter
         // Shows its requests' progress as this presenter does (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
 
-        view.setExpressionView(expressionPresenter.getView());
+        view.setExpressionView(expressionPresenter);
         view.getQueryButtons().setOnStart(this::onRunPressed);
 
-        expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
-            @Override
-            public void onChange() {
-                QueryPresenter.this.onChange();
-            }
-
-            @Override
-            public void search() {
-                promptAndStart();
-            }
-        });
+        expressionPresenter.setOnChange(this::onChange);
+        expressionPresenter.setOnSearch(this::promptAndStart);
 
         addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
@@ -392,7 +382,7 @@ public class QueryPresenter
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(dataSourceRef));
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
-        expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
+        expressionPresenter.init(dataSourceRef, fieldSelectionBoxModel);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
@@ -920,7 +910,7 @@ public class QueryPresenter
         /// @return The toolbar.
         Toolbar getMessagesToolbar();
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         void setEnabled(boolean enabled);
 

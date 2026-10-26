@@ -37,7 +37,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.security.shared.DocPermissionResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.CountDownAndRun;
@@ -54,6 +54,7 @@ import stroom.widget.util.client.Selection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -72,7 +73,7 @@ public class ProcessorPresenter
 
     private final ProcessorListPresenter processorListPresenter;
     private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private final Provider<ExpressionPresenter> filterPresenterProvider;
@@ -102,7 +103,7 @@ public class ProcessorPresenter
                               final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter,
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
-                              final ExpressionTreePresenter expressionPresenter,
+                              final ExpressionTreeController expressionPresenter,
                               final RestFactory restFactory,
                               final ProcessorInfoBuilder processorInfoBuilder,
                               final Provider<ExpressionPresenter> filterPresenterProvider,
@@ -123,7 +124,7 @@ public class ProcessorPresenter
         expressionPresenter.setSelectionModel(null);
 
         view.setProcessorList(processorListPresenter.getView());
-        view.setDetailsView(expressionPresenter.getView());
+        view.setDetailsView(expressionPresenter);
 
         own(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
             updateData();
@@ -517,6 +518,6 @@ public class ProcessorPresenter
 
         void setInfo(SafeHtml info);
 
-        void setDetailsView(View view);
+        void setDetailsView(IsWidget view);
     }
 }

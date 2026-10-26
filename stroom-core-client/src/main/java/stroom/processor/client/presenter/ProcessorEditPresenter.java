@@ -54,6 +54,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -489,7 +490,7 @@ public class ProcessorEditPresenter
         /// @return The maximum stream create time box, for a controller to open its dialog.
         DateTimeBox getMaxMetaCreateTimeBox();
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         Long getMinMetaCreateTimeMs();
 

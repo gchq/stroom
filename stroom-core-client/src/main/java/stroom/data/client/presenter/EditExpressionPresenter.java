@@ -20,8 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.client.ExpressionTreePresenter;
-import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -38,6 +37,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
         implements Focus {
 
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
     private boolean readOnly;
 
@@ -64,25 +64,15 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     @Inject
     public EditExpressionPresenter(final EventBus eventBus,
                                    final EditExpressionView view,
-                                   final ExpressionTreePresenter expressionPresenter) {
+                                   final ExpressionTreeController expressionPresenter) {
         super(eventBus, view);
         own(expressionPresenter);
         this.expressionPresenter = expressionPresenter;
         this.selectionModel = expressionPresenter.getSelectionModel();
 
-        view.setExpressionView(expressionPresenter.getView());
+        view.setExpressionView(expressionPresenter);
 
-        expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
-            @Override
-            public void onChange() {
-                EditExpressionPresenter.this.onChange();
-            }
-
-            @Override
-            public void search() {
-
-            }
-        });
+        expressionPresenter.setOnChange(this::onChange);
 
         addTermButton = view.getToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getToolbar().button(SvgImage.OPERATOR, "Add Operator", this::addOperator);
@@ -120,7 +110,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     public void init(final RestFactory restFactory,
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
+        expressionPresenter.init(dataSource, fieldSelectionListModel);
     }
 
     /// Stops the expression being changed, for a document the user can't change: terms can't be
@@ -151,7 +141,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     /**
-     * @see ExpressionTreePresenter#setConditionFilter(Predicate)
+     * @see ExpressionTreeController#setConditionFilter(Predicate)
      */
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
         expressionPresenter.setConditionFilter(conditionFilter);
@@ -279,6 +269,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         /// @return The toolbar.
         Toolbar getToolbar();
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
     }
 }

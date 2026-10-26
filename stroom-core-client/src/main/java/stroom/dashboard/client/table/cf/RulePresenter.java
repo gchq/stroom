@@ -29,6 +29,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -137,7 +138,7 @@ public class RulePresenter
 
     public interface RuleView extends View, HasUiHandlers<RuleUiHandlers> {
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         boolean isHide();
 

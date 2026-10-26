@@ -23,12 +23,12 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -89,7 +89,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
 
     public interface DataRetentionRuleView extends View {
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         String getName();
 

@@ -86,7 +86,7 @@ public final class DataReceiptRulesScreenStories {
 
     private static final String SAVE = "Save Rules";
     // The expression panel has no class of its own; it is the expression tree's
-    // view (ExpressionTreeViewImpl)
+    // view (ExpressionTree)
     private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataReceiptRulesScreenStories() {

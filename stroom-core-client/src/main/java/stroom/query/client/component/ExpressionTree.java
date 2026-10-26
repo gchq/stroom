@@ -14,40 +14,39 @@
  * limitations under the License.
  */
 
-package stroom.query.client;
+package stroom.query.client.component;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.pipeline.structure.client.view.TreeKeyboard;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
+import stroom.query.client.ExpressionItemRenderer;
+import stroom.query.client.ExpressionTreePanel;
+import stroom.query.client.Item;
+import stroom.query.client.Operator;
+import stroom.query.client.TermEditor;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.component.client.ControllerNode;
-import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
-import stroom.widget.datepicker.client.DateTimeBoxController;
+import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -61,41 +60,26 @@ import java.util.function.Predicate;
 /// back to the item, which stops editing it (keeping what was entered), as Escape does. Its items
 /// can be dragged to another operator, or moved with the keyboard (Ctrl+X and Ctrl+V) or the context
 /// menu (see [#detach]).
-public class ExpressionTreeViewImpl
-        extends ViewWithUiHandlers<ExpressionUiHandlers>
-        implements ExpressionTreeView, HasControllerNode {
+public class ExpressionTree extends Component implements HasContextMenuHandlers {
 
-    // Owns the presenters its tree panels' term editors make; its presenter owns it
-    private final ControllerNode node = new ControllerNode("ExpressionTreeView");
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final ExpressionTreePanel treePanel;
-    private final DraggableTreePanel<Item> layoutPanel;
+    @UiField
+    DraggableTreePanel<Item> layoutPanel;
+
+    // DraggableTreePanel takes its two panels through setTreePanels, not as template children
+    private final ExpressionTreePanel treePanel = new ExpressionTreePanel();
+    private final ExpressionTreePanel subTreePanel = new ExpressionTreePanel();
     private final TreeKeyboard<Item> keyboard;
     private MySingleSelectionModel<Item> selectionModel;
     private Consumer<Item> removeHandler;
+    private Runnable onChange = () -> {
+    };
 
-    @Inject
-    public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                                  final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                                  final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
-                                  final UiConfigCache uiConfigCache) {
-        treePanel = new ExpressionTreePanel(
-                docRefProvider,
-                userRefProvider,
-                dateTimeBoxControllerProvider,
-                uiConfigCache);
-        final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(
-                docRefProvider,
-                userRefProvider,
-                dateTimeBoxControllerProvider,
-                uiConfigCache);
-        node.adopt(treePanel.getControllerNode());
-        node.adopt(subTreePanel.getControllerNode());
-
-        layoutPanel = new DraggableTreePanel<>();
+    /// Makes the tree, with no expression yet.
+    public ExpressionTree() {
+        initWidget(BINDER.createAndBindUi(this));
         layoutPanel.setTreePanels(treePanel, subTreePanel);
-        layoutPanel.setAllowDragging(true);
-        layoutPanel.addStyleName("expression-tree-view");
 
         keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "item", "items");
         keyboard.setNameOf(item -> ExpressionItemRenderer.getName(treePanel.getTree(), item));
@@ -105,9 +89,7 @@ public class ExpressionTreeViewImpl
             tree.removeChild(child);
             tree.addChild(parent, child);
             treePanel.refresh();
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
+            onChange.run();
         });
         keyboard.setOnRemove(item -> {
             if (removeHandler != null) {
@@ -166,9 +148,7 @@ public class ExpressionTreeViewImpl
             }
         });
         layoutPanel.setOnDragEnd((parent, child) -> {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onChange();
-            }
+            onChange.run();
         });
         // A detached item and the items in it are faded, with the brackets to their items
         treePanel.setFaded(keyboard::isDetached);
@@ -176,9 +156,10 @@ public class ExpressionTreeViewImpl
         addKeyDownCaptureHandler(layoutPanel.getElement(), this::onFieldKeyDown);
     }
 
-    @Override
-    public ControllerNode getControllerNode() {
-        return node;
+    /// @return Its term editors (the tree's, and the dragged copy's), for its controller to
+    /// attach to.
+    public List<TermEditor> getTermEditors() {
+        return Arrays.asList(treePanel.getTermEditor(), subTreePanel.getTermEditor());
     }
 
     // Edits an item, and focuses its first field once its editor is shown
@@ -280,13 +261,14 @@ public class ExpressionTreeViewImpl
         }, true);
     }-*/;
 
-    @Override
+    /// @param tree The expression's tree of items.
     public void setTree(final DefaultTreeForTreeLayout<Item> tree) {
         keyboard.cancelDetach();
         treePanel.setTree(tree);
     }
 
-    @Override
+    /// @param selectionModel The selection, or null for a tree only to be read, which can't be
+    ///                       rearranged either.
     public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
@@ -296,83 +278,98 @@ public class ExpressionTreeViewImpl
         keyboard.setAllowMoving(selectionModel != null);
     }
 
-    @Override
+    /// Draws the tree again.
     public void refresh() {
         treePanel.refresh();
     }
 
-    @Override
-    public Widget asWidget() {
-        return layoutPanel;
-    }
-
-    @Override
-    public void init(final RestFactory restFactory,
-                     final DocRef dataSource,
+    /// Sets what a term's field is chosen from, and its values suggested from.
+    ///
+    /// @param dataSource              The data source.
+    /// @param fieldSelectionListModel The data source's fields.
+    public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        treePanel.init(restFactory, dataSource, fieldSelectionListModel);
+        treePanel.init(dataSource, fieldSelectionListModel);
     }
 
-    @Override
+    /// @param conditionFilter Which conditions a term's editor offers, beyond its field's own.
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
         treePanel.setConditionFilter(conditionFilter);
     }
 
-    @Override
+    /// Writes what is entered in the editor into the item being edited.
     public void write() {
         treePanel.write();
     }
 
-    @Override
+    /// Stops editing the item being edited, keeping what was entered.
     public void endEditing() {
         treePanel.endEditing();
     }
 
-    @Override
+    /// Opens an item for editing: it shows its editor while it is selected (others show their
+    /// labels).
+    ///
+    /// @param item The item.
     public void edit(final Item item) {
         treePanel.setEditingItem(item);
         treePanel.refresh();
     }
 
-    @Override
+    /// Gives (or takes away) the tree the read-only look, its items greyed.
+    ///
+    /// @param readOnly Whether it has the look.
     public void setReadOnlyLook(final boolean readOnly) {
         layoutPanel.setStyleName("expression-tree-view--read-only", readOnly);
     }
 
-    @Override
+    /// @return The item detached (to be attached to another operator), or null for none.
     public Item getDetached() {
         return keyboard.getDetached();
     }
 
-    @Override
+    /// Detaches an item (and the items in it) to be attached to another operator. The root
+    /// can't be.
+    ///
+    /// @param item The item.
     public void detach(final Item item) {
         keyboard.detach(item);
     }
 
-    @Override
+    /// @param target An item.
+    /// @return Whether the item detached can be attached to it.
     public boolean canAttach(final Item target) {
         return keyboard.canAttach(target);
     }
 
-    @Override
+    /// Attaches the item detached to another operator, if that can take it.
+    ///
+    /// @param target The operator.
     public void attach(final Item target) {
         keyboard.attach(target);
     }
 
-    @Override
+    /// Puts the item detached back where it was, if one is.
     public void cancelDetach() {
         keyboard.cancelDetach();
     }
 
-    @Override
+    /// Sets what to do when the tree asks for an item to be removed, e.g. with the Delete key.
+    ///
+    /// @param removeHandler What to do.
     public void setRemoveHandler(final Consumer<Item> removeHandler) {
         this.removeHandler = removeHandler;
     }
 
-    @Override
-    public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
-        super.setUiHandlers(uiHandlers);
-        treePanel.setUiHandlers(uiHandlers);
+    /// @param onChange Run when the user changes the expression: an item edited or moved.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+        treePanel.setOnChange(onChange);
+    }
+
+    /// @param onSearch Run when Enter is pressed in a term's value, to run the query.
+    public void setOnSearch(final Runnable onSearch) {
+        treePanel.setOnSearch(onSearch);
     }
 
     @Override
@@ -380,8 +377,12 @@ public class ExpressionTreeViewImpl
         return layoutPanel.addContextMenuHandler(handler);
     }
 
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        layoutPanel.fireEvent(event);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ExpressionTree> {
+
     }
 }

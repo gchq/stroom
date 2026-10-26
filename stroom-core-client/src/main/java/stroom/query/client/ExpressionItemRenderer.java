@@ -22,10 +22,9 @@ import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -68,9 +67,9 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         final double y = bounds.getY() + ((bounds.getHeight() - height) / 2);
 
         final ExpressionItemBox box = new ExpressionItemBox(treeLayout, item, selectionModel != null);
-        final Style style = box.getElement().getStyle();
-        style.setLeft(x, Unit.PX);
-        style.setTop(y, Unit.PX);
+        // Placed by custom properties its class uses (expression-item.css)
+        CssProperties.set(box.getElement(), "--expression-item__left", x + "px");
+        CssProperties.set(box.getElement(), "--expression-item__top", y + "px");
 
         panel.add(box);
         boxes.add(box);

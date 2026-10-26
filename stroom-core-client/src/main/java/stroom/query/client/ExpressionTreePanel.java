@@ -16,19 +16,13 @@
 
 package stroom.query.client;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.component.client.ControllerNode;
-import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.datagrid.client.MouseHelper;
-import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -43,22 +37,38 @@ import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.inject.Provider;
 
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class ExpressionTreePanel extends TreePanel<Item> implements HasControllerNode {
+/// An expression's tree of items, drawn as a box for each with brackets between them, which shows
+/// the item being edited with its editor (an [OperatorEditor] or a [TermEditor]) in place of its
+/// label. Its owner ([stroom.query.client.component.ExpressionTree]) gives it the tree and the
+/// selection, and its controller attaches what the term editor needs (see [#getTermEditor]).
+public class ExpressionTreePanel extends TreePanel<Item> {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
-    private final FlowPanel boxPanel;
-    private final OperatorEditor operatorEditor;
-    private final TermEditor termEditor;
+
+    @UiField
+    DivElement canvasSlot;
+    @UiField
+    AriaPanel boxPanel;
+
+    // Moved into whichever item's box is edited, so not in the layout
+    private final OperatorEditor operatorEditor = new OperatorEditor();
+    private final TermEditor termEditor = new TermEditor();
     private TreeRenderer2<Item> renderer;
     private TreeLayout<Item> treeLayout;
     private ExpressionItemRenderer cellRenderer;
@@ -68,23 +78,11 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
     private boolean drawing;
     private boolean redrawAfterDraw;
 
-    public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                               final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
-                               final UiConfigCache uiConfigCache) {
+    /// Makes the tree, with no items yet.
+    public ExpressionTreePanel() {
+        final HTMLPanel panel = (HTMLPanel) BINDER.createAndBindUi(this);
 
-        operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefProvider, userRefProvider, dateTimeBoxControllerProvider,
-                uiConfigCache);
-
-        final FlowPanel panel = new FlowPanel();
-        panel.setStyleName("expression-tree");
-        boxPanel = new FlowPanel();
-        boxPanel.setStyleName("expression-tree__items");
-        // The boxes are the tree's items (ExpressionItemRenderer), for assistive technology
-        boxPanel.getElement().setAttribute("role", "tree");
-        boxPanel.getElement().setAttribute("aria-label", "Expression");
-
+        // The canvas is made only where the browser can draw on one, so it is put in its slot here
         final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
@@ -104,18 +102,18 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
             renderer.setTreeLayout(treeLayout);
 
             canvas.addStyleName("expression-tree__canvas");
-            panel.add(canvas);
+            panel.addAndReplaceElement(canvas, canvasSlot);
+        } else {
+            canvasSlot.removeFromParent();
         }
-
-        panel.add(boxPanel);
 
         initWidget(panel);
     }
 
-    /// @return Its term editor's node, which owns the presenters the editor makes.
-    @Override
-    public ControllerNode getControllerNode() {
-        return termEditor.getControllerNode();
+    /// @return Its term editor, for its controller to attach to (see
+    /// [stroom.query.client.component.TermEditorController]).
+    public TermEditor getTermEditor() {
+        return termEditor;
     }
 
     @Override
@@ -251,16 +249,21 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
         }
     }
 
-    public void init(final RestFactory restFactory,
-                     final DocRef dataSource,
+    /// Sets what a term's field is chosen from, and its values suggested from.
+    ///
+    /// @param dataSource              The data source.
+    /// @param fieldSelectionListModel The data source's fields.
+    public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        termEditor.init(restFactory, dataSource, fieldSelectionListModel);
+        termEditor.init(dataSource, fieldSelectionListModel);
     }
 
+    /// @param conditionFilter Which conditions a term's editor offers, beyond its field's own.
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
         termEditor.setConditionFilter(conditionFilter);
     }
 
+    /// Writes what is entered in the editor into the item being edited.
     public void write() {
         if (operatorEditor != null) {
             operatorEditor.write();
@@ -291,6 +294,7 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
         }
     }
 
+    /// Stops editing the item being edited, keeping what was entered.
     public void endEditing() {
         if (operatorEditor != null) {
             operatorEditor.endEdit();
@@ -300,14 +304,22 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
         }
     }
 
-    public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
-        if (operatorEditor != null) {
-            operatorEditor.setOnChange(uiHandlers == null
-                    ? null
-                    : uiHandlers::onChange);
-        }
-        if (termEditor != null) {
-            termEditor.setUiHandlers(uiHandlers);
-        }
+    /// @param onChange Run when the user changes an item in its editor.
+    public void setOnChange(final Runnable onChange) {
+        operatorEditor.setOnChange(onChange);
+        termEditor.setOnChange(onChange);
+    }
+
+    /// @param onSearch Run when Enter is pressed in a term's value, to run the query.
+    public void setOnSearch(final Runnable onSearch) {
+        termEditor.setOnSearch(onSearch);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ExpressionTreePanel> {
+
     }
 }

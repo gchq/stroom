@@ -22,7 +22,7 @@ import stroom.dashboard.shared.StoredQueryResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.widget.datagrid.client.DataGrid;
@@ -37,6 +37,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,7 +52,7 @@ public class QueryHistoryPresenter
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
     private final RestFactory restFactory;
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private static final String NAME = "Query history";
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
@@ -62,7 +63,7 @@ public class QueryHistoryPresenter
     @Inject
     public QueryHistoryPresenter(final EventBus eventBus,
                                  final QueryHistoryView view,
-                                 final ExpressionTreePresenter expressionPresenter,
+                                 final ExpressionTreeController expressionPresenter,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
@@ -74,7 +75,7 @@ public class QueryHistoryPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        view.setExpressionView(expressionPresenter.getView());
+        view.setExpressionView(expressionPresenter);
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
@@ -181,6 +182,6 @@ public class QueryHistoryPresenter
         /// @param list The list of queries, shown above the selected query.
         void setList(Widget list);
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
     }
 }

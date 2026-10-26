@@ -18,11 +18,11 @@ package stroom.quickfilter.client.view;
 
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
 import stroom.widget.popup.client.view.PopupUtil;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -66,7 +66,7 @@ public class AdvancedQuickFilterViewImpl extends ViewImpl implements AdvancedQui
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         expression.setWidget(view.asWidget());
     }
 

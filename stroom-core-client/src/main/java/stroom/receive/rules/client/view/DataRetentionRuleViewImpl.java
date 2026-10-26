@@ -20,7 +20,6 @@ import stroom.item.client.SelectionBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -30,6 +29,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -83,7 +83,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         expression.setWidget(view.asWidget());
     }
 

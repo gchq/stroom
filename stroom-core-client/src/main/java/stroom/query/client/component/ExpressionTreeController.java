@@ -14,27 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.query.client;
+package stroom.query.client.component;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.client.ExpressionItemRenderer;
+import stroom.query.client.ExpressionModel;
+import stroom.query.client.Item;
+import stroom.query.client.Operator;
+import stroom.query.client.Term;
+import stroom.query.client.TermEditor;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -43,21 +46,34 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
-        implements HasContextMenuHandlers {
+/// An expression's tree of terms and operators ([ExpressionTree]): reads and writes the
+/// expression, keeps its selection, adds, copies, disables and deletes its items, and gives the
+/// context menu's items for moving them. It attaches a [TermEditorController] to each of the tree's
+/// term editors.
+public class ExpressionTreeController extends Controller implements HasContextMenuHandlers {
 
+    private final ExpressionTree view;
     private DefaultTreeForTreeLayout<Item> tree;
     private MySingleSelectionModel<Item> selectionModel;
-    private ExpressionUiHandlers uiHandlers;
+    private Runnable onChange = () -> {
+    };
 
     private final Listeners<Item> selectionListeners = new Listeners<>();
 
+    /// Made by GIN, with its tree.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       The tree.
+    /// @param termEditorControllerProvider Makes what each of its term editors needs.
     @Inject
-    public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view) {
-        super(eventBus, view);
-        // The view owns the presenters its term editors make
-        if (view instanceof final HasControllerNode hasComponentNode) {
-            own(hasComponentNode);
+    public ExpressionTreeController(final EventBus eventBus,
+                                    final ExpressionTree view,
+                                    final Provider<TermEditorController> termEditorControllerProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        for (final TermEditor termEditor : view.getTermEditors()) {
+            make(termEditorControllerProvider).attach(termEditor);
         }
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
@@ -72,7 +88,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         if (selectionModel != null) {
             own(selectionModel.addSelectionChangeHandler(event -> {
                 selectionListeners.fire(selectionModel.getSelectedObject());
-                getView().refresh();
+                view.refresh();
             }));
         }
     }
@@ -85,31 +101,34 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void init(final RestFactory restFactory,
-                     final DocRef dataSource,
+    /// Sets what a term's field is chosen from, and its values suggested from.
+    ///
+    /// @param dataSource              The data source.
+    /// @param fieldSelectionListModel The data source's fields.
+    public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
-        getView().init(restFactory, dataSource, fieldSelectionListModel);
+        view.init(dataSource, fieldSelectionListModel);
     }
 
-    /**
-     * Offer only the conditions that pass {@code conditionFilter}, on top of each field's own
-     * {@code ConditionSet}.
-     */
+    /// Offer only the conditions that pass `conditionFilter`, on top of each field's own
+    /// `ConditionSet`.
+    ///
+    /// @param conditionFilter Which conditions are offered.
     public void setConditionFilter(final Predicate<Condition> conditionFilter) {
-        getView().setConditionFilter(conditionFilter);
+        view.setConditionFilter(conditionFilter);
     }
 
     public void read(final ExpressionOperator root) {
         clearSelection();
 
         tree = new ExpressionModel().getTreeFromExpression(root);
-        getView().setTree(tree);
-        getView().refresh();
+        view.setTree(tree);
+        view.refresh();
     }
 
     public ExpressionOperator write() {
         // Write any current editing values.
-        getView().write();
+        view.write();
         // Now get the data from the tree.
         return new ExpressionModel().getExpressionFromTree(tree);
     }
@@ -128,7 +147,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
             if (selectedItem instanceof final Term term) {
                 term.setValue(value);
                 fireDirty();
-                getView().refresh();
+                view.refresh();
             }
         }
     }
@@ -146,13 +165,13 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
                 fireDirty();
 
-                getView().refresh();
+                view.refresh();
             }
         }
     }
 
     private void copy(final Item parent, final Item item) {
-        getView().endEditing();
+        view.endEditing();
         if (item instanceof final Operator operator) {
             List<Item> children = tree.getChildren(operator);
             if (children != null) {
@@ -181,7 +200,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void disable() {
-        getView().endEditing();
+        view.endEditing();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -189,14 +208,14 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
                 fireDirty();
 
-                getView().refresh();
+                view.refresh();
             }
         }
     }
 
     public void delete() {
-        getView().endEditing();
-        getView().cancelDetach();
+        view.endEditing();
+        view.cancelDetach();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -238,7 +257,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void addNewItem(final Item item) {
-        getView().endEditing();
+        view.endEditing();
         if (selectionModel != null) {
             final Item selected = selectionModel.getSelectedObject();
 
@@ -265,7 +284,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
             if (operator != null) {
                 tree.addChild(operator, item);
                 // A new item is edited at once
-                getView().edit(item);
+                view.edit(item);
                 selectionModel.setSelected(item, true);
             }
 
@@ -274,7 +293,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void clearSelection() {
-        getView().endEditing();
+        view.endEditing();
         if (selectionModel != null) {
             selectionModel.clear();
         }
@@ -288,15 +307,20 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionListeners.add(listener);
     }
 
+    /// Tells the owner that the expression has changed.
     public void fireDirty() {
-        if (uiHandlers != null) {
-            uiHandlers.onChange();
-        }
+        onChange.run();
     }
 
-    public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
-        getView().setUiHandlers(uiHandlers);
+    /// @param onChange Run when the user changes the expression.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+        view.setOnChange(onChange);
+    }
+
+    /// @param onSearch Run when Enter is pressed in a term's value, to run the query.
+    public void setOnSearch(final Runnable onSearch) {
+        view.setOnSearch(onSearch);
     }
 
     public MySingleSelectionModel<Item> getSelectionModel() {
@@ -305,12 +329,12 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
-        getView().setSelectionModel(selectionModel);
+        view.setSelectionModel(selectionModel);
     }
 
     @Override
     public HandlerRegistration addContextMenuHandler(final Handler handler) {
-        return getView().addContextMenuHandler(handler);
+        return view.addContextMenuHandler(handler);
     }
 
     /// Gives (or takes away) the tree the read-only look, its items greyed as a read-only field's
@@ -318,7 +342,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     ///
     /// @param readOnly Whether it has the look.
     public void setReadOnlyLook(final boolean readOnly) {
-        getView().setReadOnlyLook(readOnly);
+        view.setReadOnlyLook(readOnly);
     }
 
     /// Gets the context menu's items for moving the selected item (and the items in it) to another
@@ -333,14 +357,14 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
             return menuItems;
         }
         final Item selectedItem = selectionModel.getSelectedObject();
-        final Item detached = getView().getDetached();
+        final Item detached = view.getDetached();
         if (detached == null) {
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
                     .icon(SvgImage.MOVE)
                     .text("Detach")
                     .enabled(selectedItem != null && tree.getParent(selectedItem) != null)
-                    .command(() -> getView().detach(selectedItem))
+                    .command(() -> view.detach(selectedItem))
                     .build());
         } else {
             final String name = ExpressionItemRenderer.getName(tree, detached);
@@ -348,76 +372,16 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                     .priority(priority)
                     .icon(SvgImage.MOVE)
                     .text("Attach '" + name + "' here")
-                    .enabled(getView().canAttach(selectedItem))
-                    .command(() -> getView().attach(selectedItem))
+                    .enabled(view.canAttach(selectedItem))
+                    .command(() -> view.attach(selectedItem))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority + 1)
                     .icon(SvgImage.UNDO)
                     .text("Put '" + name + "' back")
-                    .command(() -> getView().cancelDetach())
+                    .command(() -> view.cancelDetach())
                     .build());
         }
         return menuItems;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
-
-        void setTree(DefaultTreeForTreeLayout<Item> model);
-
-        void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
-
-        void init(RestFactory restFactory,
-                  DocRef dataSource,
-                  FieldSelectionListModel fieldSelectionListModel);
-
-        void write();
-
-        void setConditionFilter(Predicate<Condition> conditionFilter);
-
-        void endEditing();
-
-        void refresh();
-
-        /// Opens an item for editing: it shows its editor while it is selected (others show their
-        /// labels).
-        ///
-        /// @param item The item.
-        void edit(Item item);
-
-        /// Gives (or takes away) the tree the read-only look, its items greyed.
-        ///
-        /// @param readOnly Whether it has the look.
-        void setReadOnlyLook(boolean readOnly);
-
-        /// @return The item detached (to be attached to another operator), or null for none.
-        Item getDetached();
-
-        /// Detaches an item (and the items in it) to be attached to another operator. The root
-        /// can't be.
-        ///
-        /// @param item The item.
-        void detach(Item item);
-
-        /// @param target An item.
-        /// @return Whether the item detached can be attached to it.
-        boolean canAttach(Item target);
-
-        /// Attaches the item detached to another operator, if that can take it.
-        ///
-        /// @param target The operator.
-        void attach(Item target);
-
-        /// Puts the item detached back where it was, if one is.
-        void cancelDetach();
-
-        /// Sets what to do when the tree asks for an item to be removed, e.g. with the Delete key.
-        ///
-        /// @param removeHandler What to do.
-        void setRemoveHandler(Consumer<Item> removeHandler);
     }
 }

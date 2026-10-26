@@ -26,7 +26,7 @@ import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
-import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.client.component.ExpressionTreeController;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplateResource;
@@ -44,10 +44,10 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +75,7 @@ public class ContentTemplateTabPresenter
     protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
     private final ContentTemplateListPresenter listPresenter;
-    private final ExpressionTreePresenter expressionPresenter;
+    private final ExpressionTreeController expressionPresenter;
     private final Provider<ContentTemplateEditPresenter> editPresenterProvider;
     private final RestFactory restFactory;
 
@@ -101,7 +101,7 @@ public class ContentTemplateTabPresenter
     public ContentTemplateTabPresenter(final EventBus eventBus,
                                        final ContentTemplateTabView view,
                                        final ContentTemplateListPresenter listPresenter,
-                                       final ExpressionTreePresenter expressionPresenter,
+                                       final ExpressionTreeController expressionPresenter,
                                        final Provider<ContentTemplateEditPresenter> editPresenterProvider,
                                        final RestFactory restFactory) {
         super(eventBus, view);
@@ -113,7 +113,7 @@ public class ContentTemplateTabPresenter
         this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
-//        getView().setExpressionView(expressionPresenter.getView());
+//        getView().setExpressionView(expressionPresenter);
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -339,7 +339,7 @@ public class ContentTemplateTabPresenter
             final String description;
             if (contentTemplate != null) {
                 description = contentTemplate.getDescription();
-                getView().setExpressionView(expressionPresenter.getView());
+                getView().setExpressionView(expressionPresenter);
                 expressionPresenter.read(contentTemplate.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
                     edit(contentTemplate);
@@ -762,6 +762,6 @@ public class ContentTemplateTabPresenter
 
         void setDescription(final String description);
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
     }
 }

@@ -18,11 +18,11 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -59,7 +59,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     }
 
     @Override
-    public void setExpressionView(final View view) {
+    public void setExpressionView(final IsWidget view) {
         expressionTree.setWidget(view.asWidget());
     }
 

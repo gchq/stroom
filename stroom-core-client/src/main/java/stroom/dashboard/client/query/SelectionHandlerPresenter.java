@@ -22,12 +22,12 @@ import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -100,7 +100,7 @@ public class SelectionHandlerPresenter
 
     public interface SelectionHandlerView extends View, Focus {
 
-        void setExpressionView(View view);
+        void setExpressionView(IsWidget view);
 
         boolean isEnabled();
 
