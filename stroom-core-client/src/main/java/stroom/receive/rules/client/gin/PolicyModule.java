@@ -17,9 +17,6 @@
 package stroom.receive.rules.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
-import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.receive.rules.client.DataRetentionPlugin;
 import stroom.receive.rules.client.ReceiveDataRuleSetPlugin;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
@@ -38,7 +35,6 @@ public class PolicyModule extends PluginModule {
     protected void configure() {
         bindPlugin(ReceiveDataRuleSetPlugin.class);
         bindPlugin(DataRetentionPlugin.class);
-        bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
         bindPresenterWidget(DataRetentionPresenter.class, DataRetentionView.class, DataRetentionViewImpl.class);
         bindPresenterWidget(DataRetentionRulePresenter.class,
                 DataRetentionRuleView.class,

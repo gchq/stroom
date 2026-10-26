@@ -17,7 +17,6 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -25,6 +24,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -39,6 +39,7 @@ import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -51,7 +52,7 @@ public class SolrIndexSettingsPresenter
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
@@ -59,7 +60,7 @@ public class SolrIndexSettingsPresenter
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
-                                      final EditExpressionPresenter editExpressionPresenter,
+                                      final ExpressionEditorController editExpressionPresenter,
                                       final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
@@ -80,7 +81,7 @@ public class SolrIndexSettingsPresenter
 
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
-        view.setRetentionExpressionView(editExpressionPresenter.getView());
+        view.setRetentionExpressionView(editExpressionPresenter);
 
         editExpressionPresenter.setOnChange(this::onChange);
         own(pipelinePresenter.addSelectionListener(selection -> onChange()));
@@ -127,7 +128,7 @@ public class SolrIndexSettingsPresenter
         }
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
-        editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
+        editExpressionPresenter.init(docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(retentionExpression);
         editExpressionPresenter.setReadOnly(isReadOnly());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
@@ -192,7 +193,7 @@ public class SolrIndexSettingsPresenter
 
         void setZkPath(String zkPath);
 
-        void setRetentionExpressionView(final View view);
+        void setRetentionExpressionView(final IsWidget view);
 
         String getTimeField();
 

@@ -21,7 +21,6 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -31,6 +30,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -38,9 +38,9 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -86,7 +86,7 @@ public class DataRetentionImpactPresenter
     private final MultiSelectionModelImpl<DataRetentionImpactRow> selectionModel;
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
-    private final Provider<EditExpressionPresenter> editExpressionPresenterProvider;
+    private final Provider<ExpressionEditorController> editExpressionPresenterProvider;
 
     private final ButtonView runButton;
     private final ButtonView stopButton;
@@ -108,7 +108,7 @@ public class DataRetentionImpactPresenter
     public DataRetentionImpactPresenter(final EventBus eventBus,
                                         final PagerPanel view,
                                         final RestFactory restFactory,
-                                        final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
+                                        final Provider<ExpressionEditorController> editExpressionPresenterProvider) {
         super(eventBus, view);
 
         dataGrid = new DataGrid<>();
@@ -281,14 +281,14 @@ public class DataRetentionImpactPresenter
     }
 
     private void openFilterPresenter() {
-        final EditExpressionPresenter editExpressionPresenter = makeDialog(editExpressionPresenterProvider);
+        final ExpressionEditorController editExpressionPresenter = editExpressionPresenterProvider.get();
         editExpressionPresenter.read(criteria.getExpression());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(FILTERABLE_FIELDS);
-        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        editExpressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.builder(editExpressionPresenter)
+        ControllerDialog.showOnce(this, editExpressionPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Query Filter")

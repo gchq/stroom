@@ -17,11 +17,11 @@
 package stroom.receive.rules.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.ConditionSet;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -49,21 +49,21 @@ import java.util.function.Consumer;
 public class RuleEditorController extends Controller {
 
     private final RuleEditor view;
-    private final EditExpressionPresenter expressionEditor;
+    private final ExpressionEditorController expressionEditor;
     private final UiConfigCache uiConfigCache;
     private ReceiveDataRule originalRule;
 
     @Inject
     public RuleEditorController(final EventBus eventBus,
                                 final RuleEditor view,
-                                final EditExpressionPresenter expressionEditor,
+                                final ExpressionEditorController expressionEditor,
                                 final UiConfigCache uiConfigCache) {
         super(eventBus);
         this.view = view;
         this.expressionEditor = own(expressionEditor);
         this.uiConfigCache = uiConfigCache;
         initWidget(view);
-        view.setExpressionEditor(expressionEditor.getWidget());
+        view.setExpressionEditor(expressionEditor.asWidget());
         view.setActions(List.of(ReceiveAction.RECEIVE, ReceiveAction.REJECT, ReceiveAction.DROP));
     }
 
@@ -115,7 +115,7 @@ public class RuleEditorController extends Controller {
     }
 
     private void read(final ReceiveDataRule rule, final FieldSelectionListModel fields) {
-        expressionEditor.init(null, null, fields);
+        expressionEditor.init(null, fields);
         this.originalRule = rule;
         view.setName(rule.getName());
         if (rule.getExpression() == null) {

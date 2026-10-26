@@ -203,12 +203,6 @@
     height: 10px;
 }
 
-.editExpressionViewImpl-expressionTree {
-    width: 100%;
-    height: 100%;
-    padding-left: 5px;
-}
-
 .pager-toolbar {
     display: flex;
     flex-grow: 1;
@@ -583,10 +577,6 @@
 
 .toolbarContainer {
     display: flex;
-}
-
-.editExpressionViewImpl-expressionTree {
-    padding-left: 5px;
 }
 
 /* Docked AI panel styles */

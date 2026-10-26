@@ -18,7 +18,6 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -28,6 +27,7 @@ import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -129,7 +129,7 @@ class TestProcessorEditPresenter {
         // A date-time box can't be made (or mocked) outside a browser; the controllers are mocks
         Mockito.doReturn(null).when(view).getMinMetaCreateTimeBox();
         Mockito.doReturn(null).when(view).getMaxMetaCreateTimeBox();
-        final EditExpressionPresenter editExpressionPresenter = Mockito.mock(EditExpressionPresenter.class);
+        final ExpressionEditorController editExpressionPresenter = Mockito.mock(ExpressionEditorController.class);
         Mockito.when(editExpressionPresenter.write()).thenReturn(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.EQUALS).value("TEST").build())
                 .build());

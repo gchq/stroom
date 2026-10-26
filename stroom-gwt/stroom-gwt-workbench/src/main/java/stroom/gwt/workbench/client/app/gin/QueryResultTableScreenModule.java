@@ -30,8 +30,6 @@ import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.dashboard.client.table.FormatViewImpl;
 import stroom.dashboard.client.table.cf.CustomRowStylePresenter;
 import stroom.dashboard.client.table.cf.CustomRowStyleViewImpl;
-import stroom.dashboard.client.table.cf.EditExpressionPresenter;
-import stroom.dashboard.client.table.cf.EditExpressionViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;
 import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -65,9 +63,6 @@ public class QueryResultTableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DownloadPresenter.class,
                 DownloadView.class,
                 DownloadViewImpl.class);
-        bindPresenterWidget(EditExpressionPresenter.class,
-                EditExpressionPresenter.EditExpressionView.class,
-                EditExpressionViewImpl.class);
         bindPresenterWidget(RulesPresenter.class,
                 RulesPresenter.RulesView.class,
                 RulesViewImpl.class);

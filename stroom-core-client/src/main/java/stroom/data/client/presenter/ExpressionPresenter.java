@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -36,19 +37,19 @@ public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements Focus {
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final RestFactory restFactory;
 
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
-                               final EditExpressionPresenter editExpressionPresenter,
+                               final ExpressionEditorController editExpressionPresenter,
                                final RestFactory restFactory) {
         super(eventBus, view);
         own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
-        view.setExpressionView(editExpressionPresenter.getView());
+        view.setExpressionView(editExpressionPresenter);
     }
 
     @Override
@@ -62,7 +63,7 @@ public class ExpressionPresenter
 
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(fields);
-        editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);
+        editExpressionPresenter.init(dataSource, fieldSelectionBoxModel);
 
         editExpressionPresenter.read(Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build()));

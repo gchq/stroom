@@ -17,8 +17,6 @@
 
 package stroom.gwt.workbench.client.widgets.query;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.main.ContentStorySupport;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
@@ -44,6 +42,8 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
+import stroom.query.client.component.ExpressionEditor;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.component.ExpressionTree;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.component.TermEditorController;
@@ -51,14 +51,13 @@ import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for Stroom's [EditExpressionPresenter] (an [ExpressionTreeController] under a toolbar):
+/// Stories for Stroom's [ExpressionEditorController] (an [ExpressionTreeController] under a toolbar):
 /// the editor of a query expression, a tree of operators and terms, each term edited (when
 /// selected) with a field picker, a condition and a value editor for the field's type.
 ///
@@ -923,16 +922,16 @@ public final class ExpressionBuilderStories {
                                  final RestHandler decorate) {
         final ScreenHarness harness = harness(context, decorate);
         final ExpressionTreeController treePresenter = treeController(harness);
-        final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
-                new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
+        final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
+                new ExpressionEditor(),
                 treePresenter);
         harness.own(presenter);
         harness.own(treePresenter);
-        presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, dynamicFields));
+        presenter.init(DATA_SOURCE, fieldModel(harness, dynamicFields));
         presenter.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
         presenter.setOnChange(() -> onChange.call(presenter.write().toString()));
-        harness.add(frame(presenter.getWidget()));
+        harness.add(frame(presenter.asWidget()));
         return harness.asWidget();
     }
 
@@ -948,7 +947,7 @@ public final class ExpressionBuilderStories {
         return harness.asWidget();
     }
 
-    /// Stroom's expression editor ([EditExpressionPresenter]) showing these stories' expression
+    /// Stroom's expression editor ([ExpressionEditorController]) showing these stories' expression
     /// (whose last term is disabled), for the view states sheet. Its fields come from a fixed list,
     /// so the harness needs no fixtures.
     ///
@@ -957,15 +956,15 @@ public final class ExpressionBuilderStories {
     /// @return The editor's widget.
     public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
         final ExpressionTreeController treePresenter = treeController(harness);
-        final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
-                new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
+        final ExpressionEditorController presenter = new ExpressionEditorController(harness.getEventBus(),
+                new ExpressionEditor(),
                 treePresenter);
         harness.own(presenter);
         harness.own(treePresenter);
-        presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
+        presenter.init(DATA_SOURCE, fieldModel(harness, false));
         presenter.setReadOnly(readOnly);
         presenter.read(populatedExpression());
-        return presenter.getWidget();
+        return presenter.asWidget();
     }
 
     private static ExpressionTreeController treeController(final ScreenHarness harness) {

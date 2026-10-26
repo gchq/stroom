@@ -16,11 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
-import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
@@ -76,7 +73,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
 
         // QueryModule, PolicyModule and TableModule
-        bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
 
         // DashboardModule
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);

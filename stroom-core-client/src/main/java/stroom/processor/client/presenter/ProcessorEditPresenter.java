@@ -18,7 +18,6 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -34,6 +33,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
@@ -70,7 +70,7 @@ public class ProcessorEditPresenter
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
@@ -85,7 +85,7 @@ public class ProcessorEditPresenter
     @Inject
     public ProcessorEditPresenter(final EventBus eventBus,
                                   final ProcessorEditView view,
-                                  final EditExpressionPresenter editExpressionPresenter,
+                                  final ExpressionEditorController editExpressionPresenter,
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
@@ -106,7 +106,7 @@ public class ProcessorEditPresenter
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.feedDependencyPresenterProvider = feedDependencyPresenterProvider;
-        view.setExpressionView(editExpressionPresenter.getView());
+        view.setExpressionView(editExpressionPresenter);
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
 
@@ -128,7 +128,7 @@ public class ProcessorEditPresenter
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
-        editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
+        editExpressionPresenter.init(dataSource, selectionBoxModel);
         editExpressionPresenter.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);

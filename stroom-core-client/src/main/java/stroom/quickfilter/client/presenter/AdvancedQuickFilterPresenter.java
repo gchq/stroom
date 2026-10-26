@@ -17,10 +17,10 @@
 package stroom.quickfilter.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QuickFilterFields;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.FormatQuickFilterRequest;
@@ -69,19 +69,19 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final ExpressionOperator EMPTY = ExpressionOperator.builder().build();
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final RestFactory restFactory;
 
     @Inject
     public AdvancedQuickFilterPresenter(final EventBus eventBus,
                                         final AdvancedQuickFilterView view,
-                                        final EditExpressionPresenter editExpressionPresenter,
+                                        final ExpressionEditorController editExpressionPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view);
         own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
-        view.setExpressionView(editExpressionPresenter.getView());
+        view.setExpressionView(editExpressionPresenter);
     }
 
     /**
@@ -117,7 +117,7 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
         fields.addItems(context.getQualifiedFields());
         // No data source: these surfaces are not datasources, and TermEditor only uses it for
         // the doc-ref and dictionary pickers, which the condition filter removes anyway.
-        editExpressionPresenter.init(restFactory, null, fields);
+        editExpressionPresenter.init(null, fields);
         editExpressionPresenter.setConditionFilter(QuickFilterFields::isQuickFilterCondition);
 
         final ExpressionOperator original = parsed.isOk()

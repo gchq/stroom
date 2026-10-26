@@ -22,6 +22,7 @@ import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.CustomConditionalFormattingStyle;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.TextAttributes;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 import stroom.widget.presenter.client.HasUiHandlers;
@@ -38,7 +39,7 @@ public class RulePresenter
         extends MyPresenterWidget<RulePresenter.RuleView>
         implements RuleUiHandlers, Focus {
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final Provider<CustomRowStylePresenter> customRowStylePresenterProvider;
     private CustomConditionalFormattingStyle customConditionalFormattingStyle;
     private ConditionalFormattingRule originalRule;
@@ -46,13 +47,15 @@ public class RulePresenter
     @Inject
     public RulePresenter(final EventBus eventBus,
                          final RuleView view,
-                         final EditExpressionPresenter editExpressionPresenter,
+                         final ExpressionEditorController editExpressionPresenter,
                          final Provider<CustomRowStylePresenter> customRowStylePresenterProvider) {
         super(eventBus, view);
         own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.customRowStylePresenterProvider = customRowStylePresenterProvider;
-        view.setExpressionView(editExpressionPresenter.getView());
+        // The rule's form frames the expression's editor itself
+        editExpressionPresenter.setFramed(false);
+        view.setExpressionView(editExpressionPresenter);
         view.setUiHandlers(this);
     }
 
@@ -73,7 +76,7 @@ public class RulePresenter
     void read(final ConditionalFormattingRule rule,
               final FieldSelectionListModel fieldSelectionListModel) {
         this.originalRule = rule;
-        editExpressionPresenter.init(null, null, fieldSelectionListModel);
+        editExpressionPresenter.init(null, fieldSelectionListModel);
         this.originalRule = rule;
         if (rule.getExpression() == null) {
             editExpressionPresenter.read(ExpressionOperator.builder().build());

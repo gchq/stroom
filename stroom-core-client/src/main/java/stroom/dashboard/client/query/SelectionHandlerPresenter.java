@@ -18,9 +18,9 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
-import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -35,7 +35,7 @@ public class SelectionHandlerPresenter
         extends MyPresenterWidget<SelectionHandlerView>
         implements Focus {
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final CurrentSelectionPresenter currentSelectionPresenter;
     private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
@@ -43,14 +43,16 @@ public class SelectionHandlerPresenter
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
-                                     final EditExpressionPresenter editExpressionPresenter,
+                                     final ExpressionEditorController editExpressionPresenter,
                                      final CurrentSelectionPresenter currentSelectionPresenter) {
         super(eventBus, view);
         own(editExpressionPresenter);
         own(currentSelectionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.currentSelectionPresenter = currentSelectionPresenter;
-        view.setExpressionView(editExpressionPresenter.getView());
+        // Its slot frames the expression's editor itself
+        editExpressionPresenter.setFramed(false);
+        view.setExpressionView(editExpressionPresenter);
         view.setCurrentSelection(currentSelectionPresenter.getView());
 
         currentSelectionPresenter.setInsertHandler(editExpressionPresenter::insertValue);
@@ -67,7 +69,7 @@ public class SelectionHandlerPresenter
 
         this.originalHandler = componentSelectionHandler;
         fieldSelectionListModel.setTaskMonitorFactory(this);
-        editExpressionPresenter.init(null, null, fieldSelectionListModel);
+        editExpressionPresenter.init(null, fieldSelectionListModel);
         this.originalHandler = componentSelectionHandler;
         if (componentSelectionHandler.getExpression() == null) {
             editExpressionPresenter.read(ExpressionOperator.builder().build());

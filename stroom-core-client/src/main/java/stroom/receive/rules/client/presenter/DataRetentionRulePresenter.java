@@ -16,11 +16,11 @@
 
 package stroom.receive.rules.client.presenter;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
@@ -34,14 +34,14 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private DataRetentionRule originalRule;
 
     @Inject
     public DataRetentionRulePresenter(final EventBus eventBus,
                                       final DataRetentionRuleView view,
-                                      final EditExpressionPresenter editExpressionPresenter,
+                                      final ExpressionEditorController editExpressionPresenter,
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
@@ -50,10 +50,10 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         // Shows its requests' progress as this presenter does (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
         this.editExpressionPresenter = editExpressionPresenter;
-        view.setExpressionView(editExpressionPresenter.getView());
+        view.setExpressionView(editExpressionPresenter);
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(MetaFields.STREAM_STORE_DOC_REF));
-        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        editExpressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
     }
 
     @Override

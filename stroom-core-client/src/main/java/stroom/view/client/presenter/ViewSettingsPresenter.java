@@ -16,7 +16,6 @@
 
 package stroom.view.client.presenter;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -26,6 +25,7 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
@@ -44,7 +44,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
     private final RestFactory restFactory;
     private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
-    private final EditExpressionPresenter expressionPresenter;
+    private final ExpressionEditorController expressionPresenter;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
@@ -52,7 +52,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
                                  final RestFactory restFactory,
                                  final DocSelectionBoxPresenter dataSourceSelectionPresenter,
                                  final DocSelectionBoxPresenter pipelineSelectionPresenter,
-                                 final EditExpressionPresenter expressionPresenter,
+                                 final ExpressionEditorController expressionPresenter,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         own(dataSourceSelectionPresenter);
@@ -65,7 +65,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
 
         view.setDataSourceSelectionView(dataSourceSelectionPresenter.getView());
         view.setPipelineSelectionView(pipelineSelectionPresenter.getView());
-        view.setExpressionView(expressionPresenter.getView());
+        view.setExpressionView(expressionPresenter);
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -103,7 +103,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline(), true);
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
-        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
+        expressionPresenter.init(MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         // Read expression.
         ExpressionOperator root = entity.getFilter();

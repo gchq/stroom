@@ -16,13 +16,13 @@
 
 package stroom.receive.content.client.presenter;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -47,7 +47,7 @@ public class ContentTemplateEditPresenter
     private static final ContentTemplateResource CONTENT_TEMPLATE_RESOURCE = GWT.create(
             ContentTemplateResource.class);
 
-    private final EditExpressionPresenter editExpressionPresenter;
+    private final ExpressionEditorController editExpressionPresenter;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private ContentTemplate originalTemplate;
@@ -56,7 +56,7 @@ public class ContentTemplateEditPresenter
     public ContentTemplateEditPresenter(final EventBus eventBus,
                                         final ContentTemplateEditView view,
                                         final DocSelectionBoxPresenter pipelineSelectionPresenter,
-                                        final EditExpressionPresenter editExpressionPresenter,
+                                        final ExpressionEditorController editExpressionPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view);
         own(pipelineSelectionPresenter);
@@ -66,7 +66,7 @@ public class ContentTemplateEditPresenter
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
-        view.setExpressionView(editExpressionPresenter.getView());
+        view.setExpressionView(editExpressionPresenter);
 
         restFactory
                 .create(CONTENT_TEMPLATE_RESOURCE)
@@ -79,7 +79,6 @@ public class ContentTemplateEditPresenter
                 .exec();
 
         editExpressionPresenter.init(
-                restFactory,
                 MetaFields.STREAM_STORE_DOC_REF,
                 fieldSelectionBoxModel);
 
