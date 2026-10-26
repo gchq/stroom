@@ -2517,6 +2517,17 @@ if (!window.visualisations) {
         };
     }
 
+    // How ECharts' force layout moves: a step every 16ms, each moving the nodes by its friction (0.6 unless set),
+    // which it cuts by 0.8% a step and stops at 0.01.
+    var LAYOUT_STEP_MS = 16;
+    var LAYOUT_FRICTION = 0.6;
+    var LAYOUT_FRICTION_DECAY = 0.992;
+    // The friction a layout that has (all but) settled starts again with when the chart is resized: enough to finish
+    // the layout at the new size within a second or two, while moving its nodes by a pixel or so.
+    var RESIZED_FRICTION = 0.02;
+    // The most a layout moves when it starts again from where its nodes are: resumed, or the network drawn again.
+    var GENTLE_FRICTION = 0.1;
+
     // The force layout's physics by the Physics setting: settled (as it settles quickly), lively (kept moving longer,
     // with less friction and gravity) or spread (nodes pushed further apart, on longer links).
     function physicsOf(settings, nodeCount) {
@@ -2532,6 +2543,46 @@ if (!window.visualisations) {
                 layoutAnimation: nodeCount <= 500};
         }
         return {repulsion: repulsion, edgeLength: edgeLength, gravity: 0.1, layoutAnimation: nodeCount <= 500};
+    }
+
+    // A network graph's series laid out by force, or null.
+    function forceSeries(option) {
+        return (option.series || []).filter(function (series) {
+            return series.type === "graph" && series.layout === "force";
+        })[0] || null;
+    }
+
+    // The friction a network's force layout starts with: the Physics setting's, or ECharts' own.
+    function startingFriction(option) {
+        var series = forceSeries(option);
+        return series && series.force && series.force.friction != null ? series.force.friction : LAYOUT_FRICTION;
+    }
+
+    // A network drawn again with the same settings (e.g. as the table refreshes) starts from where its nodes were
+    // (places, by name), and moves them gently, new nodes finding places among them; unless fewer than half of them
+    // were drawn before. Returns the friction its layout starts with, or null if it has no force layout.
+    function placeNodes(option, places) {
+        var series = forceSeries(option);
+        if (!series) {
+            return null;
+        }
+        var friction = startingFriction(option);
+        var placed = places ? series.data.filter(function (node) {
+            return places[node.name];
+        }).length : 0;
+        if (placed === 0 || placed < series.data.length / 2) {
+            return friction;
+        }
+        series.data.forEach(function (node) {
+            var at = places[node.name];
+            if (at) {
+                node.x = at[0];
+                node.y = at[1];
+            }
+        });
+        friction = Math.min(friction, GENTLE_FRICTION);
+        series.force = merge(merge({}, series.force || {}), {friction: friction});
+        return friction;
     }
 
     // ECharts' own palette, then as many more as are needed, spread round the colour wheel by the golden angle so
@@ -2762,14 +2813,16 @@ if (!window.visualisations) {
         var height = 150;
         var series = calendars.map(function (calendar, index) {
             calendar.top = 24 + index * height;
-            calendar.left = 40;
+            // Room on the left for the day names and, beyond them, the year, drawn as D3 draws it: ECharts' own
+            // year label is large and bold, and half of it fell off the chart's left edge.
+            calendar.left = 52;
             calendar.right = STROOM_BUTTON_SPACE;
             calendar.cellSize = ["auto", 14];
             calendar.itemStyle = {borderColor: style.border, borderWidth: 1, color: "transparent"};
             calendar.splitLine = {lineStyle: {color: style.subtleText}};
             calendar.dayLabel = {color: style.subtleText};
             calendar.monthLabel = {color: style.subtleText};
-            calendar.yearLabel = {color: style.subtleText};
+            calendar.yearLabel = {color: style.subtleText, fontSize: 12, fontWeight: "normal", margin: 30};
             return {
                 type: "heatmap",
                 coordinateSystem: "calendar",
@@ -4121,6 +4174,13 @@ if (!window.visualisations) {
         // layout is paused.
         var chosenInterval = null;
         var layoutPaused = false;
+        // A network's force layout as it moves: when it started and with what friction (see layoutFriction); null
+        // when it isn't moving. And whether the next redraw lays the network out afresh (its settings changed),
+        // rather than from where its nodes are.
+        var layoutClock = null;
+        var freshLayout = true;
+        // The chart's size when the force layout last ran: the middle its gravity draws the nodes to.
+        var layoutBox = null;
         // Auto Interval groups the rows again as the zoom changes, once it has settled.
         var intervalTimer = null;
 
@@ -4227,17 +4287,18 @@ if (!window.visualisations) {
             }
         }
 
-        // Pauses a network graph's layout where its nodes are now, or lets it move again from there.
+        // Pauses a network graph's layout where its nodes are now, fitted to the chart's size, or lets it move again
+        // from there, gently.
         function pauseLayout(pause) {
-            var index = built ? (built.option.series || []).indexOf(graphSeries(built.option)) : -1;
-            if (!chart || index < 0) {
+            var index = graphIndex();
+            if (index < 0) {
                 return;
             }
-            var data = chart.getModel().getSeriesByIndex(index).getData();
-            var nodes = built.option.series[index].data.map(function (node, i) {
-                var at = data.getItemLayout(i);
+            var places = nodePlaces() || {};
+            var nodes = built.option.series[index].data.map(function (node) {
                 var copy = merge({}, node);
-                if (at && isFinite(at[0]) && isFinite(at[1])) {
+                var at = places[node.name];
+                if (at) {
                     copy.x = at[0];
                     copy.y = at[1];
                 }
@@ -4245,9 +4306,94 @@ if (!window.visualisations) {
             });
             var series = [];
             series[index] = {layout: pause ? "none" : "force", data: nodes};
+            var friction = Math.min(startingFriction(built.option), GENTLE_FRICTION);
+            if (!pause) {
+                series[index].force = {friction: friction};
+                centreLayout(chart.getWidth(), chart.getHeight());
+            }
             chart.setOption({series: series});
             layoutPaused = pause;
+            startLayoutClock(pause ? null : friction);
             sendControls();
+        }
+
+        // The index of the chart's network graph series, or -1 if it has none (or isn't drawn).
+        function graphIndex() {
+            return chart && built ? (built.option.series || []).indexOf(graphSeries(built.option)) : -1;
+        }
+
+        // Where each node of the network is drawn now, by name; null if it has none.
+        function nodePlaces() {
+            var index = graphIndex();
+            var model = index >= 0 ? chart.getModel() : null;
+            var seriesModel = model ? model.getSeriesByIndex(index) : null;
+            if (!seriesModel) {
+                return null;
+            }
+            var data = seriesModel.getData();
+            var places = {};
+            var count = 0;
+            built.option.series[index].data.forEach(function (node, i) {
+                var at = data.getItemLayout(i);
+                if (at && isFinite(at[0]) && isFinite(at[1])) {
+                    places[node.name] = [at[0], at[1]];
+                    count++;
+                }
+            });
+            return count ? places : null;
+        }
+
+        // Notes that the force layout started moving (if it is animated) with the friction given; null if it stopped.
+        function startLayoutClock(friction) {
+            var series = built ? graphSeries(built.option) : null;
+            layoutClock = friction !== null && series && series.layout === "force" && series.force
+                && series.force.layoutAnimation ? {started: Date.now(), friction: friction} : null;
+        }
+
+        // The friction the force layout has now, as ECharts cuts it step by step: how far it still moves the nodes.
+        function layoutFriction() {
+            if (!layoutClock) {
+                return 0;
+            }
+            var steps = (Date.now() - layoutClock.started) / LAYOUT_STEP_MS;
+            return layoutClock.friction * Math.pow(LAYOUT_FRICTION_DECAY, steps);
+        }
+
+        // ECharts lays a network out again as the chart is resized (e.g. as a pane beside the dashboard opens): from
+        // where its nodes are, but as if from the start, so they rush to the new middle. Instead its nodes are moved
+        // with the middle, and the layout carries on no faster than it was: one that has settled barely moves. It
+        // isn't paused, which would leave it paused until the user resumed it.
+        function holdLayout() {
+            var index = graphIndex();
+            if (index < 0 || layoutPaused || built.option.series[index].layout !== "force") {
+                return;
+            }
+            var friction = Math.max(layoutFriction(), RESIZED_FRICTION);
+            centreLayout(chartElement.clientWidth, chartElement.clientHeight);
+            var series = [];
+            series[index] = {force: {friction: friction}};
+            chart.setOption({series: series});
+            startLayoutClock(friction);
+        }
+
+        // Moves the force layout's nodes with the middle of the chart, from where it was when they were laid out to
+        // where it is at the size given, so that its gravity doesn't drag them all across as it starts again. They
+        // are where ECharts starts its layout again from (the series' preservedPoints, which it keeps by node id).
+        function centreLayout(width, height) {
+            var index = graphIndex();
+            var model = index >= 0 ? chart.getModel().getSeriesByIndex(index) : null;
+            if (model && model.preservedPoints && layoutBox) {
+                var dx = (width - layoutBox.width) / 2;
+                var dy = (height - layoutBox.height) / 2;
+                Object.keys(model.preservedPoints).forEach(function (id) {
+                    var at = model.preservedPoints[id];
+                    if (at) {
+                        at[0] += dx;
+                        at[1] += dy;
+                    }
+                });
+            }
+            layoutBox = {width: width, height: height};
         }
 
         function autoIntervalOn() {
@@ -4619,9 +4765,12 @@ if (!window.visualisations) {
                     throw new Error("This chart needs ECharts " + MIN_ECHARTS_MAJOR + " or later, but ECharts " +
                         window.echarts.version + " has loaded. Install a newer ECharts build in its Script doc.");
                 }
+                var places = freshLayout ? null : nodePlaces();
+                freshLayout = false;
                 built = buildOption(context, settings, lastArgs.data, prefs, style, {zoom: zoomWindows,
                     interval: chosenInterval});
                 report = built.report;
+                var friction = placeNodes(built.option, places);
                 var instance = ensureChart(prefs.theme);
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
                 // Drawn afresh, every series shown and the layout moving, at the zoom it had, and the range tool on
@@ -4629,6 +4778,8 @@ if (!window.visualisations) {
                 hiddenSeries = false;
                 hiddenNames = [];
                 layoutPaused = false;
+                startLayoutClock(friction);
+                layoutBox = {width: instance.getWidth(), height: instance.getHeight()};
                 zoomed = !!(zoomWindows && zoomWindows.some(function (area) {
                     return area.start > 0 || area.end < 100;
                 }));
@@ -4649,6 +4800,7 @@ if (!window.visualisations) {
                 }
             } catch (e) {
                 built = null;
+                layoutClock = null;
                 if (chart) {
                     chart.clear();
                 }
@@ -4667,9 +4819,11 @@ if (!window.visualisations) {
         this.setData = function (context, settings, data) {
             // The zoom and the interval chosen are kept as the table refreshes, but not for other settings (e.g.
             // another kind of chart).
+            // So is where a network's nodes are.
             if (lastArgs && JSON.stringify(lastArgs.settings) !== JSON.stringify(settings)) {
                 zoomWindows = null;
                 chosenInterval = null;
+                freshLayout = true;
             }
             lastArgs = {context: context, settings: settings, data: data};
             render();
@@ -4677,6 +4831,7 @@ if (!window.visualisations) {
 
         this.resize = function () {
             if (chart) {
+                holdLayout();
                 chart.resize();
                 // A theme change only changes the element's class, so check for one here too.
                 var prefs = readPreferences(lastArgs ? lastArgs.context : null, element);
@@ -4752,6 +4907,7 @@ if (!window.visualisations) {
         dataCsv: dataCsv,
         reversed: reversed,
         Fields: Fields,
+        placeNodes: placeNodes,
         version: ADAPTER_VERSION
     };
 })();
