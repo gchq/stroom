@@ -16,8 +16,8 @@
 
 package stroom.query.language.functions;
 
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /// Calculates the Shannon entropy of a string, i.e. how unpredictable its characters are.
 ///
@@ -45,8 +45,9 @@ public final class ShannonEntropyCalculator {
             return 0.0;
         }
 
-        final Map<Integer, Integer> counts = new HashMap<>();
-        value.codePoints().forEach(codePoint -> counts.merge(codePoint, 1, Integer::sum));
+        final int codePointCount = value.codePointCount(0, value.length());
+        final Int2IntOpenHashMap counts = new Int2IntOpenHashMap(codePointCount);
+        value.codePoints().forEach(codePoint -> counts.mergeInt(codePoint, 1, Integer::sum));
 
         // One distinct character always scores zero. Returning it here guarantees 0.0 rather than
         // the -0.0 that some arrangements of the formula give, which displays as -0.
@@ -54,10 +55,10 @@ public final class ShannonEntropyCalculator {
             return 0.0;
         }
 
-        final double length = value.codePointCount(0, value.length());
         double sum = 0.0;
-        for (final int count : counts.values()) {
-            final double probability = count / length;
+        final IntIterator iterator = counts.values().iterator();
+        while (iterator.hasNext()) {
+            final double probability = (double) iterator.nextInt() / codePointCount;
             sum -= probability * Math.log(probability);
         }
         return sum / LN_2;
