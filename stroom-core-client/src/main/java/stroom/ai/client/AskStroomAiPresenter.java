@@ -3282,6 +3282,8 @@ public class AskStroomAiPresenter
                     .name(create.getComponentName())
                     .build());
         }
+        // The filters its clicks drive follow it, where it selects the same column under another key.
+        changes.addAll(operations(create.getFilterChanges()));
         final String replaced = "Rewrote Visualisation '" + visualisation.getName() + "' for the new chart (saved)";
         final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
                 create.getTarget(),

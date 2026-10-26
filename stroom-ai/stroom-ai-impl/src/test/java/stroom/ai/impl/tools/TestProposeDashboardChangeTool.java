@@ -28,6 +28,8 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.vis.ChartKind;
+import stroom.ai.impl.vis.EChartsTemplate;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -482,6 +484,42 @@ class TestProposeDashboardChangeTool {
                     .containsEntry("target_id", "vis-1")
                     .doesNotContainKey("doc");
         });
+    }
+
+    @Test
+    void aGeneratedChartIsReconfiguredByItsSettingsButNotMadeAnotherKind() {
+        // Seen in testing: a line chart made a bar chart by its pane's settings asked for x and y, which its
+        // Visualisation's Data tab still had.
+        final String withVis = SETTINGS + "## Visualisation 'Chats' (id vis-1)\n"
+                               + "Visualisation: 'Chats by user' (uuid line-uuid)\n"
+                               + "Linked table: 'Events'\n"
+                               + "Vis settings: {}\n";
+        dashboardTab(false, withVis);
+        final VisualisationDoc line = VisualisationDoc.builder()
+                .uuid("line-uuid")
+                .name("Chats by user")
+                .functionName(EChartsTemplate.FUNCTION_NAME)
+                .settings(EChartsTemplate.settingsJson(ChartKind.LINE, Map.of("x", "EventTime", "y", "UserId"),
+                        Map.of(), null))
+                .build();
+        Mockito.when(documentAccess.read(new DocRef(VisualisationDoc.TYPE, "line-uuid"), VisualisationDoc.class))
+                .thenReturn(Optional.of(line));
+
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "Chats",
+                "settings", Map.of("kind", "bar", "stack", "true")))))
+                .contains("Change 1 (set_vis_settings): a chart Stroom AI generated can't be made another kind by "
+                          + "its settings (kind): its Visualisation has the line chart's columns. Convert it with "
+                          + "propose_visualisation, replace (the pane's name)");
+        assertThat(takeUserActions()).isEmpty();
+
+        // Its style, its columns, and its own kind (or none, putting back its default) are fine.
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "Chats",
+                "settings", Map.of("kind", "Line", "stack", "true", "smooth", "true", "x", "UserId")))))
+                .contains("- Change visualisation 'Chats'");
+        assertThat(takeUserActions()).hasSize(1);
+        assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "Chats",
+                "settings", Map.of("kind", "", "fields", "")))))
+                .contains("- Change visualisation 'Chats'");
     }
 
     @Test

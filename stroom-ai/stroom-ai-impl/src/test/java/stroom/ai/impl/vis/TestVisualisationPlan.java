@@ -166,6 +166,38 @@ class TestVisualisationPlan {
     }
 
     @Test
+    void aConvertedChartsRenamedSelectionKeysRoundTripAndAreChecked() {
+        final Replace replace = new Replace("vis-1", "Old chart", new DocRef(VisualisationDoc.TYPE, "v1", "Bars"))
+                .withSelections(Map.of("x", "category", "Event Time", "date"));
+        final VisualisationPlan plan = new VisualisationPlan("bar", Map.of("category", "Hour", "value", "Count"),
+                Map.of(), null, "Events", "table-1", "Old chart", null, "h", null, null, replace);
+        plan.validate();
+
+        assertThat(VisualisationPlan.fromJson(plan.toJson()).replace().selections())
+                .containsOnly(Map.entry("x", "category"), Map.entry("Event Time", "date"));
+        // None renamed: none given.
+        assertThat(replace.withSelections(Map.of()).selections()).isNull();
+        // A key that would end or split the term naming it is refused.
+        for (final String key : new String[]{"x}", "a,b", "a=b", "${x", ""}) {
+            assertThatThrownBy(() -> new VisualisationPlan("bar", Map.of(), null, null, "t", "id", "n", null, "h",
+                    null, null, replace.withSelections(Map.of("x", key))).validate())
+                    .hasMessageContaining("A selection key renamed must be a role or column name");
+        }
+    }
+
+    @Test
+    void aConvertedChartsFiltersAreRenamedByOneDashboardChange() {
+        final Replace replace = new Replace("vis-1", "Old chart", new DocRef(VisualisationDoc.TYPE, "v1", "Bars"));
+
+        assertThat(VisualisationActions.selectionsRenamed(replace)).isEmpty();
+        assertThat(VisualisationActions.selectionsRenamed(replace.withSelections(Map.of("x", "category",
+                "series", "name")))).containsExactly(Map.of(
+                "op", VisualisationActions.REMAP_SELECTION,
+                "target_id", "vis-1",
+                "value", "series=name,x=category"));
+    }
+
+    @Test
     void anEmbeddedQuerysPlanIsAShowClauseForItsComponent() {
         final VisualisationPlan plan = new VisualisationPlan("pie", Map.of("name", "UserA", "value", "Messages"),
                 Map.of(), null, "Pairs", "query-1", null, null, "h", true, "from x select UserA, Messages");
