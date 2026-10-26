@@ -20,9 +20,11 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.LoginUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,10 +34,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -50,7 +50,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     SimplePanel userImage;
     @UiField
-    TextBox userName;
+    TextInput userName;
     @UiField
     Label userNameFeedback;
     @UiField
@@ -62,7 +62,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     Button signInButton;
     @UiField
-    Hyperlink forgotPasswordLink;
+    LinkButton forgotPasswordLink;
 
     @Inject
     public LoginViewImpl(final Binder binder) {

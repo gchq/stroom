@@ -17,13 +17,13 @@
 package stroom.index.client.view;
 
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -32,7 +32,7 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     private final Widget widget;
 
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SimplePanel list;
 

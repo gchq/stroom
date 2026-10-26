@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -27,7 +28,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -37,7 +37,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SimplePanel dataSource;
     @UiField
@@ -45,7 +45,7 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     TickBox autoRefresh;
     @UiField
-    TextBox refreshInterval;
+    TextInput refreshInterval;
 
     @Inject
     public BasicQuerySettingsViewImpl(final Binder binder) {

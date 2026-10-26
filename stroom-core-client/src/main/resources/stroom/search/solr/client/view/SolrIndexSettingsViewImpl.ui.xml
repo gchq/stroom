@@ -9,7 +9,7 @@
         <form:FormGroup identity="solrIndexSettingsCollection" label="Collection"
                         helpText="Name of the Solr collection that holds this index."
                         screenReaderText="The Solr collection that holds this index.">
-            <g:TextBox ui:field="collection" width="400px"/>
+            <form:TextInput ui:field="collection" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsInstanceType" label="Instance Type"
                         helpText="Type of Solr installation to connect to: Single Node or Solr Cloud. Default is Single Node."
@@ -19,7 +19,7 @@
         <form:FormGroup identity="solrIndexSettingsSolrURLs" label="Solr URLs"
                         helpText="URLs of the Solr servers, one per line, e.g. http://solr.example.com:8983/solr. Single Node needs exactly one URL. Not used when the instance type is Solr Cloud and 'Use ZK' is ticked."
                         screenReaderText="One per line. Single Node needs exactly one.">
-            <g:TextArea ui:field="solrUrls" width="400px"/>
+            <form:TextAreaInput ui:field="solrUrls" width="400px"/>
         </form:FormGroup>
         <form:FormGroup helpText="Whether to find the Solr Cloud cluster through its ZooKeeper hosts rather than the Solr URLs. Only used when the instance type is Solr Cloud."
                         screenReaderText="Solr Cloud only. Uses the ZooKeeper hosts below.">
@@ -28,17 +28,17 @@
         <form:FormGroup identity="solrIndexSettingsZKHosts" label="ZooKeeper Hosts"
                         helpText="ZooKeeper hosts for the Solr Cloud cluster, one per line, in the form host:port, e.g. zk1.example.com:2181. Needed when the instance type is Solr Cloud and 'Use ZK' is ticked."
                         screenReaderText="One host:port per line. Needed for Solr Cloud with Use ZK ticked.">
-            <g:TextArea ui:field="zkHosts" width="400px"/>
+            <form:TextAreaInput ui:field="zkHosts" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsZKPath" label="ZooKeeper Path"
                         helpText="Optional ZooKeeper chroot path where the Solr configuration is held, e.g. /solr. Leave blank if Solr uses the ZooKeeper root. Only used when the instance type is Solr Cloud and 'Use ZK' is ticked."
                         screenReaderText="ZooKeeper chroot path, e.g. /solr.">
-            <g:TextArea ui:field="zkPath" width="400px"/>
+            <form:TextAreaInput ui:field="zkPath" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsTimeField" label="Main Time Field Name"
                         helpText="Name of the date field used to apply the query time range. Default is EventTime."
                         screenReaderText="Default is EventTime.">
-            <g:TextBox ui:field="timeField" width="200px"/>
+            <form:TextInput ui:field="timeField" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline"
                         helpText="Pipeline used to extract field values from the original events at search time, when a dashboard or query does not specify its own extraction pipeline.">

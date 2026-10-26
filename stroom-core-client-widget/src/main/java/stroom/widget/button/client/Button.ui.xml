@@ -2,7 +2,8 @@
 <!--
   A button (button.css): an invisible copy of the text that sizes it (so it isn't part of its name),
   the ripples of a press, and its content: the busy spinner (only a picture: the button says it is
-  busy with aria-busy), an optional icon and the text.
+  busy with aria-busy), an optional icon and the text. Or content of its own (setContent), e.g. a logo,
+  in place of all those, for a button whose own class gives its look.
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
     <button type="button" class="button button--contained">
@@ -15,5 +16,6 @@
             <span ui:field="icon" class="button__icon svgIcon" aria-hidden="true" focusable="false"></span>
             <span ui:field="text" class="button__text">Close</span>
         </div>
+        <span ui:field="ownContent" class="button__own-content"></span>
     </button>
 </ui:UiBinder>

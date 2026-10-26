@@ -22,6 +22,7 @@ import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSe
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -30,7 +31,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -41,15 +41,15 @@ public class OpenAIModelSettingsViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox baseUrl;
+    TextInput baseUrl;
     @UiField
     SelectionBox<Credential> apiKey;
     @UiField
-    TextBox modelId;
+    TextInput modelId;
     @UiField
     ValueSpinner maxContextWindowTokens;
     @UiField
-    TextBox reasoningEffort;
+    TextInput reasoningEffort;
     @UiField
     Button testModel;
     @UiField

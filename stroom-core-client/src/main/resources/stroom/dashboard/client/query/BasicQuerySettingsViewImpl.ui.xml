@@ -10,7 +10,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsDataSource" label="Data Source"
                         helpText="Data source that the query searches, e.g. an index or the Stream Store. You need Use permission on it.">
@@ -25,7 +25,7 @@
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
                         helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."
                         screenReaderText="Number with unit, e.g. 30s or 5m. Minimum 10 seconds.">
-            <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
+            <form:TextInput ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

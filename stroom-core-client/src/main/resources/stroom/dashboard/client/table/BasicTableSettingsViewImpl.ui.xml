@@ -12,7 +12,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsQuery" label="Query"
                         helpText="Query component that supplies the results for this table.">
@@ -31,7 +31,7 @@
         <form:FormGroup identity="basicTableSettingsMaximumResults" label="Maximum Results"
                         helpText="Maximum number of results to keep at each grouping level, as a comma-separated list, e.g. 1000000,100,10 (the last value applies to any deeper levels). Leave blank to use the system default."
                         screenReaderText="Comma-separated, one per group level, e.g. 1000000,100,10. Blank uses default.">
-            <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
+            <form:TextInput ui:field="maxResults" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size"
                         helpText="Number of rows shown on each page of the table, from 1 to 10,000. Default is 100."

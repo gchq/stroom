@@ -20,6 +20,7 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.Button;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
@@ -35,7 +36,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -71,7 +71,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         // Named for screen readers, as its placeholder is only a hint, lost once something is typed
         nameFilter.setAccessibleName("Filter explorer");
 
-        logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
+        logo.setContent(SvgImageUtil.toSafeHtml(
                 SvgImage.LOGO,
                 "navigation-logo-image"));
         // A click on the logo opens the main menu, as the Main Menu button beside it does, so for

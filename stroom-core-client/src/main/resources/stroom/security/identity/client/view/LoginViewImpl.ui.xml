@@ -20,7 +20,7 @@
                     <g:FlowPanel>
                         <!-- Add user name text box -->
                         <g:FlowPanel addStyleNames="userNameTextBoxOuter">
-                            <g:TextBox ui:field="userName" addStyleNames="userNameTextBox"/>
+                            <form:TextInput ui:field="userName" addStyleNames="userNameTextBox"/>
                         </g:FlowPanel>
 
                         <!-- Add feedback -->
@@ -42,7 +42,7 @@
 
                 <b:Button ui:field="signInButton" text="Sign In" addStyleNames="LoginViewSignInButton button--contained-primary allow-focus"/>
 
-                <g:Hyperlink ui:field="forgotPasswordLink" styleName="LoginViewForgotPassword">Forgot password?</g:Hyperlink>
+                <b:LinkButton ui:field="forgotPasswordLink" addStyleNames="LoginViewForgotPassword">Forgot password?</b:LinkButton>
 
             </g:FlowPanel>
         </g:FlowPanel>

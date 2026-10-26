@@ -22,6 +22,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextAreaInput;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -61,7 +62,7 @@ public final class TextInputStories {
                 })
                 // A text area: the same field over several lines
                 .story("MultiLine", context -> {
-                    final TextArea textArea = new TextArea();
+                    final TextAreaInput textArea = new TextAreaInput();
                     AccessibleName.set(textArea, "Description");
                     textArea.setText("A first line\nand a second");
                     return minWidth(StoryPanels.column(8, textArea));

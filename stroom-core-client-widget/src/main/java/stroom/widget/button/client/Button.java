@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiTemplate;
@@ -42,6 +43,8 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     // While the busy spinner spins (button.css), until it has shrunk away (as long as that takes)
     private static final String SPINNING = "button--spinning";
     private static final int SPINNER_FADE_MILLIS = 500;
+    // Showing content of its own in place of its caption, icon and spinner (button.css)
+    private static final String OWN_CONTENT = "button--own-content";
 
     private final Parts parts;
 
@@ -217,6 +220,17 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         return parts.text.getInnerText();
     }
 
+    /// Shows content of its own (e.g. a logo, or a summary) in place of its caption, icon, spinner
+    /// and the ripple of a press: for a button given a class of its own (`styleName`), which gives it
+    /// its look in place of the button's. Its accessible name is then the content's text, unless
+    /// it has an ARIA label.
+    ///
+    /// @param content The content.
+    public void setContent(final SafeHtml content) {
+        getElement().addClassName(OWN_CONTENT);
+        parts.ownContent.setInnerSafeHtml(content);
+    }
+
     public void setIcon(final SvgImage svgImage) {
         parts.icon.addClassName("button__icon--visible");
         parts.icon.setInnerHTML(svgImage.getSvg());
@@ -264,6 +278,8 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         SpanElement icon;
         @UiField
         SpanElement text;
+        @UiField
+        SpanElement ownContent;
     }
 
 

@@ -10,14 +10,14 @@
                 identity="contentTemplateName"
                 label="Template Name"
                 helpText="The name of this template.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup
                 identity="contentTemplateDescription"
                 label="Template Description"
                 helpText="The description of this template.">
-            <g:TextArea ui:field="description" addStyleNames="w-100"/>
+            <form:TextAreaInput ui:field="description" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup

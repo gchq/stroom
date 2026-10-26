@@ -29,7 +29,7 @@
                 <p>A name for the API Key. This can be used to describe the intended purpose of the key.</p>
                 <p>API Key names must be unique for the same owner.</p>
             </form:HelpHTML>
-            <g:TextBox ui:field="nameTextBox" addStyleNames="w-100"/>
+            <form:TextInput ui:field="nameTextBox" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="hashAlgorithm" label="Hash Algorithm"
                         screenReaderText="SHA options are fast; BCrypt and Argon2 add about 100 ms per call.">
@@ -49,7 +49,7 @@
                 <p>This is the key's prefix. It can be used to help associate a key that you hold with the
                 API key record in Stroom. Note: though unlikely, multiple keys can share the same prefix.</p>
             </form:HelpHTML>
-            <g:TextBox ui:field="prefixTextBox" addStyleNames="w-100"/>
+            <form:TextInput ui:field="prefixTextBox" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="apiKeyFormGroup" identity="apiKey" label="API Key (you must copy this)"
                         screenReaderText="Copy it now. It cannot be shown again.">
@@ -63,7 +63,7 @@
                     <p>'<code>Bearer sak_0ef90a814d_ArVs6...TRUNCATED...6Edq4</code>'.</p>
             </form:HelpHTML>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
+                <form:TextAreaInput ui:field="apiKeyTextArea" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
                     <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions"/>
                     <g:Label ui:field="copyToClipboardLabel"/>
@@ -81,7 +81,7 @@
             <form:HelpHTML>
                 <p>Comments can be added to help describe the purpose of the key.</p>
             </form:HelpHTML>
-            <g:TextArea ui:field="commentsTextArea" addStyleNames="w-100"/>
+            <form:TextAreaInput ui:field="commentsTextArea" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="expiry" label="Expiry Date" required="true"
                         screenReaderText="Must be in the future, within the maximum age (365 days by default).">

@@ -28,21 +28,21 @@
                         label="Git repository URL"
                         helpText="URL of the Git repository, using HTTPS or SSH, e.g. https://github.com/org/repo.git. Read-only for content packs."
                         screenReaderText="HTTPS or SSH URL. Read-only for content packs.">
-            <g:TextBox title="The URL of the GIT repository"
+            <form:TextInput title="The URL of the GIT repository"
                        ui:field="txtGitUrl" />
         </form:FormGroup>
         <form:FormGroup identity="txtGitBranch"
                         label="Git branch"
                         helpText="Branch of the Git repository to pull from and push to, e.g. main. Read-only for content packs."
                         screenReaderText="Branch to pull from and push to. Read-only for content packs.">
-            <g:TextBox title="The branch of the GIT repository"
+            <form:TextInput title="The branch of the GIT repository"
                        ui:field="txtGitBranch" />
         </form:FormGroup>
         <form:FormGroup identity="txtGitPath"
                         label="Git path"
                         helpText="Folder within the Git repository that holds the Stroom content, e.g. stroom/content. Leave blank to use the root of the repository. Read-only for content packs."
                         screenReaderText="Leave blank for the repository root. Read-only for content packs.">
-            <g:TextBox title="The path within the GIT repository"
+            <form:TextInput title="The path within the GIT repository"
                        ui:field="txtGitPath" />
         </form:FormGroup>
 
@@ -51,7 +51,7 @@
                         label="Git commit"
                         helpText="Hash of a Git commit to pull instead of the latest commit on the branch. While it is set, Push to Git and Automatically push are not available. Leave blank to pull the latest commit. Read-only for content packs."
                         screenReaderText="While set, pushing is not available.">
-            <g:TextBox title="The commit you want to pull from Git"
+            <form:TextInput title="The commit you want to pull from Git"
                        ui:field="txtGitCommitToPull" />
         </form:FormGroup>
 

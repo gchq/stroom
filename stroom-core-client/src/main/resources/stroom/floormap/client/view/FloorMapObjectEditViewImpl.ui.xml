@@ -48,7 +48,7 @@
                             the map: a shape (imageless) object is labelled on the map with its
                             key, and image objects carry no text label.</p>
                     </form:HelpHTML>
-                    <g:TextBox ui:field="nameBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextInput ui:field="nameBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
                 <form:FormGroup label="Type" required="true" identity="floorMapObjectType">
@@ -60,7 +60,7 @@
                         <p><strong>Required</strong> — the object cannot be saved without a
                             type.</p>
                     </form:HelpHTML>
-                    <g:TextBox ui:field="typeBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextInput ui:field="typeBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
                 <form:FormGroup label="Image">
@@ -94,7 +94,7 @@
                             (invisible) to <code>1</code> (opaque). Leave empty for the
                             default (<code>0.3</code>).</p>
                     </form:HelpHTML>
-                    <g:TextBox ui:field="opacityBox" addStyleNames="stroom-control wide-control" />
+                    <form:TextInput ui:field="opacityBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
                 <form:FormGroup ui:field="verticesGroup" label="Vertices">
@@ -130,8 +130,8 @@
                             background or other image, the point the image is placed from.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="positionRow" addStyleNames="dock-container-horizontal align-center">
-                        <g:TextBox ui:field="posX" addStyleNames="stroom-control {style.matrixBox}" />
-                        <g:TextBox ui:field="posY" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="posX" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="posY" addStyleNames="stroom-control {style.matrixBox}" />
                         <g:Label ui:field="posUnit" text="m" addStyleNames="{style.unitSuffix}" />
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -149,8 +149,8 @@
                             size to set.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="sizeRow" addStyleNames="dock-container-horizontal align-center">
-                        <g:TextBox ui:field="sizeW" addStyleNames="stroom-control {style.matrixBox}" />
-                        <g:TextBox ui:field="sizeH" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="sizeW" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="sizeH" addStyleNames="stroom-control {style.matrixBox}" />
                         <g:Label ui:field="sizeUnit" text="m" addStyleNames="{style.unitSuffix}" />
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -162,8 +162,8 @@
                             with a real extent offers a <em>Size</em> in metres above instead.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="scaleRow" addStyleNames="dock-container-horizontal align-center">
-                        <g:TextBox ui:field="w2mSx" addStyleNames="stroom-control {style.matrixBox}" />
-                        <g:TextBox ui:field="w2mSy" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="w2mSx" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="w2mSy" addStyleNames="stroom-control {style.matrixBox}" />
                     </g:FlowPanel>
                 </form:FormGroup>
 
@@ -175,7 +175,7 @@
                             for you, holding <strong>Shift</strong> to snap to 15&#176; steps.</p>
                     </form:HelpHTML>
                     <g:FlowPanel ui:field="rotationRow" addStyleNames="dock-container-horizontal align-center">
-                        <g:TextBox ui:field="w2mRot" addStyleNames="stroom-control {style.matrixBox}" />
+                        <form:TextInput ui:field="w2mRot" addStyleNames="stroom-control {style.matrixBox}" />
                     </g:FlowPanel>
                 </form:FormGroup>
 

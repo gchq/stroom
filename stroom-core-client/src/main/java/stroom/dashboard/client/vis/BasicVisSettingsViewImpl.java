@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
 import stroom.item.client.SelectionBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -29,7 +30,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -42,7 +42,7 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<Component> table;
     @UiField

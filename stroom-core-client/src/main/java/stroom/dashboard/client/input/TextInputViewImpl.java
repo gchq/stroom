@@ -18,13 +18,13 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -33,7 +33,7 @@ public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> i
     private final Widget widget;
 
     @UiField
-    TextBox value;
+    TextInput value;
 
     @Inject
     public TextInputViewImpl(final Binder binder) {

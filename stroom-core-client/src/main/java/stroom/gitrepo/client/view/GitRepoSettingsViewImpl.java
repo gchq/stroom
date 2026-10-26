@@ -22,6 +22,7 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -31,7 +32,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -59,15 +59,15 @@ public class GitRepoSettingsViewImpl
     @UiField
     Label lblContentPack;
     @UiField
-    TextBox txtGitUrl;
+    TextInput txtGitUrl;
     @UiField
-    TextBox txtGitBranch;
+    TextInput txtGitBranch;
     @UiField
-    TextBox txtGitPath;
+    TextInput txtGitPath;
     @UiField
     SelectionBox<Credential> credentialSelectionBox;
     @UiField
-    TextBox txtGitCommitToPull;
+    TextInput txtGitCommitToPull;
     @UiField
     FormGroup fgGitAutoPush;
     @UiField

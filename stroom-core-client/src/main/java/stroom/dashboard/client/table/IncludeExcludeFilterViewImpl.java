@@ -17,13 +17,13 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -31,9 +31,9 @@ public class IncludeExcludeFilterViewImpl extends ViewImpl implements IncludeExc
 
     private final Widget widget;
     @UiField
-    TextArea includeText;
+    TextAreaInput includeText;
     @UiField
-    TextArea excludeText;
+    TextAreaInput excludeText;
     @UiField
     SimplePanel includeDictionaryPanel;
     @UiField

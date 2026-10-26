@@ -9,12 +9,12 @@
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextInputSettingsKey" label="Key"
                         helpText="Parameter name that the entered value is given. Use it in queries and expressions as ${{key}, e.g. a key of user is used as ${{user}."
                         screenReaderText="Parameter name, used in queries as ${{key}.">
-            <g:TextBox ui:field="key" addStyleNames="w-100"/>
+            <form:TextInput ui:field="key" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

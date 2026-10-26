@@ -24,6 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.RadioGroup;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -118,7 +119,7 @@ public final class RadioGroupStories {
 
     // A text box before or after the group, to tab from and to
     private static TextBox namedTextBox(final String name) {
-        final TextBox textBox = new TextBox();
+        final TextInput textBox = new TextInput();
         textBox.getElement().setAttribute("aria-label", name);
         return textBox;
     }

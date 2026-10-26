@@ -140,6 +140,41 @@
         <!--      <property name="severity" value="warning"/>-->
         <!--    </module>-->
 
+        <!-- Stroom's widgets, not GWT's, wherever Stroom has its own version: Button, ToolbarButton,
+             LinkButton or FabButton for a button or link; TickBox; RadioGroup; SelectionBox; Stroom's
+             dialogs, tabs, SplitPane, DateTimeBox, DataGrid and Pager. (Templates are checked by
+             TestStroomWidgetsOnly.) -->
+        <module name="IllegalImport">
+            <property name="id" value="GwtWidgetWithStroomVersion"/>
+            <property name="illegalClasses" value="
+      com.google.gwt.user.client.ui.Button,
+      com.google.gwt.user.client.ui.PushButton,
+      com.google.gwt.user.client.ui.ToggleButton,
+      com.google.gwt.user.client.ui.Hyperlink,
+      com.google.gwt.user.client.ui.InlineHyperlink,
+      com.google.gwt.user.client.ui.CheckBox,
+      com.google.gwt.user.client.ui.SimpleCheckBox,
+      com.google.gwt.user.client.ui.RadioButton,
+      com.google.gwt.user.client.ui.ListBox,
+      com.google.gwt.user.client.ui.DialogBox,
+      com.google.gwt.user.client.ui.TabPanel,
+      com.google.gwt.user.client.ui.TabLayoutPanel,
+      com.google.gwt.user.client.ui.SplitLayoutPanel,
+      com.google.gwt.user.datepicker.client.DateBox,
+      com.google.gwt.user.cellview.client.CellTable,
+      com.google.gwt.user.cellview.client.DataGrid,
+      com.google.gwt.user.cellview.client.SimplePager"/>
+            <message key="import.illegal" value="Do not use GWT''s {0}: use Stroom''s own version of it (see AGENTS.md, Stroom''s widgets only)."/>
+        </module>
+
+        <!-- A text box or area is Stroom's TextInput or TextAreaInput -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="GwtTextBoxWithStroomVersion"/>
+            <property name="format" value="\bnew (TextBox|TextArea)\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Make a TextInput or TextAreaInput (stroom.widget.form.client), Stroom''s text box and area."/>
+        </module>
+
         <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
         <module name="SuppressWarningsHolder"/>
 

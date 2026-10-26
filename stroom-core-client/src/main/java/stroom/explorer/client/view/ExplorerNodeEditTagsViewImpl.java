@@ -25,6 +25,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
@@ -77,7 +78,7 @@ public class ExplorerNodeEditTagsViewImpl
     private final Set<String> allTags = new HashSet<>();
 
     @UiField
-    TextBox textBox;
+    TextInput textBox;
     @UiField
     Toolbar clearButtonPanel;
     @UiField

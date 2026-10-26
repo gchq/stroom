@@ -20,6 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -33,7 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -47,7 +47,7 @@ public class BasicTableSettingsViewImpl
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<Component> query;
     @UiField
@@ -57,7 +57,7 @@ public class BasicTableSettingsViewImpl
     @UiField
     SimplePanel pipeline;
     @UiField
-    TextBox maxResults;
+    TextInput maxResults;
     @UiField
     ValueSpinner pageSize;
     @UiField

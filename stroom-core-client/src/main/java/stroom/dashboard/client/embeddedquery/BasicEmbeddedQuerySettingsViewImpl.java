@@ -19,6 +19,7 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -33,7 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -45,7 +45,7 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     TickBox referenceExistingQuery;
     @UiField
@@ -59,7 +59,7 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     TickBox autoRefresh;
     @UiField
-    TextBox refreshInterval;
+    TextInput refreshInterval;
     @UiField
     ValueSpinner pageSize;
 

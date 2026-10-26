@@ -8,25 +8,25 @@
         <form:FormGroup identity="accountUserId" label="User ID" required="true"
                         helpText="The name the user signs in with. Must be unique."
                         screenReaderText="Used to sign in. Must be unique.">
-            <g:TextBox ui:field="userId" addStyleNames="w-100"/>
+            <form:TextInput ui:field="userId" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="accountEmail" label="Email"
                         helpText="Optional. Used to send password reset emails, so it must not be used by another account."
                         screenReaderText="Must not be used by another account. Used for password resets.">
-            <g:TextBox ui:field="email" addStyleNames="w-100"/>
+            <form:TextInput ui:field="email" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="accountFirstName" label="First Name"
                         helpText="The user's first name.">
-            <g:TextBox ui:field="firstName" addStyleNames="w-100"/>
+            <form:TextInput ui:field="firstName" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="accountLastName" label="Last Name"
                         helpText="The user's last name.">
-            <g:TextBox ui:field="lastName" addStyleNames="w-100"/>
+            <form:TextInput ui:field="lastName" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="accountComments" label="Comments"
                         helpText="Optional notes about the account, for administrators."
                         screenReaderText="Notes for administrators.">
-            <g:TextArea ui:field="comments" addStyleNames="w-100"/>
+            <form:TextAreaInput ui:field="comments" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires"

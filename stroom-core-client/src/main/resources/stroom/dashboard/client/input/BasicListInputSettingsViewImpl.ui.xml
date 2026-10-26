@@ -10,17 +10,17 @@
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsKey" label="Key"
                         helpText="Parameter name that the selected value is given. Use it in queries and expressions as ${{key}, e.g. a key of user is used as ${{user}."
                         screenReaderText="Parameter name, used in queries as ${{key}.">
-            <g:TextBox ui:field="key" addStyleNames="w-100"/>
+            <form:TextInput ui:field="key" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicListInputSettingsValues" label="Values"
                         helpText="Values offered in the list, one value per line. Ignored when Use Dictionary is ticked."
                         screenReaderText="One value per line.">
-            <g:TextArea ui:field="values" addStyleNames="w-100"/>
+            <form:TextAreaInput ui:field="values" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Fills the list with the words from the dictionary chosen in Dictionary, in place of the words typed in Values. Default is not ticked.">
             <v:TickBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues"

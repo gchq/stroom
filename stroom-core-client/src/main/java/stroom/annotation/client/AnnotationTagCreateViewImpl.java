@@ -18,12 +18,12 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -32,11 +32,11 @@ public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationT
     private final Widget widget;
 
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     FormGroup tagTextGroup;
     @UiField
-    TextArea tagText;
+    TextAreaInput tagText;
 
     @Inject
     public AnnotationTagCreateViewImpl(final Binder binder) {

@@ -17,13 +17,13 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -33,9 +33,9 @@ public class BasicTextInputSettingsViewImpl extends ViewImpl implements BasicTex
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
-    TextBox key;
+    TextInput key;
 
     @Inject
     public BasicTextInputSettingsViewImpl(final Binder binder) {

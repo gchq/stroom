@@ -16,13 +16,13 @@
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDescription" label="Description"
                         helpText="What the property controls.">
-            <g:TextArea ui:field="description"
+            <form:TextAreaInput ui:field="description"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDefaultValue" label="Default Value"
                         helpText="The value built into Stroom, used when neither a database nor a YAML value is set."
                         screenReaderText="Used when no database or YAML value is set.">
-            <g:TextArea ui:field="defaultValue"
+            <form:TextAreaInput ui:field="defaultValue"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Set a cluster-wide value in the database, entered in Database Value, to use instead of the default. A YAML value on a node still takes priority. Unticking removes the database value. Not available when Read Only is ticked.">
@@ -33,7 +33,7 @@
                         screenReaderText="Editable when Set Database value is ticked. Format depends on the data type."
                         controlNames="Database Value, Database Value">
             <g:FlowPanel>
-                <g:TextArea ui:field="databaseValue"
+                <form:TextAreaInput ui:field="databaseValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
                 <form:PasswordBox ui:field="databaseValuePassword"
                                   addStyleNames="globalProperties allow-focus w-100"/>
@@ -44,7 +44,7 @@
                         screenReaderText="Read only. Overrides the database value on the nodes where it is set.">
             <g:FlowPanel>
                 <b:Toolbar ui:field="yamlValueToolbar" name="YAML value actions"/>
-                <g:TextArea ui:field="yamlValue"
+                <form:TextAreaInput ui:field="yamlValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
@@ -53,7 +53,7 @@
                         screenReaderText="Read only. YAML value, else database value, else default.">
             <g:FlowPanel>
                 <b:Toolbar ui:field="effectiveValueToolbar" name="Effective value actions"/>
-                <g:TextArea ui:field="effectiveValue"
+                <form:TextAreaInput ui:field="effectiveValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>

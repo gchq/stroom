@@ -18,10 +18,9 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.activity.client.ActivityChangedEvent;
+import stroom.activity.client.ActivitySummary;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.Activity.ActivityDetails;
-import stroom.activity.shared.Activity.Prop;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -32,9 +31,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -95,27 +95,6 @@ public final class ActivityChooserStories {
                 });
     }
 
-    // As NavigationPresenter.updateActivitySummary does
-    private static void updateSummary(final Button button, final Activity activity) {
-        final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
-        if (activity != null) {
-            final ActivityDetails activityDetails = activity.getDetails();
-            for (final Prop prop : activityDetails.getProperties()) {
-                if (prop.isShowInSelection()) {
-                    sb.append("<b>");
-                    sb.append(prop.getName());
-                    sb.append(": </b>");
-                    sb.append(prop.getValue());
-                    sb.append("</br>");
-                }
-            }
-        } else {
-            sb.append("<b>");
-            sb.append("none");
-        }
-        button.setHTML(sb.toString());
-    }
-
     private static Widget render(final StoryContext context,
                                  final String current,
                                  final String title,
@@ -133,18 +112,19 @@ public final class ActivityChooserStories {
         // As NavigationPresenter builds its activity button
         final CurrentActivity currentActivity = injector.getCurrentActivity();
         final Button activityButton = new Button();
+        activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);
         activityButton.setStyleName("activityButton dashboard-panel");
         final SimplePanel activityOuter = new SimplePanel(activityButton);
         activityOuter.setStyleName("activityOuter");
-        activityButton.addClickHandler(event -> currentActivity.showActivityChooser());
+        activityButton.setOnClick(currentActivity::showActivityChooser);
         harness.addRegistration(harness.getEventBus().addHandler(ActivityChangedEvent.getType(), event ->
-                updateSummary(activityButton, event.getActivity())));
+                activityButton.setContent(ActivitySummary.toHtml(event.getActivity()))));
         // The summary is the screen each opening shows (as the leak check opens it again); the play
         // opens the chooser from it
         harness.afterStartUp(() -> {
             harness.add(activityOuter);
             currentActivity.getActivity(activity -> {
-                updateSummary(activityButton, activity);
+                activityButton.setContent(ActivitySummary.toHtml(activity));
                 if (open) {
                     currentActivity.showActivityChooser();
                 }

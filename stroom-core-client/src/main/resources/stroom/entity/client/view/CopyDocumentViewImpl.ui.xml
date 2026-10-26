@@ -18,7 +18,7 @@
                         label="Name"
                         helpText="The name of the new copy. Default is the name of the original."
                         addStyleNames="dock-min">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min"
                         screenReaderText="You become an owner of the copy. Default is Destination.">

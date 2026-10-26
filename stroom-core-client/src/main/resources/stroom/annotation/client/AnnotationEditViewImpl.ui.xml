@@ -8,14 +8,14 @@
         <g:FlowPanel styleName="annotationTop">
             <annotation:SettingBlock ui:field="titleBlock">
                 <g:FlowPanel addStyleNames="annotationTitleContainer">
-                    <g:TextBox ui:field="titleTextBox"
+                    <form:TextInput ui:field="titleTextBox"
                                addStyleNames="annotationTitle annotationTitleTextBox annotationTextBox allow-focus"/>
                     <g:Label ui:field="annotationId" styleName="annotationId"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
             <annotation:SettingBlock ui:field="subjectBlock">
                 <g:FlowPanel addStyleNames="annotationSubjectContainer">
-                    <g:TextBox ui:field="subjectTextBox"
+                    <form:TextInput ui:field="subjectTextBox"
                                addStyleNames="annotationSubject annotationSubjectTextBox annotationTextBox allow-focus"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
@@ -27,7 +27,7 @@
                                 helpText="Text to add to the annotation's history. Select Comment to save it. Choose Comment adds the text of a standard comment to the end of this text."
                                 screenReaderText="Saved to the history when you select Comment.">
                     <g:FlowPanel styleName="annotationCommentContainer">
-                        <g:TextArea ui:field="comment" addStyleNames="annotationComment allow-focus"/>
+                        <form:TextAreaInput ui:field="comment" addStyleNames="annotationComment allow-focus"/>
                         <g:FlowPanel ui:field="buttons" styleName="annotationButtons">
                             <b:Button ui:field="commentButton" addStyleNames="allow-focus" text="Choose Comment"
                                       width="200px"/>

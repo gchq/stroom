@@ -22,10 +22,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -70,7 +70,7 @@ public final class LogoStories {
     private static Button logo() {
         final Button logo = new Button();
         logo.setStyleName("navigation-logo");
-        logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation-logo-image"));
+        logo.setContent(SvgImageUtil.toSafeHtml(SvgImage.LOGO, "navigation-logo-image"));
         // Out of the tab order and hidden from screen readers, as the Main Menu button beside it in
         // Stroom does the same
         logo.getElement().setTabIndex(-2);

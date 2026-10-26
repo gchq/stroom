@@ -647,6 +647,24 @@ Contained buttons
 Ripple effect
  */
 
+/*
+A button with content of its own (Button.setContent), e.g. the explorer's logo, which its own class
+styles: only that content shows, as the button's own text
+*/
+.button__own-content {
+  display: none;
+}
+
+.button--own-content > .button__background-text,
+.button--own-content > .button__ripple-container,
+.button--own-content > .button__content {
+  display: none;
+}
+
+.button--own-content > .button__own-content {
+  display: contents;
+}
+
 .button__ripple-container {
   position: absolute;
   overflow: hidden;

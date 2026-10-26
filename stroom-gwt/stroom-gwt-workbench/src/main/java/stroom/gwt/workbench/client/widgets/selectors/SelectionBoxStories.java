@@ -31,13 +31,13 @@ import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -216,7 +216,7 @@ public final class SelectionBoxStories {
                 // box; Shift+Tab closes it and goes back to the box
                 .story("TabClosesTheList", context -> {
                     final FlowPanel panel = named(selectionBox(context, NAMES));
-                    final TextBox after = new TextBox();
+                    final TextInput after = new TextInput();
                     AccessibleName.set(after, "After");
                     panel.add(after);
                     return panel;

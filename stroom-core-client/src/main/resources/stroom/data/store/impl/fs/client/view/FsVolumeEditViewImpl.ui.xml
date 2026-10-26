@@ -44,7 +44,7 @@
                         label="Path"
                         helpText="The directory where data is stored. Required for Standard volumes and must be left blank for S3 volumes."
                         screenReaderText="Required for Standard volumes. Leave blank for S3.">
-            <g:TextBox ui:field="path" addStyleNames="w-100"/>
+            <form:TextInput ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup identity="fsVolumeStatus" label="Status"
@@ -73,7 +73,7 @@
                         label="Limit"
                         helpText="The maximum amount of data to store on this volume, with an optional unit such as 500G or 2T (powers of 1024). If blank, the volume is used until it has 10 GiB free or is 99% full, whichever comes later. Must be blank for S3 volumes."
                         screenReaderText="Size with unit, e.g. 500G. Blank for S3 volumes.">
-            <g:TextBox ui:field="byteLimit" addStyleNames="w-100"/>
+            <form:TextInput ui:field="byteLimit" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup identity="fsVolumeConfig"

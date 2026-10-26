@@ -20,6 +20,7 @@ import stroom.svg.client.IconBox;
 import stroom.util.shared.time.Time;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -30,7 +31,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.TextBox;
 
 /// A text box for a time (`HH:MM:SS`), with a clock that opens a dialog to choose one: the clock,
 /// Enter or Alt+Down asks to open it ([#setOnOpenPicker(Runnable)]), which a [TimeBoxController]
@@ -42,7 +42,7 @@ public class TimeBox extends Component implements Focus, HasValueChangeHandlers<
     @UiField
     IconBox iconBox;
     @UiField
-    TextBox textBox;
+    TextInput textBox;
 
     private Runnable onOpenPicker;
     private Runnable onChange;

@@ -21,6 +21,7 @@ import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.spinner.client.SpinnerLarge;
@@ -37,7 +38,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -55,7 +55,7 @@ public class FindInContentViewImpl
     private final Widget widget;
 
     @UiField
-    TextArea pattern;
+    TextAreaInput pattern;
     @UiField
     Label patternFeedback;
     @UiField

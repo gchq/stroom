@@ -12,7 +12,7 @@
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsName" label="Name"
                         helpText="Name of this component, shown in its tab on the dashboard.">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup helpText="Runs a saved Query document, chosen in Referenced Query, so changes to that query appear here. Untick to keep a copy of a query inside the dashboard instead. Default is ticked.">
             <tickbox:TickBox ui:field="referenceExistingQuery" identity="basicQuerySettingsLocal"
@@ -38,7 +38,7 @@
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
                         helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."
                         screenReaderText="Number with unit, e.g. 30s or 5m. Minimum 10 seconds.">
-            <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
+            <form:TextInput ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size"
                         helpText="Number of rows shown on each page of the query results table, from 1 to 10,000. Default is 100."

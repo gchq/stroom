@@ -22,6 +22,8 @@ import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -34,8 +36,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -49,19 +49,19 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     private final Widget widget;
 
     @UiField
-    TextBox collection;
+    TextInput collection;
     @UiField
     SelectionBox<InstanceType> instanceType;
     @UiField
-    TextArea solrUrls;
+    TextAreaInput solrUrls;
     @UiField
     TickBox useZk;
     @UiField
-    TextArea zkHosts;
+    TextAreaInput zkHosts;
     @UiField
-    TextArea zkPath;
+    TextAreaInput zkPath;
     @UiField
-    TextBox timeField;
+    TextInput timeField;
     @UiField
     SimplePanel defaultExtractionPipeline;
     @UiField

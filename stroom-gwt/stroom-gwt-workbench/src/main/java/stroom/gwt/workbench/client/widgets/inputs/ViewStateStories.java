@@ -58,6 +58,9 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.RadioGroup;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -66,8 +69,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -87,7 +88,7 @@ public final class ViewStateStories {
     private static final String NOT_APPLICABLE = "Not applicable: read-only documents hide or disable it";
     private static final String FILTER_NOTE = "Not applicable: it chooses what is shown, so read-only "
                                               + "documents leave it usable";
-    private static final String NO_RADIOS = "No read-only state: Stroom has no radio buttons in use";
+    private static final String NO_RADIOS = "No read-only state: its one caller turns it off instead";
     private static final long DATE_TIME = 1_700_000_000_000L;
 
     private ViewStateStories() {
@@ -255,13 +256,7 @@ public final class ViewStateStories {
         table.setWidget(row, 3, note("No disabled state"));
         row++;
 
-        table.setWidget(row, 0, label("Native list", true));
-        table.setWidget(row, 1, sized(named(listBox(true), "Native list")));
-        table.setWidget(row, 2, note("No read-only state: only used in dialogs, not documents"));
-        table.setWidget(row, 3, sized(named(listBox(false), "Native list")));
-        row++;
-
-        table.setWidget(row, 0, label("Radio buttons", true));
+        table.setWidget(row, 0, label("Radio group", true));
         table.setWidget(row, 1, radios("normal", true));
         table.setWidget(row, 2, note(NO_RADIOS));
         table.setWidget(row, 3, radios("disabled", false));
@@ -369,21 +364,15 @@ public final class ViewStateStories {
         return frame;
     }
 
-    private static Widget listBox(final boolean enabled) {
-        final ListBox listBox = new ListBox();
-        listBox.addItem("Excel");
-        listBox.addItem("CSV");
-        listBox.setEnabled(enabled);
-        return listBox;
-    }
-
+    // Stroom's radio group; the group's name is only its accessible name's
     private static Widget radios(final String group, final boolean enabled) {
-        final RadioButton first = new RadioButton(group, "Ascending");
-        final RadioButton second = new RadioButton(group, "Descending");
-        first.setValue(true);
-        first.setEnabled(enabled);
-        second.setEnabled(enabled);
-        return StoryPanels.row(8, first, second);
+        final RadioGroup<String> radios = new RadioGroup<>();
+        radios.addItem("Ascending", "Ascending");
+        radios.addItem("Descending", "Descending");
+        radios.setValue("Ascending");
+        radios.setEnabled(enabled);
+        radios.setAccessibleName("Sort order (" + group + ")");
+        return radios;
     }
 
     private static Widget toggle(final boolean on, final boolean enabled) {
@@ -426,7 +415,7 @@ public final class ViewStateStories {
     }
 
     private static TextBox textBox(final String value) {
-        final TextBox textBox = new TextBox();
+        final TextInput textBox = new TextInput();
         textBox.setValue(value);
         return textBox;
     }
@@ -438,7 +427,7 @@ public final class ViewStateStories {
     }
 
     private static Widget textArea() {
-        final TextArea textArea = new TextArea();
+        final TextAreaInput textArea = new TextAreaInput();
         textArea.setVisibleLines(2);
         textArea.setValue("Summarise the report's data.");
         return textArea;

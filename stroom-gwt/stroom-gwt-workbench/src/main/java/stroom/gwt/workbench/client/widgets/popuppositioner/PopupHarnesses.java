@@ -31,6 +31,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -46,7 +47,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
@@ -84,7 +84,7 @@ final class PopupHarnesses {
         formGroup.setIdentity("contract");
         formGroup.setLabel("A field");
         formGroup.overrideHelpText(SafeHtmlUtils.fromSafeConstant("<p>Field help</p>"));
-        final TextBox textBox = new TextBox();
+        final TextInput textBox = new TextInput();
         formGroup.add(textBox);
         return formGroup;
     }

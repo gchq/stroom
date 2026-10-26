@@ -22,6 +22,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -29,7 +30,6 @@ import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -205,16 +205,17 @@ public final class FormGroupStories {
                     play.expect(play.screen().findByText(TICK_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
-                // GWT-only: a group of several controls (an amount and its unit), which one label can't
+                // A group of several controls (an amount and its unit), which one label can't
                 // name: the label names the group and each control has its own name
                 .story("SeveralControls", context -> {
                     final FormGroup formGroup = formGroup("fg-retain-for", "Retain For");
                     formGroup.setScreenReaderText(RETAIN_FOR_SR);
                     formGroup.setControlNames("Amount, Unit");
                     final TextBox amount = InputWidgets.textBox(context, "30", null);
-                    final ListBox unit = new ListBox();
+                    final SelectionBox<String> unit = new SelectionBox<>();
                     unit.addItem("Days");
                     unit.addItem("Weeks");
+                    unit.setValue("Days");
                     final FlowPanel control = new FlowPanel();
                     control.add(amount);
                     control.add(unit);

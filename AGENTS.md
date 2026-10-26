@@ -178,7 +178,9 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
   Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller.
   Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
 
-* **Stroom's widgets only.** Never GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), in the app or in workbench stories: use Stroom's `Button` (`new Button("Text")`, `setOnClick`), a `ToolbarButton` in a `Toolbar`, a `LinkButton` or a `FabButton`.
+* **Stroom's widgets only.** Wherever Stroom has its own version of one of GWT's widgets, use Stroom's, in the app and in workbench stories: never GWT's `Button` (use Stroom's `Button`, `new Button("Text")` and `setOnClick`, or `setContent(SafeHtml)` for content of its own such as a logo; a `ToolbarButton` in a `Toolbar`; a `LinkButton`; or a `FabButton`), `Hyperlink` (`LinkButton`), `CheckBox` (`TickBox`), `RadioButton` (`RadioGroup`), `ListBox` (`SelectionBox`), `TextBox` or `TextArea` (`TextInput`, `TextAreaInput`), `PasswordTextBox` (`PasswordBox`), `DialogBox`, tabs, split panels (`SplitPane`), `DateBox` (`DateTimeBox`) or cell tables (`DataGrid`).
+  GWT's layout panels and widgets Stroom has no version of (`FlowPanel`, `SimplePanel`, `HTMLPanel`, `Label`, `HTML`, `Frame`) are fine.
+  Checkstyle refuses the imports and `new TextBox(`/`new TextArea(` (`GwtWidgetWithStroomVersion`, `GwtTextBoxWithStroomVersion`), and `TestStroomWidgetsOnly` the templates' tags.
 
 * **Named for what it is.** A class's name says what it is, not how it was made (`TickBox`, not `CustomCheckBox`; `IconBox`, not `SvgIconBox`; `Histogram`, not `HistogramWidget`), and its CSS block is the same name in kebab case (`tick-box`, in `tick-box.css`).
 

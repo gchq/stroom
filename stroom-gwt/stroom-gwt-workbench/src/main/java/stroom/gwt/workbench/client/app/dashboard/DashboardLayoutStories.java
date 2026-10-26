@@ -237,7 +237,7 @@ public final class DashboardLayoutStories {
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     DashboardPlays.expectNoProblems(play);
                 })
-                // Rename Tab: Cancel keeps the tab's name, and the dashboard unchanged
+                // Rename Tab: Cancel keeps the tab's name (design mode has already made the dashboard changed)
                 .story("RenameTabCancel", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))
                 .withPlay(play -> {
@@ -254,7 +254,7 @@ public final class DashboardLayoutStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Rename Tab", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.queryByText("Search", DashboardPlays.COMPONENT_TAB)).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Set Layout Constraints: a change applies at once, and makes the dashboard changed

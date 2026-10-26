@@ -2,16 +2,17 @@
 <!-- A pager (paging-bar.css): which rows are shown, of how many, and the buttons that page through them -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:paging="urn:import:stroom.widget.button.client"
              xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="paging-bar">
         <g:Label ui:field="lblTitle" styleName="paging-bar__label"/>
         <g:HTMLPanel styleName="paging-bar__space">&nbsp;</g:HTMLPanel>
         <g:Label ui:field="lblFrom" styleName="paging-bar__label"/>
-        <g:TextBox ui:field="txtFrom" addStyleNames="paging-bar__text-box" visible="false"/>
+        <form:TextInput ui:field="txtFrom" addStyleNames="paging-bar__text-box" visible="false"/>
         <g:Label ui:field="lblToSeparator" text="&nbsp;to&nbsp;" styleName="paging-bar__label"/>
         <g:Label ui:field="lblTo" styleName="paging-bar__label"/>
-        <g:TextBox ui:field="txtTo" addStyleNames="paging-bar__text-box" visible="false"/>
+        <form:TextInput ui:field="txtTo" addStyleNames="paging-bar__text-box" visible="false"/>
         <g:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="paging-bar__label"/>
         <g:Label ui:field="lblOf" styleName="paging-bar__label"/>
         <g:HTMLPanel styleName="paging-bar__space">&nbsp;</g:HTMLPanel>

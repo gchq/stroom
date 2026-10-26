@@ -21,6 +21,7 @@ import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -31,7 +32,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.TextBox;
 
 /// A text field for a schedule's expression (a frequency such as `10m`, or a cron expression), with a
 /// clock icon at its end. Enter or Alt+Down in the field, or a click on the icon, asks to open the
@@ -52,7 +52,7 @@ public class ScheduleBox
     @UiField
     IconBox iconBox;
     @UiField
-    TextBox textBox;
+    TextInput textBox;
 
     private Schedule value = Schedule
             .builder()

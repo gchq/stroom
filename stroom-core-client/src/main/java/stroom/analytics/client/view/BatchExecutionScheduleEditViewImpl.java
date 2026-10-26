@@ -32,6 +32,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -39,7 +40,6 @@ import stroom.widget.tickbox.client.view.TickBox;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -52,7 +52,7 @@ public final class BatchExecutionScheduleEditViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox nameBox;
+    TextInput nameBox;
     @UiField
     FormGroup nameForm;
     @UiField

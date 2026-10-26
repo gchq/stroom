@@ -19,6 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.svg.client.IconBox;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -31,8 +32,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.TextBox;
-
 
 /// A text field for a date and time, in ISO 8601 (e.g. `2024-01-15T09:50:00.000Z`), with a
 /// calendar icon at its end. Enter or Alt+Down in the field, or a click on the icon, asks to open
@@ -61,7 +60,7 @@ public class DateTimeBox
     @UiField
     IconBox iconBox;
     @UiField
-    TextBox textBox;
+    TextInput textBox;
 
     private Runnable onOpenPicker;
     private Runnable onChange;

@@ -20,11 +20,11 @@ import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FileChooser;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -39,7 +39,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     DateTimeBox effective;
     @UiField
-    TextArea metaData;
+    TextAreaInput metaData;
 
     @Inject
     public DataUploadViewImpl(final Binder binder) {

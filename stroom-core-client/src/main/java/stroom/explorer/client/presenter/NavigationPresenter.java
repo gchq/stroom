@@ -18,9 +18,8 @@ package stroom.explorer.client.presenter;
 
 import stroom.about.client.event.ShowAboutEvent;
 import stroom.activity.client.ActivityChangedEvent;
+import stroom.activity.client.ActivitySummary;
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.shared.Activity.ActivityDetails;
-import stroom.activity.shared.Activity.Prop;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -68,6 +67,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
+import stroom.widget.button.client.Button;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
@@ -87,7 +87,7 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -180,6 +180,8 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
             if (uiConfig != null) {
                 final ActivityConfig activityConfig = uiConfig.getActivity();
                 if (activityConfig.isEnabled()) {
+                    // Empty until the activity's summary arrives
+                    activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);
                     updateActivitySummary();
                     activityButton.setStyleName("activityButton dashboard-panel");
                     activityOuter.setStyleName("activityOuter");
@@ -278,31 +280,12 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         own(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
         own(explorerTree.addItemKeyHandler(event -> getEventBus().fireEvent(event)));
 
-        own(activityButton.addClickHandler(event -> currentActivity.showActivityChooser()));
+        activityButton.setOnClick(currentActivity::showActivityChooser);
     }
 
     private void updateActivitySummary() {
-        currentActivity.getActivity(activity -> {
-            final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
-
-            if (activity != null) {
-                final ActivityDetails activityDetails = activity.getDetails();
-                for (final Prop prop : activityDetails.getProperties()) {
-                    if (prop.isShowInSelection()) {
-                        sb.append("<b>");
-                        sb.append(prop.getName());
-                        sb.append(": </b>");
-                        sb.append(prop.getValue());
-                        sb.append("</br>");
-                    }
-                }
-            } else {
-                sb.append("<b>");
-                sb.append("none");
-            }
-
-            activityButton.setHTML(sb.toString());
-        }, getView().getTaskListener());
+        currentActivity.getActivity(activity -> activityButton.setContent(ActivitySummary.toHtml(activity)),
+                getView().getTaskListener());
     }
 
     public void newItem(final Element element) {

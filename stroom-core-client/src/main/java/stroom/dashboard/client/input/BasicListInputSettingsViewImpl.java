@@ -17,6 +17,8 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicListInputSettingsPresenter.BasicListInputSettingsView;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -26,8 +28,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -41,11 +41,11 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
-    TextBox key;
+    TextInput key;
     @UiField
-    TextArea values;
+    TextAreaInput values;
     @UiField
     TickBox useDictionary;
     @UiField

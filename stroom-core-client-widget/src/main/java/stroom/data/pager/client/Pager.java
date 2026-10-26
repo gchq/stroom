@@ -17,6 +17,7 @@
 package stroom.data.pager.client;
 
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.form.client.TextInput;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -58,11 +59,11 @@ public class Pager extends AbstractPager {
     @UiField
     Label lblFrom;
     @UiField
-    TextBox txtFrom;
+    TextInput txtFrom;
     @UiField
     Label lblTo;
     @UiField
-    TextBox txtTo;
+    TextInput txtTo;
     @UiField
     Label lblOf;
     @UiField

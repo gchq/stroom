@@ -17,12 +17,12 @@
 package stroom.query.client.view;
 
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -31,18 +31,18 @@ public class ResultStoreSettingsViewImpl extends ViewImpl implements ResultStore
     private final Widget widget;
 
     @UiField
-    TextBox searchProcessTimeToIdle;
+    TextInput searchProcessTimeToIdle;
     @UiField
-    TextBox searchProcessTimeToLive;
+    TextInput searchProcessTimeToLive;
     @UiField
     TickBox searchProcessDestroyOnTabClose;
     @UiField
     TickBox searchProcessDestroyOnWindowClose;
 
     @UiField
-    TextBox storeTimeToIdle;
+    TextInput storeTimeToIdle;
     @UiField
-    TextBox storeTimeToLive;
+    TextInput storeTimeToLive;
     @UiField
     TickBox storeDestroyOnTabClose;
     @UiField

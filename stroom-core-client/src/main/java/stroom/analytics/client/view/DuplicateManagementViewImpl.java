@@ -18,6 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.document.client.event.ChangeUiHandlers;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -27,7 +28,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -44,7 +44,7 @@ public class DuplicateManagementViewImpl
     @UiField
     TickBox chooseColumns;
     @UiField
-    TextBox columns;
+    TextInput columns;
     @UiField
     SimplePanel list;
 

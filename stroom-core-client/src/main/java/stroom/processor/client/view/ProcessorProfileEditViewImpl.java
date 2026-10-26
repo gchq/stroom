@@ -21,13 +21,13 @@ import stroom.node.shared.NodeGroup;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeZoneBox;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -38,7 +38,7 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
     private final TimeZoneBox timeZoneBox;
 
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<NodeGroup> nodeGroup;
     @UiField

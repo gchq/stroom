@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.form.client.TextAreaInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.util.client.Clipboard;
@@ -32,7 +33,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -47,19 +47,19 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     ToolbarButton copyNameButton;
     @UiField
-    TextArea description;
+    TextAreaInput description;
     @UiField
-    TextArea defaultValue;
+    TextAreaInput defaultValue;
     @UiField
-    TextArea yamlValue;
+    TextAreaInput yamlValue;
     @UiField
     TickBox useOverride;
     @UiField
-    TextArea databaseValue;
+    TextAreaInput databaseValue;
     @UiField
     PasswordBox databaseValuePassword;
     @UiField
-    TextArea effectiveValue;
+    TextAreaInput effectiveValue;
     @UiField
     Label dataType;
     @UiField

@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
@@ -24,7 +25,7 @@
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"
                              visible="false"/>
-                    <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
+                    <form:TextAreaInput ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>

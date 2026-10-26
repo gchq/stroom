@@ -6,7 +6,7 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
-            <g:Button ui:field="logo" styleName="navigation-logo"/>
+            <b:Button ui:field="logo" styleName="navigation-logo"/>
             <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
                 <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>

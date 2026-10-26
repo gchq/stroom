@@ -16,7 +16,7 @@
                         label="Max Store Size"
                         helpText="How big this store's data file may grow. Writes fail once it is full, so leave some headroom. Only increases take effect: the data file never shrinks, because space freed by retention is reused rather than returned to the disk. Lowering this below the file's current size therefore reclaims nothing - the store keeps the size it has already reached and simply stops accepting new data, failing every write as full while the data already in it stays readable. Raising the value again restores writing. Default is 10 GiB."
                         screenReaderText="Size with a unit, e.g. GiB. Writes fail when full. Only increases take effect. Default is 10 GiB.">
-            <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
+            <form:TextInput ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup ui:field="synchroniseMergePanel"
                         helpText="When ticked, pipeline processing of a stream is not marked complete until its data has been fully merged into the Plan B store. Default is unticked."

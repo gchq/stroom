@@ -26,6 +26,7 @@ import stroom.widget.colour.client.ColourBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -64,32 +65,32 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     @UiField
     DateTimeBox effectiveTimeBox;
     @UiField
-    TextBox nameBox;
+    TextInput nameBox;
     @UiField
-    TextBox typeBox;
+    TextInput typeBox;
     @UiField
     SimplePanel chooseImgContainer;
     @UiField
     DropDownBox assetBox;
 
     @UiField
-    TextBox posX;
+    TextInput posX;
     @UiField
-    TextBox posY;
+    TextInput posY;
     @UiField
     FormGroup sizeGroup;
     @UiField
-    TextBox sizeW;
+    TextInput sizeW;
     @UiField
-    TextBox sizeH;
+    TextInput sizeH;
     @UiField
     FormGroup scaleGroup;
     @UiField
-    TextBox w2mSx;
+    TextInput w2mSx;
     @UiField
-    TextBox w2mSy;
+    TextInput w2mSy;
     @UiField
-    TextBox w2mRot;
+    TextInput w2mRot;
 
     // Area-only fields (hidden for non-area objects).
     @UiField
@@ -101,7 +102,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
     @UiField
     FormGroup opacityGroup;
     @UiField
-    TextBox opacityBox;
+    TextInput opacityBox;
     @UiField
     FormGroup verticesGroup;
     @UiField

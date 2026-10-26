@@ -21,12 +21,12 @@ import stroom.explorer.client.component.EntityTree;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -38,7 +38,7 @@ public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandle
     @UiField
     FormGroup nameFormGroup;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<PermissionInheritance> permissionInheritance;
 

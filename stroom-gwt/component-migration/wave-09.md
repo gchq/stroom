@@ -8,6 +8,104 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Collapse each small dialog (presenter, view interface and ViewImpl) into one component dialog. Each gets a show or edit(..., callback) method and is shown with ComponentDialog.showOnce. Validation returns a message, and the opener raises the alert. Callers stop reading getView() getters.
 
+## Audited (26 October 2026)
+
+Six reviewers read the wave's commits against this plan, "Done means" and AGENTS.md (the About and
+name dialogs; the dashboard's dialogs and the four of `48db2e72e4`; the asset, Git Push and info
+dialogs; the alert, splash and step controls; the period, retention, XPath, download, feed dependency,
+pipeline reference and constraint dialogs; and the last six units), then the app and the standalone
+dashboard were GWT compiled. Fixed:
+
+- **Two regressions on this branch.**
+  - The app and the dashboard didn't GWT compile: `CurrentUser` was given the `SplashScreen` helper,
+    which needs the UI config, which needs the security context `CurrentUser` is part of, a cycle
+    GIN refuses. It now takes a `Provider<SplashScreen>`. The workbench's ginjectors have no such
+    cycle, so its stories passed; the GWT compile is what found it.
+  - The pathway Constraint dialog trimmed String, Regex and String Set values (`ConstraintValueText`
+    trimmed every type's text); they are kept as typed again, numbers and ranges still read without
+    spaces (`TestConstraintValueText.testTextKeptAsTyped`).
+- **Two bugs master has too**, each with a changelog entry and a story:
+  - Git Push accepted a commit message of only spaces (`GitRepoEditor.PushBlankMessageAndCancel`).
+  - Edit Property lost a changed value when its Source was chosen again, and showed the changed value
+    under another Source: a value change showed Local but didn't make the dialog's source Local
+    (`PipelineEditor.PropertySourceAfterChange`).
+- **Stroom's widgets only.** Every component template that still declared GWT's `TextBox` or
+  `TextArea` (29, from this wave and earlier ones, the pilot's `FieldEditor` and `RuleEditor` among
+  them) declares Stroom's `TextInput` or `TextAreaInput`, as do `NameEntry`, the asset dialogs and Git
+  Push; `TextAreaInput` is listed beside `TextInput` in AGENTS.md and the design.
+- **BEM.** The alert's classes are `common-alert`, `common-alert__icon`, `__message-area`,
+  `__message`, `__show-hide`, `__show-hide-arrow`, `__detail` and `__detail-text`, in
+  `common-alert.css` (was `alert.css`; the suite's alert helpers follow); the keyboard shortcut
+  recorder's are `key-shortcut-recorder__keys` and `__message`, in `key-shortcut-recorder.css` (they
+  were in `components.css`).
+- **Owned work and replies.** The step controls' stories own their controllers (through a harness);
+  Create and Edit User Group's REST calls have `.owner(this)`; New Node Group ignores a name check
+  that comes back after the dialog is cancelled (`NodeGroupClient` takes no owner; a create that has
+  been sent still adds the group); an alert with no level shows as an error rather than throwing,
+  which would have stopped the alert queue.
+- **Smaller.** Edit User Group refuses a blank name as Create does; Edit Property fetches its stream
+  types or volume groups once shown, with the dialog's task monitor; the Prompt story uses Stroom's
+  `AlertPlugin`; `LayoutConstraint` and `StepControl` use their widgets' callbacks; unused
+  `AddEventLink.setText`, a duplicate focus on attach (`FavouriteName`, `QueryInfoDialog`) and empty
+  module comments and blank lines went; `NameEntry`'s identity is `nameEntryName`; javadoc for
+  `QueryInfo` and `StepControlController.setEnabledButtons`; stale names in ISSUES.md,
+  WRITING-STORIES.md, COMPONENTS.md and a few stories.
+- **Tests.** JUnit for `AddEventLinkController.parse`, `QueryInfo.isRequired` and
+  `NewPropertyController.editorFor`; stories for what had none: the new groups' Cancel (data volume,
+  index volume, node), Link An Event's refusal, Set Retention Period, Rename Field's and Rename Tab's
+  Cancel, a favourite with no name, New File's OK and Cancel, Rename Selected Asset, the query info
+  dialog (`App/Main/QueryInfoDialog`: Default, Cancel, NotValid), XPath filter Edit and Cancel, an
+  invalid period time and Download Options' sample.
+
+Found and recorded (ISSUES.md): a pipeline property's default value on its selected row fails colour
+contrast.
+
+## Done (26 October 2026)
+
+All 42 units, in 17 commits and the audit's: FULLRUN. Each commit ran its stories with the leak check
+and the screenshot diff. Six bugs fixed on the way, each with a changelog entry and a story or test
+(master has each): a refused new asset name always said "Item name not set"; Edit Element didn't show
+the element's own description (a typed and cancelled one was shown again, and OK could give it to
+another element); a conditional format's custom style with only one theme's colours threw; and the
+pathway Constraint dialog's New threw, a renamed constraint was kept under its old name too, an
+integer or long range couldn't be saved unchanged and a value that couldn't be read closed the
+dialog. What was decided on the way, where it differs from the plans below:
+
+- **One use, made by the caller.** Every dialog's controller is made for one use and shown with
+  `ControllerDialog.showOnce(opener, this)` from a method that takes its result's callback (`show`,
+  `edit`, `rename`); callers take a GIN `Provider` in place of an owned presenter or `makeDialog`.
+  Plugins and app-wide helpers (About, Dependencies, the alert queue, the splash and query info
+  helpers, `DocumentDialogScreens`) pass `AppRoot` as the opener. Two stay made once and shown again
+  with `ControllerDialog.show`, as they keep what was chosen: Download Options (one per table) and
+  Current Selection (one per dashboard). Making each dialog afresh fixed the stale state of the shared
+  ones (Edit Element's description; the Format dialog's settings, already fixed and now structural).
+- **The alert queue is `AlertPlugin`'s.** `CommonAlertController` shows one alert or confirmation;
+  `AlertPlugin` queues them, in the same order, running each callback once its dialog is hidden, and
+  the prompt is the browser's (`Window.prompt`), so `PromptPresenter` went.
+- **Helpers make dialogs only when shown.** `QueryInfo` (its `isRequired` is public and static) and
+  `SplashScreen` check the activity and the config first and make the dialog only if it is needed.
+- **Slots kept where the embedded controller takes its content by injection.** `ExpressionDialog`
+  (`setExpressionEditor`) and `IndexFieldEditor` (`setDenseVectorOptions`): `ExpressionEditorController`
+  and `DenseVectorFieldController` are made by GIN with their own components, with no `attach`.
+  The planned `<d:EditExpression/>` and `<ix:DenseVectorField/>` declarations wait for those to attach.
+- **Names.** `NameDocumentPresenter` and the volume group name dialogs are one `NameEntry` with a
+  controller each (`RenameDocumentController`, `CreateNewGroupController`, `NewNodeGroupController`,
+  `NewFsVolumeGroupController`, `NewIndexVolumeGroupController`); `FormatPresenter` is `ColumnFormat`,
+  `DurationPresenter` `RetentionPeriod`, `DownloadPresenter` `DownloadSearchResults`,
+  `ExpressionPresenter` `ExpressionDialog` (one for the six filter dialogs), `NewPropertyPresenter`
+  `NewProperty` (with `NewProperty.ValueEditor`), `ConstraintEditPresenter` `ConstraintEditor` (its
+  text conversion in `ConstraintValueText`).
+- **Components show their own settings.** `ColumnFormat` shows the chosen type's settings itself, so
+  it has no `setOnTypeChange`; `NewProperty` declares every value editor and shows the one for the
+  property's type (`showValueEditor`), each named Value, as the form group's label is only for the one
+  shown when it opens.
+- **A text area input.** `TextAreaInput` (`stroom.widget.form.client`: `placeholder`, `ariaLabel`)
+  joins `TextInput`, for the Dependency Information and query info text, then (in the audit) every
+  component's text area.
+- **Left, on purpose.** The old About rules (`.aboutViewImpl-*`) stay in `components.css` until
+  removals are allowed; the copyright year of a moved file is its original's; `NodeGroupClient` still
+  takes no owner; a column rename's "name in use" has no story (the stories' table has one column).
+
 ## CSS and template notes for the wave
 
 - w-100 (stroom.css:843) replaces every Java setWidth(100, PCT) in this wave: FeedDependencyEditor (400), NewPipelineReference (695) and NewProperty (696) put it on their declared DropDownBox, SelectionBox, ValueSpinner and TextBox.

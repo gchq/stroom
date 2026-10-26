@@ -20,6 +20,8 @@ import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccoun
 import stroom.security.identity.client.presenter.EditAccountUiHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
@@ -28,8 +30,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -40,15 +40,15 @@ public class EditAccountViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox userId;
+    TextInput userId;
     @UiField
-    TextBox email;
+    TextInput email;
     @UiField
-    TextBox firstName;
+    TextInput firstName;
     @UiField
-    TextBox lastName;
+    TextInput lastName;
     @UiField
-    TextArea comments;
+    TextAreaInput comments;
     @UiField
     FormGroup neverExpiresGroup;
     @UiField

@@ -5,7 +5,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form dock-container-vertical">
         <form:FormGroup identity="pathwayName" label="Name">
-            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <form:TextInput ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <split:SplitPane sizes="400px, *"
                          names="Paths, Constraints" addStyleNames="dock-max">

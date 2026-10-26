@@ -26,6 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -33,7 +34,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Escape in a dialog: the widget with the focus has it first, and the dialog closes
@@ -102,7 +102,7 @@ public final class EscapeStories {
                     }, KeyDownEvent.getType());
                     popups.addCleanUp(registration::removeHandler);
                     return DialogWidgets.button(OPEN, DialogWidgets.PRIMARY, event -> {
-                        final TextBox textBox = new TextBox();
+                        final TextInput textBox = new TextInput();
                         textBox.getElement().setAttribute("aria-label", NAME);
                         show(spies, popups, textBox, () -> textBox.setFocus(true));
                     });

@@ -69,6 +69,9 @@
 }
 
 .LoginView .LoginViewFormPanel .LoginViewForgotPassword {
+    /* A button (LinkButton), centred under the form as the link it replaced was */
+    display: block;
+    margin: 0 auto;
     font-size: .7rem;
     text-align: center;
     cursor: pointer;

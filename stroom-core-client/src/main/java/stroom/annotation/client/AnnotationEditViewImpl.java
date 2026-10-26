@@ -22,6 +22,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.TextAreaInput;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -37,8 +39,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -57,9 +57,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label annotationId;
     @UiField
-    TextBox titleTextBox;
+    TextInput titleTextBox;
     @UiField
-    TextBox subjectTextBox;
+    TextInput subjectTextBox;
     @UiField
     Label status;
     @UiField
@@ -77,7 +77,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Button create;
     @UiField
-    TextArea comment;
+    TextAreaInput comment;
     @UiField
     SimplePanel history;
     @UiField

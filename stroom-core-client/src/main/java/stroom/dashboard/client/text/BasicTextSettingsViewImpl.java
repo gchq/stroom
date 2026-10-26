@@ -21,6 +21,7 @@ import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettings
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ColumnRef;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -33,7 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -52,7 +52,7 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     Label id;
     @UiField
-    TextBox name;
+    TextInput name;
     @UiField
     SelectionBox<HasDisplayValue> table;
     @UiField

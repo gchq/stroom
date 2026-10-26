@@ -18,6 +18,7 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.TextInput;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -28,7 +29,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -41,11 +41,11 @@ public class CreateExternalUserViewImpl
     @UiField
     FormGroup subjectIdGroup;
     @UiField
-    TextBox subjectId;
+    TextInput subjectId;
     @UiField
-    TextBox displayName;
+    TextInput displayName;
     @UiField
-    TextBox fullName;
+    TextInput fullName;
 
     @Inject
     public CreateExternalUserViewImpl(final Binder binder) {

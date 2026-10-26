@@ -1,12 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.widget.layout.client"
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
         <g:FlowPanel styleName="FindViewImpl-top dock-container-horizontal dock-min">
-            <g:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
+            <form:TextAreaInput ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <p:Toolbar ui:field="buttonContainer" name="Search options"
                        addStyleNames="dock-min find-buttons toolbar--control">
                 <p:ToolbarToggleButton ui:field="toggleMatchCase" svg="CASE_SENSITIVE" title="Match case"/>
