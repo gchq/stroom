@@ -554,6 +554,9 @@ class TestProposeDashboardChangeTool {
         assertThat(run(List.of(Map.of("op", "set_vis_settings", "target", "People",
                 "settings", Map.of("nodeColours", "Node")))))
                 .contains("- Change visualisation 'People'");
+        // A value no version offers isn't put down to the chart's age: regenerating wouldn't help.
+        assertThat(ProposeDashboardChangeTool.newChoiceProblems(Map.of("nodeColours", "clusters"), graph))
+                .containsExactly("'clusters' isn't a choice of nodeColours: group, node, cluster.");
         // A chart generated now offers it.
         assertThat(ProposeDashboardChangeTool.newChoiceProblems(Map.of("nodeColours", "cluster"),
                 graph.copy().settings(current).build())).isEmpty();

@@ -1818,10 +1818,10 @@ if (!window.visualisations) {
         return {slope: slope, intercept: meanY - slope * meanX, r2: syy === 0 ? 1 : (sxy * sxy) / (sxx * syy)};
     }
 
-    // How many points a moving average takes: Trend Window, else about a tenth of them; odd (so it is centred), at
-    // least 3, and no more than there are.
+    // How many points a moving average takes: Trend Window, else about a tenth of them (at most 500); odd (so it is
+    // centred), at least 3, and no more than there are.
     function trendWindow(settings, count) {
-        var window = intSetting(settings, "trendWindow", 0, 0, 500) || Math.round(count / 10);
+        var window = intSetting(settings, "trendWindow", 0, 0, 500) || Math.min(500, Math.round(count / 10));
         window = Math.max(3, window);
         if (window % 2 === 0) {
             window++;
@@ -1833,12 +1833,18 @@ if (!window.visualisations) {
     // line smooths the points without lagging behind them.
     function movingAverage(points, window) {
         var half = Math.floor(window / 2);
+        // A running sum of the window: the point coming into it added, the one leaving taken away.
+        var sum = 0;
+        var from = 0;
+        var to = -1;
         return points.map(function (point, i) {
-            var from = Math.max(0, i - half);
-            var to = Math.min(points.length - 1, i + half);
-            var sum = 0;
-            for (var j = from; j <= to; j++) {
-                sum += points[j][1];
+            while (to < Math.min(points.length - 1, i + half)) {
+                to++;
+                sum += points[to][1];
+            }
+            while (from < i - half) {
+                sum -= points[from][1];
+                from++;
             }
             return [point[0], sum / (to - from + 1)];
         });
@@ -2721,9 +2727,12 @@ if (!window.visualisations) {
     // Draws a chart's trends (see chartTrends) as the ECharts adapter does: each a dashed line in its series' colour
     // (a total's in the subtle text colour), fainter when weak, labelled at its end. place(x, value) gives a trend
     // point's place in the plot ([across, down]), or null where it isn't shown (e.g. a category zoomed out of view);
-    // on a log axis, a trend's values of 0 or less are left out.
+    // on a log axis, a trend's values of 0 or less are left out. A trend is of every series, as the ECharts adapter
+    // finds them, but a series hidden in the legend has its trend hidden too; its label is at its last point in view.
     function drawTrends(ctx, groups, trends, names, colours, place, log) {
-        trends.forEach(function (trend) {
+        trends.filter(function (trend) {
+            return !ctx.hidden[trend.name];
+        }).forEach(function (trend) {
             var index = names.indexOf(trend.name);
             var colour = index >= 0 ? colours[index % colours.length] : ctx.style.subtleText;
             var placed = trend.line.filter(function (point) {
@@ -2744,7 +2753,13 @@ if (!window.visualisations) {
             groups.marks.append("path").attr("d", path(placed)).attr("fill", "none").attr("stroke", colour)
                 .attr("stroke-width", 1.5).attr("stroke-dasharray", "6,4")
                 .attr("stroke-opacity", trend.weak ? 0.45 : 0.9);
-            var end = placed[placed.length - 1];
+            var inView = placed.filter(function (point) {
+                return groups.inPlot(point[0], point[1]);
+            });
+            if (inView.length === 0) {
+                return;
+            }
+            var end = inView[inView.length - 1];
             // A halo in the chart's background, so the label reads over the marks under it.
             svgText(groups.labels, trend.label, end[0] - 4, end[1] - 4, ctx.style,
                 {anchor: "end", size: SMALL_FONT_SIZE, colour: colour})
@@ -2917,7 +2932,7 @@ if (!window.visualisations) {
                 return {value: mean(series.data), name: series.name};
             }) : []);
         var barXs = categoryXs(fields, "category", matrix.categories, settings);
-        drawTrends(ctx, groups, chartTrends(settings, shown, true, barXs, fields.type("category") === "DATE_TIME",
+        drawTrends(ctx, groups, chartTrends(settings, matrix.series, true, barXs, fields.type("category") === "DATE_TIME",
             stack, ctx.format, ctx.report, null), matrix.series.map(function (series) {
             return series.name;
         }), colours, categoryPlace(barXs, function (i, value) {
@@ -3227,7 +3242,7 @@ if (!window.visualisations) {
                     return point[4];
                 })), name: line.name};
             }) : []);
-        drawTrends(ctx, groups, chartTrends(settings, shown.map(function (name) {
+        drawTrends(ctx, groups, chartTrends(settings, data.names.map(function (name) {
             return {name: name, data: data.bySeries[name]};
         }), false, null, time, stack, ctx.format, ctx.report, null), data.names, colours, function (at, value) {
             return [xOf(at), y(value)];
@@ -3390,7 +3405,7 @@ if (!window.visualisations) {
                 return {value: mean(line.series.data), name: line.series.name};
             }) : []);
         var lineXs = categoryXs(fields, "x", matrix.categories, settings);
-        drawTrends(ctx, groups, chartTrends(settings, shown, true, lineXs, fields.type("x") === "DATE_TIME", stack,
+        drawTrends(ctx, groups, chartTrends(settings, matrix.series, true, lineXs, fields.type("x") === "DATE_TIME", stack,
             ctx.format, ctx.report, null), matrix.series.map(function (series) {
             return series.name;
         }), colours, categoryPlace(lineXs, function (i, value) {
@@ -3522,7 +3537,7 @@ if (!window.visualisations) {
         if (!yTime) {
             drawValueLines(ctx, groups.axes, y, false, plot, []);
         }
-        drawTrends(ctx, groups, chartTrends(settings, shown.map(function (name) {
+        drawTrends(ctx, groups, chartTrends(settings, data.names.map(function (name) {
             return {name: name, data: data.bySeries[name]};
         }), false, null, time, false, ctx.format, ctx.report, yTime
             ? "Trend Line needs a y of numbers, so no trend is drawn" : null), data.names, colours,
