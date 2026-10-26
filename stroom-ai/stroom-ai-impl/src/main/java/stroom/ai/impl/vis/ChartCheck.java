@@ -104,9 +104,6 @@ public final class ChartCheck {
 
         checkAutoInterval(kind, mapped, style, columns, sample, result);
         checkTrendLine(kind, mapped, style, columns, result);
-        if (!result.problems.isEmpty()) {
-            return result;
-        }
 
         for (final Entry<String, String> entry : mapped.entrySet()) {
             final ChartRole role = kind.role(entry.getKey()).orElseThrow();
