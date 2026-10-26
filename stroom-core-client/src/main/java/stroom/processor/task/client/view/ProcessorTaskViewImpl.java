@@ -17,7 +17,6 @@
 package stroom.processor.task.client.view;
 
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -46,7 +45,7 @@ public class ProcessorTaskViewImpl extends ViewImpl implements ProcessorTaskView
     }
 
     @Override
-    public void setTaskSummaryView(final View view) {
+    public void setTaskSummaryView(final IsWidget view) {
         streamTaskSummary.setWidget(view.asWidget());
     }
 

@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import stroom.data.client.component.ProcessorTaskSummaryListController;
 import stroom.data.client.component.ProcessorTasksListController;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -33,27 +34,27 @@ import com.google.web.bindery.event.shared.EventBus;
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<Object> {
 
-    private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
+    private final ProcessorTaskSummaryListController processorTaskSummary;
     private final ProcessorTasksListController processorTaskList;
 
     @Inject
     public ProcessorTaskPresenter(final EventBus eventBus, final StreamTaskView view,
-                                  final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter,
+                                  final ProcessorTaskSummaryListController processorTaskSummary,
                                   final ProcessorTasksListController processorTaskList) {
         super(eventBus, view);
-        own(processorTaskSummaryPresenter);
+        own(processorTaskSummary);
         own(processorTaskList);
-        this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
+        this.processorTaskSummary = processorTaskSummary;
         this.processorTaskList = processorTaskList;
 
-        getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
+        getView().setTaskSummaryView(processorTaskSummary);
         getView().setTaskListView(processorTaskList);
 
-        own(processorTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(processorTaskSummary.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.
             processorTaskList.clear();
 
-            final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
+            final ProcessorTaskSummary row = processorTaskSummary.getSelectionModel().getSelected();
 
             if (row != null) {
                 final ExpressionOperator.Builder root = ExpressionOperator.builder();
@@ -74,7 +75,7 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
 
     @Override
     public void read(final DocRef docRef, final Object document) {
-        processorTaskSummaryPresenter.read(docRef, document);
+        processorTaskSummary.read(docRef, document);
 //        processorTaskList.read(docRef, entity);
     }
 
@@ -83,7 +84,7 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
         /// Shows the summary of tasks.
         ///
         /// @param view Its view.
-        void setTaskSummaryView(View view);
+        void setTaskSummaryView(IsWidget view);
 
         /// Shows the tasks.
         ///

@@ -17,8 +17,8 @@
 package stroom.processor.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.client.component.ProcessorTaskSummaryListController;
 import stroom.data.client.component.ProcessorTasksListController;
-import stroom.data.client.presenter.ProcessorTaskSummaryPresenter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskView> {
 
-    private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
+    private final ProcessorTaskSummaryListController processorTaskSummary;
     private final ProcessorTasksListController processorTaskList;
 
     private ProcessorFilter processorFilter;
@@ -42,22 +42,22 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
     @Inject
     public ProcessorTaskPresenter(final EventBus eventBus,
                                   final ProcessorTaskView view,
-                                  final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter,
+                                  final ProcessorTaskSummaryListController processorTaskSummary,
                                   final ProcessorTasksListController processorTaskList) {
         super(eventBus, view);
-        own(processorTaskSummaryPresenter);
+        own(processorTaskSummary);
         own(processorTaskList);
-        this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
+        this.processorTaskSummary = processorTaskSummary;
         this.processorTaskList = processorTaskList;
 
-        getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
+        getView().setTaskSummaryView(processorTaskSummary);
         getView().setTaskListView(processorTaskList);
 
-        own(processorTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(processorTaskSummary.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.
             processorTaskList.clear();
 
-            final ProcessorTaskSummary row = processorTaskSummaryPresenter.getSelectionModel().getSelected();
+            final ProcessorTaskSummary row = processorTaskSummary.getSelectionModel().getSelected();
 
             if (row != null) {
                 processorTaskList.setExpression(getExpression(row));
@@ -90,10 +90,10 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
 
     public void refresh() {
         final ExpressionOperator expressionOperator = getExpression(null);
-        processorTaskSummaryPresenter.setExpression(expressionOperator);
+        processorTaskSummary.setExpression(expressionOperator);
         processorTaskList.setExpression(expressionOperator);
 
-        processorTaskSummaryPresenter.refresh();
+        processorTaskSummary.refresh();
         processorTaskList.refresh();
     }
 
@@ -122,7 +122,7 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
         /// Shows the summary of tasks.
         ///
         /// @param view Its view.
-        void setTaskSummaryView(View view);
+        void setTaskSummaryView(IsWidget view);
 
         /// Shows the tasks.
         ///

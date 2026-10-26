@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.data.client.component.ProcessorTaskSummaryListController;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.data.client.presenter.ProcessorTaskSummaryPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.ExplorerConstants;
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories of `App/Main/ProcessorTaskSummary`, showing Stroom's real [ProcessorTaskSummaryPresenter]
+/// Stories of `App/Main/ProcessorTaskSummary`, showing Stroom's real [ProcessorTaskSummaryListController]
 /// in the upper pane of a folder's 'Active Tasks' tab ([ProcessorTaskPresenter], as
 /// `FolderPresenter` creates and reads it), with fake REST replies.
 ///
