@@ -18,35 +18,37 @@ package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.pathways.client.component.PathwayTreeController;
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, PathwaysDoc> {
 
     private final PathwayListPresenter pathwayListPresenter;
-    private final PathwayTreePresenter pathwayTreePresenter;
+    private final PathwayTreeController pathwayTree;
 
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
                                   final PathwaysSplitView view,
                                   final PathwayListPresenter pathwayListPresenter,
-                                  final PathwayTreePresenter pathwayTreePresenter) {
+                                  final PathwayTreeController pathwayTree) {
         super(eventBus, view);
         own(pathwayListPresenter);
-        own(pathwayTreePresenter);
+        own(pathwayTree);
         this.pathwayListPresenter = pathwayListPresenter;
-        this.pathwayTreePresenter = pathwayTreePresenter;
+        this.pathwayTree = pathwayTree;
         view.setTable(pathwayListPresenter.getView());
-        view.setTree(pathwayTreePresenter.getView());
+        view.setTree(pathwayTree);
 
         own(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final Pathway selected = pathwayListPresenter.getSelectionModel().getSelected();
-            pathwayTreePresenter.read(getEntity(), selected);
+            pathwayTree.read(getEntity(), selected);
         }));
     }
 
@@ -64,6 +66,6 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
 
         void setTable(View view);
 
-        void setTree(View view);
+        void setTree(IsWidget view);
     }
 }

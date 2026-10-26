@@ -18,10 +18,8 @@ package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
-import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -149,7 +147,7 @@ public final class PathwaysEditorStories {
                     DocEditors.expectNoProblems(play);
                 })
                 // No NewPathway story yet: New Pathway reads a pathway with no root into the
-                // dialog's graph, and PathwayTreePresenter.read calls addNode(null), which throws
+                // dialog's graph, and PathwayTree.read calls addNode(null), which throws
                 // (see ISSUES.md)
                 // Edit Pathway: the dialog's graph and a node's constraints (a constraint can't be
                 // added, see below)

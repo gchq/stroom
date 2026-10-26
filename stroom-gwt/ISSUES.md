@@ -261,19 +261,23 @@ that fails without it.
 basic use:
 
 * New Pathway throws (`TypeError` reading `getUuid`) and the dialog never opens:
-  `PathwayTreePresenter.read` calls `addNode(pathway.getRoot())` for a new pathway, whose root is
+  `PathwayTree.read` (was `PathwayTreePresenter.read`) calls `addNode(pathway.getRoot())` for a new pathway, whose root is
   `null`. Fix: only add and draw nodes when `pathway.getRoot() != null`. The workbench has no
   New Pathway story until this is fixed (`PathwaysEditorStories`).
 * A node with no constraints can never get one: `ConstraintListPresenter` starts with
   `readOnly = true`, and `setData` (line 283) updates it but never calls `enableButtons()`, so New,
   Edit and Remove stay disabled ("New constraint disabled as read only") until a constraint is
   selected, which only then enables them (the selection handler, lines 121-123).
+* The paths' New Path, Edit Selected Path and Delete Selected Path buttons do nothing: they have no
+  command (they were made with `null`, and `PathwayTree` keeps them so in wave 7). Like the
+  constraints' buttons they also show the document's read-only state only once a node is chosen:
+  until then New is disabled and titled "(read only)" (found 26 October 2026, in wave 7).
 * A read-only pathways document can still be edited: `PathwaysSettingsViewImpl.onReadOnly` only
   disables the ordering tolerance, leaving Processing Node and the Allow tick boxes enabled (edits
   can't make the document dirty, so they are silently lost).
 
-* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwayTreePresenter.java`
-  (line 179)
+* `stroom-core-client/src/main/java/stroom/pathways/client/component/PathwayTree.java`
+  (`read`, and `enableButtons`)
 * `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ConstraintListPresenter.java`
   (line 283)
 * `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java`

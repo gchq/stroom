@@ -16,6 +16,7 @@
 
 package stroom.pathways.client.presenter;
 
+import stroom.pathways.client.component.PathwayTreeController;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.NanoTime;
@@ -30,6 +31,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -38,25 +40,25 @@ import javax.validation.ValidationException;
 public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
     private Pathway pathway;
-    private final PathwayTreePresenter pathwayTreePresenter;
+    private final PathwayTreeController pathwayTree;
     private final ConstraintListPresenter constraintListPresenter;
     private boolean readOnly = true;
 
     @Inject
     public PathwayEditPresenter(final EventBus eventBus,
                                 final PathwayEditView view,
-                                final PathwayTreePresenter pathwayTreePresenter,
+                                final PathwayTreeController pathwayTree,
                                 final ConstraintListPresenter constraintListPresenter) {
         super(eventBus, view);
-        own(pathwayTreePresenter);
+        own(pathwayTree);
         own(constraintListPresenter);
-        this.pathwayTreePresenter = pathwayTreePresenter;
+        this.pathwayTree = pathwayTree;
         this.constraintListPresenter = constraintListPresenter;
-        view.setTree(pathwayTreePresenter.getView());
+        view.setTree(pathwayTree);
         view.setConstraints(constraintListPresenter.getView());
 
-        own(pathwayTreePresenter.getSelectionModel().addSelectionChangeHandler(e -> {
-            final PathNode selected = pathwayTreePresenter.getSelectionModel().getSelectedObject();
+        own(pathwayTree.getSelectionModel().addSelectionChangeHandler(e -> {
+            final PathNode selected = pathwayTree.getSelectionModel().getSelectedObject();
             constraintListPresenter.setData(selected, readOnly);
         }));
 
@@ -255,13 +257,13 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 //        this.selected = null;
 //
 //        getView().setDetails(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        pathwayTreePresenter.read(pathwaysDoc, pathway);
+        pathwayTree.read(pathwaysDoc, pathway);
         constraintListPresenter.setData(null, readOnly);
 //        getView().setConstraints(SafeHtmlUtils.EMPTY_SAFE_HTML);
 //        getView().setSpans(SafeHtmlUtils.EMPTY_SAFE_HTML);
 
         getView().setName(pathway.getName());
-//        getView().setDetails(new PathwayTreePresenter().build(pathway));
+//        getView().setDetails(new PathwayTreeController().build(pathway));
 //
 //        addNode(pathway.getRoot());
     }
@@ -302,7 +304,7 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
 
         void setName(final String name);
 
-        void setTree(View view);
+        void setTree(IsWidget view);
 
         void setConstraints(View view);
     }

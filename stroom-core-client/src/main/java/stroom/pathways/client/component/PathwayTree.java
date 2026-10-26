@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,43 +14,41 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.presenter;
+package stroom.pathways.client.component;
 
-import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
-import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.client.presenter.Bezier;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Component;
 import stroom.widget.htree.client.treelayout.Point;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PathwayTreePresenter
-        extends MyPresenterWidget<PathwayTreeView> {
+/// A pathway's graph of nodes, which its [PathwayTreeController] fills, under a toolbar of its
+/// actions. A node is chosen by clicking its name.
+public class PathwayTree extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final int ROW_HEIGHT = 22;
     private static final int INDENT = 20;
@@ -58,39 +56,34 @@ public class PathwayTreePresenter
     private static final String EDIT_TITLE = "Edit Selected Path";
     private static final String DELETE_TITLE = "Delete Selected Path";
     private static final String READ_ONLY_SUFFIX = " (read only)";
+    private static final String SELECTED_CLASS = "pathway-nodeName--selected";
 
-    private final ButtonView newButton;
-    private final ButtonView editButton;
-    private final ButtonView removeButton;
-    private final ToolbarButton viewTracesButton;
+    @UiField
+    ToolbarButton newButton;
+    @UiField
+    ToolbarButton editButton;
+    @UiField
+    ToolbarButton removeButton;
+    @UiField
+    ToolbarButton viewTracesButton;
+    @UiField
+    HTML tree;
 
-    private final HTML html;
-    private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<PathNode>();
-
-    private PathwaysDoc pathwaysDoc;
-    private Pathway pathway;
-    private Element selected;
-    private boolean readOnly = true;
+    private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<>();
     private final Map<String, PathNode> nodeMap = new HashMap<>();
+    private Element selected;
+    // Read only until a pathway is read, and only shown on the buttons when a node is chosen, as it
+    // was (see ISSUES.md)
+    private boolean readOnly = true;
+    private Runnable onViewTraces = () -> {
+    };
 
-    @Inject
-    public PathwayTreePresenter(final EventBus eventBus,
-                                final PathwayTreeView view) {
-        super(eventBus, view);
-        newButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, null);
-        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, null);
-        editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, null);
-        removeButton.setEnabled(false);
-
-        viewTracesButton = view.getToolbar().button(SvgImage.EYE, "View Matching Traces", this::onViewTraces);
-        enableButtons();
-
-        html = new HTML();
-        html.addStyleName("max");
-        view.setDataWidget(html);
-
-        own(html.addClickHandler(e -> {
+    /// Makes the graph, with no pathway yet.
+    public PathwayTree() {
+        initWidget(BINDER.createAndBindUi(this));
+        viewTracesButton.setOnClick(() -> onViewTraces.run());
+        //noinspection unused e
+        tree.addClickHandler(e -> {
             final Element target = e.getNativeEvent().getEventTarget().cast();
             if (target != null) {
                 final Element node = ElementUtil.findParent(target, element ->
@@ -99,79 +92,36 @@ public class PathwayTreePresenter
                     final String uuid = node.getAttribute("uuid");
                     if (!Objects.equals(selected, node)) {
                         if (selected != null) {
-                            selected.removeClassName("pathway-nodeName--selected");
+                            selected.removeClassName(SELECTED_CLASS);
                         }
                         selected = node;
-                        selected.addClassName("pathway-nodeName--selected");
+                        selected.addClassName(SELECTED_CLASS);
                         selectionModel.setSelected(nodeMap.get(uuid), true);
                         enableButtons();
                     }
                 }
             }
-        }));
-    }
-
-    private void onViewTraces() {
-        final Map<String, String> parentMap = new HashMap<>();
-        final Map<String, PathNodeSequence> pathNodeSequenceMap = new HashMap<>();
-        final Map<String, PathNode> pathNodeMap = new HashMap<>();
-        addToMap(pathway.getRoot(), parentMap, pathNodeSequenceMap, pathNodeMap);
-
-        PathNode pathNode = selectionModel.getSelectedObject();
-        PathNode root = pathNode;
-        while (pathNode != null) {
-            // Get parent sequence.
-            final String parentSequenceUuid = parentMap.get(pathNode.getUuid());
-            if (parentSequenceUuid != null) {
-                final PathNodeSequence pathNodeSequence = pathNodeSequenceMap.get(parentSequenceUuid);
-                // Get parent node.
-                final String parentNodeUuid = parentMap.get(pathNodeSequence.getUuid());
-                pathNode = pathNodeMap.get(parentNodeUuid);
-
-                root = pathNode.copy().targets(Collections.singletonList(pathNodeSequence)).build();
-            } else {
-                pathNode = null;
-            }
-        }
-
-        final Pathway pathway;
-        if (root != null) {
-            pathway = this.pathway.copy().root(root).build();
-        } else {
-            pathway = this.pathway;
-        }
-
-        ShowTracesEvent.fire(
-                this,
-                pathwaysDoc.getTracesDocRef(),
-                null,
-                pathway);
-    }
-
-    private void addToMap(final PathNode pathNode,
-                          final Map<String, String> parentMap,
-                          final Map<String, PathNodeSequence> pathNodeSequenceMap,
-                          final Map<String, PathNode> pathNodeMap) {
-        pathNodeMap.put(pathNode.getUuid(), pathNode);
-        NullSafe.list(pathNode.getTargets()).forEach(target -> {
-            pathNodeSequenceMap.put(target.getUuid(), target);
-            parentMap.put(target.getUuid(), pathNode.getUuid());
-            NullSafe.list(target.getNodes()).forEach(node -> {
-                parentMap.put(node.getUuid(), target.getUuid());
-                addToMap(node, parentMap, pathNodeSequenceMap, pathNodeMap);
-            });
         });
+        enableButtons();
     }
 
-    public void read(final PathwaysDoc pathwaysDoc,
-                     final Pathway pathway) {
-        // Read only as its document is
-        final boolean readOnly = context(Contexts.READ_ONLY);
-        this.pathwaysDoc = pathwaysDoc;
-        this.pathway = pathway;
-        this.readOnly = readOnly;
-        this.selected = null;
+    /// @param onViewTraces Run when View Matching Traces is pressed, with a node chosen.
+    public void setOnViewTraces(final Runnable onViewTraces) {
+        this.onViewTraces = onViewTraces;
+    }
 
+    /// @return The chosen node.
+    public MySingleSelectionModel<PathNode> getSelectionModel() {
+        return selectionModel;
+    }
+
+    /// Draws a pathway's graph, with no node chosen.
+    ///
+    /// @param pathway The pathway, or null for none.
+    public void read(final Pathway pathway) {
+        // Read only as its document is, when it is read
+        this.readOnly = isReadOnly();
+        this.selected = null;
         nodeMap.clear();
 
         final HtmlBuilder hb = new HtmlBuilder();
@@ -204,7 +154,12 @@ public class PathwayTreePresenter
                 div.div(d -> d.append(nodeBuilder.toSafeHtml()), Attribute.className("pathway-nodes"));
             }
         }, Attribute.className("pathway"));
-        html.setHTML(hb.toSafeHtml());
+        tree.setHTML(hb.toSafeHtml());
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
     private void addNode(final PathNode node) {
@@ -373,17 +328,11 @@ public class PathwayTreePresenter
         removeButton.setTitle(DELETE_TITLE + readOnlySuffix);
     }
 
-    public MySingleSelectionModel<PathNode> getSelectionModel() {
-        return selectionModel;
-    }
 
-    public interface PathwayTreeView extends View {
+    // --------------------------------------------------------------------------------
 
-        /// The toolbar for the view's buttons, e.g. `getToolbar().button(SvgImage.ADD, "Add", this::add)`.
-        ///
-        /// @return The toolbar.
-        Toolbar getToolbar();
 
-        void setDataWidget(Widget widget);
+    interface Binder extends UiBinder<Widget, PathwayTree> {
+
     }
 }

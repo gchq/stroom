@@ -20,10 +20,9 @@ import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -50,7 +49,7 @@ public class PathwaysSplitViewImpl
     }
 
     @Override
-    public void setTree(final View view) {
+    public void setTree(final IsWidget view) {
         tree.setWidget(view.asWidget());
     }
 
