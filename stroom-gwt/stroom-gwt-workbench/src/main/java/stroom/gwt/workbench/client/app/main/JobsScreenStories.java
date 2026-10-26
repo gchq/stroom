@@ -202,7 +202,7 @@ public final class JobsScreenStories {
                             .not().toBe("");
                     expectNoProblems(play);
                 })
-                // Batch schedule set (JobNodeListHelper.setSchedule with more than one row selected)
+                // Batch schedule set (JobNodeActionsController.setSchedule with more than one row selected)
                 .story("BatchSchedule", context -> render(context, CRON_FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();

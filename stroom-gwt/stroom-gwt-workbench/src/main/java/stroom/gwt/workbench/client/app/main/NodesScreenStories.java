@@ -128,7 +128,7 @@ public final class NodesScreenStories {
                             .toHaveClass(StroomDom.SORTABLE_HEADER);
                     expectNoProblems(play);
                 })
-                // Selecting a node lists its jobs in the bottom pane (GWT NodeJobListPresenter)
+                // Selecting a node lists its jobs in the bottom pane (GWT NodeJobListController)
                 .story("NodeJobs", context -> render(context, null))
                 .withPlay(play -> {
                     play.findByText("node1a");
@@ -140,7 +140,7 @@ public final class NodesScreenStories {
                     play.click(play.getByText("node1a"));
                     play.findByText("Data Retention");
                     // GWT heads the pane 'All jobs on node ...'
-                    // (NodeJobListPresenter.updateFormGroupHeading)
+                    // (NodeJobListController.updateFormGroupHeading)
                     play.expect(play.getByText(TEXT_ALL_JOBS_ON_NODE1A)).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(JOB_NODE_FIND_PATH)

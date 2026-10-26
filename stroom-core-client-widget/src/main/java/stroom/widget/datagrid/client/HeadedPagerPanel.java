@@ -30,17 +30,24 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /// A [PagerPanel] with a heading: the bar with the list's toolbar and a pager above the list, all
 /// in a form group labelled with the heading. Its own layout (the toolbar fills the bar, and there
 /// is no message), as putting a form group in every list's panel broke them. Its refresh button
 /// spins while the list's requests run, when it is their task monitor.
 ///
-/// A presenter's view as well as a component, until the list presenters become controllers.
-public class HeadedPagerPanel extends Component implements View, TaskMonitorFactory {
+/// A template can declare its children, as a [PagerPanel]'s: the list, and the buttons in its
+/// toolbar. A presenter's view as well as a component, until the list presenters become controllers.
+public class HeadedPagerPanel extends Component implements View, TaskMonitorFactory, HasWidgets {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -55,6 +62,7 @@ public class HeadedPagerPanel extends Component implements View, TaskMonitorFact
     @UiField
     SimplePanel listContainer;
 
+    private final List<Widget> children = new ArrayList<>();
     private int taskCount;
 
     /// Makes an empty panel with no heading, e.g. one GIN makes for a list presenter.
@@ -85,6 +93,54 @@ public class HeadedPagerPanel extends Component implements View, TaskMonitorFact
     /// @return The toolbar.
     public Toolbar getToolbar() {
         return toolbar;
+    }
+
+    /// @param name The toolbar's name, after the list, e.g. "Job node actions".
+    public void setToolbarName(final String name) {
+        toolbar.setName(name);
+    }
+
+    /// Adds a child a template declares: a widget with rows (e.g. a `DataGrid`) is the list, shown
+    /// and paged; anything else (a toolbar button, a toggle, a separator) goes in the toolbar.
+    ///
+    /// @param widget The child.
+    @Override
+    public void add(final Widget widget) {
+        if (widget instanceof HasRows) {
+            showList(widget);
+        } else {
+            toolbar.add(widget);
+        }
+        children.add(widget);
+    }
+
+    /// Removes every child a template declared.
+    @Override
+    public void clear() {
+        for (final Widget widget : new ArrayList<>(children)) {
+            remove(widget);
+        }
+    }
+
+    /// @return The children a template declared, in order.
+    @Override
+    public Iterator<Widget> iterator() {
+        return Collections.unmodifiableList(children).iterator();
+    }
+
+    /// @param widget A child a template declared.
+    /// @return Whether it was one, and is removed.
+    @Override
+    public boolean remove(final Widget widget) {
+        if (!children.remove(widget)) {
+            return false;
+        }
+        widget.removeFromParent();
+        return true;
+    }
+
+    private void showList(final Widget widget) {
+        setDataWidget((Widget & HasRows) widget);
     }
 
     /// @return The pager's refresh button.

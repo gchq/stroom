@@ -19,6 +19,7 @@ package stroom.job.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.job.client.component.JobListController;
+import stroom.job.client.component.JobNodeListController;
 import stroom.job.client.component.JobWrapper;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
@@ -36,13 +37,13 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
 
     public static final String TAB_TYPE = "Jobs";
     private final JobListController jobList;
-    private final JobNodeListPresenter jobNodeListPresenter;
+    private final JobNodeListController jobNodeListPresenter;
 
     @Inject
     public JobPresenter(final EventBus eventBus,
                         final JobView view,
                         final JobListController jobList,
-                        final JobNodeListPresenter jobNodeListPresenter) {
+                        final JobNodeListController jobNodeListPresenter) {
         super(eventBus, view);
         own(jobList);
         own(jobNodeListPresenter);
@@ -50,7 +51,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
         this.jobNodeListPresenter = jobNodeListPresenter;
 
         getView().setJobListView(jobList);
-        getView().setJobNodeListView(jobNodeListPresenter.getView());
+        getView().setJobNodeListView(jobNodeListPresenter);
 
         own(jobList.getSelectionModel().addSelectionHandler(event -> {
             final Job row = NullSafe.get(
@@ -111,6 +112,6 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
         /// Shows the selected job on each node.
         ///
         /// @param view Its view.
-        void setJobNodeListView(View view);
+        void setJobNodeListView(IsWidget view);
     }
 }

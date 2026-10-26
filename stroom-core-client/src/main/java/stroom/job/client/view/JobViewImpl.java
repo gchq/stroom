@@ -17,7 +17,6 @@
 package stroom.job.client.view;
 
 import stroom.job.client.presenter.JobPresenter;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,7 +50,7 @@ public class JobViewImpl extends ViewImpl implements JobPresenter.JobView {
     }
 
     @Override
-    public void setJobNodeListView(final View view) {
+    public void setJobNodeListView(final IsWidget view) {
         jobNodeList.setWidget(view.asWidget());
     }
 

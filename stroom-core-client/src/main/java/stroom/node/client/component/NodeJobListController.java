@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.node.client.presenter;
+package stroom.node.client.component;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
@@ -30,22 +29,13 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
-import stroom.node.client.JobNodeListHelper;
 import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.schedule.client.component.SchedulePickerController;
-import stroom.svg.shared.SvgImage;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.HeadedPagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -53,65 +43,55 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * Bottom pane of NodePresenter (Nodes tab). Lists jobNodes for a single node.
- */
-public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> implements Refreshable {
+/// The bottom pane of the Nodes screen: a node's jobs ([NodeJobList]), the advanced ones last,
+/// refreshed when they, any job or the nodes change elsewhere, or now and then if auto refresh is on.
+public class NodeJobListController extends Controller {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
 
-    private final JobNodeListHelper jobNodeListHelper;
-    private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
-    private final DataGrid<JobNodeAndInfo> dataGrid;
-    private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-    private final ToolbarToggleButton showEnabledToggleBtn;
-    private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
+    private final NodeJobList view;
     private final NodeClient nodeClient;
-    private final ToolbarToggleButton autoRefreshButton;
+    private final JobNodeActionsController actions;
+    private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
+    private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
 
     private boolean autoRefresh;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus          The application's event bus.
+    /// @param view              The content.
+    /// @param restFactory       Finds the job nodes.
+    /// @param actionsProvider   Makes what does the job nodes' actions.
+    /// @param dateTimeFormatter Formats the times shown.
+    /// @param nodeClient        Lists the enabled nodes.
     @Inject
-    public NodeJobListPresenter(final EventBus eventBus,
-                                final HeadedPagerPanel view,
-                                final RestFactory restFactory,
-                                final Provider<SchedulePickerController> schedulePickerProvider,
-                                final DateTimeFormatter dateTimeFormatter,
-                                final NodeClient nodeClient) {
-        super(eventBus, view);
+    public NodeJobListController(final EventBus eventBus,
+                                 final NodeJobList view,
+                                 final RestFactory restFactory,
+                                 final Provider<JobNodeActionsController> actionsProvider,
+                                 final DateTimeFormatter dateTimeFormatter,
+                                 final NodeClient nodeClient) {
+        super(eventBus);
+        this.view = view;
         this.nodeClient = nodeClient;
-        this.dataGrid = new DataGrid<>();
-        this.dataGrid.setTableName("Node Jobs");
-        this.dataGrid.setAccessibleName("Node jobs");
-        this.selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-        this.dataProvider = buildDataProvider(eventBus, view, restFactory);
+        initWidget(view);
+        dataProvider = buildDataProvider(eventBus, restFactory);
 
-        this.jobNodeListHelper = new JobNodeListHelper(
-                dateTimeFormatter,
-                restFactory,
-                schedulePickerProvider,
-                this,
-                selectionModel,
-                getView(),
-                NodeJobListPresenter.this,
+        view.addColumns(dateTimeFormatter::formatWithDuration, this::openJobNodeAsCommandLink);
+        actions = make(actionsProvider);
+        actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
                 this::internalRefresh);
+        view.setOnEnabledChange(actions::setEnabled);
+        view.setOnEditSchedule(actions::showSchedule);
+        view.setOnShowActionMenu(actions::showActionMenu);
+        view.setOnShowEnabledChange(this::internalRefresh);
+        view.setOnAutoRefreshChange(this::onAutoRefreshToggled);
 
-        view.getToolbar().setName("Node job actions");
-        this.showEnabledToggleBtn = jobNodeListHelper.addJobFilterButton(view.getToolbar());
-
-        autoRefresh = false;
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
-                pressed -> onAutoRefreshToggled());
-        autoRefreshButton.setState(autoRefresh);
-
-        // Must call this after initialising JobNodeListHelper
-        initTable();
         refreshNodeStates();
 
         // NodeLisPresenter may change a node
@@ -128,12 +108,11 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
                     internalRefresh();
                 });
 
-        // JobNodeListPresenter may change one or more jobNodes
+        // JobNodeListController may change one or more jobNodes; this list's own changes are
+        // refreshed already
         listen(
                 JobNodeChangeEvent.getType(), event -> {
-//                    GWT.log(NodeJobListPresenter.this.getClass().getSimpleName()
-//                            + " - jobNodes changed: " + event.getJobNodes().size());
-                    if (!Objects.equals(event.getSource().getClass(), NodeJobListPresenter.this.getClass())) {
+                    if (event.getSource() != actions) {
                         final Set<String> affectedNodes = event.getJobNodes()
                                 .stream()
                                 .map(JobNode::getNodeName)
@@ -147,17 +126,12 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
     }
 
     private void refreshNodeStates() {
-        nodeClient.listEnabledNodes(enabledNodeNames -> {
-            jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
-            // Redraw the grid in case any node states have changed which impacts enabled state of rows
-            // Don't need to refresh as the grid doesn't use the node table
-            dataGrid.redraw();
-        }, throwable -> {
-        }, getView());
+        nodeClient.listEnabledNodes(view::setEnabledNodeNames, throwable -> {
+        }, view.getTaskMonitor());
     }
 
-    private void onAutoRefreshToggled() {
-        autoRefresh = !autoRefresh;
+    private void onAutoRefreshToggled(final boolean on) {
+        autoRefresh = on;
         if (autoRefresh) {
             internalRefresh();
         }
@@ -165,7 +139,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
             final EventBus eventBus,
-            final HeadedPagerPanel view,
             final RestFactory restFactory) {
 
         //noinspection Convert2Diamond
@@ -174,11 +147,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
             protected void exec(final Range range,
                                 final Consumer<JobNodeAndInfoListResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                // We want the
                 findJobNodeCriteria.setSort(FindJobNodeCriteria.FIELD_ADVANCED);
                 findJobNodeCriteria.addSort(FindJobNodeCriteria.FIELD_JOB_NAME);
                 // ON is show enabled only, OFF is show all states
-                findJobNodeCriteria.setJobNodeEnabled(showEnabledToggleBtn.isOn()
+                findJobNodeCriteria.setJobNodeEnabled(view.isShowEnabledOnly()
                         ? true
                         : null);
                 restFactory
@@ -187,11 +159,8 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
                                 resource.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
-//                        .onFailure(error -> {
-//                            changeData(new JobNodeAndInfoListResponse(Collections.emptyList()));
-//                            errorHandler.onError(error);
-//                        })
-                        .taskMonitorFactory(view)
+                        .owner(NodeJobListController.this)
+                        .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
             }
 
@@ -216,15 +185,16 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
         };
     }
 
+    /// Shows a node's jobs; the first time, starts the list.
+    ///
+    /// @param nodeName The node, or `null` for none.
     public void read(final String nodeName) {
         if (dataProvider.getDataDisplays().isEmpty()) {
-            dataProvider.addDataDisplay(dataGrid);
+            view.setDataProvider(dataProvider);
         }
         setNodeNameCriteria(nodeName);
         // Named for the node whose jobs it shows
-        dataGrid.setAccessibleName(nodeName == null
-                ? "Node jobs"
-                : "Jobs on " + nodeName);
+        view.setNodeName(nodeName);
         internalRefresh();
     }
 
@@ -236,7 +206,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
         findJobNodeCriteria.getNodeName().setString(nodeName);
     }
 
-    @Override
+    /// Finds the node's jobs again, if auto refresh is on.
     public void refresh() {
         if (autoRefresh) {
             internalRefresh();
@@ -248,52 +218,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
         dataProvider.refresh();
     }
 
-    /**
-     * Add the columns to the table.
-     */
-    private void initTable() {
-        // JobNode Enabled tick box
-        jobNodeListHelper.addEnabledTickBoxColumn(dataGrid, false);
-
-        // Job Name
-        final Column<JobNodeAndInfo, CommandLink> jobNameColumn = DataGridUtil.commandLinkColumnBuilder(
-                        this::openJobNodeAsCommandLink)
-                .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
-                .build();
-
-        DataGridUtil.addCommandLinkFieldUpdater(jobNameColumn);
-        dataGrid.addResizableColumn(
-                jobNameColumn,
-                DataGridUtil.headingBuilder("Job Name")
-                        .withToolTip("The name of the job.")
-                        .build(),
-                350);
-
-        // Job State.
-        dataGrid.addColumn(
-                DataGridUtil.textColumnBuilder(JobNodeListHelper::buildParentJobEnabledStr)
-                        .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Job State")
-                        .withToolTip("Whether this job is enabled across all nodes or not. " +
-                                "An enabled job must also be enabled on a node for it to execute on that node.")
-                        .build(),
-                80);
-
-        // Node State
-        jobNodeListHelper.addNodeStateColumn(dataGrid);
-        // Type
-        jobNodeListHelper.addTypeColumn(dataGrid);
-        // Schedule.
-        jobNodeListHelper.addScheduleColumn(dataGrid);
-        // Last executed.
-        jobNodeListHelper.addLastExecutedColumn(dataGrid);
-        // Next executed.
-        jobNodeListHelper.addNextExecutedColumn(dataGrid);
-        // Action column
-        jobNodeListHelper.addActionColumn(dataGrid);
-    }
-
     private CommandLink openJobNodeAsCommandLink(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null) {
             final String jobName = jobNodeAndInfo.getJobName();
@@ -301,31 +225,29 @@ public class NodeJobListPresenter extends MyPresenterWidget<HeadedPagerPanel> im
             return new CommandLink(
                     jobName,
                     "Open job '" + jobName + "' on node '" + nodeName + "' on the Jobs screen.",
-                    () -> OpenJobNodeEvent.fire(
-                            NodeJobListPresenter.this,
-                            jobNodeAndInfo.getJobNode()));
+                    () -> OpenJobNodeEvent.fire(this, jobNodeAndInfo.getJobNode()));
         } else {
             return null;
         }
     }
 
+    /// @param jobNode The job node to select, or `null` to select none.
     public void setSelected(final JobNode jobNode) {
         if (jobNode != null) {
-            selectionModel.setSelected(JobNodeAndInfo.withoutInfo(jobNode));
+            view.getSelectionModel().setSelected(JobNodeAndInfo.withoutInfo(jobNode));
         } else {
-            selectionModel.clear();
+            view.getSelectionModel().clear();
         }
     }
 
     private void updateFormGroupHeading() {
         final String nodeName = getNodeNameCriteria();
-        final boolean isShowEnabled = showEnabledToggleBtn.getState();
-        final String prefix = isShowEnabled
+        final String prefix = view.isShowEnabledOnly()
                 ? "Enabled"
                 : "All";
         final String heading = nodeName != null
                 ? prefix + " jobs on node '" + nodeName + "'"
                 : null;
-        getView().setHeading(heading);
+        view.setHeading(heading);
     }
 }

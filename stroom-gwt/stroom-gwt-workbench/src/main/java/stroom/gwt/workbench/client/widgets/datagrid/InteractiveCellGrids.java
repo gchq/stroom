@@ -151,7 +151,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Value spinner column, as JobNodeListPresenter's Max Tasks, in a grid that polls
+    // Value spinner column, as JobNodeList's Max Tasks, in a grid that polls
 
     static Widget valueSpinnerGrid(final StoryContext context) {
         final Spy onChange = context.fn(ON_CHANGE);
@@ -179,7 +179,7 @@ final class InteractiveCellGrids {
                 "Polled", 100);
         grid.setRowData(rows);
 
-        // As NodeStatusListPresenter and JobNodeListPresenter poll and redraw
+        // As NodeStatusList and JobNodeList poll and redraw
         final Timer poll = new Timer() {
             @Override
             public void run() {
@@ -281,7 +281,7 @@ final class InteractiveCellGrids {
     }
 
     // --------------------------------------------------------------------------------
-    // Command link column, as JobNodeListHelper's schedule column
+    // Command link column, as JobNodeColumns' schedule column
 
     static Widget commandLinkGrid(final StoryContext context) {
         final Spy onOpen = context.fn(ON_OPEN);

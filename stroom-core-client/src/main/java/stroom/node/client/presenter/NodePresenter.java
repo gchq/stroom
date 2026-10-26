@@ -19,6 +19,7 @@ package stroom.node.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.job.shared.JobNode;
+import stroom.node.client.component.NodeJobListController;
 import stroom.node.client.component.NodeStatusListController;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
@@ -38,13 +39,13 @@ public class NodePresenter
     public static final String TAB_TYPE = "Nodes";
 
     private final NodeStatusListController nodeStatusList;
-    private final NodeJobListPresenter nodeJobListPresenter;
+    private final NodeJobListController nodeJobListPresenter;
 
     @Inject
     public NodePresenter(final EventBus eventBus,
                          final NodeView view,
                          final NodeStatusListController nodeStatusList,
-                         final NodeJobListPresenter nodeJobListPresenter) {
+                         final NodeJobListController nodeJobListPresenter) {
         super(eventBus, view);
         own(nodeStatusList);
         own(nodeJobListPresenter);
@@ -52,7 +53,7 @@ public class NodePresenter
         this.nodeJobListPresenter = nodeJobListPresenter;
 
         getView().setNodeListView(nodeStatusList);
-        getView().setNodeJobListView(nodeJobListPresenter.getView());
+        getView().setNodeJobListView(nodeJobListPresenter);
 
         own(nodeStatusList.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeStatusList.getSelectionModel().getSelected();
@@ -113,6 +114,6 @@ public class NodePresenter
         /// Shows the selected node's jobs.
         ///
         /// @param view Its view.
-        void setNodeJobListView(View view);
+        void setNodeJobListView(IsWidget view);
     }
 }
