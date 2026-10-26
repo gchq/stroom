@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.3] - 2026-10-26
+
+* Dependency : Change docker images to force `brotli-libs>=1.2.1-r0`.
+
+* Dependency : Uplift `com.hubspot.jinjava` from 2.8.2 to 2.8.4.
+
+
 ## [v7.13.2] - 2026-10-23
 
 * Dependency : Uplift docker image base from `eclipse-temurin:25.0.3_9-jdk-alpine-3.23` to `eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24`.
@@ -2601,7 +2608,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.3...HEAD
+[v7.13.3]: https://github.com/gchq/stroom/compare/v7.13.2...v7.13.3
 [v7.13.2]: https://github.com/gchq/stroom/compare/v7.13.1...v7.13.2
 [v7.13.1]: https://github.com/gchq/stroom/compare/v7.13.0...v7.13.1
 [v7.13.0]: https://github.com/gchq/stroom/compare/v7.13-beta.18...v7.13.0
