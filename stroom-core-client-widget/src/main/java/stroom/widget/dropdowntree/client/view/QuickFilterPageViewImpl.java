@@ -16,105 +16,76 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
+/// [QuickFilterPage] as a presenter's view, for the presenters that haven't become controllers
+/// yet.
 public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHandlers>
         implements QuickFilterPageView {
 
-    @UiField
-    FormGroup formGroup;
-    @UiField
-    QuickFilter quickFilter;
-    @UiField
-    SimplePanel data;
+    private final QuickFilterPage page;
 
-    private final Widget widget;
-
+    /// @param page The page.
     @Inject
-    public QuickFilterPageViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        formGroup.setLabel(null);
+    public QuickFilterPageViewImpl(final QuickFilterPage page) {
+        this.page = page;
+        page.setOnFilterChange(text -> getUiHandlers().onFilterChange(text));
     }
 
     @Override
     public void setLabel(final String label) {
-        formGroup.setLabel(label);
+        page.setLabel(label);
     }
 
     @Override
     public void setHelpText(final SafeHtml helpText) {
-        formGroup.overrideHelpText(helpText);
+        page.setHelpText(helpText);
     }
 
     @Override
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
-        quickFilter.registerPopupTextProvider(popupTextSupplier);
+        page.registerPopupTextProvider(popupTextSupplier);
     }
 
     @Override
     public void focus() {
-        quickFilter.forceFocus();
+        page.focus();
     }
 
     @Override
     public void setDataView(final IsWidget view) {
-        data.setWidget(view.asWidget());
+        page.setContent(view);
     }
 
     @Override
     public void setQuickFilterText(final String quickFilterText) {
-        final String currVal = quickFilter.getText();
-        quickFilter.setText(quickFilterText);
-        if (!Objects.equals(currVal, quickFilterText)) {
-            getUiHandlers().onFilterChange(quickFilterText);
-        }
+        page.setQuickFilterText(quickFilterText);
     }
 
     @Override
     public void setFilterError(final String filterError) {
-        quickFilter.setFilterError(filterError);
+        page.setFilterError(filterError);
     }
 
     @Override
     public void setAccessibleName(final String accessibleName) {
-        quickFilter.setAccessibleName(accessibleName);
+        page.setAccessibleName(accessibleName);
     }
 
     @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
-        quickFilter.setContextHandler(contextHandler);
+        page.setQuickFilterContextHandler(contextHandler);
     }
-
-    @UiHandler("quickFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().onFilterChange(quickFilter.getText());
-    }
-
 
     @Override
     public Widget asWidget() {
-        return widget;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface Binder extends UiBinder<Widget, QuickFilterPageViewImpl> {
-
+        return page.asWidget();
     }
 }

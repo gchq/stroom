@@ -22,7 +22,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
+import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-/// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPageViewImpl]) and
+/// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPage]) and
 /// the dialog layout ([QuickFilterDialogViewImpl]): a quick filter above a data panel. These
 /// stories use the real views, with a list of rows as the data view.
 public final class QuickFilterPanelStories {
@@ -59,15 +59,14 @@ public final class QuickFilterPanelStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/QuickFilterPanel", QuickFilterPanelStories.class)
                 .layout(StoryLayout.CENTERED)
-                // The PAGE layout - GWT QuickFilterPageViewImpl: the filter sits in a form-padding
+                // The PAGE layout - QuickFilterPage: the filter sits in a form-padding
                 // FormGroup over a bare data panel. No border anywhere.
                 .story("Default", context -> {
-                    final QuickFilterPageViewImpl view = new QuickFilterPageViewImpl(
-                            GWT.create(QuickFilterPageViewImpl.Binder.class));
+                    final QuickFilterPage page = new QuickFilterPage();
                     final RowsView rows = new RowsView();
-                    view.setDataView(rows);
-                    view.setUiHandlers(filterHandler(context, rows));
-                    return frame(view.asWidget());
+                    page.setContent(rows);
+                    page.setOnFilterChange(filterHandler(context, rows)::onFilterChange);
+                    return frame(page);
                 })
                 .withPlay(play -> {
                     final Query panel = play.querySelector(PANEL);

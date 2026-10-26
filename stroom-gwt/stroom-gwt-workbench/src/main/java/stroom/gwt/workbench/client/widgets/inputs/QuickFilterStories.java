@@ -26,11 +26,10 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
+import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -167,15 +166,14 @@ public final class QuickFilterStories {
                     final FlowPanel column = StoryPanels.column(8, quickFilter, value);
                     return InputWidgets.maxWidth(column, MAX_WIDTH);
                 })
-                // QuickFilter wrapped with a label (GWT QuickFilterPageViewImpl.setLabel)
+                // QuickFilter wrapped with a label (QuickFilterPage.setLabel)
                 .story("WithLabel", context -> {
-                    final QuickFilterPageViewImpl view = new QuickFilterPageViewImpl(
-                            GWT.create(QuickFilterPageViewImpl.Binder.class));
+                    final QuickFilterPage page = new QuickFilterPage();
                     final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
-                    view.setUiHandlers(text -> onChange.call(text));
-                    view.setLabel("User Groups:");
-                    view.setHelpText(SafeHtmlUtils.fromString("Filter the list of user groups."));
-                    return InputWidgets.maxWidth(view.asWidget(), MAX_WIDTH);
+                    page.setOnFilterChange(text -> onChange.call(text));
+                    page.setLabel("User Groups:");
+                    page.setHelpText(SafeHtmlUtils.fromString("Filter the list of user groups."));
+                    return InputWidgets.maxWidth(page, MAX_WIDTH);
                 })
                 // A quick filter with a context: its arrow (or Alt+Down) asks the screen for the
                 // recent filters, and the one picked is put in the box, applied and remembered.
