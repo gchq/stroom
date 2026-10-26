@@ -2881,6 +2881,304 @@ if (!window.visualisations) {
         return best && best.end > best.start ? {start: best.start, end: best.end, gap: "3%"} : null;
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Trend lines
+    // ------------------------------------------------------------------------------------------
+
+    // A linear trend explaining less of the values' variation than this (its R²) is weak, and drawn fainter.
+    var WEAK_TREND = 0.3;
+    // A trend changing less than this share of the values' mean size over the time shown is flat.
+    var FLAT_TREND = 0.05;
+    // The most trends a report gives.
+    var MAX_TRENDS = 10;
+    // The units a trend's slope is given per over time, largest first: the largest the time shown spans twice.
+    var TREND_UNITS = [[7 * DAY, "week"], [DAY, "day"], [HOUR, "hour"], [MINUTE, "minute"], [SECOND, "second"]];
+
+    // The Trend Line setting: linear, moving average, or none.
+    function trendMethod(settings) {
+        var method = String(textSetting(settings, "trendLine") || "none").toLowerCase();
+        return method === "linear" || method === "moving average" ? method : "none";
+    }
+
+    // The least-squares line through points ([x, y], x numbers or times): its slope, intercept and R²; null with
+    // fewer than two points, or all at one x. Centred on the means first, as times are large numbers.
+    function linearFit(points) {
+        var n = points.length;
+        if (n < 2) {
+            return null;
+        }
+        var meanX = 0;
+        var meanY = 0;
+        points.forEach(function (point) {
+            meanX += point[0] / n;
+            meanY += point[1] / n;
+        });
+        var sxx = 0;
+        var sxy = 0;
+        var syy = 0;
+        points.forEach(function (point) {
+            var dx = point[0] - meanX;
+            var dy = point[1] - meanY;
+            sxx += dx * dx;
+            sxy += dx * dy;
+            syy += dy * dy;
+        });
+        if (sxx === 0) {
+            return null;
+        }
+        var slope = sxy / sxx;
+        return {slope: slope, intercept: meanY - slope * meanX, r2: syy === 0 ? 1 : (sxy * sxy) / (sxx * syy)};
+    }
+
+    // How many points a moving average takes: Trend Window, else about a tenth of them; odd (so it is centred), at
+    // least 3, and no more than there are.
+    function trendWindow(settings, count) {
+        var window = intSetting(settings, "trendWindow", 0, 0, 500) || Math.round(count / 10);
+        window = Math.max(3, window);
+        if (window % 2 === 0) {
+            window++;
+        }
+        return Math.min(window, count % 2 === 0 ? count - 1 : count);
+    }
+
+    // Each point's mean with the points either side of it, the window centred on it (narrower at the ends), so the
+    // line smooths the points without lagging behind them.
+    function movingAverage(points, window) {
+        var half = Math.floor(window / 2);
+        return points.map(function (point, i) {
+            var from = Math.max(0, i - half);
+            var to = Math.min(points.length - 1, i + half);
+            var sum = 0;
+            for (var j = from; j <= to; j++) {
+                sum += points[j][1];
+            }
+            return [point[0], sum / (to - from + 1)];
+        });
+    }
+
+    // A slope as the report and label give it: per the largest unit the time shown spans twice (e.g. +12/day), or
+    // per one along a number axis.
+    function trendSlopeText(slope, time, span, format) {
+        var per = 1;
+        var unit = " per 1";
+        if (time) {
+            var chosen = TREND_UNITS[TREND_UNITS.length - 1];
+            for (var i = 0; i < TREND_UNITS.length; i++) {
+                if (TREND_UNITS[i][0] * 2 <= span) {
+                    chosen = TREND_UNITS[i];
+                    break;
+                }
+            }
+            per = chosen[0];
+            unit = "/" + chosen[1];
+        }
+        var value = slope * per;
+        return (value < 0 ? "-" : "+") + format(Math.abs(value)) + unit;
+    }
+
+    // The trend of one series' points ([x, y]): the line drawn ([x, value] at each point's x, in x order), its
+    // label, whether it is weak, and what the report says of it (from a linear fit, whichever line is drawn). Its
+    // slope is per a unit suiting the chart's whole span (unitSpan), so every series' is per the same unit. Null
+    // with too few points: two at different x's, or three for a moving average.
+    function seriesTrend(name, points, method, settings, time, format, unitSpan) {
+        var sorted = points.filter(function (point) {
+            return point && isFinite(point[0]) && isFinite(point[1]);
+        }).map(function (point) {
+            return [point[0], point[1]];
+        }).sort(function (a, b) {
+            return a[0] - b[0];
+        });
+        var fit = linearFit(sorted);
+        if (!fit || (method === "moving average" && sorted.length < 3)) {
+            return null;
+        }
+        var span = sorted[sorted.length - 1][0] - sorted[0][0];
+        var size = sorted.reduce(function (sum, point) {
+            return sum + Math.abs(point[1]);
+        }, 0) / sorted.length;
+        var change = fit.slope * span;
+        var direction = change === 0 || Math.abs(change) < FLAT_TREND * size ? "flat"
+            : (change > 0 ? "rising" : "falling");
+        var slope = trendSlopeText(fit.slope, time, unitSpan || span, format);
+        var r2 = Math.round(fit.r2 * 100) / 100;
+        var line;
+        var label;
+        if (method === "moving average") {
+            var window = trendWindow(settings, sorted.length);
+            line = movingAverage(sorted, window);
+            label = window + "-point moving average";
+        } else {
+            line = sorted.map(function (point) {
+                return [point[0], fit.intercept + fit.slope * point[0]];
+            });
+            label = slope + ", R² " + r2.toFixed(2);
+        }
+        return {
+            name: name,
+            line: line,
+            label: label,
+            weak: method === "linear" && fit.r2 < WEAK_TREND,
+            report: {series: name, method: method, direction: direction, slope: slope, r2: r2}
+        };
+    }
+
+    // The trends a chart's Trend Line setting asks for, put in its report: one per series, or, stacked, one of
+    // their total. Series hold values by category (each category's x in xs, null if the categories have no order
+    // a trend could follow) or [x, y] points (categorical false). Refused, with a warning, when there is no x to
+    // follow, or for a reason the chart gives (e.g. a y of dates).
+    function chartTrends(settings, series, categorical, xs, time, stacked, format, report, refusal) {
+        var method = trendMethod(settings);
+        if (method === "none" || series.length === 0) {
+            return [];
+        }
+        if (refusal || (categorical && !xs)) {
+            report.warnings.push(refusal || ("Trend Line needs categories that are dates or numbers, in their own "
+                + "order (not sorted by value), so no trend is drawn"));
+            return [];
+        }
+        var inputs = series.map(function (one) {
+            return {
+                name: one.name,
+                points: categorical ? one.data.map(function (value, i) {
+                    return value === null || value === undefined ? null : [xs[i], value];
+                }).filter(Boolean) : one.data
+            };
+        });
+        if (stacked && inputs.length > 1) {
+            var totals = {};
+            var order = [];
+            inputs.forEach(function (input) {
+                input.points.forEach(function (point) {
+                    if (totals[point[0]] === undefined) {
+                        totals[point[0]] = 0;
+                        order.push(point[0]);
+                    }
+                    totals[point[0]] += point[1];
+                });
+            });
+            inputs = [{name: "Total", points: order.map(function (x) {
+                return [x, totals[x]];
+            })}];
+        }
+        var least = Infinity;
+        var most = -Infinity;
+        inputs.forEach(function (input) {
+            input.points.forEach(function (point) {
+                if (isFinite(point[0])) {
+                    least = Math.min(least, point[0]);
+                    most = Math.max(most, point[0]);
+                }
+            });
+        });
+        var trends = inputs.map(function (input) {
+            return seriesTrend(input.name, input.points, method, settings, time, format, most - least);
+        }).filter(Boolean);
+        report.trends = trends.slice(0, MAX_TRENDS).map(function (trend) {
+            return trend.report;
+        });
+        return trends;
+    }
+
+    // The x of each category, for a trend across them: their times or numbers; null when they are text, or sorted
+    // by value, as a trend across them would mean nothing.
+    function categoryXs(fields, id, categories, settings) {
+        var sort = textSetting(settings, "sort");
+        var type = fields.type(id);
+        if (sort === "Ascending" || sort === "Descending" || (type !== "DATE_TIME" && type !== "NUMBER")) {
+            return null;
+        }
+        var xs = categories.map(function (label) {
+            return Number(fields.rawOf(id, label));
+        });
+        return xs.every(isFinite) ? xs : null;
+    }
+
+    // The trends of a bar, line or scatter chart (see chartTrends), from its series as its model made them, before
+    // the value settings change them (e.g. a scatter plot's points jittered): with the x of each category, if its
+    // series are by category.
+    function trendsFor(kind, option, settings, fields, prefs, report) {
+        if ((kind !== "bar" && kind !== "line" && kind !== "scatter") || trendMethod(settings) === "none") {
+            return null;
+        }
+        var categories = option.xAxis && option.xAxis.type === "category" ? option.xAxis
+            : (option.yAxis && option.yAxis.type === "category" ? option.yAxis : null);
+        var id = kind === "bar" ? "category" : "x";
+        var xs = categories ? categoryXs(fields, id, categories.data || [], settings) : null;
+        var series = (option.series || []).map(function (one) {
+            return {name: one.name, data: one.data || []};
+        });
+        var refusal = kind === "scatter" && fields.type("y") === "DATE_TIME"
+            ? "Trend Line needs a y of numbers, so no trend is drawn" : null;
+        var trends = chartTrends(settings, series, !!categories, xs, fields.type(id) === "DATE_TIME",
+            kind !== "scatter" && boolSetting(settings, "stack", false), prefs.formatValue, report, refusal);
+        return trends.length > 0 ? {trends: trends, xs: categories ? xs : null} : null;
+    }
+
+    // Draws trends as dashed lines in their series' colours (a total's in the subtle text colour), fainter when weak,
+    // each labelled at its end. They are silent, so a click goes to the chart's own marks; on a log axis, a trend's
+    // values of 0 or less are left out.
+    function addTrendSeries(option, found, style, log) {
+        if (!found) {
+            return;
+        }
+        var names = (option.series || []).map(function (one) {
+            return one.name;
+        });
+        var colours = option.color || [];
+        // Added to a copy: a model's click handling reads its own series by index. The legend keeps to the series;
+        // each trend is labelled at its end.
+        option.series = (option.series || []).slice();
+        if (option.legend) {
+            option.legend.data = names.slice();
+        }
+        found.trends.forEach(function (trend) {
+            var index = names.indexOf(trend.name);
+            var colour = index >= 0 && colours.length > 0 ? colours[index % colours.length] : style.subtleText;
+            var data = trend.line;
+            if (found.xs) {
+                var at = {};
+                trend.line.forEach(function (point) {
+                    at[point[0]] = point[1];
+                });
+                data = found.xs.map(function (x) {
+                    return at[x] === undefined ? null : at[x];
+                });
+            }
+            data = data.map(function (item) {
+                var value = Array.isArray(item) ? item[1] : item;
+                return log && value !== null && value <= 0 ? null : item;
+            });
+            option.series.push({
+                type: "line",
+                name: trend.name + " trend",
+                data: data,
+                silent: true,
+                symbol: "none",
+                showSymbol: false,
+                connectNulls: true,
+                z: 5,
+                selectedMode: "multiple",
+                emphasis: {disabled: true},
+                lineStyle: {color: colour, type: "dashed", width: 1.5, opacity: trend.weak ? 0.45 : 0.9},
+                itemStyle: {color: colour},
+                endLabel: {
+                    show: true,
+                    formatter: function () {
+                        return trend.label;
+                    },
+                    color: colour,
+                    fontSize: 11,
+                    // A halo in the chart's background, so the label reads over the marks under it.
+                    textBorderColor: backgroundOf(style),
+                    textBorderWidth: 3,
+                    align: "right",
+                    verticalAlign: "bottom",
+                    offset: [-4, -4]
+                }
+            });
+        });
+    }
+
     function applyValueSettings(kind, option, settings, style, prefs, report) {
         var format = prefs.formatValue;
         var unitsSet = String(textSetting(settings, "units") || "none").toLowerCase() !== "none";
@@ -3198,7 +3496,10 @@ if (!window.visualisations) {
             textStyle: {color: style.text}
         });
 
+        // Trends are of the values as the model made them, drawn after the value settings (e.g. a log axis) apply.
+        var trends = trendsFor(kind, option, settings, fields, prefs, report);
         applyValueSettings(kind, option, settings, style, prefs, report);
+        addTrendSeries(option, trends, style, boolSetting(settings, "logScale", false));
         addZoom(kind, option, style, settings, rangeAt);
         // The zoom kept from before (e.g. across a refresh of the table, or a new interval).
         (option.dataZoom || []).forEach(function (zoom, index) {
@@ -4024,6 +4325,8 @@ if (!window.visualisations) {
     // Exposed for testing in a browser.
     visualisations.EChartsGeneric.internals = {
         majorVersion: majorVersion,
+        trendWindow: trendWindow,
+        linearFit: linearFit,
         buildOption: buildOption,
         formatTime: formatTime,
         sanitiseOptions: sanitiseOptions,

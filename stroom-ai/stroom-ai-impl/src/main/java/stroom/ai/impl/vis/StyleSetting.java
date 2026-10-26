@@ -82,6 +82,14 @@ public enum StyleSetting {
             List.of("Sum", "Average", "Min", "Max"), null, null,
             "how Auto Interval combines the values in one interval: Sum for counts and totals, Max or Min for "
             + "peaks and lows, Average for averages (an average of the rows' values)"),
+    TREND_LINE("trendLine", "Trend Line", Control.SELECTION, "none", List.of("none", "linear", "moving average"),
+            null, null, "draws each series' trend as a dashed line (a stack's total's, if stacked), labelled with its "
+                        + "slope (e.g. +12/day) and R² (how well a straight line fits, 0 to 1; a weak fit is "
+                        + "drawn fainter): linear is a straight-line fit, moving average a centred average of "
+                        + "the points around each; across categories only if they are dates or numbers, not "
+                        + "sorted by value"),
+    TREND_WINDOW("trendWindow", "Trend Window", Control.NUMBER, "0", List.of(), 0, 500,
+            "how many points a moving average Trend Line takes; 0 chooses about a tenth of them"),
     JITTER("jitter", "Jitter", Control.BOOLEAN, "false", List.of(), null, null,
             "spreads out points that would sit on top of each other"),
     THUMBNAIL("thumbnail", "Thumbnail", Control.BOOLEAN, "false", List.of(), null, null,
