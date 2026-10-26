@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.index.client.component.IndexSettingsController;
+import stroom.index.client.component.IndexShardListController;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -50,7 +51,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                           final LinkTabPanelView view,
                           final Provider<IndexSettingsController> indexSettingsProvider,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenterProvider,
-                          final Provider<IndexShardPresenter> indexShardPresenterProvider,
+                          final Provider<IndexShardListController> indexShardListProvider,
                           final Provider<IndexDataPresenter> indexDataPresenterProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final DocumentUserPermissionsTabProvider<LuceneIndexDoc> documentUserPermissionsTabProvider,
@@ -61,7 +62,8 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             selectFirst = SHARDS;
-            addTab(SHARDS, new DocTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
+            addTab(SHARDS, new ControllerTabProvider<>(eventBus, indexShardListProvider::get,
+                    IndexShardListController::read));
         }
 
         addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
