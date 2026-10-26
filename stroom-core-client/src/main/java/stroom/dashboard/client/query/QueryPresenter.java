@@ -21,6 +21,7 @@ import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.core.client.messages.ErrorMessageTemplates;
+import stroom.dashboard.client.component.ProcessorLimitsController;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -73,9 +74,7 @@ import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -106,7 +105,7 @@ public class QueryPresenter
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<ExplorerPopupController> pipelineSelection;
-    private final ProcessorLimitsPresenter processorLimitsPresenter;
+    private final Provider<ProcessorLimitsController> processorLimitsControllerProvider;
     private final RestFactory restFactory;
     private final UiConfigCache clientPropertyCache;
     private final LocationManager locationManager;
@@ -137,7 +136,7 @@ public class QueryPresenter
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
                           final Provider<ExplorerPopupController> pipelineSelection,
-                          final ProcessorLimitsPresenter processorLimitsPresenter,
+                          final Provider<ProcessorLimitsController> processorLimitsControllerProvider,
                           final IndexLoader indexLoader,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
@@ -150,12 +149,11 @@ public class QueryPresenter
         own(expressionTree);
         own(historyPresenter);
         own(favouritesPresenter);
-        own(processorLimitsPresenter);
         this.expressionTree = expressionTree;
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
-        this.processorLimitsPresenter = processorLimitsPresenter;
+        this.processorLimitsControllerProvider = processorLimitsControllerProvider;
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.clientPropertyCache = clientPropertyCache;
@@ -464,27 +462,16 @@ public class QueryPresenter
                 final long defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
                 final long defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
 
-                processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
-                processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-                ShowPopupEvent.builder(processorLimitsPresenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .modal()
-                        .caption("Process Search Results")
-                        .onShow(e -> processorLimitsPresenter.getView().focus())
-                        .onHideRequest(e -> {
-                            if (e.isOk()) {
-                                final Limits.Builder limitsBuilder = Limits.builder();
-                                if (processorLimitsPresenter.getRecordLimit() != null) {
-                                    limitsBuilder.eventCount(processorLimitsPresenter.getRecordLimit());
-                                }
-                                if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                    limitsBuilder.durationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
-                                }
-                                createProcessFilter(queryData.copy().limits(limitsBuilder.build()).build(), pipeline);
-                            }
-                            e.hide();
-                        })
-                        .fire();
+                processorLimitsControllerProvider.get().show(this,
+                        defaultProcessorRecordLimit,
+                        defaultProcessorTimeLimit,
+                        (recordLimit, timeLimitMins) -> {
+                            final Limits limits = Limits.builder()
+                                    .eventCount(recordLimit)
+                                    .durationMs(timeLimitMins * 60 * 1000)
+                                    .build();
+                            createProcessFilter(queryData.copy().limits(limits).build(), pipeline);
+                        });
             }
         }, this);
     }

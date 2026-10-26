@@ -223,6 +223,26 @@ public final class DashboardComponentStories {
                             ValueMatcher.stringContaining("resourcestore/results")));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Rename starts with the column's name; Enter renames it
+                .story("TableColumnRename", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Field");
+                    final Query name = rename.getByLabelText("Name");
+                    play.expect(name).toHaveValue("Name");
+                    play.clear(name);
+                    play.type(name, "Label");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(DashboardPlays.header(play, "Label")).toBeInTheDocument());
+                    play.expect(screen.queryByText("Rename Field", StroomDom.DIALOG_TITLE)).toBeNull();
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The column menu has Rename, Expression, Group, Duplicate and Remove, in GWT's order
                 .story("TableColumnMenu", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))

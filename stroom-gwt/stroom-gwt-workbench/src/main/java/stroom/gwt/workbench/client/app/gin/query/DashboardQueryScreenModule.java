@@ -24,9 +24,6 @@ import stroom.dashboard.client.query.CurrentSelectionViewImpl;
 import stroom.dashboard.client.query.NamePresenter;
 import stroom.dashboard.client.query.NamePresenter.NameView;
 import stroom.dashboard.client.query.NameViewImpl;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter.ProcessorLimitsView;
-import stroom.dashboard.client.query.ProcessorLimitsViewImpl;
 import stroom.dashboard.client.query.QueryFavouritesPresenter;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.client.query.QueryFavouritesViewImpl;
@@ -69,9 +66,6 @@ public class DashboardQueryScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(QueryPresenter.class,
                 QueryView.class,
                 QueryViewImpl.class);
-        bindPresenterWidget(ProcessorLimitsPresenter.class,
-                ProcessorLimitsView.class,
-                ProcessorLimitsViewImpl.class);
         bindPresenterWidget(BasicQuerySettingsPresenter.class,
                 BasicQuerySettingsView.class,
                 BasicQuerySettingsViewImpl.class);

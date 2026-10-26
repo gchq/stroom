@@ -20,6 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
+import stroom.dashboard.client.component.LayoutConstraintController;
+import stroom.dashboard.client.component.RenameTabController;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
@@ -112,7 +114,7 @@ public class DashboardPresenter
     private final Components components;
     private final QueryToolbarController queryToolbar;
     private final QueryInfo queryInfo;
-    private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
+    private final Provider<LayoutConstraintController> layoutConstraintControllerProvider;
     private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
     private final Provider<ExplorerPopupController> dashboardSelection;
     private CurrentSelectionPresenter currentSelectionPresenter;
@@ -146,9 +148,9 @@ public class DashboardPresenter
                               final FlexLayout flexLayout,
                               final Components components,
                               final QueryToolbarController queryToolbar,
-                              final Provider<RenameTabPresenter> renameTabPresenterProvider,
+                              final Provider<RenameTabController> renameTabControllerProvider,
                               final QueryInfo queryInfo,
-                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
+                              final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
                               final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider,
                               final UrlParameters urlParameters,
                               final Provider<ExplorerPopupController> dashboardSelection) {
@@ -159,7 +161,7 @@ public class DashboardPresenter
         this.components = components;
         components.setOwner(this);
         this.queryInfo = queryInfo;
-        this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
+        this.layoutConstraintControllerProvider = layoutConstraintControllerProvider;
         this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;
         this.dashboardSelection = dashboardSelection;
 
@@ -167,7 +169,7 @@ public class DashboardPresenter
         queryToolbar.setParamValues(dashboardContext);
 
         // Its rename dialog is this one's, made for one use
-        final TabManager tabManager = new TabManager(components, () -> makeDialog(renameTabPresenterProvider), this);
+        final TabManager tabManager = new TabManager(components, renameTabControllerProvider, this);
         flexLayout.setTabManager(tabManager);
 
         flexLayout.setChangeHandler(this);
@@ -255,21 +257,13 @@ public class DashboardPresenter
     private void onConstraints() {
         restoreTabs();
 
-        final LayoutConstraintPresenter presenter = makeDialog(layoutConstraintPresenterProvider);
-        final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
-            if (!Objects.equals(e.getValue(), layoutConstraints)) {
-                layoutConstraints = e.getValue();
+        layoutConstraintControllerProvider.get().edit(this, layoutConstraints, constraints -> {
+            if (!Objects.equals(constraints, layoutConstraints)) {
+                layoutConstraints = constraints;
                 layoutPresenter.setLayoutConstraints(layoutConstraints);
                 onChange();
             }
         });
-        presenter.read(layoutConstraints);
-        ShowPopupEvent.builder(presenter)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .caption("Set Layout Constraints")
-                .onShow(e -> presenter.getView().focus())
-                .onHide(e -> handlerRegistration.removeHandler())
-                .fire();
     }
 
     private void onSelectionInfo() {

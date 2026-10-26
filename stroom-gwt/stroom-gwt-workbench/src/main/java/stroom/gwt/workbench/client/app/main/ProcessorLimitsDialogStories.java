@@ -16,22 +16,21 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/ProcessorLimitsDialog`, showing Stroom's real [ProcessorLimitsPresenter]
+/// Stories of `App/Main/ProcessorLimitsDialog`, showing Stroom's real [ProcessorLimitsController]
 /// (the 'Process Search Results' dialog), shown as `QueryPresenter.setProcessorLimits` shows it,
 /// with the UI config's process limits.
 ///
@@ -39,6 +38,9 @@ import com.google.gwt.user.client.ui.Widget;
 /// popup, so this dialog only has the limits. Creating the filter (which `QueryPresenter` does
 /// after OK, as `POST /processorFilter/v1`) isn't reached by the story.
 public final class ProcessorLimitsDialogStories {
+
+    /// The name of the spy given the limits on OK.
+    static final String ON_OK = "onOk";
 
     private ProcessorLimitsDialogStories() {
         // Static utility
@@ -65,6 +67,27 @@ public final class ProcessorLimitsDialogStories {
                     play.expect(screen.getByRole("button", StroomDom.button("OK"))).toBeEnabled();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // OK gives the limits entered
+                .story("Ok", ProcessorLimitsDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query timeLimit = screen.findByLabelText("Time Limit (mins)");
+                    play.clear(timeLimit);
+                    play.type(timeLimit, "45");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_OK)).toHaveBeenCalledWith(1000000L, 45L));
+                    play.waitFor(() -> play.expect(screen.queryByText("Process Search Results")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Cancel gives nothing
+                .story("Cancel", ProcessorLimitsDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Process Search Results");
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Process Search Results")).toBeNull());
+                    play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
                 });
     }
 
@@ -73,20 +96,16 @@ public final class ProcessorLimitsDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
                 .injector(injector)
                 .build();
-        final ProcessorLimitsPresenter presenter = injector.getProcessorLimitsPresenter();
-        // As QueryPresenter.setProcessorLimits shows it
+        final Spy onOk = harness.fn(ON_OK);
+        // As QueryPresenter shows it
         harness.afterStartUp(() -> harness.getUiConfigCache().get(result -> {
             if (result != null) {
-                presenter.setTimeLimitMins(result.getProcess().getDefaultTimeLimit());
-                presenter.setRecordLimit(result.getProcess().getDefaultRecordLimit());
-                ShowPopupEvent.builder(presenter)
-                        .popupType(PopupType.OK_CANCEL_DIALOG)
-                        .caption("Process Search Results")
-                        .onShow(e -> presenter.getView().focus())
-                        .onHideRequest(e -> e.hide())
-                        .fire();
+                injector.getProcessorLimitsController().show(harness.getAppRoot(),
+                        result.getProcess().getDefaultRecordLimit(),
+                        result.getProcess().getDefaultTimeLimit(),
+                        (recordLimit, timeLimitMins) -> onOk.call(recordLimit, timeLimitMins));
             }
-        }, presenter));
+        }));
         return harness.asWidget();
     }
 }

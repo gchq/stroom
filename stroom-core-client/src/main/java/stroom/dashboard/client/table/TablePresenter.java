@@ -24,6 +24,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -199,7 +200,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final PagerPanel pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
-                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
+                          final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
@@ -275,7 +276,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Its dialogs are this one's, each made for one use
         columnsManager = new ColumnsManager(eventBus,
                 this,
-                () -> makeDialog(renameColumnPresenterProvider),
+                renameColumnControllerProvider,
                 () -> makeDialog(expressionPresenterProvider),
                 formatPresenter,
                 tableFilterPresenter,

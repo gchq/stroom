@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
@@ -62,7 +63,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private final EventBus eventBus;
     private final TablePresenter tablePresenter;
-    private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
+    private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final TableFilterPresenter tableFilterPresenter;
@@ -76,14 +77,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     public ColumnsManager(final EventBus eventBus,
                           final TablePresenter tablePresenter,
-                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
+                          final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
-        this.renameColumnPresenterProvider = renameColumnPresenterProvider;
+        this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
         this.tableFilterPresenter = tableFilterPresenter;
@@ -315,13 +316,19 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     public void showRename(final Column column) {
-        final RenameColumnPresenter renameColumnPresenter =
-                renameColumnPresenterProvider.get();
-        renameColumnPresenter.show(tablePresenter, column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
-            tablePresenter.onChange();
-            tablePresenter.updateColumns();
-        });
+        renameColumnControllerProvider.get().rename(tablePresenter,
+                column,
+                tablePresenter::handleFieldRename,
+                name -> tablePresenter.getTableComponentSettings()
+                        .getColumns()
+                        .stream()
+                        .map(Column::getName)
+                        .anyMatch(columnName -> Objects.equals(columnName, name)),
+                (oldField, newField) -> {
+                    replaceColumn(oldField, newField);
+                    tablePresenter.onChange();
+                    tablePresenter.updateColumns();
+                });
     }
 
     public void showExpression(final Column column) {

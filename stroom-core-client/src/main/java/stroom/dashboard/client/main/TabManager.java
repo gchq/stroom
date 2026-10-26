@@ -17,6 +17,7 @@
 package stroom.dashboard.client.main;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.component.RenameTabController;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
@@ -46,7 +47,7 @@ import java.util.function.Consumer;
 public class TabManager {
 
     private final Components components;
-    private final Provider<RenameTabPresenter> renameTabPresenterProvider;
+    private final Provider<RenameTabController> renameTabControllerProvider;
     private final DashboardPresenter dashboardPresenter;
 
     private FlexLayout flexLayout;
@@ -54,10 +55,10 @@ public class TabManager {
     private MutableTabConfig currentTabConfig;
 
     public TabManager(final Components components,
-                      final Provider<RenameTabPresenter> renameTabPresenterProvider,
+                      final Provider<RenameTabController> renameTabControllerProvider,
                       final DashboardPresenter dashboardPresenter) {
         this.components = components;
-        this.renameTabPresenterProvider = renameTabPresenterProvider;
+        this.renameTabControllerProvider = renameTabControllerProvider;
         this.dashboardPresenter = dashboardPresenter;
     }
 
@@ -111,10 +112,12 @@ public class TabManager {
 
     public void showRename(final ComponentConfig componentConfig,
                            final Consumer<String> nameChangeConsumer) {
-        renameTabPresenterProvider.get().show(dashboardPresenter,
-                tabLayout,
-                componentConfig.getName(),
-                nameChangeConsumer);
+        final TabLayout layout = tabLayout;
+        renameTabControllerProvider.get().rename(dashboardPresenter, componentConfig.getName(), name -> {
+            nameChangeConsumer.accept(name);
+            layout.refresh();
+            dashboardPresenter.onChange();
+        });
     }
 
     public void showSettings(final MutableTabConfig tabConfig) {

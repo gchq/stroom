@@ -20,9 +20,6 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.core.client.ContentManager;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter.ProcessorLimitsView;
-import stroom.dashboard.client.query.ProcessorLimitsViewImpl;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.client.view.DataUploadViewImpl;
@@ -46,9 +43,6 @@ public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DataUploadPresenter.class,
                 DataUploadView.class,
                 DataUploadViewImpl.class);
-        bindPresenterWidget(ProcessorLimitsPresenter.class,
-                ProcessorLimitsView.class,
-                ProcessorLimitsViewImpl.class);
         bind(ContentManager.class).in(Singleton.class);
     }
 }

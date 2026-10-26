@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.gin.processing;
 
 import stroom.analytics.client.presenter.ExecutionScheduleManager;
-import stroom.dashboard.client.query.ProcessorLimitsPresenter;
+import stroom.dashboard.client.component.ProcessorLimitsController;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
@@ -100,7 +100,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     ProcessorEditPresenter getProcessorEditPresenter();
 
     /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.
-    ProcessorLimitsPresenter getProcessorLimitsPresenter();
+    ProcessorLimitsController getProcessorLimitsController();
 
     /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
     ProcessorTaskListPresenter getProcessorTaskListPresenter();

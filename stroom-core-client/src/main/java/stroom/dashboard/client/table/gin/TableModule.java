@@ -34,9 +34,6 @@ import stroom.dashboard.client.table.FormatViewImpl;
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter;
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
 import stroom.dashboard.client.table.IncludeExcludeFilterViewImpl;
-import stroom.dashboard.client.table.RenameColumnPresenter;
-import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
-import stroom.dashboard.client.table.RenameColumnViewImpl;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
@@ -73,7 +70,6 @@ public class TableModule extends AbstractPresenterModule {
                 IncludeExcludeFilterView.class,
                 IncludeExcludeFilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
-        bindPresenterWidget(RenameColumnPresenter.class, RenameColumnView.class, RenameColumnViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
         bindPresenterWidget(

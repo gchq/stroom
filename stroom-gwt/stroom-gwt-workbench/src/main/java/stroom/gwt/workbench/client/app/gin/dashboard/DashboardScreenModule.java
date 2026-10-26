@@ -19,12 +19,6 @@ package stroom.gwt.workbench.client.app.gin.dashboard;
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardViewImpl;
-import stroom.dashboard.client.main.LayoutConstraintPresenter;
-import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
-import stroom.dashboard.client.main.LayoutConstraintViewImpl;
-import stroom.dashboard.client.main.RenameTabPresenter;
-import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
-import stroom.dashboard.client.main.RenameTabViewImpl;
 import stroom.dashboard.client.unknown.HTMLView;
 import stroom.dashboard.client.unknown.HTMLViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
@@ -52,12 +46,6 @@ public class DashboardScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DashboardPresenter.class,
                 DashboardPresenter.DashboardView.class,
                 DashboardViewImpl.class);
-        bindPresenterWidget(RenameTabPresenter.class,
-                RenameTabView.class,
-                RenameTabViewImpl.class);
-        bindPresenterWidget(LayoutConstraintPresenter.class,
-                LayoutConstraintView.class,
-                LayoutConstraintViewImpl.class);
         bindSharedView(HTMLView.class,
                 HTMLViewImpl.class);
     }

@@ -217,6 +217,48 @@ public final class DashboardLayoutStories {
                             .toBeNull());
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Rename Tab: Enter renames it
+                .story("RenameTabWithEnter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Query");
+                    play.click(DashboardPlays.menuItem(screen, "Rename"));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Tab");
+                    final Query name = rename.getByLabelText("Name");
+                    play.expect(name).toHaveValue("The Query");
+                    play.clear(name);
+                    play.type(name, "Search");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Search")).toBeInTheDocument());
+                    play.expect(screen.queryByText("Rename Tab", StroomDom.DIALOG_TITLE)).toBeNull();
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Set Layout Constraints: a change applies at once, and makes the dashboard changed
+                .story("SetLayoutConstraints", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    play.click(play.getByRole("button", "Set Layout Constraints"));
+                    final Play constraints = DashboardPlays.dialog(screen, "Set Layout Constraints");
+                    final Query fitWidth = constraints.getByRole("checkbox", "Fit Width");
+                    play.waitFor(() -> play.expect(fitWidth).toHaveFocus());
+                    play.expect(fitWidth).toBeChecked();
+                    play.click(fitWidth);
+                    play.waitFor(() -> play.expect(play.querySelector(".dashboard-scrollPanel"))
+                            .toHaveClass("dashboard-scrollPanel--horizontal-scroll"));
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+                    play.click(constraints.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Layout Constraints",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // Dragging a tab to a panel's right edge docks it beside the panel
                 .story("DragTabToDock", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD, routes -> {
                 }))
