@@ -34,6 +34,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.structure.client.component.NewElementController;
+import stroom.pipeline.structure.client.component.PipelineReferenceListController;
 import stroom.pipeline.structure.client.component.PipelineTree;
 import stroom.pipeline.structure.client.component.PropertyListController;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
@@ -88,7 +89,7 @@ public class PipelineStructurePresenter
     private final RestFactory restFactory;
     private final Provider<NewElementController> newElementProvider;
     private final PropertyListController propertyListPresenter;
-    private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
+    private final PipelineReferenceListController pipelineReferenceListPresenter;
     private final Provider<EditorPresenter> jsonEditorProvider;
     private final PipelineTree pipelineTree;
     private PipelineElement selectedElement;
@@ -109,7 +110,7 @@ public class PipelineStructurePresenter
                                       final RestFactory restFactory,
                                       final Provider<NewElementController> newElementProvider,
                                       final PropertyListController propertyListPresenter,
-                                      final PipelineReferenceListPresenter pipelineReferenceListPresenter,
+                                      final PipelineReferenceListController pipelineReferenceListPresenter,
                                       final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
         own(pipelinePresenter);
@@ -127,7 +128,7 @@ public class PipelineStructurePresenter
         getView().setInheritanceTree(pipelinePresenter.getView());
         getView().setTreeView(pipelineTree);
         getView().setProperties(propertyListPresenter);
-        getView().setPipelineReferences(pipelineReferenceListPresenter.getView());
+        getView().setPipelineReferences(pipelineReferenceListPresenter);
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -194,7 +195,6 @@ public class PipelineStructurePresenter
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document) {
         pipelinePresenter.setReadOnly(isReadOnly());
-        pipelineReferenceListPresenter.setReadOnly(isReadOnly());
         // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
         // that can be changed
         pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
@@ -743,7 +743,7 @@ public class PipelineStructurePresenter
 
         void setProperties(IsWidget view);
 
-        void setPipelineReferences(View view);
+        void setPipelineReferences(IsWidget view);
 
         void setAddEnabled(boolean enabled);
 

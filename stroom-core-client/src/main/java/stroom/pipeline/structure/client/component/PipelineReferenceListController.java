@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.structure.client.presenter;
+package stroom.pipeline.structure.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.component.DocRefCell;
-import stroom.data.client.component.DocRefCell.Builder;
 import stroom.data.client.component.RefCellsController;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.DocRef.DisplayType;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -31,24 +29,16 @@ import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.structure.client.component.NewPipelineReferenceController;
+import stroom.pipeline.structure.client.component.PipelineReferenceList.ReferenceState;
+import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.planb.shared.PlanBDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
-import stroom.svg.shared.SvgImage;
-import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -62,25 +52,16 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter
-        extends MyPresenterWidget<PagerPanel> {
+/// A pipeline element's reference pipelines ([PipelineReferenceList]) in a pipeline's model: those
+/// inherited, added and removed, each document's name fetched afresh. New and Edit open a reference's
+/// editor, Remove removes one (or restores a removed one), unless the pipeline is read only
+/// ([Contexts#READ_ONLY]); the changes are written to the model.
+public class PipelineReferenceListController extends Controller {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final String ADDED = "pipelineStructureViewImpl-property-added";
-    private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
-    private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
-    private static final String NEW_TITLE = "New Pipeline Reference";
-    private static final String EDIT_TITLE = "Edit Selected Pipeline Reference";
-    private static final String REMOVE_TITLE = "Remove Selected Pipeline Reference";
-    private static final String RESTORE_TITLE = "Restore Selected Pipeline Reference";
-    private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    private final DataGrid<PipelineReference> dataGrid;
-    private final MultiSelectionModelImpl<PipelineReference> selectionModel;
-    private final ButtonView addButton;
-    private final ButtonView editButton;
-    private final ButtonView removeButton;
-    private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
+    private final PipelineReferenceList view;
+    private final Map<PipelineReference, ReferenceState> referenceStateMap = new HashMap<>();
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferenceController> newPipelineReferenceProvider;
     private final RestFactory restFactory;
@@ -91,189 +72,62 @@ public class PipelineReferenceListPresenter
     private PipelineElement currentElement;
     private PipelinePropertyType propertyType;
 
-    private boolean readOnly = true;
-
-    private final RefCellsController refCells;
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus                     The application's event bus.
+    /// @param view                         The content.
+    /// @param newPipelineReferenceProvider Makes a reference's editor.
+    /// @param restFactory                  Fetches the documents' names.
+    /// @param pipelineElementTypesFactory  Gives the elements' property types.
+    /// @param refCells                     Lets the cells open their documents.
     @Inject
-    public PipelineReferenceListPresenter(final EventBus eventBus,
-                                          final PagerPanel view,
-                                          final Provider<NewPipelineReferenceController> newPipelineReferenceProvider,
-                                          final RestFactory restFactory,
-                                          final PipelineElementTypesFactory pipelineElementTypesFactory,
-                                          final RefCellsController refCells) {
-        super(eventBus, view);
-        this.refCells = own(refCells);
-
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Pipeline References");
-        dataGrid.setMultiLine(true);
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
-
+    public PipelineReferenceListController(
+            final EventBus eventBus,
+            final PipelineReferenceList view,
+            final Provider<NewPipelineReferenceController> newPipelineReferenceProvider,
+            final RestFactory restFactory,
+            final PipelineElementTypesFactory pipelineElementTypesFactory,
+            final RefCellsController refCells) {
+        super(eventBus);
+        this.view = view;
+        own(refCells);
         this.newPipelineReferenceProvider = newPipelineReferenceProvider;
         this.restFactory = restFactory;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
+        initWidget(view);
 
-        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
-        view.getToolbar().setName("Reference actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
-        editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
-        removeButton.setEnabled(false);
-
-        addColumns();
-        enableButtons();
-
-        own(selectionModel.addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(selectionModel.getSelected());
-            }
-        }));
+        view.addColumns(
+                referenceStateMap::get,
+                pipelineReference -> pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference),
+                source -> pipeline.getUuid().equals(source.getUuid()),
+                () -> refCells.configure(new DocRefCell.Builder<>()));
+        view.setOnAdd(this::onAdd);
+        view.setOnEdit(this::onEdit);
+        view.setOnRemove(this::onRemove);
+        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
-    private void addColumns() {
-        addPipelineColumn();
-        addFeedColumn();
-        addStreamTypeColumn();
-        addInheritedFromColumn();
-    }
-
-    private void addPipelineColumn() {
-        // Pipeline.
-        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .showIcon(true)
-                .cssClassFunction(this::getStateCssClass)
-                .cellTextFunction(pipelineReference -> {
-                    if (pipelineReference == null || pipelineReference.getPipeline() == null) {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    } else {
-                        return SafeHtmlUtils.fromString(pipelineReference.getPipeline()
-                                .getDisplayValue(DisplayType.AUTO));
-                    }
-                })
-                .docRefFunction(pipelineProperty -> NullSafe.get(
-                        pipelineProperty,
-                        PipelineReference::getPipeline));
-
-        final Column<PipelineReference, PipelineReference> pipelineCol = DataGridUtil.docRefColumnBuilder(
-                        refCells.configure(cellBuilder))
-                .build();
-
-        dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
-    }
-
-    private void addFeedColumn() {
-        // Feed.
-        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .cssClassFunction(this::getStateCssClass)
-                .cellTextFunction(pipelineReference -> {
-                    if (pipelineReference == null || pipelineReference.getFeed() == null) {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    } else {
-                        return SafeHtmlUtils.fromString(pipelineReference.getFeed()
-                                .getDisplayValue(DisplayType.AUTO));
-                    }
-                })
-                .docRefFunction(pipelineProperty -> NullSafe.get(
-                        pipelineProperty,
-                        PipelineReference::getFeed));
-
-        final Column<PipelineReference, PipelineReference> feedCol = DataGridUtil.docRefColumnBuilder(
-                        refCells.configure(cellBuilder))
-                .build();
-
-        dataGrid.addResizableColumn(feedCol, "Feed", 350);
-    }
-
-    private void addStreamTypeColumn() {
-        // Stream type.
-        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getStreamType() == null) {
-                    return null;
-                }
-                return getSafeHtmlWithState(pipelineReference, pipelineReference.getStreamType());
-            }
-        }, "Type", 200);
-    }
-
-    private void addInheritedFromColumn() {
-        // Default Value.
-        @SuppressWarnings("checkstyle:LineLength") // cos GWT
-        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
-                .cssClassFunction(this::getStateCssClass)
-                .cellTextFunction(pipelineReference -> {
-                    final DocRef source = pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference);
-                    if (pipelineReference == null ||
-                        source == null ||
-                        pipeline.getUuid().equals(source.getUuid())) {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    } else {
-                        return SafeHtmlUtils.fromString(source.getDisplayValue(DisplayType.AUTO));
-                    }
-                })
-                .docRefFunction(pipelineReference ->
-                        pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference));
-
-        final Column<PipelineReference, PipelineReference> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
-                        refCells.configure(cellBuilder))
-                .build();
-
-        dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
-    }
-
-    private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {
-        if (string == null) {
-            return SafeHtmlUtils.EMPTY_SAFE_HTML;
-        }
-
-        final State state = referenceStateMap.get(pipelineReference);
-        final String className = switch (state) {
-            case ADDED -> ADDED;
-            case REMOVED -> REMOVED;
-            case INHERITED -> INHERITED;
-        };
-
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
-        builder.appendEscaped(string);
-        builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
-        return builder.toSafeHtml();
-    }
-
-    private String getStateCssClass(final PipelineReference pipelineReference) {
-        final State state = referenceStateMap.get(pipelineReference);
-        return switch (state) {
-            case ADDED -> ADDED;
-            case REMOVED -> REMOVED;
-            case INHERITED -> INHERITED;
-        };
-    }
-
-    public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
-    }
-
+    /// @param tableName The list's name, for assistive technology.
     public void setTableName(final String tableName) {
-        dataGrid.setTableName(tableName);
+        view.setTableName(tableName);
     }
 
+    /// @param pipeline The pipeline shown.
     public void setPipeline(final PipelineDoc pipeline) {
         this.pipeline = pipeline;
     }
 
+    /// @param pipelineModel The pipeline's model, whose references are shown and changed.
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
     }
 
+    /// Shows an element's references, once the elements' property types are known.
+    ///
+    /// @param currentElement The element, or `null` for none.
     public void setCurrentElement(final PipelineElement currentElement) {
-        pipelineElementTypesFactory.get(this, elementTypes -> {
+        pipelineElementTypesFactory.get(view.getTaskMonitor(), elementTypes -> {
             this.currentElement = currentElement;
-            enableButtons();
 
             // Discover the reference property type.
             this.propertyType = null;
@@ -287,6 +141,7 @@ public class PipelineReferenceListPresenter
                     }
                 }
             }
+            view.setCanAdd(propertyType != null);
 
             refresh();
         });
@@ -303,8 +158,8 @@ public class PipelineReferenceListPresenter
     private void onEdit(final PipelineReference pipelineReference) {
         if (pipelineReference != null) {
             // Only allow edit of added references.
-            final State state = referenceStateMap.get(pipelineReference);
-            if (State.ADDED.equals(state)) {
+            final ReferenceState state = referenceStateMap.get(pipelineReference);
+            if (ReferenceState.ADDED.equals(state)) {
                 showEditor(pipelineReference, false);
             }
         }
@@ -351,8 +206,7 @@ public class PipelineReferenceListPresenter
         }
     }
 
-    private void onRemove() {
-        final PipelineReference selected = selectionModel.getSelected();
+    private void onRemove(final PipelineReference selected) {
         if (selected != null) {
             final PipelineData pipelineData = pipelineModel.getPipelineData();
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
@@ -379,7 +233,7 @@ public class PipelineReferenceListPresenter
         pipelineModel.update(pipelineData);
     }
 
-    private void addReference(final PipelineReference reference, final State state) {
+    private void addReference(final PipelineReference reference, final ReferenceState state) {
         // It is important that the pipe references are displayed in the order in which
         // they appear in the pipe doc (with inherited ones first)
         // Order is important as the ref lookup will try each loader in this o
@@ -394,7 +248,7 @@ public class PipelineReferenceListPresenter
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
-        selectionModel.clear();
+        view.getSelectionModel().clear();
 
         if (currentElement != null) {
             final String id = currentElement.getId();
@@ -404,20 +258,20 @@ public class PipelineReferenceListPresenter
                 if (baseReferences != null) {
                     for (final List<PipelineReference> list : baseReferences.values()) {
                         for (final PipelineReference reference : list) {
-                            addReference(reference, State.INHERITED);
+                            addReference(reference, ReferenceState.INHERITED);
                         }
                     }
                 }
                 for (final PipelineReference reference : pipelineModel.getPipelineData()
                         .getAddedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
-                        addReference(reference, State.ADDED);
+                        addReference(reference, ReferenceState.ADDED);
                     }
                 }
                 for (final PipelineReference reference : pipelineModel.getPipelineData()
                         .getRemovedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
-                        addReference(reference, State.REMOVED);
+                        addReference(reference, ReferenceState.REMOVED);
                     }
                 }
             }
@@ -445,12 +299,13 @@ public class PipelineReferenceListPresenter
                         }
                         references.clear();
                         references.addAll(newList);
-                        setData(references);
+                        view.setData(references);
                     })
-                    .taskMonitorFactory(getView())
+                    .owner(this)
+                    .taskMonitorFactory(view.getTaskMonitor())
                     .exec();
         } else {
-            setData(references);
+            view.setData(references);
         }
     }
 
@@ -474,38 +329,5 @@ public class PipelineReferenceListPresenter
         if (reference.getPipeline() != null) {
             docRefs.add(reference.getPipeline());
         }
-    }
-
-    private void setData(final List<PipelineReference> references) {
-        dataGrid.setRowData(0, references);
-        dataGrid.setRowCount(references.size());
-        enableButtons();
-    }
-
-    protected void enableButtons() {
-        addButton.setEnabled(!readOnly && propertyType != null);
-
-        final PipelineReference selected = selectionModel.getSelected();
-        final State state = referenceStateMap.get(selected);
-
-        editButton.setEnabled(!readOnly && State.ADDED.equals(state));
-        removeButton.setEnabled(!readOnly && selected != null);
-
-        final String readOnlySuffix = readOnly
-                ? READ_ONLY_SUFFIX
-                : "";
-        addButton.setTitle(NEW_TITLE + readOnlySuffix);
-        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
-        // Pressing it on a reference that is already removed restores it, so say so
-        final String removeTitle = State.REMOVED.equals(state)
-                ? RESTORE_TITLE
-                : REMOVE_TITLE;
-        removeButton.setTitle(removeTitle + readOnlySuffix);
-    }
-
-    private enum State {
-        INHERITED,
-        ADDED,
-        REMOVED
     }
 }
