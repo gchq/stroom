@@ -275,9 +275,6 @@ public class QueryEditPresenter
         currentVisPresenter = visPresenterProvider.get();
         currentVisPresenter.setQueryModel(queryModel);
         currentVisPresenter.setTaskMonitorFactory(this);
-        // Ask Stroom AI about the results the chart draws, as the results table's button does.
-        currentVisPresenter.setAskAiContext(() -> NullSafe.get(queryResultPresenter.getTablePresenter(),
-                QueryResultTablePresenter::getResultsContext));
         queryResultPresenter.setQueryResultVisPresenter(currentVisPresenter);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);

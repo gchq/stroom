@@ -17,9 +17,12 @@
 package stroom.dashboard.client.vis;
 
 import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.DocumentReference;
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.pager.client.RefreshButton;
+import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -200,12 +203,22 @@ public class VisToolbar extends Composite {
         this.dataDownloadAllowed = dataDownloadAllowed;
     }
 
-    /// Shows Ask Stroom AI, which attaches the data the chart draws to the chat, as a table's button does.
+    /// Shows Ask Stroom AI, which attaches the chart to the chat (see [#chartContext(DocRef)]).
     ///
-    /// @param askAiContext Gives the search behind the chart's data, or null if it hasn't run.
+    /// @param askAiContext Gives what is attached, or null if there is nothing to attach yet.
     public void setAskAiContext(final Supplier<AskStroomAiContext> askAiContext) {
         this.askAiContext = askAiContext;
         askAiButton.setVisible(askAiContext != null);
+    }
+
+    /// @param visualisation The Visualisation a pane shows, or null.
+    /// @return The chart, as the chat is given it for Ask Stroom AI: its Visualisation, which the chat's agent reads
+    /// (its kind, columns and settings) with the dashboard it is on; or null if the pane shows none. Seen in testing:
+    /// attaching the chart's table's data instead attached the table, not the chart.
+    public static AskStroomAiContext chartContext(final DocRef visualisation) {
+        return visualisation == null
+                ? null
+                : new DocumentReferenceContext(List.of(new DocumentReference(visualisation, null)));
     }
 
     // Shows the controls the visualisation has, as they now are.
@@ -295,7 +308,7 @@ public class VisToolbar extends Composite {
             return;
         }
         if (context == null) {
-            AlertEvent.fireInfo(handlers, "Run the query first: Stroom AI is given the data the chart draws.", null);
+            AlertEvent.fireInfo(handlers, "This pane shows no Visualisation yet.", null);
         } else {
             AskStroomAiEvent.fire(handlers, context);
         }
