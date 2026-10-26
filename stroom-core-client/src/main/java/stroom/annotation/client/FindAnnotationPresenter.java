@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -40,22 +41,23 @@ public class FindAnnotationPresenter
         implements ShowFindAnnotationEvent.Handler, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private boolean showing;
-    private final FindAnnotationListPresenter findResultListPresenter;
+    private final FindAnnotationListController findResultListPresenter;
 
     @Inject
     public FindAnnotationPresenter(final EventBus eventBus,
                                    final FindView view,
-                                   final FindAnnotationListPresenter findResultListPresenter,
+                                   final FindAnnotationListController findResultListPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         own(findResultListPresenter);
         getView().setDialogMode(false);
         this.findResultListPresenter = findResultListPresenter;
 
-        view.setResultView(findResultListPresenter.getView());
+        view.setResultView(findResultListPresenter);
         view.setUiHandlers(this);
-        findResultListPresenter.setFindResultListHandler(this);
-        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
+        findResultListPresenter.setOnOpen(this::openDocument);
+        findResultListPresenter.setOnFocusFilter(this::focus);
+        findResultListPresenter.setOnFilterError(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindAnnotationRequest.QUICK_FILTER_CONTEXT, this, this));
     }
@@ -76,7 +78,7 @@ public class FindAnnotationPresenter
             findResultListPresenter.refresh();
 
             // Ensure list has a border in the popup view.
-            findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
+            findResultListPresenter.asWidget().addStyleName("form-control-border form-control-background");
 
             getView().setDialogMode(true);
             final PopupSize popupSize = PopupSize.resizable(800, 600);

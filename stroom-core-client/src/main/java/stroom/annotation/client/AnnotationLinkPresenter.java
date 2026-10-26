@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -42,7 +43,7 @@ public class AnnotationLinkPresenter
         implements FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final FindAnnotationListPresenter listPresenter;
+    private final FindAnnotationListController listPresenter;
 
     private DocRef annotationRef;
     private AnnotationPresenter parent;
@@ -55,7 +56,7 @@ public class AnnotationLinkPresenter
     public AnnotationLinkPresenter(final EventBus eventBus,
                                    final FindView view,
                                    final AnnotationResourceClient annotationResourceClient,
-                                   final FindAnnotationListPresenter listPresenter) {
+                                   final FindAnnotationListController listPresenter) {
         super(eventBus, view);
         own(listPresenter);
         this.annotationResourceClient = annotationResourceClient;
@@ -64,16 +65,17 @@ public class AnnotationLinkPresenter
         // To browse, users only need view permission.
         listPresenter.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(listPresenter.getView());
+        view.setResultView(listPresenter);
         view.setUiHandlers(this);
-        listPresenter.setFindResultListHandler(this);
+        listPresenter.setOnOpen(this::openDocument);
+        listPresenter.setOnFocusFilter(this::focus);
 
-        listPresenter.getView().getToolbar().setName("Link actions");
-        add = listPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Annotation Link",
+        listPresenter.getToolbar().setName("Link actions");
+        add = listPresenter.getToolbar().button(SvgImage.ADD, "Add Annotation Link",
                 () -> ShowFindAnnotationEvent.fire(this, this::link));
         add.setEnabled(false);
         add.setVisible(false);
-        remove = listPresenter.getView().getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
+        remove = listPresenter.getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
         remove.setEnabled(false);
         remove.setVisible(false);
 

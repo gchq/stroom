@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
+import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.DurationLabel;
+import stroom.annotation.client.FindAnnotationCell;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
-import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.FindResultLists;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectEvent;
-import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.Range;
@@ -41,41 +41,43 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class FindAnnotationListPresenter extends MyPresenterWidget<PagerPanel> {
+/// The annotations found ([FindAnnotationList]) by a filter, and linked to or from an annotation
+/// if given one, a page at a time; the first chosen when the filter changes.
+public class FindAnnotationListController extends Controller {
 
-    private final DataGrid<Annotation> resultList;
+    private final FindAnnotationList view;
     private final RestDataProvider<Annotation, ResultPage<Annotation>> dataProvider;
-    private final MultiSelectionModelImpl<Annotation> selectionModel;
 
     private DocumentPermission permission = DocumentPermission.EDIT;
     private Long sourceId;
     private Long destinationId;
     private String lastFilter;
-    private Consumer<String> filterErrorConsumer;
+    private Consumer<String> onFilterError = error -> {
+    };
+    private Runnable onFocusFilter = () -> {
+    };
     private String filter;
     private boolean initialised;
     private boolean focusText;
 
-    private FindDocResultListHandler<Annotation> findResultListHandler = new FindDocResultListHandler<Annotation>() {
-        @Override
-        public void openDocument(final Annotation match) {
-
-        }
-
-        @Override
-        public void focus() {
-
-        }
-    };
-
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus       The application's event bus.
+    /// @param view           The content.
+    /// @param resourceClient Finds the annotations.
+    /// @param durationLabel  Says how long ago an annotation changed.
     @Inject
-    public FindAnnotationListPresenter(final EventBus eventBus,
-                                       final PagerPanel view,
-                                       final AnnotationResourceClient resourceClient,
-                                       final DurationLabel durationLabel) {
-        super(eventBus, view);
+    public FindAnnotationListController(final EventBus eventBus,
+                                        final FindAnnotationList view,
+                                        final AnnotationResourceClient resourceClient,
+                                        final DurationLabel durationLabel) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        view.setCell(new FindAnnotationCell(durationLabel));
+        view.setOnUpFromFirst(() -> onFocusFilter.run());
 
-        selectionModel = new MultiSelectionModelImpl<>();
+        final MultiSelectionModel<Annotation> selectionModel = view.getSelectionModel();
 
         dataProvider = new RestDataProvider<Annotation, ResultPage<Annotation>>(eventBus) {
             @Override
@@ -96,12 +98,9 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerPanel> {
                 resourceClient.findAnnotations(request, resultPage -> {
                     // A rejected filter comes back as an empty page like any other, so surface the
                     // reason on the filter box. See ResultPage.filterError.
-                    if (filterErrorConsumer != null) {
-                        filterErrorConsumer.accept(
-                                NullSafe.get(resultPage.getFilterError(), TokenError::getText));
-                    }
-                    if (resultPage.getPageStart() != resultList.getPageStart()) {
-                        resultList.setPageStart(resultPage.getPageStart());
+                    onFilterError.accept(NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                    if (resultPage.getPageStart() != view.getPageStart()) {
+                        view.setPageStart(resultPage.getPageStart());
                     }
                     dataConsumer.accept(resultPage);
 
@@ -114,55 +113,65 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerPanel> {
                     }
 
                     resetFocus();
-                }, errorHandler, getView());
+                }, errorHandler, view.getTaskMonitor());
             }
         };
-
-        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
-        // click, opens it, and Up on the first goes back to the filter
-        resultList = FindResultLists.create(
-                "Annotations found",
-                new FindAnnotationCell(durationLabel),
-                selectionModel,
-                doc -> findResultListHandler.openDocument(doc),
-                () -> findResultListHandler.focus());
-        view.setDataWidget(resultList);
     }
 
     private void resetFocus() {
         if (focusText) {
             focusText = false;
-            findResultListHandler.focus();
+            onFocusFilter.run();
         }
     }
 
+    /// Finds the annotations again; the first time, starts the list.
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(resultList);
+            view.setDataProvider(dataProvider);
         } else {
             dataProvider.refresh();
         }
     }
 
-    public void setFindResultListHandler(final FindDocResultListHandler<Annotation> findResultListHandler) {
-        this.findResultListHandler = findResultListHandler;
+    /// @param onOpen Given an annotation to open (Enter, or a double click, on it).
+    public void setOnOpen(final Consumer<Annotation> onOpen) {
+        view.setOnOpen(onOpen);
     }
 
+    /// @param onFocusFilter Run to put the focus back on the filter: on Up from the first
+    ///                      annotation, and after a find asked for with [#setFocusText(boolean)].
+    public void setOnFocusFilter(final Runnable onFocusFilter) {
+        this.onFocusFilter = onFocusFilter;
+    }
+
+    /// @return The annotation with the focus, or `null`.
     public Annotation getSelected() {
-        return selectionModel.getSelected();
+        return view.getSelectionModel().getSelected();
     }
 
+    /// @return The toolbar beside the pager, for the screen's own buttons.
+    public Toolbar getToolbar() {
+        return view.getToolbar();
+    }
+
+    /// Moves the focus to a row.
+    ///
+    /// @param row        The row on the page.
+    /// @param stealFocus Whether to take the focus from where it is.
     public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
-        resultList.setKeyboardSelectedRow(row, stealFocus);
+        view.setKeyboardSelectedRow(row, stealFocus);
     }
 
     public void setFocusText(final boolean focusText) {
         this.focusText = focusText;
     }
 
-    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
-        this.filterErrorConsumer = filterErrorConsumer;
+    /// @param onFilterError Given why the filter was rejected after each find, or `null` if it
+    ///                      wasn't.
+    public void setOnFilterError(final Consumer<String> onFilterError) {
+        this.onFilterError = onFilterError;
     }
 
     public void setFilter(final String filter) {
@@ -181,7 +190,9 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerPanel> {
         this.destinationId = destinationId;
     }
 
+    /// @param handler Told when another annotation is chosen.
+    /// @return Its registration.
     public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
-        return selectionModel.addSelectionHandler(handler);
+        return view.getSelectionModel().addSelectionHandler(handler);
     }
 }

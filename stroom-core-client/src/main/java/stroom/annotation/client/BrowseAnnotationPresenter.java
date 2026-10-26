@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
@@ -34,21 +35,22 @@ public class BrowseAnnotationPresenter
         extends MyPresenterWidget<FindView>
         implements TabData, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
-    private final FindAnnotationListPresenter findResultListPresenter;
+    private final FindAnnotationListController findResultListPresenter;
 
     @Inject
     public BrowseAnnotationPresenter(final EventBus eventBus,
                                      final FindView view,
-                                     final FindAnnotationListPresenter findResultListPresenter) {
+                                     final FindAnnotationListController findResultListPresenter) {
         super(eventBus, view);
         own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
         // To browse, users only need view permission.
         findResultListPresenter.setPermission(DocumentPermission.VIEW);
         view.setDialogMode(false);
-        view.setResultView(findResultListPresenter.getView());
+        view.setResultView(findResultListPresenter);
         view.setUiHandlers(this);
-        findResultListPresenter.setFindResultListHandler(this);
+        findResultListPresenter.setOnOpen(this::openDocument);
+        findResultListPresenter.setOnFocusFilter(this::focus);
     }
 
     @Override
