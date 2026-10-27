@@ -1272,6 +1272,22 @@ Where they differ from the MCP server:
   Events), with translationFilter.xslt and the parser's textConverter given. Where no template has the parser the
   sample needs, start_onboarding and find_pipeline_templates offer any translation template with replace_parser
   (an XMLParser one first for XML fragments), rather than only asking the user.
+* **create_indexing_pipeline `standalone='discovery'`**: the same last resort for a discovery index, refused while
+  find_pipeline_templates finds any discovery template, in place of template_uuid: a discovery pipeline of its own,
+  made as the discovery templates are (Source, the parser the discovery plan kept with the XSLT names: JSONParser
+  with addRootObject false, a DSParser on the build's Data Splitter (`text_converter_uuid` when it has several) or
+  XMLParser; readRecordCountFilter, splitFilter of 1, xsltFilter, schemaFilter on JSON, elasticIndexingFilter with
+  the index name and cluster), confirmed in a form. Both fallbacks make the pipeline through
+  `CreatePipelineTool.withoutTemplate`.
+* **Build kinds**: start_build and start_onboarding take `kind` (`events`, `discovery`, `reference`), kept in the
+  build's record (`kind`), which the MCP server didn't have (its discovery entry point was the
+  `create_discovery_index` prompt, not ported). The plan follows it from the start: a discovery build skips the
+  events pipeline and goes to the discovery plan (draft_index_mapping discovery=); a reference build gets the
+  `1 reference` stage (reference_pipeline, reference_stepped, reference_processed with its filter enabled by the
+  user, reference_documented) and no translation, Events or index steps. With no kind named, a reference build is
+  still known by a Raw Reference sample or a reference-stage pipeline in the build. An existing feed's start offers
+  both kinds. An events build whose translation pipeline looks values up in a feed with no Reference stream yet is
+  held before stepping (`stepped:no_reference`): Stroom remembers a lookup that found nothing for 10 minutes.
 * **`ignoreErrors` refused**: save_text_converter and build_data_splitter's save_as refuse a Data Splitter that adds
   `ignoreErrors="true"` (one the converter replaced already had is kept): it hides the errors for unmatched text.
   `error_rules.yaml` classes the Data Splitter's "exhausted the buffer" and unmatched-content errors as blocking,
