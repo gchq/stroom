@@ -72,6 +72,8 @@ class TestSearchExpressionQueryBuilder {
     private static final String ID_FIELD = "id";
     private static final String INTEGER_FIELD = "count";
     private static final String LONG_FIELD = "bytes";
+    private static final String UNSIGNED_LONG_FIELD = "packets";
+    private static final String VERSION_FIELD = "release";
     private static final String FLOAT_FIELD = "ratio";
     private static final String DOUBLE_FIELD = "score";
     private static final String DATE_FIELD = "timestamp";
@@ -107,6 +109,9 @@ class TestSearchExpressionQueryBuilder {
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.MATCHES_REGEX);
+    private static final Set<Condition> BOOLEAN_CONDITIONS = EnumSet.of(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS);
 
     private MockIndexFieldCache indexFieldCache;
     private WordListProvider wordListProvider;
@@ -126,6 +131,8 @@ class TestSearchExpressionQueryBuilder {
         addField(ID_FIELD, FieldType.ID, "long");
         addField(INTEGER_FIELD, FieldType.INTEGER, "integer");
         addField(LONG_FIELD, FieldType.LONG, "long");
+        addField(UNSIGNED_LONG_FIELD, FieldType.LONG, "unsigned_long");
+        addField(VERSION_FIELD, FieldType.KEYWORD, "version");
         addField(FLOAT_FIELD, FieldType.FLOAT, "float");
         addField(DOUBLE_FIELD, FieldType.DOUBLE, "double");
         addField(DATE_FIELD, FieldType.DATE, "date");
@@ -235,6 +242,45 @@ class TestSearchExpressionQueryBuilder {
     }
 
     @Test
+    void testUnsignedLongWithinTheRangeOfALongIsANumber() {
+        assertTerm(buildSingleTerm(UNSIGNED_LONG_FIELD, Condition.EQUALS, "42"), UNSIGNED_LONG_FIELD, 42L);
+    }
+
+    @Test
+    void testUnsignedLongBeyondTheRangeOfALongIsItsDecimalString() {
+        final Query query = buildSingleTerm(UNSIGNED_LONG_FIELD, Condition.GREATER_THAN, "9223372036854775808");
+
+        final UntypedRangeQuery range = assertRange(query, UNSIGNED_LONG_FIELD);
+        assertThat(rangeValue(range.gt())).isEqualTo("9223372036854775808");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"-1", "18446744073709551616"})
+    void testUnsignedLongOutOfRangeIsRejected(final String value) {
+        assertThatThrownBy(() -> buildSingleTerm(UNSIGNED_LONG_FIELD, Condition.EQUALS, value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Value \"" + value + "\" for field \"" + UNSIGNED_LONG_FIELD +
+                            "\" is outside the range of an unsigned long (0 to 18446744073709551615)");
+    }
+
+    @Test
+    void testUnsignedLongOutOfRangeInDictionaryIsRejected() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"1", "-1"});
+
+        assertThatThrownBy(() -> buildSingleTerm(dictionaryTerm(UNSIGNED_LONG_FIELD)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is outside the range of an unsigned long");
+    }
+
+    @Test
+    void testUnsignedLongNotANumberIsRejected() {
+        assertThatThrownBy(() -> buildSingleTerm(UNSIGNED_LONG_FIELD, Condition.EQUALS, "lots"))
+                .isInstanceOf(NumberFormatException.class)
+                .hasMessage("Expected a numeric value for field \"" + UNSIGNED_LONG_FIELD +
+                            "\" but was given string \"lots\"");
+    }
+
+    @Test
     void testDateFieldRelativeExpression() {
         final long before = System.currentTimeMillis();
         final Query query = buildSingleTerm(DATE_FIELD, Condition.GREATER_THAN, "now()");
@@ -311,7 +357,7 @@ class TestSearchExpressionQueryBuilder {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    @ValueSource(strings = {TEXT_FIELD, WILDCARD_FIELD})
     void testFullTextFieldInSingleValue(final String field) {
         final Query query = buildSingleTerm(field, Condition.IN, "alpha");
 
@@ -319,7 +365,7 @@ class TestSearchExpressionQueryBuilder {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    @ValueSource(strings = {TEXT_FIELD, WILDCARD_FIELD})
     void testFullTextFieldInMultipleValues(final String field) {
         final Query query = buildSingleTerm(field, Condition.IN, "alpha, beta ,,gamma");
 
@@ -332,7 +378,7 @@ class TestSearchExpressionQueryBuilder {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {TEXT_FIELD, KEYWORD_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    @ValueSource(strings = {TEXT_FIELD, KEYWORD_FIELD, WILDCARD_FIELD})
     void testStringFieldMatchesRegex(final String field) {
         final Query query = buildSingleTerm(field, Condition.MATCHES_REGEX, "ab+c.*");
 
@@ -661,11 +707,23 @@ class TestSearchExpressionQueryBuilder {
                 .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "abc"))
                 .build()).bool();
 
+        // NOT(a, b) matches what matches neither a nor b
         assertThat(bool.must()).isEmpty();
         assertThat(bool.should()).isEmpty();
         assertThat(bool.mustNot()).hasSize(2);
         assertTerm(bool.mustNot().get(0), LONG_FIELD, 1L);
         assertTerm(bool.mustNot().get(1), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testNotOperatorWithOneChild() {
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .build()).bool();
+
+        assertThat(bool.mustNot()).hasSize(1);
+        assertTerm(bool.mustNot().getFirst(), LONG_FIELD, 1L);
     }
 
     @Test
@@ -859,6 +917,201 @@ class TestSearchExpressionQueryBuilder {
         assertTerm(lines.get(1), "user.role", "b");
     }
 
+    @Test
+    void testNestedTermsOfTheSameObjectAreGrouped() {
+        addNestedUserFields();
+
+        // Both terms must match the same user
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .build());
+
+        final List<Query> groupMust = assertGroup(singleMust(query), "user", 2);
+        assertTerm(groupMust.get(0), "user.age", 30L);
+        assertTerm(groupMust.get(1), "user.role", "admin");
+    }
+
+    @Test
+    void testNestedNotEqualsTermIsGroupedWithOtherTermsOfTheSameObject() {
+        addNestedUserFields();
+
+        // A user aged 30 who isn't an admin
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(term("user.role", Condition.NOT_EQUALS, "admin"))
+                .build());
+
+        final List<Query> groupMust = assertGroup(singleMust(query), "user", 2);
+        assertTerm(groupMust.get(0), "user.age", 30L);
+        assertTerm(assertNegated(groupMust.get(1)), "user.role", "admin");
+    }
+
+    @Test
+    void testNestedTermsAreGroupedApartFromOtherTerms() {
+        addNestedUserFields();
+
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .addTerm(term(ID_FIELD, Condition.EQUALS, "1"))
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .build()).bool();
+
+        assertThat(bool.must()).hasSize(2);
+        assertTerm(bool.must().get(0), ID_FIELD, 1L);
+        assertGroup(bool.must().get(1), "user", 2);
+    }
+
+    @Test
+    void testOperatorOfTermsOfTheSameObjectIsGroupedWithThem() {
+        addNestedUserFields();
+
+        // A user aged 30 who is an admin or an owner
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                        .addTerm(term("user.role", Condition.EQUALS, "owner"))
+                        .build())
+                .build());
+
+        final List<Query> groupMust = assertGroup(singleMust(query), "user", 2);
+        assertTerm(groupMust.get(0), "user.age", 30L);
+        final List<Query> or = groupMust.get(1).bool().should();
+        assertThat(or).hasSize(2);
+        // Already inside the nested query, so not wrapped again
+        assertTerm(or.get(0), "user.role", "admin");
+        assertTerm(or.get(1), "user.role", "owner");
+    }
+
+    @Test
+    void testOperatorMixingObjectsIsNotGrouped() {
+        addNestedUserFields();
+
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                        .addTerm(term(ID_FIELD, Condition.EQUALS, "1"))
+                        .build())
+                .build()).bool();
+
+        // Each user term is wrapped on its own (the order of `must` clauses doesn't matter)
+        assertThat(bool.must()).hasSize(2);
+        final Query orQuery = bool.must().stream().filter(Query::isBool).findFirst().orElseThrow();
+        final Query ageQuery = bool.must().stream().filter(Query::isNested).findFirst().orElseThrow();
+        final List<Query> or = orQuery.bool().should();
+        assertTerm(assertNestedPaths(or.get(0), "user"), "user.role", "admin");
+        assertTerm(or.get(1), ID_FIELD, 1L);
+        assertTerm(assertNestedPaths(ageQuery, "user"), "user.age", 30L);
+    }
+
+    @Test
+    void testObjectsNestedWithinAGroupedObjectAreGrouped() {
+        addNestedUserFields();
+        addField("user.sessions", FieldType.NESTED, "nested");
+        addField("user.sessions.device", FieldType.KEYWORD, "keyword");
+        addField("user.sessions.ip", FieldType.IPV4_ADDRESS, "ip");
+
+        // An admin with a session on a phone from 10.0.0.1
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .addTerm(term("user.sessions.device", Condition.EQUALS, "phone"))
+                .addTerm(term("user.sessions.ip", Condition.EQUALS, "10.0.0.1"))
+                .build());
+
+        final List<Query> userMust = assertGroup(singleMust(query), "user", 2);
+        assertTerm(userMust.get(0), "user.role", "admin");
+        final List<Query> sessionMust = assertGroup(userMust.get(1), "user.sessions", 2);
+        assertTerm(sessionMust.get(0), "user.sessions.device", "phone");
+        assertTerm(sessionMust.get(1), "user.sessions.ip", "10.0.0.1");
+    }
+
+    @Test
+    void testSingleObjectWithinAGroupedObjectWrapsOnlyItsOwnLevel() {
+        addNestedUserFields();
+        addField("user.sessions", FieldType.NESTED, "nested");
+        addField("user.sessions.device", FieldType.KEYWORD, "keyword");
+
+        // An admin with a session on a phone
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .addTerm(term("user.sessions.device", Condition.EQUALS, "phone"))
+                .build());
+
+        final List<Query> userMust = assertGroup(singleMust(query), "user", 2);
+        assertTerm(userMust.get(0), "user.role", "admin");
+        assertTerm(assertNestedPaths(userMust.get(1), "user.sessions"), "user.sessions.device", "phone");
+    }
+
+    @Test
+    void testNotOperatorDoesNotGroupTermsOfTheSameObject() {
+        addNestedUserFields();
+
+        // No user aged 30, and no admin user
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .build()).bool();
+
+        assertThat(bool.mustNot()).hasSize(2);
+        assertTerm(assertNestedPaths(bool.mustNot().get(0), "user"), "user.age", 30L);
+        assertTerm(assertNestedPaths(bool.mustNot().get(1), "user"), "user.role", "admin");
+    }
+
+    @Test
+    void testNotOperatorOfAGroupedAndOperator() {
+        addNestedUserFields();
+
+        // No user who is both aged 30 and an admin
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addOperator(ExpressionOperator.builder()
+                        .addTerm(term("user.age", Condition.EQUALS, "30"))
+                        .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                        .build())
+                .build()).bool();
+
+        assertThat(bool.mustNot()).hasSize(1);
+        assertGroup(singleMust(bool.mustNot().getFirst()), "user", 2);
+    }
+
+    @Test
+    void testOrOperatorDoesNotGroupTermsOfTheSameObject() {
+        addNestedUserFields();
+
+        // Grouping would make no difference to the result
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(term("user.role", Condition.EQUALS, "admin"))
+                .build()).bool();
+
+        assertThat(bool.should()).hasSize(2);
+        assertTerm(assertNestedPaths(bool.should().get(0), "user"), "user.age", 30L);
+        assertTerm(assertNestedPaths(bool.should().get(1), "user"), "user.role", "admin");
+    }
+
+    @Test
+    void testDisabledTermIsNotGrouped() {
+        addNestedUserFields();
+
+        final Query query = buildQuery(ExpressionOperator.builder()
+                .addTerm(term("user.age", Condition.EQUALS, "30"))
+                .addTerm(ExpressionTerm.builder()
+                        .field("user.role")
+                        .condition(Condition.EQUALS)
+                        .value("admin")
+                        .enabled(false)
+                        .build())
+                .build());
+
+        assertTerm(assertNestedPaths(singleMust(query), "user"), "user.age", 30L);
+    }
+
     // --------------------------------------------------------------------------------
     // Invalid input
     // --------------------------------------------------------------------------------
@@ -1041,6 +1294,11 @@ class TestSearchExpressionQueryBuilder {
                 new ScalarCase(ID_FIELD, "1", "2", 1L, 2L),
                 new ScalarCase(INTEGER_FIELD, "10", "20", 10L, 20L),
                 new ScalarCase(LONG_FIELD, "9000000000", "9000000001", 9000000000L, 9000000001L),
+                // The second value is beyond the range of a long, so is passed on as its decimal string
+                new ScalarCase(UNSIGNED_LONG_FIELD, "9223372036854775807", "18446744073709551615",
+                        9223372036854775807L, "18446744073709551615"),
+                // Versions are passed on as they are, for Elasticsearch to compare by precedence
+                new ScalarCase(VERSION_FIELD, "1.2.0", "10.0.0", "1.2.0", "10.0.0"),
                 new ScalarCase(FLOAT_FIELD, "1.5", "2.25", 1.5D, 2.25D),
                 new ScalarCase(DOUBLE_FIELD, "1.1", "2.2", 1.1D, 2.2D),
                 new ScalarCase(DATE_FIELD, DATE_1, DATE_2, DATE_1_MS, DATE_2_MS),
@@ -1059,10 +1317,16 @@ class TestSearchExpressionQueryBuilder {
     }
 
     static Stream<Arguments> stringTypeUnsupportedConditionMatrix() {
-        return Stream.of(TEXT_FIELD, KEYWORD_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD)
+        final Stream<Arguments> stringFields = Stream.of(TEXT_FIELD, KEYWORD_FIELD, WILDCARD_FIELD)
                 .flatMap(field -> EnumSet.complementOf(EnumSet.copyOf(STRING_CONDITIONS))
                         .stream()
                         .map(condition -> Arguments.of(field, condition)));
+        // A boolean field is only compared with one of its two values, so IN, IN_DICTIONARY and MATCHES_REGEX
+        // aren't supported
+        final Stream<Arguments> booleanField = EnumSet.complementOf(EnumSet.copyOf(BOOLEAN_CONDITIONS))
+                .stream()
+                .map(condition -> Arguments.of(BOOLEAN_FIELD, condition));
+        return Stream.concat(stringFields, booleanField);
     }
 
     // --------------------------------------------------------------------------------
@@ -1223,6 +1487,18 @@ class TestSearchExpressionQueryBuilder {
 
     /// Asserts the query is a chain of `nested` queries with the given paths (outermost first) and
     /// returns the innermost (leaf) query.
+    /// Asserts a single `nested` query for the path, grouping the expected number of queries that must all
+    /// match the same object, and returns them.
+    private static List<Query> assertGroup(final Query query, final String expectedPath, final int expectedSize) {
+        assertThat(query.isNested()).as("Is a nested query for path " + expectedPath).isTrue();
+        final NestedQuery nested = query.nested();
+        assertThat(nested.path()).isEqualTo(expectedPath);
+        assertThat(nested.query().isBool()).as("Is a group of queries").isTrue();
+        final List<Query> must = nested.query().bool().must();
+        assertThat(must).hasSize(expectedSize);
+        return must;
+    }
+
     private static Query assertNestedPaths(final Query query, final String... expectedPaths) {
         Query current = query;
         for (final String expectedPath : expectedPaths) {

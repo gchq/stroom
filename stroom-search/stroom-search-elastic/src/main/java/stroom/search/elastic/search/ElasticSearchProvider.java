@@ -257,7 +257,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final FieldType elasticFieldType =
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
-                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(effectiveFieldMeta));
+                        return toDataSourceField(
+                                elasticFieldType, nativeType, fieldName, fieldIsIndexed(effectiveFieldMeta));
                     } catch (final UnsupportedTypeException e) {
                         LOGGER.debug(e::getMessage, e);
                         return null;
@@ -274,10 +275,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * Returns an `AbstractField` instance, based on the field's data type
      */
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
+                                         final String nativeType,
                                          final String fieldName,
                                          final Boolean isIndexed)
             throws IllegalArgumentException {
-        final ConditionSet conditionSet = ConditionSet.getElastic(elasticIndexFieldType);
+        final ConditionSet conditionSet = getConditionSet(elasticIndexFieldType, nativeType);
         return QueryField
                 .builder()
                 .fldName(fieldName)
@@ -285,6 +287,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .conditionSet(conditionSet)
                 .queryable(isIndexed && !FieldType.NESTED.equals(elasticIndexFieldType))
                 .build();
+    }
+
+    /**
+     * Returns the conditions a field can be queried with. A `version` field holds text, but Elasticsearch orders
+     * versions by their precedence, so it can be compared like a number.
+     */
+    private static ConditionSet getConditionSet(final FieldType elasticIndexFieldType, final String nativeType) {
+        if (Kind.Version.jsonValue().equals(nativeType)) {
+            return ConditionSet.ELASTIC_NUMERIC;
+        }
+        return ConditionSet.getElastic(elasticIndexFieldType);
     }
 
     private String getFieldTypeFromMapping(final String fieldName, final FieldMapping fieldMeta) {

@@ -91,6 +91,12 @@ main() {
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
   echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
 
+  # The elasticsearch service from stroom-resources, for the Elasticsearch end-to-end tests,
+  # which must not skip themselves if it can't be reached
+  export STROOM_TEST_ELASTIC_URL="${STROOM_TEST_ELASTIC_URL:-http://${host_ip}:9200}"
+  export STROOM_TEST_ELASTIC_REQUIRED=true
+  echo -e "${GREEN}Setting STROOM_TEST_ELASTIC_URL to ${BLUE}${STROOM_TEST_ELASTIC_URL}${NC}"
+
   echo "::group::Gradle vendors"
   echo -e "${GREEN}Gradle Vendors${NC}"
   ./gradlew \

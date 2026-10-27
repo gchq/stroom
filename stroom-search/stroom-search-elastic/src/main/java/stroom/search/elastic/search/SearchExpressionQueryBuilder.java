@@ -45,10 +45,13 @@ import co.elastic.clients.json.JsonData;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import jakarta.inject.Provider;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -63,6 +66,8 @@ public class SearchExpressionQueryBuilder {
     private static final String DELIMITER = ",";
     private static final String FIELD_PATH_SEPARATOR = ".";
     private static final Pattern FIELD_PATH_SPLIT_PATTERN = Pattern.compile("\\.");
+    // The largest value of an Elasticsearch `unsigned_long` field, 2^64 - 1
+    private static final BigInteger UNSIGNED_LONG_MAX = BigInteger.ONE.shiftLeft(Long.SIZE).subtract(BigInteger.ONE);
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
     private static final Pattern IPV4_ADDRESS_PATTERN =
@@ -96,7 +101,7 @@ public class SearchExpressionQueryBuilder {
     public ElasticQueryParams buildQuery(final ExpressionOperator expression) {
         Query query = null;
         if (expression != null) {
-            query = getQuery(expression);
+            query = getQuery(expression, List.of());
         }
         if (query == null) {
             query = MatchAllQuery.of(q -> q)._toQuery();
@@ -106,26 +111,43 @@ public class SearchExpressionQueryBuilder {
         return elasticQueryParams;
     }
 
-    private Query getQuery(final ExpressionItem item) {
+    /**
+     * Creates the query for an expression item.
+     *
+     * @param item           the expression term or operator
+     * @param enclosingPaths the `nested` object paths (outermost first) that the query will be placed inside,
+     *                       which the item's terms must not wrap themselves in again
+     */
+    private Query getQuery(final ExpressionItem item, final List<String> enclosingPaths) {
         if (item.enabled()) {
             if (item instanceof final ExpressionTerm term) {
                 // Create queries for single terms.
-                return getTermQuery(term);
+                return getTermQuery(term, enclosingPaths);
             } else if (item instanceof final ExpressionOperator operator) {
                 // Create queries for expression tree nodes.
                 if (operatorHasChildren(operator)) {
-                    final List<Query> innerChildQueries = operator.getChildren().stream()
-                            .map(this::getQuery)
-                            .filter(Objects::nonNull).toList();
+                    final List<ExpressionItem> children = operator.getChildren().stream()
+                            .filter(ExpressionItem::enabled)
+                            .toList();
 
                     final BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
                     final Op op = operator.getOp();
                     if (op == null || op.equals(Op.AND)) {
-                        innerChildQueries.forEach(boolQueryBuilder::must);
+                        getConjunctionQueries(children, enclosingPaths).forEach(boolQueryBuilder::must);
                     } else if (op.equals(Op.OR)) {
-                        innerChildQueries.forEach(boolQueryBuilder::should);
+                        // Grouping the terms of a nested object makes no difference to an OR, so don't
+                        children.stream()
+                                .map(child -> getQuery(child, enclosingPaths))
+                                .filter(Objects::nonNull)
+                                .forEach(boolQueryBuilder::should);
                     } else if (op.equals(Op.NOT)) {
-                        innerChildQueries.forEach(boolQueryBuilder::mustNot);
+                        // NOT matches what matches none of its children, as for other index types. To exclude
+                        // only what matches all of them, e.g. one nested object matching all of them, the
+                        // children go in an AND within the NOT.
+                        children.stream()
+                                .map(child -> getQuery(child, enclosingPaths))
+                                .filter(Objects::nonNull)
+                                .forEach(boolQueryBuilder::mustNot);
                     }
                     return boolQueryBuilder.build()._toQuery();
                 }
@@ -135,7 +157,112 @@ public class SearchExpressionQueryBuilder {
         return null;
     }
 
-    private Query getTermQuery(final ExpressionTerm expressionTerm) {
+    /**
+     * Creates the queries for items that must all match. Items whose terms are all fields of the same `nested`
+     * object are grouped into a single `nested` query, so that they must all match the same object, e.g.
+     * `Users.Name = alice AND Users.Role = admin` matches a user who is both alice and an admin, not just a
+     * document with a user called alice and an admin user. Within a group, a `!=` term applies to the same
+     * object too, e.g. `Users.Name = alice AND Users.Role != admin` matches a user who is alice and not an admin.
+     * A single item is not grouped, so `Users.Role != admin` on its own still matches documents with no admin
+     * user. Grouping is repeated within each group for objects nested within the grouped object.
+     *
+     * @param items          the items that must all match
+     * @param enclosingPaths the `nested` object paths (outermost first) that the queries will be placed inside
+     * @return the queries, all of which must match
+     */
+    private List<Query> getConjunctionQueries(final List<ExpressionItem> items, final List<String> enclosingPaths) {
+        final List<Query> queries = new ArrayList<>();
+        // The items of each nested object directly within the enclosing one, keyed by the object's path
+        final Map<String, List<ExpressionItem>> nestedGroups = new LinkedHashMap<>();
+        for (final ExpressionItem item : items) {
+            final String nestedPath = getNextNestedPath(item, enclosingPaths);
+            if (nestedPath != null) {
+                nestedGroups.computeIfAbsent(nestedPath, k -> new ArrayList<>()).add(item);
+            } else {
+                final Query query = getQuery(item, enclosingPaths);
+                if (query != null) {
+                    queries.add(query);
+                }
+            }
+        }
+
+        nestedGroups.forEach((nestedPath, groupItems) -> {
+            if (groupItems.size() == 1) {
+                // Nothing to match within the same object, so leave a single item to wrap itself, keeping the
+                // negation of a single `!=` term outside the nested query, i.e. no object has the value
+                final Query query = getQuery(groupItems.getFirst(), enclosingPaths);
+                if (query != null) {
+                    queries.add(query);
+                }
+                return;
+            }
+            final List<String> groupEnclosingPaths = new ArrayList<>(enclosingPaths);
+            groupEnclosingPaths.add(nestedPath);
+            final List<Query> groupQueries = getConjunctionQueries(groupItems, groupEnclosingPaths);
+            if (!groupQueries.isEmpty()) {
+                final Query groupQuery = groupQueries.size() == 1
+                        ? groupQueries.getFirst()
+                        : BoolQuery.of(b -> b.must(groupQueries))._toQuery();
+                queries.add(QueryBuilders.nested(n -> n
+                        .path(nestedPath)
+                        .query(groupQuery)));
+            }
+        });
+        return queries;
+    }
+
+    /**
+     * Returns the path of the `nested` object, directly within the enclosing paths, that every term of an
+     * expression item is a field of (at any depth), or null if there isn't one. Disabled items are ignored.
+     */
+    private String getNextNestedPath(final ExpressionItem item, final List<String> enclosingPaths) {
+        if (!item.enabled()) {
+            return null;
+        }
+        if (item instanceof final ExpressionTerm term) {
+            final String field = term.getField();
+            if (field == null) {
+                return null;
+            }
+            final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), field.trim());
+            if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
+                return null;
+            }
+            final List<String> nestedPaths = getRemainingNestedPaths(
+                    getNestedPaths(elasticIndexField.getFldName()), enclosingPaths);
+            return nestedPaths.isEmpty()
+                    ? null
+                    : nestedPaths.getFirst();
+        } else if (item instanceof final ExpressionOperator operator && operator.getChildren() != null) {
+            String commonPath = null;
+            for (final ExpressionItem child : operator.getChildren()) {
+                if (child.enabled()) {
+                    final String childPath = getNextNestedPath(child, enclosingPaths);
+                    if (childPath == null || (commonPath != null && !commonPath.equals(childPath))) {
+                        return null;
+                    }
+                    commonPath = childPath;
+                }
+            }
+            return commonPath;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the nested paths of a field that are not already applied by the enclosing paths.
+     */
+    private static List<String> getRemainingNestedPaths(final List<String> nestedPaths,
+                                                        final List<String> enclosingPaths) {
+        if (enclosingPaths.isEmpty()
+            || nestedPaths.size() < enclosingPaths.size()
+            || !nestedPaths.subList(0, enclosingPaths.size()).equals(enclosingPaths)) {
+            return nestedPaths;
+        }
+        return nestedPaths.subList(enclosingPaths.size(), nestedPaths.size());
+    }
+
+    private Query getTermQuery(final ExpressionTerm expressionTerm, final List<String> enclosingPaths) {
         String field = expressionTerm.getField();
         final Condition condition = expressionTerm.getCondition();
         String value = expressionTerm.getValue();
@@ -160,9 +287,19 @@ public class SearchExpressionQueryBuilder {
         final String fieldName = elasticIndexField.getFldName();
 
         // Resolve the ordered list of `nested` object paths (outermost first) that this field lives
-        // under. This is computed once per term and threaded through query construction so that the
-        // leaf query can be wrapped in one Elasticsearch `nested` query per level of nesting.
-        final List<String> nestedPaths = getNestedPaths(fieldName);
+        // under, other than those the query is already inside. This is computed once per term and threaded
+        // through query construction so that the leaf query can be wrapped in one Elasticsearch `nested`
+        // query per remaining level of nesting.
+        final List<String> nestedPaths = getRemainingNestedPaths(getNestedPaths(fieldName), enclosingPaths);
+
+        // A boolean field is only compared with one of its two values
+        if (Kind.Boolean.jsonValue().equals(elasticIndexField.getNativeType())
+            && !Condition.EQUALS.equals(condition)
+            && !Condition.NOT_EQUALS.equals(condition)) {
+            throw new UnsupportedOperationException(
+                    "Unsupported condition '" + condition.getDisplayValue() + "' for " +
+                    elasticIndexField.getFldType().getDisplayValue() + " field type");
+        }
 
         // Validate the expression. For IN_DICTIONARY the dictionary reference, not the value, defines
         // the terms to match, so build the dictionary query even if no value has been provided.
@@ -185,9 +322,17 @@ public class SearchExpressionQueryBuilder {
             }
         }
 
-        // Create a query based on the field type and condition.
+        // Create a query based on the field type and condition. Some native types need values parsed differently
+        // to the other native types of the same field type, so check those first.
+        final String nativeType = elasticIndexField.getNativeType();
         final FieldType elasticFieldType = elasticIndexField.getFldType();
-        if (elasticFieldType.equals(FieldType.ID) ||
+        if (Kind.UnsignedLong.jsonValue().equals(nativeType)) {
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getUnsignedLong);
+        } else if (Kind.Version.jsonValue().equals(nativeType)) {
+            return buildScalarQuery(
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getVersion);
+        } else if (elasticFieldType.equals(FieldType.ID) ||
             elasticFieldType.equals(FieldType.LONG) ||
             elasticFieldType.equals(FieldType.INTEGER)) {
             return buildScalarQuery(
@@ -586,6 +731,41 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
+    /**
+     * Parses a value of an `unsigned_long` field, which may be up to 2<sup>64</sup>-1, beyond the range of a long.
+     * A value that fits in a long is passed to Elasticsearch as a number, and a larger one as its decimal string,
+     * which Elasticsearch parses as an unsigned long.
+     */
+    private FieldValue getUnsignedLong(final Condition condition, final String fieldName, final String value) {
+        final BigInteger number;
+        try {
+            number = new BigInteger(value);
+        } catch (final NumberFormatException e) {
+            throw new NumberFormatException(
+                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\""
+            );
+        }
+        if (number.signum() < 0 || number.compareTo(UNSIGNED_LONG_MAX) > 0) {
+            throw new IllegalArgumentException(
+                    "Value \"" + value + "\" for field \"" + fieldName + "\" is outside the range of an " +
+                    "unsigned long (0 to " + UNSIGNED_LONG_MAX + ")");
+        }
+        return number.bitLength() < Long.SIZE
+                ? FieldValue.of(number.longValue())
+                : FieldValue.of(number.toString());
+    }
+
+    /**
+     * Returns the value of a `version` field, e.g. `1.2.0`, as a string. Elasticsearch parses it and compares
+     * versions by their precedence, so it is not parsed here.
+     */
+    private FieldValue getVersion(final Condition condition, final String fieldName, final String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Expected a version for field \"" + fieldName + "\"");
+        }
+        return FieldValue.of(value.trim());
+    }
+
     private FieldValue getFloat(final Condition condition, final String fieldName, final String value) {
         try {
             return FieldValue.of(Float.parseFloat(value));
@@ -634,9 +814,18 @@ public class SearchExpressionQueryBuilder {
 
         for (final String line : lines) {
             final BoolQuery.Builder mustQueries = new BoolQuery.Builder();
+            final String nativeType = indexField.getNativeType();
             final FieldType elasticFieldType = indexField.getFldType();
 
-            if (elasticFieldType.equals(FieldType.ID) ||
+            if (Kind.UnsignedLong.jsonValue().equals(nativeType)) {
+                mustQueries.must(QueryBuilders.term(q -> q
+                        .field(fieldName)
+                        .value(getUnsignedLong(condition, fieldName, line))));
+            } else if (Kind.Version.jsonValue().equals(nativeType)) {
+                mustQueries.must(QueryBuilders.term(q -> q
+                        .field(fieldName)
+                        .value(getVersion(condition, fieldName, line))));
+            } else if (elasticFieldType.equals(FieldType.ID) ||
                 elasticFieldType.equals(FieldType.LONG) ||
                 elasticFieldType.equals(FieldType.INTEGER)) {
                 mustQueries.must(QueryBuilders.term(q -> q
