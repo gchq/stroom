@@ -73,6 +73,28 @@ class TestStartBuildTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void theKindOfWorkIsRecordedAndThePlanFollowsIt() {
+        // Asked for by the user: a table to look values up in, or raw data to explore, named at the start.
+        Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
+                .thenReturn(Map.of("instructions", List.of()));
+        // The plan reads the build's kind from Stroom (here, the fake facts) as the record keeps it.
+        feeds.facts.kind = "reference";
+        final Map<String, Object> started = json(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"hr-users\", \"kind\": \"reference\"}"), PortedToolCalls.context()));
+
+        assertThat(feeds.world.records().kind("hr-users")).hasValue("reference");
+        assertThat(started).containsEntry("kind", "reference");
+        assertThat(((List<Map<String, Object>>) started.get("plan")).stream().map(step -> step.get("step")))
+                .as("the build's own steps")
+                .contains("feed", "samples", "reference_pipeline", "reference_processed", "promoted")
+                .doesNotContain("translation", "index");
+        assertThat(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"hr-users\", \"kind\": \"lookup\"}"), PortedToolCalls.context()).text())
+                .contains("kind is one of ['events', 'discovery', 'reference'], not 'lookup'");
+    }
+
+    @Test
     void itMakesTheBuildsFolderWithoutAskingFirst() {
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isFalse();

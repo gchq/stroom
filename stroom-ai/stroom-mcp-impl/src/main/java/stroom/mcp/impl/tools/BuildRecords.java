@@ -90,6 +90,11 @@ public class BuildRecords {
     public static final String SOURCE_FEEDS = "source_feeds";
     /// The record's key for the event-logging version chosen for the build's translation.
     public static final String EVENT_LOGGING_VERSION = "event_logging_version";
+    /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery` or
+    /// `reference`.
+    public static final String KIND = "kind";
+    /// The kinds of work a build may be started as.
+    public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference");
 
     static final Pattern FENCE = Pattern.compile("```json build-record\\n(.*?)\\n```", Pattern.DOTALL);
     // The tags earlier versions kept these in, and the entry each one fills (null: the build, now the folder it is
@@ -212,6 +217,25 @@ public class BuildRecords {
             chosen.put("how", how);
             state.put(EVENT_LOGGING_VERSION, chosen);
         });
+    }
+
+    /// @param build A build's name.
+    /// @return The kind of work the build was started as (one of [#BUILD_KINDS]), or empty when none was named.
+    public Optional<String> kind(final String build) {
+        return load(build).get(KIND) instanceof final String kind && BUILD_KINDS.contains(kind)
+                ? Optional.of(kind)
+                : Optional.empty();
+    }
+
+    /// Records the kind of work the build is, as start_build or start_onboarding was told: the plan's steps follow
+    /// it from the start, before the build holds what would tell it.
+    ///
+    /// @param build A build's name.
+    /// @param kind  One of [#BUILD_KINDS].
+    /// @return The record as saved.
+    public Map<String, Object> rememberKind(final String build, final String kind) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(KIND, kind));
     }
 
     /// Drops documents' entries (promoted out of the build); the record goes once it holds nothing.
