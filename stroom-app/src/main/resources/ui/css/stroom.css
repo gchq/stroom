@@ -179,6 +179,12 @@ td {
     line-height: normal;
 }
 
+/* Gone once a page is shown: hidden, not just transparent, so screen readers stop reading it */
+#loading.loading--hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
 #loadingBox {
     border: 1px solid #404e60;
     background: white;

@@ -63,13 +63,13 @@ public class App implements EntryPoint {
         if (path.startsWith("/resetPassword")) {
             // A user following a password reset link cannot sign in, so this page is served and revealed
             // without authenticating, in the same way as the sign in page.
-            ginjector.getResetPasswordPresenter().get().show();
+            ginjector.getResetPasswordController().get().show();
         } else if (path.startsWith("/signIn")) {
             final String error = Location.getParameter("error");
             if ("login_required".equals(error)) {
-                ginjector.getLoginPresenter().get().show();
+                ginjector.getLoginController().get().show();
             } else {
-                ginjector.getAuthenticationErrorPresenter().get().show();
+                ginjector.getAuthenticationErrorController().get().show();
             }
         } else {
             final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();

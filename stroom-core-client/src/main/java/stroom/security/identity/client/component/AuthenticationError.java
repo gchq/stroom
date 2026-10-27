@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.view;
+package stroom.security.identity.client.component;
 
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,11 +27,11 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class AuthenticationErrorViewImpl extends ViewImpl implements AuthenticationErrorView {
+/// The page shown when signing in fails: the error, and a message from the UI config.
+public class AuthenticationError extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel image;
@@ -40,29 +40,20 @@ public class AuthenticationErrorViewImpl extends ViewImpl implements Authenticat
     @UiField
     HTML genericMessage;
 
-    @Inject
-    public AuthenticationErrorViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty page.
+    public AuthenticationError() {
+        initWidget(BINDER.createAndBindUi(this));
 
         image.getElement().setInnerHTML(SvgImage.ERROR.getSvg());
         image.addStyleName(SvgImage.ERROR.getClassName());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void focus() {
-    }
-
-    @Override
+    /// @param errorText What went wrong.
     public void setErrorText(final String errorText) {
         this.errorText.setText(errorText);
     }
 
-    @Override
+    /// @param genericMessage The message every authentication error shows, e.g. who to contact.
     public void setGenericMessage(final SafeHtml genericMessage) {
         this.genericMessage.setHTML(genericMessage);
     }
@@ -71,7 +62,7 @@ public class AuthenticationErrorViewImpl extends ViewImpl implements Authenticat
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, AuthenticationErrorViewImpl> {
+    interface Binder extends UiBinder<Widget, AuthenticationError> {
 
     }
 }

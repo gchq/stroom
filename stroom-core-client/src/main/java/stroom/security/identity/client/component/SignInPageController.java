@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.presenter;
+package stroom.security.identity.client.component;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.Controller;
 import stroom.widget.presenter.client.Page;
-import stroom.widget.presenter.client.View;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A page Stroom shows in place of the app, before the user has signed in: the sign in, password
 /// reset and authentication error pages. `App.onModuleLoad` shows one with [#show()].
-///
-/// @param <V> The view's type.
-public abstract class SignInPagePresenter<V extends View> extends MyPresenterWidget<V> {
+public abstract class SignInPageController extends Controller {
 
-    protected SignInPagePresenter(final EventBus eventBus, final V view) {
-        super(eventBus, view);
+    // Hides the host page's loading message, not just making it transparent, so screen readers
+    // stop reading "Loading..." (stroom.css)
+    private static final String LOADING_HIDDEN = "loading--hidden";
+
+    /// @param eventBus The application's event bus.
+    protected SignInPageController(final EventBus eventBus) {
+        super(eventBus);
     }
 
     /// Shows the page as the whole page, then does what it does once shown ([#onShown()]).
@@ -41,4 +45,10 @@ public abstract class SignInPagePresenter<V extends View> extends MyPresenterWid
     /// Does what the page does once it is shown, e.g. hiding the host page's loading message and
     /// focusing the first field. A workbench story calls it once it has added the page to itself.
     public abstract void onShown();
+
+    /// Hides the host page's loading message (its `#loading` element).
+    protected final void hideLoading() {
+        final Element loading = RootPanel.get("loading").getElement();
+        loading.addClassName(LOADING_HIDDEN);
+    }
 }

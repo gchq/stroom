@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Label;
 /// password, reset password).
 ///
 /// Stroom shows these screens (`ChangePasswordController`, `CurrentPasswordController`,
-/// `EmailResetPasswordPresenter`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
+/// `EmailResetPasswordController`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
 /// icon, which is what this story does.
 public final class StaticDialogStories {
 

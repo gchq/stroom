@@ -21,7 +21,7 @@ import stroom.gwt.workbench.client.app.gin.idp.IdpScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.security.identity.client.presenter.SignInPagePresenter;
+import stroom.security.identity.client.component.SignInPageController;
 import stroom.widget.help.client.presenter.HelpManager;
 
 import com.google.gwt.core.client.GWT;
@@ -53,7 +53,7 @@ final class SignInPages {
     /// @param message    Creates the message shown on navigating, given the URL (an empty string
     ///                   for a reload of the page).
     /// @param replacePage Whether the message replaces the page.
-    /// @param page       Creates the page's presenter, given the injector and harness.
+    /// @param page       Creates the page's controller, given the injector and harness.
     /// @return The story's widget.
     static Widget render(final StoryContext context,
                          final RestFixtures fixtures,
@@ -61,7 +61,7 @@ final class SignInPages {
                          final Map<String, String> parameters,
                          final Function<String, Widget> message,
                          final boolean replacePage,
-                         final BiFunction<IdpScreenGinjector, ScreenHarness, SignInPagePresenter<?>> page) {
+                         final BiFunction<IdpScreenGinjector, ScreenHarness, SignInPageController> page) {
         final IdpScreenGinjector injector = GWT.create(IdpScreenGinjector.class);
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -74,20 +74,20 @@ final class SignInPages {
         // events on the static event bus, which the help manager shows
         new StaticEventBus(harness.getEventBus());
         new HelpManager(harness.getEventBus());
-        final SignInPagePresenter<?>[] shown = new SignInPagePresenter<?>[1];
+        final SignInPageController[] shown = new SignInPageController[1];
         IdpPage.setUp(harness, parameters, url -> {
             if (replacePage && shown[0] != null) {
-                shown[0].getWidget().getParent().setVisible(false);
+                shown[0].asWidget().getParent().setVisible(false);
             }
             harness.add(message.apply(url));
         });
         // As Stroom's App.onModuleLoad does for '/signIn' and '/resetPassword'
         harness.afterStartUp(() -> {
-            final SignInPagePresenter<?> presenter = page.apply(injector, harness);
-            shown[0] = presenter;
+            final SignInPageController controller = page.apply(injector, harness);
+            shown[0] = controller;
             // As its show() does, with the story as the page
-            harness.showPage(presenter);
-            presenter.onShown();
+            harness.showPage(controller);
+            controller.onShown();
         });
         return harness.asWidget();
     }

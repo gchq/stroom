@@ -1,9 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="AuthErrorView">
 
         <g:FlowPanel styleName="AuthErrorViewFormPanel">
@@ -14,7 +12,7 @@
                 </g:SimplePanel>
 
                 <form:FormGroup identity="error" label="Authentication Error">
-                    <g:Label ui:field="errorText" styleName="authErrorText"/>
+                    <g:Label ui:field="errorText"/>
                 </form:FormGroup>
 
                 <g:SimplePanel styleName="AuthErrorViewGenericMessageContainer">

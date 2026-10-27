@@ -2,8 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel ui:field="page" styleName="LoginView">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:c="urn:import:stroom.widget.component.client">
+    <!-- The page is its main content, a landmark screen readers can go to -->
+    <c:AriaPanel styleName="LoginView" role="main">
         <!-- The page's heading, for screen readers (the logo and form say it to sighted users) -->
         <g:HTML styleName="sr-only"><h1>Sign in to Stroom</h1></g:HTML>
 
@@ -18,12 +20,11 @@
                 <form:FormGroup identity="userName" label="User Name" required="true"
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
-                        <!-- Add user name text box -->
                         <g:FlowPanel addStyleNames="userNameTextBoxOuter">
-                            <form:TextBox ui:field="userName" addStyleNames="userNameTextBox"/>
+                            <form:TextBox ui:field="userName" addStyleNames="userNameTextBox"
+                                          placeholder="Enter User Name"/>
                         </g:FlowPanel>
 
-                        <!-- Add feedback -->
                         <g:Label ui:field="userNameFeedback" styleName="feedback"/>
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -31,10 +32,8 @@
                 <!-- Password -->
                 <form:FormGroup ui:field="passwordGroup" identity="password" label="Password" required="true">
                     <g:FlowPanel>
-                        <!-- Add password text box -->
-                        <form:PasswordBox ui:field="password"/>
+                        <form:PasswordBox ui:field="password" placeholder="Enter Password"/>
 
-                        <!-- Add feedback -->
                         <g:Label ui:field="passwordFeedback" styleName="feedback"/>
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -46,5 +45,5 @@
 
             </g:FlowPanel>
         </g:FlowPanel>
-    </g:FlowPanel>
+    </c:AriaPanel>
 </ui:UiBinder>

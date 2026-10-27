@@ -29,7 +29,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for the Stroom infinity logo, shown at the top of the login form.
 ///
-/// There is no logo widget in GWT: the stories build it as Stroom's `LoginViewImpl` does, an
+/// There is no logo widget in GWT: the stories build it as Stroom's `Login` does, an
 /// [SvgImage#INFINITY_LOGO] in a `LoginViewUserImage` panel inside a
 /// `LoginViewUserImageContainer` panel.
 public final class InfinityLogoStories {
@@ -59,7 +59,7 @@ public final class InfinityLogoStories {
 
     /// A logo made entirely from the story's args, so the Controls addon changes it.
     private static Widget fromArgs(final StoryContext context) {
-        // As LoginViewImpl's UiBinder template and constructor build it
+        // As Login's UiBinder template and constructor build it
         final SimplePanel userImage = new SimplePanel();
         userImage.setStyleName("LoginViewUserImage");
         userImage.getElement().setInnerHTML(SvgImage.INFINITY_LOGO.getSvg());

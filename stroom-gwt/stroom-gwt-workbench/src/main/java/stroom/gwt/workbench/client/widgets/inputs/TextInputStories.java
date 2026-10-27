@@ -75,7 +75,7 @@ public final class TextInputStories {
                 // Invalid state: aria-invalid, which also draws its red border (not a class as well)
                 .story("Invalid", context -> {
                     final TextBox textBox = InputWidgets.textBox(context, "not-an-email", "Email");
-                    // As Stroom's views (e.g. LoginViewImpl) mark an invalid field
+                    // As Stroom's views (e.g. Login) mark an invalid field
                     FieldValidity.setInvalid(textBox.getElement(), true);
                     return textBox;
                 })

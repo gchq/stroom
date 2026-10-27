@@ -41,14 +41,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/IdP/ChangePassword` stories, showing Stroom's real 'Change Password' dialog
 /// (`ChangePasswordController` with `ChangePassword`) as the sign in page shows it when the
-/// server requires a new password (`LoginPresenter.changePassword`), for the user `alice` who
+/// server requires a new password (`LoginController.changePassword`), for the user `alice` who
 /// signed in with `correct-horse`.
 ///
 /// The password policy is `GET /authentication/v1/fetchPasswordPolicy` (replying after 100ms) and
 /// the change `POST /authentication/v1/changePassword` (after 250ms). Cancel hides the dialog, as
-/// `LoginPresenter` does.
+/// `LoginController` does.
 ///
-/// The dialog's OK handler is `LoginPresenter.changePassword`'s (a private method), copied here
+/// The dialog's OK handler is `LoginController.changePassword`'s (a private method), copied here
 /// with its `afterLogin()` (a navigation) replaced by an echo of the change, recorded by the
 /// `onChanged` spy.
 public final class ChangePasswordStories {
@@ -206,7 +206,7 @@ public final class ChangePasswordStories {
 
         final AuthenticationResource resource = GWT.create(AuthenticationResource.class);
         final ChangePasswordController dialog = injector.getChangePasswordController();
-        // As LoginPresenter.changePassword, with afterLogin() replaced by the onChanged spy
+        // As LoginController.changePassword, with afterLogin() replaced by the onChanged spy
         dialog.show(harness.getAppRoot(), CAPTION, (password, confirmPassword, e) -> {
             final ChangePasswordRequest request = new ChangePasswordRequest(
                     "alice",

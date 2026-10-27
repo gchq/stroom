@@ -14,38 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.view;
+package stroom.security.identity.client.component;
 
-import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-/**
- * The backdrop for the password reset page. The form itself is the standard change password dialog,
- * shown over the top of this by {@code ResetPasswordPresenter}.
- */
-public class ResetPasswordViewImpl extends ViewImpl implements ResetPasswordView {
+/// The password reset page: only the sign in page's background, which the new password dialog is
+/// shown over.
+public class ResetPassword extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    @Inject
-    public ResetPasswordViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// Makes the page.
+    public ResetPassword() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ResetPasswordViewImpl> {
+    interface Binder extends UiBinder<Widget, ResetPassword> {
 
     }
 }

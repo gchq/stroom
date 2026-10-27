@@ -21,22 +21,10 @@ import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.security.identity.client.presenter.EditAccountPresenter;
 import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
-import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
-import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
-import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.client.view.AccountsViewImpl;
-import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
 import stroom.security.identity.client.view.EditAccountViewImpl;
-import stroom.security.identity.client.view.EmailResetPasswordViewImpl;
-import stroom.security.identity.client.view.LoginViewImpl;
-import stroom.security.identity.client.view.ResetPasswordViewImpl;
 
 public class ChangePasswordModule extends PluginModule {
 
@@ -44,19 +32,6 @@ public class ChangePasswordModule extends PluginModule {
     protected void configure() {
         bindPlugin(AccountsPlugin.class);
         bindPlugin(ChangePasswordPlugin.class);
-
-        bindPresenter(LoginPresenter.class,
-                LoginView.class,
-                LoginViewImpl.class);
-        bindPresenter(AuthenticationErrorPresenter.class,
-                AuthenticationErrorView.class,
-                AuthenticationErrorViewImpl.class);
-        bindPresenter(ResetPasswordPresenter.class,
-                ResetPasswordView.class,
-                ResetPasswordViewImpl.class);
-        bindPresenterWidget(EmailResetPasswordPresenter.class,
-                EmailResetPasswordView.class,
-                EmailResetPasswordViewImpl.class);
 
         bindPresenterWidget(AccountsPresenter.class,
                 AccountsView.class,

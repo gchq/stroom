@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.view;
+package stroom.security.identity.client.component;
 
-import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.EmailValidator;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.HideRequest;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,43 +29,48 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class EmailResetPasswordViewImpl
-        extends ViewWithUiHandlers<HideRequestUiHandlers>
-        implements EmailResetPasswordView {
+import java.util.Objects;
 
-    private final Widget widget;
+/// The email address to send a password reset link to.
+public class EmailResetPassword extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     TextBox email;
     @UiField
     Label emailFeedback;
 
-    @Inject
-    public EmailResetPasswordViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        email.getElement().setAttribute("placeholder", "Enter Your Email Address");
+    private Runnable onEnter = () -> {
+    };
+
+    /// Makes an empty form.
+    public EmailResetPassword() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Focuses the email address.
     public void focus() {
         email.setFocus(true);
     }
 
-    @Override
+    /// @param onEnter What Enter in the email address does, e.g. press the dialog's OK.
+    public void setOnEnter(final Runnable onEnter) {
+        this.onEnter = Objects.requireNonNull(onEnter, "onEnter");
+    }
+
+    /// @return The email address entered.
     public String getEmail() {
         return email.getValue();
     }
 
-    @Override
+    /// Checks an email address has been given and looks like one, saying under it if not and
+    /// focusing it.
+    ///
+    /// @return Whether it is valid.
     public boolean validate() {
-        boolean valid = true;
-
+        final boolean valid;
         if (email.getValue().length() == 0) {
             FieldValidity.setInvalid(email, emailFeedback, "Email is required");
             valid = false;
@@ -77,28 +79,27 @@ public class EmailResetPasswordViewImpl
             valid = false;
         } else {
             FieldValidity.setValid(email, emailFeedback);
+            valid = true;
         }
 
         if (!valid) {
             FieldValidity.focusFirstInvalid(email);
         }
-
         return valid;
     }
 
     @UiHandler("email")
-    public void onEmailKeyDown(final KeyDownEvent e) {
-        onKeyDown(e);
-    }
-
-    private void onKeyDown(final KeyDownEvent e) {
+    void onEmailKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.OK, () -> {
-            }));
+            onEnter.run();
         }
     }
 
-    public interface Binder extends UiBinder<Widget, EmailResetPasswordViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, EmailResetPassword> {
 
     }
 }

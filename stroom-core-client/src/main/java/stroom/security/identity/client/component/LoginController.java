@@ -14,71 +14,69 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.presenter;
+package stroom.security.identity.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.identity.client.component.ChangePasswordController;
-import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.client.RedirectUrlUtil;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class LoginPresenter extends SignInPagePresenter<LoginView> implements LoginUiHandlers {
+/// The sign in page ([Login]): signs the user in, asks for a new password when the server
+/// requires one, and goes back to where the user was going.
+public class LoginController extends SignInPageController {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
+    private final Login view;
     private final RestFactory restFactory;
-    private final Provider<ChangePasswordController> changePasswordPresenterProvider;
-    private final Provider<EmailResetPasswordPresenter> emailResetPasswordPresenterProvider;
+    private final Provider<ChangePasswordController> changePasswordProvider;
+    private final Provider<EmailResetPasswordController> emailResetPasswordProvider;
 
-    private final Element loadingText;
-    private final Element loading;
-
+    /// Made by GIN, with its page.
+    ///
+    /// @param eventBus                   The application's event bus.
+    /// @param view                       The page.
+    /// @param restFactory                Signs in, and changes the password.
+    /// @param changePasswordProvider     Makes the dialog that asks for a new password.
+    /// @param emailResetPasswordProvider Makes the dialog that emails a password reset link.
     @Inject
-    public LoginPresenter(final EventBus eventBus,
-                          final LoginView view,
-                          final RestFactory restFactory,
-                          final Provider<ChangePasswordController> changePasswordPresenterProvider,
-                          final Provider<EmailResetPasswordPresenter> emailResetPasswordPresenterProvider) {
-        super(eventBus, view);
+    public LoginController(final EventBus eventBus,
+                           final Login view,
+                           final RestFactory restFactory,
+                           final Provider<ChangePasswordController> changePasswordProvider,
+                           final Provider<EmailResetPasswordController> emailResetPasswordProvider) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
-        this.changePasswordPresenterProvider = changePasswordPresenterProvider;
-        this.emailResetPasswordPresenterProvider = emailResetPasswordPresenterProvider;
-        getView().setUiHandlers(this);
-
-        loadingText = RootPanel.get("loadingText").getElement();
-        loading = RootPanel.get("loading").getElement();
+        this.changePasswordProvider = changePasswordProvider;
+        this.emailResetPasswordProvider = emailResetPasswordProvider;
+        initWidget(view);
+        view.setOnSignIn(this::signIn);
+        view.setOnForgotPassword(() -> emailResetPasswordProvider.get().show(this));
 
         restFactory
                 .create(RESOURCE)
                 .method(AuthenticationResource::fetchPasswordPolicy)
-                .onSuccess(result -> getView().setAllowPasswordResets(result.isAllowPasswordResets()))
+                .onSuccess(result -> view.setAllowPasswordResets(result.isAllowPasswordResets()))
                 .onFailure(new DefaultErrorHandler(this, null))
                 .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                 .exec();
     }
 
-    @Override
-    public void signIn() {
-        if (getView().validate()) {
-            final LoginRequest request = new LoginRequest(getView().getUserName(), getView().getPassword());
+    private void signIn() {
+        if (view.validate()) {
+            final LoginRequest request = new LoginRequest(view.getUserName(), view.getPassword());
             restFactory
                     .create(RESOURCE)
                     .method(res -> res.login(request))
@@ -88,29 +86,22 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
                         } else if (result.isLoginSuccessful()) {
                             afterLogin();
                         } else {
-                            AlertEvent.fireError(this, result.getMessage(), getView()::reset);
+                            AlertEvent.fireError(this, result.getMessage(), view::reset);
                         }
                     })
-                    .onFailure(new DefaultErrorHandler(this, getView()::reset))
+                    .onFailure(new DefaultErrorHandler(this, view::reset))
                     .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
                     .exec();
         } else {
-            getView().reset();
+            view.reset();
         }
     }
 
-    @Override
-    public void emailResetPassword() {
-        final EmailResetPasswordPresenter emailResetPasswordPresenter =
-                makeDialog(emailResetPasswordPresenterProvider);
-        emailResetPasswordPresenter.show();
-    }
-
     private void changePassword() {
-        changePasswordPresenterProvider.get().show(this, "Change Password", (password, confirmPassword, e) -> {
+        changePasswordProvider.get().show(this, "Change Password", (password, confirmPassword, e) -> {
             final ChangePasswordRequest request = new ChangePasswordRequest(
-                    getView().getUserName(),
-                    getView().getPassword(),
+                    view.getUserName(),
+                    view.getPassword(),
                     password,
                     confirmPassword);
             restFactory
@@ -142,10 +133,9 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
         }
     }
 
-    /**
-     * Whether a post-login redirect target stays on this application's origin. A safe root-relative path is
-     * fine; a protocol-relative {@code //host} or an absolute URL to any other origin is not.
-     */
+    // Whether a post-login redirect target stays on this application's origin. A safe
+    // root-relative path is fine; a protocol-relative //host or an absolute URL to any other
+    // origin is not.
     private boolean isSameOrigin(final String uri) {
         if (RedirectUrlUtil.isSafeRootRelativePath(uri)) {
             return true;
@@ -156,28 +146,7 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
 
     @Override
     public void onShown() {
-        getView().focus();
-        loading.getStyle().setOpacity(0);
-        // Hidden, not just transparent, so screen readers stop reading "Loading..."
-        loading.getStyle().setVisibility(Visibility.HIDDEN);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface LoginView extends View, Focus, HasUiHandlers<LoginUiHandlers> {
-
-        String getUserName();
-
-        String getPassword();
-
-        boolean validate();
-
-        void reset();
-
-        void setAllowPasswordResets(boolean allowPasswordResets);
+        view.focus();
+        hideLoading();
     }
 }

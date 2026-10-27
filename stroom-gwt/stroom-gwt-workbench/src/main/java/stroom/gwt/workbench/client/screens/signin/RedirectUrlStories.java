@@ -24,7 +24,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.identity.client.presenter.LoginPresenter;
+import stroom.security.identity.client.component.LoginController;
 import stroom.util.client.RedirectUrlUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -37,14 +37,14 @@ import java.util.Map;
 ///
 /// * `isSafeRootRelativePath` is Stroom's `RedirectUrlUtil.isSafeRootRelativePath` (GWT client code,
 ///   `stroom-core-client`), called directly;
-/// * `isSameOrigin` is Stroom's `LoginPresenter.isSameOrigin` (private, called with JSNI by
+/// * `isSameOrigin` is Stroom's `LoginController.isSameOrigin` (private, called with JSNI by
 ///   `IdpPage.isSameOrigin`) on a real sign in page, created (not shown) as the story renders. It
 ///   compares with the page's own origin (`Window.Location`), which a story can't change, so the
 ///   story page's origin stands for Stroom's in these checks.
 public final class RedirectUrlStories {
 
     // The rendering's sign in page, for isSameOrigin (a play's checks run after it renders)
-    private static LoginPresenter loginPresenter;
+    private static LoginController loginPage;
 
     private RedirectUrlStories() {
         // Static utility
@@ -114,7 +114,7 @@ public final class RedirectUrlStories {
                     // missing redirect_uri without calling it
                     play.expect("isSameOrigin(null) throws a NullPointerException", () -> {
                         try {
-                            IdpPage.isSameOrigin(loginPresenter, null);
+                            IdpPage.isSameOrigin(loginPage, null);
                             return false;
                         } catch (final NullPointerException e) {
                             return true;
@@ -132,7 +132,7 @@ public final class RedirectUrlStories {
     // ${ORIGIN} is the page's origin, ${OTHER_SCHEME_ORIGIN} the same host with the other scheme
     private static void expectSameOrigin(final Play play, final String uri, final boolean expected) {
         play.expect("isSameOrigin(" + describe(uri) + ")",
-                () -> IdpPage.isSameOrigin(loginPresenter, withOrigin(uri))).toBe(expected);
+                () -> IdpPage.isSameOrigin(loginPage, withOrigin(uri))).toBe(expected);
     }
 
     private static String withOrigin(final String uri) {
@@ -178,11 +178,11 @@ public final class RedirectUrlStories {
                 .build();
         IdpPage.setUp(harness, Map.of(), url -> {
         });
-        final LoginPresenter presenter = injector.getLoginPresenter();
-        loginPresenter = presenter;
+        final LoginController page = harness.own(injector.getLoginController());
+        loginPage = page;
         harness.addCleanUp(() -> {
-            if (loginPresenter == presenter) {
-                loginPresenter = null;
+            if (loginPage == page) {
+                loginPage = null;
             }
         });
         harness.add(new Label("See the play function."));

@@ -18,11 +18,11 @@ package stroom.gwt.workbench.client.app.gin.idp;
 
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
+import stroom.security.identity.client.component.AuthenticationErrorController;
 import stroom.security.identity.client.component.ChangePasswordController;
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
-import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter;
+import stroom.security.identity.client.component.EmailResetPasswordController;
+import stroom.security.identity.client.component.LoginController;
+import stroom.security.identity.client.component.ResetPasswordController;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -32,28 +32,28 @@ import com.google.gwt.inject.client.GinModules;
 /// ```
 /// final IdpScreenGinjector injector = GWT.create(IdpScreenGinjector.class);
 /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
-/// final LoginPresenter presenter = injector.getLoginPresenter();
+/// final LoginController page = injector.getLoginController();
 /// ```
 /// Create one each time the story renders: its singletons belong to that rendering's harness.
 @GinModules({
         ScreenViewsModule.class,
-        IdpScreenModule.class,
 })
 public interface IdpScreenGinjector extends ScreenGinjector {
 
     /// @return A new sign in page, which fetches the password policy as it is created. The
-    /// page's host elements (`#loading`, `#loadingText`) must exist first.
-    LoginPresenter getLoginPresenter();
+    /// page's host element (`#loading`) must exist before it is shown.
+    LoginController getLoginController();
 
-    /// @return A new authentication error page. The page's host elements must exist first.
-    AuthenticationErrorPresenter getAuthenticationErrorPresenter();
+    /// @return A new authentication error page. The page's host element must exist before it is
+    /// shown.
+    AuthenticationErrorController getAuthenticationErrorController();
 
-    /// @return A new password reset page. The page's host elements must exist first.
-    ResetPasswordPresenter getResetPasswordPresenter();
+    /// @return A new password reset page. The page's host element must exist before it is shown.
+    ResetPasswordController getResetPasswordController();
 
     /// @return A new 'Change Password' dialog.
     ChangePasswordController getChangePasswordController();
 
     /// @return A new 'Reset Your Password' dialog.
-    EmailResetPasswordPresenter getEmailResetPasswordPresenter();
+    EmailResetPasswordController getEmailResetPasswordController();
 }

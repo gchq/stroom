@@ -16,17 +16,17 @@
 
 package stroom.security.identity.client.gin;
 
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter;
+import stroom.security.identity.client.component.AuthenticationErrorController;
+import stroom.security.identity.client.component.LoginController;
+import stroom.security.identity.client.component.ResetPasswordController;
 
 import com.google.inject.Provider;
 
 public interface ChangePasswordGinjector {
 
-    Provider<LoginPresenter> getLoginPresenter();
+    Provider<LoginController> getLoginController();
 
-    Provider<AuthenticationErrorPresenter> getAuthenticationErrorPresenter();
+    Provider<AuthenticationErrorController> getAuthenticationErrorController();
 
-    Provider<ResetPasswordPresenter> getResetPasswordPresenter();
+    Provider<ResetPasswordController> getResetPasswordController();
 }

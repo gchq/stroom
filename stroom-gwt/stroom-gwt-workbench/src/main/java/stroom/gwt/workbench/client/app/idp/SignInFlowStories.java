@@ -26,7 +26,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.identity.client.presenter.SignInPagePresenter;
+import stroom.security.identity.client.component.SignInPageController;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,8 +36,8 @@ import java.util.Map;
 
 /// The `App/IdP/SignInFlow` stories: Stroom's sign in host page for
 /// `/signIn?error=…&redirect_uri=…`, as Stroom's `App.onModuleLoad` shows it (the sign in page,
-/// `LoginPresenter`, for `error=login_required`, otherwise the authentication error page,
-/// `AuthenticationErrorPresenter`), through to the navigation after signing in.
+/// `LoginController`, for `error=login_required`, otherwise the authentication error page,
+/// `AuthenticationErrorController`), through to the navigation after signing in.
 ///
 /// | Stroom | Used for |
 /// |---|---|
@@ -157,11 +157,11 @@ public final class SignInFlowStories {
         return SignInPages.render(context, fixtures, uiConfig, parameters, IdpPage::redirectedMessage, true,
                 (injector, harness) -> {
                     // As App.onModuleLoad does for '/signIn'
-                    final SignInPagePresenter<?> page;
+                    final SignInPageController page;
                     if ("login_required".equals(Window.Location.getParameter("error"))) {
-                        page = injector.getLoginPresenter();
+                        page = injector.getLoginController();
                     } else {
-                        page = injector.getAuthenticationErrorPresenter();
+                        page = injector.getAuthenticationErrorController();
                     }
                     return page;
                 });

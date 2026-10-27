@@ -581,12 +581,11 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   checked by calling Stroom's code in a value's supplier, or with a real handler created with `new`
   and `bind()` driven by a button per case; create the Stroom objects inside the supplier, so each
   run of the play checks fresh ones.
-* **Sign-in pages** (`client/app/gin/idp/IdpScreenGinjector` with `IdpScreenModule`,
-  `client/app/idp/IdpPage`,
-  `SignInPages`): Stroom's `App.onModuleLoad` shows `LoginPresenter`,
-  `AuthenticationErrorPresenter` and `ResetPasswordPresenter` with `show()`, which makes the page
-  the whole browser page; a story adds the presenter to itself and calls its `onShown()`. They look up the host page's `#loading`/`#loadingText` elements when
-  created, which `IdpPage.setUp` adds. A screen that reads `Window.Location.getParameter`
+* **Sign-in pages** (`client/app/gin/idp/IdpScreenGinjector`, `client/app/idp/IdpPage`,
+  `SignInPages`): Stroom's `App.onModuleLoad` shows `LoginController`,
+  `AuthenticationErrorController` and `ResetPasswordController` with `show()`, which makes the page
+  the whole browser page; a story adds the controller to itself and calls its `onShown()`. They
+  hide the host page's `#loading` element when shown, which `IdpPage.setUp` adds. A screen that reads `Window.Location.getParameter`
   (`error`, `redirect_uri`, `token`) gets them added to the story page's URL with
   `history.replaceState`, restored on clean up. `Window.Location.replace(url)` (which a
   `LocationManager` can't intercept) is cancelled with the browser's Navigation API (Chromium) and

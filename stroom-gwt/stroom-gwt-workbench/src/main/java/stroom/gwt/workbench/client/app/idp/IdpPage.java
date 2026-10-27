@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.idp;
 
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
-import stroom.security.identity.client.presenter.LoginPresenter;
+import stroom.security.identity.client.component.LoginController;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.DivElement;
@@ -34,8 +34,8 @@ import java.util.function.Consumer;
 /// sign in page (`stroom-core/.../servlet/app.html`, served for `/signIn` and `/resetPassword`)
 /// provides it, for the stories of `App/IdP/*`:
 ///
-/// * the host page's `#loading` and `#loadingText` elements, which `LoginPresenter`,
-///   `AuthenticationErrorPresenter` and `ResetPasswordPresenter` look up when created (and fade
+/// * the host page's `#loading` and `#loadingText` elements, which `LoginController`,
+///   `AuthenticationErrorController` and `ResetPasswordController` look up when shown (and fade
 ///   out when revealed);
 /// * the URL's query parameters (`error`, `redirect_uri`, `token`), which they read with
 ///   `Window.Location.getParameter`: they are added to the story page's URL with
@@ -78,17 +78,17 @@ public final class IdpPage {
         });
     }
 
-    /// Stroom's check of a post sign in redirect, `LoginPresenter.isSameOrigin` (private).
+    /// Stroom's check of a post sign in redirect, `LoginController.isSameOrigin` (private).
     ///
-    /// @param presenter A sign in page.
+    /// @param page A sign in page.
     /// @param uri       The `redirect_uri`, or null.
     /// @return Whether Stroom would navigate to it after signing in.
-    public static native boolean isSameOrigin(LoginPresenter presenter, String uri) /*-{
-        var p = presenter;
-        return p.@stroom.security.identity.client.presenter.LoginPresenter::isSameOrigin(Ljava/lang/String;)(uri);
+    public static native boolean isSameOrigin(LoginController page, String uri) /*-{
+        var p = page;
+        return p.@stroom.security.identity.client.component.LoginController::isSameOrigin(Ljava/lang/String;)(uri);
     }-*/;
 
-    /// @return The story page's origin, e.g. `http://localhost:6008`, as `LoginPresenter.isSameOrigin`
+    /// @return The story page's origin, e.g. `http://localhost:6008`, as `LoginController.isSameOrigin`
     /// builds it (`Window.Location.getProtocol() + "//" + Window.Location.getHost()`).
     public static native String origin() /*-{
         return $wnd.location.protocol + "//" + $wnd.location.host;

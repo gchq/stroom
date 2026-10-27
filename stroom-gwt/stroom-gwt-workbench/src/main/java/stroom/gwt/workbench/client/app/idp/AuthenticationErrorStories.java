@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Map;
 
 /// The `App/IdP/AuthenticationError` stories, showing Stroom's real authentication error page
-/// (`AuthenticationErrorPresenter` with `AuthenticationErrorViewImpl`), which Stroom shows for
+/// (`AuthenticationErrorController` with `AuthenticationError`), which Stroom shows for
 /// `/signIn?error=…` with any error but `login_required`. The error is the URL's `error` parameter
 /// (see `IdpPage`) and the message the UI config's `authErrorMessage` (trusted HTML). The page has
 /// no way back to sign in.
@@ -73,6 +73,6 @@ public final class AuthenticationErrorStories {
                 ? null
                 : QueryFixtures.uiConfigWith("\"authErrorMessage\": " + messageJson);
         return SignInPages.render(context, RestFixtures.builder().build(), uiConfig, Map.of("error", error),
-                IdpPage::redirectedMessage, true, (injector, harness) -> injector.getAuthenticationErrorPresenter());
+                IdpPage::redirectedMessage, true, (injector, harness) -> injector.getAuthenticationErrorController());
     }
 }

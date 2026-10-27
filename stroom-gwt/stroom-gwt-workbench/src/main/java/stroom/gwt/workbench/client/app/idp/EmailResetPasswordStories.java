@@ -30,7 +30,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/IdP/EmailResetPassword` stories, showing Stroom's real 'Reset Your Password' dialog
-/// (`EmailResetPasswordPresenter` with `EmailResetPasswordViewImpl`), as the sign in page's
+/// (`EmailResetPasswordController` with `EmailResetPassword`), as the sign in page's
 /// 'Forgot password?' link shows it, with fake REST replies. The email is sent with
 /// `POST /authentication/v1/reset` (`true` or `false`); the dialog closes with Cancel (or OK once
 /// the email is sent).
@@ -98,7 +98,7 @@ public final class EmailResetPasswordStories {
                 .injector(injector)
                 .realAlerts()
                 .build();
-        injector.getEmailResetPasswordPresenter().show();
+        injector.getEmailResetPasswordController().show(harness.getAppRoot());
         return harness.asWidget();
     }
 }

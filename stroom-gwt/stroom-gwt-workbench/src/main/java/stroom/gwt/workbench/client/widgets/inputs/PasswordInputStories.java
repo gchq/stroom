@@ -27,7 +27,7 @@ import stroom.widget.form.client.PasswordBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 /// Stories for Stroom's [PasswordBox], the password field of its password views (e.g.
-/// `LoginViewImpl`, `ChangePassword`): a box whose value is hidden, with a button over its
+/// `Login`, `ChangePassword`): a box whose value is hidden, with a button over its
 /// end that shows and hides it.
 public final class PasswordInputStories {
 
