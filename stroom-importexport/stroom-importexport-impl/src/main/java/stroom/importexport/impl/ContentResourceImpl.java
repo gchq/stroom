@@ -29,6 +29,7 @@ import stroom.importexport.api.ContentService;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
@@ -175,9 +176,9 @@ public class ContentResourceImpl implements ContentResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public ResourceGeneration exportContent(final DocRefs docRefs) {
+    public ResourceGeneration exportContent(final ExportContentRequest request) {
         final MultiObject.Builder<Void> builder = MultiObject.builder();
-        docRefs.getDocRefs().stream()
+        request.getDocRefs().stream()
                 .forEach(docRef -> {
                     final String path = securityContextProvider.get()
                                                 .asProcessingUserResult(() -> explorerNodeServiceProvider.get().getPath(
@@ -214,7 +215,7 @@ public class ContentResourceImpl implements ContentResource {
                         .withSource(builder.build())
                         .build())
                 .withSimpleLoggedResult(() ->
-                        contentServiceProvider.get().exportContent(docRefs))
+                        contentServiceProvider.get().exportContent(request))
                 .getResultAndLog();
     }
 

@@ -3,7 +3,7 @@
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 
 # ------------3rd-party------------
-aws = "2.54.0"
+aws = "2.57.3"
 commons-io = "2.21.0"
 dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.4.2"
@@ -95,7 +95,7 @@ jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 # and package names so can be used together.
 # -jdk8 and -jsr310 are now included in -databind in v3
 # https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
-jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.1.2" }
+jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.2.4" }
 # jackson-annotations is an exception as it still uses the old v2 maven coords
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by jackson-bom
 jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom

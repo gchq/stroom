@@ -55,6 +55,7 @@ import stroom.util.shared.ResultPage;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
 import co.elastic.clients.elasticsearch._types.mapping.BooleanProperty;
+import co.elastic.clients.elasticsearch._types.mapping.DateNanosProperty;
 import co.elastic.clients.elasticsearch._types.mapping.DateProperty;
 import co.elastic.clients.elasticsearch._types.mapping.FieldAliasProperty;
 import co.elastic.clients.elasticsearch._types.mapping.FieldMapping;
@@ -63,6 +64,7 @@ import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
 import co.elastic.clients.elasticsearch._types.mapping.NumberPropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
+import co.elastic.clients.elasticsearch._types.mapping.PropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
@@ -184,10 +186,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     public int getFieldCount(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return NullSafe.get(
+            return NullSafe.getOrElse(
                     index,
                     this::getDataSourceFields,
-                    List::size);
+                    List::size,
+                    0);
         });
     }
 
@@ -236,20 +239,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .map(field -> {
                     final String fieldName = field.getKey();
                     final FieldMapping fieldMeta = field.getValue();
-                    String nativeType = getFieldTypeFromMapping(fieldName, field.getValue());
+                    final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
+                            fieldName, fieldMeta, fieldMappings);
+                    if (effectiveFieldMeta == null) {
+                        // Alias whose target field could not be found, so ignore
+                        return null;
+                    }
 
+                    final String nativeType = getFieldTypeFromMapping(fieldName, effectiveFieldMeta);
                     if (nativeType == null) {
                         // If field type is null, this is a system field, so ignore
                         return null;
-                    } else if (Kind.Alias.jsonValue().equals(nativeType)) {
-                        // Determine the mapping type of the field the alias is referring to
-                        try {
-                            final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
-                            final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
-                            nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                        } catch (final Exception e) {
-                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                        }
                     }
 
                     try {
@@ -257,7 +257,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final FieldType elasticFieldType =
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
-                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
+                        return toDataSourceField(
+                                elasticFieldType, nativeType, fieldName, fieldIsIndexed(effectiveFieldMeta));
                     } catch (final UnsupportedTypeException e) {
                         LOGGER.debug(e::getMessage, e);
                         return null;
@@ -274,10 +275,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * Returns an `AbstractField` instance, based on the field's data type
      */
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
+                                         final String nativeType,
                                          final String fieldName,
                                          final Boolean isIndexed)
             throws IllegalArgumentException {
-        final ConditionSet conditionSet = ConditionSet.getElastic(elasticIndexFieldType);
+        final ConditionSet conditionSet = getConditionSet(elasticIndexFieldType, nativeType);
         return QueryField
                 .builder()
                 .fldName(fieldName)
@@ -285,6 +287,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .conditionSet(conditionSet)
                 .queryable(isIndexed && !FieldType.NESTED.equals(elasticIndexFieldType))
                 .build();
+    }
+
+    /**
+     * Returns the conditions a field can be queried with. A `version` field holds text, but Elasticsearch orders
+     * versions by their precedence, so it can be compared like a number.
+     */
+    private static ConditionSet getConditionSet(final FieldType elasticIndexFieldType, final String nativeType) {
+        if (Kind.Version.jsonValue().equals(nativeType)) {
+            return ConditionSet.ELASTIC_NUMERIC;
+        }
+        return ConditionSet.getElastic(elasticIndexFieldType);
     }
 
     private String getFieldTypeFromMapping(final String fieldName, final FieldMapping fieldMeta) {
@@ -298,6 +311,32 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         }
 
         return null;
+    }
+
+    /// Resolves the mapping that determines a field's type and whether it is indexed.
+    /// For an alias field this is the mapping of the field the alias refers to; for any other field it is
+    /// the field's own mapping.
+    ///
+    /// @param fieldName     the full name of the field
+    /// @param fieldMeta     the field's own mapping
+    /// @param fieldMappings all field mappings for the index, keyed by full field name
+    /// @return the effective mapping, or `null` if the field is an alias whose target cannot be found
+    private FieldMapping resolveEffectiveFieldMapping(final String fieldName,
+                                                      final FieldMapping fieldMeta,
+                                                      final Map<String, FieldMapping> fieldMappings) {
+        final String nativeType = getFieldTypeFromMapping(fieldName, fieldMeta);
+        if (!Kind.Alias.jsonValue().equals(nativeType)) {
+            return fieldMeta;
+        }
+
+        final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
+        final FieldMapping targetFieldMeta = aliasPath != null
+                ? fieldMappings.get(aliasPath)
+                : null;
+        if (targetFieldMeta == null) {
+            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+        }
+        return targetFieldMeta;
     }
 
     private String getAliasPathFromMapping(final String fieldName, final FieldMapping fieldMeta) {
@@ -328,22 +367,19 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
-                String nativeType = getFieldTypeFromMapping(key, fieldMeta);
                 final String fieldName = fieldMeta.fullName();
-                final boolean indexed = fieldIsIndexed(fieldMeta);
+                final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
+                        fieldName, fieldMeta, fieldMappings);
+                if (effectiveFieldMeta == null) {
+                    // Alias whose target field could not be found, so ignore
+                    return;
+                }
 
+                final String nativeType = getFieldTypeFromMapping(key, effectiveFieldMeta);
                 if (nativeType == null) {
                     return;
-                } else if (Kind.Alias.jsonValue().equals(nativeType)) {
-                    // Determine the mapping type of the field the alias is referring to
-                    try {
-                        final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
-                        final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
-                        nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                    } catch (final Exception e) {
-                        LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                    }
                 }
+                final boolean indexed = fieldIsIndexed(effectiveFieldMeta);
 
                 final FieldType type = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
                 final ElasticIndexField field = ElasticIndexField
@@ -384,6 +420,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     return !Boolean.FALSE.equals(((BooleanProperty) mappingInstance).index());
                 } else if (mappingInstance instanceof DateProperty) {
                     return !Boolean.FALSE.equals(((DateProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof DateNanosProperty) {
+                    return !Boolean.FALSE.equals(((DateNanosProperty) mappingInstance).index());
                 } else if (mappingInstance instanceof NumberPropertyBase) {
                     return !Boolean.FALSE.equals(((NumberPropertyBase) mappingInstance).index());
                 } else if (mappingInstance instanceof IpProperty) {
@@ -464,23 +502,22 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return mappings;
     }
 
-    /**
-     * Registers a field and, if it is an {@code object} or {@code nested} container, recursively registers
-     * each of its descendant fields under their full dotted path.
-     * <p>
-     * Container fields are retained (rather than merely descended into) so that their native type stays
-     * discoverable downstream; this is what allows {@code nested} containers such as {@code user} and
-     * {@code user.address} to be identified when a query targets a deeply nested field like
-     * {@code user.address.city}. Container types that are not usable as data source fields (e.g. plain
-     * {@code object}) are filtered out later during native type resolution.
-     *
-     * @param fullName the full (dot-delimited) name of the field
-     * @param property the field's mapping property
-     * @param out      the accumulating map of field name to field mapping
-     */
-    private static void registerField(final String fullName,
-                                      final Property property,
-                                      final NavigableMap<String, FieldMapping> out) {
+    /// Registers a field and, if it is an `object` or `nested` container, recursively registers
+    /// each of its descendant fields under their full dotted path. Any multi-fields defined on the field
+    /// (e.g. `user.id.keyword`) are also registered.
+    ///
+    /// Container fields are retained (rather than merely descended into) so that their native type stays
+    /// discoverable downstream; this is what allows `nested` containers such as `user` and
+    /// `user.address` to be identified when a query targets a deeply nested field like
+    /// `user.address.city`. Container types that are not usable as data source fields (e.g. plain
+    /// `object`) are filtered out later during native type resolution.
+    ///
+    /// @param fullName the full (dot-delimited) name of the field
+    /// @param property the field's mapping property
+    /// @param out      the accumulating map of field name to field mapping
+    static void registerField(final String fullName,
+                              final Property property,
+                              final NavigableMap<String, FieldMapping> out) {
         // The synthesised FieldMapping only needs to carry the property; every downstream reader (type
         // resolution, alias lookup, indexed detection) reads the mapping value, not its key.
         out.putIfAbsent(fullName, FieldMapping.of(fm -> fm
@@ -488,21 +525,43 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .mapping(leafName(fullName), property)));
 
         // Recurse into the children of object / nested containers, expanding each to its full dotted path.
-        // Multi-fields (Property.fields(), e.g. `title.keyword`) are deliberately NOT traversed: they are
-        // not part of the returned `_source` and must not be selectable by the user.
         getChildProperties(property).forEach((childLeafName, childProperty) ->
                 registerField(fullName + FIELD_PATH_SEPARATOR + childLeafName, childProperty, out));
+
+        // Register multi-fields (e.g. `title.keyword`). Although they are not part of `_source`, search
+        // results are read via the `fields` API, which does return multi-field values, and they are
+        // commonly used for exact-match queries against analysed `text` fields.
+        getMultiFieldProperties(property).forEach((multiFieldLeafName, multiFieldProperty) ->
+                registerField(fullName + FIELD_PATH_SEPARATOR + multiFieldLeafName, multiFieldProperty, out));
     }
 
     /**
-     * @return the child properties of an {@code object} or {@code nested} container, or an empty map for any
-     * other property type (leaf fields, aliases, etc.).
+     * @return the multi-fields defined on a property (e.g. a `keyword` sub-field of a `text` field), or an
+     * empty map if the property has none.
+     */
+    private static Map<String, Property> getMultiFieldProperties(final Property property) {
+        if (property._get() instanceof final PropertyBase propertyBase) {
+            return NullSafe.map(propertyBase.fields());
+        } else if (property.isMatchOnlyText()) {
+            // Not a PropertyBase, though it can have multi-fields, e.g. ECS's `message.keyword`
+            return NullSafe.map(property.matchOnlyText().fields());
+        }
+        return Map.of();
+    }
+
+    /**
+     * @return the child properties of an {@code object}, {@code nested} or {@code passthrough} container, or an
+     * empty map for any other property type (leaf fields, aliases, etc.).
      */
     private static Map<String, Property> getChildProperties(final Property property) {
         if (property.isNested()) {
             return property.nested().properties();
         } else if (property.isObject()) {
             return property.object().properties();
+        } else if (property.isPassthrough()) {
+            // An object whose fields can also be queried by their leaf names, e.g. OpenTelemetry's
+            // `attributes`. We offer them by their full names, like the fields of an object.
+            return NullSafe.map(property.passthrough().properties());
         }
         return Map.of();
     }

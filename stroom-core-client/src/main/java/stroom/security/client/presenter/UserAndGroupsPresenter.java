@@ -167,14 +167,14 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         // Deal with Member Of Groups pane.
         registerHandler(parentsList.getSelectionModel().addSelectionHandler(e -> {
-            final User user = userList.getSelectionModel().getSelected();
+            final UserRef user = getSelectedUserRef();
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
 
         // Deal with Members in Group pane.
         registerHandler(childrenList.getSelectionModel().addSelectionHandler(e -> {
-            final User group = userList.getSelectionModel().getSelected();
+            final UserRef group = getSelectedUserRef();
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
@@ -182,7 +182,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onAddMemberOf() {
-        final User user = userList.getSelectionModel().getSelected();
+        final UserRef user = getSelectedUserRef();
         if (user != null) {
             final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
             userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
@@ -194,34 +194,34 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
             userRefPopupPresenter.show("Select Group", groupRef -> {
                 if (groupRef != null) {
-                    addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
+                    addUserToGroup(user, groupRef, parentsList, groupRef);
                 }
             });
         }
     }
 
     private void onRemoveMemberOf() {
-        final User user = userList.getSelectionModel().getSelected();
+        final UserRef user = getSelectedUserRef();
         final User group = parentsList.getSelectionModel().getSelected();
-        removeUserFromGroup(user, group, parentsList);
+        removeUserFromGroup(user, NullSafe.get(group, User::asRef), parentsList);
     }
 
     private void onAddMembersIn() {
-        final User group = userList.getSelectionModel().getSelected();
+        final UserRef group = getSelectedUserRef();
         if (group != null) {
             final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
             userRefPopupPresenter.show("Add User Or Group", userRef -> {
                 if (userRef != null) {
-                    addUserToGroup(userRef, group.asRef(), childrenList, userRef);
+                    addUserToGroup(userRef, group, childrenList, userRef);
                 }
             });
         }
     }
 
     private void onRemoveMembersIn() {
-        final User group = userList.getSelectionModel().getSelected();
+        final UserRef group = getSelectedUserRef();
         final User user = childrenList.getSelectionModel().getSelected();
-        removeUserFromGroup(user, group, childrenList);
+        removeUserFromGroup(NullSafe.get(user, User::asRef), group, childrenList);
     }
 
     private void setParentsListExtraTerm(final UserRef userRef) {
@@ -293,9 +293,17 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onSelection() {
+        onSelection(getSelectedUserRef());
+    }
+
+    // When showing a specific user (e.g. on a user's tab) the top user list is hidden and has no
+    // selection, so the fixed user takes precedence over the user list selection.
+    private UserRef getSelectedUserRef() {
+        if (userRef != null) {
+            return userRef;
+        }
         final User selected = userList.getSelectionModel().getSelected();
-//        GWT.log("onSelection - selected: " + selected);
-        onSelection(NullSafe.get(selected, User::asRef));
+        return NullSafe.get(selected, User::asRef);
     }
 
     private void onSelection(final UserRef selected) {
@@ -382,8 +390,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }
     }
 
-    private void removeUserFromGroup(final User user,
-                                     final User group,
+    private void removeUserFromGroup(final UserRef user,
+                                     final UserRef group,
                                      final UserListPresenter userListPresenter) {
         if (NullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(userListPresenter);

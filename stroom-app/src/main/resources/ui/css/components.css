@@ -1224,6 +1224,18 @@
     margin-top: 0;
 }
 
+/* Show the explorer loading spinner, without fading it in, once loading has taken 250ms,
+   so quick loads don't flash it. If loading ends sooner the delay is cancelled and it never
+   appears. It still fades out. */
+.navigation-header-spinner.refreshing {
+    transition: opacity 0s linear 250ms;
+}
+
+/* Spin the reload button once when clicked. */
+.explorer-reload.explorer-reload--spin svg {
+    animation: spinner-border 0.6s ease-in-out 1;
+}
+
 .form-control-border {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;

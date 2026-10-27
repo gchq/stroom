@@ -122,6 +122,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private final ToolbarButton find;
     private final ToolbarButton collapseAll;
     private final ToolbarButton expandAll;
+    private final ToolbarButton reload;
     private final ToolbarButton add;
     private final ToolbarButton delete;
     private final ToolbarToggleButton filter;
@@ -163,6 +164,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         locate.setEnabled(false);
         expandAll = toolbar.button(SvgImage.EXPAND_ALL, "Expand All Folders", this::onExpandAll);
         collapseAll = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse All Folders", this::onCollapseAll);
+        reload = toolbar.button(SvgImage.REFRESH, "Reload Explorer Tree", this::onReload);
+        reload.getElement().addClassName("explorer-reload");
         filter = toolbar.toggle(SvgImage.FILTER, "Filter Document Types", this::onFilter);
         filter.setPressed(hasActiveFilter);
         find = toolbar.button(SvgImage.FIND, "Find in Content", this::onFind);
@@ -308,6 +311,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         }, getView().getTaskListener());
     }
 
+    private void spinReloadButton() {
+        final Element element = reload.getElement();
+        element.removeClassName("explorer-reload--spin");
+        // Reading the width forces a reflow, so the spin restarts if the button is clicked again mid-spin.
+        element.getOffsetWidth();
+        element.addClassName("explorer-reload--spin");
+    }
+
     public void newItem(final Element element) {
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
@@ -388,6 +399,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private void onCollapseAll() {
         explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
         explorerTree.getTreeModel().collapseAll();
+    }
+
+    private void onReload() {
+        spinReloadButton();
+        explorerTree.getTreeModel().reload();
     }
 
     // The filter is only pressed when a filter has been set, not just when clicked

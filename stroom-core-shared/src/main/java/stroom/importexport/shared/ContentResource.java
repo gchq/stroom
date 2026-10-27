@@ -16,7 +16,6 @@
 
 package stroom.importexport.shared;
 
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
@@ -62,7 +61,7 @@ public interface ContentResource extends RestResource, DirectRestService {
             summary = "Export content",
             operationId = "exportContent")
     ResourceGeneration exportContent(
-            @NotNull @Parameter(description = "docRefs", required = true) DocRefs docRefs);
+            @NotNull @Parameter(description = "request", required = true) ExportContentRequest request);
 
     @POST
     @Path("fetchDependencies")
