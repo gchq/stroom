@@ -125,7 +125,7 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
                     .containsAll(offered);
         }
         // Every field in the index is tested, other than the ids, which identify the results, and the nested
-        // object itself, which can't be queried
+        // object itself, which can't be queried. The passthrough object isn't a field at all.
         final Set<String> untested = fields.keySet().stream()
                 .filter(name -> !testedConditions.containsKey(name))
                 .collect(Collectors.toSet());
@@ -137,18 +137,9 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         final List<ConditionCase> cases = new ArrayList<>();
 
         // keyword: exact, case-sensitive terms, or case-insensitive wildcard patterns
-        cases.add(match("Keyword", Condition.EQUALS, "apple", "1"));
-        cases.add(match("Keyword", Condition.EQUALS, "Apple"));
-        cases.add(match("Keyword", Condition.EQUALS, "apple pie", "4"));
-        cases.add(match("Keyword", Condition.EQUALS, "\"apple pie\"", "4"));
-        cases.add(match("Keyword", Condition.EQUALS, "APP*", "1", "4"));
-        cases.add(match("Keyword", Condition.EQUALS, "?herry", "3"));
-        cases.add(match("Keyword", Condition.NOT_EQUALS, "apple", "2", "3", "4", "5"));
-        cases.add(match("Keyword", Condition.IN, "apple,banana", "1", "2"));
-        cases.add(dictionary("Keyword", List.of("banana", "cher*"), "2", "3"));
-        cases.add(match("Keyword", Condition.MATCHES_REGEX, "ban.*", "2"));
-        cases.add(match("Keyword", Condition.MATCHES_REGEX, "cherry"));
-        cases.addAll(existence("Keyword"));
+        cases.addAll(keyword("Keyword"));
+        // A keyword within a passthrough object
+        cases.addAll(keyword("Attributes.Host"));
 
         // constant_keyword: every document has the value given in the mapping, even those that don't specify it
         cases.add(match("ConstantKeyword", Condition.EQUALS, "fixed", ALL));
@@ -170,15 +161,18 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.addAll(existence("Wildcard"));
 
         // text: analysed, so matching is by case-insensitive word
-        cases.add(match("Text", Condition.EQUALS, "apple", "1", "4"));
-        cases.add(match("Text", Condition.EQUALS, "APPLE", "1", "4"));
-        cases.add(match("Text", Condition.EQUALS, "\"red apple\"", "1"));
-        cases.add(match("Text", Condition.EQUALS, "cher*", "3"));
-        cases.add(match("Text", Condition.NOT_EQUALS, "apple", "2", "3", "5"));
-        cases.add(match("Text", Condition.IN, "banana,cherry", "2", "3"));
-        cases.add(dictionary("Text", List.of("banana", "\"dark cherry\""), "2", "3"));
-        cases.add(match("Text", Condition.MATCHES_REGEX, "ban.*", "2"));
-        cases.addAll(existence("Text"));
+        cases.addAll(text("Text"));
+        // match_only_text: text without positions, though phrases still match
+        cases.addAll(text("MatchOnlyText"));
+        // A keyword multi-field of the match_only_text field, holding the whole value
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "The red apple", "1"));
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "the red apple"));
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "*PIE*", "4"));
+        cases.add(match("MatchOnlyText.keyword", Condition.NOT_EQUALS, "The red apple", "2", "3", "4", "5"));
+        cases.add(match("MatchOnlyText.keyword", Condition.IN, "The red apple,A yellow banana", "1", "2"));
+        cases.add(dictionary("MatchOnlyText.keyword", List.of("The dark cherry"), "3"));
+        cases.add(match("MatchOnlyText.keyword", Condition.MATCHES_REGEX, "The .*", "1", "3"));
+        cases.addAll(existence("MatchOnlyText.keyword"));
 
         // boolean
         cases.add(match("Boolean", Condition.EQUALS, "true", "1", "3"));
@@ -255,6 +249,41 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.add(match("Nested.Number", Condition.EQUALS, "*", "1", "2"));
         cases.add(match("Nested.Number", Condition.NOT_EQUALS, "*", "3", "4", "5"));
 
+        return cases;
+    }
+
+    /// Cases for every condition of a `keyword` field, whose documents 1 to 4 have the values `apple`, `banana`,
+    /// `Cherry` and `apple pie`.
+    private static List<ConditionCase> keyword(final String field) {
+        final List<ConditionCase> cases = new ArrayList<>();
+        cases.add(match(field, Condition.EQUALS, "apple", "1"));
+        cases.add(match(field, Condition.EQUALS, "Apple"));
+        cases.add(match(field, Condition.EQUALS, "apple pie", "4"));
+        cases.add(match(field, Condition.EQUALS, "\"apple pie\"", "4"));
+        cases.add(match(field, Condition.EQUALS, "APP*", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "?herry", "3"));
+        cases.add(match(field, Condition.NOT_EQUALS, "apple", "2", "3", "4", "5"));
+        cases.add(match(field, Condition.IN, "apple,banana", "1", "2"));
+        cases.add(dictionary(field, List.of("banana", "cher*"), "2", "3"));
+        cases.add(match(field, Condition.MATCHES_REGEX, "ban.*", "2"));
+        cases.add(match(field, Condition.MATCHES_REGEX, "cherry"));
+        cases.addAll(existence(field));
+        return cases;
+    }
+
+    /// Cases for every condition of an analysed text field, whose documents 1 to 4 have the values
+    /// `The red apple`, `A yellow banana`, `The dark cherry` and `Apple pie recipe`.
+    private static List<ConditionCase> text(final String field) {
+        final List<ConditionCase> cases = new ArrayList<>();
+        cases.add(match(field, Condition.EQUALS, "apple", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "APPLE", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "\"red apple\"", "1"));
+        cases.add(match(field, Condition.EQUALS, "cher*", "3"));
+        cases.add(match(field, Condition.NOT_EQUALS, "apple", "2", "3", "5"));
+        cases.add(match(field, Condition.IN, "banana,cherry", "2", "3"));
+        cases.add(dictionary(field, List.of("banana", "\"dark cherry\""), "2", "3"));
+        cases.add(match(field, Condition.MATCHES_REGEX, "ban.*", "2"));
+        cases.addAll(existence(field));
         return cases;
     }
 

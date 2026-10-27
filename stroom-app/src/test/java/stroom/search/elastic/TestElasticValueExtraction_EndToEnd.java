@@ -72,7 +72,10 @@ class TestElasticValueExtraction_EndToEnd extends AbstractCoreIntegrationTest {
             "HalfFloat",
             "ScaledFloat",
             "Double",
-            "Nested.Number");
+            "Nested.Number",
+            "MatchOnlyText",
+            "MatchOnlyText.keyword",
+            "Attributes.Host");
 
     @Inject
     private ElasticEndToEndTestHelper helper;
@@ -110,19 +113,24 @@ class TestElasticValueExtraction_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(sortById(result.rows())).containsExactly(
                 row("1", "apple", "fixed", "apple", "The red apple", "true",
                         "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z", "10.0.0.1",
-                        "-5", "1", "10", "10", "1", "1.0.0", "1.5", "1.5", "1.25", "1.5", "1, 2"),
+                        "-5", "1", "10", "10", "1", "1.0.0", "1.5", "1.5", "1.25", "1.5", "1, 2",
+                        "The red apple", "The red apple", "apple"),
                 row("2", "banana", "fixed", "banana", "A yellow banana", "false",
                         "2026-01-02T00:00:00.000Z", "2026-01-02T00:00:00.000000001Z", "10.0.0.2",
-                        "0", "42", "20", "20", "2", "1.2.0", "2.5", "2.5", "2.5", "2.5", "3"),
+                        "0", "42", "20", "20", "2", "1.2.0", "2.5", "2.5", "2.5", "2.5", "3",
+                        "A yellow banana", "A yellow banana", "banana"),
                 row("3", "Cherry", "fixed", "Cherry", "The dark cherry", "true",
                         "2026-01-03T00:00:00.000Z", "2026-01-03T00:00:00.000Z", "192.168.0.1",
-                        "5", "9223372036854775807", "30", "30", "3", "2.0.0", "3.5", "3.5", "3.75", "3.5", null),
+                        "5", "9223372036854775807", "30", "30", "3", "2.0.0", "3.5", "3.5", "3.75", "3.5", null,
+                        "The dark cherry", "The dark cherry", "Cherry"),
                 row("4", "apple pie", "fixed", "apple pie", "Apple pie recipe", "false",
                         "2026-01-04T00:00:00.000Z", "2026-01-04T00:00:00.000Z", "192.168.1.1",
-                        "10", "18446744073709551615", "40", "40", "4", "10.0.0", "4.5", "4.5", "4.5", "4.5", null),
+                        "10", "18446744073709551615", "40", "40", "4", "10.0.0", "4.5", "4.5", "4.5", "4.5", null,
+                        "Apple pie recipe", "Apple pie recipe", "apple pie"),
                 row("5", null, "fixed", null, null, null,
                         null, null, null,
-                        null, null, null, null, null, null, null, null, null, null, null));
+                        null, null, null, null, null, null, null, null, null, null, null,
+                        null, null, null));
     }
 
     @Test
@@ -139,19 +147,24 @@ class TestElasticValueExtraction_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(sortById(result.rows())).containsExactly(
                 row("1", "apple", "fixed", "apple", "The red apple", "true",
                         "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z", "10.0.0.1",
-                        "-5", "1", "10", "10", "1", "1.0.0", "1.5", "1.5", "1.25", "1.5", "2"),
+                        "-5", "1", "10", "10", "1", "1.0.0", "1.5", "1.5", "1.25", "1.5", "2",
+                        "The red apple", "The red apple", "apple"),
                 row("2", "banana", "fixed", "banana", "A yellow banana", "false",
                         "2026-01-02T00:00:00.000Z", "2026-01-02T00:00:00.000Z", "10.0.0.2",
-                        "0", "42", "20", "20", "2", "1.2.0", "2.5", "2.5", "2.5", "2.5", "3"),
+                        "0", "42", "20", "20", "2", "1.2.0", "2.5", "2.5", "2.5", "2.5", "3",
+                        "A yellow banana", "A yellow banana", "banana"),
                 row("3", "Cherry", "fixed", "Cherry", "The dark cherry", "true",
                         "2026-01-03T00:00:00.000Z", "2026-01-03T00:00:00.000Z", "192.168.0.1",
-                        "5", "9223372036854775807", "30", "30", "3", "2.0.0", "3.5", "3.5", "3.75", "3.5", null),
+                        "5", "9223372036854775807", "30", "30", "3", "2.0.0", "3.5", "3.5", "3.75", "3.5", null,
+                        "The dark cherry", "The dark cherry", "Cherry"),
                 row("4", "apple pie", "fixed", "apple pie", "Apple pie recipe", "false",
                         "2026-01-04T00:00:00.000Z", "2026-01-04T00:00:00.000Z", "192.168.1.1",
-                        "10", "18446744073709551615", "40", "40", "4", "10.0.0", "4.5", "4.5", "4.5", "4.5", null),
+                        "10", "18446744073709551615", "40", "40", "4", "10.0.0", "4.5", "4.5", "4.5", "4.5", null,
+                        "Apple pie recipe", "Apple pie recipe", "apple pie"),
                 row("5", null, null, null, null, null,
                         null, null, null,
-                        null, null, null, null, null, null, null, null, null, null, null));
+                        null, null, null, null, null, null, null, null, null, null, null,
+                        null, null, null));
     }
 
     private static List<String> row(final String... values) {

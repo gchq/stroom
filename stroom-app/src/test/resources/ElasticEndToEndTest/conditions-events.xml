@@ -10,6 +10,8 @@
     <ConstantKeyword>fixed</ConstantKeyword>
     <Wildcard>apple</Wildcard>
     <Text>The red apple</Text>
+    <MatchOnlyText>The red apple</MatchOnlyText>
+    <MatchOnlyText.keyword>The red apple</MatchOnlyText.keyword>
     <Boolean>true</Boolean>
     <Date>2026-01-01T00:00:00.000Z</Date>
     <DateNanos>2026-01-01T00:00:00.000000000Z</DateNanos>
@@ -24,6 +26,7 @@
     <HalfFloat>1.5</HalfFloat>
     <ScaledFloat>1.25</ScaledFloat>
     <Double>1.5</Double>
+    <Attributes.Host>apple</Attributes.Host>
     <Nested.Number>2</Nested.Number>
   </Event>
   <Event>
@@ -32,6 +35,8 @@
     <ConstantKeyword>fixed</ConstantKeyword>
     <Wildcard>banana</Wildcard>
     <Text>A yellow banana</Text>
+    <MatchOnlyText>A yellow banana</MatchOnlyText>
+    <MatchOnlyText.keyword>A yellow banana</MatchOnlyText.keyword>
     <Boolean>false</Boolean>
     <!-- Milliseconds since the epoch -->
     <Date>1767312000000</Date>
@@ -47,6 +52,7 @@
     <HalfFloat>2.5</HalfFloat>
     <ScaledFloat>2.5</ScaledFloat>
     <Double>2.5</Double>
+    <Attributes.Host>banana</Attributes.Host>
     <Nested.Number>3</Nested.Number>
   </Event>
   <Event>
@@ -55,6 +61,8 @@
     <ConstantKeyword>fixed</ConstantKeyword>
     <Wildcard>Cherry</Wildcard>
     <Text>The dark cherry</Text>
+    <MatchOnlyText>The dark cherry</MatchOnlyText>
+    <MatchOnlyText.keyword>The dark cherry</MatchOnlyText.keyword>
     <Boolean>true</Boolean>
     <!-- No fraction of a second -->
     <Date>2026-01-03T00:00:00Z</Date>
@@ -70,6 +78,7 @@
     <HalfFloat>3.5</HalfFloat>
     <ScaledFloat>3.75</ScaledFloat>
     <Double>3.5</Double>
+    <Attributes.Host>Cherry</Attributes.Host>
   </Event>
   <Event>
     <Id>4</Id>
@@ -77,6 +86,8 @@
     <ConstantKeyword>fixed</ConstantKeyword>
     <Wildcard>apple pie</Wildcard>
     <Text>Apple pie recipe</Text>
+    <MatchOnlyText>Apple pie recipe</MatchOnlyText>
+    <MatchOnlyText.keyword>Apple pie recipe</MatchOnlyText.keyword>
     <Boolean>false</Boolean>
     <!-- A zone offset other than UTC -->
     <Date>2026-01-04T10:00:00.000+10:00</Date>
@@ -92,6 +103,7 @@
     <HalfFloat>4.5</HalfFloat>
     <ScaledFloat>4.5</ScaledFloat>
     <Double>4.5</Double>
+    <Attributes.Host>apple pie</Attributes.Host>
   </Event>
   <Event>
     <Id>5</Id>

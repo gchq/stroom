@@ -143,6 +143,36 @@ class TestElasticSearchProvider {
     }
 
     @Test
+    void testRegisterField_matchOnlyTextMultiField() {
+        final Property message = Property.of(p -> p.matchOnlyText(t -> t
+                .fields("keyword", Property.of(k -> k.keyword(kw -> kw)))));
+
+        final NavigableMap<String, FieldMapping> out = new TreeMap<>();
+        ElasticSearchProvider.registerField("Message", message, out);
+
+        assertThat(out).containsOnlyKeys("Message", "Message.keyword");
+        assertThat(getKind(out, "Message")).isEqualTo(Kind.MatchOnlyText);
+        assertThat(getKind(out, "Message.keyword")).isEqualTo(Kind.Keyword);
+    }
+
+    @Test
+    void testRegisterField_passthroughChildren() {
+        final Property attributes = Property.of(p -> p.passthrough(pt -> pt
+                .priority(10)
+                .properties("Host", Property.of(h -> h.keyword(kw -> kw)))
+                .properties("Http", Property.of(h -> h.object(o -> o
+                        .properties("Status", Property.of(s -> s.long_(l -> l))))))));
+
+        final NavigableMap<String, FieldMapping> out = new TreeMap<>();
+        ElasticSearchProvider.registerField("Attributes", attributes, out);
+
+        assertThat(out).containsOnlyKeys(
+                "Attributes", "Attributes.Host", "Attributes.Http", "Attributes.Http.Status");
+        assertThat(getKind(out, "Attributes.Host")).isEqualTo(Kind.Keyword);
+        assertThat(getKind(out, "Attributes.Http.Status")).isEqualTo(Kind.Long);
+    }
+
+    @Test
     void testRegisterField_noMultiFields() {
         final Property count = Property.of(p -> p.long_(l -> l));
 
@@ -395,6 +425,50 @@ class TestElasticSearchProvider {
                 .containsExactly("Name");
         assertThat(elasticSearchProvider.getFieldsMap(createIndex()))
                 .containsOnlyKeys("Name");
+    }
+
+    @Test
+    void testGetDataSourceFields_matchOnlyTextIsText() throws IOException {
+        givenMapping("""
+                {
+                  "Message": {
+                    "type": "match_only_text",
+                    "fields": {
+                      "keyword": { "type": "keyword" }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(
+                        tuple("Message", FieldType.TEXT, true),
+                        tuple("Message.keyword", FieldType.KEYWORD, true));
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()).getFirst().getConditionSet())
+                .isEqualTo(ConditionSet.ELASTIC_TEXT);
+    }
+
+    @Test
+    void testGetDataSourceFields_passthroughDroppedChildrenKept() throws IOException {
+        givenMapping("""
+                {
+                  "Attributes": {
+                    "type": "passthrough",
+                    "priority": 10,
+                    "properties": {
+                      "Host": { "type": "keyword" },
+                      "Port": { "type": "long" }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(
+                        tuple("Attributes.Host", FieldType.KEYWORD, true),
+                        tuple("Attributes.Port", FieldType.LONG, true));
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()))
+                .containsOnlyKeys("Attributes.Host", "Attributes.Port");
     }
 
     @Test
