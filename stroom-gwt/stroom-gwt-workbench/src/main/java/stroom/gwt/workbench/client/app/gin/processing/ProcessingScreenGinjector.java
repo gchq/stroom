@@ -47,6 +47,7 @@ import stroom.pipeline.structure.client.presenter.PipelineModelFactory;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorProfilePresenter;
+import stroom.processor.task.client.component.ProcessorFilterTasksController;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
 
@@ -107,6 +108,9 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     /// @return A folder's, feed's or pipeline's 'Active Tasks' tab (the task summary above the task
     /// list), as `FolderPresenter`, `FeedPresenter` and `PipelinePresenter` create it.
     ProcessorTaskPresenter getProcessorTaskPresenter();
+
+    /// @return A processor filter's 'Tasks' tab, as `ProcessorTaskPlugin` opens it.
+    ProcessorFilterTasksController getProcessorFilterTasksController();
 
     // Data
 

@@ -34,6 +34,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.task.client.component.ProcessorFilterTasksController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -107,6 +109,20 @@ public final class ProcessorTaskSummaryStories {
             {"sortList": [{"id": "Count", "desc": false}]}""";
     private static final String SORT_BY_COUNT_DESC = """
             {"sortList": [{"id": "Count", "desc": true}]}""";
+
+    // The term that keeps a processor filter's tasks to its own
+    private static final String FILTER_TERM = """
+            {"expression": {"children": [
+                {"field": "Processor Filter Id", "condition": "EQUALS", "value": "1"}]}}""";
+
+    // The terms ProcessorFilterTasksController gives the task list for the 'Events Pipeline', 'EVENTS',
+    // 'Processing' row of a processor filter's tasks
+    private static final String FILTER_PROCESSING_TASKS_EXPRESSION = """
+            {"expression": {"children": [
+                {"field": "Pipeline", "condition": "IS_DOC_REF", "docRef": {"uuid": "pipe-events"}},
+                {"field": "Feed", "condition": "EQUALS", "value": "EVENTS"},
+                {"field": "Status", "condition": "EQUALS", "value": "Processing"},
+                {"field": "Processor Filter Id", "condition": "EQUALS", "value": "1"}]}}""";
 
     // The task list's summary row is selected by its status, which no other summary row has
     private static final String PROCESSING = "Processing";
@@ -235,6 +251,23 @@ public final class ProcessorTaskSummaryStories {
                             .toHaveTextContent("12,345"));
                     expectRow(play, 2, "Events Pipeline", "EVENTS", "10", "Processing", "3");
                     expectNoProblems(play);
+                })
+                // A processor filter's 'Tasks' tab (ProcessorFilterTasksController, as
+                // ProcessorTaskPlugin opens it): the summary and the tasks of that filter only
+                .story("ProcessorFilterTasks", ProcessorTaskSummaryStories::renderFilterTasks)
+                .withPlay(play -> {
+                    final Play summary = summary(play);
+                    play.waitFor(() -> play.expect(summary.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(3));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(SUMMARY_PATH)
+                                    .withJsonBodyContaining(FILTER_TERM)
+                                    .toSpyMatcher());
+                    play.click(summary.getByText(PROCESSING));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(FIND_TASKS_PATH)
+                                    .withJsonBodyContaining(FILTER_PROCESSING_TASKS_EXPRESSION)
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
                 });
     }
 
@@ -318,6 +351,23 @@ public final class ProcessorTaskSummaryStories {
     private static String page(final String... rows) {
         return "{\"values\": [" + String.join(", ", rows) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
                + rows.length + ", \"total\": " + rows.length + ", \"exact\": true}}";
+    }
+
+    // A processor filter's tasks, as ProcessorTaskPlugin opens them
+    private static Widget renderFilterTasks(final StoryContext context) {
+        final RestFixtures fixtures = RestFixtures.builder()
+                .post(SUMMARY_PATH, RestReply.json(SUMMARY))
+                .post(FIND_TASKS_PATH, RestReply.json(TASKS))
+                .build();
+        final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+                .injector(injector)
+                .build();
+        harness.afterStartUp(() -> {
+            final ProcessorFilterTasksController tasks = harness.show(injector.getProcessorFilterTasksController());
+            tasks.setProcessorFilter(ProcessorFilter.builder().id(1).build());
+        });
+        return harness.asWidget();
     }
 
     // The replies to the summary's requests in turn (the last repeats), unless the

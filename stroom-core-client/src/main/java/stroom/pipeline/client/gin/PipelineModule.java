@@ -40,8 +40,6 @@ import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
-import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
-import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 
 public class PipelineModule extends PluginModule {
 
@@ -69,7 +67,6 @@ public class PipelineModule extends PluginModule {
                 FeedDependencyViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
-        bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,
-                ProcessorTaskViewImpl.class);
+        bind(ProcessorTaskPresenter.class);
     }
 }

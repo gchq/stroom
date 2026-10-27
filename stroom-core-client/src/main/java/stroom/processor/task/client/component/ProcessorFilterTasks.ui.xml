@@ -1,11 +1,12 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:split="urn:import:stroom.widget.layout.client">
+    <!-- A processor filter's tasks: their summary above the tasks of the summary row selected -->
     <g:SimplePanel styleName="max">
         <split:SplitPane vertical="true" thin="true" sizes="200px, *"
                          names="Task summary, Tasks" addStyleNames="max">
-            <g:SimplePanel ui:field="streamTaskSummary" styleName="max dashboard-panel overflow-hidden"/>
-            <g:SimplePanel ui:field="streamTaskList" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel ui:field="summary" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel ui:field="tasks" styleName="max dashboard-panel overflow-hidden"/>
         </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>

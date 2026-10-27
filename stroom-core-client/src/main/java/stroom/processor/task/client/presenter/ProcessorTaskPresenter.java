@@ -17,89 +17,44 @@
 package stroom.processor.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.client.component.ProcessorTaskSummaryListController;
-import stroom.data.client.component.ProcessorTasksListController;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorTaskFields;
-import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm.Condition;
+import stroom.processor.task.client.component.ProcessorFilterTasksController;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.presenter.client.View;
+import stroom.widget.datagrid.client.WrapperView;
 
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskView> {
+/// A processor filter's tasks ([ProcessorFilterTasksController]) in a main content tab of their
+/// own, until content tabs can show controllers.
+public class ProcessorTaskPresenter extends ContentTabPresenter<WrapperView> {
 
-    private final ProcessorTaskSummaryListController processorTaskSummary;
-    private final ProcessorTasksListController processorTaskList;
+    private final ProcessorFilterTasksController tasks;
 
-    private ProcessorFilter processorFilter;
-
+    /// Made by GIN.
+    ///
+    /// @param eventBus The application's event bus.
+    /// @param view     Shows the tasks.
+    /// @param tasks    The tasks.
     @Inject
     public ProcessorTaskPresenter(final EventBus eventBus,
-                                  final ProcessorTaskView view,
-                                  final ProcessorTaskSummaryListController processorTaskSummary,
-                                  final ProcessorTasksListController processorTaskList) {
+                                  final WrapperView view,
+                                  final ProcessorFilterTasksController tasks) {
         super(eventBus, view);
-        own(processorTaskSummary);
-        own(processorTaskList);
-        this.processorTaskSummary = processorTaskSummary;
-        this.processorTaskList = processorTaskList;
-
-        getView().setTaskSummaryView(processorTaskSummary);
-        getView().setTaskListView(processorTaskList);
-
-        own(processorTaskSummary.getSelectionModel().addSelectionHandler(event -> {
-            // Clear the task list.
-            processorTaskList.clear();
-
-            final ProcessorTaskSummary row = processorTaskSummary.getSelectionModel().getSelected();
-
-            if (row != null) {
-                processorTaskList.setExpression(getExpression(row));
-            }
-        }));
+        this.tasks = own(tasks);
+        view.setView(tasks);
     }
 
-    private ExpressionOperator getExpression(final ProcessorTaskSummary processorTaskSummary) {
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        if (processorTaskSummary != null) {
-            if (processorTaskSummary.getPipeline() != null) {
-                builder.addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF,
-                        processorTaskSummary.getPipeline());
-            }
-            if (processorTaskSummary.getFeed() != null) {
-                builder.addTextTerm(ProcessorTaskFields.FEED, Condition.EQUALS, processorTaskSummary.getFeed());
-            }
-            if (processorTaskSummary.getStatus() != null) {
-                builder.addTextTerm(ProcessorTaskFields.STATUS, Condition.EQUALS,
-                        processorTaskSummary.getStatus().getDisplayValue());
-            }
-        }
-
-        if (processorFilter != null) {
-            builder.addIntegerTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, processorFilter.getId());
-        }
-
-        return builder.build();
-    }
-
+    /// Fetches the filter's tasks again.
     public void refresh() {
-        final ExpressionOperator expressionOperator = getExpression(null);
-        processorTaskSummary.setExpression(expressionOperator);
-        processorTaskList.setExpression(expressionOperator);
-
-        processorTaskSummary.refresh();
-        processorTaskList.refresh();
+        tasks.refresh();
     }
 
+    /// Shows a processor filter's tasks.
+    ///
+    /// @param processorFilter The filter.
     public void setProcessorFilter(final ProcessorFilter processorFilter) {
-        this.processorFilter = processorFilter;
-        refresh();
+        tasks.setProcessorFilter(processorFilter);
     }
 
     @Override
@@ -109,24 +64,11 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
 
     @Override
     public String getLabel() {
-        return "Tasks: Filter " + (processorFilter == null ? "" : processorFilter.getId().toString());
+        return tasks.getLabel();
     }
 
     @Override
     public String getType() {
         return "Tasks";
-    }
-
-    public interface ProcessorTaskView extends View {
-
-        /// Shows the summary of tasks.
-        ///
-        /// @param view Its view.
-        void setTaskSummaryView(IsWidget view);
-
-        /// Shows the tasks.
-        ///
-        /// @param view Its view.
-        void setTaskListView(IsWidget view);
     }
 }

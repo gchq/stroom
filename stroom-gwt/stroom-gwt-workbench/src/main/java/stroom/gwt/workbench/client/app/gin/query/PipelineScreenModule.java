@@ -35,8 +35,6 @@ import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
-import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
-import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `PipelineModule`
@@ -66,8 +64,6 @@ public class PipelineScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FeedDependencyPresenter.class,
                 FeedDependencyView.class,
                 FeedDependencyViewImpl.class);
-        bindPresenterWidget(ProcessorTaskPresenter.class,
-                ProcessorTaskView.class,
-                ProcessorTaskViewImpl.class);
+        bind(ProcessorTaskPresenter.class);
     }
 }
