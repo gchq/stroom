@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.query;
 
 import stroom.view.client.presenter.ViewPresenter;
-import stroom.view.client.presenter.ViewSettingsPresenter;
-import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
-import stroom.view.client.view.ViewSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ViewModule`
@@ -32,9 +29,6 @@ public class ViewScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ViewPresenter.class);
-        bindSharedView(ViewSettingsView.class,
-                ViewSettingsViewImpl.class);
-        bind(ViewSettingsPresenter.class);
     }
 }
 

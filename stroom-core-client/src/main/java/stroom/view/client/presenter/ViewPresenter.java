@@ -18,11 +18,12 @@ package stroom.view.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.view.client.component.ViewSettingsController;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -41,13 +42,15 @@ public class ViewPresenter extends DocTabPresenter<LinkTabPanelView, ViewDoc> {
     @Inject
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
-                         final Provider<ViewSettingsPresenter> settingsPresenterProvider,
+                         final Provider<ViewSettingsController> settingsProvider,
                          final Provider<MarkdownEditController> markdownEditProvider,
                          final DocumentUserPermissionsTabProvider<ViewDoc>
                                  documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                ViewSettingsController::read,
+                ViewSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ViewDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
