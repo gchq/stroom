@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.gitrepo.client.presenter;
+package stroom.gitrepo.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialClient;
@@ -23,21 +23,17 @@ import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.gitrepo.client.component.GitRepoCommitDialogController;
-import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.http.client.component.HttpClientConfigEditorController;
-import stroom.item.client.SelectionBox;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.View;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -47,87 +43,75 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Provides the main functionality on the client behind the GitRepo Settings tab.
- */
-public class GitRepoSettingsPresenter
-        extends DocPresenter<GitRepoSettingsView, GitRepoDoc>
-        implements GitRepoSettingsUiHandlers {
+/// A Git repository's Settings tab ([GitRepoSettings]): its settings, and pushing to, pulling from
+/// and checking the repository for updates with them. Read only as its document is.
+public class GitRepoSettingsController extends Controller {
 
-    /**
-     * Provides REST connection to the server.
-     */
-    private final RestFactory restFactory;
-
-    /**
-     * Makes the commit message dialog box.
-     */
-    private final Provider<GitRepoCommitDialogController> commitDialogProvider;
-
-    /**
-     * Server REST API for GitRepoDocs
-     */
+    // Server REST API for GitRepoDocs
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
-    /**
-     * Local copy of the gitRepoDoc, saved in the onRead() method.
-     * Might be null if onRead() hasn't been called yet.
-     */
-    private GitRepoDoc gitRepoDoc = null;
+    private final GitRepoSettings view;
+    private final RestFactory restFactory;
+    // Makes the commit message dialog box
+    private final Provider<GitRepoCommitDialogController> commitDialogProvider;
     private final CredentialClient credentialClient;
     private final Provider<HttpClientConfigEditorController> httpClientConfigProvider;
 
-    /**
-     * Held here rather than read back off the view, because the editor is a popup: it is only shown on
-     * demand and the value has to survive between showings and into onWrite().
-     */
+    // The document read; null until it is
+    private GitRepoDoc gitRepoDoc = null;
+
+    // Held here rather than read back off the view, because the editor is a popup: it is only shown on
+    // demand and the value has to survive between showings and into write()
     private HttpClientConfig httpClientConfiguration;
 
-    /**
-     * Injected constructor.
-     *
-     * @param eventBus     For parent class
-     * @param view         The View for showing stuff to users
-     * @param restFactory  For talking to the server
-     * @param commitDialogProvider Makes the dialog for the commit message
-     */
+    /// Made by GIN, with its tab.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The tab.
+    /// @param restFactory              Pushes, pulls and checks for updates.
+    /// @param commitDialogProvider     Makes the dialog for the commit message.
+    /// @param credentialClient         Finds the credentials.
+    /// @param httpClientConfigProvider Makes the dialog that edits the HTTP client configuration.
     @Inject
-    public GitRepoSettingsPresenter(final EventBus eventBus,
-                                    final GitRepoSettingsView view,
-                                    final RestFactory restFactory,
-                                    final Provider<GitRepoCommitDialogController> commitDialogProvider,
-                                    final CredentialClient credentialClient,
-                                    final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
-        super(eventBus, view);
-        // Read only as its document is
-        watch(Contexts.READ_ONLY, getView()::onReadOnly);
+    public GitRepoSettingsController(final EventBus eventBus,
+                                     final GitRepoSettings view,
+                                     final RestFactory restFactory,
+                                     final Provider<GitRepoCommitDialogController> commitDialogProvider,
+                                     final CredentialClient credentialClient,
+                                     final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
+        this.commitDialogProvider = commitDialogProvider;
         this.credentialClient = credentialClient;
         this.httpClientConfigProvider = httpClientConfigProvider;
-        view.setUiHandlers(this);
-        this.commitDialogProvider = commitDialogProvider;
+        initWidget(view);
+
         final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
                 Set.of(CredentialType.SSH_KEY, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
-        credentialListModel.setTaskMonitorFactory(this);
-        view.getCredentialSelectionBox().setModel(credentialListModel);
+        credentialListModel.setTaskMonitorFactory(taskMonitor());
+        view.setCredentialModel(credentialListModel);
+
+        view.setOnChange(this::markChanged);
+        view.setOnSetHttpClientConfig(this::onSetHttpClientConfiguration);
+        view.setOnPush(this::onGitRepoPush);
+        view.setOnPull(this::onGitRepoPull);
+        view.setOnCheckForUpdates(this::onCheckForUpdates);
+        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
-    /**
-     * Called when the UI is created and values need to be set from
-     * the GitRepoDoc.
-     */
-    @Override
-    protected void onRead(final DocRef docRef, final GitRepoDoc doc) {
+    /// Shows a repository's settings.
+    ///
+    /// @param docRef The repository.
+    /// @param doc    The repository.
+    public void read(final DocRef docRef, final GitRepoDoc doc) {
         // Local copy of the initial value of the doc
         gitRepoDoc = doc;
 
-        final GitRepoSettingsView view = this.getView();
         if (doc.getContentStoreMetadata() != null) {
-            view.setContentStoreName(doc.getContentStoreMetadata().getOwnerName());
-            view.setContentPackName(doc.getName());
+            view.setContentPack(doc.getContentStoreMetadata().getOwnerName(), doc.getName());
         } else {
-            view.setContentStoreName("");
-            view.setContentPackName("");
+            view.setContentPack("", "");
         }
         view.setUrl(doc.getUrl());
         view.setBranch(doc.getBranch());
@@ -143,24 +127,20 @@ public class GitRepoSettingsPresenter
                     .create(GIT_REPO_RESOURCE)
                     .method(GitRepoResource::getDefaultHttpClientConfig)
                     .onSuccess(result -> httpClientConfiguration = result)
-                    .taskMonitorFactory(this)
+                    .owner(this)
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
 
         // Credentials - store locally
         grabCredentialsList(doc.getCredentialName());
-
-        // Set the initial state of the UI
-        view.setState();
     }
 
-    /**
-     * Called when values are being saved, so the UI values need to be stored
-     * into the GitRepoDoc.
-     */
-    @Override
-    protected GitRepoDoc onWrite(final GitRepoDoc doc) {
-        final GitRepoSettingsView view = this.getView();
+    /// Writes the settings shown into a copy of a repository.
+    ///
+    /// @param doc The repository.
+    /// @return A copy of it with the settings shown.
+    public GitRepoDoc write(final GitRepoDoc doc) {
         final GitRepoDoc.Builder builder = doc
                 .copy()
                 .url(view.getUrl())
@@ -170,14 +150,14 @@ public class GitRepoSettingsPresenter
 
         // Only enable auto-push when the repo is not pinned to a specific commit (a commit hash implies
         // a detached, non-pushable state). Derive this from the LIVE commit field, not the last-saved
-        // doc, and do NOT mutate the view here - onWrite runs on every dirty check, and the visibility
-        // of the auto-push option is already handled by the view's setState().
+        // doc, and do NOT change the view here - write runs on every dirty check, and the visibility
+        // of the auto-push option is already handled by the view.
         final String commit = view.getCommitToPull();
         final boolean pinnedToCommit = commit != null && !commit.isEmpty();
         builder.autoPush(!pinnedToCommit && view.isAutoPush());
 
         // Credentials - store from local values
-        final Credential credential = view.getCredentialSelectionBox().getValue();
+        final Credential credential = view.getCredential();
         builder.credentialName(credential == null
                 ? null
                 : credential.getName());
@@ -187,28 +167,20 @@ public class GitRepoSettingsPresenter
         return builder.build();
     }
 
-    @Override
-    public void onSetHttpClientConfiguration() {
+    private void onSetHttpClientConfiguration() {
         httpClientConfigProvider.get().show(this, httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
-                onChange();
+                markChanged();
             }
         });
     }
 
-    /**
-     * Called when Git Push button is pressed.
-     *
-     * @param taskMonitorFactory Where the wait icon is displayed.
-     */
-    @Override
-    public void onGitRepoPush(final TaskMonitorFactory taskMonitorFactory) {
-
-        // Use the gitRepoDoc saved in the onRead() method, if available
+    // Called when Git Push button is pressed
+    private void onGitRepoPush() {
+        // Use the gitRepoDoc saved in read(), if available
         if (gitRepoDoc != null) {
-            commitDialogProvider.get().show(this,
-                    message -> requestGitRepoPush(taskMonitorFactory, message));
+            commitDialogProvider.get().show(this, this::requestGitRepoPush);
         } else {
             AlertEvent.fireWarn(this,
                     "Git repository information not available",
@@ -217,16 +189,9 @@ public class GitRepoSettingsPresenter
         }
     }
 
-    /**
-     * Does the push into Git, once the CommitDialog has been OK'd.
-     *
-     * @param taskMonitorFactory Where to display the wait icon
-     * @param commitMessage      The commit message, from the dialog box.
-     */
-    private void requestGitRepoPush(final TaskMonitorFactory taskMonitorFactory,
-                                    final String commitMessage) {
-
-        final GitRepoDoc doc = onWrite(gitRepoDoc);
+    // Does the push into Git, once the commit dialog has been OK'd with a commit message
+    private void requestGitRepoPush(final String commitMessage) {
+        final GitRepoDoc doc = write(gitRepoDoc);
         final GitRepoPushDto dto = new GitRepoPushDto(doc, commitMessage);
         restFactory
                 .create(GIT_REPO_RESOURCE)
@@ -234,30 +199,26 @@ public class GitRepoSettingsPresenter
                 .onSuccess(result -> {
                     // Pop up an alert to show what happened
                     if (result.isOk()) {
-                        AlertEvent.fireInfo(GitRepoSettingsPresenter.this,
+                        AlertEvent.fireInfo(this,
                                 "Push Success",
                                 result.getMessage(),
                                 null);
                     } else {
-                        AlertEvent.fireError(GitRepoSettingsPresenter.this,
+                        AlertEvent.fireError(this,
                                 "Push Failure",
                                 result.getMessage(),
                                 null);
                     }
                 })
-                .taskMonitorFactory(taskMonitorFactory)
+                .owner(this)
+                .taskMonitorFactory(view.getPushTaskMonitor())
                 .exec();
     }
 
-    /**
-     * Called when the Git Pull button is pressed.
-     *
-     * @param taskMonitorFactory Where to display the wait icon.
-     */
-    @Override
-    public void onGitRepoPull(final TaskMonitorFactory taskMonitorFactory) {
+    // Called when the Git Pull button is pressed
+    private void onGitRepoPull() {
         if (gitRepoDoc != null) {
-            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            final GitRepoDoc doc = write(gitRepoDoc);
             restFactory
                     .create(GIT_REPO_RESOURCE)
                     .method(res -> res.pullFromGit(doc))
@@ -266,32 +227,28 @@ public class GitRepoSettingsPresenter
                             AlertEvent.fireInfo(this,
                                     "Pull Success",
                                     result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
+                                    () -> RefreshExplorerTreeEvent.fire(this));
                         } else {
                             AlertEvent.fireError(
                                     this,
                                     "Pull Failure",
                                     result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
+                                    () -> RefreshExplorerTreeEvent.fire(this));
                         }
                     })
-                    .taskMonitorFactory(taskMonitorFactory)
+                    .owner(this)
+                    .taskMonitorFactory(view.getPullTaskMonitor())
                     .exec();
         } else {
             AlertEvent.fireWarn(this, "Git repository information not available", "", null);
         }
     }
 
-    /**
-     * Called when the check for updates button is pressed.
-     *
-     * @param taskMonitorFactory Where to display the wait icon.
-     */
-    @Override
-    public void onCheckForUpdates(final TaskMonitorFactory taskMonitorFactory) {
+    // Called when the check for updates button is pressed
+    private void onCheckForUpdates() {
         if (gitRepoDoc != null) {
 
-            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            final GitRepoDoc doc = write(gitRepoDoc);
             restFactory
                     .create(GIT_REPO_RESOURCE)
                     .method(res -> res.areUpdatesAvailable(doc))
@@ -314,7 +271,8 @@ public class GitRepoSettingsPresenter
                             "Update Check Failure",
                             error.getMessage(),
                             null))
-                    .taskMonitorFactory(taskMonitorFactory)
+                    .owner(this)
+                    .taskMonitorFactory(view.getCheckForUpdatesTaskMonitor())
                     .exec();
 
         } else {
@@ -323,58 +281,22 @@ public class GitRepoSettingsPresenter
         }
     }
 
-    /**
-     * Gets the list of credentials and puts them into the selection list.
-     *
-     * @param credentialName The name of the currently selected credential, or
-     *                       null if nothing is selected.
-     */
+    // Shows the credential of the name given, or none for a blank name
     private void grabCredentialsList(final String credentialName) {
         if (NullSafe.isBlankString(credentialName)) {
-            getView().getCredentialSelectionBox().setValue(null);
+            view.setCredential(null);
         } else {
-            credentialClient.getCredentialByName(credentialName, credential ->
-                    getView().getCredentialSelectionBox().setValue(credential), this);
+            credentialClient.getCredentialByName(credentialName, guard(view::setCredential), taskMonitor());
         }
     }
 
-    public interface GitRepoSettingsView
-            extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
-
-        /// Shows whether the user may change what this shows.
-        ///
-        /// @param readOnly Whether it may not be changed.
-        void onReadOnly(boolean readOnly);
-
-        SelectionBox<Credential> getCredentialSelectionBox();
-
-        void setContentStoreName(String contentStoreName);
-
-        void setContentPackName(String contentPackName);
-
-        void setUrl(String url);
-
-        String getUrl();
-
-        String getBranch();
-
-        void setBranch(final String branch);
-
-        String getPath();
-
-        void setPath(final String directory);
-
-        String getCommitToPull();
-
-        void setCommitToPull(String commit);
-
-        Boolean isAutoPush();
-
-        void setAutoPush(Boolean autoPush);
-
-        /**
-         * Called by presenter on startup to set the state of the UI.
-         */
-        void setState();
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 }

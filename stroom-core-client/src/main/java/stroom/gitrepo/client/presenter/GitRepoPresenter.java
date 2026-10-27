@@ -18,10 +18,11 @@ package stroom.gitrepo.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.gitrepo.client.component.GitRepoSettingsController;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -41,12 +42,14 @@ public class GitRepoPresenter extends DocTabPresenter<LinkTabPanelView, GitRepoD
     @Inject
     public GitRepoPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final Provider<GitRepoSettingsPresenter> settingsPresenterProvider,
+                            final Provider<GitRepoSettingsController> settingsProvider,
                             final Provider<MarkdownEditController> markdownEditProvider,
                             final DocumentUserPermissionsTabProvider<GitRepoDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                GitRepoSettingsController::read,
+                GitRepoSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<GitRepoDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
