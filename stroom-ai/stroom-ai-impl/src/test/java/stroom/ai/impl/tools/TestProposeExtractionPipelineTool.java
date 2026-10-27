@@ -110,7 +110,7 @@ class TestProposeExtractionPipelineTool {
         assertThat(result)
                 .startsWith("The user has been shown a 'Create extraction pipeline' button for table 'Events'")
                 .contains("extracting UserId, Organisation, adding column(s) Organisation")
-                .contains("Nothing changes until they confirm it");
+                .contains("Nothing changes unless they do");
         assertThat(offered).singleElement().satisfies(action -> {
             assertThat(action).containsEntry("action", UserActions.CREATE_EXTRACTION_PIPELINE)
                     .containsEntry("name", "Logons extraction")

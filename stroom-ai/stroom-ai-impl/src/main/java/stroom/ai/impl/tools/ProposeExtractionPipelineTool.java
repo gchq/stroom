@@ -118,9 +118,9 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                  + "fields, and a pipeline using it. When the user clicks it and chooses the name and "
                                  + "folder, it is written, and the table set to use it, with a column for each new "
                                  + "field, unsaved. Nothing changes unless they do. For a table with an extraction "
-                                 + "pipeline already, it offers to change that pipeline in place, or to save a new one (a "
-                                 + "child of it): give every field, if Stroom AI wrote its XSLT; only those to add, "
-                                 + "if it was written by hand.")
+                                 + "pipeline already, it offers to change that pipeline in place, or to save a new "
+                                 + "one (a child of it): give every field, if Stroom AI wrote its XSLT; only those "
+                                 + "to add, if it was written by hand.")
                         .chatOnly(" Give the fields exactly as you last tried them with preview_extraction for this "
                                   + "table (it is refused otherwise), once the user "
                                   + "has seen its preview and agreed them. Tell the user about the button(s) rather "
