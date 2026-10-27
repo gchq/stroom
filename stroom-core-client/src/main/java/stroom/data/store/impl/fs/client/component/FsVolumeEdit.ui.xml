@@ -1,8 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A data volume: its type, path, status, limit and, for S3, its configuration -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:ed="urn:import:stroom.editor.client.component">
     <g:FlowPanel styleName="max form">
 
         <form:FormGroup identity="fsVolumeType" label="Volume Type"
@@ -81,8 +83,9 @@
                         addStyleNames="default-min-sizes flex-grow-1"
                         helpText="The S3 client settings for the volume as a JSON object, such as the bucket, region and credentials. Required for S3 volumes and must be empty for Standard volumes."
                         screenReaderText="JSON object. Required for S3 volumes only.">
-            <g:ResizeLayoutPanel ui:field="configEditorContainer"
-                                 addStyleNames="dock-max form-control-border"/>
+            <g:ResizeLayoutPanel addStyleNames="dock-max form-control-border">
+                <ed:CodeEditor ui:field="configEditor"/>
+            </g:ResizeLayoutPanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

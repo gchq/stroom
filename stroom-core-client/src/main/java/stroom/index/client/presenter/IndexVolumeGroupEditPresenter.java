@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.index.client.component.IndexVolumeEditController;
 import stroom.index.client.component.IndexVolumeStatusListController;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
@@ -60,7 +61,7 @@ public class IndexVolumeGroupEditPresenter
             GWT.create(IndexVolumeGroupResource.class);
 
     private final IndexVolumeStatusListController indexVolumeStatusList;
-    private final Provider<IndexVolumeEditPresenter> editProvider;
+    private final Provider<IndexVolumeEditController> editProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
 
@@ -79,7 +80,7 @@ public class IndexVolumeGroupEditPresenter
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
                                          final IndexVolumeGroupEditView view,
                                          final IndexVolumeStatusListController indexVolumeStatusList,
-                                         final Provider<IndexVolumeEditPresenter> editProvider,
+                                         final Provider<IndexVolumeEditController> editProvider,
                                          final RestFactory restFactory,
                                          final NodeClient nodeClient) {
         super(eventBus, view);
@@ -148,8 +149,7 @@ public class IndexVolumeGroupEditPresenter
     }
 
     private void editVolume(final IndexVolume indexVolume, final String caption) {
-        final IndexVolumeEditPresenter editor = makeDialog(editProvider);
-        editor.show(indexVolume, caption, result -> {
+        editProvider.get().show(this, indexVolume, caption, result -> {
             if (result != null) {
                 indexVolumeStatusList.refresh();
             }

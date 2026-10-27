@@ -17,21 +17,14 @@
 package stroom.data.store.impl.fs.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolumeEditView;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
-import stroom.data.store.impl.fs.client.view.FsVolumeEditViewImpl;
 import stroom.data.store.impl.fs.client.view.FsVolumeGroupEditViewImpl;
 
 public class FsVolumeModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPresenterWidget(
-                FsVolumeEditPresenter.class,
-                FsVolumeEditView.class,
-                FsVolumeEditViewImpl.class);
 
         bindPresenterWidget(
                 FsVolumeGroupEditPresenter.class,

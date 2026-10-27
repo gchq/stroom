@@ -17,11 +17,9 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.index.client.presenter.IndexVolumeEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.index.client.view.IndexVolumeEditViewImpl;
 import stroom.index.client.view.IndexVolumeGroupEditViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -36,8 +34,5 @@ public class IndexVolumeScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(IndexVolumeGroupEditPresenter.class,
                 IndexVolumeGroupEditView.class,
                 IndexVolumeGroupEditViewImpl.class);
-        bindPresenterWidget(IndexVolumeEditPresenter.class,
-                IndexVolumeEditPresenter.IndexVolumeEditView.class,
-                IndexVolumeEditViewImpl.class);
     }
 }

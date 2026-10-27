@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.store.impl.fs.client.component.FsVolumeEditController;
 import stroom.data.store.impl.fs.client.component.FsVolumeStatusListController;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
@@ -55,7 +56,7 @@ public class FsVolumeGroupEditPresenter
             GWT.create(FsVolumeGroupResource.class);
 
     private final FsVolumeStatusListController fsVolumeStatusList;
-    private final Provider<FsVolumeEditPresenter> editProvider;
+    private final Provider<FsVolumeEditController> editProvider;
     private final RestFactory restFactory;
 
     private final ButtonView newButton;
@@ -73,7 +74,7 @@ public class FsVolumeGroupEditPresenter
     public FsVolumeGroupEditPresenter(final EventBus eventBus,
                                       final FsVolumeGroupEditView view,
                                       final FsVolumeStatusListController fsVolumeStatusList,
-                                      final Provider<FsVolumeEditPresenter> editProvider,
+                                      final Provider<FsVolumeEditController> editProvider,
                                       final RestFactory restFactory) {
         super(eventBus, view);
         own(fsVolumeStatusList);
@@ -136,8 +137,7 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void editVolume(final FsVolume fsVolume, final String caption) {
-        final FsVolumeEditPresenter editor = makeDialog(editProvider);
-        editor.show(fsVolume, caption, result -> {
+        editProvider.get().show(this, fsVolume, caption, result -> {
             if (result != null) {
                 fsVolumeStatusList.refresh();
             }

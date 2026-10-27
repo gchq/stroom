@@ -16,11 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter;
-import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolumeEditView;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
-import stroom.data.store.impl.fs.client.view.FsVolumeEditViewImpl;
 import stroom.data.store.impl.fs.client.view.FsVolumeGroupEditViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -33,9 +30,6 @@ public class FsVolumeScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(FsVolumeEditPresenter.class,
-                FsVolumeEditView.class,
-                FsVolumeEditViewImpl.class);
         bindPresenterWidget(FsVolumeGroupEditPresenter.class,
                 FsVolumeGroupEditView.class,
                 FsVolumeGroupEditViewImpl.class);

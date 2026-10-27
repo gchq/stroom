@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.index.client.presenter;
+package stroom.index.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.FakeRestFactory;
-import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.ValidationResult;
 import stroom.node.client.NodeClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,29 +30,25 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 
-class TestIndexVolumeEditPresenter {
+class TestIndexVolumeEditController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<ConfirmEvent> confirms = new ArrayList<>();
     private final List<IndexVolume> saved = new ArrayList<>();
     private final FakeRestFactory restFactory = new FakeRestFactory();
 
     @BeforeEach
     void setUp() {
-        // The REST resources are made with GWT.create, which only works in a browser
+        // The REST resources are made with GWT.create, and the form is a widget, which only work
+        // in a browser
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(ConfirmEvent.getType(), confirms::add);
     }
 
@@ -94,32 +87,18 @@ class TestIndexVolumeEditPresenter {
         Mockito.verify(okPressed, Mockito.never()).reset();
     }
 
-    // Shows the dialog for a new volume and presses OK.
-    @SuppressWarnings("unchecked")
+    // Presses OK in the dialog for a new volume.
     private HidePopupRequestEvent showAndPressOk() {
-        final NodeClient nodeClient = Mockito.mock(NodeClient.class);
-        Mockito.doAnswer(invocation -> {
-            final Consumer<List<String>> consumer = invocation.getArgument(0);
-            consumer.accept(List.of("node1"));
-            return null;
-        }).when(nodeClient).listAllNodes(any(), any(), any());
-        final IndexVolumeEditView view = Mockito.mock(IndexVolumeEditView.class, Mockito.RETURNS_DEEP_STUBS);
-        Mockito.when(view.getByteLimit().getText()).thenReturn("");
-        Mockito.when(view.getPath().getText()).thenReturn("/newvol");
-        final IndexVolumeEditPresenter presenter = new IndexVolumeEditPresenter(
-                eventBus, view, restFactory, nodeClient);
-
-        // The dialog's size is worked out from the browser window's
-        try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {
-            presenter.show(IndexVolume.builder().build(), "Add Volume", saved::add,
-                    Mockito.mock(TaskMonitorFactory.class));
-        }
-        assertThat(shown)
-                .hasSize(1);
+        final IndexVolumeEdit view = Mockito.mock(IndexVolumeEdit.class);
+        Mockito.when(view.getByteLimit()).thenReturn("");
+        Mockito.when(view.getPath()).thenReturn("/newvol");
+        final IndexVolumeEditController controller = new IndexVolumeEditController(
+                eventBus, view, restFactory, Mockito.mock(NodeClient.class));
 
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+        controller.onHideRequest(okPressed, IndexVolume.builder().build(), saved::add,
+                Mockito.mock(TaskMonitorFactory.class));
         // The volume is validated first
         assertThat(restFactory.getRequests())
                 .hasSize(1);
