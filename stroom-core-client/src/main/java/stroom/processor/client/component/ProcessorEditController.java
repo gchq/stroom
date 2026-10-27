@@ -245,7 +245,17 @@ public class ProcessorEditController extends Controller {
                 .fire();
     }
 
-    // Shows the filter's values, ready for the dialog (package-private for its tests)
+    /// Shows the filter's values, ready for the dialog (package-private for its tests).
+    ///
+    /// @param processorType       The kind of processor the filter is for.
+    /// @param pipelineRef         The pipeline or analytic rule that processes the streams.
+    /// @param filter              The filter to edit, or `null` to add one.
+    /// @param defaultExpression   The expression a new filter starts with, or `null` for an empty one.
+    /// @param minMetaCreateTimeMs The earliest stream create time, or `null` for none.
+    /// @param maxMetaCreateTimeMs The latest stream create time, or `null` for none.
+    /// @param maxProcessingTasks  How many tasks may run at once, or `null` for no limit.
+    /// @param profileName         The processing profile, or `null` for none.
+    /// @param consumer            Given the filter saved, when OK saves it.
     void prepare(final ProcessorType processorType,
                  final DocRef pipelineRef,
                  final ProcessorFilter filter,
@@ -278,8 +288,10 @@ public class ProcessorEditController extends Controller {
                 export);
     }
 
-    // OK saves the filter, if its expression is valid and the user is sure; Cancel gives nothing
-    // (package-private for its tests)
+    /// OK saves the filter, if its expression is valid and the user is sure; Cancel gives nothing
+    /// (package-private for its tests).
+    ///
+    /// @param e The dialog's request to hide, OK or Cancel.
     void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final ExpressionOperator expression = expressionEditor.write();
@@ -510,7 +522,7 @@ public class ProcessorEditController extends Controller {
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .owner(this)
-                .taskMonitorFactory(taskMonitor())
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
 
         } else {
@@ -537,7 +549,7 @@ public class ProcessorEditController extends Controller {
                     // If it can't be created, let the user try again or cancel
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .owner(this)
-                .taskMonitorFactory(taskMonitor())
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }

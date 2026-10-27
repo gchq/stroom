@@ -168,7 +168,7 @@ public class TracesListTabController extends Controller implements HasToolbar {
                             .onFailure(error -> onLoaded.accept(null))
                             // Spin the span-list pager's own refresh button, not the traces list's.
                             .owner(this)
-                .taskMonitorFactory(traceOverviewWidget)
+                            .taskMonitorFactory(traceOverviewWidget)
                             .exec();
                 };
         traceOverviewWidget.setLargeTrace(traceRoot, fetcher);

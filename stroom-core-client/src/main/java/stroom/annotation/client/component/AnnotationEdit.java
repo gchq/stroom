@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 public class AnnotationEdit extends Component {
 
     /// Shows that a field has no value ("None", "Nobody") in the muted text colour.
-    public static final String EMPTY_VALUE_STYLE = "annotationLabel--empty";
+    private static final String EMPTY_VALUE_STYLE = "annotationLabel--empty";
 
     private static final Binder BINDER = GWT.create(Binder.class);
 

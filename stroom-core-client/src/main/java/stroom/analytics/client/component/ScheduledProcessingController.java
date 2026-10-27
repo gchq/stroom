@@ -205,7 +205,7 @@ public class ScheduledProcessingController extends Controller {
                                     .method(res -> res.deleteExecutionSchedule(selected))
                                     .onSuccess(success -> scheduleList.refresh())
                                     .owner(this)
-                            .taskMonitorFactory(taskMonitor())
+                                    .taskMonitorFactory(taskMonitor())
                                     .exec();
                         }
                     });

@@ -87,7 +87,7 @@ public class PipelineStructureController extends Controller {
             .build();
 
     private final PipelineStructure view;
-    private final DocSelectionController pipelinePresenter;
+    private final DocSelectionController inheritSelection;
     private final RestFactory restFactory;
     private final Provider<NewElementController> newElementProvider;
     private final PropertyListController propertyList;
@@ -131,8 +131,8 @@ public class PipelineStructureController extends Controller {
         own(propertyList);
         own(pipelineReferenceList);
         this.pipelineTree = view.getTree();
-        this.pipelinePresenter = make(docSelectionProvider);
-        pipelinePresenter.attach(view.getInheritBox());
+        this.inheritSelection = make(docSelectionProvider);
+        inheritSelection.attach(view.getInheritBox());
         this.restFactory = restFactory;
         this.newElementProvider = newElementProvider;
         this.propertyList = propertyList;
@@ -143,14 +143,14 @@ public class PipelineStructureController extends Controller {
         view.setProperties(propertyList);
         view.setPipelineReferences(pipelineReferenceList);
 
-        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
-        pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
+        inheritSelection.setIncludedTypes(PipelineDoc.TYPE);
+        inheritSelection.setRequiredPermissions(DocumentPermission.USE);
 
         // Get a map of all available elements and properties.
         setAdvancedMode(true);
         enableButtons();
 
-        own(pipelinePresenter.addSelectionListener(selected -> {
+        own(inheritSelection.addSelectionListener(selected -> {
             final DocRef selectedDocRef = selected;
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
                 if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
@@ -159,7 +159,7 @@ public class PipelineStructureController extends Controller {
                             "A pipeline cannot inherit from itself",
                             () -> {
                                 // Reset selection.
-                                pipelinePresenter.setSelectedEntityReference(
+                                inheritSelection.setSelectedEntityReference(
                                         getParentPipeline(),
                                         true);
                             });
@@ -234,7 +234,7 @@ public class PipelineStructureController extends Controller {
     /// @param document The pipeline.
     public void read(final DocRef docRef, final PipelineDoc document) {
         this.readDoc = document;
-        pipelinePresenter.setReadOnly(isReadOnly());
+        inheritSelection.setReadOnly(isReadOnly());
         // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
         // that can be changed
         pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
@@ -254,7 +254,7 @@ public class PipelineStructureController extends Controller {
             if (document.getParentPipeline() != null) {
                 this.parentPipeline = document.getParentPipeline();
             }
-            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
+            inheritSelection.setSelectedEntityReference(document.getParentPipeline(), true);
 
             pipelineTree.getSelectionModel().setSelected(previousSelection, true);
         }
@@ -725,11 +725,6 @@ public class PipelineStructureController extends Controller {
         return parentPipeline;
     }
 
-    /// @return The pipeline, with any change to its parent.
-    public PipelineDoc getPipelineDoc() {
-        return pipelineDoc;
-    }
-
     private void changeParentPipeline(final DocRef parentPipeline) {
         // Don't do anything if the parent pipeline has not changed.
         if (Objects.equals(this.parentPipeline, parentPipeline)) {
@@ -781,11 +776,6 @@ public class PipelineStructureController extends Controller {
             }
         }
     }
-
-    // --------------------------------------------------------------------------------
-
-
-
 
     // --------------------------------------------------------------------------------
 

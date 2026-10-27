@@ -18,7 +18,7 @@
 
 /* The Inherit From label */
 .pipeline-structure__label {
-    margin-top: 2px;
+    margin: 0 10px 0 15px;
     vertical-align: top;
     white-space: nowrap;
 }
@@ -26,7 +26,6 @@
 /* The bar above the elements: their buttons, then Inherit From and View Source */
 .pipeline-structure__bar {
     display: flex;
-    align-items: top;
     flex-direction: row;
 }
 
@@ -45,10 +44,6 @@
 /* The tree of elements */
 .pipeline-structure__tree-container {
     padding: 10px 5px;
-}
-
-.pipeline-structure__label {
-    margin: 0 10px 0 15px;
 }
 
 /* View Source, at the end of the bar */

@@ -19,7 +19,6 @@ package stroom.annotation.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
-import stroom.annotation.client.AnnotationPresenter;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.DurationLabel;
 import stroom.annotation.client.EditAnnotationEvent;
@@ -50,8 +49,6 @@ import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.StringEntryValue;
 import stroom.annotation.shared.UserRefEntryValue;
-import stroom.content.client.event.CloseContentTabEvent;
-import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
@@ -166,7 +163,10 @@ public class AnnotationEditController extends Controller implements Focus {
     private Annotation annotation;
     private DocRef annotationRef;
     private AnnotationIdentity annotationIdentity;
-    private AnnotationPresenter parent;
+    private Runnable onTitleChange = () -> {
+    };
+    private Runnable onDelete = () -> {
+    };
 
     private AnnotationTag currentStatus;
     private UserRef currentAssignedTo;
@@ -262,11 +262,11 @@ public class AnnotationEditController extends Controller implements Focus {
             annotationResourceClient.findAnnotationTags(
                     this,
                     criteria,
-                    values -> {
+                    guard(values -> {
                         if (values != null) {
                             consumer.accept(values.getValues());
                         }
-                    },
+                    }),
                     new DefaultErrorHandler(this, null), taskMonitor());
         };
     }
@@ -296,7 +296,7 @@ public class AnnotationEditController extends Controller implements Focus {
             } finally {
                 suppressHistoryUpdate = false;
             }
-            RefreshContentTabEvent.fire(this, parent);
+            onTitleChange.run();
         }
     }
 
@@ -673,12 +673,12 @@ public class AnnotationEditController extends Controller implements Focus {
 
     private void editComment(final long id) {
         final FetchAnnotationEntryRequest request = new FetchAnnotationEntryRequest(annotationRef, id);
-        annotationResourceClient.fetchAnnotationEntry(request, annotationEntry -> {
+        annotationResourceClient.fetchAnnotationEntry(request, guard(annotationEntry -> {
             if (annotationEntry.getEntryValue() instanceof final StringEntryValue value) {
                 commentEditProvider.get().edit(this, value.getValue(), (text, e) ->
                         changeComment(id, text, annotationEntry.getEntryType(), e));
             }
-        }, taskMonitor());
+        }), taskMonitor());
     }
 
     private void changeComment(final long id,
@@ -692,7 +692,7 @@ public class AnnotationEditController extends Controller implements Focus {
                 text);
         annotationResourceClient.changeAnnotationEntry(
                 request,
-                ignored -> afterChangeComment(e),
+                guard(ignored -> afterChangeComment(e)),
                 // If the change fails, say why and let the user try again or cancel
                 RestErrorHandler.forPopup(this, e),
                 taskMonitor());
@@ -713,10 +713,10 @@ public class AnnotationEditController extends Controller implements Focus {
                 final DeleteAnnotationEntryRequest request = new DeleteAnnotationEntryRequest(
                         annotationIdentity, annotationEntryType, id);
                 annotationResourceClient.deleteAnnotationEntry(
-                        request, result -> {
+                        request, guard(result -> {
                             AnnotationChangeEvent.fire(this, annotationRef);
                             updateHistory();
-                        }, taskMonitor());
+                        }), taskMonitor());
             }
         });
     }
@@ -1172,6 +1172,10 @@ public class AnnotationEditController extends Controller implements Focus {
         return added;
     }
 
+    /// Adds a comment to the history, its links made clickable (package-private for its tests).
+    ///
+    /// @param html    The history being built.
+    /// @param comment The comment.
     static void decorateComment(final HtmlBuilder html, final String comment) {
         final StringBuilder sb = new StringBuilder();
         final char[] chars = comment.toCharArray();
@@ -1531,12 +1535,12 @@ public class AnnotationEditController extends Controller implements Focus {
         }
         ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok -> {
             if (ok) {
-                annotationResourceClient.delete(annotationRef, result -> {
+                annotationResourceClient.delete(annotationRef, guard(result -> {
                     if (result) {
                         AnnotationChangeEvent.fire(this, null);
-                        CloseContentTabEvent.fire(this, parent);
+                        onDelete.run();
                     }
-                }, taskMonitor());
+                }), taskMonitor());
             }
         });
     }
@@ -1556,9 +1560,14 @@ public class AnnotationEditController extends Controller implements Focus {
         view.setComment(initialComment);
     }
 
-    /// @param parent The annotation's document, whose tab is refreshed or closed as it changes.
-    public void setParent(final AnnotationPresenter parent) {
-        this.parent = parent;
+    /// @param onTitleChange Run when the annotation's title changes, e.g. to retitle its tab.
+    public void setOnTitleChange(final Runnable onTitleChange) {
+        this.onTitleChange = onTitleChange;
+    }
+
+    /// @param onDelete Run when the annotation is deleted, e.g. to close its tab.
+    public void setOnDelete(final Runnable onDelete) {
+        this.onDelete = onDelete;
     }
 
 

@@ -21,6 +21,8 @@ import stroom.annotation.client.component.AnnotationLinksController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.content.client.event.CloseContentTabEvent;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
@@ -72,7 +74,8 @@ public class AnnotationPresenter
         own(linkedEventPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationEdit = annotationEdit;
-        annotationEdit.setParent(this);
+        annotationEdit.setOnTitleChange(() -> RefreshContentTabEvent.fire(this, this));
+        annotationEdit.setOnDelete(() -> CloseContentTabEvent.fire(this, this));
         linkedEventPresenter.setParent(this);
 
         addTab(ANNOTATION, ControllerTabProvider.ofOwned(eventBus, annotationEdit, AnnotationEditController::read));

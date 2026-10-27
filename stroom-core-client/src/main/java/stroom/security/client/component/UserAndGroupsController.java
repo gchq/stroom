@@ -27,6 +27,8 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -145,7 +147,7 @@ public class UserAndGroupsController extends Controller {
                     createButton.setTitle("Create User Or Group");
                 }
             }
-        }), userList.getTaskMonitor());
+        }), taskMonitor());
 
         // You can only delete groups on this screen, UsersPresenter for user deletion
         deleteButton = userActions.button(SvgImage.DELETE, "Delete Selected Group", this::onDelete);
@@ -534,4 +536,13 @@ public class UserAndGroupsController extends Controller {
 
     }
 
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
+    }
 }

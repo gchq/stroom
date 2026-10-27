@@ -24,7 +24,6 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -46,8 +45,6 @@ public class DataRetentionImpact extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
 
-    @UiField
-    PagerPanel pager;
     @UiField
     ToolbarButton runButton;
     @UiField

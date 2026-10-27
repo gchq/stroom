@@ -41,20 +41,20 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     private final ContentManager contentManager;
     private final Provider<UserRefPopupController> userRefPopupProvider;
-    private final Provider<UserPermissionReportController> userPermissionReportPresenterAsyncProvider;
+    private final Provider<UserPermissionReportController> userPermissionReportProvider;
     private final ClientSecurityContext securityContext;
 
     @Inject
     public UserPermissionsReportPlugin(final EventBus eventBus,
                                        final ContentManager contentManager,
                                        final Provider<UserPermissionReportController>
-                                               userPermissionReportPresenterAsyncProvider,
+                                               userPermissionReportProvider,
                                        final Provider<UserRefPopupController> userRefPopupProvider,
                                        final ClientSecurityContext securityContext) {
         super(eventBus);
         this.contentManager = contentManager;
         this.userRefPopupProvider = userRefPopupProvider;
-        this.userPermissionReportPresenterAsyncProvider = userPermissionReportPresenterAsyncProvider;
+        this.userPermissionReportProvider = userPermissionReportProvider;
         this.securityContext = securityContext;
 
         final Action openAction = getOpenAction();
@@ -103,7 +103,7 @@ public class UserPermissionsReportPlugin extends Plugin {
 
     public void open() {
 //        userRefPopupProvider.get().show(userRef -> {
-//            final UserPermissionReportController presenter = userPermissionReportPresenterAsyncProvider.get();
+//            final UserPermissionReportController presenter = userPermissionReportProvider.get();
 //            presenter.setUserRef(userRef);
 //            final CloseContentEvent.Handler closeHandler = (event) -> {
 //                if (presenter instanceof CloseContentEvent.Handler) {

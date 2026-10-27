@@ -196,7 +196,7 @@ public class DataRetentionImpactController extends Controller {
                         AlertEvent.fireErrorFromException(this, error.getException(), null);
                     })
                     .owner(this)
-                .taskMonitorFactory(taskMonitor())
+                    .taskMonitorFactory(taskMonitor())
                     .exec();
         }
     }

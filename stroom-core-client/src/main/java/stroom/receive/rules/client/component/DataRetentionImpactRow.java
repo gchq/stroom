@@ -489,10 +489,8 @@ public class DataRetentionImpactRow {
                '}';
     }
 
-    /**
-     * Months/years are variable things so this is only approximate
-     * for use in sorting
-     */
+    // Months/years are variable things so this is only approximate
+    // for use in sorting
     private static long timeUnitToMillis(final int ruleAge, final TimeUnit timeUnit) {
         final long unitMs;
         switch (timeUnit) {
