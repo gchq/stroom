@@ -269,13 +269,12 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @Path("/writeExtraction/{chatId}/{messageId}/{actionId}")
     @Operation(
             summary = "Write the search extraction a create_extraction_pipeline button in the chat proposed (an XSLT "
-                      + "and a pipeline), once the user has confirmed exactly what is written, in the folder they "
-                      + "chose",
+                      + "and a pipeline), with the name and folder the user chose, as the button prepared it",
             operationId = "writeAiExtraction")
     AiWriteExtractionResult writeExtraction(@PathParam("chatId") int chatId,
                                             @PathParam("messageId") int messageId,
                                             @PathParam("actionId") String actionId,
-                                            @Parameter(description = "The name, folder and hash the user confirmed",
+                                            @Parameter(description = "The name and folder the user chose, and the hash of what was prepared",
                                                     required = true) AiWriteExtractionRequest request);
 
     @POST
