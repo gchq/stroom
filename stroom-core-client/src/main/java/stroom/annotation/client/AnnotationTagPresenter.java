@@ -17,6 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.component.AnnotationTagCreateController;
+import stroom.annotation.client.component.AnnotationTagEditController;
 import stroom.annotation.client.component.AnnotationTagListController;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
@@ -38,8 +40,8 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     public static final String TAB_TYPE = "AnnotationTags";
 
     private final AnnotationTagListController annotationTagList;
-    private final Provider<AnnotationTagCreatePresenter> createProvider;
-    private final Provider<AnnotationTagEditPresenter> editProvider;
+    private final Provider<AnnotationTagCreateController> createProvider;
+    private final Provider<AnnotationTagEditController> editProvider;
     private final AnnotationResourceClient annotationResourceClient;
 
     private final ButtonView newButton;
@@ -54,8 +56,8 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
             final EventBus eventBus,
             final WrapperView view,
             final AnnotationTagListController annotationTagList,
-            final Provider<AnnotationTagCreatePresenter> createProvider,
-            final Provider<AnnotationTagEditPresenter> editProvider,
+            final Provider<AnnotationTagCreateController> createProvider,
+            final Provider<AnnotationTagEditController> editProvider,
             final AnnotationResourceClient annotationResourceClient) {
 
         super(eventBus, view);
@@ -87,7 +89,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        makeDialog(createProvider).open(annotationTagType, annotationTag -> refresh());
+        createProvider.get().open(this, annotationTagType, annotationTag -> refresh());
     }
 
     private void edit() {
@@ -98,11 +100,10 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final AnnotationTag annotationTag) {
-        final AnnotationTagEditPresenter editor = makeDialog(editProvider);
         final String name = annotationTag.getName();
         final String caption = "Edit " + annotationTagType.getDisplayValue() + " - " + annotationTag.getName();
 
-        editor.open(annotationTag, caption, newAnnotationTag -> {
+        editProvider.get().open(this, annotationTag, caption, newAnnotationTag -> {
             if (!Objects.equals(name, newAnnotationTag.getName())) {
                 AnnotationTagNameChangeEvent.fire(this);
             }

@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
+import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.inject.Provider;
@@ -32,7 +30,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -40,16 +37,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestAnnotationTagEditPresenter {
+class TestAnnotationTagEditController {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
         GWTMockUtilities.disarm();
-        eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
     }
 
@@ -67,22 +62,20 @@ class TestAnnotationTagEditPresenter {
     @SuppressWarnings("unchecked")
     void blankNameNamesTheTagType(final AnnotationTagType type, final String typeName) {
         // Regression test: the error always called the tag an "annotation group", whatever its type
-        final AnnotationTagEditView view = Mockito.mock(AnnotationTagEditView.class);
+        // The form is a widget, which can only be made in a browser
+        final AnnotationTagEdit view = Mockito.mock(AnnotationTagEdit.class);
         Mockito.when(view.getName()).thenReturn("");
-        final AnnotationTagEditPresenter presenter = new AnnotationTagEditPresenter(
+        final AnnotationTagEditController controller = new AnnotationTagEditController(
                 eventBus,
                 view,
                 Mockito.mock(AnnotationResourceClient.class),
                 Mockito.mock(Provider.class));
 
-        // The dialog's size is worked out from the browser window's
-        try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {
-            presenter.open(AnnotationTag.builder().type(type).name("Old").build(), "Edit", tag -> {
-            });
-        }
+        controller.read(AnnotationTag.builder().type(type).name("Old").build());
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
-        shown.getFirst().getHideRequestHandler().onHideRequest(okPressed);
+        controller.onHideRequest(okPressed, tag -> {
+        });
 
         assertThat(alerts)
                 .extracting(alert -> alert.getMessage().asString())

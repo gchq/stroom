@@ -14,31 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
-import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class AnnotationTagEditViewImpl
-        extends ViewWithUiHandlers<AnnotationTagEditUiHandlers>
-        implements AnnotationTagEditView {
+/// An annotation tag: its name, its text (for a standard comment) or style (for a label), and a
+/// button that opens its permissions.
+public class AnnotationTagEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -53,73 +52,82 @@ public class AnnotationTagEditViewImpl
     @UiField
     Button editPermissions;
 
-    @Inject
-    public AnnotationTagEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    private Runnable onPermissions = () -> {
+    };
+
+    /// Makes an empty form, offering every style, each shown as a swatch, None chosen.
+    public AnnotationTagEdit() {
+        initWidget(BINDER.createAndBindUi(this));
         formattingStyle.setRenderFunction(style -> ConditionalFormattingSwatchUtil
                 .createSwatch(ConditionalFormattingType.BACKGROUND, style, null));
         formattingStyle.addItems(ConditionalFormattingStyle.LIST);
         formattingStyle.setValue(ConditionalFormattingStyle.NONE);
-        formattingStyle.addStyleName("conditionalFormatStyleSelection");
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
+    /// @return The tag's name.
     public String getName() {
-        return this.name.getText();
+        return name.getText();
     }
 
-    @Override
+    /// @param name The tag's name.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
+    /// Shows the tag's text, for a tag type that has one.
+    ///
+    /// @param show  Whether the tag type has text.
+    /// @param label The text's label, the tag type's name.
     public void showTagText(final boolean show, final String label) {
         tagTextGroup.setLabel(label);
         tagTextGroup.setVisible(show);
     }
 
-    @Override
+    /// @return The tag's text.
     public String getTagText() {
-        return this.tagText.getText();
+        return tagText.getText();
     }
 
-    @Override
+    /// @param tagText The tag's text.
     public void setTagText(final String tagText) {
         this.tagText.setText(tagText);
     }
 
-    @Override
+    /// @param show Whether the style is shown, as it is for a label.
     public void showStyle(final boolean show) {
         styleGroup.setVisible(show);
     }
 
-    @Override
+    /// @return The style chosen.
     public ConditionalFormattingStyle getStyle() {
         return formattingStyle.getValue();
     }
 
-    @Override
+    /// @param style The style chosen.
     public void setStyle(final ConditionalFormattingStyle style) {
         formattingStyle.setValue(style);
     }
 
-    @UiHandler("editPermissions")
-    public void onEditPermissions(final ClickEvent e) {
-        getUiHandlers().onPermissions();
+    /// @param onPermissions Called when Change Permissions is pressed.
+    public void setOnPermissions(final Runnable onPermissions) {
+        this.onPermissions = onPermissions;
     }
 
-    public interface Binder extends UiBinder<Widget, AnnotationTagEditViewImpl> {
+    @UiHandler("editPermissions")
+    void onEditPermissions(final ClickEvent e) {
+        onPermissions.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, AnnotationTagEdit> {
 
     }
 }

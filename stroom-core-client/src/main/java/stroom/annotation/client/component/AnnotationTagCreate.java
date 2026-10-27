@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
-import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationTagCreateView {
+/// A new annotation tag: its name and, for a standard comment, its text.
+public class AnnotationTagCreate extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -38,48 +38,40 @@ public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationT
     @UiField
     TextArea tagText;
 
-    @Inject
-    public AnnotationTagCreateViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty form.
+    public AnnotationTagCreate() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
+    /// @return The tag's name.
     public String getName() {
-        return this.name.getText();
+        return name.getText();
     }
 
-    @Override
-    public void setName(final String name) {
-        this.name.setText(name);
-    }
-
-    @Override
+    /// Shows the tag's text, for a tag type that has one.
+    ///
+    /// @param show  Whether the tag type has text.
+    /// @param label The text's label, the tag type's name.
     public void showTagText(final boolean show, final String label) {
         tagTextGroup.setLabel(label);
         tagTextGroup.setVisible(show);
     }
 
-    @Override
+    /// @return The tag's text.
     public String getTagText() {
-        return this.tagText.getText();
+        return tagText.getText();
     }
 
-    @Override
-    public void setTagText(final String comment) {
-        this.tagText.setText(comment);
-    }
 
-    public interface Binder extends UiBinder<Widget, AnnotationTagCreateViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, AnnotationTagCreate> {
 
     }
 }
