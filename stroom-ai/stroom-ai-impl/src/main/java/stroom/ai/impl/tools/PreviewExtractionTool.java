@@ -259,11 +259,13 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                 : table.getLive() != null
                         ? table.getLive()
                         : table.getResults();
-        if (search == null || ResultsRequests.tableSettings(search) == null) {
+        if (search == null || ResultsRequests.tableSettings(search) == null
+            || ProposeDashboardChangeTool.isEmbeddedQuery(table)) {
             final List<String> tables = NullSafe.list(tab.searches()).stream()
                     .map(each -> "'" + NullSafe.nonBlankStringElse(each.getName(), each.getComponentId()) + "'")
                     .toList();
-            return ToolResult.text("The dashboard has no table '" + tableName + "' whose search is known. "
+            return ToolResult.text("The dashboard has no table '" + tableName + "' whose search is known (an "
+                                   + "embedded query's StroomQL makes its results, so it has no extraction). "
                                    + (tables.isEmpty()
                     ? "It has no tables."
                     : "Its tables are: " + String.join(", ", tables) + "."));
@@ -378,27 +380,36 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                 ? settings.getExtractionPipeline()
                 : null;
         if (pipeline != null) {
+            final String description = "the table's extraction pipeline '"
+                                       + NullSafe.nonBlankStringElse(pipeline.getName(), pipeline.getUuid()) + "'";
             final MergedPipeline merged = MergedPipeline.load(documentAccess, pipeline.getUuid()).orElse(null);
-            final String element = NullSafe.get(merged, m -> ExtractionPipelines.outputXslt(m).orElse(null));
+            if (merged == null) {
+                // As propose_extraction_pipeline would say: nothing is tried that couldn't be offered.
+                return new Trial(null, null, description, null, "The extraction of " + description + " can't be "
+                                                                 + "changed: it no longer exists, or you can't see "
+                                                                 + "it.");
+            }
+            final String element = ExtractionPipelines.outputXslt(merged).orElse(null);
             final DocRef xslt = element == null
                     ? null
                     : ExtractionPipelines.xsltOf(merged, element).orElse(null);
-            if (xslt != null) {
-                final String description = "the table's extraction pipeline '"
-                                           + NullSafe.nonBlankStringElse(pipeline.getName(), pipeline.getUuid())
-                                           + "'";
-                final String unchangeable = ExtractionPipelines.unchangeable(merged, element).orElse(null);
-                if (unchangeable != null) {
-                    return new Trial(merged.doc(), element, description, null, "The extraction of "
-                                                                               + description + " can't be changed "
-                                                                               + "this way. " + unchangeable);
-                }
-                final String code = documentAccess.read(xslt, XsltDoc.class).map(XsltDoc::getData).orElse(null);
-                return new Trial(merged.doc(), element, description, code, code != null
-                        ? null
-                        : "The XSLT of " + description + " ('" + NullSafe.nonBlankStringElse(xslt.getName(),
-                        xslt.getUuid()) + "') isn't one you can view, so a change to it can't be tried.");
+            if (xslt == null) {
+                return new Trial(merged.doc(), element, description, null, "The extraction of " + description
+                                                                           + " can't be changed this way: it has "
+                                                                           + "no XSLT element naming an XSLT "
+                                                                           + "before its search result output.");
             }
+            final String unchangeable = ExtractionPipelines.unchangeable(merged, element).orElse(null);
+            if (unchangeable != null) {
+                return new Trial(merged.doc(), element, description, null, "The extraction of " + description
+                                                                           + " can't be changed this way. "
+                                                                           + unchangeable);
+            }
+            final String code = documentAccess.read(xslt, XsltDoc.class).map(XsltDoc::getData).orElse(null);
+            return new Trial(merged.doc(), element, description, code, code != null
+                    ? null
+                    : "The XSLT of " + description + " ('" + NullSafe.nonBlankStringElse(xslt.getName(),
+                    xslt.getUuid()) + "') isn't one you can view, so a change to it can't be tried.");
         }
         final DocRef placeholder = placeholderXslt();
         return placeholder == null
@@ -466,6 +477,11 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         if (changed != null && changed.generated()) {
             sb.append(" Its XSLT was written by Stroom AI, so it was written again from the fields given, which "
                       + "are all it would give.");
+            if (!changed.removed().isEmpty()) {
+                sb.append(" It would no longer give ").append(String.join(", ", changed.removed()))
+                        .append(", which it gives now: anything else using the pipeline loses them, so give them "
+                                + "too unless the user wants them removed.");
+            }
         } else if (changed != null) {
             sb.append(" Its XSLT was written by hand, so the fields given were added to it; it gives ")
                     .append(String.join(", ", changed.alsoGiven())).append(" already.");

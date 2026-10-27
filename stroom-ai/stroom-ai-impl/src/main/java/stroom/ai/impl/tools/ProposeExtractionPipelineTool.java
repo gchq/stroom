@@ -250,7 +250,7 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         for (final ExtractionField field : added) {
             final boolean shown = columns.values().stream()
                     .anyMatch(expression -> ExtractionPreview.fieldsOf(expression).stream()
-                            .anyMatch(field.name()::equalsIgnoreCase));
+                            .anyMatch(field.name()::equals));
             if (shown) {
                 continue;
             }
@@ -298,7 +298,10 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                                               + "table '" + tableName + "' with the " + NAME
                                                               + " tool");
         final String what = (changed.generated()
-                ? "its XSLT written again from the fields " + names
+                ? "its XSLT written again from the fields " + names + (changed.removed().isEmpty()
+                ? ""
+                : ", no longer giving " + String.join(", ", changed.removed()) + " (which anything else using it "
+                  + "loses: say so)")
                 : "the fields " + names + " added to its XSLT") + columnsAdded
                             + (namesAsItRuns
                 ? " (its XSLT names some fields as it runs, so which columns it fills, and whether a field it adds "

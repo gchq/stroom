@@ -77,16 +77,22 @@ public final class ExtractionChange {
         }
         final Optional<ExtractionXslt.Generated> generated = ExtractionXslt.read(code);
         if (generated.isPresent()) {
-            final Set<String> before = names(generated.get().fields().stream().map(ExtractionField::name).toList());
+            // Stroom fills a column's field by its exact name.
+            final List<String> before = generated.get().fields().stream().map(ExtractionField::name).toList();
+            final List<String> after = fields.stream().map(ExtractionField::name).toList();
             final List<ExtractionField> added = fields.stream()
-                    .filter(field -> !before.contains(field.name().toLowerCase(Locale.ROOT)))
+                    .filter(field -> !before.contains(field.name()))
+                    .toList();
+            final List<String> removed = before.stream()
+                    .filter(name -> !after.contains(name))
                     .toList();
             final String ns = NullSafe.isBlankString(namespace)
                     ? generated.get().namespace()
                     : namespace;
-            return new Changed(ExtractionXslt.xslt(ns, fields), true, Set.of(), false, added);
+            return new Changed(ExtractionXslt.xslt(ns, fields), true, Set.of(), false, added, removed);
         }
-        return new Changed(addTo(code, namespace, fields), false, dataNames(code), namesAsItRuns(code), fields);
+        return new Changed(addTo(code, namespace, fields), false, dataNames(code), namesAsItRuns(code), fields,
+                List.of());
     }
 
     /// @param code An XSLT's code.
@@ -220,11 +226,14 @@ public final class ExtractionChange {
     /// @param namesAsItRuns For one written by hand, true if it names some fields as it runs, so they aren't all in
     ///                      [#alsoGiven()] (nor checked against those added); see [#namesAsItRuns(String)].
     /// @param added         The fields it didn't give before.
+    /// @param removed       For one Stroom AI wrote, the fields it gave that it won't (which anything else using it
+    ///                      loses); else none.
     public record Changed(String code,
                           boolean generated,
                           Set<String> alsoGiven,
                           boolean namesAsItRuns,
-                          List<ExtractionField> added) {
+                          List<ExtractionField> added,
+                          List<String> removed) {
 
     }
 }

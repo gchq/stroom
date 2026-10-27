@@ -27,7 +27,7 @@ Needs: View Data
 
 ## preview_extraction {"table":"Users","path":"/outputs/a.csv","fields":[{"name":"Org","xpath":"Org"}]}
 Needs: Stepping, View Data, View (document)
-- everything: runs: The dashboard has no table 'Users' whose search is known. It has no tables.
+- everything: runs: The dashboard has no table 'Users' whose search is known (an embedded query's StroomQL makes its results, so it has no extraction). It has no tables.
 - without Stepping: REFUSED or limited: You don't have the Stepping permission, so an extraction can't be tried on events. Ask an administrator for it.
 - without View Data: REFUSED or limited: You don't have permission to view data, so an extraction can't be tried on events.
 - without View (document): REFUSED or limited: You don't have permission to view this document.
