@@ -183,7 +183,10 @@ class PipelineTemplates {
                                + ("translation".equals(stage)
                     ? " Only if they have none, create_pipeline standalone='events' builds the events pipeline "
                       + "on its own, as Stroom's standard Event Data templates are made (a last resort)."
-                    : ""));
+                    : "discovery".equals(stage)
+                            ? " Only if they have none, create_indexing_pipeline standalone='discovery' builds "
+                              + "the discovery pipeline on its own, into Elasticsearch (a last resort)."
+                            : ""));
         } else if ("translation".equals(stage)
                    && candidates.stream().noneMatch(c -> "XMLFragmentParser".equals(c.get("parser"))
                                                          || "CombinedParser".equals(c.get("parser")))) {

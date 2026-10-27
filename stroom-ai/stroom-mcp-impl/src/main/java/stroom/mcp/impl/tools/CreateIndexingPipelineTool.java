@@ -37,6 +37,7 @@ import stroom.mcp.impl.tools.CreatePipelineTool.FromTemplate;
 import stroom.mcp.impl.tools.PipelineShapes.Shape;
 import stroom.mcp.impl.tools.WriteGuard.BuildDoc;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -72,11 +73,22 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     static final String INDEX_NAME_ARG = "index_name";
     static final String CLUSTER_UUID_ARG = "cluster_uuid";
     static final String EVENTS_STREAM_IDS_ARG = "events_stream_ids";
+    static final String STANDALONE_ARG = "standalone";
+    static final String TEXT_CONVERTER_UUID_ARG = "text_converter_uuid";
 
     // The records:2 data elements an XSLT written by hand writes.
     private static final Pattern DATA_NAME = Pattern.compile("<data\\s+name=\"([^\"{]+)\"");
     // How many missing fields a refusal names.
     private static final int MISSING_NAMED = 10;
+    // The parser each kind of raw data a discovery index reads is parsed by.
+    private static final Map<String, String> DISCOVERY_PARSERS = Map.of("json", "JSONParser", "delimited",
+            "DSParser", "xml", "XMLParser");
+    // A discovery pipeline of its own after its parser, as the discovery templates are made: one record a split,
+    // so the record number (EventId) finds exactly one record again.
+    private static final List<Map.Entry<String, String>> DISCOVERY_CHAIN = List.of(
+            Map.entry("readRecordCountFilter", "RecordCountFilter"), Map.entry("splitFilter", "SplitFilter"),
+            Map.entry("xsltFilter", "XSLTFilter"), Map.entry("schemaFilter", "SchemaFilter"),
+            Map.entry("elasticIndexingFilter", "ElasticIndexingFilter"));
 
     private final CreatePipelineTool pipelines;
     private final PipelineShapes pipelineShapes;
@@ -153,7 +165,8 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(NAME_ARG, "Pipeline name, e.g. 'Acme - Indexing'.")
                         .addStringProperty(TEMPLATE_UUID_ARG, "Indexing template (find_pipeline_templates "
-                                                              + "stage=indexing).")
+                                                              + "stage=indexing), or a discovery one (stage="
+                                                              + "discovery).")
                         .addStringProperty(XSLT_UUID_ARG, "The indexing XSLT, e.g. created from "
                                                           + "draft_index_mapping's draft.")
                         .addStringProperty(INDEX_UUID_ARG, "Lucene: the Index doc. Elasticsearch: the Elastic "
@@ -167,7 +180,20 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                                                                               + "existing Events feed's). Needed "
                                                                               + "when the build has no events "
                                                                               + "pipeline of its own."))
-                        .required(BUILD_ARG, NAME_ARG, TEMPLATE_UUID_ARG, XSLT_UUID_ARG)
+                        .addEnumProperty(STANDALONE_ARG, List.of("discovery"), "In place of template_uuid, a last "
+                                                                               + "resort: only when this Stroom "
+                                                                               + "has no discovery template at "
+                                                                               + "all and the user has no "
+                                                                               + "pipeline to base it on. A "
+                                                                               + "discovery pipeline of its own "
+                                                                               + "into Elasticsearch, its parser "
+                                                                               + "read from the discovery plan "
+                                                                               + "kept with the XSLT; the user "
+                                                                               + "confirms it.")
+                        .addStringProperty(TEXT_CONVERTER_UUID_ARG, "standalone='discovery' of delimited text: "
+                                                                    + "its Data Splitter, when the build has "
+                                                                    + "more than one.")
+                        .required(BUILD_ARG, NAME_ARG, XSLT_UUID_ARG)
                         .build())
                 .build();
     }
@@ -186,9 +212,17 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     private Map<String, Object> create(final ToolCall call, final ToolCallContext context) {
         final String build = required(call, BUILD_ARG);
         final String name = required(call, NAME_ARG);
-        final String templateUuid = required(call, TEMPLATE_UUID_ARG);
         final String xsltUuid = required(call, XSLT_UUID_ARG);
         final String indexUuid = stringArg(call, INDEX_UUID_ARG);
+        if (stringArg(call, STANDALONE_ARG) != null) {
+            if (stringArg(call, TEMPLATE_UUID_ARG) != null) {
+                throw new ToolRefusal("standalone is for when there is no template: give it, or template_uuid, not "
+                                      + "both");
+            }
+            plan.rememberBuild(context, build);
+            return standaloneDiscovery(call, context, build, name, xsltUuid, indexUuid);
+        }
+        final String templateUuid = required(call, TEMPLATE_UUID_ARG);
         final List<Long> eventsStreamIds = StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG);
         plan.rememberBuild(context, build);
         final Shape shape = pipelineShapes.shape(templateUuid);
@@ -239,6 +273,86 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                     new DocRef(LuceneIndexDoc.TYPE, indexUuid), missing.plan()).get("added"));
         }
         return result;
+    }
+
+    /// A discovery pipeline of its own, the last resort where this Stroom has no discovery template at all (asked
+    /// for by the user: discovery's fallback is as the events one's). Made as the discovery templates are: the
+    /// parser for the raw data the discovery plan names, a record count, one record a split, the discovery XSLT, the
+    /// schema filter on the JSON group, and the Elasticsearch indexing filter.
+    private Map<String, Object> standaloneDiscovery(final ToolCall call,
+                                                    final ToolCallContext context,
+                                                    final String build,
+                                                    final String name,
+                                                    final String xsltUuid,
+                                                    final String indexUuid) {
+        final List<String> existing = pipelines.templateNames("discovery");
+        if (!existing.isEmpty()) {
+            throw new ToolRefusal("standalone='discovery' is only for a Stroom with no discovery template, and this "
+                                  + "one has " + PyText.list(existing) + ": give template_uuid (find_pipeline_"
+                                  + "templates stage=discovery).");
+        }
+        final Map<?, ?> discovery = KeptMapping.readMapping(xslt(xsltUuid).getDescription())
+                .filter(kept -> "index".equals(kept.kind()))
+                .map(kept -> kept.payload().get("discovery") instanceof final Map<?, ?> map
+                        ? map
+                        : null)
+                .orElseThrow(() -> new ToolRefusal("standalone='discovery' reads what the raw data is from the "
+                                                   + "discovery plan kept with the XSLT: save_xslt index_plan= the "
+                                                   + "plan draft_index_mapping discovery= gave, then give that "
+                                                   + "XSLT"));
+        final String input = String.valueOf(Objects.requireNonNullElse(discovery.get("input"), "json"));
+        final String parser = DISCOVERY_PARSERS.getOrDefault(input, "JSONParser");
+        final String parserId = PipelineWrites.elementId(parser);
+        final Map<String, String> types = new LinkedHashMap<>();
+        types.put("Source", "Source");
+        types.put(parserId, parser);
+        DISCOVERY_CHAIN.forEach(entry -> types.put(entry.getKey(), entry.getValue()));
+        final List<PropertyValue> properties = new ArrayList<>();
+        if ("JSONParser".equals(parser)) {
+            properties.add(PropertyValue.plain(parserId, "addRootObject", false));
+        } else if ("DSParser".equals(parser)) {
+            properties.add(PropertyValue.document(parserId, "textConverter", textConverter(call, build),
+                    TextConverterDoc.TYPE));
+        }
+        properties.add(PropertyValue.plain("readRecordCountFilter", "countRead", true));
+        properties.add(PropertyValue.plain("splitFilter", "splitDepth", 1L));
+        properties.add(PropertyValue.plain("splitFilter", "splitCount", 1L));
+        properties.add(PropertyValue.document("xsltFilter", "xslt", xsltUuid, XsltDoc.TYPE));
+        properties.add(PropertyValue.plain("schemaFilter", "schemaGroup", "JSON"));
+        // With no template, the pipeline sets the index and its cluster itself.
+        final Shape own = new Shape("discovery", "elasticsearch", List.copyOf(types.keySet()), parser, List.of(),
+                List.of(), List.of(), Map.of());
+        properties.addAll(elasticProperties(call, own, Set.of(new Slot("elasticIndexingFilter", "indexName"),
+                new Slot("elasticIndexingFilter", "cluster")), indexUuid));
+        final Map<String, Object> made = pipelines.withoutTemplate(call, context, new CreatePipelineTool.OwnPipeline(
+                build, name, "", types, properties, "none: this Stroom has no discovery template, so a pipeline of "
+                                                    + "its own (a last resort), made as the discovery templates are",
+                "discovery", "A pipeline of its own: it inherits nothing, so a change to the environment's "
+                             + "templates never reaches it. Tell the user, and if a discovery template is added "
+                             + "later, a next version can inherit it."));
+        final Map<String, Object> result = new LinkedHashMap<>(made);
+        result.put("backend", "elasticsearch");
+        return result;
+    }
+
+    // The Data Splitter a delimited discovery pipeline parses with: the one given, or the build's only one.
+    private String textConverter(final ToolCall call, final String build) {
+        final String given = stringArg(call, TEXT_CONVERTER_UUID_ARG);
+        if (given != null) {
+            return given;
+        }
+        final List<BuildDoc> converters = guard.folderContents(build).stream()
+                .filter(doc -> TextConverterDoc.TYPE.equals(doc.type()))
+                .toList();
+        if (converters.size() != 1) {
+            throw new ToolRefusal(converters.isEmpty()
+                    ? "Delimited text is parsed by a Data Splitter, and build '" + build + "' has none: "
+                      + "build_data_splitter save_as= first"
+                    : "Build '" + build + "' has several text converters (" + PyText.list(converters.stream()
+                            .map(BuildDoc::name)
+                            .toList()) + "): give text_converter_uuid, the one that reads this data");
+        }
+        return converters.getFirst().uuid();
     }
 
     /// An indexing pipeline reads Events, which raw data only has once an events pipeline has translated it. The

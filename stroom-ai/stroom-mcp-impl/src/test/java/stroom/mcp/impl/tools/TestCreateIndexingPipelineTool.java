@@ -41,6 +41,7 @@ import stroom.mcp.impl.tools.PipelineShapes.Shape;
 import stroom.mcp.impl.tools.WriteGuard.BuildDoc;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -306,6 +307,65 @@ class TestCreateIndexingPipelineTool {
     }
 
     @Test
+    void aDiscoveryPipelineOfItsOwnIsMadeOnlyWhenThereIsNoDiscoveryTemplate() {
+        // Asked for by the user: discovery's fallback is a last resort, as the events one is.
+        Mockito.when(pipelines.templateNames("discovery")).thenReturn(List.of("Discovery JSON"));
+        discoveryXslt("json");
+        assertThat(standalone("\"index_name\": \"d\", \"cluster_uuid\": \"c\"").text())
+                .contains("standalone='discovery' is only for a Stroom with no discovery template, and this one has "
+                          + "['Discovery JSON']");
+        assertThat(call("\"standalone\": \"discovery\", \"index_name\": \"d\"").text())
+                .contains("give it, or template_uuid, not both");
+        Mockito.verify(pipelines, Mockito.never()).withoutTemplate(any(), any(), any());
+    }
+
+    @Test
+    void aDiscoveryPipelineOfItsOwnReadsItsParserFromTheDiscoveryPlan() {
+        Mockito.when(pipelines.templateNames("discovery")).thenReturn(List.of());
+        Mockito.when(pipelines.withoutTemplate(any(), any(), any())).thenReturn(Map.of("type", "Pipeline", "uuid",
+                "p", "name", "n"));
+        // No discovery plan kept with the XSLT: nothing says what the raw data is.
+        assertThat(standalone("\"index_name\": \"d\", \"cluster_uuid\": \"c\"").text())
+                .contains("reads what the raw data is from the discovery plan kept with the XSLT");
+
+        discoveryXslt("json");
+        assertThat(standalone("\"index_name\": \"d\"").text()).as("no template to set the cluster")
+                .contains("give cluster_uuid");
+        assertThat(json(standalone("\"index_name\": \"d\", \"cluster_uuid\": \"c\"")))
+                .containsEntry("backend", "elasticsearch");
+        final ArgumentCaptor<CreatePipelineTool.OwnPipeline> own = ArgumentCaptor.forClass(
+                CreatePipelineTool.OwnPipeline.class);
+        Mockito.verify(pipelines).withoutTemplate(any(), any(), own.capture());
+        assertThat(own.getValue().stage()).isEqualTo("discovery");
+        assertThat(own.getValue().types().keySet()).containsExactly("Source", "jsonParser", "readRecordCountFilter",
+                "splitFilter", "xsltFilter", "schemaFilter", "elasticIndexingFilter");
+        assertThat(own.getValue().properties().stream().map(PropertyValue::dotted)).containsExactly(
+                "jsonParser.addRootObject", "readRecordCountFilter.countRead", "splitFilter.splitDepth",
+                "splitFilter.splitCount", "xsltFilter.xslt", "schemaFilter.schemaGroup",
+                "elasticIndexingFilter.indexName", "elasticIndexingFilter.cluster");
+    }
+
+    @Test
+    void aDelimitedDiscoveryPipelineOfItsOwnParsesWithTheBuildsDataSplitter() {
+        Mockito.when(pipelines.templateNames("discovery")).thenReturn(List.of());
+        Mockito.when(pipelines.withoutTemplate(any(), any(), any())).thenReturn(Map.of("uuid", "p"));
+        discoveryXslt("delimited");
+        Mockito.when(guard.folderContents("b")).thenReturn(List.of());
+        assertThat(standalone("\"index_name\": \"d\", \"cluster_uuid\": \"c\"").text())
+                .contains("has none: build_data_splitter save_as= first");
+
+        Mockito.when(guard.folderContents("b")).thenReturn(List.of(new BuildDoc(TextConverterDoc.TYPE, "tc",
+                "Acme-Splitter", List.of(), "/acme", null)));
+        json(standalone("\"index_name\": \"d\", \"cluster_uuid\": \"c\""));
+        final ArgumentCaptor<CreatePipelineTool.OwnPipeline> own = ArgumentCaptor.forClass(
+                CreatePipelineTool.OwnPipeline.class);
+        Mockito.verify(pipelines).withoutTemplate(any(), any(), own.capture());
+        assertThat(own.getValue().types()).containsEntry("dsParser", "DSParser");
+        assertThat(own.getValue().properties()).anyMatch(property -> "dsParser.textConverter".equals(
+                property.dotted()) && "tc".equals(property.docUuid()));
+    }
+
+    @Test
     void anIndexingPipelineNeedsEventsFirst() {
         Mockito.when(guard.folderContents("b")).thenReturn(List.of(new BuildDoc(PipelineDoc.TYPE, "x", "x", List.of(),
                 "p", null)));
@@ -351,10 +411,11 @@ class TestCreateIndexingPipelineTool {
         assertThat(tool.definition().description()).startsWith("Onboarding step ")
                 .contains("(indexing_pipeline): Stage 2: create an indexing pipeline as a child of an indexing "
                           + "template");
-        assertThat(tool.definition().parameters().required()).containsExactly("build", "name", "template_uuid",
-                "xslt_uuid");
+        // A template, or standalone='discovery' in its place.
+        assertThat(tool.definition().parameters().required()).containsExactly("build", "name", "xslt_uuid");
         assertThat(tool.definition().parameters().properties()).containsOnlyKeys("build", "name", "template_uuid",
-                "xslt_uuid", "index_uuid", "index_name", "cluster_uuid", "events_stream_ids");
+                "xslt_uuid", "index_uuid", "index_name", "cluster_uuid", "events_stream_ids", "standalone",
+                "text_converter_uuid");
     }
 
     @Test
@@ -516,6 +577,22 @@ class TestCreateIndexingPipelineTool {
                                                                                    + "\"xslt_uuid\": \"" + xsltUuid
                                                                                    + "\"}");
         return tool.execute(call, PortedToolCalls.context());
+    }
+
+    // A call for a discovery pipeline of its own, with the arguments, on build b.
+    private ToolResult standalone(final String arguments) {
+        return tool.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", \"name\": "
+                                                                                  + "\"n\", \"standalone\": "
+                                                                                  + "\"discovery\", \"xslt_uuid\": "
+                                                                                  + "\"x\", " + arguments + "}"),
+                PortedToolCalls.context());
+    }
+
+    // The XSLT kept with a discovery plan for the raw data.
+    private void discoveryXslt(final String input) {
+        xslt(KeptMapping.withMapping("", "index", FieldPlan.forDiscovery("d", new Discovery(input, "xml".equals(input)
+                ? "logon"
+                : null, "when", false, null, Map.of(), List.of(), true, 1024, 2000)).toJson()));
     }
 
     private static Map<String, Object> json(final ToolResult result) {
