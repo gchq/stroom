@@ -80,6 +80,8 @@ class TestElasticClientFactory {
     private static Path serverKeyStore;
     private static Path trustStore;
     private static WireMockServer httpsServer;
+    private static Path caTrustStore;
+    private static WireMockServer caSignedServer;
 
     @BeforeAll
     static void beforeAll() throws IOException, InterruptedException {
@@ -121,6 +123,88 @@ class TestElasticClientFactory {
                 .keystorePassword(PASSWORD)
                 .keyManagerPassword(PASSWORD));
         httpsServer.start();
+
+        caSignedServer = createCaSignedServer();
+        caSignedServer.start();
+    }
+
+    /// Creates a server whose certificate, for "localhost" only, is signed by a test CA, as Elasticsearch's are
+    /// when its security is configured automatically. The server presents the chain of its certificate and
+    /// the CA's, and [#caTrustStore] holds only the CA's.
+    private static WireMockServer createCaSignedServer() throws IOException, InterruptedException {
+        final Path caKeyStore = tempDir.resolve("ca.p12");
+        final Path caCertificate = tempDir.resolve("ca.crt");
+        final Path caSignedKeyStore = tempDir.resolve("ca-signed-server.p12");
+        final Path certificateRequest = tempDir.resolve("ca-signed-server.csr");
+        final Path signedCertificate = tempDir.resolve("ca-signed-server.crt");
+        caTrustStore = tempDir.resolve("ca-trust.p12");
+
+        keytool("-genkeypair",
+                "-alias", "ca",
+                "-keyalg", "RSA",
+                "-keysize", "2048",
+                "-dname", "CN=Test CA",
+                "-ext", "bc:c",
+                "-validity", "1",
+                "-storetype", "PKCS12",
+                "-keystore", caKeyStore.toString(),
+                "-storepass", PASSWORD);
+        keytool("-exportcert",
+                "-alias", "ca",
+                "-keystore", caKeyStore.toString(),
+                "-storepass", PASSWORD,
+                "-file", caCertificate.toString());
+        keytool("-genkeypair",
+                "-alias", "server",
+                "-keyalg", "RSA",
+                "-keysize", "2048",
+                "-dname", "CN=localhost",
+                "-validity", "1",
+                "-storetype", "PKCS12",
+                "-keystore", caSignedKeyStore.toString(),
+                "-storepass", PASSWORD);
+        keytool("-certreq",
+                "-alias", "server",
+                "-keystore", caSignedKeyStore.toString(),
+                "-storepass", PASSWORD,
+                "-file", certificateRequest.toString());
+        keytool("-gencert",
+                "-alias", "ca",
+                "-keystore", caKeyStore.toString(),
+                "-storepass", PASSWORD,
+                "-infile", certificateRequest.toString(),
+                "-outfile", signedCertificate.toString(),
+                "-ext", "SAN=dns:localhost",
+                "-ext", "eku=serverAuth",
+                "-validity", "1");
+        // The CA must be in the key store for the signed certificate to replace the self-signed one as a chain
+        keytool("-importcert",
+                "-noprompt",
+                "-alias", "ca",
+                "-file", caCertificate.toString(),
+                "-keystore", caSignedKeyStore.toString(),
+                "-storepass", PASSWORD);
+        keytool("-importcert",
+                "-alias", "server",
+                "-file", signedCertificate.toString(),
+                "-keystore", caSignedKeyStore.toString(),
+                "-storepass", PASSWORD);
+        keytool("-importcert",
+                "-noprompt",
+                "-alias", "ca",
+                "-file", caCertificate.toString(),
+                "-storetype", "PKCS12",
+                "-keystore", caTrustStore.toString(),
+                "-storepass", PASSWORD);
+
+        return new WireMockServer(WireMockConfiguration.wireMockConfig()
+                .httpDisabled(true)
+                .dynamicHttpsPort()
+                .http2TlsDisabled(true)
+                .keystorePath(caSignedKeyStore.toString())
+                .keystoreType("PKCS12")
+                .keystorePassword(PASSWORD)
+                .keyManagerPassword(PASSWORD));
     }
 
     @AfterAll
@@ -128,12 +212,17 @@ class TestElasticClientFactory {
         if (httpsServer != null) {
             httpsServer.stop();
         }
+        if (caSignedServer != null) {
+            caSignedServer.stop();
+        }
     }
 
     @BeforeEach
     void setUp() {
         httpsServer.resetAll();
         httpsServer.stubFor(infoRequest());
+        caSignedServer.resetAll();
+        caSignedServer.stubFor(infoRequest());
     }
 
     @Test
@@ -252,6 +341,96 @@ class TestElasticClientFactory {
     }
 
     @Test
+    void testVerificationDisabledForSelfSignedCertificate() throws IOException {
+        // Trusting self-signed certificates and not verifying hostnames accepts a self-signed certificate for
+        // another host, without a trust store
+        final InfoResponse response = info(new ResolvedElasticConnection(
+                List.of(loopbackIpUrl()),
+                API_KEY,
+                httpClientConfiguration(HttpTlsConfiguration.builder()
+                        .trustSelfSignedCertificates(true)
+                        .verifyHostname(false)
+                        .build())));
+
+        assertThat(response.clusterName())
+                .isEqualTo("test-cluster");
+    }
+
+    @Test
+    void testCaSignedCertificateTrustedByCa() throws IOException {
+        final InfoResponse response = info(new ResolvedElasticConnection(
+                List.of(caSignedUrl("localhost")),
+                API_KEY,
+                httpClientConfiguration(caTrustStoreTls().build())));
+
+        assertThat(response.clusterName())
+                .isEqualTo("test-cluster");
+        caSignedServer.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/"))
+                .withHeader("Authorization", WireMock.equalTo("ApiKey " + API_KEY)));
+    }
+
+    @Test
+    void testCaSignedCertificateUntrusted() {
+        // No trust store, so only the JVM's default CAs are trusted, which don't include the test CA
+        final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                List.of(caSignedUrl("localhost")),
+                API_KEY,
+                httpClientConfiguration(HttpTlsConfiguration.builder().build()));
+
+        assertThatThrownBy(() -> info(connection))
+                .isInstanceOf(SSLException.class);
+        assertThat(caSignedServer.getAllServeEvents())
+                .isEmpty();
+    }
+
+    @Test
+    void testCaSignedCertificateHostnameMismatch() {
+        // The CA is trusted, but the certificate is for "localhost", not "127.0.0.1"
+        final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                List.of(caSignedUrl("127.0.0.1")),
+                API_KEY,
+                httpClientConfiguration(caTrustStoreTls().build()));
+
+        assertThatThrownBy(() -> info(connection))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("doesn't match any of the subject alternative names");
+        assertThat(caSignedServer.getAllServeEvents())
+                .isEmpty();
+    }
+
+    @Test
+    void testCaSignedCertificateHostnameVerificationDisabled() throws IOException {
+        final InfoResponse response = info(new ResolvedElasticConnection(
+                List.of(caSignedUrl("127.0.0.1")),
+                null,
+                httpClientConfiguration(caTrustStoreTls()
+                        .verifyHostname(false)
+                        .build())));
+
+        assertThat(response.clusterName())
+                .isEqualTo("test-cluster");
+    }
+
+    @Test
+    void testCaSignedCertificateNotTrustedAsSelfSigned() {
+        // Trusting self-signed certificates only trusts a certificate presented on its own, not one signed by
+        // an unknown CA, even with hostname verification disabled. There is no setting that turns off
+        // certificate verification, so the CA must be given as the trust store.
+        final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                List.of(caSignedUrl("localhost")),
+                API_KEY,
+                httpClientConfiguration(HttpTlsConfiguration.builder()
+                        .trustSelfSignedCertificates(true)
+                        .verifyHostname(false)
+                        .build()));
+
+        assertThatThrownBy(() -> info(connection))
+                .isInstanceOf(SSLException.class);
+        assertThat(caSignedServer.getAllServeEvents())
+                .isEmpty();
+    }
+
+    @Test
     void testWrongTrustStorePassword() {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(localhostUrl()),
@@ -362,6 +541,17 @@ class TestElasticClientFactory {
                 .trustStorePath(trustStore.toString())
                 .trustStorePassword(PASSWORD)
                 .trustStoreType("PKCS12");
+    }
+
+    private static HttpTlsConfiguration.Builder caTrustStoreTls() {
+        return HttpTlsConfiguration.builder()
+                .trustStorePath(caTrustStore.toString())
+                .trustStorePassword(PASSWORD)
+                .trustStoreType("PKCS12");
+    }
+
+    private static String caSignedUrl(final String host) {
+        return "https://" + host + ":" + caSignedServer.httpsPort();
     }
 
     private static HttpClientConfiguration httpClientConfiguration(final HttpTlsConfiguration tlsConfiguration) {
