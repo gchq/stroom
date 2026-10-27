@@ -790,7 +790,8 @@ Each unit's plan (names, template, what goes, every inline style and its replace
 > `AnalyticProcessing` for rules and reports. The processor tasks and user groups content tabs stay
 > thin presenter shells until wave 15. Four reviewers audited the wave: the stepping screen's
 > unneeded Ace editors and unreleased elements fixed, the annotation editor given callbacks in place
-> of its owner, late replies guarded. See `wave-12.md`.
+> of its owner, late replies guarded. The full workbench run after it passed all 1,716 stories with
+> the leak check. See `wave-12.md`.
 
 Convert document tabs and large composite panes into components with controllers, removing the dependency on DocPresenter: data, source and stepping; pipeline structure; annotations; processing and notifications; Plan B settings; user and permissions tabs; retention and processor tabs. Hand-rolled tabs become TabbedComponent.
 

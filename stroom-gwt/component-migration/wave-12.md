@@ -82,9 +82,14 @@ October) predates the Markdown preview fix, and shows an empty preview where it 
 and the standalone dashboard GWT compile, checkstyle is clean and the client and workbench modules'
 2,180 JUnit tests pass. One bug master has too was fixed on the way, with a changelog entry: the
 help for a user's Document Permissions filter ran its words together ("thePermission
-Visibilitydropdown."); the text is in the template now, with no test (a help popup's text). What was
-decided on the way, where it differs from the plans below, is in the audit above (Left, on purpose)
-and:
+Visibilitydropdown."); the text is in the template now, with no test (a help popup's text). The full workbench run after
+the wave (1,716 stories, 4 workers, with the leak check) passed all 1,716; of their screenshots,
+1,669 match, the 5 new are stories with no baseline yet (the document selection dialog's three, the
+user profile's `ManageUsers` and the processor task summary's `ProcessorFilterTasks`), and the 42
+that differ are the ones that differ from run to run (the force, tree and line chart
+visualisations and the data grid's polled column; see ISSUES.md) and
+`DocumentationEditor.TypingEnablesSave` as above. What was decided on the way, where it differs
+from the plans below, is in the audit above (Left, on purpose) and:
 
 - **Tabs a document owns.** `ControllerTabProvider.ofOwned(eventBus, controller, reader[, writer])`
   shows a controller the document makes and owns (to give it callbacks before its tab opens): the
