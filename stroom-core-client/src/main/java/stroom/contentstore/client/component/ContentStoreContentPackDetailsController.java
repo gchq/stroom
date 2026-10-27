@@ -22,14 +22,13 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.client.component.CredentialsManagerDialogController;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -47,7 +46,7 @@ public class ContentStoreContentPackDetailsController extends Controller {
     private final ContentStoreContentPackDetails view;
     private final MarkdownConverter markdownConverter;
     private final RestFactory restFactory;
-    private final Provider<CredentialsManagerDialogPresenter> credentialsDialogProvider;
+    private final Provider<CredentialsManagerDialogController> credentialsDialogProvider;
     private final ClientSecurityContext securityContext;
 
     // The content pack selected, or null
@@ -69,7 +68,7 @@ public class ContentStoreContentPackDetailsController extends Controller {
             final ContentStoreContentPackDetails view,
             final MarkdownConverter markdownConverter,
             final RestFactory restFactory,
-            final Provider<CredentialsManagerDialogPresenter> credentialsDialogProvider,
+            final Provider<CredentialsManagerDialogController> credentialsDialogProvider,
             final ClientSecurityContext securityContext) {
         super(eventBus);
         this.view = view;
@@ -130,33 +129,13 @@ public class ContentStoreContentPackDetailsController extends Controller {
 
             if (cpws.getContentPack().getGitNeedsAuth()) {
                 if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
-                    // Made for this use, and owned until it is hidden
-                    final CredentialsManagerDialogPresenter credentialsDialog = makeDialog(credentialsDialogProvider);
-                    final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
-                    credentialsDialog.setupDialog(
-                            builder,
+                    // Made for this use, and owned until it is hidden; the GitRepo is made with the
+                    // credentials chosen
+                    credentialsDialogProvider.get().show(this,
                             cpws.getContentPack().getContentStoreMetadata().getAuthContact(),
-                            null);
-                    builder.onHideRequest(e -> {
-                        if (e.isOk()) {
-                            final String credentialsName = credentialsDialog.getCredentialName();
-
-                            if (credentialsName != null) {
-                                // Create the GitRepo with the given credentials
-                                e.hide();
-                                requestGitRepoCreation(cpws, credentialsName);
-                            } else {
-                                // Something is wrong
-                                AlertEvent.fireWarn(credentialsDialog,
-                                        "No credentials were selected; "
-                                        + "this content pack cannot be downloaded",
-                                        e::reset);
-                            }
-                        } else {
-                            // Cancel pressed
-                            e.hide();
-                        }
-                    }).fire();
+                            null,
+                            "No credentials were selected; this content pack cannot be downloaded",
+                            credentialsName -> requestGitRepoCreation(cpws, credentialsName));
                 } else {
                     // We need credentials but don't have permission to access them
                     AlertEvent.fireError(this,

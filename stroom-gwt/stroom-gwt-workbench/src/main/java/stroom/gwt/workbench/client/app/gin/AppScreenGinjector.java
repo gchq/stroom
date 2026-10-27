@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.client.component.CredentialsManagerDialogController;
 import stroom.dictionary.client.component.DictionaryEditor;
 import stroom.entity.client.component.InfoDocumentController;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
@@ -64,7 +64,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
 
     /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsController` is
     /// given.
-    CredentialsManagerDialogPresenter getCredentialsManagerDialogPresenter();
+    CredentialsManagerDialogController getCredentialsManagerDialogController();
 
     // Documents and the explorer
 

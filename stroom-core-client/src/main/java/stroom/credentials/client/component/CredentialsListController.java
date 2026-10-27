@@ -17,9 +17,8 @@
 package stroom.credentials.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.credentials.client.component.CredentialEditController.CreationState;
 import stroom.credentials.client.presenter.CredentialClient;
-import stroom.credentials.client.presenter.CredentialEditPresenter;
-import stroom.credentials.client.presenter.CredentialEditPresenter.CreationState;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
@@ -47,7 +46,7 @@ public class CredentialsListController extends Controller {
 
     private final CredentialsList view;
     private final CredentialClient credentialClient;
-    private final Provider<CredentialEditPresenter> credentialEditPresenterProvider;
+    private final Provider<CredentialEditController> credentialEditProvider;
     private final Provider<ReplaceSecretController> replaceSecretProvider;
     private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> dataProvider;
 
@@ -56,7 +55,7 @@ public class CredentialsListController extends Controller {
     /// @param eventBus                        The application's event bus.
     /// @param view                            The content.
     /// @param credentialClient                Finds, makes and deletes the credentials.
-    /// @param credentialEditPresenterProvider Makes a credential's editor.
+    /// @param credentialEditProvider          Makes a credential's editor.
     /// @param replaceSecretProvider           Makes the dialog that replaces a credential's secret.
     /// @param securityContext                 Tells whether the user may see credentials.
     /// @param expiryFormatter                 Formats when a credential expires.
@@ -64,14 +63,14 @@ public class CredentialsListController extends Controller {
     public CredentialsListController(final EventBus eventBus,
                                      final CredentialsList view,
                                      final CredentialClient credentialClient,
-                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
+                                     final Provider<CredentialEditController> credentialEditProvider,
                                      final Provider<ReplaceSecretController> replaceSecretProvider,
                                      final ClientSecurityContext securityContext,
                                      final ExpiryFormatter expiryFormatter) {
         super(eventBus);
         this.view = view;
         this.credentialClient = credentialClient;
-        this.credentialEditPresenterProvider = credentialEditPresenterProvider;
+        this.credentialEditProvider = credentialEditProvider;
         this.replaceSecretProvider = replaceSecretProvider;
         initWidget(view);
         view.addColumns(expiryFormatter::formatWithDuration);
@@ -155,8 +154,8 @@ public class CredentialsListController extends Controller {
 
     private void handleAddButtonClick() {
         credentialClient.createDocRef(docRef -> {
-            makeDialog(credentialEditPresenterProvider)
-                    .show(docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
+            credentialEditProvider.get()
+                    .show(this, docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
         }, view.getTaskMonitor());
     }
 
@@ -195,7 +194,8 @@ public class CredentialsListController extends Controller {
 
         // Check that the user can edit these credentials
         if (cwp.isEdit()) {
-            makeDialog(credentialEditPresenterProvider).show(cwp.getCredential().asDocRef(),
+            credentialEditProvider.get().show(this,
+                    cwp.getCredential().asDocRef(),
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);

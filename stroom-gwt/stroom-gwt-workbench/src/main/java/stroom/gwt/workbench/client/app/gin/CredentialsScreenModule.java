@@ -16,10 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
-import stroom.credentials.client.view.CredentialsManagerViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -35,9 +33,6 @@ public class CredentialsScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(CredentialsPresenter.class,
                 CredentialsView.class,
                 CredentialsViewImpl.class);
-        bindPresenterWidget(CredentialsManagerDialogPresenter.class,
-                CredentialsManagerDialogPresenter.CredentialsManagerDialogView.class,
-                CredentialsManagerViewImpl.class);
     }
 }
 

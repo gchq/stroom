@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.credentials.client.component.CredentialsManagerDialogController;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -28,15 +28,14 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/CredentialPickerDialog`, showing Stroom's real
-/// [CredentialsManagerDialogPresenter] (the 'Credentials' picker) with fake REST replies.
+/// [CredentialsManagerDialogController] (the 'Credentials' picker) with fake REST replies.
 ///
-/// The presenter comes from GIN ([AppScreenGinjector]), as Stroom injects it into
+/// The controller comes from GIN ([AppScreenGinjector]), as Stroom injects it into
 /// `ContentStoreContentPackDetailsController`, and the story shows it as that presenter does. The
 /// credentials come from `POST /credentials/findCredentialsWithPermissions`, and `onPick` is a spy
 /// called from the dialog's OK handler.
@@ -107,16 +106,11 @@ public final class CredentialPickerDialogStories {
 
         // Shown as ContentStoreContentPackDetailsController shows it, with no help text and nothing
         // selected
-        final CredentialsManagerDialogPresenter dialog = injector.getCredentialsManagerDialogPresenter();
-        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(dialog);
-        dialog.setupDialog(builder, null, null);
-        builder.onHideRequest(event -> {
-            if (event.isOk()) {
-                harness.spy(ON_PICK, dialog.getCredentialName());
-            }
-            event.hide();
-        });
-        builder.fire();
+        harness.afterStartUp(() -> injector.getCredentialsManagerDialogController().show(harness.getAppRoot(),
+                null,
+                null,
+                "No credentials were selected",
+                name -> harness.spy(ON_PICK, name)));
         return harness.asWidget();
     }
 }
