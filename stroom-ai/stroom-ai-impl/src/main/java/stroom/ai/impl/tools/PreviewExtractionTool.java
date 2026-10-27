@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
+import stroom.ai.impl.extraction.ExtractionChange;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPipelines;
 import stroom.ai.impl.extraction.ExtractionPreview;
@@ -77,6 +78,10 @@ import java.util.Set;
 /// has none, a pipeline as the Search Extraction template makes, unsaved) with Stroom's stepping, as the user. It
 /// returns a table of the values extracted from each event, and what to look at before using it (see
 /// [ExtractionPreview]), and writes the XSLT to the workspace. It changes nothing.
+///
+/// For a table with an extraction pipeline already, the extraction is tried as a change to its XSLT (see
+/// [ExtractionChange]): written again from the fields, if Stroom AI wrote it; with the fields added, if it was
+/// written by hand.
 ///
 /// The events are the rows of a snapshot of the table with their StreamId and EventId (current_results with
 /// withEventIds), so the values the table shows now can be compared with those extracted. Stepping needs the
@@ -174,7 +179,11 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                                  + "date). Stroom writes the XSLT from them; it gives each event's StreamId and "
                                  + "EventId too. Turning extraction on fills every value in the table from it, so "
                                  + "give every field the table's columns use (their XPaths, e.g. from the XSLT that "
-                                 + "indexes them); the result says which are missing. It returns a table of the "
+                                 + "indexes them); the result says which are missing. For a table with an "
+                                 + "extraction pipeline already, it is tried as a change to that pipeline's XSLT: "
+                                 + "if Stroom AI wrote it, give every field it is to give (it is written again from "
+                                 + "them, so fields can be removed or changed); if it was written by hand, give "
+                                 + "only the fields to add. It returns a table of the "
                                  + "values extracted from each event, with what to check (a field the data source "
                                  + "has too, values not found, values of the wrong type, values that differ from "
                                  + "those the table shows now). It changes nothing. XPaths may use only plain string "
@@ -278,6 +287,18 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
             return ToolResult.text("There is no XSLT you can view to try the extraction with (stepping only takes "
                                    + "an XSLT for an element that has one set), so it can't be tried.");
         }
+        if (trial.unreadable() != null) {
+            return ToolResult.text(trial.unreadable());
+        }
+        // A change to an XSLT written by hand that can't be made says why before anything is stepped.
+        final ExtractionChange.Changed changed;
+        try {
+            changed = trial.existingCode() == null
+                    ? null
+                    : ExtractionChange.change(trial.existingCode(), "", fields);
+        } catch (final IllegalArgumentException e) {
+            return ToolResult.text(e.getMessage() + " Nothing was tried.");
+        }
         final List<Sample> tried = new ArrayList<>();
         final Set<Long> streams = new LinkedHashSet<>();
         String xslt = null;
@@ -296,7 +317,9 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                             namespace = NullSafe.string(ExtractionPreview.values(
                                     SteppingWalks.output(probe, trial.element()))
                                     .get(ExtractionXslt.PROBE_NAMESPACE));
-                            xslt = ExtractionXslt.xslt(namespace, fields);
+                            xslt = changed == null
+                                    ? ExtractionXslt.xslt(namespace, fields)
+                                    : ExtractionChange.change(trial.existingCode(), namespace, fields).code();
                         }
                         tried.add(step(walk, location, sample, trial.element(), xslt));
                     }
@@ -319,8 +342,17 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         if (xslt != null) {
             workspace.write(WorkspacePath.parse(XSLT_OUT), xslt, null);
         }
-        final Preview preview = ExtractionPreview.preview(fields, tried, columns, dataSourceFields);
-        return ToolResult.text(describe(tableName, trial, preview, namespace));
+        final Set<String> alsoGiven = new LinkedHashSet<>(NullSafe.getOrElse(changed,
+                ExtractionChange.Changed::alsoGiven, Set.of()));
+        if (changed != null && changed.namesAsItRuns()) {
+            // The fields it names as it runs, as it gave them the events tried.
+            tried.stream()
+                    .filter(sample -> sample.extracted() != null)
+                    .forEach(sample -> alsoGiven.addAll(sample.extracted().keySet()));
+            fields.forEach(field -> alsoGiven.remove(field.name()));
+        }
+        final Preview preview = ExtractionPreview.preview(fields, alsoGiven, tried, columns, dataSourceFields);
+        return ToolResult.text(describe(tableName, trial, changed, preview, namespace));
     }
 
     // Steps one event with the extraction's XSLT.
@@ -348,10 +380,24 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         if (pipeline != null) {
             final MergedPipeline merged = MergedPipeline.load(documentAccess, pipeline.getUuid()).orElse(null);
             final String element = NullSafe.get(merged, m -> ExtractionPipelines.outputXslt(m).orElse(null));
-            if (element != null && ExtractionPipelines.xsltOf(merged, element).isPresent()) {
-                return new Trial(merged.doc(), element, "the table's extraction pipeline '"
-                                                        + NullSafe.nonBlankStringElse(pipeline.getName(),
-                        pipeline.getUuid()) + "'");
+            final DocRef xslt = element == null
+                    ? null
+                    : ExtractionPipelines.xsltOf(merged, element).orElse(null);
+            if (xslt != null) {
+                final String description = "the table's extraction pipeline '"
+                                           + NullSafe.nonBlankStringElse(pipeline.getName(), pipeline.getUuid())
+                                           + "'";
+                final String unchangeable = ExtractionPipelines.unchangeable(merged, element).orElse(null);
+                if (unchangeable != null) {
+                    return new Trial(merged.doc(), element, description, null, "The extraction of "
+                                                                               + description + " can't be changed "
+                                                                               + "this way. " + unchangeable);
+                }
+                final String code = documentAccess.read(xslt, XsltDoc.class).map(XsltDoc::getData).orElse(null);
+                return new Trial(merged.doc(), element, description, code, code != null
+                        ? null
+                        : "The XSLT of " + description + " ('" + NullSafe.nonBlankStringElse(xslt.getName(),
+                        xslt.getUuid()) + "') isn't one you can view, so a change to it can't be tried.");
             }
         }
         final DocRef placeholder = placeholderXslt();
@@ -359,7 +405,7 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
                 ? null
                 : new Trial(ExtractionPipelines.trial(placeholder), ExtractionPipelines.XSLT_ELEMENT,
                         "a pipeline as the Search Extraction template makes (the table has no extraction pipeline "
-                        + "of its own)");
+                        + "of its own)", null, null);
     }
 
     // An XSLT the user can view, whose code is replaced by the extraction's as it is stepped: the first by name,
@@ -411,11 +457,23 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
 
     private static String describe(final String tableName,
                                    final Trial trial,
+                                   final ExtractionChange.Changed changed,
                                    final Preview preview,
                                    final String namespace) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Tried the extraction for table '").append(tableName).append("' on ").append(preview.stepped())
                 .append(" event(s), in ").append(trial.description()).append(". Nothing was changed.");
+        if (changed != null && changed.generated()) {
+            sb.append(" Its XSLT was written by Stroom AI, so it was written again from the fields given, which "
+                      + "are all it would give.");
+        } else if (changed != null) {
+            sb.append(" Its XSLT was written by hand, so the fields given were added to it; it gives ")
+                    .append(String.join(", ", changed.alsoGiven())).append(" already.");
+            if (changed.namesAsItRuns()) {
+                sb.append(" It names some fields as it runs, so those it gave the events tried count as given too; "
+                          + "a field added that it gives already isn't caught.");
+            }
+        }
         if (namespace != null) {
             sb.append(" The XSLT Stroom wrote from the fields is in ").append(XSLT_OUT).append("; the events' "
                                                                                           + "namespace is '")
@@ -430,7 +488,10 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
         }
         if (preview.problems().isEmpty()) {
             sb.append("\n\nShow the user the table and anything to check, and agree the fields with them; then "
-                      + "offer to make it with propose_extraction_pipeline, with these fields and the namespace.");
+                      + "offer to make it with propose_extraction_pipeline, with these fields and the namespace")
+                    .append(changed == null
+                            ? "."
+                            : " (it offers to change the pipeline in place, or to save a new one).");
         }
         return sb.toString();
     }
@@ -481,7 +542,18 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
 
 
     /// The pipeline an extraction is tried in, the element given its XSLT, and how to say which it is.
-    private record Trial(PipelineDoc pipeline, String element, String description) {
+    ///
+    /// @param pipeline     The pipeline.
+    /// @param element      The element given the extraction's XSLT.
+    /// @param description  Which pipeline it is, in words.
+    /// @param existingCode The code of the table's own extraction XSLT, which the extraction changes; null for a
+    ///                     table with none (or if it can't be read).
+    /// @param unreadable   Why the table's own extraction XSLT can't be read, or null.
+    private record Trial(PipelineDoc pipeline,
+                         String element,
+                         String description,
+                         String existingCode,
+                         String unreadable) {
 
     }
 }

@@ -33,8 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /// The pipelines a dashboard table's search extraction runs in: which element of one writes its records, and the
 /// pipeline a new extraction is tried in before one is made.
@@ -47,8 +45,8 @@ public final class ExtractionPipelines {
     /// The types of element that read an extraction's records into a table.
     static final Set<String> OUTPUT_TYPES = Set.of("SearchResultOutputFilter", "DynamicSearchResultOutputFilter");
     static final String XSLT_FILTER = "XSLTFilter";
-    // A data element of an XSLT, with its name given literally: <data name="UserId" ...>.
-    private static final Pattern DATA_NAME = Pattern.compile("<data\\s+name\\s*=\\s*[\"']([^\"'{}]+)[\"']");
+    // The property of an XSLT element that finds its XSLT by name, before the XSLT it names.
+    static final String XSLT_NAME_PATTERN = "xsltNamePattern";
     /// The element of a pipeline of its own that reads the records into the table.
     static final String OUTPUT_ELEMENT = "searchResultOutputFilter";
 
@@ -120,12 +118,25 @@ public final class ExtractionPipelines {
             fields.addAll(ExtractionField.RESERVED);
             generated.get().fields().forEach(field -> fields.add(field.name()));
         } else {
-            final Matcher matcher = DATA_NAME.matcher(code);
-            while (matcher.find()) {
-                fields.add(matcher.group(1).strip());
-            }
+            fields.addAll(ExtractionChange.dataNames(code));
         }
         return Optional.of(fields);
+    }
+
+    /// Why a table's extraction can't be changed by changing the XSLT its element names: its element finds its XSLT
+    /// by a name pattern (e.g. one per feed), which takes precedence over the XSLT it names.
+    ///
+    /// @param pipeline A pipeline, merged with what it inherits.
+    /// @param element  Its element whose XSLT writes its records.
+    /// @return Why, or empty if it can be.
+    public static Optional<String> unchangeable(final MergedPipeline pipeline, final String element) {
+        final Object pattern = pipeline.properties().get(new MergedPipeline.ElementProperty(element,
+                XSLT_NAME_PATTERN));
+        return pattern instanceof final String text && !text.isBlank()
+                ? Optional.of("Its XSLT element '" + element + "' finds its XSLT by the name pattern '" + text.strip()
+                              + "', which takes precedence over the XSLT it names, so an extraction can't be "
+                              + "changed by changing that XSLT. Change the XSLT the pattern finds by hand.")
+                : Optional.empty();
     }
 
     /// The XSLT an element of a pipeline uses.
@@ -152,9 +163,20 @@ public final class ExtractionPipelines {
     /// @param xslt     The pipeline's XSLT.
     /// @return The pipeline data.
     public static PipelineData data(final DocRef template, final DocRef xslt) {
-        if (template != null) {
+        return data(template, XSLT_ELEMENT, xslt);
+    }
+
+    /// The pipeline data of a new extraction pipeline Stroom makes: a child of a pipeline setting only the XSLT of
+    /// one element, or, without a parent, a pipeline of its own as the Search Extraction template makes.
+    ///
+    /// @param parent  The pipeline it inherits, or null for one of its own.
+    /// @param element The parent's element whose XSLT writes its records (see [#outputXslt(MergedPipeline)]).
+    /// @param xslt    The pipeline's XSLT.
+    /// @return The pipeline data.
+    public static PipelineData data(final DocRef parent, final String element, final DocRef xslt) {
+        if (parent != null) {
             return new PipelineDataBuilder()
-                    .addProperty(PipelineDataUtil.createProperty(XSLT_ELEMENT, "xslt", xslt))
+                    .addProperty(PipelineDataUtil.createProperty(element, "xslt", xslt))
                     .build();
         }
         final PipelineDataBuilder data = elements(xslt)

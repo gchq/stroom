@@ -69,7 +69,23 @@ public final class ExtractionPreview {
                                   final List<Sample> samples,
                                   final Map<String, String> columns,
                                   final List<String> dataSourceFields) {
-        final List<String> problems = new ArrayList<>(blankColumns(fields, columns));
+        return preview(fields, Set.of(), samples, columns, dataSourceFields);
+    }
+
+    /// Previews a draft change to an extraction written by hand: fields added to those it gives.
+    ///
+    /// @param fields           The fields added.
+    /// @param alsoGiven        The fields it gives already.
+    /// @param samples          The events it was tried on.
+    /// @param columns          The table's columns: each one's expression, by column name.
+    /// @param dataSourceFields The fields of the table's data source, or null if they can't be read.
+    /// @return The preview.
+    public static Preview preview(final List<ExtractionField> fields,
+                                  final Set<String> alsoGiven,
+                                  final List<Sample> samples,
+                                  final Map<String, String> columns,
+                                  final List<String> dataSourceFields) {
+        final List<String> problems = new ArrayList<>(blankColumns(fields, alsoGiven, columns));
         final List<String> notes = new ArrayList<>();
 
         // Fields the data source has too.
@@ -121,9 +137,22 @@ public final class ExtractionPreview {
     /// @param columns The table's columns: each one's expression, by column name.
     /// @return Each such column, said; none if there are none.
     public static List<String> blankColumns(final List<ExtractionField> fields, final Map<String, String> columns) {
+        return blankColumns(fields, Set.of(), columns);
+    }
+
+    /// The columns of a table that an extraction would leave blank (see [#blankColumns(List, Map)]).
+    ///
+    /// @param fields    The fields it gives, besides StreamId and EventId.
+    /// @param alsoGiven Other fields it gives, e.g. those an XSLT written by hand gives already.
+    /// @param columns   The table's columns: each one's expression, by column name.
+    /// @return Each such column, said; none if there are none.
+    public static List<String> blankColumns(final List<ExtractionField> fields,
+                                            final Set<String> alsoGiven,
+                                            final Map<String, String> columns) {
         final Set<String> given = new LinkedHashSet<>();
         ExtractionField.RESERVED.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
         fields.forEach(field -> given.add(field.name().toLowerCase(Locale.ROOT)));
+        alsoGiven.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
         final List<String> problems = new ArrayList<>();
         NullSafe.map(columns).forEach((column, expression) -> {
             for (final String field : fieldsOf(expression)) {

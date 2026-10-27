@@ -103,6 +103,10 @@ public class UserActions {
     /// with the name and folder the user chooses, for them to confirm; only then is it written, and the table set
     /// up to use it, unsaved (only from Stroom's own propose_extraction_pipeline tool).
     public static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
+    /// Shows a change the agent proposed to a dashboard table's extraction pipeline, in place, as a diff of its
+    /// XSLT with the other documents that use it, for the user to confirm; only then is it written, and columns
+    /// added to the table for new fields, unsaved (only from Stroom's own propose_extraction_pipeline tool).
+    public static final String CHANGE_EXTRACTION_PIPELINE = "change_extraction_pipeline";
     /// Creates several planned Visualisations in one folder the user picks, and adds them to a dashboard.
     public static final String CREATE_VISUALISATIONS = "create_visualisations";
     /// The most Visualisations one create_visualisations button creates.
@@ -242,8 +246,8 @@ public class UserActions {
                 case CREATE_VISUALISATION -> builtIn.contains(map)
                         ? createVisualisation(id, map, expiresMs)
                         : Optional.empty();
-                case CREATE_EXTRACTION_PIPELINE -> builtIn.contains(map)
-                        ? createExtraction(id, map, expiresMs)
+                case CREATE_EXTRACTION_PIPELINE, CHANGE_EXTRACTION_PIPELINE -> builtIn.contains(map)
+                        ? extraction(id, action, map, expiresMs)
                         : Optional.empty();
                 default -> Optional.empty();
             };
@@ -472,9 +476,14 @@ public class UserActions {
     }
 
     /// A button that shows what a search extraction proposed for a dashboard table the user may see would write, for
-    /// them to confirm. The extraction is kept as JSON in `request` ([ExtractionPlan]), the dashboard in `doc` and
-    /// the suggested name in `name`; it is read and checked again when the button is clicked.
-    private Optional<UserActionRecord> createExtraction(final String id, final Map<?, ?> map, final long expiresMs) {
+    /// them to confirm: a new pipeline (create_extraction_pipeline), or a change to the table's pipeline in place
+    /// (change_extraction_pipeline, for a table with one). The extraction is kept as JSON in `request`
+    /// ([ExtractionPlan]), the dashboard in `doc` and the suggested name in `name`; it is read and checked again when
+    /// the button is clicked.
+    private Optional<UserActionRecord> extraction(final String id,
+                                                  final String action,
+                                                  final Map<?, ?> map,
+                                                  final long expiresMs) {
         final DocRef named = docRef(map.get("doc"));
         final String name = NullSafe.get(string(map.get("name")), String::strip);
         final String planJson = string(map.get("plan"));
@@ -491,15 +500,26 @@ public class UserActions {
             return Optional.empty();
         }
         final DocRef dashboard = lookup.find(named).orElse(null);
+        final boolean change = CHANGE_EXTRACTION_PIPELINE.equals(action);
         if (dashboard == null || hasControlCharacters(plan.component())
-            || !ID_PATTERN.matcher(plan.componentId()).matches()) {
+            || !ID_PATTERN.matcher(plan.componentId()).matches()
+            || (change && plan.existing() == null)) {
             return Optional.empty();
         }
         final String summary = NullSafe.get(string(map.get("summary")), String::strip);
-        final String label = "Create extraction pipeline '" + name + "' for table '" + plan.component()
-                             + "' on dashboard '" + dashboard.getName() + "', extracting "
-                             + String.join(", ", plan.fields().stream().map(ExtractionField::name).toList());
-        return Optional.of(new UserActionRecord(id, CREATE_EXTRACTION_PIPELINE, truncate(label, MAX_DETAILS_CHARS),
+        final String fields = String.join(", ", plan.fields().stream().map(ExtractionField::name).toList());
+        final String existing = plan.existing() == null
+                ? null
+                : NullSafe.nonBlankStringElse(plan.existing().pipeline().getName(),
+                        plan.existing().pipeline().getUuid());
+        final String label = change
+                ? "Change extraction pipeline '" + existing + "' of table '" + plan.component() + "' on dashboard '"
+                  + dashboard.getName() + "' in place, with " + fields
+                : "Create extraction pipeline '" + name + "' for table '" + plan.component() + "' on dashboard '"
+                  + dashboard.getName() + "', " + (existing == null
+                        ? "extracting "
+                        : "a child of pipeline '" + existing + "', with ") + fields;
+        return Optional.of(new UserActionRecord(id, action, truncate(label, MAX_DETAILS_CHARS),
                 NullSafe.isBlankString(summary)
                         ? null
                         : truncate(summary, MAX_DETAILS_CHARS),

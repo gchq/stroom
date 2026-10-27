@@ -53,6 +53,8 @@ public class AiUserActionResult {
     private final List<AiCreateVisualisation> createVisualisations;
     @JsonProperty
     private final AiCreateExtraction createExtraction;
+    @JsonProperty
+    private final AiChangeExtraction changeExtraction;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
@@ -101,7 +103,7 @@ public class AiUserActionResult {
                               final AiCreateVisualisation createVisualisation,
                               final List<AiCreateVisualisation> createVisualisations) {
         this(done, message, openDocument, createQueryName, createQueryText, createDashboardName,
-                createDashboardConfig, createVisualisation, createVisualisations, null);
+                createDashboardConfig, createVisualisation, createVisualisations, null, null);
     }
 
     /// @param done                  True if the action was done.
@@ -115,6 +117,8 @@ public class AiUserActionResult {
     /// @param createVisualisations  For a create_visualisations action, each chart to create, or null.
     /// @param createExtraction      For a create_extraction_pipeline action, what would be written, for the user to
     ///                              confirm, or null.
+    /// @param changeExtraction      For a change_extraction_pipeline action, the change that would be written, for
+    ///                              the user to confirm, or null.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
@@ -126,7 +130,8 @@ public class AiUserActionResult {
                               @JsonProperty("createVisualisation") final AiCreateVisualisation createVisualisation,
                               @JsonProperty("createVisualisations")
                               final List<AiCreateVisualisation> createVisualisations,
-                              @JsonProperty("createExtraction") final AiCreateExtraction createExtraction) {
+                              @JsonProperty("createExtraction") final AiCreateExtraction createExtraction,
+                              @JsonProperty("changeExtraction") final AiChangeExtraction changeExtraction) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
@@ -137,6 +142,7 @@ public class AiUserActionResult {
         this.createVisualisation = createVisualisation;
         this.createVisualisations = createVisualisations;
         this.createExtraction = createExtraction;
+        this.changeExtraction = changeExtraction;
     }
 
     /// @param name   The name to suggest in Stroom's New Dashboard dialog.
@@ -161,7 +167,13 @@ public class AiUserActionResult {
     /// @param createExtraction What would be written, for the user to confirm.
     /// @return The result of a create_extraction_pipeline action that can be done.
     public static AiUserActionResult createExtraction(final AiCreateExtraction createExtraction) {
-        return new AiUserActionResult(true, null, null, null, null, null, null, null, null, createExtraction);
+        return new AiUserActionResult(true, null, null, null, null, null, null, null, null, createExtraction, null);
+    }
+
+    /// @param changeExtraction The change that would be written, for the user to confirm.
+    /// @return The result of a change_extraction_pipeline action that can be done.
+    public static AiUserActionResult changeExtraction(final AiChangeExtraction changeExtraction) {
+        return new AiUserActionResult(true, null, null, null, null, null, null, null, null, null, changeExtraction);
     }
 
     /// @return True if the action was done.
@@ -214,5 +226,11 @@ public class AiUserActionResult {
     /// confirm; otherwise null.
     public AiCreateExtraction getCreateExtraction() {
         return createExtraction;
+    }
+
+    /// @return For a change_extraction_pipeline action that can be done, the change that would be written, for the
+    /// user to confirm; otherwise null.
+    public AiChangeExtraction getChangeExtraction() {
+        return changeExtraction;
     }
 }

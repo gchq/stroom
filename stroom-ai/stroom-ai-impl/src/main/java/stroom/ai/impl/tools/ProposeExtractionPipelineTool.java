@@ -20,8 +20,11 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.extraction.ExtractionChange;
 import stroom.ai.impl.extraction.ExtractionField;
+import stroom.ai.impl.extraction.ExtractionPipelines;
 import stroom.ai.impl.extraction.ExtractionPlan;
+import stroom.ai.impl.extraction.ExtractionPlan.Existing;
 import stroom.ai.impl.extraction.ExtractionPreview;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
@@ -32,6 +35,7 @@ import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.query.api.TableSettings;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
@@ -52,8 +56,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// dialog, for them to confirm; only then is it written, as the user, and the table set to use it, with a column
 /// for each new field, as unsaved changes.
 ///
-/// For a table with no extraction pipeline of its own. It is checked as preview_extraction checks it, but without
-/// stepping: every field the table's columns use must be given, as turning extraction on fills every value from it.
+/// For a table with an extraction pipeline already, it offers two buttons: one to change that pipeline's XSLT in
+/// place (see [ExtractionChange]), if the user can edit it, shown as a diff with the other dashboards and queries
+/// that use it; and one to save a new pipeline, a child of it with its own XSLT, for this table only.
+///
+/// It is checked as preview_extraction checks it, but without stepping: every field the table's columns use must
+/// be given, as turning extraction on fills every value from it.
 class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
 
     static final String NAME = "propose_extraction_pipeline";
@@ -104,10 +112,13 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                  + "fields, and a pipeline using it. The button shows exactly what would be written, "
                                  + "with the name and folder the user chooses, for them to confirm; only then is it "
                                  + "written, and the table set to use it, with a column for each new field, unsaved. "
-                                 + "Nothing changes until they confirm it.")
+                                 + "Nothing changes until they confirm it. For a table with an extraction pipeline "
+                                 + "already, it offers to change that pipeline in place, or to save a new one (a "
+                                 + "child of it): give every field, if Stroom AI wrote its XSLT; only those to add, "
+                                 + "if it was written by hand.")
                         .chatOnly(" Give the fields and namespace you tried with preview_extraction, once the user "
-                                  + "has seen its preview and agreed them, for a table with no extraction pipeline "
-                                  + "of its own. Tell the user about the button rather than saying it was made.")
+                                  + "has seen its preview and agreed them. Tell the user about the button(s) rather "
+                                  + "than saying it was made.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(TABLE_ARG, "The dashboard table, by its name as the user sees it.")
@@ -184,17 +195,59 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
                                    + "is known (an embedded query's StroomQL makes its results, so it has no "
                                    + "extraction).");
         }
-        if (settings.extractValues() && settings.getExtractionPipeline() != null) {
-            return ToolResult.text("Nothing was offered: table '" + tableName + "' extracts its values with "
-                                   + "pipeline '" + NullSafe.nonBlankStringElse(settings.getExtractionPipeline()
-                    .getName(), settings.getExtractionPipeline().getUuid()) + "' already. Changing an extraction "
-                                   + "pipeline isn't supported yet.");
+        // A table that extracts already: a change to its pipeline's XSLT.
+        final DocRef pipeline = settings.extractValues()
+                ? settings.getExtractionPipeline()
+                : null;
+        final Existing existing;
+        final ExtractionChange.Changed changed;
+        if (pipeline != null) {
+            final String uses = "Nothing was offered: table '" + tableName + "' extracts its values with pipeline '"
+                                + name(pipeline) + "', ";
+            final MergedPipeline merged = MergedPipeline.load(documentAccess, pipeline.getUuid()).orElse(null);
+            if (merged == null) {
+                return ToolResult.text(uses + "which no longer exists or you can't see, so it can't be changed.");
+            }
+            final String element = ExtractionPipelines.outputXslt(merged).orElse(null);
+            final DocRef xslt = element == null
+                    ? null
+                    : ExtractionPipelines.xsltOf(merged, element).orElse(null);
+            if (xslt == null) {
+                return ToolResult.text(uses + "which has no XSLT element naming an XSLT before its search result "
+                                       + "output, so it can't be changed this way.");
+            }
+            final String unchangeable = ExtractionPipelines.unchangeable(merged, element).orElse(null);
+            if (unchangeable != null) {
+                return ToolResult.text(uses + "which can't be changed this way. " + unchangeable);
+            }
+            final String code = documentAccess.read(xslt, XsltDoc.class).map(XsltDoc::getData).orElse(null);
+            if (code == null) {
+                return ToolResult.text(uses + "whose XSLT '" + name(xslt) + "' isn't one you can read, so it can't "
+                                       + "be changed.");
+            }
+            try {
+                changed = ExtractionChange.change(code, namespace, fields);
+            } catch (final IllegalArgumentException e) {
+                return ToolResult.text("Nothing was offered: " + e.getMessage());
+            }
+            existing = new Existing(merged.pipeline(), element, xslt, ExtractionChange.sha256(code));
+        } else {
+            existing = null;
+            changed = null;
         }
 
         final Map<String, String> columns = ResultsRequests.columnExpressions(search);
-        final List<String> problems = new ArrayList<>(ExtractionPreview.blankColumns(fields, columns));
+        // An XSLT naming fields as it runs gives fields its code doesn't name: the preview, stepped, checked which.
+        final boolean namesAsItRuns = changed != null && changed.namesAsItRuns();
+        final List<String> problems = new ArrayList<>(namesAsItRuns
+                ? List.of()
+                : ExtractionPreview.blankColumns(fields, NullSafe.getOrElse(changed,
+                        ExtractionChange.Changed::alsoGiven, Set.of()), columns));
         final List<String> newColumns = new ArrayList<>();
-        for (final ExtractionField field : fields) {
+        final List<ExtractionField> added = changed == null
+                ? fields
+                : changed.added();
+        for (final ExtractionField field : added) {
             final boolean shown = columns.values().stream()
                     .anyMatch(expression -> ExtractionPreview.fieldsOf(expression).stream()
                             .anyMatch(field.name()::equalsIgnoreCase));
@@ -215,26 +268,67 @@ class ProposeExtractionPipelineTool extends AbstractWorkspaceTool {
         }
 
         final ExtractionPlan plan = new ExtractionPlan(NullSafe.nonBlankStringElse(table.getName(),
-                table.getComponentId()), table.getComponentId(), namespace, fields, newColumns);
+                table.getComponentId()), table.getComponentId(), namespace, fields, newColumns, existing);
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
         arguments.put("name", name);
         arguments.put("plan", plan.toJson());
         NullSafe.consume(summary, text -> arguments.put("summary", text.strip()));
-        final ToolUserAction action = new ToolUserAction("create-extraction-pipeline-" + SEQUENCE.incrementAndGet(),
+        final int sequence = SEQUENCE.incrementAndGet();
+        final ToolUserAction create = new ToolUserAction("create-extraction-pipeline-" + sequence,
                 UserActions.CREATE_EXTRACTION_PIPELINE, arguments);
-        auditLog.documentViewed(context.session(), dashboard, "Proposed an extraction pipeline for table '"
-                                                              + tableName + "' with the " + NAME + " tool");
         final String names = String.join(", ", fields.stream().map(ExtractionField::name).toList());
-        return ToolResult.text("The user has been shown a 'Create extraction pipeline' button for table '"
-                               + tableName + "' on dashboard '" + dashboard.getName() + "', extracting " + names
-                               + (newColumns.isEmpty()
+        final String columnsAdded = newColumns.isEmpty()
                 ? ""
-                : ", adding column(s) " + String.join(", ", newColumns)) + ". When they click it, they choose "
-                               + "the name (suggested '" + name + "') and folder of the new pipeline and its XSLT, "
-                               + "and confirm exactly what is written; only then is it written, and the table set "
-                               + "to use it, unsaved. Nothing changes until they confirm it. Tell them about the "
-                               + "button rather than saying it was made.")
-                .withUserAction(action);
+                : ", adding column(s) " + String.join(", ", newColumns);
+        if (existing == null) {
+            auditLog.documentViewed(context.session(), dashboard, "Proposed an extraction pipeline for table '"
+                                                                  + tableName + "' with the " + NAME + " tool");
+            return ToolResult.text("The user has been shown a 'Create extraction pipeline' button for table '"
+                                   + tableName + "' on dashboard '" + dashboard.getName() + "', extracting " + names
+                                   + columnsAdded + ". When they click it, they choose the name (suggested '" + name
+                                   + "') and folder of the new pipeline and its XSLT, and confirm exactly what is "
+                                   + "written; only then is it written, and the table set to use it, unsaved. "
+                                   + "Nothing changes until they confirm it. Tell them about the button rather than "
+                                   + "saying it was made.")
+                    .withUserAction(create);
+        }
+
+        auditLog.documentViewed(context.session(), dashboard, "Proposed a change to the extraction pipeline of "
+                                                              + "table '" + tableName + "' with the " + NAME
+                                                              + " tool");
+        final String what = (changed.generated()
+                ? "its XSLT written again from the fields " + names
+                : "the fields " + names + " added to its XSLT") + columnsAdded
+                            + (namesAsItRuns
+                ? " (its XSLT names some fields as it runs, so which columns it fills, and whether a field it adds "
+                  + "is one it gives already, are as the preview found)"
+                : "");
+        final ToolUserAction change = new ToolUserAction("change-extraction-pipeline-" + sequence,
+                UserActions.CHANGE_EXTRACTION_PIPELINE, arguments);
+        final boolean canEdit = documentAccess.canEdit(existing.xslt());
+        final ToolResult result = ToolResult.text("The user has been shown "
+                                                  + (canEdit
+                ? "two buttons for table '" + tableName + "' on dashboard '" + dashboard.getName() + "', with "
+                  + what + ": 'Change extraction pipeline' changes pipeline '" + name(pipeline) + "' in place "
+                  + "(they are shown the change as a diff, and the other dashboards and queries that use it, which "
+                  + "change too), and 'Create extraction pipeline' saves a new pipeline, a child of it with its "
+                  + "own XSLT, in a name (suggested '" + name + "') and folder they choose, for this table only. "
+                : "a 'Create extraction pipeline' button for table '" + tableName + "' on dashboard '"
+                  + dashboard.getName() + "', with " + what + ": it saves a new pipeline, a child of pipeline '"
+                  + name(pipeline) + "' with its own XSLT, in a name (suggested '" + name + "') and folder they "
+                  + "choose. They can't change pipeline '" + name(pipeline) + "' in place, as they can't edit its "
+                  + "XSLT. ")
+                                                  + "They confirm exactly what is written; only then is it written, "
+                                                  + "and the table set up to use it, unsaved. Nothing changes until "
+                                                  + "they confirm it. Tell them about the button(s) rather than "
+                                                  + "saying it was made.");
+        return canEdit
+                ? result.withUserAction(change).withUserAction(create)
+                : result.withUserAction(create);
+    }
+
+    private static String name(final DocRef docRef) {
+        return NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid());
     }
 }
