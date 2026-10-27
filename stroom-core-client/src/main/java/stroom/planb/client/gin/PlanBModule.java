@@ -20,10 +20,7 @@ import stroom.core.client.gin.PluginModule;
 import stroom.planb.client.PlanBPlugin;
 import stroom.planb.client.presenter.PlanBDataPresenter;
 import stroom.planb.client.presenter.PlanBPresenter;
-import stroom.planb.client.presenter.PlanBSettingsPresenter;
-import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.view.PlanBDataViewImpl;
-import stroom.planb.client.view.PlanBSettingsViewImpl;
 
 public class PlanBModule extends PluginModule {
 
@@ -31,9 +28,6 @@ public class PlanBModule extends PluginModule {
     protected void configure() {
         bindPlugin(PlanBPlugin.class);
         bind(PlanBPresenter.class);
-        bindPresenterWidget(PlanBSettingsPresenter.class,
-                PlanBSettingsView.class,
-                PlanBSettingsViewImpl.class);
         bindPresenterWidget(PlanBDataPresenter.class,
                 PlanBDataPresenter.PlanBDataView.class,
                 PlanBDataViewImpl.class);

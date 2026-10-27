@@ -18,10 +18,12 @@ package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.planb.client.component.PlanBSettingsController;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -47,12 +49,14 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<PlanBDataPresenter> planBDataPresenterProvider,
-            final Provider<PlanBSettingsPresenter> planBSettingsPresenterProvider,
+            final Provider<PlanBSettingsController> planBSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<PlanBDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(planBSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, planBSettingsProvider::get,
+                PlanBSettingsController::read,
+                PlanBSettingsController::write));
         addTab(DATA, new DocTabProvider<>(planBDataPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override

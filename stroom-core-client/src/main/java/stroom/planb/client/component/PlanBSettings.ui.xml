@@ -3,6 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
+    <!-- A Plan B store's Settings tab, also a Traces store's (its state type hidden): the state
+         type above the settings of that type -->
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup ui:field="stateTypeGroup"
                         label="State Type"
@@ -12,4 +14,4 @@
         </form:FormGroup>
         <g:SimplePanel ui:field="settings"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

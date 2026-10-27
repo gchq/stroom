@@ -14,29 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.planb.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
-import stroom.planb.client.presenter.StateTypeChangeUiHandlers;
 import stroom.planb.shared.StateType;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class PlanBSettingsViewImpl
-        extends ViewWithUiHandlers<StateTypeChangeUiHandlers>
-        implements PlanBSettingsView {
+/// A Plan B store's Settings tab: the type of state it holds above the settings of that type
+/// (shown here by its controller, which makes them again when the type changes).
+public class PlanBSettings extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup stateTypeGroup;
@@ -45,9 +41,12 @@ public class PlanBSettingsViewImpl
     @UiField
     SimplePanel settings;
 
-    @Inject
-    public PlanBSettingsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    private Runnable onStateTypeChange = () -> {
+    };
+
+    /// Makes the tab, for a temporal state store.
+    public PlanBSettings() {
+        initWidget(BINDER.createAndBindUi(this));
 
         stateType.addItem(StateType.STATE);
         stateType.addItem(StateType.RANGED_STATE);
@@ -57,45 +56,47 @@ public class PlanBSettingsViewImpl
         stateType.addItem(StateType.HISTOGRAM);
         stateType.addItem(StateType.METRIC);
         stateType.setValue(StateType.TEMPORAL_STATE);
+        stateType.addValueChangeHandler(e -> onStateTypeChange.run());
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return The type of state chosen.
     public StateType getStateType() {
         return stateType.getValue();
     }
 
-    @Override
+    /// @param stateType The type of state.
     public void setStateType(final StateType stateType) {
         this.stateType.setValue(stateType);
     }
 
-    @Override
+    /// @param visible Whether the state type can be seen (and so changed); not for a type that is
+    ///                fixed, e.g. a Traces store's.
     public void setStateTypeVisible(final boolean visible) {
         stateTypeGroup.setVisible(visible);
     }
 
-    @Override
+    /// Shows the settings of the store's type.
+    ///
+    /// @param editor The settings.
     public void setSettingsEditor(final IsWidget editor) {
-        settings.setWidget(editor.asWidget());
+        settings.setWidget(editor);
+    }
+
+    /// @param onStateTypeChange Run when the user chooses another type of state.
+    public void setOnStateTypeChange(final Runnable onStateTypeChange) {
+        this.onStateTypeChange = onStateTypeChange;
     }
 
     @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         stateType.setReadOnly(readOnly);
     }
 
-    @UiHandler("stateType")
-    public void onStateType(final ValueChangeEvent<StateType> event) {
-        getUiHandlers().onChange();
-        getUiHandlers().onStateTypeChange();
-    }
 
-    public interface Binder extends UiBinder<Widget, PlanBSettingsViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, PlanBSettings> {
 
     }
 }

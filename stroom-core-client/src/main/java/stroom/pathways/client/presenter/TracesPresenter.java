@@ -18,12 +18,15 @@ package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.client.component.PlanBSettingsController;
+import stroom.planb.shared.StateType;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -48,7 +51,7 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
     public TracesPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final TracesListTabPresenter tracesListTabPresenter,
-                           final Provider<TracesSettingsPresenter> tracesSettingsPresenterProvider,
+                           final Provider<PlanBSettingsController> planBSettingsProvider,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<TracesDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
@@ -56,7 +59,18 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
         this.tracesListTabPresenter = tracesListTabPresenter;
 
         addTab(TRACES, new DocTabProvider<>(() -> tracesListTabPresenter));
-        addTab(SETTINGS, new DocTabProvider<>(tracesSettingsPresenterProvider::get));
+        // Plan B's settings, for traces only
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, () -> {
+            final PlanBSettingsController planBSettings = planBSettingsProvider.get();
+            planBSettings.setStateTypeLocked(true);
+            return planBSettings;
+        }, (planBSettings, docRef, doc) -> {
+            planBSettings.readSettings(doc.getSettings(), StateType.TRACE);
+            planBSettings.setSharedFileStoreLocked(doc.hasSharedFileStoreData());
+        }, (planBSettings, doc) -> doc.copyTraces()
+                .stateType(StateType.TRACE)
+                .settings(planBSettings.writeSettings())
+                .build()));
         addTab(DOCUMENTATION, new MarkdownTabProvider<TracesDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
