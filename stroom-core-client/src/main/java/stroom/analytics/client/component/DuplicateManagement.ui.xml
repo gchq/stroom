@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <!-- An analytic rule's Duplicate Management tab (duplicate-management.css) -->
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
             <form:FormGroup identity="rememberNotifications"
@@ -29,7 +30,7 @@
             <form:FormGroup identity="columns"
                             label="Columns"
                             screenReaderText="Comma-separated, case-sensitive. Enabled when Choose Columns is ticked.">
-                <form:TextBox ui:field="columns" width="100%"/>
+                <form:TextBox ui:field="columns" addStyleNames="w-100" enabled="false"/>
                 <form:HelpHTML>
                     <p>A comma delimited list of column names (case-sensitive) that should be used to
                         de-duplicate notifications. Only editable when Choose Columns is ticked.</p>
@@ -39,6 +40,6 @@
             </form:FormGroup>
         </g:FlowPanel>
         <g:SimplePanel ui:field="list"
-                       styleName="DuplicateManagementViewImpl dock-max dashboard-panel overflow-hidden"/>
+                       styleName="duplicate-management__list dock-max dashboard-panel overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder>

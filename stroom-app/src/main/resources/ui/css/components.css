@@ -1130,8 +1130,7 @@
     border-radius: .25rem;
 }
 
-.ScheduledProcessingViewImpl,
-.DuplicateManagementViewImpl {
+.ScheduledProcessingViewImpl {
     border-top: 1px solid var(--border-color);
 }
 

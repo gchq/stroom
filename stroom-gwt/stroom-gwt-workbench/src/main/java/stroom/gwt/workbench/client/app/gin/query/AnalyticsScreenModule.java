@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
@@ -29,7 +28,6 @@ import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingP
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
-import stroom.analytics.client.view.DuplicateManagementViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -57,8 +55,6 @@ public class AnalyticsScreenModule extends AbstractPresenterModule {
                 AnalyticProcessingViewImpl.class);
         bindSharedView(AnalyticNotificationView.class,
                 AnalyticNotificationViewImpl.class);
-        bindSharedView(DuplicateManagementView.class,
-                DuplicateManagementViewImpl.class);
     }
 }
 

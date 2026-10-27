@@ -17,6 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.component.AnalyticSettingsController;
+import stroom.analytics.client.component.DuplicateManagementController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
@@ -60,8 +61,7 @@ public class AnalyticRulePresenter
                                  final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
-                                 final Provider<AnalyticDuplicateManagementPresenter>
-                                         duplicateManagementPresenterProvider,
+                                 final Provider<DuplicateManagementController> duplicateManagementProvider,
                                  final Provider<MarkdownEditController> markdownEditProvider,
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {
@@ -85,7 +85,9 @@ public class AnalyticRulePresenter
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
-        addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
+        addTab(DUPLICATE_MANAGEMENT, new ControllerTabProvider<>(eventBus, duplicateManagementProvider::get,
+                DuplicateManagementController::read,
+                DuplicateManagementController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
