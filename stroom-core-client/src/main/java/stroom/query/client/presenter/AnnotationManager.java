@@ -18,11 +18,11 @@ package stroom.query.client.presenter;
 
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
-import stroom.annotation.client.ChangeAssignedToPresenter;
-import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.ShowFindAnnotationEvent;
+import stroom.annotation.client.component.ChangeAssignedToDialogController;
+import stroom.annotation.client.component.ChangeStatusDialogController;
 import stroom.annotation.shared.AddAnnotationTable;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTable;
@@ -67,8 +67,8 @@ import javax.inject.Inject;
 public class AnnotationManager implements HasHandlers {
 
     private final EventBus eventBus;
-    private final Provider<ChangeStatusPresenter> changeStatusPresenterProvider;
-    private final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider;
+    private final Provider<ChangeStatusDialogController> changeStatusProvider;
+    private final Provider<ChangeAssignedToDialogController> changeAssignedToProvider;
     private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
@@ -81,15 +81,15 @@ public class AnnotationManager implements HasHandlers {
 
     @Inject
     public AnnotationManager(final EventBus eventBus,
-                             final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
-                             final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider,
+                             final Provider<ChangeStatusDialogController> changeStatusProvider,
+                             final Provider<ChangeAssignedToDialogController> changeAssignedToProvider,
                              final AnnotationResourceClient annotationResourceClient,
                              final ClientSecurityContext securityContext,
                              final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.eventBus = eventBus;
-        this.changeStatusPresenterProvider = changeStatusPresenterProvider;
-        this.changeAssignedToPresenterProvider = changeAssignedToPresenterProvider;
+        this.changeStatusProvider = changeStatusProvider;
+        this.changeAssignedToProvider = changeAssignedToProvider;
         this.annotationResourceClient = annotationResourceClient;
         enabled = securityContext.hasAppPermission(AppPermission.ANNOTATIONS);
     }
@@ -425,13 +425,13 @@ public class AnnotationManager implements HasHandlers {
     private void changeStatus(final List<Long> annotationIdList) {
         if (enabled) {
             // One per use, released once it is hidden
-            appRoot.makeDialog(changeStatusPresenterProvider).show(annotationIdList);
+            changeStatusProvider.get().show(appRoot, annotationIdList);
         }
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
         if (enabled) {
-            appRoot.makeDialog(changeAssignedToPresenterProvider).show(annotationIdList);
+            changeAssignedToProvider.get().show(appRoot, annotationIdList);
         }
     }
 

@@ -16,12 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.annotation.client.ChangeAssignedToPresenter;
-import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.annotation.client.ChangeAssignedToViewImpl;
-import stroom.annotation.client.ChangeStatusPresenter;
-import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.annotation.client.ChangeStatusViewImpl;
 import stroom.index.client.presenter.IndexDataPresenter;
 import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexPresenter;
@@ -56,12 +50,6 @@ public class IndexScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(IndexDataPresenter.class,
                 IndexDataView.class,
                 IndexDataViewImpl.class);
-        bindPresenterWidget(ChangeStatusPresenter.class,
-                ChangeStatusView.class,
-                ChangeStatusViewImpl.class);
-        bindPresenterWidget(ChangeAssignedToPresenter.class,
-                ChangeAssignedToView.class,
-                ChangeAssignedToViewImpl.class);
     }
 }
 

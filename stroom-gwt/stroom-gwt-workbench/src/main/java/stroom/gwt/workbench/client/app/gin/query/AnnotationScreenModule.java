@@ -25,12 +25,6 @@ import stroom.annotation.client.AnnotationTagCreateViewImpl;
 import stroom.annotation.client.AnnotationTagEditPresenter;
 import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 import stroom.annotation.client.AnnotationTagEditViewImpl;
-import stroom.annotation.client.ChangeAssignedToPresenter;
-import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.annotation.client.ChangeAssignedToViewImpl;
-import stroom.annotation.client.ChangeStatusPresenter;
-import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.annotation.client.ChangeStatusViewImpl;
 import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
@@ -60,12 +54,6 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(LinkedEventPresenter.class,
                 LinkedEventView.class,
                 LinkedEventViewImpl.class);
-        bindPresenterWidget(ChangeStatusPresenter.class,
-                ChangeStatusView.class,
-                ChangeStatusViewImpl.class);
-        bindPresenterWidget(ChangeAssignedToPresenter.class,
-                ChangeAssignedToView.class,
-                ChangeAssignedToViewImpl.class);
         bindSharedView(FindView.class,
                 FindPanel.class);
         bind(FindAnnotationPresenter.class);

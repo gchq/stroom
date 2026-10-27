@@ -133,7 +133,15 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void batchChange(final MultiAnnotationChangeRequest request,
+    /// Changes several annotations at once, e.g. their status.
+    ///
+    /// @param owner              What the reply is for: it is dropped once that is disposed.
+    /// @param request            The annotations, and the change.
+    /// @param consumer           Given how many were changed.
+    /// @param errorHandler       Told why it failed.
+    /// @param taskMonitorFactory Shows the request's progress.
+    public void batchChange(final HasControllerNode owner,
+                            final MultiAnnotationChangeRequest request,
                             final Consumer<Integer> consumer,
                             final RestErrorHandler errorHandler,
                             final TaskMonitorFactory taskMonitorFactory) {
@@ -142,6 +150,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .method(res -> res.batchChange(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .owner(owner)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
