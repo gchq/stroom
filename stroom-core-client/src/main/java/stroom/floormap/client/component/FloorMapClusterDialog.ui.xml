@@ -17,6 +17,8 @@
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
@@ -33,9 +35,9 @@
                             addStyleNames="stroom-floormap-cluster-filters__search">
                 <view:QuickFilter ui:field="quickFilter"/>
             </form:FormGroup>
-            <!-- Both dropdowns are hidden by the view unless the cluster's
-                 members actually differ; they start out hidden so a dialog whose
-                 first cluster offers neither never flashes them. -->
+            <!-- Both dropdowns are hidden unless the cluster's members actually
+                 differ; they start out hidden so a dialog whose first cluster
+                 offers neither never flashes them. -->
             <form:FormGroup ui:field="areaFilterGroup" identity="clusterArea" label="Area"
                             addStyleNames="stroom-floormap-cluster-filters__filter"
                             visible="false"
@@ -49,6 +51,14 @@
                 <l:SelectionBox ui:field="groupFilter" addStyleNames="w-100"/>
             </form:FormGroup>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="data" styleName="dock-max overflow-hidden"/>
+        <g:SimplePanel styleName="dock-max overflow-hidden">
+            <dg:PagerPanel toolbarName="Cluster member actions">
+                <b:ToolbarButton ui:field="trackButton" svg="LOCATE" title="Track this entity" enabled="false"/>
+                <!-- Says which of the two empty states this is: a filter that matched
+                     nothing looks exactly like a broken dialog otherwise. -->
+                <dg:DataGrid ui:field="dataGrid" tableName="Cluster Members"
+                             emptyText="No members match the search and filters"/>
+            </dg:PagerPanel>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

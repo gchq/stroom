@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.component.FloorMapCanvasController;
+import stroom.floormap.client.component.FloorMapClusterDialogController;
 import stroom.floormap.client.component.FloorMapDockController;
 import stroom.floormap.client.component.FloorMapGroupsController;
 import stroom.floormap.client.component.FloorMapLayers;
@@ -288,7 +289,7 @@ public class FloorMapMapPresenter
 
     /// Builds the cluster member list on demand. Left as a provider rather than
     /// resolved up front: a map whose entities never crowd never opens it.
-    private final Provider<FloorMapClusterPresenter> floorMapClusterPresenter;
+    private final Provider<FloorMapClusterDialogController> clusterDialogProvider;
 
     private final HistogramQueryHelper histogramQueryHelper;
     /// The unbounded read behind "Show All". Separate from [#histogramQueryHelper] because
@@ -395,10 +396,10 @@ public class FloorMapMapPresenter
                                 final FloorMapLayers layersPanel,
                                 final Provider<FloorMapGroupsController> floorMapGroupsProvider,
                                 final Provider<FloorMapDockController> dockProvider,
-                                final Provider<FloorMapClusterPresenter> floorMapClusterPresenter) {
+                                final Provider<FloorMapClusterDialogController> clusterDialogProvider) {
         super(eventBus, view);
 
-        this.floorMapClusterPresenter = floorMapClusterPresenter;
+        this.clusterDialogProvider = clusterDialogProvider;
         this.canvas = make(canvasProvider);
         this.floorMapTimeline = make(floorMapTimelineProvider);
         this.floorMapTracking = make(floorMapTrackingProvider);
@@ -523,7 +524,8 @@ public class FloorMapMapPresenter
         // under the tenth could be counted and named but never got at.
         canvas.setOnClusterSelected(cluster -> {
             if (cluster != null) {
-                makeDialog(floorMapClusterPresenter).show(
+                clusterDialogProvider.get().show(
+                        this,
                         cluster,
                         this::entityDisplayName,
                         lastAreaMembership,

@@ -42,7 +42,7 @@ import java.util.List;
 /// Map's read-only 'Map' tab: the map canvas, its timeline and its dock of Tracking, Layers and
 /// Groups panels) with fake REST replies, for its three lists: the Tracking panel's entities
 /// (`FloorMapTrackingController`), the Groups panel's groups (`FloorMapGroupsController`) and the
-/// members of a cluster on the map (`FloorMapClusterPresenter`, a dialog opened by clicking the
+/// members of a cluster on the map (`FloorMapClusterDialogController`, a dialog opened by clicking the
 /// cluster's glyph).
 ///
 /// As `FloorMapPresenter` does for its Map tab, the story fetches the document

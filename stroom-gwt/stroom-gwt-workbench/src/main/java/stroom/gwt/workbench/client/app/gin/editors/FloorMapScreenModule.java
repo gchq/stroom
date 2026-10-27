@@ -16,8 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.floormap.client.presenter.FloorMapClusterPresenter;
-import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
@@ -26,7 +24,6 @@ import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
-import stroom.floormap.client.view.FloorMapClusterViewImpl;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
@@ -58,8 +55,5 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapMapPresenter.class,
                 FloorMapMapView.class,
                 FloorMapMapViewImpl.class);
-        bindPresenterWidget(FloorMapClusterPresenter.class,
-                FloorMapClusterView.class,
-                FloorMapClusterViewImpl.class);
     }
 }
