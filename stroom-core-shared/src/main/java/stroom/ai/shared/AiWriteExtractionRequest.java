@@ -25,8 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-/// The user's confirmation of a search extraction to write (see [AiCreateExtraction]): the name and folder they
-/// chose, and the hash of what they were shown, so that only that is written.
+/// A search extraction to write (see [AiCreateExtraction]): the name and folder the user chose, and the hash of
+/// what the button prepared, so that only that is written.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class AiWriteExtractionRequest {
