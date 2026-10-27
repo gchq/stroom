@@ -78,6 +78,7 @@ import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.Values;
+import stroom.query.language.token.StroomQLFormatter;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -1085,6 +1086,11 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
         }
         return nodeName;
+    }
+
+    @Override
+    public String formatQuery(final String query) {
+        return StroomQLFormatter.format(query);
     }
 
     @Override

@@ -146,6 +146,14 @@ public class EditorPresenter
         getView().setFormattedHighlights(highlightsFunction);
     }
 
+    /// Sets a formatter to use when the user formats the text, in place of the formatting the
+    /// editor would otherwise apply for the current mode.
+    ///
+    /// @param textFormatter The formatter to use, or `null` to use the editor's own formatting.
+    public void setTextFormatter(final TextFormatter textFormatter) {
+        getView().setTextFormatter(textFormatter);
+    }
+
     public void setControlsVisible(final boolean visible) {
         getView().setControlsVisible(visible);
     }

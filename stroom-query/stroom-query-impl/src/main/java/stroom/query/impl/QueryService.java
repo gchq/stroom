@@ -55,6 +55,12 @@ public interface QueryService {
 
     ExpressionOperator parseQuery(String query);
 
+    /// Formats a StroomQL query, changing only the whitespace between its tokens.
+    ///
+    /// @param query The StroomQL query text to format. May be `null` or blank.
+    /// @return The formatted query text, or `query` unchanged if it is `null` or blank.
+    String formatQuery(String query);
+
     ContextualQueryHelp getQueryHelpContext(String query, int row, int col);
 
     ResultPage<QueryField> findFields(FindFieldCriteria criteria);

@@ -37,6 +37,7 @@ import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.query.shared.QueryResource;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
@@ -47,6 +48,7 @@ import stroom.util.shared.StoredError;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -67,6 +69,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -74,6 +77,7 @@ public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
         implements HasChangeHandlers, HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
 
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final TabData TABLE = new TabDataImpl("Table");
     private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
@@ -85,6 +89,7 @@ public class QueryEditPresenter
     private final QueryModel queryModel;
     private final QueryResultTabsView linkTabsLayoutView;
     private final QueryInfo queryInfo;
+    private final RestFactory restFactory;
     private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
 
     private final Provider<QueryResultVisPresenter> visPresenterProvider;
@@ -93,6 +98,7 @@ public class QueryEditPresenter
     private String currentQuery;
     private Timer requestTimer;
     private Map<String, String> queryVariables;
+    private TaskMonitorFactory taskMonitorFactory;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -114,6 +120,7 @@ public class QueryEditPresenter
         this.visPresenterProvider = visPresenterProvider;
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
+        this.restFactory = restFactory;
 
         queryResultPresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
         queryResultPresenter.setQueryTablePreferencesConsumer(qtp -> {
@@ -222,6 +229,7 @@ public class QueryEditPresenter
         this.editorPresenter = editorPresenter;
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
         this.editorPresenter.getBasicAutoCompletionOption().setOff();
+        this.editorPresenter.setTextFormatter(this::formatQuery);
 
 //        // This glues the editor code completion to the QueryHelpPresenter's completion provider
 //        // Need to do this via addAttachHandler so the editor is fully loaded
@@ -246,6 +254,15 @@ public class QueryEditPresenter
             editorPresenter.focus();
             return false;
         }, 500);
+    }
+
+    private void formatQuery(final String query, final Consumer<String> formattedQueryConsumer) {
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.formatQuery(query))
+                .onSuccess(response -> formattedQueryConsumer.accept(response.getQuery()))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     private void setVisHidden(final boolean state) {
@@ -492,6 +509,7 @@ public class QueryEditPresenter
 
     @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
         queryModel.setTaskMonitorFactory(taskMonitorFactory);
         queryHelpPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }

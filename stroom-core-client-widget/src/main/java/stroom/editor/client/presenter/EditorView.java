@@ -49,6 +49,12 @@ public interface EditorView
      */
     void setFormattedHighlights(final Function<String, List<TextRange>> highlightsFunction);
 
+    /// Sets a formatter to use when the user formats the text, in place of the formatting the
+    /// view would otherwise apply for the current mode.
+    ///
+    /// @param textFormatter The formatter to use, or `null` to use the view's own formatting.
+    void setTextFormatter(TextFormatter textFormatter);
+
     void setText(final String text, final boolean format);
 
     Action getFormatAction();

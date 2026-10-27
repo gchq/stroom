@@ -29,6 +29,7 @@ import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.FormatQueryResponse;
 import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
@@ -150,6 +151,12 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public ValidateExpressionResult validateQuery(final String query) {
         return queryServiceProvider.get().validateQuery(query);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public FormatQueryResponse formatQuery(final String query) {
+        return new FormatQueryResponse(queryServiceProvider.get().formatQuery(query));
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
