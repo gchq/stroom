@@ -22,8 +22,6 @@ import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
-import stroom.dashboard.client.query.SelectionHandlerPresenter;
-import stroom.dashboard.client.query.SelectionHandlerViewImpl;
 import stroom.dashboard.client.query.SelectionHandlersPresenter;
 import stroom.dashboard.client.query.SelectionHandlersViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -46,9 +44,6 @@ public class DashboardQueryScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(SelectionHandlersPresenter.class,
                 SelectionHandlersPresenter.SelectionHandlersView.class,
                 SelectionHandlersViewImpl.class);
-        bindPresenterWidget(SelectionHandlerPresenter.class,
-                SelectionHandlerPresenter.SelectionHandlerView.class,
-                SelectionHandlerViewImpl.class);
     }
 }
 

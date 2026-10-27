@@ -18,6 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.component.SelectionHandlerEditorController;
 import stroom.dashboard.client.component.SelectionHandlerList;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
@@ -47,9 +48,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -57,7 +55,6 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +67,7 @@ public class SelectionHandlersPresenter
         implements Focus {
 
     private final SelectionHandlerList selectionHandlerList;
-    private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
+    private final Provider<SelectionHandlerEditorController> handlerEditorProvider;
     private final DynamicFieldSelectionListModel dynamicFieldSelectionListModel;
     private List<ComponentSelectionHandler> selectionHandlers = new ArrayList<>();
 
@@ -91,12 +88,12 @@ public class SelectionHandlersPresenter
     public SelectionHandlersPresenter(final EventBus eventBus,
                                       final SelectionHandlersView view,
                                       final SelectionHandlerList selectionHandlerList,
-                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
+                                      final Provider<SelectionHandlerEditorController> handlerEditorProvider,
                                       final DynamicFieldSelectionListModel dynamicFieldSelectionListModel) {
         super(eventBus, view);
         this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.selectionHandlerList = selectionHandlerList;
-        this.editRulePresenterProvider = editRulePresenterProvider;
+        this.handlerEditorProvider = handlerEditorProvider;
 
         getView().setTableView(selectionHandlerList);
 
@@ -263,29 +260,13 @@ public class SelectionHandlersPresenter
     private void edit(final ComponentSelectionHandler existingRule,
                       final String caption,
                       final Consumer<ComponentSelectionHandler> consumer) {
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = makeDialog(editRulePresenterProvider);
-        editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
-
-        final DashboardContext dashboardContext = getDashboardContext();
-        editSelectionHandlerPresenter.refreshSelection(dashboardContext);
-        final HandlerRegistration handlerRegistration = dashboardContext
-                .addContextChangeListener(() -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
-
-        final PopupSize popupSize = PopupSize.resizable(1200, 1000, 800, 600);
-        ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption(caption)
-                .onShow(e -> editSelectionHandlerPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        consumer.accept(rule);
-                    }
-                    e.hide();
-                })
-                .onHide(e -> handlerRegistration.removeHandler())
-                .fire();
+        // Made for one use, and disposed once it is closed
+        handlerEditorProvider.get().edit(this,
+                caption,
+                existingRule,
+                fieldSelectionListModel,
+                getDashboardContext(),
+                consumer);
     }
 
     @Override
