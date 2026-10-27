@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
@@ -88,6 +89,8 @@ public class BuildPlan {
     public static final String STAGE_OUTPUT = "3 output";
     /// The last step.
     public static final String STAGE_FINISH = "finish";
+    /// The reference data stage: a table to look values up in, loaded by a reference-data pipeline.
+    public static final String STAGE_REFERENCE = "1 reference";
 
     // The step that writes the build's Events.
     private static final String PROCESSED = "processed";
@@ -117,6 +120,21 @@ public class BuildPlan {
             List.of("validated", "Events validated against the schema and the quality rules", "check_events"),
             List.of("documented", "Events pipeline documented, with its Field mapping generated",
                     "write_documentation stream_ids=..."));
+    // A table to look values up in (stroom://guide/reference-data): on its own, or before the events pipeline that
+    // looks values up in it is stepped (a lookup made before its Reference stream exists is remembered for 10
+    // minutes), so it comes after the converter and before the translation.
+    private static final List<List<String>> REFERENCE = List.of(
+            List.of("reference_pipeline", "Reference-data pipeline: its XSLT from the maps (each a name, a key and "
+                                          + "values), saved in the build, and a child of the Reference Data "
+                                          + "template with the build's converter and that XSLT",
+                    "build_reference_xslt, save_xslt, find_pipeline_templates stage=reference, create_pipeline"),
+            List.of("reference_stepped", "Every reference sample record stepped clean through it",
+                    "step_sample over the Raw Reference streams"),
+            List.of("reference_processed", "The reference sample processed into Reference streams, which lookups "
+                                           + "read: its filter is created disabled, for the user to enable",
+                    "create_processor_filter, wait_for_processing"),
+            List.of("reference_documented", "Reference-data pipeline documented: what each map holds",
+                    "write_documentation stream_ids=<Raw Reference streams>"));
     private static final List<List<String>> STAGE_2 = List.of(
             List.of("index", "Index doc for the agreed backend, convention and name",
                     "get_field_conventions, draft_index_mapping, create_index_doc"),
@@ -154,7 +172,11 @@ public class BuildPlan {
     // The steps whose call depends on how processing stands, as step:processing.
     private static final Set<String> CALLS = Set.of("pipeline:version", "stepped:surveyed", "processed:disabled",
             "processed:running", "index_template:unstepped", "indexed:disabled", "indexed:unstepped",
-            "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited");
+            "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited", "feed:reference",
+            "samples:reference", "reference_processed:disabled", "reference_processed:running",
+            "stepped:no_reference", "index:discovery");
+    // The steps before the translation, which a reference-only build keeps.
+    private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
 
     private final BuildFacts facts;
     private final WriteGuard guard;
@@ -176,7 +198,10 @@ public class BuildPlan {
     /// @return Every step of the plan, in order: each `step`, `what`, `tools` and `stage`.
     public static List<Map<String, Object>> checklist() {
         final List<Map<String, Object>> steps = new ArrayList<>();
-        addSteps(steps, STAGE_EVENTS, STAGE_1);
+        final int translation = STAGE_1.stream().map(List::getFirst).toList().indexOf("translation");
+        addSteps(steps, STAGE_EVENTS, STAGE_1.subList(0, translation));
+        addSteps(steps, STAGE_REFERENCE, REFERENCE);
+        addSteps(steps, STAGE_EVENTS, STAGE_1.subList(translation, STAGE_1.size()));
         addSteps(steps, STAGE_INDEXING, STAGE_2);
         addSteps(steps, STAGE_OUTPUT, STAGE_3);
         addSteps(steps, STAGE_FINISH, FINISH);
@@ -187,7 +212,8 @@ public class BuildPlan {
     /// take.
     public static List<Map<String, Object>> onboardingChecklist() {
         return checklist().stream()
-                .filter(step -> !"covered".equals(step.get("step")) && !STAGE_OUTPUT.equals(step.get("stage")))
+                .filter(step -> !"covered".equals(step.get("step")) && !STAGE_OUTPUT.equals(step.get("stage"))
+                                && !STAGE_REFERENCE.equals(step.get("stage")))
                 .toList();
     }
 
@@ -343,6 +369,28 @@ public class BuildPlan {
                 });
     }
 
+    /// @param build A build.
+    /// @return The steps its plan takes (each `step`, `what`, `tools` and `stage`), leaving out those its kind of
+    /// work doesn't need; the onboarding checklist when the build can't be read (the plan is advice).
+    public List<Map<String, Object>> plannedSteps(final String build) {
+        try {
+            final List<Map<String, Object>> steps = new ArrayList<>();
+            final Object all = status(build, null).get("steps");
+            for (final Object item : all instanceof final List<?> list
+                    ? list
+                    : List.of()) {
+                final Map<String, Object> step = new LinkedHashMap<>(JsonValues.map(item));
+                if (!"not needed".equals(step.remove("state"))) {
+                    steps.add(step);
+                }
+            }
+            return steps;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No steps for build {}: {}", build, e.getMessage()), e);
+            return onboardingChecklist();
+        }
+    }
+
     /// @param build The build, or null.
     /// @param made  A document the calling tool has just created, which counts whether or not the build's listing
     ///              shows it yet, or null.
@@ -471,7 +519,14 @@ public class BuildPlan {
         // A discovery build indexes its raw streams as they are: no events pipeline, its discovery pipeline indexes.
         // Known by its pipeline's raw parser, or by its plan: an XML discovery pipeline from an XMLParser indexing
         // template reads as indexing.
-        final boolean discovery = (!withStage(pipelines, Set.of("discovery")).isEmpty()
+        // The kind of work the build was started as, when it was named (start_build or start_onboarding kind=): its
+        // steps follow it from the start, before the build holds what would tell it.
+        final String kind = facts.kind(build).orElse(null);
+        final List<Map<String, Object>> referencePipelines = withStage(pipelines, Set.of("reference"));
+        final List<Map<String, Object>> rawReference = NullSafe.list(streams.get(StreamTypeNames.RAW_REFERENCE));
+        final boolean reference = "reference".equals(kind) || !referencePipelines.isEmpty()
+                                  || !rawReference.isEmpty();
+        final boolean discovery = ("discovery".equals(kind) || !withStage(pipelines, Set.of("discovery")).isEmpty()
                                    || xslts.stream().anyMatch(x -> Boolean.TRUE.equals(x.get("discovery"))))
                                   && translation.isEmpty();
         List<Map<String, Object>> indexing = withStage(pipelines, Set.of("indexing", "discovery"));
@@ -517,7 +572,15 @@ public class BuildPlan {
         // documentation, and again after save_xslt index_plan=, next said "step 9 of 9, promoted".
         final boolean hasIndexDoc = !of(byType, "Index").isEmpty() || !of(byType, "ElasticIndex").isEmpty();
         final boolean stage2 = newSource || surveyed || !indexing.isEmpty() || hasIndexDoc
-                               || hasMapping(xslts, "index");
+                               || hasMapping(xslts, "index") || discovery;
+        // A table to look values up in, loaded on its own: no translation, Events or index (asked for by the user:
+        // a reference feed's build was planned as an events onboarding).
+        final boolean referenceOnly = reference && !"events".equals(kind) && translation.isEmpty() && raw.isEmpty()
+                                      && !hasMapping(xslts, "translation") && !surveyed && indexing.isEmpty()
+                                      && !hasIndexDoc && !cefBuild && !discovery && copies.isEmpty();
+        if (fmt == null && referenceOnly && !rawReference.isEmpty()) {
+            fmt = sampleFormat(streams, StreamTypeNames.RAW_REFERENCE).orElse(null);
+        }
         for (final Map<String, Object> p : pipelines) {
             if (p.get("working_copy_of") != null) {
                 // A working copy's documentation is the production pipeline's, under its name.
@@ -547,7 +610,7 @@ public class BuildPlan {
 
         final Map<String, Boolean> done = new LinkedHashMap<>();
         done.put("feed", ownFeed);
-        done.put("samples", !raw.isEmpty());
+        done.put("samples", !raw.isEmpty() || (referenceOnly && !rawReference.isEmpty()));
         // Not needed either once the events pipeline reads the raw data with a JSON or XML parser: its clean step is
         // what proves the format (seen in testing: a JSON-lines feed's working pipeline, and step 1 still to do).
         done.put("converter", fmt != null && JsonValues.truthy(fmt.get("needs_text_converter"))
@@ -585,10 +648,24 @@ public class BuildPlan {
         done.put("cef_stepped", !forwarding.isEmpty()
                                 && forwarding.stream().allMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
         done.put("cef_documented", !forwarding.isEmpty() && allNamed(forwarding, documented) && !stale);
+        done.put("reference_pipeline", !referencePipelines.isEmpty()
+                                       && referencePipelines.stream().noneMatch(BuildPlan::hasMissing));
+        done.put("reference_stepped", referencePipelines.stream().anyMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
+        final List<String> referenceFeeds = new ArrayList<>(rawReference.stream()
+                .map(meta -> String.valueOf(meta.get("feed")))
+                .distinct()
+                .toList());
+        if (referenceFeeds.isEmpty() && referenceOnly) {
+            referenceFeeds.addAll(sources);
+        }
+        done.put("reference_processed", !referenceFeeds.isEmpty()
+                                        && referenceFeeds.stream().allMatch(feed -> !facts.referenceStreams(feed)
+                .isEmpty()));
+        done.put("reference_documented", !referencePipelines.isEmpty() && allNamed(referencePipelines, documented));
         done.put("promoted", false);
 
-        final List<Map<String, Object>> steps = steps(done, skipped(discovery, survey != null, existing,
-                !copies.isEmpty() && !ownFeed, stage1, stage2, cefBuild));
+        final List<Map<String, Object>> steps = steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
+                survey != null, existing, !copies.isEmpty() && !ownFeed, stage1, stage2, cefBuild));
         final Map<String, Object> next = steps.stream()
                 .filter(step -> "to do".equals(step.get("state")))
                 .findFirst()
@@ -655,11 +732,6 @@ public class BuildPlan {
                         : survey.get("streams")), existing
                 ? "<recent raw streams of " + named + " (" + streamMetaCall(sources, null) + ")>"
                 : List.of());
-        Object eventsIds = orElse(discovery
-                ? rawIds
-                : events.subList(0, Math.min(20, events.size())), existing
-                ? "<recent Events streams from " + named + " (" + streamMetaCall(sources, "Events") + ")>"
-                : List.of());
         String edited = null;
         Map<String, Object> version = null;
         if ("documented".equals(nextStep) && !translation.isEmpty()
@@ -682,6 +754,47 @@ public class BuildPlan {
             // placeholder).
             processing = "surveyed";
         }
+        Map<String, Object> referenceArgs = null;
+        if (reference) {
+            referenceArgs = new LinkedHashMap<>();
+            referenceArgs.put("pipeline", referencePipelines.isEmpty()
+                    ? null
+                    : uuid(referencePipelines.getFirst()));
+            referenceArgs.put("raw", orElse(rawReference.stream().map(m -> m.get("id")).toList(), existing
+                    ? "<recent Raw Reference streams of " + named + " (" + streamMetaCall(sources, "Raw Reference")
+                      + ")>"
+                    : List.of()));
+        }
+        if (referenceOnly && ("feed".equals(nextStep) || "samples".equals(nextStep))) {
+            processing = "reference";
+        } else if ("reference_processed".equals(nextStep) && !referencePipelines.isEmpty()) {
+            // Created disabled, as any filter but an events or indexing pipeline's: the user enables it.
+            final List<Map<String, Object>> filters = facts.processingFilters(uuid(referencePipelines.getFirst()));
+            processing = filters.isEmpty()
+                    ? null
+                    : filters.stream().noneMatch(f -> Boolean.TRUE.equals(f.get("enabled")))
+                            ? "disabled"
+                            : "running";
+        } else if ("index".equals(nextStep) && discovery) {
+            processing = "discovery";
+        }
+        if ("stepped".equals(nextStep) && !translation.isEmpty()) {
+            // Lookups made before their reference feed has a Reference stream find nothing, and Stroom remembers that
+            // for 10 minutes (asked for by the user: the reference data processed before stepping).
+            final List<String> unloaded = facts.referencedFeeds(uuid(translation.getFirst())).stream()
+                    .filter(feed -> facts.referenceStreams(feed).isEmpty())
+                    .toList();
+            if (!unloaded.isEmpty()) {
+                processing = "no_reference";
+                referenceArgs = new LinkedHashMap<>(NullSafe.map(referenceArgs));
+                referenceArgs.put("unloaded", unloaded);
+            }
+        }
+        Object eventsIds = orElse(discovery
+                ? rawIds
+                : events.subList(0, Math.min(20, events.size())), existing
+                ? "<recent Events streams from " + named + " (" + streamMetaCall(sources, "Events") + ")>"
+                : List.of());
         if (cefOnly || (cefBuild && raw.isEmpty())) {
             eventsIds = orElse(eventsIds, "<recent Events streams from " + named
                                           + " (" + streamMetaCall(sources, "Events") + ")>");
@@ -698,12 +811,12 @@ public class BuildPlan {
                         : "<every location survey_feed gave>",
                 forwarding.isEmpty()
                         ? null
-                        : uuid(forwarding.getFirst()), edited, version);
+                        : uuid(forwarding.getFirst()), edited, version, referenceArgs);
         final NextCall call = nextCall(nextStep == null
                 ? "promoted"
                 : nextStep, args);
         // On existing data, before any pipeline: which stage comes next is the work's (a survey, a copy, an index).
-        final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild;
+        final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild && !reference;
         final Map<String, Object> start = onlyExistingData
                 ? existingDataStart(sources, named)
                 : null;
@@ -816,6 +929,53 @@ public class BuildPlan {
                     "the server reads the Events itself: never read them back to send them");
             case "documented" -> call("write_documentation", args("build", build, "pipeline_uuid", tr, "stream_ids",
                     raw, "markdown", DOCUMENTATION), "the Field mapping section is generated");
+            case "feed:reference" -> call("create_feed", args("build", build, "name",
+                            "<the reference feed name the user confirmed>", "stream_type", "Raw Reference"),
+                    "then upload_sample stream_type='Raw Reference' once per file of the table");
+            case "samples:reference" -> call("upload_sample", args("feed", args.feeds().isEmpty()
+                            ? "<the reference feed>"
+                            : args.feeds().getFirst(), "stream_type", "Raw Reference", "files",
+                    List.of("<each file of the table, as the user's terminal sees it>")),
+                    "run each command it gives in the user's terminal; each prints its stream id. A reference sample "
+                    + "applies from 2000-01-01 unless effective_time says otherwise");
+            case "reference_pipeline" -> call("build_reference_xslt", args("build", build, "mapping",
+                            "<the maps the user confirmed: each a name, a key and its values (stroom://guide/"
+                            + "reference-data)>"),
+                    "save_xslt it in the build; then find_pipeline_templates stage=reference and create_pipeline "
+                    + "from the Reference Data template: it takes the build's converter and that XSLT");
+            case "reference_stepped" -> call("step_sample", args("pipeline_uuid", referencePipeline(args),
+                            "stream_ids", referenceRaw(args)),
+                    "until the verdict is clean: fix the maps, build_reference_xslt and save_xslt uuid=... in "
+                    + "between");
+            case "reference_processed" -> call("create_processor_filter", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "it is created disabled: give the user its pipeline_link and ask them to enable it on the "
+                    + "Processors tab; once they say so, wait_for_processing with its filter_id");
+            case "reference_processed:disabled" -> call("wait_for_processing", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "only once the user says they enabled its filter (" + ASK + "): it writes the Reference "
+                    + "streams lookups read");
+            case "reference_processed:running" -> call("wait_for_processing", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "it writes the Reference streams lookups read");
+            case "reference_documented" -> call("write_documentation", args("build", build, "pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args), "markdown", DOCUMENTATION),
+                    "what each map holds, its key and its values");
+            case "stepped:no_reference" -> call("find_reference_data", args(),
+                    "the events pipeline looks values up in " + PyText.list(JsonValues.strings(
+                            NullSafe.map(args.reference()).get("unloaded"))) + ", which holds no Reference stream "
+                    + "yet: every lookup would find nothing, and Stroom remembers that for 10 minutes. Have it "
+                    + "processed first by the pipeline that loads it (its filter, enabled by the user), then "
+                    + "step_sample");
+            case "index:discovery" -> call("draft_index_mapping", args("backend", "elasticsearch", "index_name",
+                            "<the index name the user confirmed, e.g. stroom-discovery-<source>-v1>",
+                            "events_stream_ids", events, "discovery", args("input", "<json, delimited or xml>",
+                                    "timestamp_field", "<the field holding each record's time, as the user "
+                                                       + "confirmed>")),
+                    "with what the user confirmed in one message (cluster, index name, template, time field, stream "
+                    + "meta, fields to drop, an example index template); then save_xslt index_plan=plan, "
+                    + "find_pipeline_templates stage=discovery and create_indexing_pipeline from the discovery "
+                    + "template");
             case "index" -> call("get_field_conventions", args(),
                     "go straight on, without asking first: it finds the backend and asks the user, in a form, how "
                     + "the index's fields are named; then draft_index_mapping as its reply says (index_name, "
@@ -947,7 +1107,13 @@ public class BuildPlan {
 
     // The format of the newest raw sample stream.
     private Optional<Map<String, Object>> sampleFormat(final Map<String, List<Map<String, Object>>> streams) {
-        final List<Map<String, Object>> metas = NullSafe.list(streams.get("Raw Events"));
+        return sampleFormat(streams, StreamTypeNames.RAW_EVENTS);
+    }
+
+    // The format of the newest sample stream of a type (Raw Events, or a reference feed's Raw Reference).
+    private Optional<Map<String, Object>> sampleFormat(final Map<String, List<Map<String, Object>>> streams,
+                                                      final String type) {
+        final List<Map<String, Object>> metas = NullSafe.list(streams.get(type));
         if (metas.isEmpty()) {
             return Optional.empty();
         }
@@ -1069,7 +1235,9 @@ public class BuildPlan {
                       + "what the user asked: an events pipeline for the feed, survey_feed build=... (its kinds of "
                       + "event); a production pipeline's new version or working copy, copy_pipeline; indexing its "
                       + "Events, get_field_conventions and the index; sending its Events on as CEF, "
-                      + "draft_cef_mapping";
+                      + "draft_cef_mapping; indexing its raw data as it is, for exploration (a discovery index), "
+                      + "start_build kind=discovery for this build; loading it as a table to look values up in "
+                      + "(reference data), start_build kind=reference";
         final List<Map<String, Object>> current = facts.translating(sources);
         if (!current.isEmpty()) {
             // Seen in testing: asked to onboard a feed "using the current pipeline as a reference", the agent
@@ -1122,7 +1290,7 @@ public class BuildPlan {
         return steps;
     }
 
-    private static Set<String> skipped(final boolean discovery,
+    private static Set<String> skipped(final Kinds kinds,
                                        final boolean surveyKnown,
                                        final boolean existing,
                                        final boolean copiesWithoutOwnFeed,
@@ -1130,9 +1298,17 @@ public class BuildPlan {
                                        final boolean stage2,
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
-        final Set<String> skipped = new HashSet<>(discovery
+        final Set<String> skipped = new HashSet<>(kinds.discovery()
                 ? Set.of("translation", "pipeline", "stepped", "processed", "validated", "documented")
                 : Set.of());
+        if (!kinds.reference()) {
+            skipped.addAll(stepsOf(STAGE_REFERENCE));
+        }
+        if (kinds.referenceOnly()) {
+            // A table loaded on its own: its feed, sample and converter, then its reference-data pipeline.
+            stepsOf(STAGE_EVENTS).stream().filter(step -> !SOURCE_STEPS.contains(step)).forEach(skipped::add);
+            skipped.addAll(stepsOf(STAGE_INDEXING));
+        }
         if (!surveyKnown) {
             skipped.add("covered");
         }
@@ -1244,6 +1420,17 @@ public class BuildPlan {
     }
 
     // Arguments in the order given, as name, value, name, value, ...
+    // The build's reference-data pipeline's UUID, or a placeholder.
+    private static String referencePipeline(final CallArgs args) {
+        return NullSafe.nonBlankStringElse(PyText.str(NullSafe.map(args.reference()).get("pipeline")),
+                "<the reference-data pipeline uuid>");
+    }
+
+    // The build's Raw Reference streams' ids, or a placeholder.
+    private static Object referenceRaw(final CallArgs args) {
+        return orElse(NullSafe.map(args.reference()).get("raw"), "<the Raw Reference streams>");
+    }
+
     private static Map<String, Object> args(final Object... namesAndValues) {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         for (int i = 0; i + 1 < namesAndValues.length; i += 2) {
@@ -1357,6 +1544,9 @@ public class BuildPlan {
     /// @param editedXslt  Its translation XSLT changed by hand, or null.
     /// @param version     The pipeline translating the feed now (`name`, `uuid`), whose next version the build
     ///                    makes with its translation written anew, or null.
+    /// @param reference   Its reference data: `pipeline` (the reference-data pipeline's UUID), `raw` (its Raw
+    ///                    Reference streams) and `unloaded` (feeds the events pipeline looks values up in that hold
+    ///                    no Reference stream yet); null for a build without.
     public record CallArgs(String build,
                            List<String> feeds,
                            Object raw,
@@ -1370,7 +1560,8 @@ public class BuildPlan {
                            Object locations,
                            String cef,
                            String editedXslt,
-                           Map<String, Object> version) {
+                           Map<String, Object> version,
+                           Map<String, Object> reference) {
 
         /// @param build       The build.
         /// @param feeds       Its feeds' names.
@@ -1386,7 +1577,16 @@ public class BuildPlan {
                                   final String translation,
                                   final String indexing) {
             return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
-                    null, null, null, null);
+                    null, null, null, null, null);
         }
+    }
+
+    /// What kind of work a build is, as its plan's steps follow it.
+    ///
+    /// @param discovery     A discovery index: raw records indexed as they are, with no events pipeline.
+    /// @param reference     Reference data: a table to look values up in, loaded by a reference-data pipeline.
+    /// @param referenceOnly Reference data loaded on its own: no translation, Events or index.
+    record Kinds(boolean discovery, boolean reference, boolean referenceOnly) {
+
     }
 }

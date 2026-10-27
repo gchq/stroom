@@ -238,7 +238,7 @@ class TestBuildPlanOnExistingData {
         assertThat(next(result).get("step")).isEqualTo("index_template");
         // Raw streams: refused with one.
         final BuildPlan.NextCall call = BuildPlan.nextCall("indexed", new BuildPlan.CallArgs("b", List.of("RAW"),
-                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null, null));
+                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null, null, null));
         assertThat(((Map<?, ?>) call.call().get("arguments")).containsKey("source_pipeline_uuid")).isFalse();
     }
 
@@ -365,6 +365,125 @@ class TestBuildPlanOnExistingData {
         facts.events = List.of(9L);
         assertThat(plan.nextBeforeEvents("b")).isEmpty();
         assertThat(plan.nextBeforeEvents(null)).isEmpty();
+    }
+
+    @Test
+    void aReferenceBuildHasItsOwnStepsAndNoTranslation() {
+        // Asked for by the user: a table to look values up in was planned as an events onboarding.
+        facts.kind = "reference";
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "REF"));
+        Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("samples");
+        assertThat(argumentMap(result)).as("uploaded as Raw Reference").containsEntry("stream_type", "Raw Reference");
+        assertThat(TestBuildPlan.states(result)).as("no translation, Events or index")
+                .containsEntry("translation", "not needed")
+                .containsEntry("processed", "not needed")
+                .containsEntry("index", "not needed")
+                .containsEntry("reference_pipeline", "to do");
+
+        // The table uploaded, as text: its converter, then the reference-data pipeline.
+        facts.ownRawReference = List.of(7L);
+        facts.profiler = text -> FakeBuildFacts.profileOf("delimited");
+        assertThat(next(status()).get("step")).isEqualTo("converter");
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "REF"), FakeBuildFacts.doc("TextConverter", "c",
+                "REF-SPLITTER"));
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("reference_pipeline");
+        assertThat(call(result).get("tool")).isEqualTo("build_reference_xslt");
+
+        // The pipeline, stepped, processed (its filter enabled by the user), documented.
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "REF"), FakeBuildFacts.doc("TextConverter", "c",
+                "REF-SPLITTER"), FakeBuildFacts.doc("Pipeline", "rp", "REF-Reference"));
+        facts.stages = Map.of("rp", "reference");
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("reference_stepped");
+        assertThat(argumentMap(result)).containsEntry("pipeline_uuid", "rp").containsEntry("stream_ids", List.of(7L));
+        facts.stepped = true;
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("reference_processed");
+        assertThat(call(result).get("tool")).isEqualTo("create_processor_filter");
+        assertThat(String.valueOf(next(result).get("then"))).contains("created disabled");
+        facts.filters = List.of(Map.of("enabled", false));
+        assertThat(String.valueOf(next(status()).get("then"))).as("waits for the user to enable it")
+                .contains("only once the user says they enabled its filter");
+        facts.referenceStreams = Map.of("REF", List.of(9L));
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("reference_documented");
+        assertThat(call(result).get("tool")).isEqualTo("write_documentation");
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "REF"), FakeBuildFacts.doc("TextConverter", "c",
+                "REF-SPLITTER"), FakeBuildFacts.doc("Pipeline", "rp", "REF-Reference"),
+                FakeBuildFacts.doc("Documentation", "d", "REF-Reference"));
+        assertThat(next(status()).get("step")).isEqualTo("promoted");
+    }
+
+    @Test
+    void aReferenceBuildIsKnownByWhatItHoldsWithNoKindNamed() {
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "REF"));
+        // Before anything tells it: a new source's onboarding.
+        assertThat(state(status(), "reference_pipeline")).isEqualTo("not needed");
+        facts.ownRawReference = List.of(7L);
+        facts.profiler = text -> FakeBuildFacts.profileOf("json lines");
+        final Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("reference_pipeline");
+        assertThat(state(result, "translation")).isEqualTo("not needed");
+        // Its steps aren't an onboarding's: the onboarding checklist leaves them out.
+        assertThat(BuildPlan.onboardingChecklist()).noneMatch(step -> String.valueOf(step.get("step"))
+                .startsWith("reference_"));
+    }
+
+    @Test
+    void aDiscoveryBuildIsLedFromTheStart() {
+        // A new sample, the kind named: no events pipeline, the discovery plan next.
+        facts.kind = "discovery";
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "RAW"));
+        facts.ownRaw = List.of(7L);
+        Map<String, Object> result = status();
+        assertThat(state(result, "translation")).isEqualTo("not needed");
+        assertThat(next(result).get("step")).isEqualTo("index");
+        assertThat(call(result).get("tool")).isEqualTo("draft_index_mapping");
+        assertThat(argumentMap(result)).containsEntry("backend", "elasticsearch")
+                .containsEntry("events_stream_ids", List.of(7L))
+                .containsKey("discovery");
+        assertThat(String.valueOf(next(result).get("then"))).contains("find_pipeline_templates stage=discovery");
+
+        // An existing feed, the kind named: led the same way, not left to choose the work.
+        facts.docs = List.of();
+        facts.ownRaw = List.of();
+        facts.sources = List.of("ACME");
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("index");
+        assertThat(call(result).get("tool")).isEqualTo("draft_index_mapping");
+    }
+
+    @Test
+    void anExistingFeedsStartOffersADiscoveryIndexAndReferenceData() {
+        facts.sources = List.of("ACME");
+        final Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("existing data");
+        assertThat(String.valueOf(next(result).get("then")))
+                .contains("indexing its raw data as it is, for exploration (a discovery index), start_build "
+                          + "kind=discovery")
+                .contains("(reference data), start_build kind=reference");
+    }
+
+    @Test
+    void anEventsPipelineIsSteppedOnlyOnceTheTablesItLooksUpAreLoaded() {
+        // Lookups made before their reference feed has a Reference stream find nothing, and Stroom remembers that
+        // for 10 minutes: the reference data is processed first (asked for by the user).
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("Pipeline", "ev",
+                "ACME-Events"), FakeBuildFacts.doc("XSLT", "x", "ACME-Events"));
+        facts.stages = Map.of("ev", "translation");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        facts.ownRaw = List.of(7L);
+        facts.referencedFeeds = Map.of("ev", List.of("USERS"));
+        Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("stepped");
+        assertThat(call(result).get("tool")).isEqualTo("find_reference_data");
+        assertThat(String.valueOf(next(result).get("then"))).contains("['USERS']").contains("10 minutes");
+
+        facts.referenceStreams = Map.of("USERS", List.of(5L));
+        result = status();
+        assertThat(call(result).get("tool")).as("loaded: stepped").isEqualTo("step_sample");
     }
 
     @Test
@@ -560,6 +679,11 @@ class TestBuildPlanOnExistingData {
 
     private static Map<?, ?> arguments(final Map<String, Object> result) {
         return (Map<?, ?>) call(result).get("arguments");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> argumentMap(final Map<String, Object> result) {
+        return (Map<String, Object>) arguments(result);
     }
 
     private static Object state(final Map<String, Object> result, final String step) {
