@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
-import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter;
-import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
-import stroom.search.elastic.client.view.ElasticClusterSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ElasticClusterModule`
@@ -33,9 +30,6 @@ public class ElasticClusterScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ElasticClusterPresenter.class);
-        bindPresenterWidget(ElasticClusterSettingsPresenter.class,
-                ElasticClusterSettingsView.class,
-                ElasticClusterSettingsViewImpl.class);
     }
 }
 

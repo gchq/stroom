@@ -84,7 +84,7 @@ public final class ElasticClusterEditorStories {
     private static final String DEFAULT_HTTP_CLIENT_CONFIG_PATH = "/elasticCluster/v1/getDefaultHttpClientConfig";
 
     // A FormGroup gives its control the group's identity as its id
-    // (ElasticClusterSettingsViewImpl.ui.xml)
+    // (ElasticClusterSettings.ui.xml)
     private static final String URLS = "#elasticClusterSettingsConnectionURLs";
     private static final String API_KEY = "#elasticClusterSettingsAPIKey";
 

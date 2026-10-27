@@ -4,11 +4,12 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
+    <!-- An Elasticsearch cluster's Settings tab -->
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs"
                         helpText="URLs of the Elasticsearch nodes to connect to, one per line, in the form scheme://host:port, e.g. https://elastic.example.com:9200. If the port is left out it defaults to 80 for http and 443 for https."
                         screenReaderText="One URL per line, e.g. https://host:9200.">
-            <form:TextArea ui:field="connectionUrls" width="400px"/>
+            <form:TextArea ui:field="connectionUrls" addStyleNames="text-field--wide"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsAPIKey"
                         label="API Key (optional)"
@@ -16,8 +17,7 @@
                         screenReaderText="Access token credential holding the encoded key. Leave blank if not needed.">
             <l:SelectionBox ui:field="apiKey"/>
         </form:FormGroup>
-        <b:Button ui:field="setHttpClientConfig" text="Set HTTP Client Config" width="200px"
-                  addStyleNames="allow-focus"/>
-        <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+        <b:Button ui:field="setHttpClientConfig" text="Set HTTP Client Config" addStyleNames="allow-focus"/>
+        <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>
