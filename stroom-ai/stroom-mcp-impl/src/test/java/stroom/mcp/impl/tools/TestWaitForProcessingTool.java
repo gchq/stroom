@@ -323,7 +323,7 @@ class TestWaitForProcessingTool {
         assertThat(result.get("finished")).isEqualTo(false);
         assertThat(String.valueOf(result.get("hint"))).startsWith("Every task of the pipeline's filters has ended, "
                                                                   + "but none for stream(s) [6]: waiting again "
-                                                                  + "won't change that.");
+                                                                  + "won't change that. explain_processing");
     }
 
     @Test
@@ -456,7 +456,10 @@ class TestWaitForProcessingTool {
                                                 + "\"timeout_seconds\": 5}");
 
         assertThat(pauses.get()).isPositive();
-        assertThat(result.get("hint")).isEqualTo("Tasks were still running at the timeout; call again.");
+        // Nothing processed by the timeout: the reason is more use than another wait (asked for by the user).
+        assertThat(String.valueOf(result.get("hint"))).startsWith("Nothing was processed for these streams by the "
+                                                                  + "timeout. Rather than waiting again, "
+                                                                  + "explain_processing with this pipeline_uuid");
     }
 
     @Test

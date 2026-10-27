@@ -12,6 +12,7 @@
 - document_info (read-only, reads untrusted content): RUN in every situation
 - document_links (read-only, reads untrusted content): RUN in every situation
 - elastic_index_templates (read-only, reads untrusted content): RUN in every situation
+- explain_processing (read-only, reads untrusted content): RUN in every situation
 - fetch_events (read-only, reads untrusted content): RUN in every situation
 - find_in_content (read-only, reads untrusted content): RUN in every situation
 - folder_contents (read-only, reads untrusted content): RUN in every situation

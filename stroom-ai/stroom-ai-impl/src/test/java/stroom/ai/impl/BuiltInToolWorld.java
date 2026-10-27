@@ -46,6 +46,8 @@ import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.config.global.api.GlobalConfigReader;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
@@ -74,6 +76,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.Dependency;
+import stroom.job.api.JobStates;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -83,6 +86,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.processor.api.ProcessingDiagnostics;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.datasource.QueryField;
@@ -231,6 +235,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                     "code", XSLT_TEXT.replace("host1", "host2"), "summary", "Look up host2."))),
             Map.entry("stream_meta", "{\"feeds\":[\"TEST-FEED\"]}"),
             Map.entry("processor_tasks", "{\"mode\":\"list\"}"),
+            Map.entry("explain_processing", "{\"pipeline_uuid\":\"pipeline-uuid\"}"),
             Map.entry("server_tasks", "{}"),
             Map.entry("document_links", "{\"uuids\":[\"pipeline-uuid\"]}"),
             Map.entry("find_in_content", "{\"pattern\":\"HOST_TO_LOCATION\",\"uuids\":[\"xslt-uuid\"]}"),
@@ -533,6 +538,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
                 bind(ProcessorFilterService.class).toInstance(Mockito.mock(ProcessorFilterService.class));
                 bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
+                bind(ProcessingDiagnostics.class).toInstance(processingDiagnostics());
+                bind(JobStates.class).toInstance(Mockito.mock(JobStates.class));
+                bind(ClusterNodeManager.class).toInstance(clusterNodeManager());
                 bind(TaskResource.class).toInstance(Mockito.mock(TaskResource.class));
                 bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
                 bind(NodeService.class).toInstance(nodeService);
@@ -673,6 +681,27 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 });
         Mockito.doAnswer(invocation -> files.remove(path(invocation.getArgument(1))))
                 .when(workspace).delete(Mockito.anyInt(), Mockito.any(WorkspacePath.class));
+    }
+
+
+    // The processing settings as Stroom's defaults have them, for explain_processing.
+    private static ProcessingDiagnostics processingDiagnostics() {
+        final ProcessingDiagnostics diagnostics = Mockito.mock(ProcessingDiagnostics.class);
+        Mockito.when(diagnostics.getSettings()).thenReturn(new ProcessingDiagnostics.Settings(false, true, true, true,
+                true, 1000, 1000, Duration.ofMinutes(10), Duration.ofMinutes(1)));
+        return diagnostics;
+    }
+
+    // One enabled node that is the master, for explain_processing.
+    private static ClusterNodeManager clusterNodeManager() {
+        final ClusterState state = new ClusterState();
+        state.setAllNodes(List.of("node1"));
+        state.setEnabledNodes(List.of("node1"));
+        state.addEnabledActiveNode("node1");
+        state.setMasterNodeName("node1");
+        final ClusterNodeManager manager = Mockito.mock(ClusterNodeManager.class);
+        Mockito.when(manager.getClusterState()).thenReturn(state);
+        return manager;
     }
 
     private static String path(final WorkspacePath path) {

@@ -58,6 +58,7 @@ class TestToolPermissionMatrix {
             new Case("preview_extraction", null, List.of(Need.STEPPING, Need.VIEW_DATA, Need.VIEW)),
             new Case("stream_meta", "{\"feeds\":[\"TEST-FEED\"],\"parts\":true}", List.of(Need.VIEW_DATA)),
             new Case("processor_tasks", null, List.of(Need.MANAGE_PROCESSORS)),
+            new Case("explain_processing", null, List.of(Need.MANAGE_PROCESSORS)),
             new Case("folder_contents", null, List.of(Need.VIEW)),
             new Case("folder_contents", "{\"folder\":\"folder-uuid\",\"show\":[\"processors\"]}",
                     List.of(Need.VIEW, Need.MANAGE_PROCESSORS)),

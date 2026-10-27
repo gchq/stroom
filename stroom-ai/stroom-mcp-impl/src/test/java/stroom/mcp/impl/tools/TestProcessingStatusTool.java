@@ -122,6 +122,17 @@ class TestProcessingStatusTool {
     }
 
     @Test
+    void filtersWithNothingMovingPointToTheDiagnosis() {
+        // Asked for by the user: no progress hands over to explain_processing.
+        Mockito.when(taskService.find(Mockito.any(ExpressionCriteria.class))).thenReturn(ResultPage.empty());
+
+        final Map<String, Object> result = tool.status("p", List.of(done));
+
+        assertThat(String.valueOf(result.get("hint"))).startsWith("No filter has finished or has a task processing.")
+                .contains("explain_processing pipeline_uuid=p");
+    }
+
+    @Test
     void aPipelineWithNoFiltersSaysSo() {
         assertThat(tool.status("p", List.of()).get("hint")).isEqualTo("No processor filters for this pipeline.");
     }
