@@ -20,10 +20,7 @@ import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
-import stroom.receive.rules.client.presenter.DataRetentionRulePresenter;
-import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.receive.rules.client.view.DataRetentionPolicyViewImpl;
-import stroom.receive.rules.client.view.DataRetentionRuleViewImpl;
 import stroom.receive.rules.client.view.DataRetentionViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -39,9 +36,6 @@ public class PolicyScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DataRetentionPresenter.class,
                 DataRetentionView.class,
                 DataRetentionViewImpl.class);
-        bindPresenterWidget(DataRetentionRulePresenter.class,
-                DataRetentionRuleView.class,
-                DataRetentionRuleViewImpl.class);
         bindPresenterWidget(DataRetentionPolicyPresenter.class,
                 DataRetentionPolicyView.class,
                 DataRetentionPolicyViewImpl.class);

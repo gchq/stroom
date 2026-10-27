@@ -26,14 +26,12 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.receive.rules.client.component.DataRetentionPolicyListController;
+import stroom.receive.rules.client.component.DataRetentionRuleEditorController;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -71,7 +69,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
     private final DataRetentionPolicyListController dataRetentionPolicyList;
     private final ExpressionTreeController expressionTree;
-    private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
+    private final Provider<DataRetentionRuleEditorController> ruleEditorProvider;
     private final RestFactory restFactory;
 
     private DataRetentionRules policy;
@@ -93,14 +91,14 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                         final DataRetentionPolicyView view,
                                         final DataRetentionPolicyListController dataRetentionPolicyList,
                                         final ExpressionTreeController expressionTree,
-                                        final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
+                                        final Provider<DataRetentionRuleEditorController> ruleEditorProvider,
                                         final RestFactory restFactory) {
         super(eventBus, view);
         own(dataRetentionPolicyList);
         own(expressionTree);
         this.dataRetentionPolicyList = dataRetentionPolicyList;
         this.expressionTree = expressionTree;
-        this.editRulePresenterProvider = editRulePresenterProvider;
+        this.ruleEditorProvider = ruleEditorProvider;
         this.restFactory = restFactory;
 
         getView().setTableView(dataRetentionPolicyList);
@@ -494,63 +492,37 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 true,
                 ExpressionOperator.builder().build());
 
-        final DataRetentionRulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
-        editRulePresenter.read(newRule);
+        // Made for one use, and disposed once it is closed
+        ruleEditorProvider.get().edit(this, "Add New Rule", newRule, rule -> {
+            visibleRules.add(ruleNumber, rule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Rule")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final DataRetentionRule rule = editRulePresenter.write();
-                        visibleRules.add(ruleNumber, rule);
-
-                        update();
-                        setDirty(true);
-                        dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(0));
-                    }
-                    e.hide();
-                })
-                .fire();
+            update();
+            setDirty(true);
+            dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(0));
+        });
     }
 
     private void edit(final DataRetentionRule existingRule) {
-        final DataRetentionRulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
-        editRulePresenter.read(existingRule);
+        // Made for one use, and disposed once it is closed
+        ruleEditorProvider.get().edit(this, "Edit Rule", existingRule, rule -> {
+            final int index = visibleRules.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                          + "so the changes can't be kept.", null);
+            } else {
+                visibleRules.remove(index);
+                visibleRules.add(index, rule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Edit Rule")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final DataRetentionRule rule = editRulePresenter.write();
-                        final int index = visibleRules.indexOf(existingRule);
-                        if (index < 0) {
-                            // Deleted behind the dialog, which isn't modal
-                            AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
-                                                      + "so the changes can't be kept.", null);
-                        } else {
-                            visibleRules.remove(index);
-                            visibleRules.add(index, rule);
+                update();
+                // Only mark the policies as dirty if the rule was actually changed.
+                if (!existingRule.equals(rule)) {
+                    setDirty(true);
+                }
 
-                            update();
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
-
-                            dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(index));
-                        }
-                    }
-                    e.hide();
-                })
-                .fire();
+                dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(index));
+            }
+        });
     }
 
     private void update() {

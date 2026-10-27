@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.client.view;
+package stroom.receive.rules.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetentionRuleView {
+/// A data retention rule: its name, whether it keeps data for ever or for how long, and the
+/// expression choosing the data it applies to.
+public class DataRetentionRuleEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel expression;
@@ -52,12 +52,10 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     @UiField
     SelectionBox<TimeUnit> timeUnit;
 
-    @Inject
-    public DataRetentionRuleViewImpl(final DataRetentionRuleViewImpl.Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the form, retaining for 1 minute until a rule is shown.
+    public DataRetentionRuleEditor() {
+        initWidget(BINDER.createAndBindUi(this));
 
-        age.setMin(1);
-        age.setMax(9999);
         age.setValue(1);
 
         timeUnit.addItem(TimeUnit.MINUTES);
@@ -66,80 +64,75 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
         timeUnit.addItem(TimeUnit.WEEKS);
         timeUnit.addItem(TimeUnit.MONTHS);
         timeUnit.addItem(TimeUnit.YEARS);
-
-        // TODO @AT There must be a better way of setting the focus than having to use a timer
-        new Timer() {
-            @Override
-            public void run() {
-                name.setFocus(true);
-                name.setTabIndex(0);
-            }
-        }.schedule(100);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @param expressionEditor The expression editor, a controller of its own.
+    public void setExpressionEditor(final IsWidget expressionEditor) {
+        expression.setWidget(expressionEditor.asWidget());
     }
 
-    @Override
-    public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view.asWidget());
+    /// Puts the keyboard focus on the name.
+    public void focus() {
+        name.setFocus(true);
     }
 
-    @Override
+    /// @return The name typed.
     public String getName() {
         return name.getText();
     }
 
-    @Override
+    /// @param name The rule's name.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
+    /// @return Whether Keep Forever is ticked.
     public boolean isForever() {
         return forever.getValue();
     }
 
-    @Override
+    /// @param forever Whether the rule keeps data for ever; Retain For is disabled if so.
     public void setForever(final boolean forever) {
         this.forever.setValue(forever);
-        setEnabled(!forever);
+        setRetainForEnabled(!forever);
     }
 
-    @Override
+    /// @return How many of the time unit to retain data for.
     public int getAge() {
         return age.getIntValue();
     }
 
-    @Override
+    /// @param age How many of the time unit to retain data for.
     public void setAge(final int age) {
         this.age.setValue(age);
     }
 
-    @Override
+    /// @return The unit of how long to retain data.
     public TimeUnit getTimeUnit() {
         return timeUnit.getValue();
     }
 
-    @Override
+    /// @param timeUnit The unit of how long to retain data.
     public void setTimeUnit(final TimeUnit timeUnit) {
         this.timeUnit.setValue(timeUnit);
     }
 
     @UiHandler("forever")
-    public void onAddFunctionClick(final ValueChangeEvent<Boolean> event) {
-        setEnabled(!isForever());
+    void onForeverChange(final ValueChangeEvent<Boolean> event) {
+        setRetainForEnabled(!isForever());
     }
 
-    private void setEnabled(final boolean enabled) {
+    private void setRetainForEnabled(final boolean enabled) {
         retainLabel.setStyleName("section--disabled", !enabled);
         age.setEnabled(enabled);
         timeUnit.setEnabled(enabled);
     }
 
-    public interface Binder extends UiBinder<Widget, DataRetentionRuleViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, DataRetentionRuleEditor> {
 
     }
 }
