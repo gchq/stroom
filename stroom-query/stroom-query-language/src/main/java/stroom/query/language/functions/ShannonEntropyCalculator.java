@@ -27,6 +27,7 @@ public final class ShannonEntropyCalculator {
 
     private static final double LN_2 = Math.log(2);
 
+    // Caps the initial map size so long strings don't allocate a table sized to their length.
     // Enough to cover basic ASCII without resizing.
     private static final int MAX_INITIAL_MAP_SIZE = 128;
 
