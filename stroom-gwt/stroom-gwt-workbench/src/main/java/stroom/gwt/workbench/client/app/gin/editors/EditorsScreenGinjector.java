@@ -83,7 +83,6 @@ import com.google.gwt.inject.client.GinModules;
         FeedScreenModule.class,
         FloorMapScreenModule.class,
         GitRepoScreenModule.class,
-        HttpScreenModule.class,
         IndexScreenModule.class,
         KafkaConfigScreenModule.class,
         OpenAIModelScreenModule.class,

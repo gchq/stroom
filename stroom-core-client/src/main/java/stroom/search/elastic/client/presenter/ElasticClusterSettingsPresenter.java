@@ -24,7 +24,7 @@ import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.http.client.presenter.HttpClientConfigPresenter;
+import stroom.http.client.component.HttpClientConfigEditorController;
 import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -54,7 +54,7 @@ public class ElasticClusterSettingsPresenter
 
     private final RestFactory restFactory;
     private final CredentialClient credentialClient;
-    private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+    private final Provider<HttpClientConfigEditorController> httpClientConfigProvider;
     private HttpClientConfig httpClientConfiguration;
 
     @Inject
@@ -63,14 +63,14 @@ public class ElasticClusterSettingsPresenter
             final ElasticClusterSettingsView view,
             final RestFactory restFactory,
             final CredentialClient credentialClient,
-            final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
+            final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
 
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
-        this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
+        this.httpClientConfigProvider = httpClientConfigProvider;
 
         final CredentialListModel credentialListModel = new CredentialListModel(
                 eventBus,
@@ -105,7 +105,7 @@ public class ElasticClusterSettingsPresenter
     @Override
     public void onSetHttpClientConfiguration() {
         // Read only as this document is, through its context
-        makeDialog(httpClientConfigPresenterProvider).show(httpClientConfiguration, updated -> {
+        httpClientConfigProvider.get().show(this, httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();

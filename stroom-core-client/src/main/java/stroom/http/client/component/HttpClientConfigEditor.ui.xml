@@ -1,4 +1,5 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An HTTP client's settings, with a button that opens its TLS settings -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
@@ -34,28 +35,28 @@
         <form:FormGroup helpText="Whether cookies set by a server are kept and sent back to it on later requests. Some endpoints use a cookie to hold a session, e.g. after signing in, so requests to them need cookies. Default is unticked."
                         screenReaderText="Keeps and sends back server cookies. Default is unticked.">
             <tickbox:TickBox ui:field="cookiesEnabled"
-                                    identity="httpClientCookiesEnabled"
-                                    label="Cookies Enabled"/>
+                             identity="httpClientCookiesEnabled"
+                             label="Cookies Enabled"/>
         </form:FormGroup>
         <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default is ticked."
                         screenReaderText="Some endpoints redirect to authenticate. Default is ticked.">
             <tickbox:TickBox ui:field="followRedirects"
-                                    identity="httpClientFollowRedirects"
-                                    label="Follow Redirects"/>
+                             identity="httpClientFollowRedirects"
+                             label="Follow Redirects"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnections"
                         label="Max Connections"
                         helpText="The maximum number of connections in the pool across all hosts. Default is 1024."
                         screenReaderText="Total across all hosts. Default is 1024.">
-            <v:ValueSpinner ui:field="maxConnections"
-                            width="200px"/>
+            <v:ValueSpinner ui:field="maxConnections" minValue="1" maxValue="1000000"
+                            addStyleNames="http-config__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
                         label="Max Connections Per Route"
                         helpText="The maximum number of pooled connections to any one host. Default is 1024."
                         screenReaderText="Per host. Default is 1024.">
-            <v:ValueSpinner ui:field="maxConnectionsPerRoute"
-                            width="200px"/>
+            <v:ValueSpinner ui:field="maxConnectionsPerRoute" minValue="1" maxValue="1000000"
+                            addStyleNames="http-config__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientKeepAlive"
                         label="Keep Alive"
@@ -67,16 +68,13 @@
                         label="Retries"
                         helpText="How many times a failed request is retried. 0 means no retries. Default is 0."
                         screenReaderText="0 to 1000. Default is 0.">
-            <v:ValueSpinner ui:field="retries"
-                            width="200px"/>
+            <v:ValueSpinner ui:field="retries" maxValue="1000" addStyleNames="http-config__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientUserAgent"
                         label="User Agent"
                         helpText="The value sent as the User-Agent header of each request. Leave blank to use the HTTP client's default."
                         screenReaderText="Sent as the User-Agent header. Blank uses the HTTP client's default.">
-            <form:TextBox ui:field="userAgent"
-                       width="400px"
-                       title="User Agent"/>
+            <form:TextBox ui:field="userAgent" addStyleNames="http-config__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
                         label="Validate After Inactivity Period"
@@ -84,6 +82,7 @@
                         screenReaderText="Idle time before a reused connection is checked. Default is 0.">
             <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
         </form:FormGroup>
-        <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config" width="200px" addStyleNames="allow-focus"/>
+        <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config"
+                  addStyleNames="allow-focus http-config__button"/>
     </g:FlowPanel>
 </ui:UiBinder>

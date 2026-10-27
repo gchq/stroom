@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.http.client.view;
+package stroom.http.client.component;
 
 import stroom.credentials.shared.Credential;
-import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
+import stroom.item.client.SelectionListModel;
+import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextArea;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class HttpTlsConfigViewImpl
-        extends ViewImpl
-        implements HttpTlsConfigView {
+/// An HTTP client's TLS settings: the protocol, the key and trust stores and what may be used.
+/// Blank text is read back as `null`, and lists are one item per line.
+public class HttpTlsConfigEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox protocol;
@@ -59,18 +60,13 @@ public class HttpTlsConfigViewImpl
     @UiField
     TextBox certAlias;
 
-    @Inject
-    public HttpTlsConfigViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty form.
+    public HttpTlsConfigEditor() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         protocol.setReadOnly(readOnly);
         provider.setReadOnly(readOnly);
         keyStore.setReadOnly(readOnly);
@@ -82,89 +78,120 @@ public class HttpTlsConfigViewImpl
         certAlias.setReadOnly(readOnly);
     }
 
-    @Override
+    /// Puts the focus on the protocol.
     public void focus() {
         protocol.setFocus(true);
     }
 
-    @Override
+    /// @param protocol The TLS protocol, e.g. TLSv1.3.
     public void setProtocol(final String protocol) {
         this.protocol.setValue(protocol);
     }
 
-    @Override
+    /// @return The TLS protocol, or `null` if blank.
     public String getProtocol() {
         return getText(protocol.getValue());
     }
 
-    @Override
+    /// @param provider The Java security provider.
     public void setProvider(final String provider) {
         this.provider.setValue(provider);
     }
 
-    @Override
+    /// @return The Java security provider, or `null` if blank.
     public String getProvider() {
         return getText(provider.getValue());
     }
 
-    @Override
-    public SelectionBox<Credential> getKeyStoreSelectionBox() {
-        return keyStore;
+    /// @param model The key stores to choose from.
+    public void setKeyStoreModel(final SelectionListModel<Credential, SimpleSelectionItemWrapper<Credential>> model) {
+        keyStore.setModel(model);
     }
 
-    @Override
-    public SelectionBox<Credential> getTrustStoreSelectionBox() {
-        return trustStore;
+    /// @param credential The key store chosen, or `null` for none.
+    public void setKeyStore(final Credential credential) {
+        keyStore.setValue(credential);
     }
 
-    @Override
+    /// @return The key store's name, or `null` if none is chosen.
+    public String getKeyStoreName() {
+        return NullSafe.get(keyStore.getValue(), Credential::getName);
+    }
+
+    /// @param model The trust stores to choose from.
+    public void setTrustStoreModel(final SelectionListModel<Credential, SimpleSelectionItemWrapper<Credential>> model) {
+        trustStore.setModel(model);
+    }
+
+    /// @param credential The trust store chosen, or `null` for none.
+    public void setTrustStore(final Credential credential) {
+        trustStore.setValue(credential);
+    }
+
+    /// @return The trust store's name, or `null` if none is chosen.
+    public String getTrustStoreName() {
+        return NullSafe.get(trustStore.getValue(), Credential::getName);
+    }
+
+    /// @param trustSelfSignedCertificates Whether a self-signed server certificate is trusted.
     public void setTrustSelfSignedCertificates(final boolean trustSelfSignedCertificates) {
         this.trustSelfSignedCertificates.setValue(trustSelfSignedCertificates);
     }
 
-    @Override
+    /// @return Whether a self-signed server certificate is trusted.
     public boolean isTrustSelfSignedCertificates() {
         return trustSelfSignedCertificates.getValue();
     }
 
-    @Override
+    /// @param verifyHostname Whether the server certificate's host name is checked.
     public void setVerifyHostname(final boolean verifyHostname) {
         this.verifyHostname.setValue(verifyHostname);
     }
 
-    @Override
+    /// @return Whether the server certificate's host name is checked.
     public boolean isVerifyHostname() {
         return verifyHostname.getValue();
     }
 
-    @Override
+    /// @param supportedProtocols The protocol versions that may be used, or `null` for the
+    ///                           defaults.
     public void setSupportedProtocols(final List<String> supportedProtocols) {
         this.supportedProtocols.setValue(listToText(supportedProtocols));
     }
 
-    @Override
+    /// @return The protocol versions that may be used, or `null` if none are given.
     public List<String> getSupportedProtocols() {
         return textToList(supportedProtocols.getValue());
     }
 
-    @Override
+    /// @param supportedCiphers The cipher suites that may be used, or `null` for the defaults.
     public void setSupportedCiphers(final List<String> supportedCiphers) {
         this.supportedCiphers.setValue(listToText(supportedCiphers));
     }
 
-    @Override
+    /// @return The cipher suites that may be used, or `null` if none are given.
     public List<String> getSupportedCiphers() {
-        return textToList(this.supportedCiphers.getValue());
+        return textToList(supportedCiphers.getValue());
     }
 
-    private String listToText(final List<String> list) {
+    /// @param certAlias The client certificate's alias.
+    public void setCertAlias(final String certAlias) {
+        this.certAlias.setValue(certAlias);
+    }
+
+    /// @return The client certificate's alias, or `null` if blank.
+    public String getCertAlias() {
+        return getText(certAlias.getValue());
+    }
+
+    private static String listToText(final List<String> list) {
         if (NullSafe.isEmptyCollection(list)) {
             return "";
         }
         return list.stream().collect(Collectors.joining("\n"));
     }
 
-    private List<String> textToList(final String text) {
+    private static List<String> textToList(final String text) {
         if (!NullSafe.isBlankString(text)) {
             final String[] parts = text.split("\n");
             final List<String> list = new ArrayList<>(parts.length);
@@ -180,24 +207,18 @@ public class HttpTlsConfigViewImpl
         return null;
     }
 
-    private String getText(final String value) {
+    private static String getText(final String value) {
         if (NullSafe.isBlankString(value)) {
             return null;
         }
         return value.trim();
     }
 
-    @Override
-    public void setCertAlias(final String certAlias) {
-        this.certAlias.setValue(certAlias);
-    }
 
-    @Override
-    public String getCertAlias() {
-        return getText(certAlias.getValue());
-    }
+    // --------------------------------------------------------------------------------
 
-    public interface Binder extends UiBinder<Widget, HttpTlsConfigViewImpl> {
+
+    interface Binder extends UiBinder<Widget, HttpTlsConfigEditor> {
 
     }
 }

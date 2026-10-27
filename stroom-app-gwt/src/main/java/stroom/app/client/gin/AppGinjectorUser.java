@@ -47,7 +47,6 @@ import stroom.feed.client.gin.FeedModule;
 import stroom.floormap.client.gin.FloorMapModule;
 import stroom.folder.client.gin.FolderModule;
 import stroom.gitrepo.client.gin.GitRepoModule;
-import stroom.http.client.gin.HttpModule;
 import stroom.importexport.client.gin.ImportExportConfigModule;
 import stroom.index.client.gin.IndexModule;
 import stroom.kafka.client.gin.KafkaConfigModule;
@@ -105,7 +104,6 @@ import com.google.web.bindery.event.shared.EventBus;
         FsVolumeModule.class,
         FeedModule.class,
         FolderModule.class,
-        HttpModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
         KafkaConfigModule.class,

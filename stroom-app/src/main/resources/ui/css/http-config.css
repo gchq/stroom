@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.http.client.presenter;
+/* An HTTP client's settings and its TLS settings */
 
-import stroom.widget.presenter.client.UiHandlers;
+/* A text field, wide enough for a URL or a cipher suite's name */
+.http-config__text {
+    width: 400px;
+}
 
-public interface HttpClientConfigUiHandlers extends UiHandlers {
+/* A number, e.g. Max Connections */
+.http-config__number {
+    width: 200px;
+}
 
-    void onSetHttpTlsConfig();
+/* Set HTTP TLS Config, as wide as the numbers above it */
+.http-config__button {
+    width: 200px;
 }

@@ -24,7 +24,7 @@ import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.http.client.presenter.HttpClientConfigPresenter;
+import stroom.http.client.component.HttpClientConfigEditorController;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -51,7 +51,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
 
     private final RestFactory restFactory;
     private final CredentialClient credentialClient;
-    private final Provider<HttpClientConfigPresenter> httpClientSettingsPresenterProvider;
+    private final Provider<HttpClientConfigEditorController> httpClientConfigProvider;
     private HttpClientConfig httpClientConfiguration;
 
     @Inject
@@ -60,13 +60,13 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
             final OpenAIModelSettingsView view,
             final RestFactory restFactory,
             final CredentialClient credentialClient,
-            final Provider<HttpClientConfigPresenter> httpClientSettingsPresenterProvider) {
+            final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
-        this.httpClientSettingsPresenterProvider = httpClientSettingsPresenterProvider;
+        this.httpClientConfigProvider = httpClientConfigProvider;
         final CredentialListModel credentialListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
@@ -138,9 +138,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
 
     @Override
     public void onSetHttpClientConfiguration() {
-        final HttpClientConfigPresenter httpClientSettingsPresenter =
-                makeDialog(httpClientSettingsPresenterProvider);
-        httpClientSettingsPresenter.show(httpClientConfiguration, updated -> {
+        httpClientConfigProvider.get().show(this, httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();

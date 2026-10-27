@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.http.client.view;
+package stroom.http.client.component;
 
-import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
-import stroom.http.client.presenter.HttpClientConfigUiHandlers;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class HttpClientConfigViewImpl
-        extends ViewWithUiHandlers<HttpClientConfigUiHandlers>
-        implements HttpClientConfigView {
+/// An HTTP client's settings: its timeouts, pool sizes, retries and user agent, with a button that
+/// opens its TLS settings.
+public class HttpClientConfigEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     DurationPicker timeout;
@@ -67,23 +65,16 @@ public class HttpClientConfigViewImpl
     @UiField
     Button setHttpTlsConfig;
 
-    @Inject
-    public HttpClientConfigViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        maxConnections.setMin(1);
-        maxConnections.setMax(1000000);
-        maxConnectionsPerRoute.setMin(1);
-        maxConnectionsPerRoute.setMax(1000000);
-        retries.setMax(1000);
+    private Runnable onSetHttpTlsConfig = () -> {
+    };
+
+    /// Makes an empty form.
+    public HttpClientConfigEditor() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
+    protected void onReadOnlyChange(final boolean readOnly) {
         timeout.setReadOnly(readOnly);
         connectionTimeout.setReadOnly(readOnly);
         connectionRequestTimeout.setReadOnly(readOnly);
@@ -98,142 +89,149 @@ public class HttpClientConfigViewImpl
         validateAfterInactivityPeriod.setReadOnly(readOnly);
     }
 
-    @Override
+    /// Puts the focus on the timeout.
     public void focus() {
         timeout.focus();
     }
 
-    @Override
+    /// @param timeout How long to wait for a response.
     public void setTimeout(final SimpleDuration timeout) {
         this.timeout.setValue(timeout);
     }
 
-    @Override
+    /// @return How long to wait for a response.
     public SimpleDuration getTimeout() {
         return timeout.getValue();
     }
 
-    @Override
+    /// @param connectionTimeout How long to wait for a connection.
     public void setConnectionTimeout(final SimpleDuration connectionTimeout) {
         this.connectionTimeout.setValue(connectionTimeout);
     }
 
-    @Override
+    /// @return How long to wait for a connection.
     public SimpleDuration getConnectionTimeout() {
         return connectionTimeout.getValue();
     }
 
-    @Override
+    /// @param connectionRequestTimeout How long to wait for a pooled connection.
     public void setConnectionRequestTimeout(final SimpleDuration connectionRequestTimeout) {
         this.connectionRequestTimeout.setValue(connectionRequestTimeout);
     }
 
-    @Override
+    /// @return How long to wait for a pooled connection.
     public SimpleDuration getConnectionRequestTimeout() {
         return connectionRequestTimeout.getValue();
     }
 
-    @Override
+    /// @param timeToLive How long a pooled connection may stay idle.
     public void setTimeToLive(final SimpleDuration timeToLive) {
         this.timeToLive.setValue(timeToLive);
     }
 
-    @Override
+    /// @return How long a pooled connection may stay idle.
     public SimpleDuration getTimeToLive() {
         return timeToLive.getValue();
     }
 
-    @Override
+    /// @param cookiesEnabled Whether cookies are kept and sent back.
     public void setCookiesEnabled(final boolean cookiesEnabled) {
         this.cookiesEnabled.setValue(cookiesEnabled);
     }
 
-    @Override
+    /// @return Whether cookies are kept and sent back.
     public boolean isCookiesEnabled() {
         return cookiesEnabled.getValue();
     }
 
-    @Override
+    /// @param followRedirects Whether redirects are followed.
     public void setFollowRedirects(final boolean followRedirects) {
         this.followRedirects.setValue(followRedirects);
     }
 
-    @Override
+    /// @return Whether redirects are followed.
     public boolean isFollowRedirects() {
         return followRedirects.getValue();
     }
 
-    @Override
+    /// @param maxConnections The most pooled connections across all hosts.
     public void setMaxConnections(final int maxConnections) {
         this.maxConnections.setValue(maxConnections);
     }
 
-    @Override
+    /// @return The most pooled connections across all hosts.
     public int getMaxConnections() {
         return maxConnections.getIntValue();
     }
 
-    @Override
+    /// @param maxConnectionsPerRoute The most pooled connections to one host.
     public void setMaxConnectionsPerRoute(final int maxConnectionsPerRoute) {
         this.maxConnectionsPerRoute.setValue(maxConnectionsPerRoute);
     }
 
-    @Override
+    /// @return The most pooled connections to one host.
     public int getMaxConnectionsPerRoute() {
         return maxConnectionsPerRoute.getIntValue();
     }
 
-    @Override
+    /// @param keepAlive How long a connection is kept open for reuse.
     public void setKeepAlive(final SimpleDuration keepAlive) {
         this.keepAlive.setValue(keepAlive);
     }
 
-    @Override
+    /// @return How long a connection is kept open for reuse.
     public SimpleDuration getKeepAlive() {
         return keepAlive.getValue();
     }
 
-    @Override
+    /// @param retries How many times a failed request is retried.
     public void setRetries(final int retries) {
         this.retries.setValue(retries);
     }
 
-    @Override
+    /// @return How many times a failed request is retried.
     public int getRetries() {
         return retries.getIntValue();
     }
 
-    @Override
+    /// @param userAgent The User-Agent header value, or null for the HTTP client's own.
     public void setUserAgent(final String userAgent) {
         this.userAgent.setValue(NullSafe.string(userAgent));
     }
 
-    @Override
+    /// @return The User-Agent header value, or null (when blank) for the HTTP client's own.
     public String getUserAgent() {
-        // Blank means the HTTP client's own user agent
         return NullSafe.isBlankString(userAgent.getValue())
                 ? null
                 : userAgent.getValue().trim();
     }
 
-    @Override
+    /// @param validateAfterInactivityPeriod How long a pooled connection may be idle before it
+    ///                                      is checked.
     public void setValidateAfterInactivityPeriod(final SimpleDuration validateAfterInactivityPeriod) {
         this.validateAfterInactivityPeriod.setValue(validateAfterInactivityPeriod);
     }
 
-    @Override
+    /// @return How long a pooled connection may be idle before it is checked.
     public SimpleDuration getValidateAfterInactivityPeriod() {
         return validateAfterInactivityPeriod.getValue();
     }
 
-    @UiHandler("setHttpTlsConfig")
-    public void onSetHttpTlsConfig(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onSetHttpTlsConfig();
-        }
+    /// @param onSetHttpTlsConfig Called when Set HTTP TLS Config is pressed.
+    public void setOnSetHttpTlsConfig(final Runnable onSetHttpTlsConfig) {
+        this.onSetHttpTlsConfig = onSetHttpTlsConfig;
     }
 
-    public interface Binder extends UiBinder<Widget, HttpClientConfigViewImpl> {
+    @UiHandler("setHttpTlsConfig")
+    void onSetHttpTlsConfig(final ClickEvent event) {
+        onSetHttpTlsConfig.run();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, HttpClientConfigEditor> {
 
     }
 }

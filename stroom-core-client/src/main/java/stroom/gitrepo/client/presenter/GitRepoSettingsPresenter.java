@@ -30,7 +30,7 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsV
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
-import stroom.http.client.presenter.HttpClientConfigPresenter;
+import stroom.http.client.component.HttpClientConfigEditorController;
 import stroom.item.client.SelectionBox;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
@@ -75,7 +75,7 @@ public class GitRepoSettingsPresenter
      */
     private GitRepoDoc gitRepoDoc = null;
     private final CredentialClient credentialClient;
-    private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+    private final Provider<HttpClientConfigEditorController> httpClientConfigProvider;
 
     /**
      * Held here rather than read back off the view, because the editor is a popup: it is only shown on
@@ -97,13 +97,13 @@ public class GitRepoSettingsPresenter
                                     final RestFactory restFactory,
                                     final Provider<GitRepoCommitDialogController> commitDialogProvider,
                                     final CredentialClient credentialClient,
-                                    final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
+                                    final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
-        this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
+        this.httpClientConfigProvider = httpClientConfigProvider;
         view.setUiHandlers(this);
         this.commitDialogProvider = commitDialogProvider;
         final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
@@ -189,7 +189,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
-        makeDialog(httpClientConfigPresenterProvider).show(httpClientConfiguration, updated -> {
+        httpClientConfigProvider.get().show(this, httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();
