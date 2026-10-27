@@ -851,7 +851,8 @@ Each unit's plan (names, template, what goes, every inline style and its replace
 > bases stay for `EmbeddedQueryPresenter` in wave 14. Five reviewers audited the wave: the floor map
 > editor's dirty state, the data tabs' queries left polling on close and late replies fixed. Two
 > bugs master has were fixed: the Key/Value Input's rename and the floor map editor's Fact and Time
-> lists. See `wave-13.md`.
+> lists. The full workbench run after it passed all 1,722 stories with the leak check. See
+> `wave-13.md`.
 
 Rename the dashboard Component interface to DashboardPane, give panes and their settings a component-model base, then convert bottom-up through this stack: settings tabs, TextInput, KeyValueInput and ListInput panes, Vis, table rules and filters, ColumnsManager, TablePresenter, QueryResultTable, QueryResultTableSplit, the query-data tabs, QueryEdit, QueryDocEdit, then DashboardPresenter and EmbeddedQuery. The model pushes data through setData and setSearching, not ResultComponent.
 

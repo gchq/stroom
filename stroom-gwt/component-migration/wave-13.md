@@ -88,7 +88,13 @@ the standalone dashboard GWT compile, checkstyle is clean and the client and wor
 renaming a Key/Value Input in its settings left its tab with the old name and didn't mark the
 dashboard changed (story `DashboardLayout.KeyValueInputSettingsRename`); and the floor map editor's
 Fact and Time lists never showed, their dock having no height in the split pane (story
-`FloorMapEditor.FactAndTimeLists`, which fails with the old layout). What was decided on the way,
+`FloorMapEditor.FactAndTimeLists`, which fails with the old layout). The full workbench run after
+the wave (1,722 stories, 4 workers, with the leak check) passed all 1,722; of their screenshots,
+1,646 match, the 11 new are stories with no baseline yet (the 9 above, the user profile's
+`ManageUsers` and the processor task summary's `ProcessorFilterTasks`), and of the 65 that differ,
+25 are the query editor's, floor map editor's and documentation editor's explained above, and 40
+are the ones that differ from run to run (the force visualisations and the data grid's polled
+column; see ISSUES.md). What was decided on the way,
 where it differs from the plans below, is in the audit above (Left, on purpose) and:
 
 - **Bases.** `DashboardPane` (was the dashboard's `Component`) is what a dashboard holds;
