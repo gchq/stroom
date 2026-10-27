@@ -198,6 +198,13 @@ Needs: View (document)
 - nothing: REFUSED or limited: You don't have permission to view this document.
 - admin: runs (the same as with everything)
 
+## propose_extraction_pipeline {"table":"Users","namespace":"","name":"Users extraction","fields":[{"name":"Org","xpath":"Org"}]}
+Needs: View (document)
+- everything: runs: Nothing was offered: the dashboard has no table 'Users' whose search is known (an embedded query's StroomQL makes its results, so it has no extraction).
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
 ## propose_documentation_change {"markdown":"# Test words\n\nThe words to look for.","summary":"Says what the words are.","uuid":"dictionary-uuid"}
 Needs: View (document)
 - everything: runs: The user has been shown the change to the documentation of Dictionary 'Test words' (+2 −0 lines, in 2 place(s)) as a diff, with a 'Review and apply' button. It was diffed against the documentation as …

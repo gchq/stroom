@@ -158,6 +158,10 @@ public record ExtractionField(@JsonProperty("name") String name,
         if (xpath.length() > MAX_XPATH_CHARS) {
             return "its XPath may be at most " + MAX_XPATH_CHARS + " characters.";
         }
+        if (xpath.chars().anyMatch(c -> Character.isISOControl(c) && c != '\t' && c != '\n' && c != '\r')) {
+            // XML can't hold them.
+            return "its XPath may not have control characters.";
+        }
         final String code = code(xpath);
         if (code == null) {
             return "its XPath has a string or comment that isn't closed.";

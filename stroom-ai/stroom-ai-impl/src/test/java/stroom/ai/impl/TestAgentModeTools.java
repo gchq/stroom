@@ -158,6 +158,8 @@ class TestAgentModeTools {
             Map.entry("propose_dashboard_change", false),
             // Only tries an extraction on events, by stepping: it changes nothing.
             Map.entry("preview_extraction", false),
+            // Only offers the user a button: the user confirms what is written.
+            Map.entry("propose_extraction_pipeline", false),
             // Only offers the user a button: the user applies the change to the Documentation tab, unsaved.
             Map.entry("propose_documentation_change", false),
             Map.entry("config_properties", false),

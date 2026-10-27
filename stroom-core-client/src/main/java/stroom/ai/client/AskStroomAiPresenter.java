@@ -29,6 +29,7 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiCreateExtraction;
 import stroom.ai.shared.AiCreateVisualisation;
 import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptArgument;
@@ -37,6 +38,7 @@ import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiSuggestions;
 import stroom.ai.shared.AiTabSnapshot;
+import stroom.ai.shared.AiWriteExtractionRequest;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -92,9 +94,11 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.stepping.client.event.SteppingCodeChangeEvent;
 import stroom.pipeline.stepping.client.presenter.CodeDiffCardRenderer;
@@ -147,6 +151,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -209,6 +214,11 @@ public class AskStroomAiPresenter
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String WORKING_MESSAGE_ID = AiConversationEntries.WORKING_MESSAGE_ID;
     private static final String WORKING_TEXT_ID = "ai-working-text";
+    // The question asked before a search extraction is written. Fixed and short, as the alert shows a long message
+    // in place of its detail (what would be written), so the user wouldn't see that.
+    private static final String EXTRACTION_QUESTION = "Write this search extraction's XSLT and pipeline? Below is "
+                                                      + "exactly what would be written, and the changes to the "
+                                                      + "table that follow. Nothing is written until you confirm.";
     // On what the model said alongside its tool calls, while the Working line shows it.
     private static final String SHOWN_AS_PROGRESS_CLASS = "ai-message--shown-as-progress";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
@@ -3044,6 +3054,12 @@ public class AskStroomAiPresenter
                 createVisualisation(messageId, actionId, result.getCreateVisualisation());
                 return;
             }
+            if (result.isDone() && result.getCreateExtraction() != null) {
+                // Nothing is written yet, and the user may cancel, so the button can be used again.
+                button.removeAttribute("disabled");
+                createExtraction(messageId, actionId, result.getCreateExtraction());
+                return;
+            }
             if (result.getOpenDocument() != null) {
                 OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
                 button.removeAttribute("disabled");
@@ -3124,6 +3140,106 @@ public class AskStroomAiPresenter
                             error -> showError(error, "Unable to set up " + visualisation.getName(), null),
                             getView());
                 });
+    }
+
+    /// Makes a search extraction the agent proposed for a dashboard table: the user chooses the new pipeline's name
+    /// and folder in Stroom's New dialog (which creates nothing here), then confirms exactly what would be written;
+    /// only then does the server write it, as them. The table is then set up to use it, unsaved.
+    private void createExtraction(final int messageId, final String actionId, final AiCreateExtraction create) {
+        if (currentChat == null) {
+            return;
+        }
+        // The chat the button is in, should the user open another while choosing.
+        final int chatId = currentChat.getId();
+        ShowCreateDocumentDialogEvent.fireChoose(
+                this,
+                "New Extraction Pipeline",
+                create.getFolder() != null
+                        ? create.getFolder()
+                        : selectedExplorerNode,
+                PipelineDoc.TYPE,
+                NullSafe.string(create.getName()),
+                (name, folder, inheritance) -> ConfirmEvent.fire(this,
+                        SafeHtmlUtils.fromString(EXTRACTION_QUESTION),
+                        extractionDetail(create, name, folder, inheritance),
+                        ok -> {
+                            if (ok) {
+                                writeExtraction(chatId, messageId, actionId, create, new AiWriteExtractionRequest(
+                                        name, NullSafe.get(folder, ExplorerNode::getDocRef), inheritance,
+                                        create.getContentHash()));
+                            }
+                        }));
+    }
+
+    // What would be written for a search extraction, the table changes that follow, and the XSLT's code, for the
+    // user to confirm.
+    private static SafeHtml extractionDetail(final AiCreateExtraction create,
+                                             final String name,
+                                             final ExplorerNode folder,
+                                             final PermissionInheritance inheritance) {
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendEscaped("In folder '" + NullSafe.get(folder, ExplorerNode::getName) + "'"
+                         + (inheritance == PermissionInheritance.NONE
+                ? ", inheriting none of its permissions:"
+                : ", inheriting its permissions:"));
+        sb.appendHtmlConstant("<ul>");
+        sb.appendHtmlConstant("<li>").appendEscaped("XSLT '" + name + "', written by Stroom from the fields:")
+                .appendHtmlConstant("<ul>");
+        NullSafe.list(create.getFields()).forEach(field ->
+                sb.appendHtmlConstant("<li>").appendEscaped(field).appendHtmlConstant("</li>"));
+        sb.appendHtmlConstant("</ul>").appendEscaped("Described as: " + NullSafe.string(create.getXsltDescription()))
+                .appendHtmlConstant("</li>");
+        sb.appendHtmlConstant("<li>").appendEscaped("Pipeline '" + name + "', using it: "
+                                                    + NullSafe.string(create.getBase()) + ". Described as: "
+                                                    + NullSafe.string(create.getPipelineDescription()))
+                .appendHtmlConstant("</li>");
+        sb.appendHtmlConstant("</ul>");
+        sb.appendEscaped("Then, unsaved, on the dashboard:");
+        sb.appendHtmlConstant("<ul>");
+        NullSafe.list(create.getDashboardChanges()).forEach(change ->
+                sb.appendHtmlConstant("<li>").appendEscaped(change).appendHtmlConstant("</li>"));
+        sb.appendHtmlConstant("</ul>");
+        sb.appendEscaped("The XSLT's code:");
+        sb.appendHtmlConstant("<pre style=\"white-space: pre-wrap\">")
+                .appendEscaped(NullSafe.string(create.getXslt()))
+                .appendHtmlConstant("</pre>");
+        return sb.toSafeHtml();
+    }
+
+    // Has the server write a search extraction the user confirmed, then sets the table up to use it, unsaved.
+    private void writeExtraction(final int chatId,
+                                 final int messageId,
+                                 final String actionId,
+                                 final AiCreateExtraction create,
+                                 final AiWriteExtractionRequest request) {
+        askStroomAiClient.writeExtraction(chatId, messageId, actionId, request, result -> {
+            if (!result.isDone()) {
+                AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+                return;
+            }
+            final String written = "Wrote pipeline and XSLT '" + request.getName() + "'";
+            showUserActionStatus(messageId, actionId, "DONE", result.getMessage());
+            final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                    create.getDashboard(),
+                    create.getComponentId(),
+                    create.getComponentName(),
+                    operations(result.getTableChanges()),
+                    onResult -> onResult.accept(null),
+                    this::pollAfterAnswer,
+                    message -> {
+                        if (message != null) {
+                            AlertEvent.fireWarn(this, written + ", but table '" + create.getComponentName()
+                                                      + "' couldn't be set up to use it: " + message + "\nSet "
+                                                      + "its extraction pipeline in the table's settings.", null);
+                        }
+                    },
+                    dashboardUndoKey(messageId, actionId));
+            if (!event.isHandled()) {
+                AlertEvent.fireWarn(this, written + ", but the dashboard can't be opened here to set table '"
+                                          + create.getComponentName() + "' up to use it. Set its extraction "
+                                          + "pipeline in the table's settings.", null);
+            }
+        }, getView());
     }
 
     /// Asks the user for one folder (the dashboard's, by default), creates a Visualisation there for each chart

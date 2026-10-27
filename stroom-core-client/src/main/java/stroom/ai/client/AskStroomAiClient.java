@@ -32,6 +32,8 @@ import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.ai.shared.AiWriteExtractionRequest;
+import stroom.ai.shared.AiWriteExtractionResult;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -362,6 +364,31 @@ public class AskStroomAiClient {
                 .method(res -> res.setApproveEverything(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Writes the search extraction a create_extraction_pipeline button proposed, once the user has confirmed
+    /// exactly what is written, with the name and folder they chose.
+    ///
+    /// @param chatId             The chat.
+    /// @param messageId          The tool result message the action is in.
+    /// @param actionId           The action's id.
+    /// @param request            The name, folder and hash the user confirmed.
+    /// @param consumer           Given what happened.
+    /// @param taskMonitorFactory Shows that it is being done.
+    void writeExtraction(final int chatId,
+                         final int messageId,
+                         final String actionId,
+                         final AiWriteExtractionRequest request,
+                         final Consumer<AiWriteExtractionResult> consumer,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.writeExtraction(chatId, messageId, actionId, request))
+                .onSuccess(consumer)
+                .onFailure(error -> consumer.accept(AiWriteExtractionResult.failed(
+                        "The extraction couldn't be written: " + error.getException().getMessage())))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
