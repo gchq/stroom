@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.security.client.component.DocumentCreatePermissionsListController;
+import stroom.security.client.component.UserInfoTabController;
 import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
@@ -30,7 +31,6 @@ import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.client.presenter.SigningKeyPresenter;
 import stroom.security.client.presenter.UserAccessPresenter;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
-import stroom.security.client.presenter.UserInfoPresenter;
 import stroom.security.client.presenter.UserTabPresenter;
 import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.component.EditAccountController;
@@ -86,7 +86,7 @@ public interface SecurityScreenGinjector extends ScreenGinjector {
     UserTabPresenter getUserTabPresenter();
 
     /// @return A user tab's 'Info' sub-tab.
-    UserInfoPresenter getUserInfoPresenter();
+    UserInfoTabController getUserInfoTabController();
 
     /// @return The 'Application Permissions' tab.
     AppPermissionsPresenter getAppPermissionsPresenter();

@@ -21,7 +21,7 @@
                     the user signs in.
                 </p>
             </form:HelpHTML>
-            <form:TextBox ui:field="displayName" width="400px"/>
+            <form:TextBox ui:field="displayName" addStyleNames="text-field--wide" readOnly="true"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="fullNameFormGroup"
@@ -35,7 +35,7 @@
                     the user signs in.
                 </p>
             </form:HelpHTML>
-            <form:TextBox ui:field="fullName" width="400px"/>
+            <form:TextBox ui:field="fullName" addStyleNames="text-field--wide" readOnly="true"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="subjectIdFormGroup"
@@ -54,7 +54,7 @@
                     determines which Open ID Connect claim is used for the unique identity.
                 </p>
             </form:HelpHTML>
-            <form:TextBox ui:field="subjectId" width="400px"/>
+            <form:TextBox ui:field="subjectId" addStyleNames="text-field--wide" readOnly="true"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="enabledFormGroup"

@@ -23,15 +23,16 @@ import stroom.gwt.workbench.client.app.security.SecurityPlays;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.client.presenter.UserInfoPresenter;
+import stroom.security.client.component.UserInfoTabController;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/UserProfileScreen`, showing Stroom's real [UserInfoPresenter] (the 'Info'
+/// Stories of `App/Main/UserProfileScreen`, showing Stroom's real [UserInfoTabController] (the 'Info'
 /// sub-tab of a user's tab) for a user and a group. It makes no requests; the signed in user holds
-/// no app permissions.
+/// no app permissions, except in `ManageUsers`.
 public final class UserProfileScreenStories {
 
     private static final UserRef ALICE = new UserRef("u-1", "alice@corp", "Alice Anderson",
@@ -55,6 +56,15 @@ public final class UserProfileScreenStories {
                     play.expect(play.findByDisplayValue("Alice Anderson")).toBeInTheDocument();
                     play.expect(play.getByDisplayValue("alice@corp")).toBeInTheDocument();
                     play.expect(play.getByLabelText("Unique Identifier")).toHaveAttribute("readonly", null);
+                    // Only those who may manage users can enable or disable one
+                    play.expect(play.getByRole("checkbox", "Enabled")).toBeDisabled();
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Seen by one who may manage users: the Enabled box can be changed
+                .story("ManageUsers", context -> render(context, ALICE, AppPermission.MANAGE_USERS_PERMISSION))
+                .withPlay(play -> {
+                    play.expect(play.findByRole("checkbox", "Enabled")).toBeEnabled();
+                    play.expect(play.getByRole("checkbox", "Enabled")).toBeChecked();
                     SecurityPlays.expectNoProblems(play);
                 })
                 // A group: the names are hidden and the id is relabelled
@@ -68,17 +78,19 @@ public final class UserProfileScreenStories {
                 });
     }
 
-    private static Widget render(final StoryContext context, final UserRef userRef) {
+    private static Widget render(final StoryContext context,
+                                 final UserRef userRef,
+                                 final AppPermission... appPermissions) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.builder().build())
                 .injector(injector)
                 .user(ALICE)
-                .appPermissions()
+                .appPermissions(appPermissions)
                 .build();
         // Shown as UserTabPresenter shows its Info tab
         harness.afterStartUp(() -> {
-            final UserInfoPresenter presenter = harness.show(injector.getUserInfoPresenter());
-            presenter.setUserRef(userRef);
+            final UserInfoTabController userInfo = harness.show(injector.getUserInfoTabController());
+            userInfo.setUserRef(userRef);
         });
         return harness.asWidget();
     }

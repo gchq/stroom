@@ -14,48 +14,55 @@
  * limitations under the License.
  */
 
-package stroom.security.client.presenter;
+package stroom.security.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserResource;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.component.client.Controller;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/**
- * The Info sub-tab of UserTabPresenter
- */
-public class UserInfoPresenter
-        extends MyPresenterWidget<UserInfoView> {
+/// The Info tab of a user's or group's screen ([UserInfoTab]): shows the user given with
+/// [#setUserRef(UserRef)] and, for those who may manage users, saves a change to whether they are
+/// enabled as soon as it is made.
+public class UserInfoTabController extends Controller {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
+    private final UserInfoTab view;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private UserRef userRef;
 
+    /// Made by GIN, with its content.
+    ///
+    /// @param eventBus        The application's event bus.
+    /// @param view            The content.
+    /// @param restFactory     Saves the enabled state.
+    /// @param securityContext Says whether the user may manage users, so change the enabled state.
     @Inject
-    public UserInfoPresenter(final EventBus eventBus,
-                             final UserInfoView view,
-                             final RestFactory restFactory,
-                             final ClientSecurityContext securityContext) {
-        super(eventBus, view);
+    public UserInfoTabController(final EventBus eventBus,
+                                 final UserInfoTab view,
+                                 final RestFactory restFactory,
+                                 final ClientSecurityContext securityContext) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
         this.securityContext = securityContext;
+        initWidget(view);
 
-        own(getView().getIsEnabledTickBox().addValueChangeHandler(event -> {
-            if (event.getValue() != null) {
-                onEnabledStateChange(event.getValue());
+        view.setOnEnabledChange(isEnabled -> {
+            if (isEnabled != null) {
+                onEnabledStateChange(isEnabled);
             }
-        }));
+        });
     }
 
     private void onEnabledStateChange(final boolean isEnabled) {
@@ -72,36 +79,33 @@ public class UserInfoPresenter
                                                 resource.update(user.copy().enabled(isEnabled).build()))
                                         .onSuccess(aVoid ->
                                                 userRef = user.asRef())
-                                        .taskMonitorFactory(this)
+                                        .owner(this)
+                                        .taskMonitorFactory(taskMonitor())
                                         .exec();
                             }
                         })
-                        .taskMonitorFactory(this)
+                        .owner(this)
+                        .taskMonitorFactory(taskMonitor())
                         .exec();
             }
         }
     }
 
+    /// Shows a user or group.
+    ///
+    /// @param userRef The user or group, or `null` for an unknown one.
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        getView().setUserRef(userRef);
-        getView().setReadOnly(hasPermissionToEdit());
+        view.setUserRef(userRef);
+        view.setReadOnly(!hasPermissionToEdit());
     }
 
     private boolean hasPermissionToEdit() {
         return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface UserInfoView extends View {
-
-        void setUserRef(final UserRef userRef);
-
-        void setReadOnly(boolean isReadOnly);
-
-        TickBox getIsEnabledTickBox();
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
     }
 }

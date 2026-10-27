@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.security.client.view;
+package stroom.security.client.component;
 
-import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
+import java.util.function.Consumer;
 
-    private final Widget widget;
+/// The Info tab of a user's or group's screen: its names and unique identifier, read only, and
+/// for a user whether they may sign in.
+public class UserInfoTab extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FormGroup displayNameFormGroup;
@@ -50,22 +53,17 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
     @UiField
     FormGroup enabledFormGroup;
 
-    private UserRef userRef;
-
-    @Inject
-    public UserInfoViewImpl(final Binder binder) {
-        this.widget = binder.createAndBindUi(this);
-
-        // All for display only
-        displayName.setReadOnly(true);
-        subjectId.setReadOnly(true);
-        fullName.setReadOnly(true);
+    /// Makes the tab, showing no user.
+    public UserInfoTab() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
+    /// Shows a user's or group's details; a group has no names or enabled state, and its
+    /// identifier is its name.
+    ///
+    /// @param userRef The user or group, or `null` for an unknown one, shown as a user with no
+    ///                details.
     public void setUserRef(final UserRef userRef) {
-        this.userRef = userRef;
-        // No user (e.g. an unknown one) is shown as a user with no details
         final boolean isUser = userRef == null || userRef.isUser();
 
         enabledFormGroup.setVisible(isUser);
@@ -88,29 +86,22 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
         isEnabledTickBox.setValue(userRef != null && userRef.isEnabled());
     }
 
-    @Override
-    public void setReadOnly(final boolean isReadOnly) {
-        isEnabledTickBox.setEnabled(isReadOnly);
-//        displayName.setReadOnly(isReadOnly);
-//        subjectId.setReadOnly(isReadOnly);
-//        fullName.setReadOnly(isReadOnly);
+    /// @param onEnabledChange Given whether the Enabled box is now ticked, when the user presses it.
+    public void setOnEnabledChange(final Consumer<Boolean> onEnabledChange) {
+        isEnabledTickBox.setOnChange(onEnabledChange);
     }
 
     @Override
-    public TickBox getIsEnabledTickBox() {
-        return isEnabledTickBox;
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
+    protected void onReadOnlyChange(final boolean readOnly) {
+        // The names and identifier are always read only
+        isEnabledTickBox.setEnabled(!readOnly);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, UserInfoViewImpl> {
+    interface Binder extends UiBinder<Widget, UserInfoTab> {
 
     }
 }

@@ -22,6 +22,7 @@ import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.AppPermissionsEditController;
 import stroom.security.client.component.UserDependenciesListController;
+import stroom.security.client.component.UserInfoTabController;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -76,7 +77,8 @@ public class UserTabPresenter
             .withTooltip("API keys held by this user/group.")
             .build();
 
-    private final UserInfoPresenter userInfoPresenter;
+    private final UserInfoTabController userInfo;
+    private final ControllerLayer userInfoLayer;
     private final LazyValue<UserPermissionReportPresenter> userPermsReportPresenterLazyValue;
     private final LazyValue<UserDependenciesListController> userDependenciesListLazyValue;
     private ControllerLayer userDependenciesListLayer;
@@ -93,7 +95,7 @@ public class UserTabPresenter
     @Inject
     public UserTabPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final UserInfoPresenter userInfoPresenter,
+                            final UserInfoTabController userInfo,
                             final ClientSecurityContext clientSecurityContext,
                             final Provider<UserPermissionReportPresenter> userPermsReportPresenterProvider,
                             final Provider<UserDependenciesListController> userDependenciesListProvider,
@@ -101,8 +103,9 @@ public class UserTabPresenter
                             final Provider<AppPermissionsEditController> appPermissionsEditProvider,
                             final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
         super(eventBus, view);
-        own(userInfoPresenter);
-        this.userInfoPresenter = userInfoPresenter;
+        own(userInfo);
+        this.userInfo = userInfo;
+        this.userInfoLayer = new ControllerLayer(userInfo);
         this.userPermsReportPresenterLazyValue = new LazyValue<>(
                 userPermsReportPresenterProvider,
                 userPermissionReportPresenter -> {
@@ -176,8 +179,8 @@ public class UserTabPresenter
 
     private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (INFO_TAB.equals(tab)) {
-            userInfoPresenter.setUserRef(userRef);
-            callback.accept(userInfoPresenter);
+            userInfo.setUserRef(userRef);
+            callback.accept(userInfoLayer);
         } else if (USER_GROUPS_TAB.equals(tab)) {
             final UserAndGroupsPresenter userAndGroupsPresenter
                     = userAndGroupsPresenterLazyValue.getValue();
@@ -239,7 +242,7 @@ public class UserTabPresenter
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
         this.label = getLabel(userRef);
-        userInfoPresenter.setUserRef(userRef);
+        userInfo.setUserRef(userRef);
         appPermissionsEditLazyValue.consumeIfInitialised(appPermissionsEdit ->
                 appPermissionsEdit.setUserRef(userRef));
         userPermsReportPresenterLazyValue.consumeIfInitialised(userPermissionReportPresenter ->
