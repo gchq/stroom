@@ -1,8 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A quick filter as an expression tree, below a message when its text couldn't be converted -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max dock-container-vertical advanced-query">
-        <g:Label ui:field="message" styleName="dock-min advanced-query__message"/>
+        <g:Label ui:field="message" styleName="dock-min advanced-query__message" visible="false"/>
         <g:SimplePanel ui:field="expression" styleName="dock-max advanced-query__expression"/>
     </g:FlowPanel>
 </ui:UiBinder>

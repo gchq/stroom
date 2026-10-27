@@ -18,9 +18,6 @@ package stroom.gwt.workbench.client.app.gin;
 
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
-import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
-import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
-import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -52,10 +49,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
 
         // SecurityModule
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
-
-        // QuickFilterModule: the Advanced Query dialog of a quick filter's recent-filters drop-down
-        bindPresenterWidget(AdvancedQuickFilterPresenter.class, AdvancedQuickFilterView.class,
-                AdvancedQuickFilterViewImpl.class);
 
         // MonitoringModule
         bindSharedView(WrapperView.class, WrapperViewImpl.class);

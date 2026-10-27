@@ -30,7 +30,6 @@ import stroom.entity.client.gin.EntityModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
-import stroom.quickfilter.client.gin.QuickFilterModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
@@ -55,7 +54,6 @@ import com.google.web.bindery.event.shared.EventBus;
         EntityModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
-        QuickFilterModule.class,
         DashboardModule.class,
         VisModule.class,
         EmbeddedQueryModule.class})

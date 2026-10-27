@@ -18,7 +18,7 @@ package stroom.quickfilter.client;
 
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
-import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
+import stroom.quickfilter.client.component.AdvancedQuickFilterController;
 import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.quickfilter.shared.QuickFilterHistoryKey;
 import stroom.quickfilter.shared.QuickFilterHistoryResource;
@@ -68,18 +68,18 @@ public class QuickFilterContextHandlerFactory {
     private static final int MENU_PADDING = 1;
 
     private final RestFactory restFactory;
-    private final Provider<AdvancedQuickFilterPresenter> advancedQuickFilterPresenterProvider;
+    private final Provider<AdvancedQuickFilterController> advancedQuickFilterProvider;
 
     private final AppRoot appRoot;
 
     @Inject
     public QuickFilterContextHandlerFactory(final RestFactory restFactory,
-                                            final Provider<AdvancedQuickFilterPresenter>
-                                                    advancedQuickFilterPresenterProvider,
+                                            final Provider<AdvancedQuickFilterController>
+                                                    advancedQuickFilterProvider,
                                             final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.restFactory = restFactory;
-        this.advancedQuickFilterPresenterProvider = advancedQuickFilterPresenterProvider;
+        this.advancedQuickFilterProvider = advancedQuickFilterProvider;
     }
 
     /**
@@ -161,8 +161,10 @@ public class QuickFilterContextHandlerFactory {
                         .priority(items.size())
                         .text("Advanced Query...")
                         .tooltip("Build this filter as an expression tree")
-                        .command(() -> appRoot.makeDialog(advancedQuickFilterPresenterProvider)
-                                .show(context,
+                        // Made for one use, and disposed once it is closed
+                        .command(() -> advancedQuickFilterProvider.get()
+                                .show(appRoot,
+                                        context,
                                         quickFilter.getText(),
                                         // OK writes the text back through the same path as picking
                                         // a recent filter: set it, fire the change, record the use.

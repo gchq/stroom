@@ -14,34 +14,33 @@
  * limitations under the License.
  */
 
-package stroom.quickfilter.client.view;
+package stroom.quickfilter.client.component;
 
-import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
+import stroom.widget.component.client.Component;
 import stroom.widget.popup.client.view.PopupUtil;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class AdvancedQuickFilterViewImpl extends ViewImpl implements AdvancedQuickFilterView, RequiresResize {
+/// A quick filter as an expression tree, below a message when its text couldn't be converted.
+public class AdvancedQuickFilter extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     Label message;
     @UiField
     SimplePanel expression;
 
-    @Inject
-    public AdvancedQuickFilterViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        message.setVisible(false);
+    /// Makes the form, with no message.
+    public AdvancedQuickFilter() {
+        final Widget widget = BINDER.createAndBindUi(this);
+        initWidget(widget);
         // The dialog is described by the message, if there is one, so that it is read as the
         // dialog opens (the focus goes to the expression)
         widget.addAttachHandler(event -> {
@@ -53,24 +52,12 @@ public class AdvancedQuickFilterViewImpl extends ViewImpl implements AdvancedQui
         });
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @param expressionEditor The expression editor, a controller of its own.
+    public void setExpressionEditor(final IsWidget expressionEditor) {
+        expression.setWidget(expressionEditor.asWidget());
     }
 
-    @Override
-    public void onResize() {
-        if (widget instanceof final RequiresResize requiresResize) {
-            requiresResize.onResize();
-        }
-    }
-
-    @Override
-    public void setExpressionView(final IsWidget view) {
-        expression.setWidget(view.asWidget());
-    }
-
-    @Override
+    /// @param text A message shown above the tree, or `null` to hide it.
     public void setMessage(final String text) {
         message.setText(text == null
                 ? ""
@@ -82,7 +69,7 @@ public class AdvancedQuickFilterViewImpl extends ViewImpl implements AdvancedQui
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, AdvancedQuickFilterViewImpl> {
+    interface Binder extends UiBinder<Widget, AdvancedQuickFilter> {
 
     }
 }
