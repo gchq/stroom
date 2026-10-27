@@ -175,6 +175,36 @@ class TestAnswerLinks {
     }
 
     @Test
+    void testANameWrittenWithTypographicHyphensOrSpacesIsLinkedUnderItsName() {
+        // Seen: a table of pipelines written with non-breaking hyphens (U+2011), none of them linked.
+        final DocRef errors = new DocRef("Pipeline", "465bb324-f137-4538-98ba-f8758e460fd7",
+                "Stroom Errors - Indexing");
+        final DocRef ipv4 = new DocRef("Pipeline", "b3bc9162-561c-40ef-b897-57d2815b4b09",
+                "Maxmind-GeoLite2-City-IPv4");
+        final Map<String, List<DocRef>> documents = Map.of(
+                EVENTS_PIPELINE.getName(), List.of(EVENTS_PIPELINE),
+                errors.getName(), List.of(errors),
+                ipv4.getName(), List.of(ipv4),
+                FEED.getName(), List.of(FEED));
+
+        assertThat(AnswerLinks.link("| Twitter‑Events‑V1.1 | 58 | Feed TWITTER | yes |", documents,
+                KNOWN_STREAMS))
+                .isEqualTo("| " + docLink("Twitter-Events-V1.1", EVENTS_PIPELINE) + " | 58 | Feed TWITTER | yes |");
+        // The name's own spaces may be no-break ones, and its dash an en dash.
+        assertThat(AnswerLinks.link("| Stroom Errors – Indexing | 3 | **no** |", documents,
+                KNOWN_STREAMS))
+                .isEqualTo("| " + docLink("Stroom Errors - Indexing", errors) + " | 3 | **no** |");
+        // Followed by words of the answer's own, and as inline code.
+        assertThat(AnswerLinks.link("Maxmind‑GeoLite2‑City‑IPv4 (loader); `ACME‑EVENTS`.",
+                documents, KNOWN_STREAMS))
+                .isEqualTo(docLink("Maxmind-GeoLite2-City-IPv4", ipv4) + " (loader); "
+                           + docLink("`ACME‑EVENTS`", FEED) + ".");
+        // Still not part of a longer name.
+        assertThat(AnswerLinks.link("Twitter‑Events‑V1.1‑Old", documents, KNOWN_STREAMS))
+                .isEqualTo("Twitter‑Events‑V1.1‑Old");
+    }
+
+    @Test
     void testInlineCodeIsLinkedOnlyWhenItIsExactlyAName() {
         assertThat(link("Saved `ACME-EVENTS Fragments`, reading `ACME-EVENTS/raw`."))
                 .isEqualTo("Saved " + docLink("`ACME-EVENTS Fragments`", CONVERTER) + ", reading `ACME-EVENTS/raw`.");
