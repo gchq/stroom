@@ -281,9 +281,12 @@ public class VisualisationActions {
         return JsonUtil.writeValueAsString(settings, false);
     }
 
-    // A folder as the explorer tree holds it, under the System root, so Stroom's New Visualisation dialog finds
-    // and selects it: the tree tells nodes apart by their root as well as their UUID.
-    static ExplorerNode inExplorerTree(final ExplorerNode folder) {
+    /// A folder as the explorer tree holds it, under the System root, so Stroom's New dialogs find and select it: the
+    /// tree tells nodes apart by their root as well as their UUID.
+    ///
+    /// @param folder A folder.
+    /// @return It, as the explorer tree holds it.
+    public static ExplorerNode inExplorerTree(final ExplorerNode folder) {
         return folder.copy()
                 .rootNodeUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid())
                 .build();

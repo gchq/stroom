@@ -51,6 +51,8 @@ public class AiUserActionResult {
     private final AiCreateVisualisation createVisualisation;
     @JsonProperty
     private final List<AiCreateVisualisation> createVisualisations;
+    @JsonProperty
+    private final AiCreateExtraction createExtraction;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
@@ -89,6 +91,30 @@ public class AiUserActionResult {
     ///                              or null.
     /// @param createVisualisations  For a create_visualisations action, each chart to create and where to wire it
     ///                              up, or null.
+    public AiUserActionResult(final Boolean done,
+                              final String message,
+                              final DocRef openDocument,
+                              final String createQueryName,
+                              final String createQueryText,
+                              final String createDashboardName,
+                              final DashboardConfig createDashboardConfig,
+                              final AiCreateVisualisation createVisualisation,
+                              final List<AiCreateVisualisation> createVisualisations) {
+        this(done, message, openDocument, createQueryName, createQueryText, createDashboardName,
+                createDashboardConfig, createVisualisation, createVisualisations, null);
+    }
+
+    /// @param done                  True if the action was done.
+    /// @param message               What happened, or why it was not done.
+    /// @param openDocument          A document for the browser to open, or null.
+    /// @param createQueryName       For a create_query action, the name to suggest, or null.
+    /// @param createQueryText       For a create_query action, the StroomQL of the new query, or null.
+    /// @param createDashboardName   For a create_dashboard action, the name to suggest, or null.
+    /// @param createDashboardConfig For a create_dashboard action, the new dashboard's settings, or null.
+    /// @param createVisualisation   For a create_visualisation action, what to create, or null.
+    /// @param createVisualisations  For a create_visualisations action, each chart to create, or null.
+    /// @param createExtraction      For a create_extraction_pipeline action, what would be written, for the user to
+    ///                              confirm, or null.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
@@ -99,7 +125,8 @@ public class AiUserActionResult {
                               @JsonProperty("createDashboardConfig") final DashboardConfig createDashboardConfig,
                               @JsonProperty("createVisualisation") final AiCreateVisualisation createVisualisation,
                               @JsonProperty("createVisualisations")
-                              final List<AiCreateVisualisation> createVisualisations) {
+                              final List<AiCreateVisualisation> createVisualisations,
+                              @JsonProperty("createExtraction") final AiCreateExtraction createExtraction) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
@@ -109,6 +136,7 @@ public class AiUserActionResult {
         this.createDashboardConfig = createDashboardConfig;
         this.createVisualisation = createVisualisation;
         this.createVisualisations = createVisualisations;
+        this.createExtraction = createExtraction;
     }
 
     /// @param name   The name to suggest in Stroom's New Dashboard dialog.
@@ -128,6 +156,12 @@ public class AiUserActionResult {
     /// @return The result of a create_visualisations action that can be done.
     public static AiUserActionResult createVisualisations(final List<AiCreateVisualisation> createVisualisations) {
         return new AiUserActionResult(true, null, null, null, null, null, null, null, createVisualisations);
+    }
+
+    /// @param createExtraction What would be written, for the user to confirm.
+    /// @return The result of a create_extraction_pipeline action that can be done.
+    public static AiUserActionResult createExtraction(final AiCreateExtraction createExtraction) {
+        return new AiUserActionResult(true, null, null, null, null, null, null, null, null, createExtraction);
     }
 
     /// @return True if the action was done.
@@ -174,5 +208,11 @@ public class AiUserActionResult {
     /// otherwise null.
     public List<AiCreateVisualisation> getCreateVisualisations() {
         return createVisualisations;
+    }
+
+    /// @return For a create_extraction_pipeline action that can be done, what would be written, for the user to
+    /// confirm; otherwise null.
+    public AiCreateExtraction getCreateExtraction() {
+        return createExtraction;
     }
 }

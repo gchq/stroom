@@ -17,6 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.extraction.ExtractionField;
+import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.ai.impl.vis.VisualisationPlan.Replace;
 import stroom.docref.DocRef;
@@ -168,6 +170,42 @@ class TestUserActions {
             assertThat(VisualisationPlan.fromJson(action.request())).isEqualTo(dashboardPlan());
             assertThat(action.status()).isEqualTo(Status.PENDING);
         });
+    }
+
+    @Test
+    void aCreateExtractionPipelineButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+                List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of("UserId"));
+        final Map<String, Object> create = createExtraction("Dashboard", plan.toJson());
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(create), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom from the plan.
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_EXTRACTION_PIPELINE);
+            assertThat(action.label()).isEqualTo("Create extraction pipeline 'Logons extraction' for table "
+                                                 + "'Events' on dashboard 'Logons', extracting UserId");
+            assertThat(action.name()).isEqualTo("Logons extraction");
+            assertThat(action.doc()).isEqualTo(dashboard);
+            assertThat(ExtractionPlan.fromJson(action.request())).isEqualTo(plan);
+            assertThat(action.status()).isEqualTo(Status.PENDING);
+        });
+    }
+
+    @Test
+    void aCreateExtractionPipelineButtonNeedsADashboardAndAPlanItCanRead() {
+        Mockito.when(lookup.find(Mockito.any())).thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+                List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of());
+
+        assertThat(userActions.check(null, List.of(createExtraction("Pipeline", plan.toJson())), NOW)).isEmpty();
+        assertThat(userActions.check(null, List.of(createExtraction("Dashboard", "{not json")), NOW)).isEmpty();
+        // A field whose XPath calls a function Stroom doesn't allow.
+        final String unsafe = plan.toJson().replace("EventSource/User/Id", "doc('file:///etc/passwd')");
+        assertThat(userActions.check(null, List.of(createExtraction("Dashboard", unsafe)), NOW)).isEmpty();
     }
 
     @Test
@@ -787,6 +825,12 @@ class TestUserActions {
     private static VisualisationPlan dashboardPlan() {
         return new VisualisationPlan("graph", Map.of("source", "Sender", "target", "Recipient"), Map.of(), null,
                 "Messages", "table-ABC12", "Chat user connections", VisualisationPlan.BELOW, "abc123", null, null);
+    }
+
+    private static Map<String, Object> createExtraction(final String type, final String plan) {
+        return Map.of("id", "x1", "action", UserActions.CREATE_EXTRACTION_PIPELINE,
+                "doc", doc(type, OTHER_UUID, "Something"), "name", "Logons extraction", "plan", plan,
+                "summary", "Who logged on");
     }
 
     private static Map<String, Object> createVisualisation(final String id, final String type, final String plan) {

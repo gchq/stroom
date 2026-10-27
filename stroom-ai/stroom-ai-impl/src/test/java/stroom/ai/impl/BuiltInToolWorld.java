@@ -204,6 +204,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("fetch_events", "{\"path\":\"/outputs/a.csv\"}"),
             Map.entry("preview_extraction", "{\"table\":\"Users\",\"path\":\"/outputs/a.csv\",\"fields\":"
                                             + "[{\"name\":\"Org\",\"xpath\":\"Org\"}]}"),
+            Map.entry("propose_extraction_pipeline", "{\"table\":\"Users\",\"namespace\":\"\",\"name\":\"Users "
+                                                     + "extraction\",\"fields\":[{\"name\":\"Org\",\"xpath\":"
+                                                     + "\"Org\"}]}"),
             Map.entry("search_events", "{\"path\":\"/outputs/a.xml\",\"text\":\"a\"}"),
             Map.entry("table", "{\"help\":true}"),
             Map.entry("pipeline", "{\"steps\":[]}"),
@@ -366,8 +369,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             case "propose_query_change" -> openTab(QUERY, AiTabSnapshotPart.QUERY, STROOMQL);
             case "propose_code_change" -> openStepping();
             case "current_results" -> openQueryResults();
-            case "propose_dashboard_change", "preview_extraction" -> openTab(DASHBOARD, AiTabSnapshotPart.QUERY,
-                    STROOMQL);
+            case "propose_dashboard_change", "preview_extraction", "propose_extraction_pipeline" -> openTab(
+                    DASHBOARD, AiTabSnapshotPart.QUERY, STROOMQL);
             default -> {
                 // Nothing to open.
             }
