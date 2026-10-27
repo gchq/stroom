@@ -63,7 +63,6 @@ import stroom.gwt.workbench.client.app.gin.content.ContentAppScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentExtrasScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentTemplateScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.FsVolumeScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ImportExportScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.IndexVolumeScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.PathwaysScreenModule;
@@ -141,7 +140,6 @@ import com.google.gwt.inject.client.GinModules;
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,
-        FsVolumeScreenModule.class,
         PathwaysScreenModule.class,
         PlanBScreenModule.class,
         ContentTemplateScreenModule.class,

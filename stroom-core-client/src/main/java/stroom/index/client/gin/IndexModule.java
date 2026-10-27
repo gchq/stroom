@@ -21,11 +21,8 @@ import stroom.index.client.IndexPlugin;
 import stroom.index.client.presenter.IndexDataPresenter;
 import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexPresenter;
-import stroom.index.client.presenter.IndexVolumeGroupEditPresenter;
-import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.index.client.view.IndexDataViewImpl;
-import stroom.index.client.view.IndexVolumeGroupEditViewImpl;
 
 public class IndexModule extends PluginModule {
 
@@ -35,10 +32,6 @@ public class IndexModule extends PluginModule {
         bind(IndexPresenter.class);
 
         bind(IndexVolumeGroupPresenter.class);
-        bindPresenterWidget(
-                IndexVolumeGroupEditPresenter.class,
-                IndexVolumeGroupEditView.class,
-                IndexVolumeGroupEditViewImpl.class);
         bindPresenterWidget(
                 IndexDataPresenter.class,
                 IndexDataView.class,

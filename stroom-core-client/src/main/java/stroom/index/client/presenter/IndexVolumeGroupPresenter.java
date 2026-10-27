@@ -19,6 +19,7 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.index.client.component.IndexVolumeGroupEditController;
 import stroom.index.client.component.IndexVolumeGroupListController;
 import stroom.index.client.component.NewIndexVolumeGroupController;
 import stroom.index.shared.IndexVolumeGroup;
@@ -42,7 +43,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
             GWT.create(IndexVolumeGroupResource.class);
 
     private final IndexVolumeGroupListController indexVolumeGroupList;
-    private final Provider<IndexVolumeGroupEditPresenter> editProvider;
+    private final Provider<IndexVolumeGroupEditController> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider;
 
@@ -55,7 +56,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
             final EventBus eventBus,
             final WrapperView view,
             final IndexVolumeGroupListController indexVolumeGroupList,
-            final Provider<IndexVolumeGroupEditPresenter> editProvider,
+            final Provider<IndexVolumeGroupEditController> editProvider,
             final RestFactory restFactory,
             final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider) {
 
@@ -129,8 +130,8 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
-        final IndexVolumeGroupEditPresenter editor = makeDialog(editProvider);
-        editor.show(indexVolumeGroup,
+        editProvider.get().show(this,
+                indexVolumeGroup,
                 "Edit Index Volume Group - " + indexVolumeGroup.getName(),
                 result -> refresh());
     }

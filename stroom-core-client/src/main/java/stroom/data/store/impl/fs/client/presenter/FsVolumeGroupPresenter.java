@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.store.impl.fs.client.component.FsVolumeGroupEditController;
 import stroom.data.store.impl.fs.client.component.FsVolumeGroupListController;
 import stroom.data.store.impl.fs.client.component.NewFsVolumeGroupController;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
@@ -44,7 +45,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             GWT.create(FsVolumeGroupResource.class);
 
     private final FsVolumeGroupListController fsVolumeGroupList;
-    private final Provider<FsVolumeGroupEditPresenter> editProvider;
+    private final Provider<FsVolumeGroupEditController> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider;
 
@@ -57,7 +58,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final EventBus eventBus,
             final WrapperView view,
             final FsVolumeGroupListController fsVolumeGroupList,
-            final Provider<FsVolumeGroupEditPresenter> editProvider,
+            final Provider<FsVolumeGroupEditController> editProvider,
             final RestFactory restFactory,
             final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider) {
 
@@ -109,8 +110,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final FsVolumeGroup volumeGroup) {
-        final FsVolumeGroupEditPresenter editor = makeDialog(editProvider);
-        editor.show(volumeGroup, "Edit Data Volume Group - " + volumeGroup.getName(), result -> {
+        editProvider.get().show(this, volumeGroup, "Edit Data Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();
             }

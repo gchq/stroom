@@ -83,7 +83,6 @@ import com.google.gwt.inject.client.GinModules;
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,
-        FsVolumeScreenModule.class,
         PathwaysScreenModule.class,
         PlanBScreenModule.class,
         ContentTemplateScreenModule.class,

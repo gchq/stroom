@@ -14,59 +14,58 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.client.view;
+package stroom.index.client.component;
 
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroupEditView {
+/// An index volume group: its name, above its volumes.
+public class IndexVolumeGroupEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
     @UiField
     SimplePanel list;
 
-    @Inject
-    public FsVolumeGroupEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty form, with no volumes until [#setList(IsWidget)].
+    public IndexVolumeGroupEdit() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
+    /// @return The group's name.
     public String getName() {
-        return this.name.getText();
+        return name.getText();
     }
 
-    @Override
+    /// @param name The group's name.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
-    public void setListView(final IsWidget listView) {
-        list.setWidget(listView.asWidget());
+    /// @param list The group's volumes.
+    public void setList(final IsWidget list) {
+        this.list.setWidget(list.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, FsVolumeGroupEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, IndexVolumeGroupEdit> {
 
     }
 }

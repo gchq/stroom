@@ -34,7 +34,6 @@ import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.data.client.gin.StreamStoreModule;
-import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
@@ -101,7 +100,6 @@ import com.google.web.bindery.event.shared.EventBus;
         DocumentAssetModule.class,
         DocumentationModule.class,
         EntityModule.class,
-        FsVolumeModule.class,
         FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
