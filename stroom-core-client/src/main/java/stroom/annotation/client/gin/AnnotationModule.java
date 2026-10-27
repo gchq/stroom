@@ -20,10 +20,7 @@ import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
 import stroom.annotation.client.AnnotationCommentPlugin;
 import stroom.annotation.client.AnnotationCreatePlugin;
-import stroom.annotation.client.AnnotationEditPresenter;
-import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.AnnotationEditSupport;
-import stroom.annotation.client.AnnotationEditViewImpl;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
 import stroom.annotation.client.LinkedEventPresenter;
@@ -44,7 +41,6 @@ public class AnnotationModule extends PluginModule {
         bindPlugin(AnnotationCollectionPlugin.class);
         bindPlugin(AnnotationCommentPlugin.class);
         bind(AnnotationEditSupport.class).asEagerSingleton();
-        bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindSharedView(FindView.class, FindPanel.class);
     }

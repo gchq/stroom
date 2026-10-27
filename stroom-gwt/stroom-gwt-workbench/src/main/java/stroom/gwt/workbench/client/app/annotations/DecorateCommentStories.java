@@ -41,10 +41,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /// The `App/Annotations/decorateComment` stories: Stroom's
-/// `AnnotationEditPresenter.decorateComment`, which turns `#<digits>` at the start of a word into
+/// `AnnotationEditController.decorateComment`, which turns `#<digits>` at the start of a word into
 /// an annotation link and `<streamId>:<eventId>` into an event link.
 ///
-/// `decorateComment` is a package-private static method of `AnnotationEditPresenter`, used only to
+/// `decorateComment` is a package-private static method of `AnnotationEditController`, used only to
 /// render the comments in an annotation's history, so these stories show the real annotation editor
 /// with the comments as its history entries (see [AnnotationFixtures]) and check the links it
 /// renders (`<u>` elements), and what pressing them does (`EditAnnotationEvent` and

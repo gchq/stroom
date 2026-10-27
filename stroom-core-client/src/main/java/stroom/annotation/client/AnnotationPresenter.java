@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.component.AnnotationEditController;
 import stroom.annotation.client.component.AnnotationLinksController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
@@ -53,7 +54,7 @@ public class AnnotationPresenter
     private boolean descriptionDirty;
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final AnnotationEditPresenter annotationEditPresenter;
+    private final AnnotationEditController annotationEdit;
     private MarkdownEditController markdownEdit;
 
     @SuppressWarnings("checkstyle:linelength")
@@ -61,20 +62,20 @@ public class AnnotationPresenter
     public AnnotationPresenter(final EventBus eventBus,
                                final LinkTabPanelView view,
                                final AnnotationResourceClient annotationResourceClient,
-                               final AnnotationEditPresenter annotationEditPresenter,
+                               final AnnotationEditController annotationEdit,
                                final Provider<AnnotationLinksController> annotationLinksProvider,
                                final LinkedEventPresenter linkedEventPresenter,
                                final Provider<MarkdownEditController> markdownEditProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(annotationEditPresenter);
+        own(annotationEdit);
         own(linkedEventPresenter);
         this.annotationResourceClient = annotationResourceClient;
-        this.annotationEditPresenter = annotationEditPresenter;
-        annotationEditPresenter.setParent(this);
+        this.annotationEdit = annotationEdit;
+        annotationEdit.setParent(this);
         linkedEventPresenter.setParent(this);
 
-        addTab(ANNOTATION, new DocTabProvider<>(() -> annotationEditPresenter));
+        addTab(ANNOTATION, ControllerTabProvider.ofOwned(eventBus, annotationEdit, AnnotationEditController::read));
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
         addTab(LINK_TO, new ControllerTabProvider<>(eventBus, () -> {
             final AnnotationLinksController linkTo = annotationLinksProvider.get();
@@ -173,10 +174,10 @@ public class AnnotationPresenter
     }
 
     public void updateHistory() {
-        annotationEditPresenter.updateHistory();
+        annotationEdit.updateHistory();
     }
 
     public void setInitialComment(final String initialComment) {
-        annotationEditPresenter.setInitialComment(initialComment);
+        annotationEdit.setInitialComment(initialComment);
     }
 }

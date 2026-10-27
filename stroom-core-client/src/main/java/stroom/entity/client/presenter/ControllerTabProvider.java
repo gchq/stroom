@@ -51,6 +51,8 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
     private final Supplier<C> make;
     private final TabReader<C, D> reader;
     private final BiFunction<C, D, D> writer;
+    // Whether the tab owns the controller, or only shows one its document owns
+    private final boolean owns;
     private Host host;
 
     /// A tab that only shows the document.
@@ -74,10 +76,37 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
                                  final Supplier<C> make,
                                  final TabReader<C, D> reader,
                                  final BiFunction<C, D, D> writer) {
+        this(eventBus, make, reader, writer, true);
+    }
+
+    private ControllerTabProvider(final EventBus eventBus,
+                                  final Supplier<C> make,
+                                  final TabReader<C, D> reader,
+                                  final BiFunction<C, D, D> writer,
+                                  final boolean owns) {
         this.eventBus = Objects.requireNonNull(eventBus, "eventBus");
         this.make = Objects.requireNonNull(make, "make");
         this.reader = Objects.requireNonNull(reader, "reader");
         this.writer = Objects.requireNonNull(writer, "writer");
+        this.owns = owns;
+    }
+
+    /// A tab that only shows the document, through a controller its document owns rather than the
+    /// tab, e.g. one the document tells things before the tab is first shown. It sees the
+    /// document's context through the document.
+    ///
+    /// @param eventBus   The application's event bus.
+    /// @param controller The controller, owned by the document.
+    /// @param reader     Reads the document into it.
+    /// @param <C>        The controller's type.
+    /// @param <D>        The document's type.
+    /// @return The tab.
+    public static <C extends Controller, D> ControllerTabProvider<C, D> ofOwned(final EventBus eventBus,
+                                                                              final C controller,
+                                                                              final TabReader<C, D> reader) {
+        Objects.requireNonNull(controller, "controller");
+        return new ControllerTabProvider<>(eventBus, () -> controller, reader, (content, document) -> document,
+                false);
     }
 
     @Override
@@ -112,14 +141,16 @@ public final class ControllerTabProvider<C extends Controller, D> implements Tab
         getPresenter().onClose();
     }
 
-    // The presenter the document shows the controller through, which owns it
+    // The presenter the document shows the controller through, which owns it unless its document does
     private final class Host extends DocPresenter<ControllerView, D> {
 
         private final C content;
 
         private Host(final C content) {
             super(eventBus, new ControllerView(content));
-            this.content = own(content);
+            this.content = owns
+                    ? own(content)
+                    : content;
         }
 
         @Override

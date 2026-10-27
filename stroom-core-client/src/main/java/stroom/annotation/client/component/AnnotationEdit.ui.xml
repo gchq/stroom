@@ -4,35 +4,48 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:annotation="urn:import:stroom.annotation.client">
+    <!-- An annotation's Annotation tab (stroom-annotation.css, annotation-edit.css) -->
     <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
             <annotation:SettingBlock ui:field="titleBlock">
                 <g:FlowPanel addStyleNames="annotationTitleContainer">
-                    <form:TextBox ui:field="titleTextBox"
+                    <!-- Named, as a placeholder is only a hint, and the title each is given (its
+                         value, for when it is too long to show) would otherwise be read as its name -->
+                    <form:TextBox ui:field="titleTextBox" placeholder="Title" ariaLabel="Title"
                                addStyleNames="annotationTitle annotationTitleTextBox annotationTextBox allow-focus"/>
                     <g:Label ui:field="annotationId" styleName="annotationId"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
             <annotation:SettingBlock ui:field="subjectBlock">
                 <g:FlowPanel addStyleNames="annotationSubjectContainer">
-                    <form:TextBox ui:field="subjectTextBox"
+                    <form:TextBox ui:field="subjectTextBox" placeholder="Subject" ariaLabel="Subject"
                                addStyleNames="annotationSubject annotationSubjectTextBox annotationTextBox allow-focus"/>
                 </g:FlowPanel>
             </annotation:SettingBlock>
         </g:FlowPanel>
         <g:FlowPanel styleName="annotationBottom">
             <g:FlowPanel styleName="dock-max annotationLeft">
-                <g:SimplePanel ui:field="history" styleName="annotationHistory"/>
+                <g:SimplePanel styleName="annotationHistory">
+                    <!-- Shown once the history is fetched -->
+                    <g:FlowPanel ui:field="historyContainer"
+                                 styleName="max dock-container-vertical annotationHistoryContainer"
+                                 visible="false">
+                        <g:HTML ui:field="historyHtml" styleName="dock-max annotationHistoryOuter"/>
+                        <b:Button ui:field="copyHistory" icon="COPY" text="Copy History"
+                                  addStyleNames="dock-min allow-focus annotationHistoryCopyButton"/>
+                    </g:FlowPanel>
+                </g:SimplePanel>
                 <form:FormGroup identity="annotationComment" label="Add a comment"
                                 helpText="Text to add to the annotation's history. Select Comment to save it. Choose Comment adds the text of a standard comment to the end of this text."
                                 screenReaderText="Saved to the history when you select Comment.">
                     <g:FlowPanel styleName="annotationCommentContainer">
                         <form:TextArea ui:field="comment" addStyleNames="annotationComment allow-focus"/>
                         <g:FlowPanel ui:field="buttons" styleName="annotationButtons">
-                            <b:Button ui:field="commentButton" addStyleNames="allow-focus" text="Choose Comment"
-                                      width="200px"/>
-                            <b:Button ui:field="create" addStyleNames="allow-focus button--contained-primary"
-                                      text="Create" width="200px"/>
+                            <b:Button ui:field="commentButton" addStyleNames="allow-focus annotation-edit__button"
+                                      text="Choose Comment"/>
+                            <b:Button ui:field="create" icon="ADD"
+                                      addStyleNames="allow-focus button--contained-primary annotation-edit__button"
+                                      text="Create"/>
                         </g:FlowPanel>
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -81,7 +94,7 @@
                         </form:FormGroup>
                     </annotation:SettingBlock>
                     <g:SimplePanel styleName="annotationDelete">
-                        <b:Button ui:field="delete" addStyleNames="allow-focus button--contained-secondary"
+                        <b:Button ui:field="delete" icon="DELETE" addStyleNames="allow-focus button--contained-secondary"
                                   text="Delete Annotation"/>
                     </g:SimplePanel>
                 </g:FlowPanel>

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.annotation.client.component.ChooserController;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationPresenter;
+import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.client.DurationLabel;
+import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.Lozenge;
+import stroom.annotation.client.component.AnnotationEdit.AnnotationEditAction;
 import stroom.annotation.client.component.ChooserController.DataSupplier;
-import stroom.annotation.client.component.CommentEditController;
-import stroom.annotation.client.component.MultiChooserController;
-import stroom.annotation.client.component.OpenChooser;
-import stroom.annotation.client.component.RetentionPeriodController;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
@@ -55,7 +56,6 @@ import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.SourceLocation;
@@ -64,18 +64,19 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.FindUserContext;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -84,17 +85,14 @@ import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -106,9 +104,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class AnnotationEditPresenter
-        extends DocPresenter<AnnotationEditView, Annotation>
-        implements AnnotationEditUiHandlers {
+/// An annotation's Annotation tab ([AnnotationEdit]): shows the annotation, makes each change to it
+/// straight away on the server (its title, subject, status, assignment, labels, collections,
+/// retention period and comments), and shows its history, whose comments and references can be
+/// followed, edited and deleted. Read only as its document is: everything can be read, nothing
+/// changed.
+public class AnnotationEditController extends Controller implements Focus {
 
     private static final String EMPTY_VALUE = "'  '";
     private static final String ENTRY_ID_ATTRIBUTE = "entryId";
@@ -150,6 +151,7 @@ public class AnnotationEditPresenter
     // Put between references written with nothing between them: an em space
     private static final String LINK_GAP = "\u2003";
 
+    private final AnnotationEdit view;
     private final AnnotationResourceClient annotationResourceClient;
     private final Provider<ChooserController<AnnotationTag>> chooserProvider;
     private final UserRefPopupController assignedToPicker;
@@ -161,6 +163,7 @@ public class AnnotationEditPresenter
     private final DurationLabel durationLabel;
     private final Provider<CommentEditController> commentEditProvider;
 
+    private Annotation annotation;
     private DocRef annotationRef;
     private AnnotationIdentity annotationIdentity;
     private AnnotationPresenter parent;
@@ -180,20 +183,37 @@ public class AnnotationEditPresenter
     private boolean suppressHistoryUpdate;
 
     private final Set<Long> expandedItems = new HashSet<>();
+    // The history as text, for Copy History
+    private String historyText = "";
 
+    /// Made by GIN, with its tab.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The tab.
+    /// @param annotationResourceClient Fetches and changes the annotation.
+    /// @param chooserProvider          Makes the status and standard comment choosers.
+    /// @param assignedToPicker         Picks who the annotation is assigned to.
+    /// @param multiChooserProvider     Makes the label and collection choosers.
+    /// @param clientSecurityContext    Says who the user is, to assign themselves.
+    /// @param dateTimeFormatter        Formats the history's times.
+    /// @param retentionPeriodProvider  Makes the retention period dialog.
+    /// @param durationLabel            Describes the retention period.
+    /// @param commentEditProvider      Makes the dialog that edits a comment.
     @Inject
-    public AnnotationEditPresenter(final EventBus eventBus,
-                                   final AnnotationEditView view,
-                                   final AnnotationResourceClient annotationResourceClient,
-                                   final Provider<ChooserController<AnnotationTag>> chooserProvider,
-                                   final UserRefPopupController assignedToPicker,
-                                   final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
-                                   final ClientSecurityContext clientSecurityContext,
-                                   final DateTimeFormatter dateTimeFormatter,
-                                   final Provider<RetentionPeriodController> retentionPeriodProvider,
-                                   final DurationLabel durationLabel,
-                                   final Provider<CommentEditController> commentEditProvider) {
-        super(eventBus, view);
+    public AnnotationEditController(final EventBus eventBus,
+                                    final AnnotationEdit view,
+                                    final AnnotationResourceClient annotationResourceClient,
+                                    final Provider<ChooserController<AnnotationTag>> chooserProvider,
+                                    final UserRefPopupController assignedToPicker,
+                                    final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
+                                    final ClientSecurityContext clientSecurityContext,
+                                    final DateTimeFormatter dateTimeFormatter,
+                                    final Provider<RetentionPeriodController> retentionPeriodProvider,
+                                    final DurationLabel durationLabel,
+                                    final Provider<CommentEditController> commentEditProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(assignedToPicker);
         this.annotationResourceClient = annotationResourceClient;
         this.chooserProvider = chooserProvider;
@@ -205,8 +225,33 @@ public class AnnotationEditPresenter
         this.durationLabel = durationLabel;
         this.commentEditProvider = commentEditProvider;
 
-        getView().setUiHandlers(this);
+        view.setOnAction(this::onAction);
+        view.setOnTitleChange(this::onTitleChange);
+        view.setOnSubjectChange(this::onSubjectChange);
+        view.setOnHistoryKeyDown(this::onHistoryKeyDown);
+        view.setOnHistoryMouseDown(this::onHistoryMouseDown);
         assignedToPicker.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
+        watch(Contexts.READ_ONLY, view::setReadOnly);
+    }
+
+    private void onAction(final AnnotationEditAction action, final Element element) {
+        switch (action) {
+            case STATUS -> showStatusChooser(element);
+            case ASSIGNED_TO -> showAssignedToChooser(element);
+            case ASSIGN_YOURSELF -> assignYourself();
+            case LABELS -> showLabelChooser(element);
+            case COLLECTIONS -> showCollectionChooser(element);
+            case RETENTION_PERIOD -> showRetentionPeriodChooser(element);
+            case CHOOSE_COMMENT -> showCommentChooser(element);
+            case CREATE -> create();
+            case COPY_HISTORY -> copyHistory();
+            case DELETE -> onDelete();
+        }
+    }
+
+    // Whether the annotation may not be changed, as its document says
+    private boolean isReadOnly() {
+        return context(Contexts.READ_ONLY);
 
     }
 
@@ -222,7 +267,7 @@ public class AnnotationEditPresenter
                             consumer.accept(values.getValues());
                         }
                     },
-                    new DefaultErrorHandler(this, null), this);
+                    new DefaultErrorHandler(this, null), taskMonitor());
         };
     }
 
@@ -247,7 +292,7 @@ public class AnnotationEditPresenter
             // persisted data.
             suppressHistoryUpdate = true;
             try {
-                read(getEntity().asDocRef(), getEntity().copy().name(selected).build());
+                read(annotation.asDocRef(), annotation.copy().name(selected).build());
             } finally {
                 suppressHistoryUpdate = false;
             }
@@ -257,7 +302,7 @@ public class AnnotationEditPresenter
 
     private void setTitle(final String title) {
         currentTitle = title;
-        getView().setTitle(title);
+        view.setAnnotationTitle(title);
     }
 
     private void changeSubject(final String selected) {
@@ -272,7 +317,7 @@ public class AnnotationEditPresenter
 
     private void setSubject(final String subject) {
         currentSubject = subject;
-        getView().setSubject(subject);
+        view.setSubject(subject);
     }
 
     private boolean hasChanged(final String oldValue, final String newValue) {
@@ -299,7 +344,7 @@ public class AnnotationEditPresenter
 
     private void setStatus(final AnnotationTag status) {
         currentStatus = status;
-        getView().setStatus(status);
+        view.setStatus(status);
     }
 
     private void changeAssignedTo(final UserRef selected) {
@@ -317,8 +362,8 @@ public class AnnotationEditPresenter
         currentAssignedTo = assignedTo;
         assignedToPicker.resolve(assignedTo, userRef -> {
             currentAssignedTo = userRef;
-            getView().setAssignedTo(userRef);
-            getView().setAssignYourselfEnabled(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
+            view.setAssignedTo(userRef);
+            view.setAssignYourselfEnabled(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
             assignedToPicker.setSelected(currentAssignedTo);
         });
     }
@@ -351,7 +396,7 @@ public class AnnotationEditPresenter
 
     private void setLabels(final List<AnnotationTag> labels) {
         currentLabels = labels;
-        getView().setLabels(currentLabels);
+        view.setLabels(currentLabels);
     }
 
     private void changeAnnotationCollections(final List<AnnotationTag> selected) {
@@ -382,11 +427,10 @@ public class AnnotationEditPresenter
 
     private void setCollections(final List<AnnotationTag> collections) {
         currentCollections = collections;
-        getView().setCollections(currentCollections);
+        view.setCollections(currentCollections);
     }
 
-    @Override
-    public void showRetentionPeriodChooser(final Element element) {
+    private void showRetentionPeriodChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -406,15 +450,15 @@ public class AnnotationEditPresenter
 
     private void setRetentionPeriod(final SimpleDuration retentionPeriod) {
         currentRetentionPeriod = retentionPeriod;
-        getView().setRetentionPeriod(retentionPeriod == null
+        view.setRetentionPeriod(retentionPeriod == null
                 ? "Forever"
                 : retentionPeriod.toLongString());
     }
 
     // Adds a standard comment to the comment being written, returning whether it did
     private boolean changeComment(final AnnotationTag selected) {
-        if (selected != null && hasChanged(getView().getComment(), selected.getTagText())) {
-            getView().setComment(getView().getComment() + selected.getTagText());
+        if (selected != null && hasChanged(view.getComment(), selected.getTagText())) {
+            view.setComment(view.getComment() + selected.getTagText());
             return true;
         }
         return false;
@@ -430,11 +474,12 @@ public class AnnotationEditPresenter
     }
 
     private void change(final SingleAnnotationChangeRequest request, final Consumer<Boolean> consumer) {
-        annotationResourceClient.change(request, consumer, this);
+        annotationResourceClient.change(request, guard(consumer), taskMonitor());
     }
 
+    /// Fetches the history again.
     public void updateHistory() {
-        annotationResourceClient.getAnnotationEntries(annotationRef, this::updateHistory, this);
+        annotationResourceClient.getAnnotationEntries(annotationRef, guard(this::updateHistory), taskMonitor());
     }
 
     private void updateHistory(final List<AnnotationEntry> entries) {
@@ -495,82 +540,70 @@ public class AnnotationEditPresenter
                 }
             }, HISTORY_INNER);
 
-            final HTML panel = new HTML(html.toSafeHtml());
-            panel.setStyleName("dock-max annotationHistoryOuter");
-            // Enter on an event or annotation reference follows it, as a mouse press does. Enter,
-            // Space, Shift+F10 or the context menu key on an entry's actions button opens the
-            // entry's menu, as pressing the entry does
-            panel.addDomHandler(e -> {
-                final Element target = e.getNativeEvent().getEventTarget().cast();
-                if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
-                    e.preventDefault();
-                    followLink(target);
-                } else if (ElementUtil.hasClassName(target, ENTRY_ACTIONS_CLASS) && isMenuKey(e)) {
-                    e.preventDefault();
-                    showEntryEditMenu(target, new PopupPosition(
-                            new Rect(target).grow(3), PopupLocation.BELOW));
-                }
-            }, KeyDownEvent.getType());
-            panel.addMouseDownHandler(e -> {
-                // If the user has clicked on a link then consume the event.
-                final Element target = e.getNativeEvent().getEventTarget().cast();
-                if (target.hasTagName("u")) {
-                    followLink(target);
-                } else {
-                    Element parent = target;
-                    String id = null;
-                    String type = null;
-                    String groupId = null;
-
-                    Element entryElement = null;
-                    while (parent != null && NullSafe.isBlankString(type)) {
-                        entryElement = parent;
-                        type = entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE);
-                        parent = parent.getParentElement();
-                    }
-
-                    if (entryElement != null) {
-                        id = entryElement.getAttribute(ENTRY_ID_ATTRIBUTE);
-                        groupId = entryElement.getAttribute(GROUP_ID_ATTRIBUTE);
-                    }
-
-                    if (NullSafe.isNonBlankString(groupId)) {
-                        final long gid = Long.parseLong(groupId);
-                        if (expandedItems.contains(gid)) {
-                            expandedItems.remove(gid);
-                        } else {
-                            expandedItems.add(gid);
-                        }
-                        updateHistory();
-                    } else if (NullSafe.isNonBlankString(id) && NullSafe.isNonBlankString(type)) {
-                        showEntryEditMenu(target, new PopupPosition(e.getClientX(), e.getClientY()));
-                    }
-                }
-            });
-
-            final String historyText = text.toString();
-
-            final Button copyToClipboard = new Button();
-            copyToClipboard.setIcon(SvgImage.COPY);
-            copyToClipboard.setText("Copy History");
-            copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
-            copyToClipboard.addClickHandler(e -> Clipboard.writeText(historyText, () -> {
-            }, () -> AlertEvent.fireError(
-                    AnnotationEditPresenter.this,
-                    "Unable to copy",
-                    null)));
-
-            final FlowPanel verticalPanel = new FlowPanel();
-            verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
-            verticalPanel.add(panel);
-            verticalPanel.add(copyToClipboard);
-
-            getView().setHistoryView(verticalPanel);
-
-            // Scroll the history to the bottom after update.
-            Scheduler.get().scheduleDeferred(() ->
-                    panel.getElement().setScrollTop(panel.getElement().getScrollHeight()));
+            historyText = text.toString();
+            view.setHistory(html.toSafeHtml());
         }
+    }
+
+    // Enter on an event or annotation reference follows it, as a mouse press does. Enter, Space,
+    // Shift+F10 or the context menu key on an entry's actions button opens the entry's menu, as
+    // pressing the entry does
+    private void onHistoryKeyDown(final KeyDownEvent e) {
+        final Element target = e.getNativeEvent().getEventTarget().cast();
+        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
+            e.preventDefault();
+            followLink(target);
+        } else if (ElementUtil.hasClassName(target, ENTRY_ACTIONS_CLASS) && isMenuKey(e)) {
+            e.preventDefault();
+            showEntryEditMenu(target, new PopupPosition(
+                    new Rect(target).grow(3), PopupLocation.BELOW));
+        }
+    }
+
+    // A press on a link follows it; on a group, expands or collapses it; on an entry, opens its menu
+    private void onHistoryMouseDown(final MouseDownEvent e) {
+        // If the user has clicked on a link then consume the event.
+        final Element target = e.getNativeEvent().getEventTarget().cast();
+        if (target.hasTagName("u")) {
+            followLink(target);
+        } else {
+            Element parent = target;
+            String id = null;
+            String type = null;
+            String groupId = null;
+
+            Element entryElement = null;
+            while (parent != null && NullSafe.isBlankString(type)) {
+                entryElement = parent;
+                type = entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE);
+                parent = parent.getParentElement();
+            }
+
+            if (entryElement != null) {
+                id = entryElement.getAttribute(ENTRY_ID_ATTRIBUTE);
+                groupId = entryElement.getAttribute(GROUP_ID_ATTRIBUTE);
+            }
+
+            if (NullSafe.isNonBlankString(groupId)) {
+                final long gid = Long.parseLong(groupId);
+                if (expandedItems.contains(gid)) {
+                    expandedItems.remove(gid);
+                } else {
+                    expandedItems.add(gid);
+                }
+                updateHistory();
+            } else if (NullSafe.isNonBlankString(id) && NullSafe.isNonBlankString(type)) {
+                showEntryEditMenu(target, new PopupPosition(e.getClientX(), e.getClientY()));
+            }
+        }
+    }
+
+    private void copyHistory() {
+        Clipboard.writeText(historyText, () -> {
+        }, () -> AlertEvent.fireError(
+                this,
+                "Unable to copy",
+                null));
     }
 
     // Whether a key opens an entry's menu from its actions button: Enter or Space, as for any
@@ -645,7 +678,7 @@ public class AnnotationEditPresenter
                 commentEditProvider.get().edit(this, value.getValue(), (text, e) ->
                         changeComment(id, text, annotationEntry.getEntryType(), e));
             }
-        }, this);
+        }, taskMonitor());
     }
 
     private void changeComment(final long id,
@@ -662,7 +695,7 @@ public class AnnotationEditPresenter
                 ignored -> afterChangeComment(e),
                 // If the change fails, say why and let the user try again or cancel
                 RestErrorHandler.forPopup(this, e),
-                this);
+                taskMonitor());
     }
 
     private void afterChangeComment(final HidePopupRequestEvent e) {
@@ -683,7 +716,7 @@ public class AnnotationEditPresenter
                         request, result -> {
                             AnnotationChangeEvent.fire(this, annotationRef);
                             updateHistory();
-                        }, this);
+                        }, taskMonitor());
             }
         });
     }
@@ -1283,7 +1316,7 @@ public class AnnotationEditPresenter
         if (NullSafe.isNonBlankString(link)) {
             final Hyperlink hyperlink = Hyperlink.create(link);
             if (hyperlink != null) {
-                HyperlinkEvent.fire(this, hyperlink, this);
+                HyperlinkEvent.fire(this, hyperlink, taskMonitor());
             }
         } else {
             final String eventIdString = target.getAttribute("eventId");
@@ -1345,18 +1378,21 @@ public class AnnotationEditPresenter
         text.append("'");
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final Annotation annotation) {
+    /// Shows an annotation, and fetches its history.
+    ///
+    /// @param docRef     The annotation.
+    /// @param annotation The annotation.
+    public void read(final DocRef docRef, final Annotation annotation) {
+        this.annotation = annotation;
         this.annotationRef = annotation.asDocRef();
         this.annotationIdentity = annotation.asAnnotationIdentity();
-        // Read only: everything can be read, nothing changed (the presenter also refuses each
+        // Read only (watched): everything can be read, nothing changed (this also refuses each
         // change, as some are made straight to the server)
-        getView().setReadOnly(isReadOnly());
         this.currentStatus = annotation.getStatus();
         this.currentAssignedTo = annotation.getAssignedTo();
 
-        getView().setId(annotation.getId());
-        getView().setButtonText("Comment");
+        view.setId(annotation.getId());
+        view.setButtonText("Comment");
 
         setTitle(annotation.getName());
         setSubject(annotation.getSubject());
@@ -1371,29 +1407,21 @@ public class AnnotationEditPresenter
         }
     }
 
-    @Override
-    protected Annotation onWrite(final Annotation document) {
-        return null;
-    }
-
-    @Override
-    public void onTitleChange() {
+    private void onTitleChange() {
         if (isReadOnly()) {
             return;
         }
-        changeTitle(getView().getTitle());
+        changeTitle(view.getAnnotationTitle());
     }
 
-    @Override
-    public void onSubjectChange() {
+    private void onSubjectChange() {
         if (isReadOnly()) {
             return;
         }
-        changeSubject(getView().getSubject());
+        changeSubject(view.getSubject());
     }
 
-    @Override
-    public void showStatusChooser(final Element element) {
+    private void showStatusChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -1414,8 +1442,7 @@ public class AnnotationEditPresenter
         openChooser.opened(chooser, element);
     }
 
-    @Override
-    public void showAssignedToChooser(final Element element) {
+    private void showAssignedToChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -1423,8 +1450,7 @@ public class AnnotationEditPresenter
         assignedToPicker.show(this::changeAssignedTo);
     }
 
-    @Override
-    public void showLabelChooser(final Element element) {
+    private void showLabelChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -1440,8 +1466,7 @@ public class AnnotationEditPresenter
         openChooser.opened(chooser, element);
     }
 
-    @Override
-    public void showCollectionChooser(final Element element) {
+    private void showCollectionChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -1457,8 +1482,7 @@ public class AnnotationEditPresenter
         openChooser.opened(chooser, element);
     }
 
-    @Override
-    public void showCommentChooser(final Element element) {
+    private void showCommentChooser(final Element element) {
         if (isReadOnly()) {
             return;
         }
@@ -1478,33 +1502,30 @@ public class AnnotationEditPresenter
         openChooser.opened(chooser, element);
     }
 
-    @Override
-    public void assignYourself() {
+    private void assignYourself() {
         if (isReadOnly()) {
             return;
         }
         changeAssignedTo(clientSecurityContext.getUserRef());
     }
 
-    @Override
-    public void create() {
+    private void create() {
         if (isReadOnly()) {
             return;
         }
-        final String comment = getView().getComment();
+        final String comment = view.getComment();
         if (comment != null && !comment.isEmpty()) {
             final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
                     annotationRef,
                     new ChangeComment(comment));
             change(request);
-            getView().setComment("");
+            view.setComment("");
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
         }
     }
 
-    @Override
-    public void onDelete() {
+    private void onDelete() {
         if (isReadOnly()) {
             return;
         }
@@ -1515,15 +1536,27 @@ public class AnnotationEditPresenter
                         AnnotationChangeEvent.fire(this, null);
                         CloseContentTabEvent.fire(this, parent);
                     }
-                }, this);
+                }, taskMonitor());
             }
         });
     }
 
-    public void setInitialComment(final String initialComment) {
-        getView().setComment(initialComment);
+    @Override
+    public void focus() {
+        view.focus();
     }
 
+    private TaskMonitorFactory taskMonitor() {
+        final TaskMonitorFactory provided = getProvidedTaskMonitor();
+        return provided != null ? provided : new DefaultTaskMonitorFactory(this);
+    }
+
+    /// @param initialComment The comment to start with, e.g. the text of the data annotated.
+    public void setInitialComment(final String initialComment) {
+        view.setComment(initialComment);
+    }
+
+    /// @param parent The annotation's document, whose tab is refreshed or closed as it changes.
     public void setParent(final AnnotationPresenter parent) {
         this.parent = parent;
     }
@@ -1585,53 +1618,5 @@ public class AnnotationEditPresenter
                    "annotationEntryType=" + annotationEntryType + ", " +
                    "entries=" + entries + ']';
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface AnnotationEditView extends View, Focus, HasUiHandlers<AnnotationEditUiHandlers> {
-
-        void setId(long id);
-
-        String getTitle();
-
-        void setTitle(String title);
-
-        String getSubject();
-
-        void setSubject(String subject);
-
-        void setStatus(AnnotationTag status);
-
-        void setAssignedTo(UserRef assignedTo);
-
-        /// Enables 'Assign Yourself', or disables it, saying why, when the annotation is already
-        /// assigned to the current user.
-        ///
-        /// @param enabled Whether it is enabled.
-        void setAssignYourselfEnabled(boolean enabled);
-
-        void setLabels(List<AnnotationTag> labels);
-
-        void setCollections(List<AnnotationTag> collections);
-
-        String getComment();
-
-        void setComment(String comment);
-
-        void setHistoryView(Widget view);
-
-        void setButtonText(String text);
-
-        void setRetentionPeriod(String retentionPeriod);
-
-        /// Makes the annotation read only: its title, subject and comment can be read and copied but
-        /// not changed, its settings don't open their choosers, and Comment, Create and Delete are
-        /// disabled.
-        ///
-        /// @param readOnly Whether the annotation is read only.
-        void setReadOnly(boolean readOnly);
     }
 }

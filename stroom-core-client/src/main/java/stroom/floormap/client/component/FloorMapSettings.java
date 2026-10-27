@@ -433,7 +433,7 @@ public class FloorMapSettings extends Component {
     /// `AbstractTabBar` carries its own copy for the same reason. This is the third such
     /// copy. Making `CurrentFocus` public, or lifting the method into a shared client
     /// utility, would let the three collapse into one; that is a change to shared widget code
-    /// and deliberately not made here. (`AnnotationEditPresenter` also reads
+    /// and deliberately not made here. (`AnnotationEditController` also reads
     /// `$doc.activeElement`, but inline inside an unrelated clipboard JSNI method, so it
     /// would not be folded in by the same change.)
     ///

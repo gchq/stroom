@@ -36,7 +36,7 @@ import java.util.Objects;
 public class ChangeAssignedToDialog extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // The value is shown faded when there is none (AnnotationEditViewImpl's)
+    // The value is shown faded when there is none (AnnotationEdit's)
     private static final String EMPTY_VALUE = "annotationLabel--empty";
 
     @UiField

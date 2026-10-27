@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
 import stroom.widget.util.client.HtmlBuilder;
 
@@ -27,7 +27,7 @@ class TestCommentDecoration {
     @Test
     void test() {
         final HtmlBuilder builder = new HtmlBuilder();
-        AnnotationEditPresenter.decorateComment(
+        AnnotationEditController.decorateComment(
                 builder,
                 "This is related to #6 and #3, and events 739:10, 739:14 and 739:22 is where it happens");
 
@@ -55,7 +55,7 @@ class TestCommentDecoration {
     @Test
     void testAdjacentReferencesAreSpacedApart() {
         final HtmlBuilder builder = new HtmlBuilder();
-        AnnotationEditPresenter.decorateComment(builder, "#5#6 and 1:2#7");
+        AnnotationEditController.decorateComment(builder, "#5#6 and 1:2#7");
 
         // An em space between links with nothing between them, so each is a target of its own
         assertThat(builder.toSafeHtml().asString())

@@ -1,0 +1,438 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.annotation.client.component;
+
+import stroom.annotation.client.AssignYourselfLink;
+import stroom.annotation.client.Lozenge;
+import stroom.annotation.client.SettingBlock;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.util.shared.UserRef;
+import stroom.widget.button.client.Button;
+import stroom.widget.component.client.Component;
+import stroom.widget.form.client.TextArea;
+import stroom.widget.form.client.TextBox;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+/// An annotation's Annotation tab: its title and subject, its history with a box to add a comment
+/// to it, and its settings (status, who it is assigned to, labels, collections and retention
+/// period), each of which opens a chooser when selected. Read only, everything can be read and
+/// copied but nothing changed.
+public class AnnotationEdit extends Component {
+
+    /// Shows that a field has no value ("None", "Nobody") in the muted text colour.
+    public static final String EMPTY_VALUE_STYLE = "annotationLabel--empty";
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private boolean assignYourselfEnabled;
+
+    @UiField
+    Label annotationId;
+    @UiField
+    TextBox titleTextBox;
+    @UiField
+    TextBox subjectTextBox;
+    @UiField
+    Label status;
+    @UiField
+    Label assignedTo;
+    @UiField
+    AssignYourselfLink assignYourself;
+    @UiField
+    HTML labels;
+    @UiField
+    HTML collections;
+    @UiField
+    Label retentionPeriod;
+    @UiField
+    Button commentButton;
+    @UiField
+    Button create;
+    @UiField
+    TextArea comment;
+    @UiField
+    FlowPanel historyContainer;
+    @UiField
+    HTML historyHtml;
+    @UiField
+    Button copyHistory;
+    @UiField
+    Button delete;
+
+    @UiField
+    SettingBlock statusBlock;
+    @UiField
+    SettingBlock assignedToBlock;
+    @UiField
+    SettingBlock annotationLabelBlock;
+    @UiField
+    SettingBlock annotationCollectionBlock;
+    @UiField
+    SettingBlock annotationRetentionPeriodBlock;
+
+    private BiConsumer<AnnotationEditAction, Element> onAction = (action, element) -> {
+    };
+    private Runnable onTitleChange = () -> {
+    };
+    private Runnable onSubjectChange = () -> {
+    };
+    private Consumer<KeyDownEvent> onHistoryKeyDown = e -> {
+    };
+    private Consumer<MouseDownEvent> onHistoryMouseDown = e -> {
+    };
+
+    /// Makes the tab, with no annotation.
+    public AnnotationEdit() {
+        initWidget(BINDER.createAndBindUi(this));
+        assignYourself.setOnAssign(() -> onAction.accept(AnnotationEditAction.ASSIGN_YOURSELF,
+                assignYourself.getElement()));
+        historyHtml.addDomHandler(e -> onHistoryKeyDown.accept(e), KeyDownEvent.getType());
+        historyHtml.addMouseDownHandler(e -> onHistoryMouseDown.accept(e));
+        copyHistory.setOnClick(() -> onAction.accept(AnnotationEditAction.COPY_HISTORY, copyHistory.getElement()));
+
+        setAnnotationTitle(null);
+        setSubject(null);
+        setStatus(null);
+    }
+
+    /// @param id The annotation's id, shown as `#<id>`.
+    public void setId(final long id) {
+        annotationId.setText("#" + id);
+    }
+
+    /// @return The title, as edited.
+    public String getAnnotationTitle() {
+        return this.titleTextBox.getText();
+    }
+
+    /// @param title The title, also the box's tooltip, for when it is too long to show; `null` for
+    ///              none.
+    public void setAnnotationTitle(final String title) {
+        if (title == null || title.isEmpty()) {
+            this.titleTextBox.setText("");
+            this.titleTextBox.setTitle("");
+        } else {
+            this.titleTextBox.setText(title);
+            this.titleTextBox.setTitle(title);
+        }
+    }
+
+    /// @return The subject, as edited.
+    public String getSubject() {
+        return this.subjectTextBox.getText();
+    }
+
+    /// @param subject The subject, also the box's tooltip; `null` for none.
+    public void setSubject(final String subject) {
+        if (subject == null || subject.isEmpty()) {
+            this.subjectTextBox.setText("");
+            this.subjectTextBox.setTitle("");
+        } else {
+            this.subjectTextBox.setText(subject);
+            this.subjectTextBox.setTitle(subject);
+        }
+    }
+
+    /// @param status The status, or `null` for none.
+    public void setStatus(final AnnotationTag status) {
+        if (status == null) {
+            this.status.setText("None");
+            this.status.addStyleName(EMPTY_VALUE_STYLE);
+        } else {
+            this.status.setText(status.getName());
+            this.status.removeStyleName(EMPTY_VALUE_STYLE);
+        }
+    }
+
+    /// @param assignedTo Who it is assigned to, or `null` for nobody.
+    public void setAssignedTo(final UserRef assignedTo) {
+        if (assignedTo == null) {
+            this.assignedTo.setText("Nobody");
+            this.assignedTo.addStyleName(EMPTY_VALUE_STYLE);
+        } else {
+            this.assignedTo.setText(assignedTo.toDisplayString());
+            this.assignedTo.removeStyleName(EMPTY_VALUE_STYLE);
+        }
+    }
+
+    /// Enables 'Assign Yourself', or disables it, saying why, when the annotation is already
+    /// assigned to the current user.
+    ///
+    /// @param enabled Whether it is enabled.
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        this.assignYourselfEnabled = enabled;
+        assignYourself.setState(!enabled, isReadOnly());
+    }
+
+    /// @param labels The labels, as lozenges, or none.
+    public void setLabels(final List<AnnotationTag> labels) {
+        setTags(this.labels, labels);
+    }
+
+    /// @param collections The collections, as lozenges, or none.
+    public void setCollections(final List<AnnotationTag> collections) {
+        setTags(this.collections, collections);
+    }
+
+    private static void setTags(final HTML html, final List<AnnotationTag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            html.setText("None");
+            html.addStyleName(EMPTY_VALUE_STYLE);
+        } else {
+            final HtmlBuilder htmlBuilder = new HtmlBuilder();
+            for (final AnnotationTag annotationTag : tags) {
+                htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
+            }
+            html.setHTML(htmlBuilder.toSafeHtml());
+            html.removeStyleName(EMPTY_VALUE_STYLE);
+        }
+    }
+
+    /// @param retentionPeriod The retention period, as text, or `null` or blank for none.
+    public void setRetentionPeriod(final String retentionPeriod) {
+        if (retentionPeriod == null || retentionPeriod.trim().isEmpty()) {
+            this.retentionPeriod.setText("None");
+            this.retentionPeriod.addStyleName(EMPTY_VALUE_STYLE);
+        } else {
+            this.retentionPeriod.setText(retentionPeriod);
+            this.retentionPeriod.removeStyleName(EMPTY_VALUE_STYLE);
+        }
+    }
+
+    /// Shows the history, scrolled to its end.
+    ///
+    /// @param history The history.
+    public void setHistory(final SafeHtml history) {
+        historyHtml.setHTML(history);
+        historyContainer.setVisible(true);
+        // Scroll the history to the bottom after update.
+        Scheduler.get().scheduleDeferred(() ->
+                historyHtml.getElement().setScrollTop(historyHtml.getElement().getScrollHeight()));
+    }
+
+    /// @return The comment, as entered.
+    public String getComment() {
+        return this.comment.getText();
+    }
+
+    /// @param comment The comment.
+    public void setComment(final String comment) {
+        this.comment.setText(comment);
+    }
+
+    /// @param text The text of the button that adds the comment.
+    public void setButtonText(final String text) {
+        create.setText(text);
+    }
+
+    /// Puts the focus on the title if there is none, else on the comment.
+    public void focus() {
+        if (titleTextBox.getText() == null || titleTextBox.getText().isEmpty()) {
+            titleTextBox.setFocus(true);
+        } else {
+            comment.setFocus(true);
+        }
+    }
+
+    /// @param onAction Given what was pressed and its element (e.g. to show a chooser beside).
+    public void setOnAction(final BiConsumer<AnnotationEditAction, Element> onAction) {
+        this.onAction = onAction;
+    }
+
+    /// @param onTitleChange Run when the user has finished editing the title.
+    public void setOnTitleChange(final Runnable onTitleChange) {
+        this.onTitleChange = onTitleChange;
+    }
+
+    /// @param onSubjectChange Run when the user has finished editing the subject.
+    public void setOnSubjectChange(final Runnable onSubjectChange) {
+        this.onSubjectChange = onSubjectChange;
+    }
+
+    /// @param onHistoryKeyDown Given a key pressed in the history, e.g. on a link or an entry's
+    ///                         actions button.
+    public void setOnHistoryKeyDown(final Consumer<KeyDownEvent> onHistoryKeyDown) {
+        this.onHistoryKeyDown = onHistoryKeyDown;
+    }
+
+    /// @param onHistoryMouseDown Given a press in the history, e.g. on a link or an entry.
+    public void setOnHistoryMouseDown(final Consumer<MouseDownEvent> onHistoryMouseDown) {
+        this.onHistoryMouseDown = onHistoryMouseDown;
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        titleTextBox.setReadOnly(readOnly);
+        subjectTextBox.setReadOnly(readOnly);
+        comment.setReadOnly(readOnly);
+        commentButton.setEnabled(!readOnly);
+        create.setEnabled(!readOnly);
+        delete.setEnabled(!readOnly);
+        statusBlock.setReadOnly(readOnly);
+        assignedToBlock.setReadOnly(readOnly);
+        annotationLabelBlock.setReadOnly(readOnly);
+        annotationCollectionBlock.setReadOnly(readOnly);
+        annotationRetentionPeriodBlock.setReadOnly(readOnly);
+        assignYourself.setState(!assignYourselfEnabled, readOnly);
+    }
+
+    private void finishTitleEdit() {
+        setAnnotationTitle(titleTextBox.getText());
+        onTitleChange.run();
+    }
+
+    private void finishSubjectEdit() {
+        setSubject(subjectTextBox.getText());
+        onSubjectChange.run();
+    }
+
+    @UiHandler("titleTextBox")
+    void onTitleBlur(final BlurEvent e) {
+        finishTitleEdit();
+    }
+
+    @UiHandler("titleTextBox")
+    void onTitleReturn(final KeyDownEvent e) {
+        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            finishTitleEdit();
+            Scheduler.get().scheduleDeferred(() -> subjectTextBox.setFocus(true));
+        }
+    }
+
+    @UiHandler("subjectTextBox")
+    void onSubjectBlur(final BlurEvent e) {
+        finishSubjectEdit();
+    }
+
+    @UiHandler("subjectTextBox")
+    void onSubjectReturn(final KeyDownEvent e) {
+        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            finishSubjectEdit();
+            Scheduler.get().scheduleDeferred(() -> comment.setFocus(true));
+        }
+    }
+
+    @UiHandler("titleBlock")
+    void onTitleBlock(final ClickEvent e) {
+        titleTextBox.setFocus(true);
+    }
+
+    @UiHandler("subjectBlock")
+    void onSubjectBlock(final ClickEvent e) {
+        subjectTextBox.setFocus(true);
+    }
+
+    @UiHandler("statusBlock")
+    void onStatusBlock(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.STATUS, statusBlock.getElement());
+    }
+
+    @UiHandler("assignedToBlock")
+    void onAssignedToBlock(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.ASSIGNED_TO, assignedToBlock.getElement());
+    }
+
+    @UiHandler("annotationLabelBlock")
+    void onAnnotationLabelBlock(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.LABELS, annotationLabelBlock.getElement());
+    }
+
+    @UiHandler("annotationCollectionBlock")
+    void onAnnotationCollectionBlock(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.COLLECTIONS, annotationCollectionBlock.getElement());
+    }
+
+    @UiHandler("annotationRetentionPeriodBlock")
+    void onAnnotationRetentionPeriodBlock(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.RETENTION_PERIOD, annotationRetentionPeriodBlock.getElement());
+    }
+
+    @UiHandler("create")
+    void onCreate(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.CREATE, create.getElement());
+    }
+
+    @UiHandler("commentButton")
+    void onCommentButton(final ClickEvent e) {
+        if (commentButton.isEnabled()) {
+            onAction.accept(AnnotationEditAction.CHOOSE_COMMENT, commentButton.getElement());
+        }
+    }
+
+    @UiHandler("delete")
+    void onDelete(final ClickEvent e) {
+        onAction.accept(AnnotationEditAction.DELETE, delete.getElement());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What can be pressed on the tab.
+    public enum AnnotationEditAction {
+        /// The status, to choose another.
+        STATUS,
+        /// Who it is assigned to, to choose another.
+        ASSIGNED_TO,
+        /// Assign Yourself.
+        ASSIGN_YOURSELF,
+        /// The labels, to add or remove some.
+        LABELS,
+        /// The collections, to add or remove some.
+        COLLECTIONS,
+        /// The retention period, to change it.
+        RETENTION_PERIOD,
+        /// Choose Comment, to add a standard comment's text to the comment.
+        CHOOSE_COMMENT,
+        /// The button that adds the comment to the history.
+        CREATE,
+        /// Copy History.
+        COPY_HISTORY,
+        /// Delete Annotation.
+        DELETE
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, AnnotationEdit> {
+
+    }
+}
