@@ -18,8 +18,8 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.component.FindAnnotationListController;
 import stroom.annotation.shared.Annotation;
-import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.client.presenter.FindUiHandlers;
+import stroom.explorer.client.presenter.FindView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.presenter.client.MyPresenterWidget;

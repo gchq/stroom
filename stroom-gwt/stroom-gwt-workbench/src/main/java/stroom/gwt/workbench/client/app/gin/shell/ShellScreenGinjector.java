@@ -44,9 +44,7 @@ import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.feed.client.FeedPlugin;
 import stroom.folder.client.FolderFavouritesPlugin;
@@ -192,14 +190,8 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return The current activity (a singleton), which shows the activity chooser.
     CurrentActivity getCurrentActivity();
 
-    /// @return The 'Find' dialog, shown for `ShowFindEvent`.
-    FindPresenter getFindPresenter();
-
     /// @return The 'Find In Content' dialog, shown for `ShowFindInContentEvent`.
     FindInContentPresenter getFindInContentPresenter();
-
-    /// @return The 'Recent Items' dialog, shown for `ShowRecentItemsEvent`.
-    RecentItemsPresenter getRecentItemsPresenter();
 
     /// @return The 'New ...' and 'Save As' dialog, shown for `ShowCreateDocumentDialogEvent`.
     CreateDocumentPresenter getCreateDocumentPresenter();

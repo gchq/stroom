@@ -35,8 +35,8 @@ import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
-import stroom.explorer.client.presenter.AbstractFindPresenter;
-import stroom.explorer.client.view.FindViewImpl;
+import stroom.explorer.client.component.FindPanel;
+import stroom.explorer.client.presenter.FindView;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AnnotationModule`
@@ -66,8 +66,8 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
-        bindSharedView(AbstractFindPresenter.FindView.class,
-                FindViewImpl.class);
+        bindSharedView(FindView.class,
+                FindPanel.class);
         bind(FindAnnotationPresenter.class);
     }
 }

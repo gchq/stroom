@@ -17,8 +17,8 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.explorer.client.component.FindController;
 import stroom.explorer.client.event.ShowFindEvent;
-import stroom.explorer.client.presenter.FindPresenter;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories of `App/Main/FindDialog`, showing Stroom's real [FindPresenter] (the 'Find' dialog) with
+/// Stories of `App/Main/FindDialog`, showing Stroom's real [FindController] (the 'Find' dialog) with
 /// fake REST replies.
 ///
 /// `POST /explorer/v2/find` is answered by a handler that filters a small fixed set by the
@@ -124,9 +124,9 @@ public final class FindDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        // As NavigationPlugin would
-        final FindPresenter presenter = injector.getFindPresenter();
-        harness.addRegistration(harness.getEventBus().addHandler(ShowFindEvent.getType(), presenter));
+        // As NavigationPlugin does, made once and kept
+        final FindController find = harness.own(injector.getFindController());
+        harness.addRegistration(harness.getEventBus().addHandler(ShowFindEvent.getType(), event -> find.show()));
         harness.afterStartUp(() -> ShowFindEvent.fire(harness.getHasHandlers()));
         return harness.asWidget();
     }

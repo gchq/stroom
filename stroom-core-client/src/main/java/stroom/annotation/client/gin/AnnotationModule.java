@@ -43,8 +43,8 @@ import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
 import stroom.core.client.gin.PluginModule;
-import stroom.explorer.client.presenter.AbstractFindPresenter;
-import stroom.explorer.client.view.FindViewImpl;
+import stroom.explorer.client.component.FindPanel;
+import stroom.explorer.client.presenter.FindView;
 
 public class AnnotationModule extends PluginModule {
 
@@ -69,7 +69,7 @@ public class AnnotationModule extends PluginModule {
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
-        bindSharedView(AbstractFindPresenter.FindView.class, FindViewImpl.class);
+        bindSharedView(FindView.class, FindPanel.class);
 
 
         bindPresenter(

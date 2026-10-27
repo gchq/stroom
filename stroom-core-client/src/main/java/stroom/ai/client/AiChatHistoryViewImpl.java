@@ -80,9 +80,9 @@ public class AiChatHistoryViewImpl
 
     private void setDialogMode(final boolean dialog) {
         if (dialog) {
-            widget.addStyleName("FindViewImpl--dialog");
+            widget.addStyleName("find-panel--dialog");
         } else {
-            widget.removeStyleName("FindViewImpl--dialog");
+            widget.removeStyleName("find-panel--dialog");
         }
     }
 

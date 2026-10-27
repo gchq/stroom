@@ -20,7 +20,6 @@ import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.ContentManager;
 import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
-import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -41,6 +40,5 @@ public class ContentAppScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FindInContentPresenter.class,
                 FindInContentView.class,
                 FindInContentViewImpl.class);
-        bind(FindPresenter.class);
     }
 }

@@ -1,0 +1,51 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A filter or pattern above a list of what it finds: Find, Recent Items, Find in Content, the
+   annotation finders and the Ask Stroom AI chat history. As a dialog's content (find-panel--dialog)
+   its top has no padding of its own */
+.find-panel {
+    gap: var(--control__gap--vertical);
+}
+
+.find-panel__top {
+    position: relative;
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal) 0 var(--control__padding--horizontal);
+}
+
+.find-panel--dialog .find-panel__top {
+    padding: 0;
+}
+
+.find-panel__top .text-field--multiline {
+    /* Single line */
+    height: 2.1rem;
+}
+
+.find-panel__top .text-field--multiline.multiLine {
+    /* Multi line */
+    height: 6.3rem;
+}
+
+/* What may be typed in the pattern, and what is wrong with it, under the pattern */
+.find-panel__guidance {
+    margin: 0.2rem 0 0.4rem 0;
+}
+
+.find-panel__bottom {
+    position: relative;
+    overflow: hidden;
+}

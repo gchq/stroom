@@ -79,6 +79,30 @@ class TestAppRoot {
     }
 
     @Test
+    void whatItMakesIsOwnedUntilTheRootGoes() {
+        final AppRoot appRoot = new AppRoot();
+
+        final MyPresenterWidget<View> kept = appRoot.make(this::newDialog);
+
+        assertThat(kept.getControllerNode().parent()).isSameAs(appRoot.getControllerNode());
+        // Hiding it doesn't dispose it
+        HidePopupEvent.builder(kept).fire();
+        deferred.forEach(Runnable::run);
+        assertThat(kept.isDisposed()).isFalse();
+        appRoot.getControllerNode().dispose();
+        assertThat(kept.isDisposed()).isTrue();
+    }
+
+    @Test
+    void makingKeptFromANullProviderFails() {
+        final AppRoot appRoot = new AppRoot();
+
+        assertThatThrownBy(() -> appRoot.make(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("provider");
+    }
+
+    @Test
     void makingFromANullProviderFails() {
         final AppRoot appRoot = new AppRoot();
 

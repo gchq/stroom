@@ -1131,43 +1131,6 @@
     overflow: auto;
 }
 
-.FindViewImpl {
-    gap: var(--control__gap--vertical);
-}
-
-.FindViewImpl--dialog {
-
-}
-
-.FindViewImpl-top {
-    position: relative;
-    padding: var(--control__padding--vertical) var(--control__padding--horizontal) 0 var(--control__padding--horizontal);
-}
-
-.FindViewImpl--dialog .FindViewImpl-top {
-    padding: 0;
-}
-
-.FindViewImpl-top .text-field--multiline {
-    /* Single line */
-    height: 2.1rem;
-}
-
-.FindViewImpl-top .text-field--multiline.multiLine {
-    /* Multi line */
-    height: 6.3rem;
-}
-
-/* What may be typed in the pattern, and what is wrong with it, under the pattern */
-.FindViewImpl-guidance {
-    margin: 0.2rem 0 0.4rem 0;
-}
-
-.FindViewImpl-bottom {
-    position: relative;
-    overflow: hidden;
-}
-
 .find-buttons {
     display: flex;
     position: absolute;

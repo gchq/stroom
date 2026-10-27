@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.view;
+package stroom.explorer.client.component;
 
-import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
+import stroom.explorer.client.presenter.FindView;
+import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -32,27 +33,50 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FindViewImpl
-        extends ViewWithUiHandlers<FindUiHandlers>
-        implements AbstractFindPresenter.FindView {
+/// A filter above a list of what it finds, its owner's: the content of Find, Recent Items and the
+/// annotation finders. The annotation presenters not yet split see it as a [FindView].
+public class FindPanel extends Component implements FindView {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String DIALOG = "find-panel--dialog";
 
     @UiField
-    FlowPanel topPanel;
+    FlowPanel panel;
     @UiField
     QuickFilter nameFilter;
     @UiField
     SimplePanel bottomPanel;
 
-    @Inject
-    public FindViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        setDialogMode(true);
+    private Consumer<String> onFilterChange = filter -> {
+    };
+    private Consumer<KeyDownEvent> onFilterKeyDown = event -> {
+    };
+
+    /// Makes an empty panel, as a dialog's content.
+    public FindPanel() {
+        initWidget(BINDER.createAndBindUi(this));
+    }
+
+    /// @param onFilterChange Given the filter's text whenever it changes.
+    public void setOnFilterChange(final Consumer<String> onFilterChange) {
+        this.onFilterChange = Objects.requireNonNull(onFilterChange, "onFilterChange");
+    }
+
+    /// @param onFilterKeyDown Given each key pressed in the filter, e.g. to open what is chosen on
+    ///                        Enter.
+    public void setOnFilterKeyDown(final Consumer<KeyDownEvent> onFilterKeyDown) {
+        this.onFilterKeyDown = Objects.requireNonNull(onFilterKeyDown, "onFilterKeyDown");
+    }
+
+    @Override
+    public void setUiHandlers(final FindUiHandlers uiHandlers) {
+        setOnFilterChange(uiHandlers::changeQuickFilter);
+        setOnFilterKeyDown(uiHandlers::onFilterKeyDown);
     }
 
     @Override
@@ -63,11 +87,6 @@ public class FindViewImpl
     @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         nameFilter.setContextHandler(contextHandler);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -82,11 +101,7 @@ public class FindViewImpl
 
     @Override
     public void setDialogMode(final boolean dialog) {
-        if (dialog) {
-            widget.addStyleName("FindViewImpl--dialog");
-        } else {
-            widget.removeStyleName("FindViewImpl--dialog");
-        }
+        panel.setStyleName(DIALOG, dialog);
     }
 
     @Override
@@ -102,15 +117,19 @@ public class FindViewImpl
 
     @UiHandler("nameFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeQuickFilter(nameFilter.getText());
+        onFilterChange.accept(nameFilter.getText());
     }
 
     @UiHandler("nameFilter")
     void onFilterKeyDown(final KeyDownEvent event) {
-        getUiHandlers().onFilterKeyDown(event);
+        onFilterKeyDown.accept(event);
     }
 
-    public interface Binder extends UiBinder<Widget, FindViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FindPanel> {
 
     }
 }

@@ -5,8 +5,8 @@
              xmlns:l="urn:import:stroom.widget.layout.client"
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
-    <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
-        <g:FlowPanel styleName="FindViewImpl-top dock-container-horizontal dock-min">
+    <g:FlowPanel styleName="find-panel find-panel--dialog max dock-container-vertical">
+        <g:FlowPanel styleName="find-panel__top dock-container-horizontal dock-min">
             <form:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <p:Toolbar ui:field="buttonContainer" name="Search options"
                        addStyleNames="dock-min find-buttons toolbar--control">
@@ -15,14 +15,14 @@
             </p:Toolbar>
         </g:FlowPanel>
         <!-- What may be typed, and what is wrong with it, under the pattern -->
-        <g:FlowPanel styleName="FindViewImpl-guidance dock-min">
+        <g:FlowPanel styleName="find-panel__guidance dock-min">
             <g:Label ui:field="patternFeedback" styleName="form-group__feedback"/>
             <g:Label ui:field="patternHint" styleName="form-group__description"/>
         </g:FlowPanel>
         <!-- The results above the text of the selected one (addStyleNames, as styleName would replace
              the split pane's own class) -->
         <l:SplitPane vertical="true" sizes="300px, *" names="Results, Text"
-                     addStyleNames="FindViewImpl-bottom dock-max overflow-hidden">
+                     addStyleNames="find-panel__bottom dock-max overflow-hidden">
             <g:SimplePanel ui:field="resultContainer"
                            styleName="max form-control-border form-control-background"/>
             <g:FlowPanel ui:field="textContainer" styleName="max form-control-border form-control-background">

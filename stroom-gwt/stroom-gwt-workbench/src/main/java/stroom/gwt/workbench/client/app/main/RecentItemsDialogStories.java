@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.component.FindDocResultList;
 import stroom.explorer.client.component.FindDocResultListController;
+import stroom.explorer.client.component.FindPanel;
+import stroom.explorer.client.component.RecentItemsController;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.presenter.RecentItems;
-import stroom.explorer.client.presenter.RecentItemsPresenter;
-import stroom.explorer.client.view.FindViewImpl;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories of `App/Main/RecentItemsDialog`, showing Stroom's real [RecentItemsPresenter] (the
+/// Stories of `App/Main/RecentItemsDialog`, showing Stroom's real [RecentItemsController] (the
 /// 'Recent Items' dialog) with fake REST replies.
 ///
 /// A [RestFixtures] route answers `POST /explorer/v2/find`, and the `onOpenDoc` spy records
@@ -153,24 +153,24 @@ public final class RecentItemsDialogStories {
         final RecentItems recentItems = new RecentItems();
         recentItems.getRecentItems().addAll(recent);
 
-        // The presenter, with the view and result list controller that GIN would inject
+        // The controller, with the content and result list controller that GIN would inject
         final FindDocResultListController resultList = new FindDocResultListController(
                 eventBus,
                 new FindDocResultList(),
                 harness.getRestFactory());
-        final RecentItemsPresenter presenter = new RecentItemsPresenter(
+        final RecentItemsController dialog = harness.own(new RecentItemsController(
                 eventBus,
-                new FindViewImpl(GWT.create(FindViewImpl.Binder.class)),
+                new FindPanel(),
                 resultList,
                 recentItems,
-                SelectorWidgets.quickFilterContextHandlerFactory(harness));
+                SelectorWidgets.quickFilterContextHandlerFactory(harness)));
 
         harness.fn(OPEN_DOC_SPY);
         eventBus.addHandler(OpenDocumentEvent.getType(), event ->
                 harness.spy(OPEN_DOC_SPY, event.getDocRef().getType() + " " + event.getDocRef().getName()));
 
         // Show the dialog as the app does, i.e. as NavigationPlugin would on the event
-        eventBus.addHandler(ShowRecentItemsEvent.getType(), presenter);
+        harness.addRegistration(eventBus.addHandler(ShowRecentItemsEvent.getType(), event -> dialog.show()));
         ShowRecentItemsEvent.fire(harness.getHasHandlers());
         return harness.asWidget();
     }

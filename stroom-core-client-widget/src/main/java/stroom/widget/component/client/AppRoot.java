@@ -63,4 +63,17 @@ public final class AppRoot implements HasControllerNode {
         node.adopt(dialog.getControllerNode());
         return ControllerDialog.disposeWhenHidden(dialog);
     }
+
+    /// Makes something the app keeps once made, e.g. a dialog shown again and again that remembers
+    /// what it last showed, owned by the app root for as long as the page.
+    ///
+    /// @param provider What makes it, e.g. a GIN provider.
+    /// @param <C>      Its type.
+    /// @return It, made and owned.
+    public <C extends Controller> C make(final Provider<C> provider) {
+        Objects.requireNonNull(provider, "provider");
+        final C controller = provider.get();
+        node.adopt(controller.getControllerNode());
+        return controller;
+    }
 }

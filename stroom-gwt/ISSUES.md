@@ -1672,7 +1672,9 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   last run), and match alone: the schedule box's `QuickSettingsAreGroupedButtons` (the dialog 1px
   lower) and `AppShell.ContextMenu` (the opened dictionary's focus on its first toolbar button, not
   its Words link tab; the focus goes to the first tab stop once the screen is shown, a guess that the
-  link tabs aren't yet tab stops under load).
+  link tabs aren't yet tab stops under load). `AppShell.ToolbarTabStops` did the same, the other way
+  round (the focus on the Words link tab), in a run of 102 stories with 16 workers in wave 11, and
+  matched in a run of the app shell's 56 alone.
 * Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals
