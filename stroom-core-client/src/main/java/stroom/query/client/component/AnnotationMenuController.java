@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+package stroom.query.client.component;
 
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.AnnotationResourceClient;
@@ -33,14 +33,16 @@ import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.Column;
 import stroom.query.api.SpecialColumns;
+import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
-import stroom.widget.component.client.AppRoot;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -50,8 +52,7 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -62,11 +63,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
-public class AnnotationManager implements HasHandlers {
+/// The Annotate menu of a query's results table, for the rows selected: edit, create or add to an
+/// annotation, change its status or who it is assigned to, or find one. It has no widget of its
+/// own; the dialogs it opens are its own until they are hidden.
+public class AnnotationMenuController extends Controller {
 
-    private final EventBus eventBus;
     private final Provider<ChangeStatusDialogController> changeStatusProvider;
     private final Provider<ChangeAssignedToDialogController> changeAssignedToProvider;
     private final AnnotationResourceClient annotationResourceClient;
@@ -75,37 +77,51 @@ public class AnnotationManager implements HasHandlers {
     private List<TableRow> selectedItems;
 
     private Supplier<List<Column>> columnSupplier;
-    private TaskMonitorFactory taskMonitorFactory;
 
-    private final AppRoot appRoot;
-
+    /// Made by GIN, with what it needs.
+    ///
+    /// @param eventBus                  The application's event bus.
+    /// @param changeStatusProvider      Makes the dialog that changes an annotation's status.
+    /// @param changeAssignedToProvider  Makes the dialog that changes who an annotation is assigned to.
+    /// @param annotationResourceClient  Changes annotations.
+    /// @param securityContext           Says whether the user may annotate.
     @Inject
-    public AnnotationManager(final EventBus eventBus,
-                             final Provider<ChangeStatusDialogController> changeStatusProvider,
-                             final Provider<ChangeAssignedToDialogController> changeAssignedToProvider,
-                             final AnnotationResourceClient annotationResourceClient,
-                             final ClientSecurityContext securityContext,
-                             final AppRoot appRoot) {
-        this.appRoot = appRoot;
-        this.eventBus = eventBus;
+    public AnnotationMenuController(final EventBus eventBus,
+                                    final Provider<ChangeStatusDialogController> changeStatusProvider,
+                                    final Provider<ChangeAssignedToDialogController> changeAssignedToProvider,
+                                    final AnnotationResourceClient annotationResourceClient,
+                                    final ClientSecurityContext securityContext) {
+        super(eventBus);
         this.changeStatusProvider = changeStatusProvider;
         this.changeAssignedToProvider = changeAssignedToProvider;
         this.annotationResourceClient = annotationResourceClient;
         enabled = securityContext.hasAppPermission(AppPermission.ANNOTATIONS);
     }
 
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        this.taskMonitorFactory = taskMonitorFactory;
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
+    /// @return Whether the user may annotate.
     public boolean isEnabled() {
         return enabled;
     }
 
+    /// @param columnSupplier Gives the table's columns, to find the rows' event ids and annotations.
     public void setColumnSupplier(final Supplier<List<Column>> columnSupplier) {
         this.columnSupplier = columnSupplier;
     }
 
+    /// Shows the annotation menu for the selected rows, below the element an event happened on.
+    ///
+    /// @param event         The event, e.g. a click.
+    /// @param selectedItems The selected rows the menu's actions apply to.
     public void showAnnotationMenu(final NativeEvent event,
                                    final List<TableRow> selectedItems) {
         final Element target = event.getEventTarget().cast();
@@ -137,6 +153,8 @@ public class AnnotationManager implements HasHandlers {
         }
     }
 
+    /// @param selectedItems The selected rows.
+    /// @return The menu's items for them.
     public List<Item> getMenuItems(final List<TableRow> selectedItems) {
         final List<Item> menuItems = new ArrayList<>();
 
@@ -165,6 +183,13 @@ public class AnnotationManager implements HasHandlers {
         return menuItems;
     }
 
+    /// Collects the rows' event ids and annotation ids, and the rows as a table to add to an
+    /// annotation.
+    ///
+    /// @param selectedItems    The selected rows.
+    /// @param eventIdList      Given the rows' event ids.
+    /// @param annotationIdList Given the rows' annotation ids.
+    /// @return The rows as a table, or null if the user may not annotate or none are selected.
     public AnnotationTable addRowData(final List<TableRow> selectedItems,
                                       final List<EventId> eventIdList,
                                       final List<Long> annotationIdList) {
@@ -238,6 +263,8 @@ public class AnnotationManager implements HasHandlers {
         return null;
     }
 
+    /// @param selectedItems The selected rows.
+    /// @return The ids of the annotations they belong to.
     public Set<Long> getAnnotationIds(final List<TableRow> selectedItems) {
         if (!enabled) {
             return Collections.emptySet();
@@ -367,7 +394,7 @@ public class AnnotationManager implements HasHandlers {
 
                         // Let the UI know the annotation has changed but not until we have shown the annotation
                         // (hence deferred by timer).
-                        AnnotationChangeEvent.fireDeferred(AnnotationManager.this, annotation.asDocRef());
+                        AnnotationChangeEvent.fireDeferred(AnnotationMenuController.this, annotation.asDocRef());
                     });
                 });
             });
@@ -384,7 +411,7 @@ public class AnnotationManager implements HasHandlers {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new LinkEvents(eventIdList));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
         }
     }
 
@@ -398,7 +425,7 @@ public class AnnotationManager implements HasHandlers {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new LinkAnnotations(annotationIdList));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
         }
     }
 
@@ -412,10 +439,13 @@ public class AnnotationManager implements HasHandlers {
                     annotation.asDocRef(),
                     annotation.getId(),
                     new AddAnnotationTable(table));
-            annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
+            annotationResourceClient.change(request, r -> runnable.run(), taskMonitor());
         }
     }
 
+    /// Opens an annotation, if the user may annotate.
+    ///
+    /// @param annotationId The annotation's id.
     public void editAnnotation(final long annotationId) {
         if (enabled) {
             EditAnnotationEvent.fire(this, annotationId);
@@ -425,18 +455,13 @@ public class AnnotationManager implements HasHandlers {
     private void changeStatus(final List<Long> annotationIdList) {
         if (enabled) {
             // One per use, released once it is hidden
-            changeStatusProvider.get().show(appRoot, annotationIdList);
+            changeStatusProvider.get().show(this, annotationIdList);
         }
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
         if (enabled) {
-            changeAssignedToProvider.get().show(appRoot, annotationIdList);
+            changeAssignedToProvider.get().show(this, annotationIdList);
         }
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
     }
 }

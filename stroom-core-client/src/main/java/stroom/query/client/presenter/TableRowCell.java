@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.query.api.Column;
+import stroom.query.client.component.AnnotationMenuController;
 import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -29,10 +30,10 @@ import java.util.List;
 
 public class TableRowCell extends AbstractCell<TableRow> implements HasContextMenus<TableRow> {
 
-    private final AnnotationManager annotationManager;
+    private final AnnotationMenuController annotationManager;
     private final Column column;
 
-    public TableRowCell(final AnnotationManager annotationManager, final Column column) {
+    public TableRowCell(final AnnotationMenuController annotationManager, final Column column) {
         this.annotationManager = annotationManager;
         this.column = column;
     }

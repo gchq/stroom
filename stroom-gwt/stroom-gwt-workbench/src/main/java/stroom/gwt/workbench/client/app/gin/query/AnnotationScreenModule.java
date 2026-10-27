@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.annotation.client.LinkedEventPresenter;
-import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
-import stroom.annotation.client.LinkedEventViewImpl;
 import stroom.explorer.client.component.FindPanel;
 import stroom.explorer.client.presenter.FindView;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -32,9 +29,6 @@ public class AnnotationScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(LinkedEventPresenter.class,
-                LinkedEventView.class,
-                LinkedEventViewImpl.class);
         bindSharedView(FindView.class,
                 FindPanel.class);
     }

@@ -56,7 +56,6 @@ import stroom.query.api.Row;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableResult;
 import stroom.query.client.component.QueryResultVisController;
-import stroom.query.client.presenter.AnnotationManager;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.QueryTableColumnValuesDataSupplier;
@@ -140,7 +139,7 @@ public class QueryResultTableController
 
     private final ButtonView downloadButton;
     private final DownloadSearchResultsController downloadOptions;
-    private final AnnotationManager annotationManager;
+    private final AnnotationMenuController annotationManager;
     private final ToolbarToggleButton valueFilterButton;
     private final ButtonView resetButton;
     private final ToolbarButton annotateButton;
@@ -193,7 +192,7 @@ public class QueryResultTableController
                                       final LocationManager locationManager,
                                       final QueryResultTable view,
                                       final DownloadSearchResultsController downloadOptions,
-                                      final AnnotationManager annotationManager,
+                                      final AnnotationMenuController annotationManager,
                                       final ClientSecurityContext securityContext,
                                       final Provider<ColumnFormatController> columnFormatProvider,
                                       final Provider<RulesController> rulesProvider,
@@ -209,9 +208,9 @@ public class QueryResultTableController
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadOptions = downloadOptions;
+        own(annotationManager);
         this.annotationManager = annotationManager;
         rowStyles = new TableRowStyles(userPreferencesManager);
-        annotationManager.setTaskMonitorFactory(taskMonitor());
 
         this.pagerView = view.getPager();
         // Pages of up to 10,000 rows: only the rows in view are drawn (virtual), unless a column wraps

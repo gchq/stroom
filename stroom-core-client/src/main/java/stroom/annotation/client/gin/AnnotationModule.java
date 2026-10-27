@@ -23,9 +23,6 @@ import stroom.annotation.client.AnnotationCreatePlugin;
 import stroom.annotation.client.AnnotationEditSupport;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
-import stroom.annotation.client.LinkedEventPresenter;
-import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
-import stroom.annotation.client.LinkedEventViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.explorer.client.component.FindPanel;
 import stroom.explorer.client.presenter.FindView;
@@ -41,7 +38,6 @@ public class AnnotationModule extends PluginModule {
         bindPlugin(AnnotationCollectionPlugin.class);
         bindPlugin(AnnotationCommentPlugin.class);
         bind(AnnotationEditSupport.class).asEagerSingleton();
-        bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindSharedView(FindView.class, FindPanel.class);
     }
 }

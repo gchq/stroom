@@ -91,7 +91,7 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
-import stroom.query.client.presenter.AnnotationManager;
+import stroom.query.client.component.AnnotationMenuController;
 import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
@@ -176,7 +176,7 @@ public class TableController extends DashboardComponentController
     private final ToolbarButton annotateButton;
     private final ButtonView askAiButton;
     private final DownloadSearchResultsController downloadOptions;
-    private final AnnotationManager annotationManager;
+    private final AnnotationMenuController annotationManager;
     private final RestFactory restFactory;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
@@ -217,7 +217,7 @@ public class TableController extends DashboardComponentController
                            final ColumnFilterDialogController columnFilterDialog,
                            final Provider<TableSettingsController> settingsPresenterProvider,
                            final DownloadSearchResultsController downloadOptions,
-                           final AnnotationManager annotationManager,
+                           final AnnotationMenuController annotationManager,
                            final RestFactory restFactory,
                            final UiConfigCache clientPropertyCache,
                            final TimeZones timeZones,
@@ -235,6 +235,7 @@ public class TableController extends DashboardComponentController
         this.pagerView = view.getPager();
         this.locationManager = locationManager;
         this.downloadOptions = downloadOptions;
+        own(annotationManager);
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
         this.timeZones = timeZones;
@@ -245,7 +246,6 @@ public class TableController extends DashboardComponentController
         rowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(taskMonitor());
-        annotationManager.setTaskMonitorFactory(taskMonitor());
 
         // Pages of up to 10,000 rows: only the rows in view are drawn (virtual), unless a column wraps
         dataGrid = view.getDataGrid();

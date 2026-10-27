@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An annotation's Linked Events tab: its events above the data of the one selected -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <split:SplitPane vertical="true" thin="true" sizes="400px, *"
+                     names="Linked events, Data" addStyleNames="max">
+        <g:SimplePanel styleName="max">
+            <dg:PagerPanel ui:field="pager" toolbarName="Linked event actions">
+                <dg:DataGrid ui:field="dataGrid" tableName="Linked Events"/>
+            </dg:PagerPanel>
+        </g:SimplePanel>
+        <g:SimplePanel ui:field="data" styleName="max"/>
+    </split:SplitPane>
+</ui:UiBinder>

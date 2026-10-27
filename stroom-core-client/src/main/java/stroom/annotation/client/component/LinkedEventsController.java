@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.annotation.client.component;
 
-import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
-import stroom.annotation.client.component.AddEventLinkController;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationPresenter;
+import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.LinkEvents;
@@ -27,34 +28,33 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.datagrid.client.DataGrid;
-import stroom.widget.datagrid.client.PagerPanel;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
 
+/// An annotation's Linked Events tab ([LinkedEvents]): the events linked to it, which the user can
+/// link and unlink, and the data of the one selected.
 @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
-public class LinkedEventPresenter
-        extends DocPresenter<LinkedEventView, Annotation> {
+public class LinkedEventsController extends Controller {
 
     private final DataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
 
     private final AnnotationResourceClient annotationResourceClient;
 
-    private final ButtonView addEventButton;
-    private final ButtonView removeEventButton;
+    private final LinkedEvents view;
 
     private final DataPresenter dataPresenter;
     private final Provider<AddEventLinkController> addEventLinkProvider;
@@ -64,21 +64,28 @@ public class LinkedEventPresenter
     private List<EventId> currentData;
     private EventId nextSelection;
     private AnnotationPresenter parent;
+    private boolean readOnly;
 
+    /// Made by GIN, with its content and its parts.
+    ///
+    /// @param eventBus                 The application's event bus.
+    /// @param view                     The content.
+    /// @param annotationResourceClient Links, unlinks and lists the events.
+    /// @param dataPresenter            The data of the event selected.
+    /// @param addEventLinkProvider     Makes the dialog that asks which event to link.
     @Inject
-    public LinkedEventPresenter(final EventBus eventBus,
-                                final LinkedEventView view,
-                                final PagerPanel pagerView,
-                                final AnnotationResourceClient annotationResourceClient,
-                                final DataPresenter dataPresenter,
-                                final Provider<AddEventLinkController> addEventLinkProvider) {
-        super(eventBus, view);
+    public LinkedEventsController(final EventBus eventBus,
+                                  final LinkedEvents view,
+                                  final AnnotationResourceClient annotationResourceClient,
+                                  final DataPresenter dataPresenter,
+                                  final Provider<AddEventLinkController> addEventLinkProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
         own(dataPresenter);
 
-        dataGrid = new DataGrid<>();
-        dataGrid.setTableName("Linked Events");
+        dataGrid = view.getDataGrid();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        pagerView.setDataWidget(dataGrid);
 
         this.annotationResourceClient = annotationResourceClient;
         this.dataPresenter = dataPresenter;
@@ -89,14 +96,13 @@ public class LinkedEventPresenter
 
         this.addEventLinkProvider = addEventLinkProvider;
 
-        pagerView.getToolbar().setName("Linked event actions");
-        addEventButton = pagerView.getToolbar().button(SvgImage.ADD, "Add Event Link", this::onAddEvent);
-        addEventButton.setEnabled(false);
-        removeEventButton = pagerView.getToolbar().button(SvgImage.DELETE, "Remove Event Link", this::onRemoveEvent);
-        removeEventButton.setEnabled(false);
-
-        view.setEventListView(pagerView);
-        view.setDataView(dataPresenter.getView());
+        view.setOnAction(action -> {
+            switch (action) {
+                case ADD -> onAddEvent();
+                case REMOVE -> onRemoveEvent();
+            }
+        });
+        view.setData(dataPresenter.getView());
 
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.copyTextColumnBuilder(EventId::toString)
@@ -105,16 +111,30 @@ public class LinkedEventPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         own(selectionModel.addSelectionHandler(e -> onSelection()));
+        watch(Contexts.READ_ONLY, readOnly -> {
+            this.readOnly = readOnly;
+            enableButtons();
+        });
+    }
+
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
     private void linkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new LinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
+                new LinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, taskMonitor());
     }
 
     private void unlinkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new UnlinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
+                new UnlinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, taskMonitor());
     }
 
     private void onChangeComplete(final Boolean success) {
@@ -148,21 +168,19 @@ public class LinkedEventPresenter
         });
     }
 
-    @Override
-    protected void onRead(final DocRef docRef, final Annotation annotation) {
+    /// Shows an annotation's linked events.
+    ///
+    /// @param docRef     The annotation.
+    /// @param annotation The annotation.
+    public void read(final DocRef docRef, final Annotation annotation) {
         dataGrid.setTableName("Annotation '" + docRef.getName() + "' Events");
         this.annotationRef = docRef;
         refreshData();
         enableButtons();
     }
 
-    @Override
-    protected Annotation onWrite(final Annotation document) {
-        return null;
-    }
-
     private void refreshData() {
-        annotationResourceClient.getLinkedEvents(annotationRef, this::setData, this);
+        annotationResourceClient.getLinkedEvents(annotationRef, this::setData, taskMonitor());
     }
 
     private void setData(final List<EventId> data) {
@@ -203,19 +221,12 @@ public class LinkedEventPresenter
         enableButtons();
     }
 
+    /// @param parent The annotation's editor, whose history is updated when an event is linked.
     public void setParent(final AnnotationPresenter parent) {
         this.parent = parent;
     }
 
     private void enableButtons() {
-        addEventButton.setEnabled(!isReadOnly());
-        removeEventButton.setEnabled(!isReadOnly() && selectionModel.getSelected() != null);
-    }
-
-    public interface LinkedEventView extends View {
-
-        void setEventListView(View view);
-
-        void setDataView(View view);
+        view.setActionsEnabled(!readOnly, !readOnly && selectionModel.getSelected() != null);
     }
 }

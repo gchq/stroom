@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.component.AnnotationEditController;
 import stroom.annotation.client.component.AnnotationLinksController;
+import stroom.annotation.client.component.LinkedEventsController;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -27,7 +28,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -66,20 +66,21 @@ public class AnnotationPresenter
                                final AnnotationResourceClient annotationResourceClient,
                                final AnnotationEditController annotationEdit,
                                final Provider<AnnotationLinksController> annotationLinksProvider,
-                               final LinkedEventPresenter linkedEventPresenter,
+                               final LinkedEventsController linkedEvents,
                                final Provider<MarkdownEditController> markdownEditProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         own(annotationEdit);
-        own(linkedEventPresenter);
+        own(linkedEvents);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationEdit = annotationEdit;
         annotationEdit.setOnTitleChange(() -> RefreshContentTabEvent.fire(this, this));
         annotationEdit.setOnDelete(() -> CloseContentTabEvent.fire(this, this));
-        linkedEventPresenter.setParent(this);
+        linkedEvents.setParent(this);
 
         addTab(ANNOTATION, ControllerTabProvider.ofOwned(eventBus, annotationEdit, AnnotationEditController::read));
-        addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
+        addTab(EVENTS, ControllerTabProvider.ofOwned(eventBus, linkedEvents,
+                LinkedEventsController::read));
         addTab(LINK_TO, new ControllerTabProvider<>(eventBus, () -> {
             final AnnotationLinksController linkTo = annotationLinksProvider.get();
             linkTo.setOnChange(this::updateHistory);
