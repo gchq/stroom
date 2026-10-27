@@ -72,6 +72,7 @@ RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
 DDL_DUMP_DIR="${BUILD_DIR}/build"
 DDL_DUMP_FILE="${DDL_DUMP_DIR}/stroom-database-schema-${BUILD_TAG}.sql"
+DOCKER_SCOUT_THRESHOLD="critical,high"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -334,11 +335,16 @@ releaseToDockerHub() {
   shift 2
 
   local allTagArgs=()
+  local firstTag=""
 
   for tagVersionPart in "$@"; do
     if [[ -n "${tagVersionPart}" ]]; then
       # echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
-      allTagArgs+=("--tag=${dockerRepo}:${tagVersionPart}")
+      local tag="${dockerRepo}:${tagVersionPart}"
+      allTagArgs+=("--tag=${tag}")
+      if [[ -z "${firstTag}" ]]; then
+        firstTag="${tag}"
+      fi
     fi
   done
 
@@ -351,6 +357,14 @@ releaseToDockerHub() {
     --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
+
+  echo -e "Doing Scout scan of local image with tag ${GREEN}${firstTag}${NC}" \
+    "and threshold ${GREEN}${DOCKER_SCOUT_THRESHOLD}${NC}"
+  docker scout \
+    cves \
+    "${firstTag}" \
+    --exit-code \
+    --only-severity "${DOCKER_SCOUT_THRESHOLD}"
 
   if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
@@ -368,7 +382,7 @@ releaseToDockerHub() {
 
 docker_login() {
   # The username and password are configured in the travis gui
-  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PAT}" ]]; then
     # Docker login stores the creds in a file so check it to
     # see if we are already logged in
     #local dockerConfigFile="${HOME}/.docker/config.json"
@@ -380,7 +394,7 @@ docker_login() {
       echo -e "Logging in to Docker (if this fails, have you provided the" \
         "correct docker creds)"
       # Login is idempotent
-      echo "${DOCKER_PASSWORD}" \
+      echo "${DOCKER_PAT}" \
         | docker login \
           -u "${DOCKER_USERNAME}" \
           --password-stdin \
@@ -388,7 +402,7 @@ docker_login() {
       echo -e "Successfully logged in to docker"
     #fi
   else
-    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PAT not set so" \
       "skipping docker login. Pulls/builds will be un-authenticated and rate" \
       "limited, pushes will fail.${NC}"
   fi
@@ -396,11 +410,11 @@ docker_login() {
 
 docker_logout() {
   # The username and password are configured in the travis gui
-  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PAT}" ]]; then
     echo -e "Logging out of Docker"
     docker logout >/dev/null 2>&1
   else
-    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PAT not set so" \
       "skipping docker logout"
   fi
 }
@@ -627,6 +641,12 @@ export BUILD_VERSION
 
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
+
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
 
   echo "::group::DockerHub release"
   # build and release stroom image to dockerhub
