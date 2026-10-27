@@ -46,6 +46,18 @@ class TestExtractionPreview {
     }
 
     @Test
+    void aFieldNamedInAnotherCaseDoesntFillAColumn() {
+        // Stroom matches a field's name exactly.
+        assertThat(ExtractionPreview.blankColumns(List.of(new ExtractionField("userid", "User/Id", null)),
+                Map.of("User", "${UserId}")))
+                .singleElement().asString()
+                .isEqualTo("Column 'User' uses UserId, but the extraction gives userid: Stroom matches a field's "
+                           + "name exactly, so the column would be blank. Name the field UserId.");
+        assertThat(ExtractionPreview.blankColumns(List.of(new ExtractionField("UserId", "User/Id", null)),
+                Map.of("User", "${UserId}"))).isEmpty();
+    }
+
+    @Test
     void aFieldTheTableShowsNowIsComparedWithTheIndexedValues() {
         final Preview agrees = ExtractionPreview.preview(List.of(USER, ORG),
                 List.of(sample(1, Map.of("User", "jsmith"), Map.of("UserId", "jsmith", "Organisation", "Fin")),

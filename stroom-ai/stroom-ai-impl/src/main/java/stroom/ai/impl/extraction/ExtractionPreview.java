@@ -149,14 +149,22 @@ public final class ExtractionPreview {
     public static List<String> blankColumns(final List<ExtractionField> fields,
                                             final Set<String> alsoGiven,
                                             final Map<String, String> columns) {
-        final Set<String> given = new LinkedHashSet<>();
-        ExtractionField.RESERVED.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
-        fields.forEach(field -> given.add(field.name().toLowerCase(Locale.ROOT)));
-        alsoGiven.forEach(name -> given.add(name.toLowerCase(Locale.ROOT)));
+        // Stroom fills a column's field by its exact name.
+        final Set<String> given = new LinkedHashSet<>(ExtractionField.RESERVED);
+        fields.forEach(field -> given.add(field.name()));
+        given.addAll(alsoGiven);
         final List<String> problems = new ArrayList<>();
         NullSafe.map(columns).forEach((column, expression) -> {
             for (final String field : fieldsOf(expression)) {
-                if (!given.contains(field.toLowerCase(Locale.ROOT))) {
+                final String otherCase = given.stream().filter(field::equalsIgnoreCase).findFirst().orElse(null);
+                if (given.contains(field)) {
+                    continue;
+                }
+                if (otherCase != null) {
+                    problems.add("Column '" + column + "' uses " + field + ", but the extraction gives " + otherCase
+                                 + ": Stroom matches a field's name exactly, so the column would be blank. Name the "
+                                 + "field " + field + ".");
+                } else {
                     problems.add("Column '" + column + "' uses " + field + ", which the extraction doesn't give: "
                                  + "turning extraction on fills every value in the table from it, so the column "
                                  + "would be blank. Give " + field + " too, with the XPath of its value (e.g. from "
@@ -248,7 +256,7 @@ public final class ExtractionPreview {
         final String column = NullSafe.map(columns).entrySet().stream()
                 .filter(entry -> {
                     final Matcher matcher = SINGLE_FIELD.matcher(NullSafe.string(entry.getValue()));
-                    return matcher.matches() && matcher.group(1).strip().equalsIgnoreCase(field.name());
+                    return matcher.matches() && matcher.group(1).strip().equals(field.name());
                 })
                 .map(Map.Entry::getKey)
                 .findFirst()
