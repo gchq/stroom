@@ -24,7 +24,6 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.pathways.client.presenter.PathwayEditPresenter;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
 import stroom.pathways.shared.FindPathwayCriteria;
@@ -55,7 +54,7 @@ public class PathwayListController extends Controller {
 
     private final PathwayList view;
     private final RestFactory restFactory;
-    private final PathwayEditPresenter pathwayEditPresenter;
+    private final PathwayEditController pathwayEdit;
     private RestDataProvider<Pathway, ResultPage<Pathway>> dataProvider;
 
     private String filter;
@@ -70,17 +69,17 @@ public class PathwayListController extends Controller {
     /// @param view                 The content.
     /// @param restFactory          Finds and changes the pathways.
     /// @param dateTimeFormatter    Formats the times shown.
-    /// @param pathwayEditPresenter Edits a pathway.
+    /// @param pathwayEdit          Edits a pathway.
     @Inject
     public PathwayListController(final EventBus eventBus,
                                  final PathwayList view,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
-                                 final PathwayEditPresenter pathwayEditPresenter) {
+                                 final PathwayEditController pathwayEdit) {
         super(eventBus);
         this.view = view;
         this.restFactory = restFactory;
-        this.pathwayEditPresenter = own(pathwayEditPresenter);
+        this.pathwayEdit = own(pathwayEdit);
         initWidget(view);
         view.addColumns(dateTimeFormatter::format);
         view.setOnFilterChange(this::onFilterChange);
@@ -106,10 +105,10 @@ public class PathwayListController extends Controller {
 
     private void onAdd() {
         final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        pathwayEditPresenter.read(pathwaysDoc, Pathway.builder().name("").createTime(now).build());
-        pathwayEditPresenter.show("New Pathway", e -> {
+        pathwayEdit.read(pathwaysDoc, Pathway.builder().name("").createTime(now).build());
+        pathwayEdit.show("New Pathway", e -> {
             if (e.isOk()) {
-                final Pathway pathway = pathwayEditPresenter.write();
+                final Pathway pathway = pathwayEdit.write();
                 restFactory
                         .create(PATHWAYS_RESOURCE)
                         .method(res -> res.addPathway(new AddPathway(docRef, pathway)))
@@ -131,11 +130,11 @@ public class PathwayListController extends Controller {
     private void onEdit() {
         final Pathway existingPathway = view.getSelectionModel().getSelected();
         if (existingPathway != null) {
-            pathwayEditPresenter.read(pathwaysDoc, existingPathway);
-            pathwayEditPresenter.show("Edit Pathway", e -> {
+            pathwayEdit.read(pathwaysDoc, existingPathway);
+            pathwayEdit.show("Edit Pathway", e -> {
                 if (e.isOk()) {
                     try {
-                        final Pathway pathway = pathwayEditPresenter.write();
+                        final Pathway pathway = pathwayEdit.write();
                         restFactory
                                 .create(PATHWAYS_RESOURCE)
                                 .method(res -> res.updatePathway(new UpdatePathway(

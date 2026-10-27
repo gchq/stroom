@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.pathways.client.view;
+package stroom.pathways.client.component;
 
-import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
+/// A pathway's name, then its paths beside the constraints of the path chosen.
+public class PathwayEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -38,42 +38,41 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     @UiField
     SimplePanel constraints;
 
-    @Inject
-    public PathwayEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the form, empty.
+    public PathwayEdit() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the keyboard focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-    @Override
+    /// @return The name typed.
     public String getName() {
         return name.getText();
     }
 
-    @Override
-    public void setName(final String fieldName) {
-        name.setText(fieldName);
+    /// @param name The pathway's name.
+    public void setName(final String name) {
+        this.name.setText(name);
     }
 
-    @Override
-    public void setTree(final IsWidget view) {
-        tree.setWidget(view.asWidget());
+    /// @param tree The pathway's paths, a controller of their own.
+    public void setTree(final IsWidget tree) {
+        this.tree.setWidget(tree.asWidget());
     }
 
-    @Override
-    public void setConstraints(final IsWidget view) {
-        constraints.setWidget(view.asWidget());
+    /// @param constraints The chosen path's constraints, a controller of their own.
+    public void setConstraints(final IsWidget constraints) {
+        this.constraints.setWidget(constraints.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, PathwayEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, PathwayEdit> {
 
     }
 }
