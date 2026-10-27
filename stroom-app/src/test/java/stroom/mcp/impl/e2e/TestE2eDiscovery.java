@@ -551,6 +551,62 @@ class TestE2eDiscovery extends AbstractE2eTest {
     /// nesting, keys Elasticsearch refuses or that repeat ours (renamed or repaired); one record with a value where
     /// an earlier one had an object, which Elasticsearch rejects: reported, while the others are indexed.
     @Test
+    void aDiscoveryBuildIsLedFromTheStartAndMadeWithNoTemplate() {
+        // Asked for by the user: discovery named at the start leads the build; with no discovery template in this
+        // Stroom, a pipeline of its own as the last resort, confirmed by the user.
+        final String build = "e2e-discovery-own-" + STAMP;
+        final String feed = "E2E-OWN-RAW-" + STAMP.toUpperCase();
+        final String index = indexName("own");
+        final Map<String, Object> started = json("start_build", args("build", build, "kind", "discovery"));
+        assertThat(started).containsEntry("kind", "discovery");
+        assertThat(list(started, "plan")).extracting(step -> step.get("step")).as("no events pipeline")
+                .contains("index", "indexing_pipeline")
+                .doesNotContain("translation", "pipeline");
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+        final Map<String, Object> status = json("build_status", args("build", build));
+        assertThat(nextStep(status)).as("the discovery plan next, not a translation").isEqualTo("index");
+        assertThat(nextTool(status)).isEqualTo("draft_index_mapping");
+        assertThat(map(map(next(status), "call"), "arguments")).containsEntry("backend", "elasticsearch")
+                .containsKey("discovery");
+
+        final Map<String, Object> found = json("find_pipeline_templates", args("stage", "discovery"));
+        assertThat(list(found, "candidates")).as("no discovery template in this Stroom").isEmpty();
+        assertThat(String.valueOf(found.get("hint"))).contains("create_indexing_pipeline standalone='discovery'");
+        final DocRef cluster = liveCluster();
+        final Map<String, Object> plan = map(client.json("draft_index_mapping", args("backend", "elasticsearch",
+                "index_name", index, "discovery", obj("timestamp_field", "ts"))), "plan");
+        final String xslt = uuidOf(client.json("save_xslt", args("build", build, "name", index + "-XSLT",
+                "index_plan", plan)));
+        final int before = client.forms().size();
+        final Map<String, Object> made = agreed("create_indexing_pipeline", args("build", build, "name",
+                index + " - Discovery", "standalone", "discovery", "xslt_uuid", xslt, "index_name", index,
+                "cluster_uuid", cluster.getUuid()));
+        assertThat(formsText(formsSince(before))).as("the user confirms a pipeline with no template")
+                .contains("with no template");
+        assertThat(String.valueOf(made.get("chain"))).isEqualTo("Source -> jsonParser -> readRecordCountFilter -> "
+                                                                 + "splitFilter -> xsltFilter -> schemaFilter -> "
+                                                                 + "elasticIndexingFilter");
+        final String pipeline = uuidOf(made);
+        assertThat(templates("discovery")).as("its own pipeline is in the build, not a template")
+                .noneMatch(candidate -> pipeline.equals(candidate.get("uuid")));
+
+        // It indexes as a template's child would.
+        final Map<String, Object> stepped = stepSample(pipeline, List.of(raw));
+        assertThat(stepped).as("stepped clean: %s", stepped.get("groups")).containsEntry("verdict", "clean");
+        assertThat(documents(pipeline, raw, 3)).extracting(document -> document.get("EventId"))
+                .containsExactly(number("1"), number("2"), number("3"));
+        final Map<String, Object> agreedTemplate = agreed("propose_index_template", args("pipeline_uuid", pipeline,
+                "plan", plan, "events_stream_ids", List.of(raw), "example_template", STANDALONE_EXAMPLE));
+        apply((String) agreedTemplate.get("dev_tools"));
+        indexStreams(pipeline, List.of(raw));
+        node.refresh(index);
+        assertThat(node.count(index, null)).as("the index holds the 3 records").isEqualTo(3);
+        assertThat(nextStep(json("build_status", args("build", build)))).as("past the pipeline")
+                .isNotIn("index", "indexing_pipeline", "translation");
+    }
+
+    @Test
     void awkwardShapesAreIndexedAndARejectedRecordReported() {
         final String build = "e2e-discovery-shapes-" + STAMP;
         final String feed = "E2E-SHAPES-" + STAMP.toUpperCase();
