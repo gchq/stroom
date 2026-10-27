@@ -22,8 +22,6 @@ import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.cf.RulePresenter;
-import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -46,8 +44,5 @@ public class TableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(RulesPresenter.class,
                 RulesPresenter.RulesView.class,
                 RulesViewImpl.class);
-        bindPresenterWidget(RulePresenter.class,
-                RulePresenter.RuleView.class,
-                RuleViewImpl.class);
     }
 }

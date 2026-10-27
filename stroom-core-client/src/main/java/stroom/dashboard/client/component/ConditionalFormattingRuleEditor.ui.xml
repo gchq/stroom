@@ -1,11 +1,12 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A conditional formatting rule: the rows it matches and how they are shown -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max form">
+    <g:FlowPanel styleName="conditional-formatting-rule-editor max form">
 
         <form:FormGroup addStyleNames="dock-max"
                         identity="cfRuleExpression"
@@ -33,22 +34,22 @@
                         label="Formatting Type"
                         helpText="How the style is applied to matching rows: Background colours the row background, Text colours the text only, and Custom uses your own colours."
                         screenReaderText="Background, Text or Custom.">
-            <l:SelectionBox ui:field="formattingType"/>
+            <l:SelectionBox ui:field="formattingType" addStyleNames="conditionalFormatTypeSelection"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="styleGroup"
                         identity="cfStyle"
                         label="Style"
                         helpText="Standard colour style to apply to matching rows.">
-            <l:SelectionBox ui:field="formattingStyle"/>
+            <l:SelectionBox ui:field="formattingStyle" addStyleNames="conditionalFormatStyleSelection"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="customStyleGroup"
                         identity="cfCustomStyle"
                         label="Custom Style"
                         helpText="Opens a dialog to set your own background and text colours for matching rows, for both light and dark themes.">
-            <b:Button ui:field="editCustomStyle" text="Set Custom Style" width="200px"
-                      addStyleNames="allow-focus button--contained-primary"/>
+            <b:Button ui:field="editCustomStyle" text="Set Custom Style"
+                      addStyleNames="allow-focus button--contained-primary conditional-formatting-rule-editor__custom-style"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
@@ -69,7 +70,7 @@
                         identity="cfExample"
                         label="Example"
                         helpText="Preview of how matching rows will look with the chosen style.">
-            <g:SimplePanel ui:field="example" width="200px"/>
+            <g:SimplePanel ui:field="example" styleName="conditional-formatting-rule-editor__example"/>
         </form:FormGroup>
 
     </g:FlowPanel>

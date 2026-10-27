@@ -18,6 +18,7 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.component.ConditionalFormattingRuleEditorController;
 import stroom.dashboard.client.component.RuleList;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
@@ -33,9 +34,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -53,7 +51,7 @@ public class RulesPresenter
         implements Focus {
 
     private final RuleList ruleList;
-    private final Provider<RulePresenter> editRulePresenterProvider;
+    private final Provider<ConditionalFormattingRuleEditorController> ruleEditorProvider;
 
     private List<QueryField> fields;
     private List<ConditionalFormattingRule> rules = new ArrayList<>();
@@ -74,10 +72,10 @@ public class RulesPresenter
     public RulesPresenter(final EventBus eventBus,
                           final RulesView view,
                           final RuleList ruleList,
-                          final Provider<RulePresenter> editRulePresenterProvider) {
+                          final Provider<ConditionalFormattingRuleEditorController> ruleEditorProvider) {
         super(eventBus, view);
         this.ruleList = ruleList;
-        this.editRulePresenterProvider = editRulePresenterProvider;
+        this.ruleEditorProvider = ruleEditorProvider;
 
         getView().setTableView(ruleList);
 
@@ -213,70 +211,40 @@ public class RulesPresenter
                 .formattingType(ConditionalFormattingType.BACKGROUND)
                 .enabled(true)
                 .build();
-        final RulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
-        editRulePresenter.read(newRule, selectionBoxModel);
-
-        final PopupSize popupSize = PopupSize.resizable(1000, 700);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Rule")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ConditionalFormattingRule rule = editRulePresenter.write();
-                        rules.add(rule);
-                        update();
-                        ruleList.getSelectionModel().setSelected(rule);
-                        setDirty(true);
-                    }
-                    e.hide();
-                    // Return focus to the add button
-                    addButton.focus();
-                })
-                .fire();
+        // Made for one use, and disposed once it is closed
+        ruleEditorProvider.get().edit(this, "Add New Rule", newRule, selectionBoxModel, rule -> {
+            rules.add(rule);
+            update();
+            ruleList.getSelectionModel().setSelected(rule);
+            setDirty(true);
+        }, addButton::focus);
     }
 
     private void edit(final ConditionalFormattingRule existingRule) {
-        final RulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
-        editRulePresenter.read(existingRule, selectionBoxModel);
+        // Made for one use, and disposed once it is closed
+        ruleEditorProvider.get().edit(this, "Edit Rule", existingRule, selectionBoxModel, rule -> {
+            final int index = rules.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                          + "so the changes can't be kept.", null);
+            } else {
+                rules.remove(index);
+                rules.add(index, rule);
 
-        final PopupSize popupSize = PopupSize.resizable(1000, 700);
-        ShowPopupEvent.builder(editRulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Edit Rule")
-                .onShow(e -> editRulePresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ConditionalFormattingRule rule = editRulePresenter.write();
-                        final int index = rules.indexOf(existingRule);
-                        if (index < 0) {
-                            // Deleted behind the dialog, which isn't modal
-                            AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
-                                                      + "so the changes can't be kept.", null);
-                        } else {
-                            rules.remove(index);
-                            rules.add(index, rule);
+                update();
+                ruleList.getSelectionModel().setSelected(rule);
 
-                            update();
-                            ruleList.getSelectionModel().setSelected(rule);
-
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
-                        }
-                    }
-                    e.hide();
-                    // Return focus to the add button
-                    addButton.focus();
-                })
-                .fire();
+                // Only mark the policies as dirty if the rule was actually changed.
+                if (!existingRule.equals(rule)) {
+                    setDirty(true);
+                }
+            }
+        }, addButton::focus);
     }
 
     @Override

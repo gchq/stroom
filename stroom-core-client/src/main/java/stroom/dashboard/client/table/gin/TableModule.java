@@ -23,8 +23,6 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.cf.RulePresenter;
-import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.query.client.presenter.TimeZones;
@@ -44,6 +42,5 @@ public class TableModule extends AbstractPresenterModule {
                 BasicTableSettingsView.class,
                 BasicTableSettingsViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
-        bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
     }
 }

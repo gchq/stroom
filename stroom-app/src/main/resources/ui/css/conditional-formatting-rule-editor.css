@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table.cf;
+/* A conditional formatting rule: the rows it matches and how they are shown */
 
-import stroom.widget.presenter.client.UiHandlers;
+/* Set Custom Style, the width of the example below it */
+.conditional-formatting-rule-editor__custom-style {
+    width: 200px;
+}
 
-public interface RuleUiHandlers extends UiHandlers {
-
-    void onEditCustomStyle();
+/* The example of a matching row */
+.conditional-formatting-rule-editor__example {
+    width: 200px;
 }
