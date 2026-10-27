@@ -18,6 +18,7 @@ package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.pathways.client.component.PathwayListController;
 import stroom.pathways.client.component.PathwayTreeController;
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.shared.PathwaysDoc;
@@ -30,20 +31,20 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, PathwaysDoc> {
 
-    private final PathwayListPresenter pathwayListPresenter;
+    private final PathwayListController pathwayListPresenter;
     private final PathwayTreeController pathwayTree;
 
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
                                   final PathwaysSplitView view,
-                                  final PathwayListPresenter pathwayListPresenter,
+                                  final PathwayListController pathwayListPresenter,
                                   final PathwayTreeController pathwayTree) {
         super(eventBus, view);
         own(pathwayListPresenter);
         own(pathwayTree);
         this.pathwayListPresenter = pathwayListPresenter;
         this.pathwayTree = pathwayTree;
-        view.setTable(pathwayListPresenter.getView());
+        view.setTable(pathwayListPresenter);
         view.setTree(pathwayTree);
 
         own(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
@@ -54,17 +55,17 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
 
     @Override
     protected void onRead(final DocRef docRef, final PathwaysDoc document) {
-        pathwayListPresenter.onRead(docRef, document);
+        pathwayListPresenter.read(docRef, document);
     }
 
     @Override
     protected PathwaysDoc onWrite(final PathwaysDoc document) {
-        return pathwayListPresenter.onWrite(document);
+        return document;
     }
 
     public interface PathwaysSplitView extends View {
 
-        void setTable(View view);
+        void setTable(IsWidget view);
 
         void setTree(IsWidget view);
     }

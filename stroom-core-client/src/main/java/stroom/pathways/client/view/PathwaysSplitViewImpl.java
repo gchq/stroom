@@ -17,7 +17,6 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
-import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,7 +43,7 @@ public class PathwaysSplitViewImpl
     }
 
     @Override
-    public void setTable(final View view) {
+    public void setTable(final IsWidget view) {
         dataGrid.setWidget(view.asWidget());
     }
 
