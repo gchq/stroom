@@ -176,7 +176,7 @@ class TestUserActions {
     void aCreateExtractionPipelineButtonIsOnlyOfferedByStroomsOwnTools() {
         final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
-        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1),
                 List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of("UserId"));
         final Map<String, Object> create = createExtraction("Dashboard", plan.toJson());
 
@@ -200,7 +200,8 @@ class TestUserActions {
         final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
         final List<ExtractionField> fields = List.of(new ExtractionField("UserId", "EventSource/User/Id", null));
-        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3", fields, List.of(),
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1), fields,
+                List.of(),
                 new ExtractionPlan.Existing(new DocRef("Pipeline", "p1", "Logon pipeline"), "xsltFilter",
                         new DocRef("XSLT", "x1", "Logon XSLT"), "a".repeat(64)));
         final Map<String, Object> change = new HashMap<>(createExtraction("Dashboard", plan.toJson()));
@@ -223,7 +224,8 @@ class TestUserActions {
                                                                           + "UserId"));
 
         // A change needs the pipeline it changes.
-        change.put("plan", new ExtractionPlan("Events", "table-1", "", fields, List.of()).toJson());
+        change.put("plan", new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1), fields,
+                List.of()).toJson());
         assertThat(userActions.check(null, List.of(change), NOW)).isEmpty();
         // And its code's hash.
         change.put("plan", plan.toJson().replace("a".repeat(64), "short"));
@@ -233,7 +235,7 @@ class TestUserActions {
     @Test
     void aCreateExtractionPipelineButtonNeedsADashboardAndAPlanItCanRead() {
         Mockito.when(lookup.find(Mockito.any())).thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
-        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", "event-logging:3",
+        final ExtractionPlan plan = new ExtractionPlan("Events", "table-1", new ExtractionPlan.Sample(7, 1),
                 List.of(new ExtractionField("UserId", "EventSource/User/Id", null)), List.of());
 
         assertThat(userActions.check(null, List.of(createExtraction("Pipeline", plan.toJson())), NOW)).isEmpty();

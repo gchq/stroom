@@ -80,7 +80,9 @@ public record ExtractionField(@JsonProperty("name") String name,
             "abs", "sum", "count", "min", "max", "avg", "exists", "empty", "position", "last", "name", "local-name",
             "data", "distinct-values", "format-number");
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9 _.()-]*");
+    // A field's name: as an index names its fields (e.g. @timestamp, user.name), but nothing that could change the
+    // XSLT it is written into (an attribute value, where braces are code) or a column's ${...} reference to it.
+    private static final Pattern NAME_PATTERN = Pattern.compile("[^{}\"'<>&\\p{Cntrl}]+");
     // A function call: a name (perhaps prefixed) followed by '(' or '#' (a function reference). Not the end of a
     // longer name (e.g. before( in substring-before(), but a call after a minus sign is one (e.g. -doc(): the
     // compiled expression's calls are checked too (see disallowedCall).
@@ -140,8 +142,8 @@ public record ExtractionField(@JsonProperty("name") String name,
                 continue;
             }
             if (field.name().length() > MAX_NAME_CHARS || !NAME_PATTERN.matcher(field.name()).matches()) {
-                problems.add(label + " isn't a name a field can have: letters, digits, spaces and _ . ( ) -, "
-                             + "starting with a letter, up to " + MAX_NAME_CHARS + " characters.");
+                problems.add(label + " isn't a name a field can have: up to " + MAX_NAME_CHARS + " characters, "
+                             + "none of them { } \" ' < > & or control characters.");
             }
             if (RESERVED.stream().anyMatch(reserved -> reserved.equalsIgnoreCase(field.name()))) {
                 problems.add(label + " is given by every extraction, from the ids of the event; leave it out.");

@@ -256,8 +256,8 @@ public class UserActionService {
         try {
             written = change
                     ? extractionActions.writeChange(action.doc(), plan, NullSafe.get(request,
-                    AiWriteExtractionRequest::getContentHash))
-                    : extractionActions.write(action.doc(), plan, request);
+                    AiWriteExtractionRequest::getContentHash), ToolSession.chat(chatId))
+                    : extractionActions.write(action.doc(), plan, request, ToolSession.chat(chatId));
         } catch (final RuntimeException e) {
             final String problem = e instanceof IllegalStateException
                     ? e.getMessage()
@@ -439,7 +439,8 @@ public class UserActionService {
         }
         final AiCreateExtraction create;
         try {
-            create = extractionActions.prepare(action.doc(), action.name(), ExtractionPlan.fromJson(action.request()));
+            create = extractionActions.prepare(action.doc(), action.name(), ExtractionPlan.fromJson(action.request()),
+                    ToolSession.chat(chatId));
         } catch (final IllegalArgumentException | IllegalStateException e) {
             auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
             return new AiUserActionResult(false, e.getMessage(), null);
@@ -461,7 +462,7 @@ public class UserActionService {
         final AiChangeExtraction changeExtraction;
         try {
             changeExtraction = extractionActions.prepareChange(action.doc(), ExtractionPlan.fromJson(
-                    action.request()));
+                    action.request()), ToolSession.chat(chatId));
         } catch (final IllegalArgumentException | IllegalStateException e) {
             auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), e.getMessage(), false);
             return new AiUserActionResult(false, e.getMessage(), null);

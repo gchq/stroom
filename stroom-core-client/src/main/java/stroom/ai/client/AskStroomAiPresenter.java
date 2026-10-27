@@ -3180,11 +3180,45 @@ public class AskStroomAiPresenter
                         extractionDetail(create, name, folder, inheritance),
                         ok -> {
                             if (ok) {
-                                writeExtraction(chatId, messageId, actionId, create, new AiWriteExtractionRequest(
-                                        name, NullSafe.get(folder, ExplorerNode::getDocRef), inheritance,
-                                        create.getContentHash()));
+                                whenTableExtractsWith(create.getDashboard(), create.getComponentId(),
+                                        create.getComponentName(), create.getTablePipeline(),
+                                        () -> writeExtraction(chatId, messageId, actionId, create,
+                                                new AiWriteExtractionRequest(name,
+                                                        NullSafe.get(folder, ExplorerNode::getDocRef), inheritance,
+                                                        create.getContentHash())),
+                                        problem -> AlertEvent.fireWarn(this, problem, null));
                             }
                         }));
+    }
+
+    // Goes on to write a search extraction only if its table extracts with the pipeline it did when the extraction
+    // was proposed (none, or the one it changes or is a child of), as the dashboard has it now: else the table
+    // changes that follow would replace another, and nothing is written.
+    private void whenTableExtractsWith(final DocRef dashboard,
+                                       final String componentId,
+                                       final String componentName,
+                                       final DocRef expected,
+                                       final Runnable then,
+                                       final Consumer<String> onProblem) {
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireReadExtraction(this, dashboard,
+                componentId, componentName, pipeline -> {
+                    if (Objects.equals(NullSafe.get(pipeline, DocRef::getUuid),
+                            NullSafe.get(expected, DocRef::getUuid))) {
+                        then.run();
+                    } else {
+                        onProblem.accept("Nothing was written: table '" + componentName + "' extracts its values "
+                                         + (pipeline == null
+                                ? "with no pipeline"
+                                : "with pipeline '" + docName(pipeline) + "'")
+                                         + " now, not as it did when this was proposed. Ask for the extraction "
+                                         + "again.");
+                    }
+                }, message -> onProblem.accept("Nothing was written: " + NullSafe.nonBlankStringElse(message,
+                        "the table's extraction pipeline couldn't be read.")));
+        if (!event.isHandled()) {
+            onProblem.accept("Nothing was written: the dashboard can't be opened here to check table '"
+                             + componentName + "'.");
+        }
     }
 
     // What would be written for a search extraction, the table changes that follow, and the XSLT's code, for the
@@ -3296,8 +3330,10 @@ public class AskStroomAiPresenter
                             NullSafe.string(change.getProposedXslt()),
                             AceEditorMode.XML,
                             "Write",
-                            (andStep, code, rejected, onResult) -> writeExtractionChange(chatId, messageId,
-                                    actionId, change, onResult));
+                            (andStep, code, rejected, onResult) -> whenTableExtractsWith(change.getDashboard(),
+                                    change.getComponentId(), change.getComponentName(), change.getPipeline(),
+                                    () -> writeExtractionChange(chatId, messageId, actionId, change, onResult),
+                                    onResult));
                 });
     }
 
