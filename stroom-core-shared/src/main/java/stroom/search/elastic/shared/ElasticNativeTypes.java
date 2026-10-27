@@ -45,6 +45,8 @@ public class ElasticNativeTypes {
         NATIVE_TYPE_MAP.put("date_nanos", FieldType.DATE);
 
         NATIVE_TYPE_MAP.put("text", FieldType.TEXT);
+        // Text without positions or scores, which still supports phrase queries, e.g. ECS's `message`
+        NATIVE_TYPE_MAP.put("match_only_text", FieldType.TEXT);
 
         NATIVE_TYPE_MAP.put("keyword", FieldType.KEYWORD);
         // A version, e.g. `1.2.0`, is text, though Elasticsearch orders versions by their precedence

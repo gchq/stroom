@@ -8,6 +8,7 @@
     "ConstantKeyword": "fixed",
     "Wildcard": "apple",
     "Text": "The red apple",
+    "MatchOnlyText": "The red apple",
     "Boolean": true,
     "Date": "2026-01-01T00:00:00.000Z",
     "DateNanos": "2026-01-01T00:00:00.000000000Z",
@@ -22,6 +23,7 @@
     "HalfFloat": 1.5,
     "ScaledFloat": 1.25,
     "Double": 1.5,
+    "Attributes": {"Host": "apple"},
     "Nested": [{"Number": 1}, {"Number": 2}]
   },
   {
@@ -33,6 +35,7 @@
     "ConstantKeyword": "fixed",
     "Wildcard": "banana",
     "Text": "A yellow banana",
+    "MatchOnlyText": "A yellow banana",
     "Boolean": false,
     "Date": "2026-01-02T00:00:00.000Z",
     "DateNanos": "2026-01-02T00:00:00.000000001Z",
@@ -47,6 +50,7 @@
     "HalfFloat": 2.5,
     "ScaledFloat": 2.5,
     "Double": 2.5,
+    "Attributes": {"Host": "banana"},
     "Nested": [{"Number": 3}]
   },
   {
@@ -58,6 +62,7 @@
     "ConstantKeyword": "fixed",
     "Wildcard": "Cherry",
     "Text": "The dark cherry",
+    "MatchOnlyText": "The dark cherry",
     "Boolean": true,
     "Date": "2026-01-03T00:00:00.000Z",
     "DateNanos": "2026-01-03T00:00:00.000000000Z",
@@ -71,7 +76,8 @@
     "Float": 3.5,
     "HalfFloat": 3.5,
     "ScaledFloat": 3.75,
-    "Double": 3.5
+    "Double": 3.5,
+    "Attributes": {"Host": "Cherry"}
   },
   {
     "_id": "4",
@@ -82,6 +88,7 @@
     "ConstantKeyword": "fixed",
     "Wildcard": "apple pie",
     "Text": "Apple pie recipe",
+    "MatchOnlyText": "Apple pie recipe",
     "Boolean": false,
     "Date": "2026-01-04T00:00:00.000Z",
     "DateNanos": "2026-01-04T00:00:00.000000000Z",
@@ -95,7 +102,8 @@
     "Float": 4.5,
     "HalfFloat": 4.5,
     "ScaledFloat": 4.5,
-    "Double": 4.5
+    "Double": 4.5,
+    "Attributes": {"Host": "apple pie"}
   },
   {
     "_id": "5",

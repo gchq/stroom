@@ -542,19 +542,26 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private static Map<String, Property> getMultiFieldProperties(final Property property) {
         if (property._get() instanceof final PropertyBase propertyBase) {
             return NullSafe.map(propertyBase.fields());
+        } else if (property.isMatchOnlyText()) {
+            // Not a PropertyBase, though it can have multi-fields, e.g. ECS's `message.keyword`
+            return NullSafe.map(property.matchOnlyText().fields());
         }
         return Map.of();
     }
 
     /**
-     * @return the child properties of an {@code object} or {@code nested} container, or an empty map for any
-     * other property type (leaf fields, aliases, etc.).
+     * @return the child properties of an {@code object}, {@code nested} or {@code passthrough} container, or an
+     * empty map for any other property type (leaf fields, aliases, etc.).
      */
     private static Map<String, Property> getChildProperties(final Property property) {
         if (property.isNested()) {
             return property.nested().properties();
         } else if (property.isObject()) {
             return property.object().properties();
+        } else if (property.isPassthrough()) {
+            // An object whose fields can also be queried by their leaf names, e.g. OpenTelemetry's
+            // `attributes`. We offer them by their full names, like the fields of an object.
+            return NullSafe.map(property.passthrough().properties());
         }
         return Map.of();
     }
