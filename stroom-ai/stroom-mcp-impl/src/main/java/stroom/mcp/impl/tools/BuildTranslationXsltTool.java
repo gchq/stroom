@@ -252,8 +252,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                 + "Leave both out, with uuid=, to regenerate a saved XSLT from the mapping kept "
                                 + "with it (as the generator now writes it: its current style defaults); never "
                                 + "send a kept mapping back whole."))
-                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the translation writes, e.g. "
-                                                               + "'4.0.2': the one the user chose (as "
+                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the translation writes: "
+                                                               + "the one the user chose (as "
                                                                + "draft_translation_mapping returned it). Left out: "
                                                                + "a saved XSLT's own, else the user is asked which "
                                                                + "of the versions this Stroom holds (the newest "

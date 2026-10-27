@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The Data Splitter XML a spec is written as (the Stroom MCP server's `generate_splitter`, and its tests in
 /// `tests/test_directive_logs.py`, `test_formats.py`, `test_sources.py` and `test_wild_formats.py`).
@@ -43,6 +44,92 @@ class TestSplitterXml extends DraftFixtures {
         final Map<String, String> out = new LinkedHashMap<>();
         element.attributes().forEach(attribute -> out.put(attribute.name(), attribute.value()));
         return out;
+    }
+
+    @Test
+    void theConverterNamesItsPartsAndPassesOverBlankLines() {
+        final SplitterSpec spec = SplitterSpec.builder("delimited").delimiter(",").header(true).build();
+
+        final XmlElement root = XmlParser.parse(SplitterXml.converter(spec));
+
+        assertThat(root.childElements(DS, "split")).extracting(split -> attributes(split).get("id"))
+                .containsExactly("header", "record");
+        // After the head's byte order mark regex.
+        assertThat(attributes(root.childElements(DS, "regex").getLast())).containsEntry("id", "blank_line")
+                .containsEntry("pattern", SplitterXml.BLANK_LINE);
+        assertThat(attributes(only(root.childElements(DS, "split").getLast(), "group"))).containsEntry("id",
+                "fields");
+        // As the Stroom MCP server wrote it: no ids, no blank line regex.
+        assertThat(SplitterXml.generateSplitter(spec)).doesNotContain(" id=\"header\"").doesNotContain("blank_line");
+    }
+
+    @Test
+    void escapesAreTakenOutOfEachCell() {
+        final String headed = SplitterXml.converter(SplitterSpec.builder("delimited").delimiter(",").header(true)
+                .escape("\\").build());
+        assertThat(headed).contains("escape=\"\\\"").contains("<data name=\"$heading$1\" value=\"$2\" />");
+
+        // Named columns: a split per column, in turn.
+        final String named = SplitterXml.converter(SplitterSpec.builder("delimited").delimiter(",")
+                .header(List.of("a", "b")).escape("\\").build());
+        assertThat(named).contains("escape=\"\\\" maxMatch=\"1\">\n        <data name=\"a\" value=\"$2\" />")
+                .contains("<data name=\"b\" value=\"$2\" />");
+    }
+
+    @Test
+    void spacedValuesFieldsCatchAllAndBlockRecordsAreWrittenAsStroomReadsThem() {
+        assertThat(SplitterXml.converter(SplitterSpec.builder("key_value").delimiter(" ").spacedValues(true)
+                .build())).contains("<all>\n        <group reverse=\"true\">")
+                .contains("<data name=\"$2\" value=\"$1\" />");
+        assertThat(SplitterXml.converter(SplitterSpec.builder("fields").fields(Map.of("user", "user=(\\S+)",
+                "all", "x+")).build())).contains("<group matchOrder=\"any\">")
+                .contains("<data name=\"user\" value=\"$1\" />")
+                .contains("<data name=\"all\" value=\"$\" />")
+                .contains("<all />");
+        assertThat(SplitterXml.converter(SplitterSpec.builder("regex").pattern("^(\\d+)$").names(List.of("n"))
+                .catchAll(true).build())).contains("<regex id=\"unparsed\"")
+                .contains("<data name=\"unparsed\" value=\"$1\" />");
+        assertThat(SplitterXml.converter(SplitterSpec.builder("regex").pattern("(?s)(.*)").names(List.of("m"))
+                .blankLineRecords(true).build())).startsWith(SplitterXml.DS_HEAD + "  <regex id=\"record\"");
+    }
+
+    @Test
+    void theBufferAllowsFourTimesTheLongestRecordWhenTheDefaultIsTooSmall() {
+        // Twice the longest fits in Stroom's default of 20,000.
+        assertThat(SplitterXml.bufferSizeFor(0)).isEmpty();
+        assertThat(SplitterXml.bufferSizeFor(10_000)).isEmpty();
+        // Rounded up to the next 10,000.
+        assertThat(SplitterXml.bufferSizeFor(10_001)).hasValue(50_000);
+        assertThat(SplitterXml.bufferSizeFor(20_000)).hasValue(80_000);
+        // Never more than Stroom's most.
+        assertThat(SplitterXml.bufferSizeFor(Integer.MAX_VALUE)).hasValue(1_000_000_000);
+    }
+
+    @Test
+    void theLongestLineIsMeasuredWithoutItsNewLine() {
+        assertThat(SplitterXml.longestLine("")).isZero();
+        assertThat(SplitterXml.longestLine("ab\nabcd\nabc")).isEqualTo(4);
+        assertThat(SplitterXml.longestLine("abcde\n")).isEqualTo(5);
+    }
+
+    @Test
+    void theBufferIsSetOnTheDataSplitterElement() {
+        final String xml = SplitterXml.generateSplitter(SplitterSpec.builder("delimited").delimiter(",")
+                .header(true).build());
+
+        final String buffered = SplitterXml.withBufferSize(xml, 50_000);
+
+        assertThat(attributes(XmlParser.parse(buffered))).containsEntry("bufferSize", "50000");
+        // Set again, the new size replaces the old.
+        assertThat(SplitterXml.withBufferSize(buffered, 60_000))
+                .contains("bufferSize=\"60000\"")
+                .doesNotContain("50000");
+        assertThat(SplitterXml.withBufferSize("<dataSplitter bufferSize='30000'/>", 40_000))
+                .isEqualTo("<dataSplitter bufferSize=\"40000\"/>");
+        // Not a Data Splitter: left as it is.
+        assertThat(SplitterXml.withBufferSize("<records/>", 40_000)).isEqualTo("<records/>");
+        assertThatThrownBy(() -> SplitterXml.withBufferSize(xml, 19_999))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

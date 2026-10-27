@@ -16,11 +16,16 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.util.LinkedHashMap;
@@ -33,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 /// build_data_splitter (the Stroom MCP server's `tools/generation.py` `build_data_splitter`, and the tool parts of
 /// `tests/test_generation.py` and `test_xml_fragments.py`; the spec, its inference and dry run are
 /// [stroom.ai.impl.tools.sample.SplitterDryRun]'s, tested with it).
+@SuppressWarnings("unchecked")
 class TestBuildDataSplitterTool {
 
     private static final String CSV = "time,user,action\n2026-10-01T10:00:00Z,alice,login\n"
@@ -70,6 +76,180 @@ class TestBuildDataSplitterTool {
         assertThat(splitter.get("records")).isEqualTo(5);
         assertThat(splitter.get("unmatched_count")).isEqualTo(1);
         assertThat((String) splitter.get("not_saved")).contains("1 line(s) match nothing");
+        assertThat(splitter).doesNotContainKey("saved");
+    }
+
+    @Test
+    void longLinesGetAReadBufferBigEnoughForThem() {
+        // Seen in testing: CSV lines of about 20,000 characters, longer than the Data Splitter's default buffer,
+        // were lost in processing.
+        final String csv = "time,user,action\n2026-10-01T10:00:00Z,alice," + "x".repeat(20_000) + "\n";
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", csv));
+
+        assertThat(splitter).containsEntry("buffer_size", 90_000);
+        assertThat((String) splitter.get("converter")).contains("version=\"3.0\" bufferSize=\"90000\">");
+        // And Stroom's own parser keeps the line whole with it.
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 1);
+        assertThat(firstRecord(splitter)).containsEntry("action", "x".repeat(20_000));
+    }
+
+    @ParameterizedTest(name = "a line of {0} characters")
+    @ValueSource(ints = {9_990, 10_010, 15_000, 19_990, 20_010, 39_990, 100_000})
+    void stroomKeepsALongLineWithTheBufferItIsGiven(final int length) {
+        // Seen in Stroom: the default buffer keeps a line of 19,990 characters and loses one of 20,010.
+        final String csv = "time,user,action\n2026-10-01T10:00:00Z,alice," + "x".repeat(length) + "\n"
+                           + "2026-10-01T10:05:00Z,bob,logout\n";
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", csv));
+
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 2);
+    }
+
+    @Test
+    void aLongLineInALaterSampleStreamSizesTheBufferToo() {
+        final String longCsv = "time,user,action\n2026-10-01T11:00:00Z,carol," + "y".repeat(30_000) + "\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L, 8L))).thenReturn(new SampleStreamTexts.Texts(
+                orderedOf("stream 7", CSV, "stream 8", longCsv), List.of()));
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("stream_ids", List.of(7, 8)));
+
+        assertThat(splitter).containsEntry("buffer_size", 130_000);
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 3);
+    }
+
+    @Test
+    void aRecordOverSeveralLinesIsSizedWhole() {
+        // A stack trace of short lines: no line is long, the record is. Sized by its longest line, it was lost.
+        final StringBuilder trace = new StringBuilder("2026-10-01 ERROR boom\n");
+        for (int i = 0; i < 1_000; i++) {
+            trace.append("    at com.example.Service.method").append(i).append("(Service.java:").append(i)
+                    .append(")\n");
+        }
+        final String sample = trace + "2026-10-02 INFO next\n";
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", sample, "spec", Map.of("kind",
+                "regex", "record_start", "\\d{4}-\\d{2}-\\d{2}", "pattern", "(?s)^(\\S+) (\\S+) (.*)$", "names",
+                List.of("time", "level", "message"))));
+
+        assertThat((Integer) splitter.get("buffer_size")).isGreaterThan(trace.length());
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 2);
+    }
+
+    @Test
+    void aQuotedValueOverSeveralLinesIsSizedWhole() {
+        final StringBuilder value = new StringBuilder();
+        for (int i = 0; i < 1_000; i++) {
+            value.append("line ").append(i).append(" of a long ticket description\n");
+        }
+        final String sample = "id,description\n1,\"" + value + "\"\n2,short\n";
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", sample, "spec", Map.of("kind",
+                "delimited", "delimiter", ",", "header", true, "quote", "\"", "quoted_newlines", true)));
+
+        assertThat((Integer) splitter.get("buffer_size")).isGreaterThan(value.length());
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 2);
+    }
+
+    @Test
+    void aBufferGivenForTheFeedsLongerRecordsKeepsThemInStroom() {
+        // The sample's lines are short; the feed's are not (seen in testing: found only in processing).
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", CSV, "buffer_size", 100_000));
+        final String feed = "time,user,action\n2026-10-01T10:00:00Z,alice," + "z".repeat(60_000) + "\n";
+
+        assertThat(StroomSplitterRun.run((String) splitter.get("converter"), feed).clean()).isTrue();
+        assertThat(StroomSplitterRun.run(SplitterXml.converter(SplitterSpec.fromMap(
+                (Map<String, Object>) splitter.get("spec"))), feed).errors())
+                .first().asString().contains("exhausted the buffer");
+    }
+
+    @Test
+    void recordsStroomWritesWithOtherValuesAreReportedButSaved() {
+        // Stroom takes control characters out of the text; the dry run keeps them.
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample",
+                "time,user,action\n2026-10-01T10:00:00Z,al\u0007ice,login\n", "save_as", "ACME-SPLITTER", "build",
+                "acme-v1"));
+
+        assertThat(stroomCheck(splitter)).containsEntry("matches", false).containsEntry("loses_records", false);
+        assertThat((List<Map<String, Object>>) stroomCheck(splitter).get("differences")).singleElement()
+                .satisfies(difference -> {
+                    assertThat(difference.get("dry_run")).isEqualTo(Map.of("user", "al\u0007ice"));
+                    assertThat(difference.get("stroom")).isEqualTo(Map.of("user", "alice"));
+                });
+        assertThat(splitter).containsKey("saved");
+    }
+
+    @Test
+    void shortLinesKeepStroomsDefaultBuffer() {
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", CSV));
+
+        assertThat(splitter).doesNotContainKey("buffer_size");
+        assertThat((String) splitter.get("converter")).doesNotContain("bufferSize");
+    }
+
+    @Test
+    void theBufferMayBeGivenForRecordsTheSampleDoesNotHold() {
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", CSV, "buffer_size", 200_000));
+
+        assertThat(splitter).containsEntry("buffer_size", 200_000);
+        assertThat((String) splitter.get("converter")).contains("bufferSize=\"200000\"");
+        // Less than Stroom's default, or more than its most, is no buffer it takes.
+        assertThat((String) world.call(tool, Map.of("sample", CSV, "buffer_size", 1_000)).get("error"))
+                .startsWith("buffer_size is from 20000 (Stroom's default) to 1000000000 characters, not 1000");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void stroomsOwnParserChecksTheConverter() {
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", CSV));
+
+        final Map<String, Object> check = (Map<String, Object>) splitter.get("stroom_check");
+        assertThat(check).containsEntry("matches", true).containsEntry("records", 2)
+                .containsEntry("loses_records", false);
+        // The converter named in its parts, which Stroom's errors give.
+        assertThat((String) splitter.get("converter")).contains("<split id=\"record\"");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aConverterStroomLosesRecordsWithIsNotSaved() {
+        // Seen in testing: a value holding a space, read as pairs ending at the space; Stroom kept zones=Zone and
+        // reported the rest.
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", "zones=Zone 1, Zone 2 user=al\n",
+                "spec", Map.of("kind", "key_value", "delimiter", " "), "save_as", "ACME-SPLITTER", "build",
+                "acme-v1"));
+
+        final Map<String, Object> check = (Map<String, Object>) splitter.get("stroom_check");
+        assertThat(check).containsEntry("matches", false).containsEntry("loses_records", true);
+        assertThat((List<String>) check.get("errors")).first().asString()
+                .contains("failed to match from the start of the content");
+        assertThat((List<String>) check.get("error_hints")).singleElement().asString().contains("spaced_values");
+        assertThat((String) splitter.get("hint")).startsWith("Stroom's own parser doesn't agree with the dry run");
+        assertThat(splitter).containsKey("not_saved").doesNotContainKey("saved");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void valuesHoldingSpacesAreReadFromTheEnd() {
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample",
+                "ipAddress=123.123.123.123 zones=Zone 1, Zone 2 location=loc1 A user=An end user\n"
+                + "ipAddress=1.2.3.4 zones=Zone 3 location=loc2 user=someone else\n"));
+
+        assertThat((Map<String, Object>) splitter.get("spec")).containsEntry("spaced_values", true);
+        assertThat(splitter.get("unmatched_count")).isEqualTo(0);
+        assertThat((Map<String, Object>) splitter.get("stroom_check")).containsEntry("matches", true);
+        assertThat(((List<Map<String, String>>) splitter.get("first_records")).getFirst())
+                .containsEntry("zones", "Zone 1, Zone 2").containsEntry("user", "An end user");
+    }
+
+    @Test
+    void linesEndedByACarriageReturnAloneAreNotSaved() {
+        // Seen in Stroom: such a stream is one line to the Data Splitter, which writes no records and no error.
+        final Map<String, Object> splitter = world.call(tool, Map.of("sample", CSV.replace("\n", "\r"), "save_as",
+                "ACME-SPLITTER", "build", "acme-v1"));
+
+        assertThat((String) splitter.get("line_endings")).contains("carriage return alone");
+        assertThat((String) splitter.get("not_saved")).contains("FindReplaceFilter");
         assertThat(splitter).doesNotContainKey("saved");
     }
 
@@ -147,5 +327,15 @@ class TestBuildDataSplitterTool {
         map.put(k1, v1);
         map.put(k2, v2);
         return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> stroomCheck(final Map<String, Object> splitter) {
+        return (Map<String, Object>) splitter.get("stroom_check");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> firstRecord(final Map<String, Object> splitter) {
+        return ((List<Map<String, String>>) splitter.get("first_records")).getFirst();
     }
 }

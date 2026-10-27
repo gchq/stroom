@@ -58,6 +58,24 @@ class TestErrorTriage {
     }
 
     @Test
+    void aDataSplittersLostRecordsSayHowToKeepThem() {
+        // Seen in testing: CSV lines of about 20,000 characters lost, and the agent, told the DSParser had no
+        // buffer property, couldn't go on. The parser is inherited from the template: still blocking.
+        final ErrorTriage.Classified buffer = RULES.classify("ERROR", "dsParser", false,
+                "Top level expression 'split[1] : <split delimiter=\"\\n\">' matched too much content and "
+                + "exhausted the buffer. Attempting recovery...");
+        assertThat(buffer.classification()).isEqualTo(ErrorTriage.BLOCKING);
+        assertThat(buffer.reason()).contains("bufferSize").contains("buffer_size=").contains("not a property of "
+                                                                                           + "the DSParser");
+
+        final ErrorTriage.Classified unmatched = RULES.classify("ERROR", "dsParser", false,
+                "Expressions failed to match all of the content provided by group: split[0]/group[0] : "
+                + "<group id=\"fields\"> unmatched content: [x]");
+        assertThat(unmatched.classification()).isEqualTo(ErrorTriage.BLOCKING);
+        assertThat(unmatched.reason()).contains("spaced_values").contains("catch_all").contains("stroom_check");
+    }
+
+    @Test
     void environmentRulesComeFirst() {
         final ErrorTriage rules = ErrorTriage.withEnvironmentRules(List.of(
                 "{element: decorationFilter, message: lookup, class: benign, reason: known miss}"));

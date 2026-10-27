@@ -326,6 +326,45 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
+    void anExistingFeedsSampleFormatIsTheOneItsSurveyFound() {
+        // Seen in testing: survey_feed found XML fragments, but with no raw stream of its own the build had no
+        // sample format, so create_pipeline let an XMLParser template through.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"));
+        facts.sources = List.of("ACME");
+        facts.survey = survey(false, null, List.of(5L), "<Event><System/></Event>\n<Event><System/></Event>\n",
+                "xml fragments");
+        facts.profiler = text -> FakeBuildFacts.profileOf("xml fragments");
+
+        final Map<String, Object> format = plan.sampleFormat("b").orElseThrow();
+
+        assertThat(format)
+                .containsEntry("format", "xml fragments")
+                .containsEntry("feed", "ACME")
+                .containsEntry("stream_id", "5")
+                .containsEntry("suggested_parser", "XMLFragmentParser");
+    }
+
+    @Test
+    void aBuildWithNeitherASampleNorASurveyHasNoSampleFormat() {
+        facts.sources = List.of("ACME");
+        assertThat(plan.sampleFormat("b")).isEmpty();
+        // Surveyed, but a new source's own feed (no feed outside the build): its sample streams say, not the survey.
+        facts.sources = List.of();
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"));
+        facts.survey = survey(false, null, List.of(5L), null, "xml fragments");
+        assertThat(plan.sampleFormat("b")).isEmpty();
+    }
+
+    @Test
+    void onlyTheEventsPipelinesStepsAreStageOnes() {
+        assertThat(BuildPlan.isEventsStep("feed")).isTrue();
+        assertThat(BuildPlan.isEventsStep("documented")).isTrue();
+        assertThat(BuildPlan.isEventsStep("index")).isFalse();
+        assertThat(BuildPlan.isEventsStep("promoted")).isFalse();
+        assertThat(BuildPlan.isEventsStep(null)).isFalse();
+    }
+
+    @Test
     void aJsonFeedsLongRecordsCutInItsSurveyDocNeedNoConverter() {
         // Seen in testing: JSON lines of 4,720 characters, kept cut at 4,000 in the survey doc, joined with the others
         // read as text, and build_status asked for a Data Splitter (step 1 of 14) all through the build.

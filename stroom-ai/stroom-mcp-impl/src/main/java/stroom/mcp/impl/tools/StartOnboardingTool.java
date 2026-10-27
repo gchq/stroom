@@ -232,7 +232,8 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                            + "the converter (if needed), build_translation_xslt with the streams and build and name "
                            + "(it saves the XSLT with the mapping), the pipeline, step_sample over all streams until "
                            + "clean, process, validate, write_documentation, index. build_status shows what remains "
-                           + "at any point.");
+                           + "at any point. Ask the user now only what stage 1 needs: the indexing backend and "
+                           + "field naming are asked by stage 2's tools when next reaches them.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
     }
@@ -265,7 +266,8 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("done", false);
         result.put("standing_instructions", instructions(context, folders));
         result.put("hint", "Propose the feed name from sibling feeds and create_feed. Don't read the files' text into "
-                           + "the conversation: the server reads the uploaded streams.");
+                           + "the conversation: the server reads the uploaded streams. Ask the user now only what "
+                           + "stage 1 needs, not the indexing backend.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
     }

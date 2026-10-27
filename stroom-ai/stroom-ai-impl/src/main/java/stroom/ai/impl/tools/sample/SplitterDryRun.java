@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.workspace.DeadlineCharSequence;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.impl.workspace.SafePattern;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,6 +78,11 @@ public final class SplitterDryRun {
             Map.entry("^(.*?)\\s*$", List.of("prefix")));
     /// The most records a dry run reads; a longer sample is read at lines spread over it.
     public static final int MAX_RECORDS = 2000;
+    /// A record that is a block of lines ended by a blank line (one of white space only, or the end): its lines
+    /// without the blank ones before it. Seen in the Stroom docs' multi-line example: a query and its results.
+    public static final String BLANK_LINE_RECORD = "\\s*((?:[^\\n]*\\S[^\\n]*(?:\\n|$))+)";
+
+    private static final Pattern BLANK_LINE_RECORDS = Pattern.compile(BLANK_LINE_RECORD);
 
     private static final Pattern CEF = Pattern.compile(CEF_PATTERN);
     private static final Pattern CEF_PAIR_PATTERN = Pattern.compile(CEF_PAIR);
@@ -140,6 +146,21 @@ public final class SplitterDryRun {
         return List.of(d + "*(" + key + ")" + s + "([^" + d + "]*)");
     }
 
+    /// The regex for one key=value pair whose value may hold the delimiter unquoted, matched along the record
+    /// read backwards (Data Splitter's `reverse`): the value (group 1, backwards) runs to the separator, the key
+    /// (group 2) to the delimiter, which a key never holds; white space before the value (the record's new line,
+    /// read backwards) is passed over.
+    ///
+    /// @param spec A key_value spec.
+    /// @return The regex.
+    public static String spacedPairPattern(final SplitterSpec spec) {
+        final String d = PyText.isBlank(spec.delimiter())
+                ? "\\s"
+                : PyText.escape(spec.delimiter());
+        final String s = PyText.escape(spec.pairSeparator());
+        return "\\s*([^" + s + "]+)" + s + "([^" + d + "]+)(?:" + d + ")*";
+    }
+
     /// Splits a line at a delimiter, leaving it inside quotes alone; a doubled quote inside a quoted value stays
     /// doubled, as Data Splitter leaves it (seen in Stroom: `"Said ""bye"""` is `Said ""bye""`).
     ///
@@ -148,7 +169,24 @@ public final class SplitterDryRun {
     /// @param quote     The quote character, or null.
     /// @return The cells, without their quotes.
     public static List<String> splitQuoted(final String line, final String delimiter, final String quote) {
-        if (quote == null || quote.isEmpty() || !line.contains(quote)) {
+        return splitQuoted(line, delimiter, quote, null);
+    }
+
+    /// Splits a line at a delimiter as [#splitQuoted(String, String, String)] does, with an escape character: the
+    /// character after it is taken as it is (never a delimiter or quote), and the escape taken out, as Data
+    /// Splitter's `$2` gives a cell.
+    ///
+    /// @param line      The line.
+    /// @param delimiter The delimiter.
+    /// @param quote     The quote character, or null.
+    /// @param escape    The escape character, or null.
+    /// @return The cells, without their quotes or escapes.
+    public static List<String> splitQuoted(final String line,
+                                           final String delimiter,
+                                           final String quote,
+                                           final String escape) {
+        final boolean escapes = escape != null && !escape.isEmpty() && line.contains(escape);
+        if (!escapes && (quote == null || quote.isEmpty() || !line.contains(quote))) {
             return PyText.split(line, delimiter);
         }
         final List<String> out = new ArrayList<>();
@@ -156,6 +194,23 @@ public final class SplitterDryRun {
         boolean inside = false;
         int i = 0;
         while (i < line.length()) {
+            if (escapes && line.startsWith(escape, i) && i + escape.length() < line.length()) {
+                i += escape.length();
+                cell.append(line.charAt(i));
+                i++;
+                continue;
+            }
+            if (quote == null || quote.isEmpty()) {
+                if (line.startsWith(delimiter, i)) {
+                    out.add(cell.toString());
+                    cell.setLength(0);
+                    i += delimiter.length();
+                } else {
+                    cell.append(line.charAt(i));
+                    i++;
+                }
+                continue;
+            }
             if (inside && line.startsWith(quote + quote, i)) {
                 // The mapping's unescape_quotes transform makes it one.
                 cell.append(quote).append(quote);
@@ -203,6 +258,9 @@ public final class SplitterDryRun {
         if ("cef".equals(applied.kind())) {
             return applyCef(applied, text);
         }
+        if ("fields".equals(applied.kind())) {
+            return applyFields(applied, text);
+        }
         Map<String, String> fields;
         if ("regex".equals(applied.kind())) {
             final Matcher m = SafePattern.matcher(SafePattern.compile(applied.pattern(), 0), text);
@@ -224,12 +282,27 @@ public final class SplitterDryRun {
                 return null;
             }
         } else if (applied.headerLine()) {
-            final List<String> cells = splitQuoted(text, applied.delimiter(), applied.quote());
+            // As Stroom's split gives a cell ($1, or $2 with escapes): without the white space round it, quoted or
+            // not; a cell past the heading is written with no name (seen in Stroom).
+            final List<String> cells = splitQuoted(text, applied.delimiter(), applied.quote(), applied.escape());
             fields = new LinkedHashMap<>();
             for (int n = 0; n < cells.size(); n++) {
-                if (heading != null && n < heading.size()) {
-                    fields.put(heading.get(n), cells.get(n));
+                if (heading != null) {
+                    fields.putIfAbsent(n < heading.size()
+                            ? heading.get(n)
+                            : StroomSplitterRun.UNNAMED, PyText.strip(cells.get(n)));
                 }
+            }
+        } else if (applied.escape() != null) {
+            // Named columns with escapes: a split per column, each taking one cell in turn.
+            final List<String> cells = splitQuoted(text, applied.delimiter(), applied.quote(), applied.escape());
+            fields = new LinkedHashMap<>();
+            for (int n = 0; n < Math.min(applied.columns().size(), cells.size()); n++) {
+                fields.put(applied.columns().get(n), PyText.strip(cells.get(n)));
+            }
+            if (cells.size() > applied.columns().size()) {
+                // Stroom reports the cells past the last column as content no expression matched.
+                return null;
             }
         } else {
             // The same regex the converter runs.
@@ -287,6 +360,9 @@ public final class SplitterDryRun {
     // The regexes the converter runs, matched along the text as Data Splitter does: at each place the first that
     // matches.
     private static Map<String, String> applyKeyValue(final SplitterSpec spec, final String text) {
+        if (spec.spacedValues()) {
+            return applySpacedPairs(spec, text);
+        }
         final List<Pattern> patterns = new ArrayList<>();
         kvPatterns(spec).forEach(p -> patterns.add(Pattern.compile(p)));
         final Map<String, String> fields = new LinkedHashMap<>();
@@ -308,7 +384,58 @@ public final class SplitterDryRun {
             fields.putIfAbsent(found.group(1), found.group(2));
             at = found.end();
         }
+        if (!PyText.isBlank(text.substring(at))) {
+            // Stroom reports the rest as content its expressions failed to match (seen: a value holding a space
+            // unquoted, `zones=Zone 1`, the record kept with zones=Zone and the error raised).
+            return Map.of();
+        }
         return fields;
+    }
+
+    // Pairs read from the end, as the converter's reversed group reads them: Stroom writes them last first, so
+    // the first a key is given in that order is the one kept.
+    private static Map<String, String> applySpacedPairs(final SplitterSpec spec, final String text) {
+        final String reversed = new StringBuilder(text).reverse().toString();
+        final Pattern pair = SafePattern.compile(spacedPairPattern(spec), 0);
+        final Map<String, String> fields = new LinkedHashMap<>();
+        int at = 0;
+        while (at < reversed.length()) {
+            final Matcher m = PyText.matchFrom(pair, new DeadlineCharSequence(reversed), at);
+            if (m == null || m.end() <= at) {
+                break;
+            }
+            fields.putIfAbsent(new StringBuilder(m.group(2)).reverse().toString(),
+                    new StringBuilder(m.group(1)).reverse().toString());
+            at = m.end();
+        }
+        return PyText.isBlank(reversed.substring(at))
+                ? fields
+                : Map.of();
+    }
+
+    // Each field found by its own regex anywhere in the record, in the order given, each match taken out of the
+    // text (Data Splitter's matchOrder any); with catch_all, what no field took is kept as `unparsed`. A record
+    // with none of them writes nothing (no record, and no error in Stroom).
+    private static Map<String, String> applyFields(final SplitterSpec spec, final String text) {
+        String rest = text;
+        final Map<String, String> fields = new LinkedHashMap<>();
+        for (final Map.Entry<String, String> field : spec.fields().entrySet()) {
+            final Pattern pattern = SafePattern.compile(field.getValue(), 0);
+            Matcher m = SafePattern.matcher(pattern, rest);
+            while (m.find() && m.end() > m.start()) {
+                fields.putIfAbsent(field.getKey(), m.groupCount() > 0
+                        ? NullSafe.string(m.group(1))
+                        : m.group());
+                rest = rest.substring(0, m.start()) + rest.substring(m.end());
+                m = SafePattern.matcher(pattern, rest);
+            }
+        }
+        if (spec.catchAll() && !PyText.isBlank(rest)) {
+            fields.put(SplitterSpec.UNPARSED, PyText.strip(rest));
+        }
+        return fields.isEmpty()
+                ? null
+                : fields;
     }
 
     /// @param messages Syslog messages' bodies.
@@ -331,7 +458,7 @@ public final class SplitterDryRun {
             final boolean quoted = messages.stream().anyMatch(message -> message.contains("=\""));
             return SplitterSpec.builder("key_value").delimiter(" ").quote(quoted
                     ? "\""
-                    : null).build();
+                    : null).spacedValues(!quoted && spacedValues(bodies, " ", "=")).build();
         }
         for (final String delimiter : List.of(",", "|", "\t", ";")) {
             final String quote = bodies.stream().anyMatch(body -> body.contains("\""))
@@ -351,6 +478,32 @@ public final class SplitterDryRun {
             }
         }
         return null;
+    }
+
+    /// Whether key=value text has values holding the delimiter unquoted (`zones=Zone 1, Zone 2 user=An end user`):
+    /// some record's pairs, read as ending at the delimiter, leave text no pair matches, which Stroom reports and
+    /// loses (seen: the Stroom docs' reverse example), and every such record reads whole from the end. Text neither
+    /// reading parses (sudo's `alice : TTY=pts/0 ; ...`) keeps the plain reading.
+    ///
+    /// @param lines         The records.
+    /// @param delimiter     What separates pairs.
+    /// @param pairSeparator What separates a key from its value.
+    /// @return True if reading from the end is what parses them.
+    static boolean spacedValues(final List<String> lines, final String delimiter, final String pairSeparator) {
+        final SplitterSpec plain = SplitterSpec.builder("key_value").delimiter(delimiter).pairSeparator(pairSeparator)
+                .build();
+        final SplitterSpec spaced = plain.toBuilder().spacedValues(true).build();
+        boolean needed = false;
+        for (final String line : lines.subList(0, Math.min(200, lines.size()))) {
+            if (PyText.isBlank(line) || !applyKeyValue(plain, line).isEmpty()) {
+                continue;
+            }
+            if (applyKeyValue(spaced, line).isEmpty()) {
+                return false;
+            }
+            needed = true;
+        }
+        return needed;
     }
 
     /// Infers a spec for a sample's format, from its profile.
@@ -395,7 +548,7 @@ public final class SplitterDryRun {
                     .anyMatch(line -> line.contains("=\""));
             return new Inferred(SplitterSpec.builder("key_value").delimiter(" ").pairSeparator("=").quote(quoted
                     ? "\""
-                    : null).build(), info);
+                    : null).spacedValues(!quoted && spacedValues(lines, " ", "=")).build(), info);
         }
         if (SampleProfiler.CEF_FORMAT.equals(format)) {
             return new Inferred(cefSpec(lines), info);
@@ -481,7 +634,10 @@ public final class SplitterDryRun {
     private static String patterns(final SplitterSpec spec) {
         final List<String> patterns = new ArrayList<>();
         for (SplitterSpec part = spec; part != null; part = part.body()) {
-            for (final String pattern : Arrays.asList(part.recordStart(), part.recordEnd(), part.pattern())) {
+            final List<String> parts = new ArrayList<>(Arrays.asList(part.recordStart(), part.recordEnd(),
+                    part.pattern()));
+            parts.addAll(part.fields().values());
+            for (final String pattern : parts) {
                 if (pattern != null && !patterns.contains(pattern)) {
                     patterns.add(pattern);
                 }
@@ -495,7 +651,9 @@ public final class SplitterDryRun {
     private static DryRun dryRunLimited(final SplitterSpec spec, final String sample, final int maxRecords) {
         List<String> lines = PyText.nonBlankLines(sample);
         final boolean delimited = "delimited".equals(spec.kind());
-        if (spec.recordStart() != null && !delimited) {
+        if (spec.blankLineRecords()) {
+            lines = blankLineRecords(sample);
+        } else if (spec.recordStart() != null && !delimited) {
             lines = groupLines(lines, spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {
             lines = groupLinesToEnd(lines, spec.recordEnd());
@@ -521,6 +679,9 @@ public final class SplitterDryRun {
             final Map<String, String> fields = applyRecord(spec, line, heading);
             if (fields != null && !fields.isEmpty()) {
                 records.add(fields);
+            } else if (spec.catchAll()) {
+                // Kept whole, as the converter's catch-all writes it.
+                records.add(Map.of(SplitterSpec.UNPARSED, PyText.rstrip(line, "\n")));
             } else {
                 unmatched.add(PyText.head(line, 200));
             }
@@ -550,6 +711,46 @@ public final class SplitterDryRun {
             }
         }
         return names;
+    }
+
+    /// The length of the longest record a spec makes of text over several lines (records that start or end at a
+    /// marked line, blocks ended by a blank line, quoted values holding new lines), each with its new line: Stroom's
+    /// read buffer must hold a whole record, and such a record can far outrun its longest line (a stack trace of
+    /// short lines).
+    ///
+    /// @param spec The spec.
+    /// @param text The text.
+    /// @return The longest record's length; 0 when the spec makes one record of each line.
+    /// @throws PatternTimeoutException if the spec's record patterns take too long to match.
+    public static int longestRecord(final SplitterSpec spec, final String text) {
+        final boolean delimited = "delimited".equals(spec.kind());
+        final List<String> records;
+        if (spec.blankLineRecords()) {
+            records = blankLineRecords(text);
+        } else if (spec.recordStart() != null && !delimited) {
+            records = groupLines(PyText.nonBlankLines(text), spec.recordStart());
+        } else if (spec.recordEnd() != null && !delimited) {
+            records = groupLinesToEnd(PyText.nonBlankLines(text), spec.recordEnd());
+        } else if (delimited && spec.quotedNewlines() && spec.quote() != null) {
+            records = quotedLines(text, spec.quote());
+        } else {
+            return 0;
+        }
+        return records.stream().mapToInt(record -> record.length() + 1).max().orElse(0);
+    }
+
+    /// Records that are blocks of lines ended by a blank line, as the converter's [#BLANK_LINE_RECORD] takes them
+    /// (each with its last line's new line).
+    ///
+    /// @param text The text.
+    /// @return The records.
+    public static List<String> blankLineRecords(final String text) {
+        final List<String> records = new ArrayList<>();
+        final Matcher m = BLANK_LINE_RECORDS.matcher(text);
+        while (m.find()) {
+            records.add(m.group(1));
+        }
+        return records;
     }
 
     /// Records of delimited text whose quoted values may hold new lines: lines joined while a quote is open.

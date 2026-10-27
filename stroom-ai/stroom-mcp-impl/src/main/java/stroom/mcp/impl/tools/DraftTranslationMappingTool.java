@@ -151,8 +151,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                           + "out."))
                         .addStringProperty(BUILD_ARG, "The build holding the source notes (record_source_notes): "
                                                       + "the draft then follows the user's documentation.")
-                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the translation writes, e.g. "
-                                                               + "'4.0.2', if the user has said. Left out, the user "
+                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the translation writes, "
+                                                               + "if the user has chosen one of those this Stroom "
+                                                               + "holds. Left out, the user "
                                                                + "is asked which of the versions this Stroom holds "
                                                                + "(the newest recommended).")
                         .build())
