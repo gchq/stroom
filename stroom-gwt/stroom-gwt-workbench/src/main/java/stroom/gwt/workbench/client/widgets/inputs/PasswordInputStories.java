@@ -27,7 +27,7 @@ import stroom.widget.form.client.PasswordBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 /// Stories for Stroom's [PasswordBox], the password field of its password views (e.g.
-/// `LoginViewImpl`, `ChangePasswordViewImpl`): a box whose value is hidden, with a button over its
+/// `LoginViewImpl`, `ChangePassword`): a box whose value is hidden, with a button over its
 /// end that shows and hides it.
 public final class PasswordInputStories {
 
@@ -63,7 +63,7 @@ public final class PasswordInputStories {
                 // Invalid state - sets aria-invalid and the invalid class on the input
                 .story("Invalid", context -> {
                     final PasswordBox password = passwordBox(context, "123");
-                    // As Stroom's views (e.g. ChangePasswordViewImpl) mark an invalid password
+                    // As Stroom's views (e.g. ChangePassword) mark an invalid password
                     FieldValidity.setInvalid(password.getInput().getElement(), true);
                     return InputWidgets.maxWidth(password, MAX_WIDTH);
                 })
@@ -78,7 +78,7 @@ public final class PasswordInputStories {
                 // With a badge beside the button (the change password screen's length badge)
                 .story("WithOverlayPrefix", context -> {
                     final PasswordBox password = passwordBox(context, "hunter2");
-                    // ChangePasswordViewImpl's length badge, a Bootstrap pill
+                    // ChangePassword's length badge, a Bootstrap pill
                     // ("badge badge-pill badge-danger") showing up to "9+" and hidden when empty.
                     // The badge's colour depends on the password policy in Stroom, which isn't
                     // part of this widget, so it stays badge-danger.
@@ -94,14 +94,14 @@ public final class PasswordInputStories {
     private static PasswordBox passwordBox(final StoryContext context, final String value) {
         final PasswordBox password = new PasswordBox();
         password.setValue(value);
-        // As ChangePasswordViewImpl sets it ("Enter Password" there)
+        // As ChangePassword sets it ("Enter Password" there)
         password.setPlaceholder("Enter password…");
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
         password.addValueChangeHandler(event -> onChange.call(event.getValue()));
         return password;
     }
 
-    /// The length badge part of `ChangePasswordViewImpl.onPassword`.
+    /// The length badge part of `ChangePassword.updateStrength`.
     private static void updateBadge(final SimplePanel badge, final String password) {
         final int length = password.length();
         badge.getElement().setInnerText(length > MAX_BADGE_LENGTH

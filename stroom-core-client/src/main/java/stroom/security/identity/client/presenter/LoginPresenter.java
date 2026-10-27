@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
@@ -44,7 +45,7 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
     private final RestFactory restFactory;
-    private final Provider<ChangePasswordPresenter> changePasswordPresenterProvider;
+    private final Provider<ChangePasswordController> changePasswordPresenterProvider;
     private final Provider<EmailResetPasswordPresenter> emailResetPasswordPresenterProvider;
 
     private final Element loadingText;
@@ -54,7 +55,7 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
     public LoginPresenter(final EventBus eventBus,
                           final LoginView view,
                           final RestFactory restFactory,
-                          final Provider<ChangePasswordPresenter> changePasswordPresenterProvider,
+                          final Provider<ChangePasswordController> changePasswordPresenterProvider,
                           final Provider<EmailResetPasswordPresenter> emailResetPasswordPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -106,39 +107,26 @@ public class LoginPresenter extends SignInPagePresenter<LoginView> implements Lo
     }
 
     private void changePassword() {
-        final ChangePasswordPresenter changePasswordPresenter =
-                makeDialog(changePasswordPresenterProvider);
-        changePasswordPresenter.show("Change Password", e -> {
-            if (e.isOk()) {
-                // Validate the change-password dialog (new password strength + confirmation), not the
-                // login view. This updates the dialog's feedback labels and, on failure, e.reset() keeps
-                // the dialog open showing them — OK stays enabled throughout.
-                if (changePasswordPresenter.validate()) {
-                    final ChangePasswordRequest request = new ChangePasswordRequest(
-                            getView().getUserName(),
-                            getView().getPassword(),
-                            changePasswordPresenter.getPassword(),
-                            changePasswordPresenter.getConfirmPassword());
-                    restFactory
-                            .create(RESOURCE)
-                            .method(res -> res.changePassword(request))
-                            .onSuccess(result -> {
-                                if (result.isChangeSucceeded()) {
-                                    afterLogin();
-                                } else {
-                                    AlertEvent.fireError(this, result.getMessage(), e::reset);
-                                }
-                            })
-                            .onFailure(RestErrorHandler.forPopup(this, e))
-                            .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
-                            .exec();
-
-                } else {
-                    e.reset();
-                }
-            } else {
-                e.hide();
-            }
+        changePasswordPresenterProvider.get().show(this, "Change Password", (password, confirmPassword, e) -> {
+            final ChangePasswordRequest request = new ChangePasswordRequest(
+                    getView().getUserName(),
+                    getView().getPassword(),
+                    password,
+                    confirmPassword);
+            restFactory
+                    .create(RESOURCE)
+                    .method(res -> res.changePassword(request))
+                    .onSuccess(result -> {
+                        if (result.isChangeSucceeded()) {
+                            afterLogin();
+                        } else {
+                            AlertEvent.fireError(this, result.getMessage(), e::reset);
+                        }
+                    })
+                    .onFailure(RestErrorHandler.forPopup(this, e))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(this))
+                    .exec();
+        }, () -> {
         });
     }
 

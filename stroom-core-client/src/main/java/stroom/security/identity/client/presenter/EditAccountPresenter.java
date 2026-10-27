@@ -19,6 +19,7 @@ package stroom.security.identity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountAction;
@@ -55,7 +56,7 @@ public class EditAccountPresenter
 
     private Account account;
     private Runnable onChangeHandler;
-    private final Provider<ChangePasswordPresenter> changePasswordPresenterProvider;
+    private final Provider<ChangePasswordController> changePasswordPresenterProvider;
     private String password;
     private String confirmPassword;
 
@@ -64,7 +65,7 @@ public class EditAccountPresenter
                                 final EditAccountView view,
                                 final RestFactory restFactory,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final Provider<ChangePasswordPresenter> changePasswordPresenterProvider) {
+                                final Provider<ChangePasswordController> changePasswordPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -133,19 +134,11 @@ public class EditAccountPresenter
 
     @Override
     public void onChangePassword() {
-        final ChangePasswordPresenter changePasswordPresenter = makeDialog(changePasswordPresenterProvider);
-        changePasswordPresenter.show(getPasswordCaption(), e -> {
-            if (e.isOk()) {
-                if (changePasswordPresenter.validate()) {
-                    this.password = changePasswordPresenter.getPassword();
-                    this.confirmPassword = changePasswordPresenter.getConfirmPassword();
-                    e.hide();
-                } else {
-                    e.reset();
-                }
-            } else {
-                e.hide();
-            }
+        changePasswordPresenterProvider.get().show(this, getPasswordCaption(), (password, confirmPassword, e) -> {
+            this.password = password;
+            this.confirmPassword = confirmPassword;
+            e.hide();
+        }, () -> {
         });
     }
 

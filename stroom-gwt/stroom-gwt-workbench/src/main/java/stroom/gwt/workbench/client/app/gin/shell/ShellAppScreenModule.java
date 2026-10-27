@@ -26,9 +26,6 @@ import stroom.main.client.view.MainViewImpl;
 import stroom.preferences.client.UserPreferencesPresenter;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.preferences.client.UserPreferencesViewImpl;
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter.CurrentPasswordView;
-import stroom.security.identity.client.view.CurrentPasswordViewImpl;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 import stroom.welcome.client.view.WelcomeViewImpl;
@@ -36,8 +33,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of Stroom's app shell that the `shell` batch's `App/Main/AppShell` stories need and
 /// no other batch's module has: the main view and the explorer's navigation panel (Stroom's
-/// `AppModule`, `stroom-app-gwt`), the About, User Preferences, Welcome and current password
-/// screens (`AboutModule`, `UserPreferencesModule`, `WelcomeModule`, `ChangePasswordModule`) and the
+/// `AppModule`, `stroom-app-gwt`), the About, User Preferences and Welcome
+/// screens (`AboutModule`, `UserPreferencesModule`, `WelcomeModule`) and the
 /// Feed editor (`FeedModule`, without the data upload dialog, which another module of the
 /// ginjector binds).
 ///
@@ -65,11 +62,6 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(WelcomePresenter.class,
                 WelcomeView.class,
                 WelcomeViewImpl.class);
-
-        // ChangePasswordModule (the rest is in the security batch's IdentityScreenModule)
-        bindPresenterWidget(CurrentPasswordPresenter.class,
-                CurrentPasswordView.class,
-                CurrentPasswordViewImpl.class);
 
         // FeedModule
         bind(FeedPresenter.class);

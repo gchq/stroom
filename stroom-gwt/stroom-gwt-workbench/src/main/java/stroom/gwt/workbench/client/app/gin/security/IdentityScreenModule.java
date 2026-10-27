@@ -18,12 +18,9 @@ package stroom.gwt.workbench.client.app.gin.security;
 
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.client.presenter.EditAccountPresenter;
 import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccountView;
 import stroom.security.identity.client.view.AccountsViewImpl;
-import stroom.security.identity.client.view.ChangePasswordViewImpl;
 import stroom.security.identity.client.view.EditAccountViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -36,12 +33,6 @@ public class IdentityScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        // CurrentPasswordPresenter is left out: it needs Stroom's CurrentUser (not the harness's
-        // ClientSecurityContext), whose graph (the splash screen, the current activity) the stories
-        // don't have, so its story creates it with `new`.
-        bindPresenterWidget(ChangePasswordPresenter.class,
-                ChangePasswordView.class,
-                ChangePasswordViewImpl.class);
         bindPresenterWidget(AccountsPresenter.class,
                 AccountsView.class,
                 AccountsViewImpl.class);

@@ -18,8 +18,6 @@ package stroom.gwt.workbench.client.app.gin.idp;
 
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.LoginPresenter;
@@ -27,7 +25,6 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
-import stroom.security.identity.client.view.ChangePasswordViewImpl;
 import stroom.security.identity.client.view.EmailResetPasswordViewImpl;
 import stroom.security.identity.client.view.LoginViewImpl;
 import stroom.security.identity.client.view.ResetPasswordViewImpl;
@@ -50,12 +47,6 @@ public class IdpScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(AuthenticationErrorPresenter.class,
                 AuthenticationErrorView.class,
                 AuthenticationErrorViewImpl.class);
-        // CurrentPasswordPresenter is left out: it needs Stroom's CurrentUser, whose graph (the
-        // splash screen, the current activity) the stories don't have, so its story creates it
-        // with `new`.
-        bindPresenterWidget(ChangePasswordPresenter.class,
-                ChangePasswordView.class,
-                ChangePasswordViewImpl.class);
         bindPresenterWidget(ResetPasswordPresenter.class,
                 ResetPasswordView.class,
                 ResetPasswordViewImpl.class);

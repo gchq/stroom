@@ -30,8 +30,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.CurrentUser;
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
-import stroom.security.identity.client.view.CurrentPasswordViewImpl;
+import stroom.security.identity.client.component.CurrentPassword;
+import stroom.security.identity.client.component.CurrentPasswordController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.EnumSet;
 
-/// Stories of `App/Main/ChangePasswordDialog`, showing Stroom's real [CurrentPasswordPresenter]
+/// Stories of `App/Main/ChangePasswordDialog`, showing Stroom's real [CurrentPasswordController]
 /// ('Enter Your Current Password', then the 'Change Password' dialog and the offer to sign out of
 /// the other sessions) with fake REST replies.
 ///
@@ -52,7 +52,7 @@ import java.util.EnumSet;
 /// | `POST /session/v1/terminateOther` (the request spy) | ending the user's other sessions |
 ///
 /// It is shown as the user menu's 'Change Password' item (`ChangePasswordPlugin`) shows it. The
-/// presenter is created with `new`, with Stroom's `CurrentUser` holding the `admin` user: it needs
+/// controller is created with `new`, with Stroom's `CurrentUser` holding the `admin` user: it needs
 /// that class rather than the harness's `ClientSecurityContext`, and GIN can't create its graph
 /// (the splash screen and the current activity) here.
 public final class ChangePasswordDialogStories {
@@ -179,12 +179,12 @@ public final class ChangePasswordDialogStories {
                 null, null);
         currentUser.setUserAndPermissions(new AppUserPermissions(StartupFixtures.ADMIN,
                 EnumSet.of(AppPermission.ADMINISTRATOR)), false);
-        final CurrentPasswordPresenter presenter = new CurrentPasswordPresenter(harness.getEventBus(),
-                new CurrentPasswordViewImpl(GWT.create(CurrentPasswordViewImpl.Binder.class)),
+        final CurrentPasswordController dialog = new CurrentPasswordController(harness.getEventBus(),
+                new CurrentPassword(),
                 harness.getRestFactory(),
                 currentUser,
-                injector::getChangePasswordPresenter);
-        presenter.show();
+                injector::getChangePasswordController);
+        dialog.show(harness.getAppRoot());
         return harness.asWidget();
     }
 }

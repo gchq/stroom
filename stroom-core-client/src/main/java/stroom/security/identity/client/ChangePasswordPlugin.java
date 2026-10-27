@@ -19,11 +19,12 @@ package stroom.security.identity.client;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
+import stroom.security.identity.client.component.CurrentPasswordController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -36,14 +37,17 @@ import javax.inject.Singleton;
 public class ChangePasswordPlugin extends Plugin {
 
     private final UiConfigCache clientPropertyCache;
-    private final Provider<CurrentPasswordPresenter> currentPasswordPresenterProvider;
+    private final AppRoot appRoot;
+    private final Provider<CurrentPasswordController> currentPasswordPresenterProvider;
 
     @Inject
     public ChangePasswordPlugin(final EventBus eventBus,
                                 final UiConfigCache clientPropertyCache,
-                                final Provider<CurrentPasswordPresenter> currentPasswordPresenterProvider) {
+                                final AppRoot appRoot,
+                                final Provider<CurrentPasswordController> currentPasswordPresenterProvider) {
         super(eventBus);
         this.clientPropertyCache = clientPropertyCache;
+        this.appRoot = appRoot;
         this.currentPasswordPresenterProvider = currentPasswordPresenterProvider;
     }
 
@@ -58,7 +62,7 @@ public class ChangePasswordPlugin extends Plugin {
                         .iconColour(IconColour.GREY)
                         .text("Change Password")
                         .command(() -> {
-                            currentPasswordPresenterProvider.get().show();
+                            currentPasswordPresenterProvider.get().show(appRoot);
                         })
                         .build();
 

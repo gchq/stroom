@@ -29,7 +29,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/IdP/ChangePassword` stories, showing Stroom's real 'Change Password' dialog
-/// (`ChangePasswordPresenter` with `ChangePasswordViewImpl`) as the sign in page shows it when the
+/// (`ChangePasswordController` with `ChangePassword`) as the sign in page shows it when the
 /// server requires a new password (`LoginPresenter.changePassword`), for the user `alice` who
 /// signed in with `correct-horse`.
 ///
@@ -205,41 +205,34 @@ public final class ChangePasswordStories {
         harness.add(column);
 
         final AuthenticationResource resource = GWT.create(AuthenticationResource.class);
-        final ChangePasswordPresenter presenter = injector.getChangePasswordPresenter();
+        final ChangePasswordController dialog = injector.getChangePasswordController();
         // As LoginPresenter.changePassword, with afterLogin() replaced by the onChanged spy
-        presenter.show(CAPTION, e -> {
-            if (e.isOk()) {
-                if (presenter.validate()) {
-                    final ChangePasswordRequest request = new ChangePasswordRequest(
-                            "alice",
-                            "correct-horse",
-                            presenter.getPassword(),
-                            presenter.getConfirmPassword());
-                    harness.getRestFactory()
-                            .create(resource)
-                            .method(res -> res.changePassword(request))
-                            .onSuccess(response -> {
-                                if (response.isChangeSucceeded()) {
-                                    final String changed = response.isForceSignIn()
-                                            ? "changed ✓ — forceSignIn: redirect to login"
-                                            : "changed ✓";
-                                    result.setText("onChanged: " + changed);
-                                    harness.spy(ON_CHANGED, changed);
-                                } else {
-                                    AlertEvent.fireError(presenter, response.getMessage(), e::reset);
-                                }
-                            })
-                            .onFailure(RestErrorHandler.forPopup(presenter, e))
-                            .taskMonitorFactory(new DefaultTaskMonitorFactory(presenter))
-                            .exec();
-                } else {
-                    e.reset();
-                }
-            } else {
-                e.hide();
-                result.setText("onChanged: cancelled");
-                harness.spy(ON_CANCEL, null);
-            }
+        dialog.show(harness.getAppRoot(), CAPTION, (password, confirmPassword, e) -> {
+            final ChangePasswordRequest request = new ChangePasswordRequest(
+                    "alice",
+                    "correct-horse",
+                    password,
+                    confirmPassword);
+            harness.getRestFactory()
+                    .create(resource)
+                    .method(res -> res.changePassword(request))
+                    .onSuccess(response -> {
+                        if (response.isChangeSucceeded()) {
+                            final String changed = response.isForceSignIn()
+                                    ? "changed ✓ — forceSignIn: redirect to login"
+                                    : "changed ✓";
+                            result.setText("onChanged: " + changed);
+                            harness.spy(ON_CHANGED, changed);
+                        } else {
+                            AlertEvent.fireError(dialog, response.getMessage(), e::reset);
+                        }
+                    })
+                    .onFailure(RestErrorHandler.forPopup(dialog, e))
+                    .taskMonitorFactory(new DefaultTaskMonitorFactory(dialog))
+                    .exec();
+        }, () -> {
+            result.setText("onChanged: cancelled");
+            harness.spy(ON_CANCEL, null);
         });
         return harness.asWidget();
     }

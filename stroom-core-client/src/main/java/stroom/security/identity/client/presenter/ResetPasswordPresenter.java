@@ -19,11 +19,13 @@ package stroom.security.identity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ResetPasswordRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -58,14 +60,14 @@ public class ResetPasswordPresenter extends SignInPagePresenter<ResetPasswordVie
             "This password reset link is invalid or has expired. Please request a new one.";
 
     private final RestFactory restFactory;
-    private final Provider<ChangePasswordPresenter> changePasswordPresenterProvider;
+    private final Provider<ChangePasswordController> changePasswordPresenterProvider;
     private final Element loading;
 
     @Inject
     public ResetPasswordPresenter(final EventBus eventBus,
                                   final ResetPasswordView view,
                                   final RestFactory restFactory,
-                                  final Provider<ChangePasswordPresenter> changePasswordPresenterProvider) {
+                                  final Provider<ChangePasswordController> changePasswordPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.changePasswordPresenterProvider = changePasswordPresenterProvider;
@@ -90,29 +92,16 @@ public class ResetPasswordPresenter extends SignInPagePresenter<ResetPasswordVie
 
         // Reuse the normal change password form so that the password policy, strength meter and
         // validation are identical to changing a password from within the application.
-        final ChangePasswordPresenter changePasswordPresenter =
-                makeDialog(changePasswordPresenterProvider);
-        changePasswordPresenter.show("Reset Password", event -> {
-            if (event.isOk()) {
-                if (changePasswordPresenter.validate()) {
-                    resetPassword(changePasswordPresenter, token, event);
-                } else {
-                    event.reset();
-                }
-            } else {
-                event.hide();
-                gotoSignIn();
-            }
-        });
+        changePasswordPresenterProvider.get().show(this, "Reset Password",
+                (password, confirmPassword, event) -> resetPassword(token, password, confirmPassword, event),
+                this::gotoSignIn);
     }
 
-    private void resetPassword(final ChangePasswordPresenter changePasswordPresenter,
-                               final String token,
-                               final stroom.widget.popup.client.event.HidePopupRequestEvent event) {
-        final ResetPasswordRequest request = new ResetPasswordRequest(
-                token,
-                changePasswordPresenter.getPassword(),
-                changePasswordPresenter.getConfirmPassword());
+    private void resetPassword(final String token,
+                               final String password,
+                               final String confirmPassword,
+                               final HidePopupRequestEvent event) {
+        final ResetPasswordRequest request = new ResetPasswordRequest(token, password, confirmPassword);
 
         restFactory
                 .create(RESOURCE)

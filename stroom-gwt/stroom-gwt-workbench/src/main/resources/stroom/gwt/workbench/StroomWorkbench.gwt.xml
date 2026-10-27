@@ -152,7 +152,7 @@
     <inherits name="stroom.kafka.KafkaConfig"/>
     <inherits name="stroom.aws.s3.S3Config"/>
 
-    <!-- The security batch: CurrentPasswordPresenter needs Stroom's CurrentUser (CurrentActivity) -->
+    <!-- The security batch: CurrentPasswordController needs Stroom's CurrentUser (CurrentActivity) -->
     <inherits name="stroom.activity.Activity"/>
 
     <!-- The processing batch (node groups, processors, pipelines, data retention, ...) -->

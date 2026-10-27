@@ -18,8 +18,8 @@ package stroom.gwt.workbench.client.app.gin.idp;
 
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
+import stroom.security.identity.client.component.ChangePasswordController;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter;
@@ -52,7 +52,7 @@ public interface IdpScreenGinjector extends ScreenGinjector {
     ResetPasswordPresenter getResetPasswordPresenter();
 
     /// @return A new 'Change Password' dialog.
-    ChangePasswordPresenter getChangePasswordPresenter();
+    ChangePasswordController getChangePasswordController();
 
     /// @return A new 'Reset Your Password' dialog.
     EmailResetPasswordPresenter getEmailResetPasswordPresenter();

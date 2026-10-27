@@ -28,8 +28,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.CurrentUser;
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter;
-import stroom.security.identity.client.view.CurrentPasswordViewImpl;
+import stroom.security.identity.client.component.CurrentPassword;
+import stroom.security.identity.client.component.CurrentPasswordController;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 
@@ -39,12 +39,12 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.EnumSet;
 
 /// The `App/IdP/CurrentPassword` stories, showing Stroom's real 'Enter Your Current Password'
-/// dialog (`CurrentPasswordPresenter` with `CurrentPasswordViewImpl`), the first step of changing a
+/// dialog (`CurrentPasswordController` with `CurrentPassword`), the first step of changing a
 /// signed in user's password from the user menu, with fake REST replies. The password is checked
 /// with `POST /authentication/v1/confirmPassword` (replying after 200ms); once it is confirmed,
 /// Stroom goes on to the 'Change Password' dialog itself.
 ///
-/// As in `App/Main/ChangePasswordDialog`, the presenter is created with `new`, with Stroom's
+/// As in `App/Main/ChangePasswordDialog`, the controller is created with `new`, with Stroom's
 /// `CurrentUser` holding the `admin` user. The plays only check the empty dialog, so it can still
 /// be tried by hand.
 public final class CurrentPasswordStories {
@@ -115,12 +115,12 @@ public final class CurrentPasswordStories {
                 null, null);
         currentUser.setUserAndPermissions(new AppUserPermissions(StartupFixtures.ADMIN,
                 EnumSet.of(AppPermission.ADMINISTRATOR)), false);
-        final CurrentPasswordPresenter presenter = new CurrentPasswordPresenter(harness.getEventBus(),
-                new CurrentPasswordViewImpl(GWT.create(CurrentPasswordViewImpl.Binder.class)),
+        final CurrentPasswordController dialog = new CurrentPasswordController(harness.getEventBus(),
+                new CurrentPassword(),
                 harness.getRestFactory(),
                 currentUser,
-                injector::getChangePasswordPresenter);
-        presenter.show();
+                injector::getChangePasswordController);
+        dialog.show(harness.getAppRoot());
         return harness.asWidget();
     }
 }

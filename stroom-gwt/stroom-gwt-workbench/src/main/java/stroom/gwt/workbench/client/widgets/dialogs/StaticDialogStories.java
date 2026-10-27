@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.Label;
 /// Stories for the dialogs of Stroom's identity provider screens (change password, current
 /// password, reset password).
 ///
-/// Stroom shows these screens (`ChangePasswordPresenter`, `CurrentPasswordPresenter`,
+/// Stroom shows these screens (`ChangePasswordController`, `CurrentPasswordController`,
 /// `EmailResetPasswordPresenter`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
 /// icon, which is what this story does.
 public final class StaticDialogStories {

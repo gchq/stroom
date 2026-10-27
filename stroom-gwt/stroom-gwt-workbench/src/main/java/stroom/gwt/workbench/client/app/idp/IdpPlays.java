@@ -65,7 +65,7 @@ final class IdpPlays {
                + ", \"passwordPolicyMessage\": \"" + message + "\"}";
     }
 
-    /// Waits for the change password dialog (`ChangePasswordPresenter`, shown once the policy has
+    /// Waits for the change password dialog (`ChangePasswordController`, shown once the policy has
     /// loaded) and types the new password and its confirmation.
     ///
     /// The dialog is on the page's body, and is found by its caption; its 'Enter Password' field is

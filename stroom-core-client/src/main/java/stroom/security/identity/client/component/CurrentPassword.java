@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.security.identity.client.view;
+package stroom.security.identity.client.component;
 
-import stroom.security.identity.client.presenter.CurrentPasswordPresenter.CurrentPasswordView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.PasswordBox;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.HideRequest;
-import stroom.widget.popup.client.view.HideRequestUiHandlers;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,69 +28,69 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHandlers> implements CurrentPasswordView {
+import java.util.Objects;
 
-    private final Widget widget;
+/// The user's current password, asked for before they change it.
+public class CurrentPassword extends Component {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     @UiField
     PasswordBox password;
     @UiField
     Label passwordFeedback;
 
-    @Inject
-    public CurrentPasswordViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    private Runnable onEnter = () -> {
+    };
 
-        password.setPlaceholder("Enter Your Current Password");
+    /// Makes an empty form.
+    public CurrentPassword() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Focuses the password.
     public void focus() {
         password.focus();
     }
 
-    @Override
+    /// Sets what to do when Enter is pressed in the password.
+    ///
+    /// @param onEnter What to do, e.g. press the dialog's OK.
+    public void setOnEnter(final Runnable onEnter) {
+        this.onEnter = Objects.requireNonNull(onEnter, "onEnter");
+    }
+
+    /// @return The password.
     public String getPassword() {
         return password.getValue();
     }
 
-    @Override
+    /// Checks a password has been given, saying under it if not and focusing it.
+    ///
+    /// @return Whether one has.
     public boolean validate() {
-        boolean valid = true;
-
         if (password.getValue().length() == 0) {
             FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
-            valid = false;
-        } else {
-            FieldValidity.setValid(password.getInput(), passwordFeedback);
-        }
-
-        if (!valid) {
             FieldValidity.focusFirstInvalid(password.getInput());
+            return false;
         }
-
-        return valid;
+        FieldValidity.setValid(password.getInput(), passwordFeedback);
+        return true;
     }
 
     @UiHandler("password")
-    public void onPasswordKeyDown(final KeyDownEvent e) {
-        onKeyDown(e);
-    }
-
-    private void onKeyDown(final KeyDownEvent e) {
+    void onPasswordKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.OK, () -> {
-            }));
+            onEnter.run();
         }
     }
 
-    public interface Binder extends UiBinder<Widget, CurrentPasswordViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CurrentPassword> {
 
     }
 }
