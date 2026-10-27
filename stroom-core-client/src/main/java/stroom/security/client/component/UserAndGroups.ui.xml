@@ -3,9 +3,9 @@
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:l="urn:import:stroom.widget.layout.client">
-    <!-- The users and groups above; below, the groups the selected one is a member of beside
-         the members of the selected group (addStyleNames, as styleName would replace the split
-         pane's own class) -->
+    <!-- The User Groups screen (user-and-groups.css): the users and groups above; below, the
+         groups the selected one is a member of beside the members of the selected group
+         (addStyleNames, as styleName would replace the split pane's own class) -->
     <l:SplitPane ui:field="outerSplitPane"
                  vertical="true"
                  thin="true"
@@ -20,9 +20,9 @@
                      names="Member of, Members"
                      addStyleNames="max">
             <g:SimplePanel ui:field="parents"
-                           styleName="max"/>
+                           styleName="max user-and-groups__pane"/>
             <g:SimplePanel ui:field="children"
-                           styleName="max"/>
+                           styleName="max user-and-groups__pane"/>
         </l:SplitPane>
     </l:SplitPane>
 </ui:UiBinder>

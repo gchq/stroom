@@ -21,6 +21,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.AppPermissionsEditController;
+import stroom.security.client.component.UserAndGroupsController;
 import stroom.security.client.component.UserDependenciesListController;
 import stroom.security.client.component.UserInfoTabController;
 import stroom.security.shared.AppPermission;
@@ -85,7 +86,8 @@ public class UserTabPresenter
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
     private final LazyValue<AppPermissionsEditController> appPermissionsEditLazyValue;
     private ControllerLayer appPermissionsEditLayer;
-    private final LazyValue<UserAndGroupsPresenter> userAndGroupsPresenterLazyValue;
+    private final LazyValue<UserAndGroupsController> userAndGroupsLazyValue;
+    private ControllerLayer userAndGroupsLayer;
     private final List<TabData> tabs = new ArrayList<>();
 
     private UserRef userRef;
@@ -101,7 +103,7 @@ public class UserTabPresenter
                             final Provider<UserDependenciesListController> userDependenciesListProvider,
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
                             final Provider<AppPermissionsEditController> appPermissionsEditProvider,
-                            final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
+                            final Provider<UserAndGroupsController> userAndGroupsProvider) {
         super(eventBus, view);
         own(userInfo);
         this.userInfo = userInfo;
@@ -128,10 +130,11 @@ public class UserTabPresenter
                     appPermissionsEditLayer = new ControllerLayer(appPermissionsEdit);
                     appPermissionsEdit.setUserRef(getUserRef());
                 });
-        this.userAndGroupsPresenterLazyValue = new LazyValue<>(
-                userAndGroupsPresenterProvider,
-                userAndGroupsPresenter -> {
-                    userAndGroupsPresenter.setUserRef(userRef);
+        this.userAndGroupsLazyValue = new LazyValue<UserAndGroupsController>(
+                (Supplier<UserAndGroupsController>) () -> make(userAndGroupsProvider),
+                userAndGroups -> {
+                    userAndGroupsLayer = new ControllerLayer(userAndGroups);
+                    userAndGroups.setUserRef(userRef);
                 });
 
         final boolean hasManagerUsersPerm = clientSecurityContext.hasAppPermission(
@@ -182,10 +185,9 @@ public class UserTabPresenter
             userInfo.setUserRef(userRef);
             callback.accept(userInfoLayer);
         } else if (USER_GROUPS_TAB.equals(tab)) {
-            final UserAndGroupsPresenter userAndGroupsPresenter
-                    = userAndGroupsPresenterLazyValue.getValue();
-            userAndGroupsPresenter.setUserRef(userRef);
-            callback.accept(userAndGroupsPresenter);
+            final UserAndGroupsController userAndGroups = userAndGroupsLazyValue.getValue();
+            userAndGroups.setUserRef(userRef);
+            callback.accept(userAndGroupsLayer);
         } else if (APP_PERMS_TAB.equals(tab)) {
             final AppPermissionsEditController appPermissionsEdit = appPermissionsEditLazyValue.getValue();
             appPermissionsEdit.setUserRef(userRef);

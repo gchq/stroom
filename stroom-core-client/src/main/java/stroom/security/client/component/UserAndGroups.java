@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.security.client.view;
+package stroom.security.client.component;
 
-import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.widget.component.client.Component;
 import stroom.widget.layout.client.SplitPane;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGroupsView {
+/// The User Groups screen: the users and groups above; below, the groups the selected one is a
+/// member of beside the members of the selected group. Each is a list its controller shows here.
+public class UserAndGroups extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SplitPane outerSplitPane;
@@ -43,55 +44,53 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     @UiField
     SimplePanel children;
 
-    @Inject
-    public UserAndGroupsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the screen, with no lists.
+    public UserAndGroups() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @param visible Whether the users and groups are shown; the panes below take the space when
+    ///                they are not.
     public void setUserListVisible(final boolean visible) {
         userList.setVisible(visible);
         // The pane below takes the space
         outerSplitPane.setPaneHidden(userList, !visible);
     }
 
-    @Override
+    /// @param view The users and groups.
     public void setUserList(final IsWidget view) {
-        this.userList.setWidget(view.asWidget());
+        this.userList.setWidget(view);
     }
 
-    @Override
+    /// @param view The groups the selected user or group is a member of.
     public void setParentsView(final IsWidget view) {
-        parents.setWidget(view.asWidget());
+        parents.setWidget(view);
     }
 
-    @Override
+    /// Enables the Member Of pane, or dims it and makes it inert while nothing is selected.
+    ///
+    /// @param enabled Whether the pane is enabled.
     public void setParentsEnabled(final boolean enabled) {
         setPaneEnabled(parents, enabled);
     }
 
-    @Override
+    /// @param view The members of the selected group.
     public void setChildrenView(final IsWidget view) {
-        children.setWidget(view.asWidget());
+        children.setWidget(view);
     }
 
-    @Override
+    /// Enables the members pane, or dims it and makes it inert while nothing is selected.
+    ///
+    /// @param enabled Whether the pane is enabled.
     public void setChildrenEnabled(final boolean enabled) {
         setPaneEnabled(children, enabled);
     }
 
-    // A pane that waits for a selection is shown dimmed, saying 'No Selection', rather than hidden,
-    // so the screen doesn't change shape. It is also inert: out of the tab order, unclickable and
-    // hidden from screen readers, rather than only looking unavailable
+    // A pane that waits for a selection is shown dimmed (user-and-groups.css), saying 'No
+    // Selection', rather than hidden, so the screen doesn't change shape. It is also inert: out of
+    // the tab order, unclickable and hidden from screen readers, rather than only looking
+    // unavailable
     private static void setPaneEnabled(final Widget pane, final boolean enabled) {
-        pane.getElement().getStyle().setOpacity(enabled
-                ? 1
-                : 0.4);
         if (enabled) {
             pane.getElement().removeAttribute("inert");
         } else {
@@ -99,7 +98,8 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
         }
     }
 
-    @Override
+    /// @param visible Whether the members pane is shown; the Member Of pane takes the space when
+    ///                it is not.
     public void setChildrenVisible(final boolean visible) {
         children.setVisible(visible);
         // The Member Of pane takes the space
@@ -110,7 +110,7 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, UserAndGroupsViewImpl> {
+    interface Binder extends UiBinder<Widget, UserAndGroups> {
 
     }
 }
