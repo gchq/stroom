@@ -274,7 +274,8 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     AiWriteExtractionResult writeExtraction(@PathParam("chatId") int chatId,
                                             @PathParam("messageId") int messageId,
                                             @PathParam("actionId") String actionId,
-                                            @Parameter(description = "The name and folder the user chose, and the hash of what was prepared",
+                                            @Parameter(description = "The name and folder the user chose, and the "
+                                                                     + "hash of what was prepared",
                                                     required = true) AiWriteExtractionRequest request);
 
     @POST
