@@ -11,8 +11,10 @@ or instead of writing a translation. A table to look values up in (users, assets
 start, and a reference table gets no translation or index. An events pipeline whose lookups read a table with no
 Reference stream yet is stepped only once that table is processed (Stroom remembers a lookup that found nothing for
 10 minutes). Events sent on to ArcSight: CEF output
-(draft_cef_mapping). A pipeline to fix or change: a new version or working copy of it (copy_pipeline). When what the
-user wants fits more than one, ask which.
+(draft_cef_mapping). A pipeline to fix or change: a new version or working copy of it (copy_pipeline). Data not
+being processed, or processed slowly (a pipeline, a feed or a stream), or processing's health and priorities:
+explain_processing, which finds what stops it and changes nothing. When what the user wants fits more than one, ask
+which.
 
 A discovery index: the source is a feed already holding raw data (start_build feeds=[it] kind=discovery) or a sample
 (start_build kind=discovery, create_feed, upload_sample); nothing is surveyed, as Elasticsearch maps the fields itself. Ask the user, in one

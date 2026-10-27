@@ -40,6 +40,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `document_info` | A document's type, path, tags, history, version and dependencies | all | yes | | | View | no | `describe_document` (part), `find_documents` (by path) |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | all | yes | | Manage Processors | View | workspace | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster, each by name with its JSON body | all | yes | | | View | no | none (`check_index_template` and `propose_index_template` take templates the user gives) |
+| `explain_processing` | Why processing isn't happening (or is slow) for a pipeline, feed, stream or the whole cluster, link by link from nodes and jobs to each filter's tracker, profile, tasks and priority | all | yes | Manage Processors | Manage Jobs, Manage Nodes, View System Info | View | no | `processing_status` (part) |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file | all | yes | View Data | | | yes (workspace) | `read_stream`, `locate_event` (part) |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries) | all | yes | | | View | workspace | `find_documents` (with `content`) |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | all | yes | | Manage Processors | View | no | `find_documents`, `processing_status` (part) |
@@ -165,6 +166,17 @@ instructions or any tool's description names a tool that doesn't exist.
   are ported as tools of their own (`stroom-mcp-impl`): `processing_status` reads each filter's tasks with the paged
   reader `processor_tasks` uses (`ProcessorTaskFinder`), and `summarise_streams` triages with `ErrorTriage` (the
   bundled `error_rules.yaml`, after any the `stroom.ai.errorTriage.rules` property gives).
+* **`explain_processing` and `processing_status`**: MCP's `processing_status` reports a pipeline's filters and their
+  progress without judging them. The built-in diagnoses: it traces the chain from the cluster's nodes and the jobs
+  processing needs (Processor Task Creator, Data Processor, the reaper and heartbeat, asked of every node in
+  parallel) through each filter's state, tracker, stream create time window, feed dependencies, polling, processor
+  profile (node group, periods, the threads each node gets now) and tasks (locked streams, limits) to its priority
+  among the filters ahead of it, and calls each link ok, blocking, slowing or not checked. It reads job, node and
+  claiming state through `JobStates` (`stroom-job-api`) and `ProcessingDiagnostics` (`stroom-processor-api`), read
+  APIs added for it, and the cluster state through `ClusterNodeManager`. Stroom's own skip reasons are only logged,
+  so they are worked out from state; it never reads logs. An overnight profile period is reported as only applying
+  until midnight (a defect in `ProcessorProfileCache`, written up separately). Both claim modes are explained, by
+  `stroom.processor.claimTasksOnWorker`. `processing_status` stays as the build plan's quick progress check.
 * **`xslt_lookups` and `find_reference_data`**: MCP lists every reference map in the environment, with no arguments;
   the built-in starts from given XSLTs or pipelines (`uuids`, `map`, `loaders`) and analyses their lookups.
 * **`search_events`, `run_stroomql`, `describe_data_source` and `find_events`**: MCP's `find_events` searches one

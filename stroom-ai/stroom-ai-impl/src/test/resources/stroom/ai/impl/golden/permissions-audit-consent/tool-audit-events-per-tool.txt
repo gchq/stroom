@@ -157,6 +157,30 @@
     }
   }
 
+## explain_processing {"pipeline_uuid":"pipeline-uuid"}
+- audit: documentsSearched(1, "processing of Test pipeline", [DocRef{type='Pipeline', uuid='pipeline-uuid', name='Test pipeline'}], {}, "Processing explained by the explain_processing tool")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Processing explained by the explain_processing tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Processing explained by the explain_processing tool"
+    } ],
+    "query" : {
+      "raw" : "processing of Test pipeline"
+    },
+    "results" : {
+      "objects" : [ {
+        "id" : "pipeline-uuid",
+        "name" : "Test pipeline",
+        "type" : "Pipeline"
+      } ]
+    },
+    "totalResults" : 1
+  }
+
 ## fetch_events {"path":"/outputs/a.csv"}
 (nothing recorded)
 

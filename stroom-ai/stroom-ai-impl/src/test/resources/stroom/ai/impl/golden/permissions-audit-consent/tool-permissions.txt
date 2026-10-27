@@ -48,6 +48,13 @@ Needs: Manage Processors
 - nothing: REFUSED or limited: You need the Manage Processors permission to see processing tasks, as the Active Tasks tab does.
 - admin: runs (the same as with everything)
 
+## explain_processing {"pipeline_uuid":"pipeline-uuid"}
+Needs: Manage Processors
+- everything: runs: {
+- without Manage Processors: REFUSED or limited: You need the Manage Processors permission to see processing, as the Processors tab does.
+- nothing: REFUSED or limited: You need the Manage Processors permission to see processing, as the Processors tab does.
+- admin: runs (the same as with everything)
+
 ## folder_contents {"folder":"folder-uuid"}
 Needs: View (document)
 - everything: runs: Folder 'Test' (/Test, uuid folder-uuid, [Test](?action=open-doc&docType=Folder&docUuid=folder-uuid))

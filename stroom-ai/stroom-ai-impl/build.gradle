@@ -20,6 +20,7 @@ dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-ai:stroom-ai-impl-db')
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')

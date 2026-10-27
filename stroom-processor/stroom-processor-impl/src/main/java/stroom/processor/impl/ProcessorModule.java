@@ -23,6 +23,7 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.processor.api.JobNames;
+import stroom.processor.api.ProcessingDiagnostics;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
@@ -57,6 +58,7 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorTaskResource.class).to(ProcessorTaskResourceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
         bind(ProcessorProfileService.class).to(ProcessorProfileServiceImpl.class);
+        bind(ProcessingDiagnostics.class).to(ProcessingDiagnosticsImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ProcessorResourceImpl.class)

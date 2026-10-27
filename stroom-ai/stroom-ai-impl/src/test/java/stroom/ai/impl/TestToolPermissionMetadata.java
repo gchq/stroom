@@ -56,7 +56,9 @@ class TestToolPermissionMetadata {
     /// Permissions a tool declares that this world can't make it check, with why. Kept as short as possible.
     private static final Map<String, Map<AppPermission, String>> NOT_REACHED_HERE = Map.of(
             "processor_tasks", Map.of(AppPermission.VIEW_DATA_PERMISSION,
-                    "checked only once there are Error streams to read, and this world has no processing tasks"));
+                    "checked only once there are Error streams to read, and this world has no processing tasks"),
+            "explain_processing", Map.of(AppPermission.VIEW_SYSTEM_INFO_PERMISSION,
+                    "checked only when nodes claim their own tasks, and this world uses the master queue"));
 
     @TempDir
     Path tempDir;
