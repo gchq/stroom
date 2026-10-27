@@ -266,6 +266,19 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
                                     @QueryParam("rejectedChanges") String rejectedChanges);
 
     @POST
+    @Path("/writeExtraction/{chatId}/{messageId}/{actionId}")
+    @Operation(
+            summary = "Write the search extraction a create_extraction_pipeline button in the chat proposed (an XSLT "
+                      + "and a pipeline), once the user has confirmed exactly what is written, in the folder they "
+                      + "chose",
+            operationId = "writeAiExtraction")
+    AiWriteExtractionResult writeExtraction(@PathParam("chatId") int chatId,
+                                            @PathParam("messageId") int messageId,
+                                            @PathParam("actionId") String actionId,
+                                            @Parameter(description = "The name, folder and hash the user confirmed",
+                                                    required = true) AiWriteExtractionRequest request);
+
+    @POST
     @Path("/undoUserAction/{chatId}/{messageId}/{actionId}")
     @Operation(
             summary = "Record that the user undid a proposed code change they applied to a stepping editor with a "

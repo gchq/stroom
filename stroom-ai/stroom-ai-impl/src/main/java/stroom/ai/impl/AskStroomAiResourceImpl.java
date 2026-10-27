@@ -31,6 +31,8 @@ import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.ai.shared.AiWriteExtractionRequest;
+import stroom.ai.shared.AiWriteExtractionResult;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -315,6 +317,16 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                            final String actionId,
                                            final String rejectedChanges) {
         return userActionServiceProvider.get().doUserAction(chatId, messageId, actionId, rejectedChanges);
+    }
+
+    // Logged by UserActionService, as writing documents from a suggestion in the chat.
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiWriteExtractionResult writeExtraction(final int chatId,
+                                                   final int messageId,
+                                                   final String actionId,
+                                                   final AiWriteExtractionRequest request) {
+        return userActionServiceProvider.get().writeExtraction(chatId, messageId, actionId, request);
     }
 
     // Logged by UserActionService, as undoing a change applied from a suggestion in the chat.

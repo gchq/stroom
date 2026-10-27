@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 50
+Built-in tools: 51
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (50 tool(s))
+### AGENT (51 tool(s))
 ask_user
 config_properties
 current_results
@@ -35,6 +35,7 @@ propose_code_change
 propose_dashboard
 propose_dashboard_change
 propose_documentation_change
+propose_extraction_pipeline
 propose_query
 propose_query_change
 propose_visualisation
@@ -56,7 +57,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (46 tool(s))
+### ASK (47 tool(s))
 ask_user
 config_properties
 current_results
@@ -85,6 +86,7 @@ propose_code_change
 propose_dashboard
 propose_dashboard_change
 propose_documentation_change
+propose_extraction_pipeline
 propose_query
 propose_query_change
 propose_visualisation
@@ -104,7 +106,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (46 tool(s))
+### PLAN (47 tool(s))
 ask_user
 config_properties
 current_results
@@ -133,6 +135,7 @@ propose_code_change
 propose_dashboard
 propose_dashboard_change
 propose_documentation_change
+propose_extraction_pipeline
 propose_query
 propose_query_change
 propose_visualisation
@@ -1613,6 +1616,68 @@ Proposes a change to the documentation of a Stroom document given its UUID: the 
     }
   },
   "required" : [ "uuid", "summary" ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_extraction_pipeline
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Offers the user a button to make a search extraction for a dashboard table, to add values from its events to it: an XSLT, which Stroom writes from the fields, and a pipeline using it. The button shows exactly what would be written, with the name and folder the user chooses, for them to confirm; only then is it written, and the table set to use it, with a column for each new field, unsaved. Nothing changes until they confirm it. Give the fields and namespace you tried with preview_extraction, once the user has seen its preview and agreed them, for a table with no extraction pipeline of its own. Tell the user about the button rather than saying it was made.
+
+### Parameters
+
+{
+  "properties" : {
+    "fields" : {
+      "description" : "The fields to extract, besides StreamId and EventId, as tried.",
+      "items" : {
+        "properties" : {
+          "name" : {
+            "description" : "The field's name.",
+            "type" : "string"
+          },
+          "type" : {
+            "description" : "Its type (default text).",
+            "enum" : [ "text", "number", "date" ],
+            "type" : "string"
+          },
+          "xpath" : {
+            "description" : "The XPath of its value, from the event element.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "xpath" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "name" : {
+      "description" : "The name to suggest for the new pipeline and its XSLT, e.g. 'Logons extraction'; the user may change it.",
+      "type" : "string"
+    },
+    "namespace" : {
+      "description" : "The events' namespace, as the preview gave it (blank for none).",
+      "type" : "string"
+    },
+    "summary" : {
+      "description" : "A sentence saying what it adds to the table, shown with the button.",
+      "type" : "string"
+    },
+    "table" : {
+      "description" : "The dashboard table, by its name as the user sees it.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "table", "fields", "namespace", "name" ],
   "type" : "object"
 }
 

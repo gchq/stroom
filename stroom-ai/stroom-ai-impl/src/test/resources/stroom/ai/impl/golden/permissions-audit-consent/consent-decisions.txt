@@ -33,6 +33,7 @@
 - propose_dashboard (read-only, reads untrusted content): RUN in every situation
 - propose_dashboard_change (read-only, reads untrusted content): RUN in every situation
 - propose_documentation_change (read-only, reads untrusted content): RUN in every situation
+- propose_extraction_pipeline (read-only, reads untrusted content): RUN in every situation
 - propose_query (read-only, reads untrusted content): RUN in every situation
 - propose_query_change (read-only, reads untrusted content): RUN in every situation
 - propose_visualisation (read-only, reads untrusted content): RUN in every situation
