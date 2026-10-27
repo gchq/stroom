@@ -26,10 +26,11 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.component.UserTaskManagerController;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.UserTaskManagerPresenter;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -48,7 +49,8 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
                              final Provider<TaskManagerPresenter> presenterProvider,
                              final ClientSecurityContext securityContext,
                              final DocumentPluginRegistry documentPluginRegistry,
-                             final Provider<UserTaskManagerPresenter> userTaskManagerPresenterProvider) {
+                             final AppRoot appRoot,
+                             final Provider<UserTaskManagerController> userTaskManagerProvider) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
@@ -62,7 +64,7 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
 
         // The screens it opens, made when first asked for
         eventBus.addHandler(OpenUserTaskManagerEvent.getType(), event ->
-                userTaskManagerPresenterProvider.get().onOpen(event));
+                userTaskManagerProvider.get().show(appRoot));
     }
 
     @Override

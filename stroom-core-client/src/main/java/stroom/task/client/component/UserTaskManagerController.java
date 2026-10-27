@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.task.client.presenter;
+package stroom.task.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.task.client.component.UserTask;
-import stroom.task.client.event.OpenUserTaskManagerEvent;
-import stroom.task.client.event.OpenUserTaskManagerHandler;
-import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
+import stroom.task.client.presenter.TaskManagerTreeAction;
+import stroom.task.client.presenter.TaskProgressUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
@@ -31,15 +29,13 @@ import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,80 +46,81 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class UserTaskManagerPresenter
-        extends MyPresenterWidget<UserTaskManagerView>
-        implements OpenUserTaskManagerHandler {
+/// The user's own Task Manager ([UserTaskManager]): their running tasks on every node, fetched
+/// every second while the dialog, made for one use, is shown, each of which can be terminated.
+public class UserTaskManagerController extends Controller {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
+    private final UserTaskManager view;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
     private final Map<TaskProgress, UserTask> taskMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
-    private final Timer refreshTimer;
-    private boolean visible;
     private final Set<String> refreshing = new HashSet<>();
-
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
-
     private final FindTaskProgressCriteria criteria;
-
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
     private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
+    private final Timer refreshTimer = new Timer() {
+        @Override
+        public void run() {
+            refreshTaskStatus();
+        }
+    };
 
+    /// Made by GIN, with its list.
+    ///
+    /// @param eventBus    The application's event bus.
+    /// @param view        The list.
+    /// @param restFactory Fetches and terminates the tasks.
+    /// @param nodeClient  Lists the nodes to fetch them from.
     @Inject
-    public UserTaskManagerPresenter(final EventBus eventBus,
-                                    final UserTaskManagerView view,
-                                    final RestFactory restFactory,
-                                    final NodeClient nodeClient) {
-        super(eventBus, view);
+    public UserTaskManagerController(final EventBus eventBus,
+                                     final UserTaskManager view,
+                                     final RestFactory restFactory,
+                                     final NodeClient nodeClient) {
+        super(eventBus);
+        this.view = view;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
-
-        refreshTimer = new Timer() {
-            @Override
-            public void run() {
-                refreshTaskStatus();
-            }
-        };
+        initWidget(view);
 
         criteria = new FindTaskProgressCriteria();
         criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
+        // The polling stops when the dialog goes
+        onDispose(refreshTimer::cancel);
+        onDispose(delayedUpdate::reset);
     }
 
-    @Override
-    public void onOpen(final OpenUserTaskManagerEvent event) {
-        setData(null);
+    /// Shows the user's tasks in a dialog, owned by `opener` until it is closed, fetching them
+    /// every second until then.
+    ///
+    /// @param opener What shows it.
+    public void show(final HasControllerNode opener) {
         refreshTimer.scheduleRepeating(1000);
-        refreshing.clear();
-        visible = true;
-
-        ShowPopupEvent.builder(this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .caption("Task Manager")
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    refreshTimer.cancel();
-                    refreshing.clear();
-                    visible = false;
-                    e.hide();
-                })
+                .onShow(e -> view.focus())
                 .fire();
     }
 
     private void refreshTaskStatus() {
         delayedUpdate.reset();
-        // Stop this refreshing more than once before the call returns.
         nodeClient.listAllNodes(
                 this::refresh,
                 throwable -> {
                 },
-                this);
+                getProvidedTaskMonitor());
     }
 
     private void refresh(final List<String> nodeNames) {
-        // Store node list for suture queries.
+        if (isDisposed()) {
+            return;
+        }
         for (final String nodeName : nodeNames) {
+            // Stop this refreshing more than once before the call returns.
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
                 restFactory
@@ -140,7 +137,6 @@ public class UserTaskManagerPresenter
                             refreshing.remove(nodeName);
                         })
                         .owner(this)
-                        .taskMonitorFactory(this)
                         .exec();
             }
         }
@@ -153,56 +149,52 @@ public class UserTaskManagerPresenter
                 criteria,
                 responseMap.values(),
                 treeAction);
-
-        // Refresh the display.
         setData(list);
     }
 
     private void setData(final ResultPage<TaskProgress> list) {
-        if (visible) {
-            final Set<UserTask> tasksToRemove = new HashSet<>(taskMap.values());
+        final Set<UserTask> tasksToRemove = new HashSet<>(taskMap.values());
 
-            idMap.clear();
-            if (list != null) {
-                for (final TaskProgress taskProgress : list.getValues()) {
-                    final TaskId thisId = taskProgress.getId();
-                    // Avoid processing any duplicate task
-                    if (idMap.containsKey(thisId)) {
-                        break;
-                    }
-
-                    // Get the associated task's row.
-                    UserTask task = taskMap.get(taskProgress);
-
-                    // If there isn't one then create a new one and add it to
-                    // the display.
-                    if (task == null) {
-                        task = new UserTask();
-                        task.setTaskProgress(taskProgress);
-                        task.setOnTerminate(() -> onTerminate(taskProgress));
-
-                        taskMap.put(taskProgress, task);
-                        getView().addTask(task);
-                        idMap.put(taskProgress.getId(), taskProgress);
-                    }
-
-                    // We have updated or added this task so don't remove it
-                    // from the display.
-                    tasksToRemove.remove(task);
+        idMap.clear();
+        if (list != null) {
+            for (final TaskProgress taskProgress : list.getValues()) {
+                final TaskId thisId = taskProgress.getId();
+                // Avoid processing any duplicate task
+                if (idMap.containsKey(thisId)) {
+                    break;
                 }
-            }
 
-            // Remove old tasks
-            for (final UserTask task : tasksToRemove) {
-                getView().removeTask(task);
-                taskMap.values().remove(task);
+                // Get the associated task's row.
+                UserTask task = taskMap.get(taskProgress);
+
+                // If there isn't one then create a new one and add it to
+                // the display.
+                if (task == null) {
+                    task = new UserTask();
+                    task.setTaskProgress(taskProgress);
+                    task.setOnTerminate(() -> onTerminate(taskProgress));
+
+                    taskMap.put(taskProgress, task);
+                    view.addTask(task);
+                    idMap.put(taskProgress.getId(), taskProgress);
+                }
+
+                // We have updated or added this task so don't remove it
+                // from the display.
+                tasksToRemove.remove(task);
             }
+        }
+
+        // Remove old tasks
+        for (final UserTask task : tasksToRemove) {
+            view.removeTask(task);
+            taskMap.values().remove(task);
         }
     }
 
     private void onTerminate(final TaskProgress taskProgress) {
         final String message = "Are you sure you want to terminate this task?";
-        ConfirmEvent.fire(UserTaskManagerPresenter.this, message, ok -> {
+        ConfirmEvent.fire(this, message, ok -> {
             if (ok) {
                 final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
                 findTaskCriteria.addId(taskProgress.getId());
@@ -211,24 +203,8 @@ public class UserTaskManagerPresenter
                         .create(TASK_RESOURCE)
                         .method(res -> res.terminate(taskProgress.getNodeName(), request))
                         .owner(this)
-                        .taskMonitorFactory(this)
                         .exec();
             }
         });
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface UserTaskManagerView extends View, Focus {
-
-        void addTask(IsWidget task);
-
-        void removeTask(IsWidget task);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 }

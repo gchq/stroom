@@ -28,15 +28,14 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.task.client.event.OpenUserTaskManagerEvent;
-import stroom.task.client.presenter.UserTaskManagerPresenter;
+import stroom.task.client.component.UserTaskManagerController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories of `App/Main/UserTaskManagerDialog`, showing Stroom's real [UserTaskManagerPresenter]
+/// Stories of `App/Main/UserTaskManagerDialog`, showing Stroom's real [UserTaskManagerController]
 /// (the current user's 'Task Manager' dialog) with fake REST replies.
 ///
 /// The dialog polls: once a second, while it is open, it lists the nodes (`GET /node/v1/all`) and
@@ -126,11 +125,9 @@ public final class UserTaskManagerDialogStories {
                 .realAlerts()
                 .build();
 
-        // As TaskManagerPlugin would; asked to close on re-render, to stop its polling
-        final UserTaskManagerPresenter presenter = harness.ownPopup(injector.getUserTaskManagerPresenter());
-        harness.addRegistration(harness.getEventBus().addHandler(OpenUserTaskManagerEvent.getType(), presenter));
-        // As the 'Task Manager' button does
-        OpenUserTaskManagerEvent.fire(harness.getHasHandlers());
+        // As TaskManagerPlugin does when the 'Task Manager' button is pressed; its polling stops
+        // when the story's dialogs are closed
+        injector.getUserTaskManagerController().show(harness.getAppRoot());
         return harness.asWidget();
     }
 }

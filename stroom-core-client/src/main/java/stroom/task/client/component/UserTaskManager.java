@@ -14,56 +14,49 @@
  * limitations under the License.
  */
 
-package stroom.task.client.view;
+package stroom.task.client.component;
 
-import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManagerView {
+/// The user's running tasks, one [UserTask] each, scrolling in a frame.
+public class UserTaskManager extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FlowPanel taskList;
 
-    @Inject
-    public UserTaskManagerViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes an empty list.
+    public UserTaskManager() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Focuses the list.
     public void focus() {
         taskList.getElement().focus();
     }
 
-    @Override
-    public void addTask(final IsWidget task) {
-        taskList.add(task.asWidget());
+    /// @param task A task to show, after the others.
+    public void addTask(final UserTask task) {
+        taskList.add(task);
     }
 
-    @Override
-    public void removeTask(final IsWidget task) {
-        taskList.remove(task.asWidget());
+    /// @param task A task shown, to remove.
+    public void removeTask(final UserTask task) {
+        taskList.remove(task);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, UserTaskManagerViewImpl> {
+    interface Binder extends UiBinder<Widget, UserTaskManager> {
 
     }
 }

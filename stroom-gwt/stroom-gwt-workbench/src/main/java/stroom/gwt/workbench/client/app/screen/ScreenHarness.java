@@ -646,10 +646,9 @@ public final class ScreenHarness {
     /// Owns a popup as [#own] does, and closes it as the user would, with its Close button (a
     /// `HidePopupRequestEvent` with `DialogAction.CLOSE`), when the story renders again, before the
     /// harness hides the popups that are still open. Use it for a popup whose presenter stops
-    /// something only when asked to close, e.g. `UserTaskManagerPresenter`, which polls the server
-    /// every second until its `onHideRequest` cancels its timer (the harness's own hiding, with
-    /// `HidePopupEvent`, skips that). The REST requests made meanwhile are dropped, as the
-    /// dispatcher is disposed first.
+    /// something only when asked to close, e.g. one that polls the server until its
+    /// `onHideRequest` cancels its timer (the harness's own hiding, with `HidePopupEvent`, skips
+    /// that). The REST requests made meanwhile are dropped, as the dispatcher is disposed first.
     ///
     /// @param popup The popup's presenter.
     /// @param <P>   The presenter type.

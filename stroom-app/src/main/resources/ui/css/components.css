@@ -620,16 +620,6 @@
     overflow: hidden;
 }
 
-/* The tasks, scrolling in a rounded frame */
-.userTaskManagerViewImpl-layout {
-    width: 400px;
-    height: 200px;
-    border: 1px solid var(--control__border-color);
-    border-radius: .25rem;
-    background-color: var(--content-box__background-color);
-    overflow: hidden;
-}
-
 .solrIndexFieldListViewImpl-synchState {
     padding: 5px;
 }

@@ -26,8 +26,8 @@ import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.presenter.UsersPresenter;
+import stroom.task.client.component.UserTaskManagerController;
 import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.UserTaskManagerPresenter;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -88,8 +88,8 @@ public interface AppScreenGinjector extends ScreenGinjector {
     /// @return The 'Server Tasks' tab.
     TaskManagerPresenter getTaskManagerPresenter();
 
-    /// @return The user's task manager dialog, shown by firing `OpenUserTaskManagerEvent`.
-    UserTaskManagerPresenter getUserTaskManagerPresenter();
+    /// @return The user's task manager dialog, as `TaskManagerPlugin` shows it on `OpenUserTaskManagerEvent`.
+    UserTaskManagerController getUserTaskManagerController();
 
     // Security
 
