@@ -99,7 +99,7 @@ public final class OpenAiModelEditorStories {
     private static final String VALIDATE = "/openAIModel/v1/validate";
 
     // A FormGroup gives its control the group's identity as its id
-    // (OpenAIModelSettingsViewImpl.ui.xml)
+    // (OpenAIModelSettings.ui.xml)
     private static final String BASE_URL = "#openAIModelBaseUrl";
     private static final String MODEL_ID = "#openAIModelId";
     private static final String API_KEY = "#openAIModelApiKey";

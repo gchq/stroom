@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.openai.client.presenter.OpenAIModelPresenter;
-import stroom.openai.client.presenter.OpenAIModelSettingsPresenter;
-import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
-import stroom.openai.client.view.OpenAIModelSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `OpenAIModelModule`
@@ -33,9 +30,6 @@ public class OpenAIModelScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(OpenAIModelPresenter.class);
-        bindPresenterWidget(OpenAIModelSettingsPresenter.class,
-                OpenAIModelSettingsView.class,
-                OpenAIModelSettingsViewImpl.class);
     }
 }
 

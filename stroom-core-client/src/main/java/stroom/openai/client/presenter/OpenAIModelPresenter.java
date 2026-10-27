@@ -18,10 +18,11 @@ package stroom.openai.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.openai.client.component.OpenAIModelSettingsController;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -42,12 +43,14 @@ public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, Open
     public OpenAIModelPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<OpenAIModelSettingsPresenter> modelSettingsPresenterProvider,
+            final Provider<OpenAIModelSettingsController> modelSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<OpenAIModelDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocTabProvider<>(modelSettingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, modelSettingsProvider::get,
+                OpenAIModelSettingsController::read,
+                OpenAIModelSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
