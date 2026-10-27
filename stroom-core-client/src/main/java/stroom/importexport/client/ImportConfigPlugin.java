@@ -18,14 +18,15 @@ package stroom.importexport.client;
 
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.importexport.client.component.ImportConfigController;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.client.presenter.ImportConfigPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
@@ -44,14 +45,15 @@ public class ImportConfigPlugin extends Plugin {
     public ImportConfigPlugin(final EventBus eventBus,
                               final ClientSecurityContext securityContext,
                               final Provider<ImportConfigConfirmPresenter> importConfigConfirmPresenterProvider,
-                              final Provider<ImportConfigPresenter> importConfigPresenterProvider) {
+                              final AppRoot appRoot,
+                              final Provider<ImportConfigController> importConfigProvider) {
         super(eventBus);
         this.securityContext = securityContext;
 
         // The screens it opens, made when first asked for
         eventBus.addHandler(ImportConfigConfirmEvent.getType(), event ->
                 importConfigConfirmPresenterProvider.get().onConfirmImport(event));
-        eventBus.addHandler(ImportConfigEvent.getType(), event -> importConfigPresenterProvider.get().onImport(event));
+        eventBus.addHandler(ImportConfigEvent.getType(), event -> importConfigProvider.get().show(appRoot));
     }
 
     @Override

@@ -21,12 +21,9 @@ import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
-import stroom.importexport.client.presenter.ImportConfigPresenter;
-import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
 import stroom.importexport.client.view.DependenciesTabViewImpl;
 import stroom.importexport.client.view.ExportConfigViewImpl;
 import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
-import stroom.importexport.client.view.ImportConfigViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ImportExportConfigModule`
@@ -38,9 +35,6 @@ public class ImportExportScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(ImportConfigPresenter.class,
-                ImportConfigView.class,
-                ImportConfigViewImpl.class);
         bindPresenterWidget(ImportConfigConfirmPresenter.class,
                 ImportConfigConfirmView.class,
                 ImportConfigConfirmViewImpl.class);

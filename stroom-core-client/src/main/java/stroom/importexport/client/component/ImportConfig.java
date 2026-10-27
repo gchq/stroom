@@ -14,45 +14,44 @@
  * limitations under the License.
  */
 
-package stroom.importexport.client.view;
+package stroom.importexport.client.component;
 
-import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FileChooser;
-import stroom.widget.presenter.client.ViewImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
+/// The content of the Import dialog: the export file to import.
+public class ImportConfig extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     FileChooser fileChooser;
 
-    @Inject
-    public ImportConfigViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes empty content.
+    public ImportConfig() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Focuses the file chooser.
     public void focus() {
         fileChooser.focus();
     }
 
-    @Override
+    /// @return The file chooser, for its controller to attach to.
     public FileChooser getFileChooser() {
         return fileChooser;
     }
 
-    public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ImportConfig> {
 
     }
 }
