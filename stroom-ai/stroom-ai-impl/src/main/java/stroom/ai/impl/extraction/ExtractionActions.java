@@ -136,10 +136,10 @@ public class ExtractionActions {
     }
 
     /// Writes the extraction once the user has chosen its name and folder, as the user: the XSLT, then the pipeline
-    /// using it, both in the folder they chose, with the name they chose. If either can't be written, any already made is removed (as
-    /// the processing user, as the user may not be able to delete what they made); if that fails too, the user is
-    /// told what was kept. (A failure inside Stroom's explorer between making a document and its node leaves the
-    /// document with no node, which can't be removed from here.)
+    /// using it, both in the folder they chose, with the name they chose. If either can't be written, any already
+    /// made is removed (as the processing user, as the user may not be able to delete what they made); if that
+    /// fails too, the user is told what was kept. (A failure inside Stroom's explorer between making a document and
+    /// its node leaves the document with no node, which can't be removed from here.)
     ///
     /// @param dashboard The dashboard.
     /// @param plan      The extraction.
