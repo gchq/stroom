@@ -17,9 +17,6 @@
 package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.script.client.presenter.ScriptPresenter;
-import stroom.script.client.presenter.ScriptSettingsPresenter;
-import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.script.client.view.ScriptSettingsViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ScriptModule`
@@ -33,9 +30,6 @@ public class ScriptScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(ScriptPresenter.class);
-        bindPresenterWidget(ScriptSettingsPresenter.class,
-                ScriptSettingsView.class,
-                ScriptSettingsViewImpl.class);
     }
 }
 

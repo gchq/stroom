@@ -14,41 +14,40 @@
  * limitations under the License.
  */
 
-package stroom.script.client.view;
+package stroom.script.client.component;
 
-import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsView {
+/// A script's Settings tab: the other scripts it depends on (a list its controller shows here).
+public class ScriptSettings extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel dependencies;
 
-    @Inject
-    public ScriptSettingsViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    /// Makes the tab, with no list.
+    public ScriptSettings() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @param dependencies The scripts it depends on.
+    public void setDependencyList(final IsWidget dependencies) {
+        this.dependencies.setWidget(dependencies);
     }
 
-    @Override
-    public void setDependencyList(final IsWidget view) {
-        dependencies.setWidget(view.asWidget());
-    }
 
-    public interface Binder extends UiBinder<Widget, ScriptSettingsViewImpl> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ScriptSettings> {
 
     }
 }

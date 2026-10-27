@@ -22,10 +22,11 @@ import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.AbstractTabProvider;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.script.client.component.ScriptSettingsController;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -49,7 +50,7 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
     @Inject
     public ScriptPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
-                           final Provider<ScriptSettingsPresenter> settingsPresenterProvider,
+                           final Provider<ScriptSettingsController> settingsProvider,
                            final Provider<EditorPresenter> editorPresenterProvider,
                            final Provider<MarkdownEditController> markdownEditProvider,
                            final DocumentUserPermissionsTabProvider<ScriptDoc> documentUserPermissionsTabProvider) {
@@ -90,7 +91,9 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
+                ScriptSettingsController::read,
+                ScriptSettingsController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
