@@ -543,9 +543,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                                  final String description,
                                                  final List<PropertyValue> given,
                                                  final boolean reuse) {
-        final List<String> existing = templates.find("translation").get("candidates") instanceof final List<?> list
-                ? list.stream().map(candidate -> String.valueOf(JsonValues.map(candidate).get("name"))).toList()
-                : List.of();
+        final List<String> existing = templateNames("translation");
         if (!existing.isEmpty()) {
             throw new ToolRefusal("standalone='events' is only for a Stroom with no translation template, and this "
                                   + "one has " + PyText.list(existing) + ": inherit one (create_pipeline "
@@ -597,14 +595,43 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 .forEach(properties::add);
         writes.jsonArrayParser(types, properties, writes.sampleIsArray(build)).ifPresent(properties::add);
         writes.ownDocuments(build, properties, reuse);
-        final Typed typed = writes.typedProperties(types, properties);
+        return withoutTemplate(call, context, new OwnPipeline(build, proposed, description, types, properties,
+                "none: this Stroom has no translation template, so a pipeline of its own (a last resort), made as "
+                + "Stroom's standard Event Data templates are", "translation",
+                "A pipeline of its own: it inherits nothing, so a change to the environment's templates never "
+                + "reaches it. Tell the user, and if a translation template is added later, a next version can "
+                + "inherit it."));
+    }
+
+    /// @param stage A stage (translation, discovery, ...).
+    /// @return The names of this Stroom's templates for it (find_pipeline_templates' candidates).
+    List<String> templateNames(final String stage) {
+        return templates.find(stage).get("candidates") instanceof final List<?> list
+                ? list.stream().map(candidate -> String.valueOf(JsonValues.map(candidate).get("name"))).toList()
+                : List.of();
+    }
+
+    /// Creates a pipeline of its own, inheriting from no template: each element linked to the next in the order
+    /// given, with the properties set. The user confirms it (and its name) in a form first. The last resort where
+    /// this Stroom has no template for the work (create_pipeline standalone=, create_indexing_pipeline
+    /// standalone=).
+    ///
+    /// @param call    The call asking, whose id tells its forms apart in a chat.
+    /// @param context The call's context.
+    /// @param own     What the pipeline is made of.
+    /// @return The pipeline made, with `next`; or the confirmation round to return.
+    /// @throws ToolRefusal if a property doesn't fit its element or the user's answer doesn't allow it.
+    Map<String, Object> withoutTemplate(final ToolCall call, final ToolCallContext context, final OwnPipeline own) {
+        final String build = own.build();
+        final String proposed = own.name();
+        final Map<String, String> types = own.types();
+        final Typed typed = writes.typedProperties(types, own.properties());
         final String chain = String.join(" -> ", types.keySet());
         final List<String> sets = typed.properties().stream().map(PropertyValue::dotted).toList();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
         details.put("pipeline name", proposed);
-        details.put("template", "none: this Stroom has no translation template, so a pipeline of its own (a last "
-                                + "resort), made as Stroom's standard Event Data templates are");
+        details.put("template", own.template());
         details.put("chain", chain);
         details.put("sets", sets);
         consent.require(call, context, Consent.Request.confirmation(NAME,
@@ -621,7 +648,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             previous = element.getKey();
         }
         final PipelineDoc doc = guard.createFilled(PipelineDoc.TYPE, name, build, ref -> {
-            PipelineDoc made = described(pipelineDocs.read(ref.getUuid()), description).copy()
+            PipelineDoc made = described(pipelineDocs.read(ref.getUuid()), own.description()).copy()
                     .pipelineData(data.build())
                     .build();
             for (final PropertyValue property : typed.properties()) {
@@ -629,7 +656,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         writes.value(property, typed.keys().get(property.dotted())));
             }
             return pipelineDocs.write(made);
-        }, false, PipelineShapes.STAGE_ROLES.get("translation"));
+        }, false, PipelineShapes.STAGE_ROLES.get(own.stage()));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
@@ -637,9 +664,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         result.put("template", null);
         result.put("chain", chain);
         result.put("sets", sets);
-        result.put("note", "A pipeline of its own: it inherits nothing, so a change to the environment's templates "
-                           + "never reaches it. Tell the user, and if a translation template is added later, a "
-                           + "next version can inherit it.");
+        result.put("note", own.note());
         return plan.withNext(context, build, result);
     }
 
@@ -766,6 +791,27 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         boolean acceptParserMismatch,
                         String versionOf,
                         Boolean keepReferences) {
+
+    }
+
+    /// A pipeline of its own, made with no template.
+    ///
+    /// @param build       The build it is made in.
+    /// @param name        The name proposed, which the user may correct.
+    /// @param description What it does, or empty.
+    /// @param types       Each element's type, by its id, in the order they are linked (Source first).
+    /// @param properties  The properties to set.
+    /// @param template    What the confirmation says of its template: why it has none.
+    /// @param stage       Its stage (translation, discovery), which names its role in the build.
+    /// @param note        What the result tells the agent to tell the user.
+    record OwnPipeline(String build,
+                       String name,
+                       String description,
+                       Map<String, String> types,
+                       List<PropertyValue> properties,
+                       String template,
+                       String stage,
+                       String note) {
 
     }
 
