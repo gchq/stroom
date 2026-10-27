@@ -31,7 +31,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +70,8 @@ public class FieldValueExtractor {
         try {
             switch (indexField.getFldType()) {
                 case LONG, ID -> {
-                    return convertLong(value);
+                    final long val = Long.parseLong(value);
+                    return ValLong.create(val);
                 }
                 case BOOLEAN -> {
                     final boolean val = Boolean.parseBoolean(value);
@@ -102,16 +102,5 @@ public class FieldValueExtractor {
             LOGGER.debug(e::getMessage, e);
         }
         return null;
-    }
-
-    private Val convertLong(final String value) {
-        try {
-            return ValLong.create(Long.parseLong(value));
-        } catch (final NumberFormatException e) {
-            // An Elasticsearch `unsigned_long` may be beyond the range of a long. No Val type can hold it
-            // exactly, so keep it as its decimal string rather than lose it.
-            final BigInteger bigInteger = new BigInteger(value);
-            return ValString.create(bigInteger.toString());
-        }
     }
 }

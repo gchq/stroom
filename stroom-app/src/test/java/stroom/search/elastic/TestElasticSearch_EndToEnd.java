@@ -206,15 +206,29 @@ class TestElasticSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void testUnsignedLongValueWithinTheRangeOfALong() {
+        final DocRef indexRef = indexTypedEvents();
+
+        final SearchResult result = search(indexRef, ExpressionOperator.builder()
+                .addTerm(HOST, Condition.EQUALS, "gamma"), HOST, BYTES);
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.rows()).containsExactly(List.of("gamma", "42"));
+    }
+
+    @Test
     void testUnsignedLongValuesBeyondTheRangeOfALong() {
         final DocRef indexRef = indexTypedEvents();
 
-        final SearchResult result = search(indexRef, ExpressionOperator.builder(), HOST, BYTES);
+        // No Val type can hold these values, so returning them is an error rather than a value
+        final SearchResult result = search(indexRef, ExpressionOperator.builder()
+                .addTerm(HOST, Condition.EQUALS, "alpha"), HOST, BYTES);
 
-        assertThat(result.rows()).containsExactlyInAnyOrder(
-                List.of("alpha", "18446744073709551615"),
-                List.of("beta", "9223372036854775808"),
-                List.of("gamma", "42"));
+        assertThat(result.rows()).isEmpty();
+        assertThat(result.errors())
+                .anySatisfy(error -> assertThat(error)
+                        .contains("field 'Bytes'")
+                        .contains("Value 18446744073709551615 is outside the range of a long"));
     }
 
     @Test

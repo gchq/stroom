@@ -72,7 +72,6 @@ import jakarta.json.JsonValue;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -424,10 +423,6 @@ public class ElasticSearchTaskHandler {
                             values[insertAt] = ValString.create(collectionValue.stream()
                                     .map(Object::toString)
                                     .collect(Collectors.joining(", ")));
-                        } else if (fieldValue instanceof final BigInteger bigIntegerValue) {
-                            // There is no Val type that can hold an integer beyond the range of a long
-                            // exactly, so represent it as its exact decimal string rather than lose precision.
-                            values[insertAt] = ValString.create(bigIntegerValue.toString());
                         } else {
                             values[insertAt] = Val.create(fieldValue);
                         }
@@ -583,8 +578,19 @@ public class ElasticSearchTaskHandler {
      *
      * @return {@code null} if the field is absent, a single native value, or a {@link List} of native
      * values when the field (or the nested objects it spans) yields more than one value.
+     * @throws IllegalArgumentException if the field has a whole number value beyond the range of a long,
+     *                                  e.g. an `unsigned_long` value above {@link Long#MAX_VALUE}.
      */
     static Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
+        try {
+            return resolveFieldValue(searchHitMap, fieldName);
+        } catch (final ArithmeticException e) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Unable to read the value of field '{}'. {}", fieldName, e.getMessage()), e);
+        }
+    }
+
+    private static Object resolveFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
         if (fieldName == null || searchHitMap == null || searchHitMap.isEmpty()) {
             return null;
         }
@@ -735,8 +741,9 @@ public class ElasticSearchTaskHandler {
     /// Package-private for testing.
     ///
     /// @param jsonValue The JSON value to convert.
-    /// @return The native Java representation of `jsonValue`, i.e. a `Boolean`, `Long`, `BigInteger` (for
-    /// integers outside the range of a long), `Double` or `String`, or `null` for a JSON null.
+    /// @return The native Java representation of `jsonValue`, i.e. a `Boolean`, `Long`, `Double` or
+    /// `String`, or `null` for a JSON null.
+    /// @throws ArithmeticException if `jsonValue` is a whole number beyond the range of a long.
     static Object jsonValueToNative(final JsonValue jsonValue) {
         if (jsonValue == null) {
             return null;
@@ -752,12 +759,7 @@ public class ElasticSearchTaskHandler {
             case NUMBER:
                 final JsonNumber jsonNumber = (JsonNumber) jsonValue;
                 if (jsonNumber.isIntegral()) {
-                    // An `unsigned_long` field may hold values beyond the range of a long, which
-                    // `longValue()` would silently truncate, so keep those as an exact BigInteger.
-                    final BigInteger bigInteger = jsonNumber.bigIntegerValue();
-                    return bigInteger.bitLength() < Long.SIZE
-                            ? bigInteger.longValue()
-                            : bigInteger;
+                    return toLongExact(jsonNumber);
                 } else {
                     return jsonNumber.doubleValue();
                 }
@@ -767,6 +769,19 @@ public class ElasticSearchTaskHandler {
                 return jsonValue.asJsonObject().toString();
             default:
                 return jsonValue.toString();
+        }
+    }
+
+    /// An `unsigned_long` field may hold values beyond the range of a long, which no `Val` type can hold, so
+    /// reject them rather than silently truncate them as `longValue()` would.
+    private static long toLongExact(final JsonNumber jsonNumber) {
+        try {
+            return jsonNumber.longValueExact();
+        } catch (final ArithmeticException e) {
+            throw new ArithmeticException(LogUtil.message(
+                    "Value {} is outside the range of a long ({} to {}). Elasticsearch unsigned_long values " +
+                    "above {} are not supported.",
+                    jsonNumber, Long.MIN_VALUE, Long.MAX_VALUE, Long.MAX_VALUE));
         }
     }
 

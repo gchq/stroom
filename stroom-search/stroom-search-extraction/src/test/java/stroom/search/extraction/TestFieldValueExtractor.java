@@ -92,14 +92,34 @@ class TestFieldValueExtractor {
     }
 
     @Test
+    void testLong_longBoundaries() {
+        assertThat(convert(FieldType.LONG, "9223372036854775807"))
+                .isEqualTo(ValLong.create(Long.MAX_VALUE));
+        assertThat(convert(FieldType.LONG, "-9223372036854775808"))
+                .isEqualTo(ValLong.create(Long.MIN_VALUE));
+    }
+
+    @Test
     void testLong_beyondRangeOfLong() {
+        // An Elasticsearch `unsigned_long` value no Val type can hold is left blank
         assertThat(convert(FieldType.LONG, "18446744073709551615"))
-                .isEqualTo(ValString.create("18446744073709551615"));
+                .isNull();
+        assertThat(convert(FieldType.LONG, "9223372036854775808"))
+                .isNull();
+        assertThat(convert(FieldType.LONG, "-9223372036854775809"))
+                .isNull();
     }
 
     @Test
     void testLong_invalid() {
         assertThat(convert(FieldType.LONG, "abc"))
+                .isNull();
+    }
+
+    @Test
+    void testLong_decimal() {
+        // Not a whole number, so not beyond the range of a long, just not a long
+        assertThat(convert(FieldType.LONG, "1.5"))
                 .isNull();
     }
 

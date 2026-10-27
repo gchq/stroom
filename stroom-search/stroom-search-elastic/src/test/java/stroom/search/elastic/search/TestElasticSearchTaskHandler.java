@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -297,12 +298,10 @@ class TestElasticSearchTaskHandler {
         final Map<String, JsonData> fields = fields("""
                 {"big": [18446744073709551615]}""");
 
-        final Object value = ElasticSearchTaskHandler.getFieldValue(fields, "big");
-
-        assertThat(String.valueOf(value))
-                .isEqualTo("18446744073709551615");
-        assertThat(value)
-                .isEqualTo(new BigInteger("18446744073709551615"));
+        assertThatThrownBy(() -> ElasticSearchTaskHandler.getFieldValue(fields, "big"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("field 'big'")
+                .hasMessageContaining("Value 18446744073709551615 is outside the range of a long");
     }
 
     @Test
@@ -311,8 +310,19 @@ class TestElasticSearchTaskHandler {
         final Map<String, JsonData> fields = new HashMap<>();
         fields.put("big", JsonData.fromJson("[18446744073709551615]"));
 
-        assertThat(ElasticSearchTaskHandler.getFieldValue(fields, "big"))
-                .isEqualTo(new BigInteger("18446744073709551615"));
+        assertThatThrownBy(() -> ElasticSearchTaskHandler.getFieldValue(fields, "big"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("field 'big'");
+    }
+
+    @Test
+    void testGetFieldValue_nestedUnsignedLongAboveLongMax() {
+        final Map<String, JsonData> fields = fields("""
+                {"user": [{"bytes": [1]}, {"bytes": [18446744073709551615]}]}""");
+
+        assertThatThrownBy(() -> ElasticSearchTaskHandler.getFieldValue(fields, "user.bytes"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("field 'user.bytes'");
     }
 
     @Test
@@ -323,13 +333,15 @@ class TestElasticSearchTaskHandler {
         assertThat(ElasticSearchTaskHandler.jsonValueToNative(Json.createValue(Long.MIN_VALUE)))
                 .isEqualTo(Long.MIN_VALUE);
 
-        // Values just outside the range of a long are preserved exactly
+        // Values just outside the range of a long are rejected rather than truncated
         final BigInteger aboveMax = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
         final BigInteger belowMin = BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE);
-        assertThat(ElasticSearchTaskHandler.jsonValueToNative(Json.createValue(aboveMax)))
-                .isEqualTo(aboveMax);
-        assertThat(ElasticSearchTaskHandler.jsonValueToNative(Json.createValue(belowMin)))
-                .isEqualTo(belowMin);
+        assertThatThrownBy(() -> ElasticSearchTaskHandler.jsonValueToNative(Json.createValue(aboveMax)))
+                .isInstanceOf(ArithmeticException.class)
+                .hasMessageContaining("Value 9223372036854775808 is outside the range of a long");
+        assertThatThrownBy(() -> ElasticSearchTaskHandler.jsonValueToNative(Json.createValue(belowMin)))
+                .isInstanceOf(ArithmeticException.class)
+                .hasMessageContaining("Value -9223372036854775809 is outside the range of a long");
     }
 
     // --------------------------------------------------------------------------------
@@ -647,14 +659,29 @@ class TestElasticSearchTaskHandler {
 
         processResultBatch(fieldIndex, hits, new AtomicLong());
 
-        // No Val type can hold the value exactly as a number, so its exact decimal string is used
-        final List<Val[]> rows = captureRows(1);
-        assertThat(rows.getFirst())
-                .containsExactly(
-                        ValString.create("18446744073709551615"),
-                        ValLong.create(42),
-                        ValString.create("1, 18446744073709551615"));
-        verifyNoInteractions(errorConsumer);
+        // No Val type can hold the value, so it is an error rather than a value
+        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
+        verify(errorConsumer).add(captor.capture());
+        assertThat(captor.getValue())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("field 'big'")
+                .hasMessageContaining("Value 18446744073709551615 is outside the range of a long");
+        verify(valuesConsumer, never()).accept(any());
+    }
+
+    @Test
+    void testProcessResultBatch_multiValuedUnsignedLongAboveLongMax() {
+        final List<Hit<ObjectNode>> hits = List.of(
+                hit("1", """
+                        {"bigs": [1, 18446744073709551615]}"""));
+
+        processResultBatch(fieldIndex("bigs"), hits, new AtomicLong());
+
+        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
+        verify(errorConsumer).add(captor.capture());
+        assertThat(captor.getValue())
+                .hasMessageContaining("field 'bigs'");
+        verify(valuesConsumer, never()).accept(any());
     }
 
     private void processResultBatch(final FieldIndex fieldIndex,
