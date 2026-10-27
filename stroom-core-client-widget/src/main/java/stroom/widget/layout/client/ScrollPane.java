@@ -37,4 +37,27 @@ public class ScrollPane extends ScrollPanel {
         addStyleName(BLOCK);
         getContainerElement().addClassName(BLOCK + "__content");
     }
+
+    /// @param role The pane's ARIA role, e.g. `region` for content that is named and can be
+    ///             scrolled with the keyboard.
+    public void setRole(final String role) {
+        getElement().setAttribute("role", role);
+    }
+
+    /// @param ariaLabel What the pane holds, for screen readers.
+    public void setAriaLabel(final String ariaLabel) {
+        getElement().setAttribute("aria-label", ariaLabel);
+    }
+
+    /// Makes the pane a tab stop, so that content too long to show can be scrolled with the
+    /// keyboard, or takes it out of the tab order.
+    ///
+    /// @param focusable Whether the pane is a tab stop.
+    public void setFocusable(final boolean focusable) {
+        if (focusable) {
+            getElement().setTabIndex(0);
+        } else {
+            getElement().removeAttribute("tabindex");
+        }
+    }
 }

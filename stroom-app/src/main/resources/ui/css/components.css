@@ -382,11 +382,6 @@
 }
 
 /* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
-.stroom-control.resultStoreViewImpl {
-    padding: 0;
-    overflow: hidden;
-}
-
 .subStreamNavigator {
     position: relative;
     text-align: right;

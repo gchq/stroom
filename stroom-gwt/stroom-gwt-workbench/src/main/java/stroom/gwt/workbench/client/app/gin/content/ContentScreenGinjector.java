@@ -51,7 +51,7 @@ import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.pathways.client.presenter.TracesPresenter;
-import stroom.query.client.presenter.ResultStorePresenter;
+import stroom.query.client.component.SearchResultStoresController;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.xmlschema.client.XMLSchemaPlugin;
 
@@ -189,7 +189,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     // Queries
 
     /// @return The 'Search Result Stores' dialog, shown by its `show` method.
-    ResultStorePresenter getResultStorePresenter();
+    SearchResultStoresController getSearchResultStoresController();
 
     /// @return The 'Traces' tab, as `TracesPlugin` opens it for `ShowTracesEvent`.
     TracesPresenter getTracesPresenter();

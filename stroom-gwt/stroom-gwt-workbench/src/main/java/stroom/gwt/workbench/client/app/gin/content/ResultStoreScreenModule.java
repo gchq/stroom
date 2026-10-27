@@ -17,9 +17,6 @@
 
 package stroom.gwt.workbench.client.app.gin.content;
 
-import stroom.query.client.presenter.ResultStorePresenter;
-import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
-import stroom.query.client.view.ResultStoreViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The result store bindings of Stroom's `QueryModule` (`stroom/query/client/gin/QueryModule.java`):
@@ -30,8 +27,5 @@ public class ResultStoreScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(ResultStorePresenter.class,
-                ResultStoreView.class,
-                ResultStoreViewImpl.class);
     }
 }

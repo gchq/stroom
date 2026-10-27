@@ -800,6 +800,19 @@ public final class AppShellStories {
                 // narrows. The runner's real input check (test-runner/lib/real-input/shortcuts.mjs)
                 // presses '?' to show the list, and Alt+PageUp and Alt+PageDown to move between the
                 // two tabs, as a play's keys have no key codes for the key bindings to read
+                // G S opens Search Result Stores (it did nothing: the shortcut was bound to the
+                // dialog before one had been made)
+                .story("GoToSearchResults", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    navTree(play).findByText("Countries");
+                    // GWT's key sequences complete on the keys' release, so the keys are pressed
+                    // and released rather than only pressed
+                    play.keyboard("gs");
+                    play.waitFor(() -> play.expect(screen.getByText("Search Result Stores", StroomDom.DIALOG_TITLE))
+                            .toBeInTheDocument());
+                    expectNoProblems(play);
+                })
                 .story("KeyboardShortcuts", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();

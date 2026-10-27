@@ -29,7 +29,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.query.client.presenter.ResultStorePresenter;
+import stroom.query.client.component.SearchResultStoresController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories of `App/Main/ResultStoresDialog`, showing Stroom's real [ResultStorePresenter] (the
+/// Stories of `App/Main/ResultStoresDialog`, showing Stroom's real [SearchResultStoresController] (the
 /// 'Search Result Stores' dialog) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `NodeResource` (the nodes, `GET /node/v1/all`) and
@@ -185,8 +185,9 @@ public final class ResultStoresDialogStories {
                 // The confirmations are answered in Stroom's real dialog
                 .realAlerts()
                 .build();
-        // As ResultStorePlugin does
-        harness.afterStartUp(() -> injector.getResultStorePresenter().show());
+        // As ResultStorePlugin does, made once and kept
+        final SearchResultStoresController dialog = harness.own(injector.getSearchResultStoresController());
+        harness.afterStartUp(dialog::show);
         return harness.asWidget();
     }
 }

@@ -626,6 +626,15 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
+### The Go to Search Results shortcut did nothing (on master too)
+
+**Fixed (27 October 2026, in wave 11), seen in a story.** `ResultStorePlugin` bound G S to
+`resultStorePresenter::show` in its constructor, before the dialog had been made, so the shortcut
+had nothing to show (the menu item made the dialog as it was built, so it worked). The shortcut
+now makes the dialog when first pressed. `AppShell.GoToSearchResults` presses G S.
+
+* `stroom-core-client/src/main/java/stroom/query/client/ResultStorePlugin.java`
+
 ### Document Permissions' Edit button stays disabled until a document is opened (on master too)
 
 **Open; found 26 October 2026 in wave 10.** On the Document Permissions tab
