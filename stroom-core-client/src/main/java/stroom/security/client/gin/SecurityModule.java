@@ -70,8 +70,6 @@ import stroom.security.client.view.UserAndGroupsViewImpl;
 import stroom.security.client.view.UserInfoViewImpl;
 import stroom.security.client.view.UserPermissionReportViewImpl;
 import stroom.security.client.view.UsersViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
 
@@ -99,7 +97,6 @@ public class SecurityModule extends PluginModule {
         bindPlugin(ApiKeysPlugin.class);
         bindPlugin(UserAccessPlugin.class);
         bindPlugin(SigningKeyPlugin.class);
-        bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
         bindPresenterWidget(
                 UsersPresenter.class,

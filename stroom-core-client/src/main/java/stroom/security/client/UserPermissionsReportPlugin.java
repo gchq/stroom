@@ -21,8 +21,8 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.component.UserRefPopupController;
 import stroom.security.client.presenter.UserPermissionReportPresenter;
-import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -40,7 +40,7 @@ import javax.inject.Singleton;
 public class UserPermissionsReportPlugin extends Plugin {
 
     private final ContentManager contentManager;
-    private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
+    private final Provider<UserRefPopupController> userRefPopupPresenterProvider;
     private final Provider<UserPermissionReportPresenter> userPermissionReportPresenterAsyncProvider;
     private final ClientSecurityContext securityContext;
 
@@ -49,7 +49,7 @@ public class UserPermissionsReportPlugin extends Plugin {
                                        final ContentManager contentManager,
                                        final Provider<UserPermissionReportPresenter>
                                                userPermissionReportPresenterAsyncProvider,
-                                       final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
+                                       final Provider<UserRefPopupController> userRefPopupPresenterProvider,
                                        final ClientSecurityContext securityContext) {
         super(eventBus);
         this.contentManager = contentManager;

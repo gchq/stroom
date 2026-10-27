@@ -21,7 +21,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
+import stroom.widget.dropdowntree.client.view.QuickFilterDialog;
 import stroom.widget.dropdowntree.client.view.QuickFilterPage;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.presenter.client.ViewImpl;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Locale;
 
 /// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPage]) and
-/// the dialog layout ([QuickFilterDialogViewImpl]): a quick filter above a data panel. These
+/// the dialog layout ([QuickFilterDialog]): a quick filter above a data panel. These
 /// stories use the real views, with a list of rows as the data view.
 public final class QuickFilterPanelStories {
 
@@ -82,15 +82,14 @@ public final class QuickFilterPanelStories {
                     play.expect(play.within(group).querySelector(".quick-filter__input")).not().toBeNull();
                     play.expect(play.getByText("Scotland")).toBeInTheDocument();
                 })
-                // The DIALOG layout - GWT QuickFilterDialogViewImpl: no FormGroup and no padding, and
+                // The DIALOG layout - QuickFilterDialog: no FormGroup and no padding, and
                 // form-control-border form-control-background on the DATA PANEL alone
                 .story("DialogVariant", context -> {
-                    final QuickFilterDialogViewImpl view = new QuickFilterDialogViewImpl(
-                            GWT.create(QuickFilterDialogViewImpl.Binder.class));
+                    final QuickFilterDialog dialog = new QuickFilterDialog();
                     final RowsView rows = new RowsView();
-                    view.setDataView(rows);
-                    view.setUiHandlers(filterHandler(context, rows));
-                    return frame(view.asWidget());
+                    dialog.add(rows.asWidget());
+                    dialog.setOnFilterChange(filterHandler(context, rows)::onFilterChange);
+                    return frame(dialog);
                 })
                 .withPlay(play -> {
                     final Query panel = play.querySelector(PANEL);

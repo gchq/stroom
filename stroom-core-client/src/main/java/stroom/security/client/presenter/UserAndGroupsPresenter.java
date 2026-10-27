@@ -25,6 +25,7 @@ import stroom.security.client.component.CreateNewGroupController;
 import stroom.security.client.component.CreateUserController;
 import stroom.security.client.component.UserListController;
 import stroom.security.client.component.UserListController.Mode;
+import stroom.security.client.component.UserRefPopupController;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -62,7 +63,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     private final Provider<CreateUserController> createUserProvider;
     private final Provider<CreateNewGroupController> createNewGroupControllerProvider;
-    private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
+    private final Provider<UserRefPopupController> userRefPopupProvider;
     private final RestFactory restFactory;
 
     private final ToolbarButton createButton;
@@ -82,7 +83,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final Provider<UserListController> userListPresenterProvider,
                                   final Provider<CreateUserController> createUserProvider,
                                   final Provider<CreateNewGroupController> createNewGroupControllerProvider,
-                                  final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
+                                  final Provider<UserRefPopupController> userRefPopupProvider,
                                   final UiConfigCache uiConfigCache,
                                   final RestFactory restFactory) {
         super(eventBus, view);
@@ -101,7 +102,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
         this.userList.setResultPageConsumer(userResultPage ->
                 onSelection());
-        this.userList.setCopyPermissionsPopupFunction(this::getCopyPermissionsPopup);
+        this.userList.setOnCopyPermissions(this::copyPermissionsTo);
 
         this.parentsList = make(userListPresenterProvider);
         // A parent can only be a group
@@ -114,7 +115,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         this.createUserProvider = createUserProvider;
         this.createNewGroupControllerProvider = createNewGroupControllerProvider;
-        this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
+        this.userRefPopupProvider = userRefPopupProvider;
         this.restFactory = restFactory;
 
         view.setUserList(userList);
@@ -181,15 +182,15 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void onAddMemberOf() {
         final User user = userList.getSelectionModel().getSelected();
         if (user != null) {
-            final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
-            userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
+            final UserRefPopupController userRefPopup = userRefPopupProvider.get();
+            userRefPopup.setAdditionalTerm(ExpressionTerm
                     .builder()
                     .field(UserFields.IS_GROUP.getFldName())
                     .condition(Condition.EQUALS)
                     .value("true")
                     .build());
 
-            userRefPopupPresenter.show("Select Group", groupRef -> {
+            userRefPopup.showOnce(this, "Select Group", groupRef -> {
                 if (groupRef != null) {
                     addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
                 }
@@ -206,8 +207,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void onAddMembersIn() {
         final User group = userList.getSelectionModel().getSelected();
         if (group != null) {
-            final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
-            userRefPopupPresenter.show("Add User Or Group", userRef -> {
+            userRefPopupProvider.get().showOnce(this, "Add User Or Group", userRef -> {
                 if (userRef != null) {
                     addUserToGroup(userRef, group.asRef(), childrenList, userRef);
                 }
@@ -404,22 +404,20 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }
     }
 
-    private UserRefPopupPresenter getCopyPermissionsPopup(final UserRef toUser) {
-        final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
-        userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
+    // Asks which user to copy a user's groups and permissions from
+    private void copyPermissionsTo(final UserRef toUser) {
+        final UserRefPopupController userRefPopup = userRefPopupProvider.get();
+        userRefPopup.setAdditionalTerm(ExpressionTerm
                 .builder()
                 .field(UserFields.IS_GROUP.getFldName())
                 .condition(Condition.EQUALS)
                 .value("false")
                 .build());
-
-        userRefPopupPresenter.setUserConsumer(fromUser -> {
+        userRefPopup.showOnce(this, "Select User", fromUser -> {
             if (fromUser != null) {
                 copyPermissions(fromUser, toUser);
             }
         });
-
-        return userRefPopupPresenter;
     }
 
     private void copyPermissions(final UserRef fromUser,

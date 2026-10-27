@@ -58,7 +58,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class UserAndGroupHelper {
 
@@ -200,8 +199,7 @@ public class UserAndGroupHelper {
                                                  final boolean isExternalIdp,
                                                  final Set<UserScreen> userScreens,
                                                  final HasHandlers hasHandlers,
-                                                 final Function<UserRef, UserRefPopupPresenter>
-                                                         copyPermissionsPopupFunction) {
+                                                 final Consumer<UserRef> onCopyPermissions) {
         final Set<UserScreen> screens = NullSafe.set(userScreens);
         if (userRef == null) {
             return Collections.emptyList();
@@ -253,15 +251,13 @@ public class UserAndGroupHelper {
                         .command(() ->
                                 OpenApiKeysScreenEvent.fire(hasHandlers, userRef)));
             }
-            if (userRef.isUser() && copyPermissionsPopupFunction != null) {
+            if (userRef.isUser() && onCopyPermissions != null) {
                 builder.withSeparatorIf(builder.hasItems());
 
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UserTabPlugin.USER_ICON)
                         .text("Copy User Groups and Permissions from...")
-                        .command(() -> {
-                            copyPermissionsPopupFunction.apply(userRef).show("Select User");
-                        }));
+                        .command(() -> onCopyPermissions.accept(userRef)));
             }
 
             return builder.build();

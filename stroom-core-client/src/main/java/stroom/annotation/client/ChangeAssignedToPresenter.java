@@ -21,7 +21,7 @@ import stroom.annotation.shared.ChangeAssignedTo;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserRefPopupPresenter;
+import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -45,7 +45,7 @@ public class ChangeAssignedToPresenter
         implements ChangeAssignedToUiHandlers {
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final UserRefPopupPresenter assignedToPresenter;
+    private final UserRefPopupController assignedToPresenter;
     private final ClientSecurityContext clientSecurityContext;
 
     private UserRef currentAssignedTo;
@@ -54,7 +54,7 @@ public class ChangeAssignedToPresenter
     public ChangeAssignedToPresenter(final EventBus eventBus,
                                      final ChangeAssignedToView view,
                                      final AnnotationResourceClient annotationResourceClient,
-                                     final UserRefPopupPresenter assignedToPresenter,
+                                     final UserRefPopupController assignedToPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         own(assignedToPresenter);

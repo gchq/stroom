@@ -83,7 +83,7 @@ public final class UserGroupsScreenStories {
             .post("/users/v1/createGroup", RestReply.json("""
                     {"id": 3, "uuid": "g-auditors", "subjectId": "Auditors", "displayName": "Auditors",
                       "group": true, "enabled": true}"""))
-            // The user picker (UserRefPopupPresenter)
+            // The user picker (UserRefPopupController)
             .post("/userRef/v1/find", RestReply.json("""
                     {"values": [{"uuid": "u-alice", "subjectId": "alice", "displayName": "Alice Anderson",
                                  "group": false, "enabled": true}],

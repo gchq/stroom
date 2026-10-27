@@ -61,7 +61,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserRefPopupPresenter;
+import stroom.security.client.component.UserRefPopupController;
 import stroom.security.shared.FindUserContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -152,7 +152,7 @@ public class AnnotationEditPresenter
 
     private final AnnotationResourceClient annotationResourceClient;
     private final Provider<ChooserController<AnnotationTag>> chooserProvider;
-    private final UserRefPopupPresenter assignedToPresenter;
+    private final UserRefPopupController assignedToPresenter;
     private final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider;
     private final OpenChooser openChooser = new OpenChooser();
     private final ClientSecurityContext clientSecurityContext;
@@ -186,7 +186,7 @@ public class AnnotationEditPresenter
                                    final AnnotationEditView view,
                                    final AnnotationResourceClient annotationResourceClient,
                                    final Provider<ChooserController<AnnotationTag>> chooserProvider,
-                                   final UserRefPopupPresenter assignedToPresenter,
+                                   final UserRefPopupController assignedToPresenter,
                                    final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,

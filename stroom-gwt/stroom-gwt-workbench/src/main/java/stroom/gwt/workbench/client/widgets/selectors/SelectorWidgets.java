@@ -22,12 +22,12 @@ import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.security.client.component.UserRefPopup;
+import stroom.security.client.component.UserRefPopupController;
 import stroom.security.client.component.UserRefSelectionController;
-import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.DropDownBox;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Provider;
@@ -100,9 +100,8 @@ public final class SelectorWidgets {
     /// @param harness The story's harness.
     /// @return The presenter.
     public static UserRefSelectionBoxPresenter userRefSelectionBox(final ScreenHarness harness) {
-        final UserRefPopupPresenter popup = new UserRefPopupPresenter(harness.getEventBus(),
-                new QuickFilterDialogViewImpl(GWT.create(QuickFilterDialogViewImpl.Binder.class)),
-                new PagerPanel(),
+        final UserRefPopupController popup = new UserRefPopupController(harness.getEventBus(),
+                new UserRefPopup(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness));
@@ -125,9 +124,8 @@ public final class SelectorWidgets {
     ///         editor.
     public static Provider<UserRefSelectionController> userRefSelectionControllerProvider(
             final ScreenHarness harness) {
-        return () -> new UserRefSelectionController(new UserRefPopupPresenter(harness.getEventBus(),
-                new QuickFilterDialogViewImpl(GWT.create(QuickFilterDialogViewImpl.Binder.class)),
-                new PagerPanel(),
+        return () -> new UserRefSelectionController(new UserRefPopupController(harness.getEventBus(),
+                new UserRefPopup(),
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness)));

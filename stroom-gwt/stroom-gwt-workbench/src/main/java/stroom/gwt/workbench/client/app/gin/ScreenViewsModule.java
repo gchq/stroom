@@ -23,8 +23,6 @@ import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.Advanced
 import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
 import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
-import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
@@ -53,7 +51,6 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         // AppModule: menus and tool tips
 
         // SecurityModule
-        bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
 
         // QuickFilterModule: the Advanced Query dialog of a quick filter's recent-filters drop-down

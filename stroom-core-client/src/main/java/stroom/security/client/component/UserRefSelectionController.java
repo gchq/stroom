@@ -16,7 +16,6 @@
 
 package stroom.security.client.component;
 
-import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.Controller;
@@ -30,7 +29,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /// Picks a user or group with a [DropDownBox]: the box shows the one picked ("None" for none), and
-/// asks for the picker popup ([UserRefPopupPresenter]), which this owns and shows.
+/// asks for the picker popup ([UserRefPopupController]), which this owns and shows.
 ///
 /// ```java
 /// // A template declares the box; its screen's controller attaches one of these to it
@@ -41,7 +40,7 @@ public class UserRefSelectionController extends Controller {
     /// Shown when no user or group is picked.
     public static final String NONE_DISPLAY_VALUE = "None";
 
-    private final UserRefPopupPresenter userRefPopupPresenter;
+    private final UserRefPopupController userRefPopup;
     private final Listeners<UserRef> selectionListeners = new Listeners<>();
     private DropDownBox box;
     private boolean enabled = true;
@@ -49,11 +48,11 @@ public class UserRefSelectionController extends Controller {
 
     /// Made by GIN; [#attach(DropDownBox)] gives it its box.
     ///
-    /// @param userRefPopupPresenter The picker popup, which this owns.
+    /// @param userRefPopup The picker popup, which this owns.
     @Inject
-    public UserRefSelectionController(final UserRefPopupPresenter userRefPopupPresenter) {
-        this.userRefPopupPresenter = own(userRefPopupPresenter);
-        userRefPopupPresenter.setSelectionChangeConsumer(this::showSelection);
+    public UserRefSelectionController(final UserRefPopupController userRefPopup) {
+        this.userRefPopup = own(userRefPopup);
+        userRefPopup.setSelectionChangeConsumer(this::showSelection);
     }
 
     /// Attaches this to the box whose requests to open the popup it answers.
@@ -78,14 +77,14 @@ public class UserRefSelectionController extends Controller {
 
     /// @return The user or group picked, or null for none.
     public UserRef getSelected() {
-        return userRefPopupPresenter.getSelected();
+        return userRefPopup.getSelected();
     }
 
     /// Shows a user or group as picked; listeners are not told.
     ///
     /// @param userRef The user or group, or null for none.
     public void setSelected(final UserRef userRef) {
-        userRefPopupPresenter.setSelected(userRef);
+        userRefPopup.setSelected(userRef);
         showSelection(userRef);
     }
 
@@ -93,7 +92,7 @@ public class UserRefSelectionController extends Controller {
     ///
     /// @param context What the user or group is picked for, e.g. an owner.
     public void setContext(final FindUserContext context) {
-        userRefPopupPresenter.setContext(context);
+        userRefPopup.setContext(context);
     }
 
     /// Listens for the user picking another user or group, until the registration is removed.
@@ -127,9 +126,9 @@ public class UserRefSelectionController extends Controller {
 
     private void showPopup() {
         if (enabled && !readOnly) {
-            final UserRef initialSelection = userRefPopupPresenter.getSelected();
-            userRefPopupPresenter.show(userRef -> {
-                final UserRef currentSelection = userRefPopupPresenter.getSelected();
+            final UserRef initialSelection = userRefPopup.getSelected();
+            userRefPopup.show(userRef -> {
+                final UserRef currentSelection = userRefPopup.getSelected();
                 if (!Objects.equals(initialSelection, currentSelection)) {
                     selectionListeners.fire(userRef);
                 }

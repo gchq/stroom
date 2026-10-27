@@ -27,7 +27,6 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.presenter.UserAndGroupHelper;
-import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserScreen;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -54,7 +53,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /// Users and groups ([UserList]) found by a quick filter (and terms its owner adds), a page at a
 /// time, sorted as chosen; each with an action menu, and enabled or disabled with its tick box where
@@ -79,7 +77,7 @@ public class UserListController extends Controller {
     private boolean isExternalIdp = false;
     private Mode mode = Mode.USERS_AND_GROUPS;
     private Set<UserScreen> validUserScreensForActionMenu = UserScreen.all();
-    private Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction;
+    private Consumer<UserRef> onCopyPermissions;
 
     private final RefCellsController refCells;
 
@@ -245,7 +243,7 @@ public class UserListController extends Controller {
                         isExternalIdp,
                         Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),
                         this,
-                        copyPermissionsPopupFunction));
+                        onCopyPermissions));
         //noinspection Convert2Diamond // GWT
         this.dataProvider = new RestDataProvider<User, ResultPage<User>>(getEventBus()) {
             @Override
@@ -341,11 +339,10 @@ public class UserListController extends Controller {
         this.resultPageConsumer = resultPageConsumer;
     }
 
-    /// @param copyPermissionsPopupFunction Makes the popup that copies a user's permissions, for
-    ///                                     the action menu.
-    public void setCopyPermissionsPopupFunction(
-            final Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction) {
-        this.copyPermissionsPopupFunction = copyPermissionsPopupFunction;
+    /// @param onCopyPermissions Given a user to copy groups and permissions to, from the action
+    ///                          menu, or null for no such item.
+    public void setOnCopyPermissions(final Consumer<UserRef> onCopyPermissions) {
+        this.onCopyPermissions = onCopyPermissions;
     }
 
     /// @param validUserScreensForActionMenu The screens a user's action menu may open.
