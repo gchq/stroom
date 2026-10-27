@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.node.client.view;
+package stroom.node.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.shared.NodeInclusionBehaviour;
+import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -30,15 +30,14 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 import java.util.List;
 
-public class NodeGroupEditViewImpl
-        extends ViewWithUiHandlers<NodeGroupEditUiHandlers>
-        implements NodeGroupEditView {
+/// A node group: its name, whether it is enabled, whether its ticked nodes are included or
+/// excluded, and the list of nodes to tick.
+public class NodeGroupEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TextBox name;
@@ -49,70 +48,69 @@ public class NodeGroupEditViewImpl
     @UiField
     SimplePanel list;
 
-    @Inject
-    public NodeGroupEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        name.setEnabled(false);
+    private Runnable onInvertSelectionChange = () -> {
+    };
+
+    /// Makes an empty form, offering both inclusion behaviours.
+    public NodeGroupEdit() {
+        initWidget(BINDER.createAndBindUi(this));
         nodeInclusionBehaviour.addItems(List.of(
                 NodeInclusionBehaviour.INCLUDE_SELECTED,
                 NodeInclusionBehaviour.EXCLUDE_SELECTED));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// Puts the focus on the name.
     public void focus() {
         name.setFocus(true);
     }
 
-//    @Override
-//    public String getName() {
-//        return this.name.getText();
-//    }
-
-    @Override
+    /// @param name The group's name, which can't be changed here.
     public void setName(final String name) {
         this.name.setText(name);
     }
 
-    @Override
+    /// @return Whether Enabled is ticked.
     public boolean isEnabled() {
         return enabled.getValue();
     }
 
-    @Override
+    /// @param enabled Whether Enabled is ticked.
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
     }
 
-    @Override
+    /// @return Whether the ticked nodes are excluded rather than included.
     public boolean isInvertSelection() {
         return NodeInclusionBehaviour.EXCLUDE_SELECTED.equals(nodeInclusionBehaviour.getValue());
     }
 
-    @Override
+    /// @param invertSelection Whether the ticked nodes are excluded rather than included.
     public void setInvertSelection(final boolean invertSelection) {
-        if (invertSelection) {
-            this.nodeInclusionBehaviour.setValue(NodeInclusionBehaviour.EXCLUDE_SELECTED);
-        } else {
-            this.nodeInclusionBehaviour.setValue(NodeInclusionBehaviour.INCLUDE_SELECTED);
-        }
+        nodeInclusionBehaviour.setValue(invertSelection
+                ? NodeInclusionBehaviour.EXCLUDE_SELECTED
+                : NodeInclusionBehaviour.INCLUDE_SELECTED);
     }
 
-    @Override
-    public void setListView(final IsWidget listView) {
-        list.setWidget(listView.asWidget());
+    /// @param list The nodes to tick.
+    public void setList(final IsWidget list) {
+        this.list.setWidget(list.asWidget());
+    }
+
+    /// @param onInvertSelectionChange Called when the inclusion behaviour changes.
+    public void setOnInvertSelectionChange(final Runnable onInvertSelectionChange) {
+        this.onInvertSelectionChange = onInvertSelectionChange;
     }
 
     @UiHandler("nodeInclusionBehaviour")
-    void onNodeInclusionBehaviourClick(final ValueChangeEvent<NodeInclusionBehaviour> event) {
-        getUiHandlers().onInvertSelectionChange();
+    void onNodeInclusionBehaviourChange(final ValueChangeEvent<NodeInclusionBehaviour> event) {
+        onInvertSelectionChange.run();
     }
 
-    public interface Binder extends UiBinder<Widget, NodeGroupEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, NodeGroupEdit> {
 
     }
 }

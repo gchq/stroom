@@ -20,6 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.client.component.NewNodeGroupController;
+import stroom.node.client.component.NodeGroupEditController;
 import stroom.node.client.component.NodeGroupListController;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
@@ -37,7 +38,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     public static final String TAB_TYPE = "NodeGroups";
 
     private final NodeGroupListController nodeGroupList;
-    private final Provider<NodeGroupEditPresenter> editProvider;
+    private final Provider<NodeGroupEditController> editProvider;
     private final NodeGroupClient nodeGroupClient;
     private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
@@ -46,7 +47,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final EventBus eventBus,
             final WrapperView view,
             final NodeGroupListController nodeGroupList,
-            final Provider<NodeGroupEditPresenter> editProvider,
+            final Provider<NodeGroupEditController> editProvider,
             final NodeGroupClient nodeGroupClient,
             final Provider<NewNodeGroupController> newNodeGroupControllerProvider) {
 
@@ -80,8 +81,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final NodeGroup nodeGroup) {
-        final NodeGroupEditPresenter editor = makeDialog(editProvider);
-        editor.show(nodeGroup, "Edit Node Group - " + nodeGroup.getName(), result -> refresh());
+        editProvider.get().show(this, nodeGroup, "Edit Node Group - " + nodeGroup.getName(), result -> refresh());
     }
 
     private void delete() {

@@ -34,7 +34,7 @@ import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.node.client.presenter.NodeGroupEditPresenter;
+import stroom.node.client.component.NodeGroupEditController;
 import stroom.node.client.presenter.NodeGroupPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
@@ -82,7 +82,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     NodeGroupPresenter getNodeGroupPresenter();
 
     /// @return The node group members dialog ('Edit Node Group - name').
-    NodeGroupEditPresenter getNodeGroupEditPresenter();
+    NodeGroupEditController getNodeGroupEditController();
 
     // Execution schedules
 

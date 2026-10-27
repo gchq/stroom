@@ -28,7 +28,6 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.node.client.presenter.NodeGroupEditPresenter;
 import stroom.node.shared.NodeGroup;
 
 import com.google.gwt.core.client.GWT;
@@ -39,9 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
-/// Stories of `App/Main/NodeGroupMembersDialog`, showing Stroom's real [NodeGroupEditPresenter]
+/// Stories of `App/Main/NodeGroupMembersDialog`, showing Stroom's real [NodeGroupEditController]
 /// (the 'Edit Node Group - name' dialog, as `NodeGroupPresenter` opens it) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -163,21 +161,12 @@ public final class NodeGroupMembersDialogStories {
                 .injector(injector)
                 .build();
         final NodeGroup group = NodeGroup.builder().id(7).version(1).name("Indexers").enabled(true).build();
-        final NodeGroupEditPresenter presenter = injector.getNodeGroupEditPresenter();
         // As NodeGroupPresenter.edit(nodeGroup) shows it
-        harness.afterStartUp(() -> show(presenter, group, "Edit Node Group - " + group.getName(), result -> {
-        }));
+        harness.afterStartUp(() -> injector.getNodeGroupEditController().show(harness.getAppRoot(),
+                group,
+                "Edit Node Group - " + group.getName(),
+                result -> {
+                }));
         return harness.asWidget();
     }
-
-    // NodeGroupEditPresenter.show is package private (only NodeGroupPresenter calls it), so it is
-    // called with JSNI, which ignores Java's access rules
-    private static native void show(NodeGroupEditPresenter presenter,
-                                    NodeGroup nodeGroup,
-                                    String title,
-                                    Consumer<Boolean> consumer) /*-{
-        presenter.@stroom.node.client.presenter.NodeGroupEditPresenter::show(
-            Lstroom/node/shared/NodeGroup;Ljava/lang/String;Ljava/util/function/Consumer;)(
-            nodeGroup, title, consumer);
-    }-*/;
 }

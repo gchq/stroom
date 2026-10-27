@@ -31,11 +31,8 @@ import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.monitoring.client.ProcessorProfilePlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
-import stroom.node.client.presenter.NodeGroupEditPresenter;
-import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
-import stroom.node.client.view.NodeGroupEditViewImpl;
 import stroom.node.client.view.NodeViewImpl;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
@@ -66,10 +63,6 @@ public class MonitoringModule extends PluginModule {
                 NodePresenter.class,
                 NodeView.class,
                 NodeViewImpl.class);
-        bindPresenterWidget(
-                NodeGroupEditPresenter.class,
-                NodeGroupEditView.class,
-                NodeGroupEditViewImpl.class);
 
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);

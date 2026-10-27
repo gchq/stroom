@@ -21,11 +21,8 @@ import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
 import stroom.job.client.view.JobViewImpl;
-import stroom.node.client.presenter.NodeGroupEditPresenter;
-import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
-import stroom.node.client.view.NodeGroupEditViewImpl;
 import stroom.node.client.view.NodeViewImpl;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
@@ -44,9 +41,6 @@ public class MonitoringScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(NodePresenter.class,
                 NodeView.class,
                 NodeViewImpl.class);
-        bindPresenterWidget(NodeGroupEditPresenter.class,
-                NodeGroupEditView.class,
-                NodeGroupEditViewImpl.class);
         bindPresenterWidget(JobPresenter.class,
                 JobView.class,
                 JobViewImpl.class);
