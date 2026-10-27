@@ -20,6 +20,85 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Convert document tabs and large composite panes into components with controllers, removing the dependency on DocPresenter: data, source and stepping; pipeline structure; annotations; processing and notifications; Plan B settings; user and permissions tabs; retention and processor tabs. Hand-rolled tabs become TabbedComponent.
 
+## Audited (27 October 2026)
+
+Four reviewers read the wave's 28 unit commits against this plan, "Done means" and AGENTS.md (the
+user Info tab to the dictionary's Imports tab; the annotation links to the annotation editor; the
+pipeline's Structure tab to the traces list; the Solr settings to the analytic Execution tab). None
+found a regression in a converted screen's behaviour. Fixed, in 3 commits:
+
+- **The stepping screen.** Every element's panes started the code's and the input's Ace editors,
+  used or not (the old presenter made them only for elements with code or that change their
+  input); `SteppingElement` now makes them when its controller first asks. Elements dropped when
+  the pipeline changed were never released, each keeping its editors; `SteppingPresenter` releases
+  them, the one shown once another takes its place.
+- **Ownership and late replies.** The annotation editor held its owner presenter to retitle or
+  close its tab; it has `setOnTitleChange` and `setOnDelete` now. Its tag, comment, entry and
+  delete replies are guarded, as its others were. The user groups screen showed its config fetch on
+  the list's pager; it uses the screen's task monitor again.
+- **Java and CSS.** `///` javadoc on the package-private methods its tests use
+  (`ProcessorEditController.prepare` and `onHideRequest`, `AnnotationEditController.decorateComment`);
+  misindented `.taskMonitorFactory(...)` lines; the annotation's empty-value class private; an unused
+  pager field; fields named for what they hold (`inheritSelection`, `steppingElement`,
+  `userPermissionReportProvider`); an unused getter and empty dividers; the pipeline structure's
+  label rule given once, without the invalid `align-items: top`.
+- **Docs.** Stale class names in ISSUES.md's open entries, COMPONENT_MODEL_DESIGN.md,
+  WRITING-STORIES.md, a shared comment and a floor map comment; the stepping key handler leak
+  marked fixed.
+- **Not this wave's.** `TestPresenterCoverage` failed on evidence for two presenters wave 11
+  removed (`CredentialEditPresenter`, `AiAttachmentDataPresenter`; wave 11 counted only the two
+  client modules' tests); the entries went.
+
+Left, on purpose:
+
+- **Slots.** Controllers that call `initWidget` (the lists, expression trees, processor list and
+  the notification, schedule and table builder panes) are shown in slots, as before; so are the
+  inner lists the plan wanted declared (duplicate management, the dictionary imports, the
+  processor task summary and list).
+- **Wrappers.** The `SimplePanel`s around the Solr settings' and processor filter's pickers, and
+  the pipeline's Inherit From picker, stay, as wave 11 kept its own: dropping them is a look change.
+- **Plan B's type editors** are still made in Java and put in a slot by `PlanBSettingsController`
+  (the plan declares all eight and shows one); **the annotation links** are controllers on the
+  shared `FindPanel`, with no component of their own.
+- **Recorded in ISSUES.md.** The Solr settings' key-down change marking (as master); the screens
+  with no story or no check; `.pipelineStructureViewImpl-buttons`, unused; the annotation editor's
+  and traces list's classes still to be given BEM names; three tabs that read read-only once rather
+  than follow it (as before the wave).
+- **Not this wave's.** The suite's tools and oracles (`stroom-gwt-suite`) and the historical design
+  notes keep the old names, as before.
+
+## Done (27 October 2026)
+
+All 32 of the plan's units, in 31 commits: 28 for the units (StreamingProcessing and
+AnalyticProcessing shared one; Plan B's settings took the Traces store's, the scheduled processing
+pane the data generator's), 3 for the audit, and this record. Each unit's commit ran its stories in
+a copy of the worktree with the leak check and the screenshot diff. The wave's targeted run, after
+the audit (612 stories: the app shell, every editor, the index, dictionary, annotation, security
+and permissions stories, and the main screens the wave touched), passed all 612 with the leak
+check; of their screenshots, 609 match, the 2 new are the user profile's `ManageUsers` and the
+processor task summary's `ProcessorFilterTasks` (no baseline yet), and
+`DocumentationEditor.TypingEnablesSave` differs as it did in wave 9's full run: its baseline (26
+October) predates the Markdown preview fix, and shows an empty preview where it now draws. The app
+and the standalone dashboard GWT compile, checkstyle is clean and the client and workbench modules'
+2,180 JUnit tests pass. One bug master has too was fixed on the way, with a changelog entry: the
+help for a user's Document Permissions filter ran its words together ("thePermission
+Visibilitydropdown."); the text is in the template now, with no test (a help popup's text). What was
+decided on the way, where it differs from the plans below, is in the audit above (Left, on purpose)
+and:
+
+- **Tabs a document owns.** `ControllerTabProvider.ofOwned(eventBus, controller, reader[, writer])`
+  shows a controller the document makes and owns (to give it callbacks before its tab opens): the
+  annotation editor, the pipeline's Structure tab, the notification list, the traces list, the
+  scheduled processing pane and the analytic Execution tab. The tab passes on its toolbars.
+- **Merged.** `AbstractProcessingPresenter` and its two subclasses are one `AnalyticProcessing`
+  (the document gives `setProcessingTypes` and writes the type and config); the Traces store's
+  Settings tab is `PlanBSettingsController` with its state type locked (its doubled form padding
+  went); the data generator's Execution tab is `ScheduledProcessingController` itself.
+- **Thin shells.** `ProcessorTaskPresenter` and `UserAndGroupsPresenter` stay as content-tab shells
+  around their controllers until wave 15.
+- **Template help.** A `QuickFilterPage` takes a `<form:HelpHTML>` child as its filter's help, and
+  `ClassificationWrapper` its content as `<d:content>`.
+
 ## CSS and template notes for the wave
 
 - New shared modifier text-field--wide { width: 400px; } in text-field.css for the width="400px" text boxes and areas (23 uses in 10 templates; in this wave: ElasticClusterSettings, UserInfoTab, SolrIndexSettings, OpenAIModelSettings). width="200px" on a TextBox/TextArea is the .text-field default (text-field.css:34-35) and can simply go.
