@@ -16,7 +16,9 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticDataShardsController;
 import stroom.analytics.client.component.AnalyticProcessingController;
+import stroom.analytics.client.component.AnalyticQueryEditController;
 import stroom.analytics.client.component.AnalyticSettingsController;
 import stroom.analytics.client.component.DuplicateManagementController;
 import stroom.analytics.client.component.NotificationListController;
@@ -27,7 +29,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -53,24 +54,24 @@ public class AnalyticRulePresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final AnalyticQueryEditPresenter analyticQueryEditPresenter;
+    private final AnalyticQueryEditController analyticQueryEdit;
     private final NotificationListController notificationList;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
-                                 final AnalyticQueryEditPresenter analyticQueryEditPresenter,
+                                 final AnalyticQueryEditController analyticQueryEdit,
                                  final Provider<AnalyticSettingsController> settingsProvider,
                                  final Provider<NotificationListController> notificationListProvider,
                                  final Provider<AnalyticProcessingController> analyticProcessingProvider,
-                                 final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
+                                 final Provider<AnalyticDataShardsController> analyticDataShardsProvider,
                                  final Provider<DuplicateManagementController> duplicateManagementProvider,
                                  final Provider<MarkdownEditController> markdownEditProvider,
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(analyticQueryEditPresenter);
-        this.analyticQueryEditPresenter = analyticQueryEditPresenter;
+        own(analyticQueryEdit);
+        this.analyticQueryEdit = analyticQueryEdit;
 
         // Created up front rather than by the tab provider, as the notifications tab has to be told when the
         // processing type changes on the execution tab, which can happen before the tab is ever opened.
@@ -84,7 +85,9 @@ public class AnalyticRulePresenter
         analyticProcessing.setIsDocumentDirty(this::isDirty);
         analyticProcessing.setOnProcessingTypeChange(this::setRuleType);
 
-        addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
+        addTab(QUERY, ControllerTabProvider.ofOwned(eventBus, analyticQueryEdit,
+                AnalyticQueryEditController::read,
+                AnalyticQueryEditController::write));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, settingsProvider::get,
                 AnalyticSettingsController::read,
                 AnalyticSettingsController::write));
@@ -103,7 +106,8 @@ public class AnalyticRulePresenter
                         .analyticProcessType(processing.getProcessingType())
                         .analyticProcessConfig(processing.writeProcessConfig())
                         .build()));
-        addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
+        addTab(SHARDS, new ControllerTabProvider<>(eventBus, analyticDataShardsProvider::get,
+                AnalyticDataShardsController::read));
         addTab(DUPLICATE_MANAGEMENT, new ControllerTabProvider<>(eventBus, duplicateManagementProvider::get,
                 DuplicateManagementController::read,
                 DuplicateManagementController::write));
@@ -130,11 +134,11 @@ public class AnalyticRulePresenter
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-            analyticQueryEditPresenter.start();
+            analyticQueryEdit.start();
             return true;
         } else if (Action.CLOSE == action
                    && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-            analyticQueryEditPresenter.stop();
+            analyticQueryEdit.stop();
             return true;
         } else {
             return false;

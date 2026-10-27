@@ -28,6 +28,7 @@ import stroom.widget.presenter.client.ViewImpl;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -94,8 +95,8 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
     }
 
     @Override
-    public void setQueryEditView(final View view) {
-        queryEditContainer.setWidget(view.asWidget());
+    public void setQueryEditView(final IsWidget queryEdit) {
+        queryEditContainer.setWidget(queryEdit);
     }
 
     @Override

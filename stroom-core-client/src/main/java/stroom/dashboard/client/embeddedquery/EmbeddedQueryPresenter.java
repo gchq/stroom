@@ -53,11 +53,11 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.TableResult;
 import stroom.query.client.QueryClient;
+import stroom.query.client.component.QueryResultTableController;
+import stroom.query.client.component.QueryResultVisController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.QueryModel;
-import stroom.query.client.presenter.QueryResultTablePresenter;
-import stroom.query.client.presenter.QueryResultVisPresenter;
 import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
@@ -71,6 +71,7 @@ import stroom.widget.component.client.Listeners;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -100,16 +101,15 @@ public class EmbeddedQueryPresenter
     private final QueryModel queryModel;
     private final Provider<QueryDocPresenter> queryDocPresenterProvider;
     private final ContentManager contentManager;
-    //    private final QueryResultTabsView linkTabsLayoutView;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
     private String query;
 
-    private final Provider<QueryResultTablePresenter> tablePresenterProvider;
-    private final Provider<QueryResultVisPresenter> visPresenterProvider;
+    private final Provider<QueryResultTableController> tablePresenterProvider;
+    private final Provider<QueryResultVisController> visPresenterProvider;
 
-    private QueryResultTablePresenter currentTablePresenter;
-    private QueryResultVisPresenter currentVisPresenter;
+    private QueryResultTableController currentTablePresenter;
+    private QueryResultVisController currentVisPresenter;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
     private List<ErrorMessage> currentErrors;
@@ -123,8 +123,8 @@ public class EmbeddedQueryPresenter
     public EmbeddedQueryPresenter(final EventBus eventBus,
                                   final EmbeddedQueryView view,
                                   final Provider<EmbeddedQuerySettingsController> settingsPresenterProvider,
-                                  final Provider<QueryResultTablePresenter> tablePresenterProvider,
-                                  final Provider<QueryResultVisPresenter> visPresenterProvider,
+                                  final Provider<QueryResultTableController> tablePresenterProvider,
+                                  final Provider<QueryResultVisController> visPresenterProvider,
                                   final Provider<QueryDocPresenter> queryDocPresenterProvider,
                                   final QueryClient queryClient,
                                   final RestFactory restFactory,
@@ -144,12 +144,12 @@ public class EmbeddedQueryPresenter
 
             @Override
             public OffsetRange getRequestedRange() {
-                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getRequestedRange);
+                return NullSafe.get(currentTablePresenter, QueryResultTableController::getRequestedRange);
             }
 
             @Override
             public GroupSelection getGroupSelection() {
-                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getGroupSelection);
+                return NullSafe.get(currentTablePresenter, QueryResultTableController::getGroupSelection);
             }
 
             @Override
@@ -229,12 +229,12 @@ public class EmbeddedQueryPresenter
 
             @Override
             public OffsetRange getRequestedRange() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getRequestedRange);
+                return NullSafe.get(currentVisPresenter, QueryResultVisController::getRequestedRange);
             }
 
             @Override
             public GroupSelection getGroupSelection() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getGroupSelection);
+                return NullSafe.get(currentVisPresenter, QueryResultVisController::getGroupSelection);
             }
 
             @Override
@@ -481,10 +481,10 @@ public class EmbeddedQueryPresenter
 
     private void updateVisibleResult() {
         if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
-            getView().setResultView(currentVisPresenter.getView());
+            getView().setResultView(currentVisPresenter);
             currentVisPresenter.refresh();
         } else if (currentTablePresenter != null) {
-            getView().setResultView(currentTablePresenter.getView());
+            getView().setResultView(currentTablePresenter);
         }
     }
 
@@ -506,7 +506,7 @@ public class EmbeddedQueryPresenter
                             getDashboardContext().fireComponentChangeEvent(this)));
 
             if (currentVisPresenter != null) {
-                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+                currentTablePresenter.setQueryResultVis(currentVisPresenter);
             }
 
             // Chain update events.
@@ -536,7 +536,7 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
 
             if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+                currentTablePresenter.setQueryResultVis(currentVisPresenter);
             }
         }
     }
@@ -547,7 +547,7 @@ public class EmbeddedQueryPresenter
             release(currentVisPresenter);
             currentVisPresenter = null;
             if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVisPresenter(null);
+                currentTablePresenter.setQueryResultVis(null);
             } else if (getQuerySettings().getShowTable() != Boolean.TRUE) {
                 // The removed vis is being shown and there is no table to show instead, so clear it
                 // rather than leave a vis that will never finish loading
@@ -805,7 +805,7 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void onSearching(final boolean searching) {
-//        tablePresenter.getView().onSearching(searching);
+//        tablePresenter.onSearching(searching);
 
         // If this is the end of a query then schedule a refresh.
         if (!searching) {
@@ -858,7 +858,7 @@ public class EmbeddedQueryPresenter
         return TAB_TYPE;
     }
 
-    public QueryResultTablePresenter getCurrentTablePresenter() {
+    public QueryResultTableController getCurrentTablePresenter() {
         return currentTablePresenter;
     }
 
@@ -873,7 +873,7 @@ public class EmbeddedQueryPresenter
     public List<Column> getColumns() {
         return NullSafe.getOrElse(
                 currentTablePresenter,
-                QueryResultTablePresenter::getColumns,
+                QueryResultTableController::getColumns,
                 Collections.emptyList());
     }
 
@@ -916,6 +916,6 @@ public class EmbeddedQueryPresenter
         /// Shows the view of the query's result, i.e. its table or vis.
         ///
         /// @param view The result view to show, or `null` to show nothing.
-        void setResultView(View view);
+        void setResultView(IsWidget view);
     }
 }

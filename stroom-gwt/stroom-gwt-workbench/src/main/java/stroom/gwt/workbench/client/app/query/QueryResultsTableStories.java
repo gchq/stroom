@@ -23,7 +23,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// The `App/Query/QueryResultsTable` stories, showing Stroom's real `QueryResultTablePresenter`
+/// The `App/Query/QueryResultsTable` stories, showing Stroom's real `QueryResultTableController`
 /// (the results table) in a Query editor, as `App/Editors/QueryEditor` does, with fake REST
 /// replies: the table's result is the table result of the search's reply
 /// (`POST /query/v1/search/{node}`).

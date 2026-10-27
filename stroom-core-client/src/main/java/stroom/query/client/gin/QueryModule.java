@@ -20,20 +20,6 @@ import stroom.core.client.gin.PluginModule;
 import stroom.query.client.QueryPlugin;
 import stroom.query.client.ResultStorePlugin;
 import stroom.query.client.presenter.QueryDocPresenter;
-import stroom.query.client.presenter.QueryEditPresenter;
-import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.presenter.QueryResultTablePresenter;
-import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
-import stroom.query.client.presenter.QueryResultTableSplitPresenter;
-import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
-import stroom.query.client.presenter.QueryResultVisPresenter;
-import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
-import stroom.query.client.view.QueryEditViewImpl;
-import stroom.query.client.view.QueryResultTableSplitViewImpl;
-import stroom.query.client.view.QueryResultTableViewImpl;
-import stroom.query.client.view.QueryResultTabsView;
-import stroom.query.client.view.QueryResultTabsViewImpl;
-import stroom.query.client.view.QueryResultVisViewImpl;
 
 public class QueryModule extends PluginModule {
 
@@ -44,24 +30,5 @@ public class QueryModule extends PluginModule {
 
         bind(QueryDocPresenter.class);
 
-        bindPresenterWidget(
-                QueryEditPresenter.class,
-                QueryEditView.class,
-                QueryEditViewImpl.class);
-        bindPresenterWidget(
-                QueryResultTableSplitPresenter.class,
-                QueryResultTableSplitView.class,
-                QueryResultTableSplitViewImpl.class);
-        bindSharedView(
-                QueryResultTabsView.class,
-                QueryResultTabsViewImpl.class);
-        bindPresenterWidget(
-                QueryResultTablePresenter.class,
-                QueryResultTableView.class,
-                QueryResultTableViewImpl.class);
-        bindPresenterWidget(
-                QueryResultVisPresenter.class,
-                QueryResultVisView.class,
-                QueryResultVisViewImpl.class);
     }
 }

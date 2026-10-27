@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.query.client.presenter.QueryResultTablePresenter;
+import stroom.query.client.component.QueryResultTableController;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
@@ -114,7 +114,7 @@ public final class AnalyticRuleEditorStories {
     private static final String SHARD_DATA = "shardData";
     private static Runnable onShardData = () -> {
     };
-    private static QueryResultTablePresenter otherTable;
+    private static QueryResultTableController otherTable;
 
     private static final RestFixtures SHARD_FIXTURES = analyticRoutes(RestFixtures.builder()
             .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED)))
@@ -521,7 +521,7 @@ public final class AnalyticRuleEditorStories {
             DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
                     resource, res -> res.fetch(DOC_REF.getUuid()));
             // Another query's table, not shown, as another open rule's Shards tab has
-            final QueryResultTablePresenter table = injector.getQueryResultTablePresenter();
+            final QueryResultTableController table = injector.getQueryResultTable();
             harness.getComponentRoot().adopt(table.getControllerNode());
             otherTable = table;
         });

@@ -20,9 +20,9 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.planb.client.component.PlanBDataController;
 import stroom.planb.client.component.PlanBSettingsController;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-// The Data tab (PlanBDataPresenter) is second in the tab order after Settings. Settings stays the
+// The Data tab (PlanBDataController) is second in the tab order after Settings. Settings stays the
 // tab a PlanB document opens on - the Data tab is for inspecting what a store holds, not the first
 // thing a user wants on opening one.
 public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> {
@@ -48,7 +48,7 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
     public PlanBPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<PlanBDataPresenter> planBDataPresenterProvider,
+            final Provider<PlanBDataController> planBDataPresenterProvider,
             final Provider<PlanBSettingsController> planBSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<PlanBDoc> documentUserPermissionsTabProvider) {
@@ -57,7 +57,7 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, planBSettingsProvider::get,
                 PlanBSettingsController::read,
                 PlanBSettingsController::write));
-        addTab(DATA, new DocTabProvider<>(planBDataPresenterProvider::get));
+        addTab(DATA, new ControllerTabProvider<>(eventBus, planBDataPresenterProvider::get, PlanBDataController::read));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

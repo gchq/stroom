@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.component.AnalyticProcessingController;
 import stroom.analytics.client.component.NotificationListController;
+import stroom.analytics.client.component.ReportQueryEditController;
 import stroom.analytics.client.component.ReportSettingsTabController;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -26,7 +27,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -50,13 +50,13 @@ public class ReportPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ReportQueryEditPresenter reportQueryEditPresenter;
+    private final ReportQueryEditController reportQueryEdit;
     private final NotificationListController notificationList;
 
     @Inject
     public ReportPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
-                           final ReportQueryEditPresenter reportQueryEditPresenter,
+                           final ReportQueryEditController reportQueryEdit,
                            final Provider<ReportSettingsTabController> reportSettingsProvider,
                            final Provider<NotificationListController> notificationListProvider,
                            final Provider<AnalyticProcessingController> analyticProcessingProvider,
@@ -64,8 +64,8 @@ public class ReportPresenter
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        own(reportQueryEditPresenter);
-        this.reportQueryEditPresenter = reportQueryEditPresenter;
+        own(reportQueryEdit);
+        this.reportQueryEdit = reportQueryEdit;
 
         final AnalyticProcessingController analyticProcessing = make(analyticProcessingProvider);
         analyticProcessing.setProcessingTypes(AnalyticProcessType.SCHEDULED_QUERY);
@@ -75,7 +75,9 @@ public class ReportPresenter
         // not the tab has been opened.
         this.notificationList = make(notificationListProvider);
 
-        addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
+        addTab(QUERY, ControllerTabProvider.ofOwned(eventBus, reportQueryEdit,
+                ReportQueryEditController::read,
+                ReportQueryEditController::write));
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, reportSettingsProvider::get,
                 ReportSettingsTabController::read,
                 ReportSettingsTabController::write));
@@ -117,11 +119,11 @@ public class ReportPresenter
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-            reportQueryEditPresenter.start();
+            reportQueryEdit.start();
             return true;
         } else if (Action.CLOSE == action
                    && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-            reportQueryEditPresenter.stop();
+            reportQueryEdit.stop();
             return true;
         } else {
             return false;

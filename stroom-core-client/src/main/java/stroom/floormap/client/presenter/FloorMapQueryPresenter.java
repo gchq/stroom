@@ -30,14 +30,15 @@ import stroom.query.api.Column;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TimeRange;
-import stroom.query.client.presenter.QueryEditPresenter;
-import stroom.query.client.presenter.QueryResultTablePresenter;
+import stroom.query.client.component.QueryEditController;
+import stroom.query.client.component.QueryResultTableController;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -52,7 +53,7 @@ import javax.inject.Inject;
 
 /// Presenter for the Floor Map query tab.
 ///
-/// Embeds a [QueryEditPresenter] for authoring and executing StroomQL
+/// Embeds a [QueryEditController] for authoring and executing StroomQL
 /// queries, parses the resulting [TableResult] rows into
 /// [FloorMapObject] lists, and gives them to its owner ([#setOnEventData]) so the
 /// canvas can display the matched entities.  Also provides column-mapping
@@ -65,7 +66,7 @@ public class FloorMapQueryPresenter
         extends MyPresenterWidget<FloorMapQueryView>
         implements HasToolbar, HasClose {
 
-    private final QueryEditPresenter queryEditPresenter;
+    private final QueryEditController queryEditPresenter;
     /// Which result column carries each event role. Never `null` once `read` has run.
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
     /// UUID of the document being queried.
@@ -81,11 +82,11 @@ public class FloorMapQueryPresenter
     @Inject
     public FloorMapQueryPresenter(final EventBus eventBus,
                                   final FloorMapQueryView view,
-                                  final QueryEditPresenter queryEditPresenter) {
+                                  final QueryEditController queryEditPresenter) {
         super(eventBus, view);
         own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
-        view.setQueryEditView(queryEditPresenter.getView());
+        view.setQueryEditView(queryEditPresenter);
 
         // A dropdown change has to mark the document dirty, as a query edit does (the mapping was
         // once unsaveable on its own, as only the query editor's changes were told)
@@ -103,7 +104,7 @@ public class FloorMapQueryPresenter
 
         // Listen to this tab's table's data updates and publish the events (it once heard every
         // query result table's in the application, and needed a source guard)
-        final QueryResultTablePresenter tablePresenter =
+        final QueryResultTableController tablePresenter =
                 queryEditPresenter.getQueryResultPresenter().getTablePresenter();
         own(tablePresenter.addUpdateListener(() -> {
             // The dropdowns track whatever columns the table currently has, so
@@ -625,7 +626,7 @@ public class FloorMapQueryPresenter
     }
 
     public interface FloorMapQueryView extends View {
-        void setQueryEditView(View view);
+        void setQueryEditView(IsWidget queryEdit);
 
         void setAvailableColumns(List<String> columnNames);
 

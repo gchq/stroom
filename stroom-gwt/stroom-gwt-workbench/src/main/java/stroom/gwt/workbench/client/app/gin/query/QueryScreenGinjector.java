@@ -30,9 +30,9 @@ import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryDocPresenter;
-import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
 import stroom.view.client.presenter.ViewPresenter;
@@ -82,7 +82,7 @@ public interface QueryScreenGinjector extends ScreenGinjector {
     AnalyticRulePresenter getAnalyticRulePresenter();
 
     /// @return A query's result table, as a query pane or an analytic rule's Shards tab has.
-    QueryResultTablePresenter getQueryResultTablePresenter();
+    QueryResultTableController getQueryResultTable();
 
     /// @return A report's editor tab, as `ReportPlugin` creates it.
     ReportPresenter getReportPresenter();

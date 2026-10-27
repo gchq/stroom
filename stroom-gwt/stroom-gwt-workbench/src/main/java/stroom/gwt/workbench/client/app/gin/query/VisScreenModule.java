@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin.query;
 
-import stroom.dashboard.client.vis.VisPresenter;
-import stroom.dashboard.client.vis.VisPresenter.VisView;
-import stroom.dashboard.client.vis.VisViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `VisModule`
@@ -30,9 +27,6 @@ public class VisScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(VisPresenter.class,
-                VisView.class,
-                VisViewImpl.class);
     }
 }
 

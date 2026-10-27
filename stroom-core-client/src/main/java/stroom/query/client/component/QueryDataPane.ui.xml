@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A store's or index's Data tab: a StroomQL query of its rows with Reset, Run, Stop and Create
+     Dashboard, any error in it, and the results table -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal align-center form-padding input-row">
+            <g:Label text="Query:" styleName="dock-min"/>
+            <form:TextBox ui:field="query" addStyleNames="dock-max"/>
+            <b:Toolbar name="Query actions" addStyleNames="dock-min">
+                <b:ToolbarButton ui:field="reset" svg="UNDO" title="Reset to Default"
+                                 addStyleNames="query-buttons__button"/>
+                <b:ToolbarButton ui:field="run" svg="PLAY" title="Run"
+                                 addStyleNames="query-buttons__button query-buttons__button--play"/>
+                <b:ToolbarButton ui:field="stop" svg="STOP" title="Stop"
+                                 addStyleNames="query-buttons__button query-buttons__button--stop"/>
+                <b:ToolbarButton ui:field="createDashboard" svg="DOCUMENT_DASHBOARD" title="Create Dashboard"
+                                 addStyleNames="query-buttons__button"/>
+            </b:Toolbar>
+        </g:FlowPanel>
+        <g:ScrollPanel ui:field="errorContainer" styleName="queryDataView-errorContainer" visible="false">
+            <g:Label ui:field="errorLabel" styleName="queryDataView-errorLabel"/>
+        </g:ScrollPanel>
+        <g:SimplePanel ui:field="tableContainer" styleName="max dock-max TablePresenter"/>
+    </g:FlowPanel>
+</ui:UiBinder>

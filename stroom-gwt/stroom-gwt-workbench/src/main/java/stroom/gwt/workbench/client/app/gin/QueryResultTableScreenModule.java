@@ -16,9 +16,6 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.query.client.presenter.QueryResultTablePresenter;
-import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
-import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of a query's results table (`QueryResultTablePresenter`) and the dialogs it opens
@@ -30,8 +27,5 @@ public class QueryResultTableScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(QueryResultTablePresenter.class,
-                QueryResultTableView.class,
-                QueryResultTableViewImpl.class);
     }
 }

@@ -18,11 +18,8 @@ package stroom.index.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.index.client.IndexPlugin;
-import stroom.index.client.presenter.IndexDataPresenter;
-import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.index.client.view.IndexDataViewImpl;
 
 public class IndexModule extends PluginModule {
 
@@ -32,9 +29,5 @@ public class IndexModule extends PluginModule {
         bind(IndexPresenter.class);
 
         bind(IndexVolumeGroupPresenter.class);
-        bindPresenterWidget(
-                IndexDataPresenter.class,
-                IndexDataView.class,
-                IndexDataViewImpl.class);
     }
 }

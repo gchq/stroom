@@ -19,11 +19,11 @@ package stroom.query.client.presenter;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.query.client.component.QueryDocEditController;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
@@ -43,14 +43,13 @@ public class QueryDocPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final QueryDocEditPresenter queryDocEditPresenter;
-    private final DocTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
+    private final QueryDocEditController queryDocEditPresenter;
     private Runnable saveInterceptor;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final QueryDocEditPresenter queryDocEditPresenter,
+                             final QueryDocEditController queryDocEditPresenter,
                              final Provider<MarkdownEditController> markdownEditProvider,
                              final DocumentUserPermissionsTabProvider<QueryDoc>
                                      documentUserPermissionsTabProvider) {
@@ -58,9 +57,9 @@ public class QueryDocPresenter
         own(queryDocEditPresenter);
         this.queryDocEditPresenter = queryDocEditPresenter;
 
-        queryDocDocumentEditTabProvider = new DocTabProvider<>(() -> queryDocEditPresenter);
-
-        addTab(QUERY, queryDocDocumentEditTabProvider);
+        addTab(QUERY, ControllerTabProvider.ofOwned(eventBus, queryDocEditPresenter,
+                QueryDocEditController::read,
+                QueryDocEditController::write));
         addTab(DOCUMENTATION, new MarkdownTabProvider<QueryDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,
@@ -87,19 +86,11 @@ public class QueryDocPresenter
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-
-            final DocPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
-            if (presenter instanceof QueryDocEditPresenter) {
-                ((QueryDocEditPresenter) presenter).start();
-            }
+            queryDocEditPresenter.start();
             return true;
         } else if (Action.CLOSE == action
                    && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
-
-            final DocPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
-            if (presenter instanceof QueryDocEditPresenter) {
-                ((QueryDocEditPresenter) presenter).stop();
-            }
+            queryDocEditPresenter.stop();
             return true;
         } else {
             return false;

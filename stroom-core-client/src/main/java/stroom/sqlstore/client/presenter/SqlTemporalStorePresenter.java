@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.sqlstore.client.component.SqlTemporalStoreDataController;
 import stroom.sqlstore.client.component.SqlTemporalStoreSettingsController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.widget.tab.client.presenter.TabData;
@@ -45,7 +45,7 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
     public SqlTemporalStorePresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final Provider<SqlTemporalStoreDataPresenter> sqlTemporalStoreDataPresenterProvider,
+            final Provider<SqlTemporalStoreDataController> sqlTemporalStoreDataPresenterProvider,
             final Provider<SqlTemporalStoreSettingsController> sqlStoreSettingsProvider,
             final Provider<MarkdownEditController> markdownEditProvider,
             final DocumentUserPermissionsTabProvider<SqlTemporalStoreDoc> documentUserPermissionsTabProvider) {
@@ -53,7 +53,8 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
 
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, sqlStoreSettingsProvider::get,
                 SqlTemporalStoreSettingsController::read));
-        addTab(DATA, new DocTabProvider<>(sqlTemporalStoreDataPresenterProvider::get));
+        addTab(DATA, new ControllerTabProvider<>(eventBus, sqlTemporalStoreDataPresenterProvider::get,
+                SqlTemporalStoreDataController::read));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

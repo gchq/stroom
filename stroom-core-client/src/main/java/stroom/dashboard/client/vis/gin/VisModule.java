@@ -17,9 +17,6 @@
 package stroom.dashboard.client.vis.gin;
 
 import stroom.dashboard.client.vis.VisPlugin;
-import stroom.dashboard.client.vis.VisPresenter;
-import stroom.dashboard.client.vis.VisPresenter.VisView;
-import stroom.dashboard.client.vis.VisViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -31,7 +28,5 @@ public class VisModule extends AbstractPresenterModule {
     protected void configure() {
         bind(VisPlugin.class).asEagerSingleton();
         bind(VisFunctionCache.class).in(Singleton.class);
-
-        bindPresenterWidget(VisPresenter.class, VisView.class, VisViewImpl.class);
     }
 }

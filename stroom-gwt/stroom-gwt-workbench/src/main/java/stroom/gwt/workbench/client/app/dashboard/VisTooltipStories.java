@@ -34,7 +34,7 @@ import com.google.gwt.dom.client.Element;
 /// `vis.js` (handled by `MessageSupport`).
 ///
 /// The visualisation is the workbench's test visualisation, `vis-tooltip`: an `index.html` asset
-/// (`src/main/webapp/assets/vis-tooltip/`), which Stroom's `VisPresenter` loads into the frame as
+/// (`src/main/webapp/assets/vis-tooltip/`), which Stroom's `VisController` loads into the frame as
 /// `/assets/vis-tooltip/index.html` when the visualisation has one. Its bars are against the edges
 /// of the frame, each named as an image, and each asks for its tooltip on the side facing out of
 /// the frame, both when the mouse is over it and when it has the focus. It sits between the query

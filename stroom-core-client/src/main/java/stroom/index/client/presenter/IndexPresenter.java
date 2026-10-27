@@ -20,9 +20,9 @@ import stroom.docref.DocRef;
 import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.index.client.component.IndexDataController;
 import stroom.index.client.component.IndexFieldListController;
 import stroom.index.client.component.IndexSettingsController;
 import stroom.index.client.component.IndexShardListController;
@@ -53,7 +53,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
                           final Provider<IndexSettingsController> indexSettingsProvider,
                           final Provider<IndexFieldListController> indexFieldListProvider,
                           final Provider<IndexShardListController> indexShardListProvider,
-                          final Provider<IndexDataPresenter> indexDataPresenterProvider,
+                          final Provider<IndexDataController> indexDataPresenterProvider,
                           final Provider<MarkdownEditController> markdownEditProvider,
                           final DocumentUserPermissionsTabProvider<LuceneIndexDoc> documentUserPermissionsTabProvider,
                           final ClientSecurityContext securityContext) {
@@ -72,7 +72,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
         addTab(SETTINGS, new ControllerTabProvider<>(eventBus, indexSettingsProvider::get,
                 IndexSettingsController::read,
                 IndexSettingsController::write));
-        addTab(DATA, new DocTabProvider<LuceneIndexDoc>(indexDataPresenterProvider::get));
+        addTab(DATA, new ControllerTabProvider<>(eventBus, indexDataPresenterProvider::get, IndexDataController::read));
         addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(getEventBus(), markdownEditProvider::get) {
             @Override
             public void onRead(final MarkdownEditController markdownEdit,

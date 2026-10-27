@@ -17,10 +17,7 @@
 package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
-import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
-import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
-import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AnalyticsModule extends PluginModule {
@@ -30,9 +27,6 @@ public class AnalyticsModule extends PluginModule {
         bindPlugin(AnalyticsPlugin.class);
 
         bind(AnalyticRulePresenter.class);
-        bindPresenterWidget(AnalyticDataShardsPresenter.class,
-                AnalyticDataShardsView.class,
-                AnalyticDataShardsViewImpl.class);
 
     }
 }

@@ -21,8 +21,6 @@ import stroom.floormap.client.FloorMapEventStorePlugin;
 import stroom.floormap.client.FloorMapPlugin;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.client.presenter.FloorMapEventStoreDataPresenter;
-import stroom.floormap.client.presenter.FloorMapEventStoreDataPresenter.FloorMapEventStoreDataView;
 import stroom.floormap.client.presenter.FloorMapEventStorePresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
@@ -30,7 +28,6 @@ import stroom.floormap.client.presenter.FloorMapPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
-import stroom.floormap.client.view.FloorMapEventStoreDataViewImpl;
 import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapQueryViewImpl;
 
@@ -47,9 +44,6 @@ public class FloorMapModule extends PluginModule {
 
         bind(FloorMapPresenter.class);
         bind(FloorMapEventStorePresenter.class);
-        bindPresenterWidget(FloorMapEventStoreDataPresenter.class,
-                FloorMapEventStoreDataView.class,
-                FloorMapEventStoreDataViewImpl.class);
 
         // Lists a cluster's members, with a search box and filters over the
         // app-wide PagerPanel that holds the grid.

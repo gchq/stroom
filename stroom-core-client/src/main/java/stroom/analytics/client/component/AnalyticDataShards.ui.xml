@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- An analytic rule's Shards tab: its data shards above the rows of the shard selected -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client">
+    <g:SimplePanel styleName="max">
+        <split:SplitPane vertical="true" thin="true" sizes="200px, *"
+                         names="Shards, Data" addStyleNames="max">
+            <g:SimplePanel ui:field="shardList" styleName="max dashboard-panel overflow-hidden"/>
+            <g:SimplePanel ui:field="table" styleName="max dashboard-panel overflow-hidden"/>
+        </split:SplitPane>
+    </g:SimplePanel>
+</ui:UiBinder>

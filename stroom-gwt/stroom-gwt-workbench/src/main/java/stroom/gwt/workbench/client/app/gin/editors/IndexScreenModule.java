@@ -16,11 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.index.client.presenter.IndexDataPresenter;
-import stroom.index.client.presenter.IndexDataPresenter.IndexDataView;
 import stroom.index.client.presenter.IndexPresenter;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
-import stroom.index.client.view.IndexDataViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `IndexModule`
@@ -35,10 +32,6 @@ public class IndexScreenModule extends AbstractPresenterModule {
     protected void configure() {
         bind(IndexPresenter.class);
         bind(IndexVolumeGroupPresenter.class);
-        // The index's Data tab, and the annotation dialogs its results table opens
-        bindPresenterWidget(IndexDataPresenter.class,
-                IndexDataView.class,
-                IndexDataViewImpl.class);
     }
 }
 

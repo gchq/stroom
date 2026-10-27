@@ -25,7 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// The `App/Dashboard/QueryResultVis` stories, showing Stroom's real `QueryResultVisPresenter` (a
+/// The `App/Dashboard/QueryResultVis` stories, showing Stroom's real `QueryResultVisController` (a
 /// query's visualisation pane) in its Query editor, as `App/Editors/QueryEditor` does, with fake
 /// REST replies.
 ///

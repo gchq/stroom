@@ -22,6 +22,7 @@ import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -47,7 +48,7 @@ public class EmbeddedQueryViewImpl extends ViewImpl implements EmbeddedQueryView
     }
 
     @Override
-    public void setResultView(final View view) {
+    public void setResultView(final IsWidget view) {
         if (view != null) {
             layout.setWidget(view.asWidget());
         } else {

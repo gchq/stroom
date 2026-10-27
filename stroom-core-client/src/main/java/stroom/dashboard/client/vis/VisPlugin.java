@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.component.VisController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -26,7 +27,7 @@ public class VisPlugin {
 
     @Inject
     public VisPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-                     final Provider<VisPresenter> provider) {
-        componentRegistry.register(VisPresenter.TYPE, provider);
+                     final Provider<VisController> provider) {
+        componentRegistry.register(VisController.TYPE, provider);
     }
 }

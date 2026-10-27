@@ -36,9 +36,9 @@ import stroom.query.api.Format;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.component.QueryResultTableController;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
@@ -265,7 +265,7 @@ public class SelectionHandlersController extends SettingsTabController implement
             final DashboardPane component = getDashboardContext().getComponents().get(componentConfig.getId());
             if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
                 List<Column> columns = Collections.emptyList();
-                final QueryResultTablePresenter queryResultTablePresenter =
+                final QueryResultTableController queryResultTablePresenter =
                         embeddedQueryPresenter.getCurrentTablePresenter();
                 if (queryResultTablePresenter != null) {
                     columns = NullSafe.list(queryResultTablePresenter.getCurrentColumns());
