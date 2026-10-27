@@ -69,7 +69,7 @@ export function ctrlEnterVerdict({ keyOutcome, okOutcome, keySaid, aceFocused, o
 export function escapeVerdict({ before, after, said, aceFocused = false }) {
   // The panel skips key handling outright when the target is the ACE editor, so a dialog that
   // focuses its editor on show owes nothing here. `Set Expression For '…'` and `Filter '…'` both do
-  // (`ColumnFunctionEditorPresenter:135`, `ColumnFilterPresenter:57`).
+  // (`ColumnFunctionEditorController`, `ColumnFilterPresenter:57`).
   if (after === before && aceFocused) {
     return { verdict: 'unchecked', why: 'focus was in an ACE editor — the panel excludes it' };
   }

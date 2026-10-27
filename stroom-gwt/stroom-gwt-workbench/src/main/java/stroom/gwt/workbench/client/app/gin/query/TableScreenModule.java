@@ -19,9 +19,6 @@ package stroom.gwt.workbench.client.app.gin.query;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
-import stroom.dashboard.client.table.ColumnFunctionEditorPresenter;
-import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
-import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
@@ -46,9 +43,6 @@ public class TableScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(BasicTableSettingsPresenter.class,
                 BasicTableSettingsView.class,
                 BasicTableSettingsViewImpl.class);
-        bindPresenterWidget(ColumnFunctionEditorPresenter.class,
-                ColumnFunctionEditorView.class,
-                ColumnFunctionEditorViewImpl.class);
         bindPresenterWidget(RulesPresenter.class,
                 RulesPresenter.RulesView.class,
                 RulesViewImpl.class);

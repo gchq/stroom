@@ -17,7 +17,7 @@
 package stroom.query.client.component;
 
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.component.CodeEditorController;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.query.client.presenter.DynamicQueryHelpSelectionListModel;
 import stroom.query.client.presenter.QueryHelpAceCompletionProvider;
@@ -57,7 +57,7 @@ public class QueryHelpController extends Controller {
     private final MarkdownConverter markdownConverter;
 
     // The editor items are inserted into, once linked
-    private EditorPresenter editorPresenter;
+    private CodeEditorController editor;
 
     /// Made by GIN, with its help.
     ///
@@ -129,22 +129,22 @@ public class QueryHelpController extends Controller {
     /// Links the help to an editor: the editor completes from the help, and items inserted from
     /// the help go into it.
     ///
-    /// @param editorPresenter The editor.
-    public void linkToEditor(final EditorPresenter editorPresenter) {
-        Objects.requireNonNull(editorPresenter);
+    /// @param editor The editor's controller.
+    public void linkToEditor(final CodeEditorController editor) {
+        Objects.requireNonNull(editor);
 
         // Items inserted from the help go into it
-        this.editorPresenter = editorPresenter;
+        this.editor = editor;
 
         // This glues the editor code completion to the help's completion provider
         // Need to do this via addAttachHandler so the editor is fully loaded
         // else it moans about the id not being a thing on the AceEditor
-        editorPresenter.getWidget().addAttachHandler(event -> {
+        own(editor.getCodeEditor().addAttachHandler(event -> {
             // On attach only (it once also registered on every detach)
             if (event.isAttached()) {
-                editorPresenter.registerCompletionProviders(getKeyedAceCompletionProvider());
+                editor.registerCompletionProviders(getKeyedAceCompletionProvider());
             }
-        });
+        }));
     }
 
     /// @param dataSourceRef The data source whose fields the help lists.
@@ -217,13 +217,13 @@ public class QueryHelpController extends Controller {
     }
 
     private void insert(final String text, final InsertType insertType) {
-        if (editorPresenter != null) {
+        if (editor != null) {
             if (InsertType.SNIPPET.equals(insertType)) {
-                editorPresenter.insertSnippet(text);
-                editorPresenter.focus();
+                editor.insertSnippet(text);
+                editor.focus();
             } else if (insertType.isInsertable()) {
-                editorPresenter.insertTextAtCursor(text);
-                editorPresenter.focus();
+                editor.insertTextAtCursor(text);
+                editor.focus();
             }
         }
     }

@@ -488,29 +488,6 @@
     height: 100%;
 }
 
-.columnFunctionEditorViewImpl {
-
-}
-
-.columnFunctionEditorViewImpl-resizePanel {
-    display: block;
-}
-
-.columnFunctionEditorViewImpl-editorContainer {
-    border: 1px solid var(--control__border-color);
-    background-color: var(--dashboard-panel__background-color);
-}
-
-.columnFunctionEditorViewImpl-labelPanel {
-    display: flex;
-    /* align-items: center; */
-    justify-content: flex-end;
-    padding: 5px;
-}
-
-.columnFunctionEditorViewImpl-completionLabel {
-}
-
 .QueryEditViewImpl {
     border-top: 1px solid var(--control__border-color);
     background-color: var(--dashboard-panel__background-color);

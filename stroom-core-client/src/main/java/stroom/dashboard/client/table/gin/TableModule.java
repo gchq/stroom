@@ -19,9 +19,6 @@ package stroom.dashboard.client.table.gin;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
-import stroom.dashboard.client.table.ColumnFunctionEditorPresenter;
-import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
-import stroom.dashboard.client.table.ColumnFunctionEditorViewImpl;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
@@ -46,10 +43,6 @@ public class TableModule extends AbstractPresenterModule {
                 BasicTableSettingsPresenter.class,
                 BasicTableSettingsView.class,
                 BasicTableSettingsViewImpl.class);
-        bindPresenterWidget(
-                ColumnFunctionEditorPresenter.class,
-                ColumnFunctionEditorView.class,
-                ColumnFunctionEditorViewImpl.class);
         bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
     }

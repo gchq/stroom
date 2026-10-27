@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnFunctionEditorController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
@@ -65,7 +66,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final EventBus eventBus;
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnController> renameColumnControllerProvider;
-    private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
+    private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
     private final TableFilterPresenter tableFilterPresenter;
     private final ColumnValuesFilterController columnValuesFilterPresenter;
@@ -79,14 +80,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public ColumnsManager(final EventBus eventBus,
                           final TablePresenter tablePresenter,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
-                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
+                          final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
                           final ColumnValuesFilterController columnValuesFilterPresenter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
-        this.expressionPresenterProvider = expressionPresenterProvider;
+        this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
         this.tableFilterPresenter = tableFilterPresenter;
         this.columnValuesFilterPresenter = columnValuesFilterPresenter;
@@ -333,9 +334,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     public void showExpression(final Column column) {
-        final ColumnFunctionEditorPresenter expressionPresenter =
-                expressionPresenterProvider.get();
-        expressionPresenter.show(tablePresenter, column, (oldField, newField) -> {
+        expressionProvider.get().show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.onChange();
             tablePresenter.refresh();

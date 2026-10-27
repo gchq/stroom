@@ -91,9 +91,8 @@
 
 /* Where it sits: */
 
-/* In the query help's list (and the column function editor's, which shows the query help), a flat
+/* In the query help's list (the column function editor's too, which shows the query help), a flat
    filter, with only a bottom border */
-.columnFunctionEditorViewImpl .quick-filter__input,
 .query-help .quick-filter__input {
     border-color: transparent;
     border-bottom-color: var(--control__border-color);

@@ -263,7 +263,7 @@ public class QueryEditPresenter
             run();
             onChange();
         });
-        queryHelp.linkToEditor(editorPresenter);
+        queryHelp.linkToEditor(editorPresenter.getController());
 
         //noinspection unused event
         listen(WindowCloseEvent.getType(), event -> {

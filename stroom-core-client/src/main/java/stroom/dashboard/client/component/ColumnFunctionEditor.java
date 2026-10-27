@@ -14,53 +14,49 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.editor.client.component.CodeEditor;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-/**
- * This is the view for editing the function expression in a dashboard column
- */
-public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunctionEditorView {
+/// The content of a dashboard table column's expression editor: the query help beside the
+/// expression's editor.
+public class ColumnFunctionEditor extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SimplePanel editorContainer;
+    SimplePanel queryHelp;
     @UiField
-    SimplePanel queryHelpContainer;
+    CodeEditor editor;
 
-    @Inject
-    public ColumnFunctionEditorViewImpl(final Binder binder) {
-
-        widget = binder.createAndBindUi(this);
+    /// Makes the content, with no query help until [#setQueryHelp(IsWidget)].
+    public ColumnFunctionEditor() {
+        initWidget(BINDER.createAndBindUi(this));
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    /// @return The expression's editor, for its controller to attach to.
+    public CodeEditor getEditor() {
+        return editor;
     }
 
-    @Override
-    public void setEditor(final CodeEditor editor) {
-        this.editorContainer.setWidget(editor.asWidget());
-    }
-
-    @Override
+    /// @param queryHelp The query help, beside the editor.
     public void setQueryHelp(final IsWidget queryHelp) {
-        queryHelpContainer.setWidget(queryHelp);
+        this.queryHelp.setWidget(queryHelp);
     }
 
-    public interface Binder extends UiBinder<Widget, ColumnFunctionEditorViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ColumnFunctionEditor> {
 
     }
 }

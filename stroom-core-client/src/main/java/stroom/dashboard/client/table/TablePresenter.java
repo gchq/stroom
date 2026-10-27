@@ -25,6 +25,7 @@ import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFormatController;
+import stroom.dashboard.client.component.ColumnFunctionEditorController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
@@ -202,7 +203,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
-                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
+                          final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
@@ -277,7 +278,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnsManager = new ColumnsManager(eventBus,
                 this,
                 renameColumnControllerProvider,
-                () -> makeDialog(expressionPresenterProvider),
+                expressionProvider,
                 columnFormatProvider,
                 tableFilterPresenter,
                 columnValuesFilterPresenter);

@@ -28,7 +28,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 /// `DashboardUrlLinkNamedByHostAndPath`, which shows a dashboard table names a link made by
 /// `link(url)` as the query's table does): the other
 /// stories of that title (`QueryResultsTableStories`) show a StroomQL query's table, but a column's
-/// 'Expression' editor (`ColumnFunctionEditorPresenter`) is only offered by a dashboard's table
+/// 'Expression' editor (`ColumnFunctionEditorController`) is only offered by a dashboard's table
 /// (`TablePresenter`), so this story opens a dashboard (see `DashboardSupport`) with a `Count`
 /// column.
 public final class QueryResultsTableDashboardStories {

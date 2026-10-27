@@ -60,6 +60,11 @@ public class EditorPresenter
         this.controller = own(controller).attach(view);
     }
 
+    /// @return The editor's controller, for a part that links to it, e.g. the query help.
+    public CodeEditorController getController() {
+        return controller;
+    }
+
     /// @see CodeEditorController#getEditorId()
     public String getEditorId() {
         return controller.getEditorId();
