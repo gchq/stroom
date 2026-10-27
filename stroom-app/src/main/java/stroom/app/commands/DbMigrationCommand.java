@@ -67,7 +67,7 @@ public class DbMigrationCommand extends AbstractStroomBaseCommand {
         final Set<DataSource> dataSources = injector.getInstance(
                 Key.get(GuiceUtil.setOf(DataSource.class)));
 
-        LOGGER.info("Used {} data sources:\n{}",
+        info(LOGGER, "Used {} data sources:\n{}",
                 dataSources.size(),
                 dataSources.stream()
                         .map(dataSource -> dataSource instanceof DataSourceProxy
