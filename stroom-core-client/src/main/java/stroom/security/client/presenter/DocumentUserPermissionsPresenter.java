@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.item.client.SelectionBox;
+import stroom.security.client.component.DocumentUserPermissionsEditController;
 import stroom.security.client.component.DocumentUserPermissionsListController;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentPermission;
@@ -54,7 +55,7 @@ public class DocumentUserPermissionsPresenter
         extends ContentTabPresenter<DocumentUserPermissionsView> {
 
     private final DocumentUserPermissionsListController documentUserPermissionsList;
-    private final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider;
+    private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
     private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
@@ -66,12 +67,12 @@ public class DocumentUserPermissionsPresenter
             final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsView view,
             final DocumentUserPermissionsListController documentUserPermissionsList,
-            final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
+            final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider) {
 
         super(eventBus, view);
         own(documentUserPermissionsList);
         this.documentUserPermissionsList = documentUserPermissionsList;
-        this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
+        this.documentUserPermissionsEditProvider = documentUserPermissionsEditProvider;
         this.docPermissionClient = docPermissionClient;
         view.setDocUserPermissionListView(documentUserPermissionsList);
 
@@ -106,8 +107,8 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsList.getSelectionModel().getSelected();
         if (selected != null) {
-            makeDialog(documentUserPermissionsEditPresenterProvider).show(
-                    docRef, selected, documentUserPermissionsList::refresh, this);
+            documentUserPermissionsEditProvider.get().show(
+                    this, docRef, selected, documentUserPermissionsList::refresh, this);
         }
     }
 

@@ -25,8 +25,6 @@ import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter.BatchDocumentPermissionsView;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter;
 import stroom.security.client.presenter.DocumentUserCreatePermissionsEditPresenter.DocumentUserCreatePermissionsEditView;
-import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter;
-import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.client.presenter.EditApiKeyPresenter;
@@ -46,7 +44,6 @@ import stroom.security.client.view.AppPermissionsViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsEditViewImpl;
 import stroom.security.client.view.BatchDocumentPermissionsViewImpl;
 import stroom.security.client.view.DocumentUserCreatePermissionsEditViewImpl;
-import stroom.security.client.view.DocumentUserPermissionsEditViewImpl;
 import stroom.security.client.view.DocumentUserPermissionsViewImpl;
 import stroom.security.client.view.EditApiKeyViewImpl;
 import stroom.security.client.view.SigningKeyViewImpl;
@@ -78,9 +75,6 @@ public class SecurityScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DocumentUserPermissionsPresenter.class,
                 DocumentUserPermissionsView.class,
                 DocumentUserPermissionsViewImpl.class);
-        bindPresenterWidget(DocumentUserPermissionsEditPresenter.class,
-                DocumentUserPermissionsEditView.class,
-                DocumentUserPermissionsEditViewImpl.class);
         bindPresenterWidget(DocumentUserCreatePermissionsEditPresenter.class,
                 DocumentUserCreatePermissionsEditView.class,
                 DocumentUserCreatePermissionsEditViewImpl.class);
