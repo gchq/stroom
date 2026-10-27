@@ -21,7 +21,7 @@ lists, the type filter and the document lists; the processor, preferences, user 
 the dictionary, task, job, property, store, node, cache and security lists; the retention, content,
 dependency, rule, AI, account, shard and schedule lists; the dashboard, volume, tag, XPath, shard,
 script, trace, activity and filter lists; and the last thirteen, from the profile periods to the
-stream lists). Fixed, in 13 commits:
+stream lists). Fixed, in 13 commits (and one more after the last run):
 
 - **A regression on this branch.** The table filter dialog focuses its chosen tab's layer if it is a
   `Focus`, as a presenter was; a `ControllerLayer` wasn't, so the Include Exclude tab (and any
@@ -97,6 +97,33 @@ Left, on purpose (recorded below or in ISSUES.md):
 - **History.** Two commits don't build on their own: `4608101725` holds a file of the next commit, and
   `406bbb67cf` the rename of `PropertyListPresenter` to `PropertyListController` that `058f8fc228`
   completes. They are left as they are rather than rewriting the branch.
+
+## Done (27 October 2026)
+
+All 91 units, in 94 commits (77 for the units, one dropping wave 9's stale coverage evidence, 15 for
+the audit and this record). The last full run, in a copy of the worktree with 24 workers and the leak check,
+passed all 1,712 stories; 4 passed on their second attempt (three visualisations and the Ace editor's
+`Snippet`, already recorded as flaky under load). Of its 44 screenshots that differed, 38 are the force
+graphs and 3 other recorded noise (the Tree visualisation's `ShowAndHide`, the data grid's spinner
+column, the line chart's `PageKeys`); the schedule box's quick settings (the dialog 1px lower) and
+`AppShell.ContextMenu` (the focus on the first link tab or the first toolbar button) differ only under
+that load, and match alone and in three runs of the app shell's 56 stories; `AppShell.OpensDocument`
+found the audit's layer focus change, fixed (a layer's content is focused as a newly shown screen is,
+its first tab stop if it doesn't focus itself) and matching since. The 3 new are the document
+selection dialog's stories. The app and the standalone dashboard GWT compile, checkstyle is clean and
+the client modules' 2,173 JUnit tests pass. Each unit's commit ran its stories with the leak check
+and the screenshot diff. What was decided on the way, where it differs from the plans below, is in
+the audit above (Left, on purpose) and:
+
+- **Lists in templates.** `PagerPanel` and `HeadedPagerPanel` take their list and toolbar buttons as
+  template children, with a `toolbarName`; a quick-filtered list's root is a `QuickFilterPage`.
+- **Read-only only inside a document.** `Contexts.READ_ONLY` is true where nothing provides it, so a
+  list on a screen of its own (the profile periods, the feed dependencies) doesn't watch it.
+- **Merged and renamed.** The stream lists are one `MetaList` with `MetaListController`,
+  `SteppingMetaListController` and `MetaRelationListController` (columns chosen by `Columns`); the
+  three notification lists are one `NotificationList`; `ScriptListPresenter` went into
+  `ScriptDependencyList`; `JobNodeListHelper` became `JobNodeColumns` and `JobNodeActionsController`;
+  the Solr field list's data provider is the shared `ListDataProvider`.
 
 ## CSS and template notes for the wave
 

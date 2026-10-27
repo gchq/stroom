@@ -1659,6 +1659,11 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   run (found 25 October 2026, in wave 6's editor unit): `apply ` hadn't become
   `xsl:apply-templates`. It passed its second, and 4 runs of 4 alone; Ace's completion timing under
   load, a guess. Not yet known whether it is older than wave 6.
+* Two screenshots differ only in a full run with 24 workers (found 27 October 2026, in wave 10's
+  last run), and match alone: the schedule box's `QuickSettingsAreGroupedButtons` (the dialog 1px
+  lower) and `AppShell.ContextMenu` (the opened dictionary's focus on its first toolbar button, not
+  its Words link tab; the focus goes to the first tab stop once the screen is shown, a guess that the
+  link tabs aren't yet tab stops under load).
 * Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals
