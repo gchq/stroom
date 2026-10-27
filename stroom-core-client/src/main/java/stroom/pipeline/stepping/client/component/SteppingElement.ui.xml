@@ -1,22 +1,20 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.widget.layout.client"
              xmlns:ed="urn:import:stroom.editor.client.component"
              xmlns:d="urn:import:stroom.data.client.component">
     <!--
       One pipeline element's panes on the stepping screen, one above another: its code, its input
       beside its output, and the log of its errors and warnings. Panes the element has no use for are
-      hidden
+      hidden. The code's and the input's editors are made only for an element that uses them (each
+      starts Ace), so their panes are empty here
     -->
     <l:SplitPane ui:field="layout" vertical="true" thin="true" sizes="50%, *, 15%" names="Code, Output, Log"
                  addStyleNames="max">
-        <ed:CodeEditor ui:field="code" addStyleNames="dashboard-panel overflow-hidden"/>
+        <g:SimplePanel ui:field="codePane" addStyleNames="max dashboard-panel overflow-hidden"/>
         <l:SplitPane ui:field="inputAndOutput" thin="true" sizes="50%, *" names="Input, Output">
-            <d:ClassificationWrapper ui:field="input" addStyleNames="dashboard-panel overflow-hidden">
-                <d:content>
-                    <ed:CodeEditor ui:field="inputEditor"/>
-                </d:content>
-            </d:ClassificationWrapper>
+            <d:ClassificationWrapper ui:field="input" addStyleNames="dashboard-panel overflow-hidden"/>
             <d:ClassificationWrapper ui:field="output" addStyleNames="dashboard-panel overflow-hidden">
                 <d:content>
                     <ed:CodeEditor ui:field="outputEditor"/>

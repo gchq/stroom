@@ -25,11 +25,14 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// One pipeline element's panes on the stepping screen, one above another: its code (if it has
 /// any), its input (if it changes it) beside its output, and the log of its errors and warnings
-/// (when there are any). Each editor is attached to a controller by the owner.
+/// (when there are any). Each editor is attached to a controller by the owner. The code's and the
+/// input's editors are made when first asked for, as each starts Ace once shown and most elements
+/// use neither.
 public class SteppingElement extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -37,19 +40,20 @@ public class SteppingElement extends Component {
     @UiField
     SplitPane layout;
     @UiField
-    CodeEditor code;
+    SimplePanel codePane;
     @UiField
     SplitPane inputAndOutput;
     @UiField
     ClassificationWrapper input;
-    @UiField
-    CodeEditor inputEditor;
     @UiField
     ClassificationWrapper output;
     @UiField
     CodeEditor outputEditor;
     @UiField
     CodeEditor log;
+
+    private CodeEditor code;
+    private CodeEditor inputEditor;
 
     /// Makes the panes, with the log hidden.
     public SteppingElement() {
@@ -59,7 +63,7 @@ public class SteppingElement extends Component {
 
     /// @param visible Whether the code pane is shown, for an element that has code.
     public void setCodeVisible(final boolean visible) {
-        layout.setPaneHidden(code, !visible);
+        layout.setPaneHidden(codePane, !visible);
     }
 
     /// @param visible Whether the input pane is shown beside the output, for an element that
@@ -81,13 +85,21 @@ public class SteppingElement extends Component {
         output.setClassification(classification);
     }
 
-    /// @return The code's editor.
+    /// @return The code's editor, made in the code pane the first time it is asked for.
     public CodeEditor getCode() {
+        if (code == null) {
+            code = new CodeEditor();
+            codePane.setWidget(code);
+        }
         return code;
     }
 
-    /// @return The input's editor.
+    /// @return The input's editor, made in the input pane the first time it is asked for.
     public CodeEditor getInput() {
+        if (inputEditor == null) {
+            inputEditor = new CodeEditor();
+            input.setContent(inputEditor);
+        }
         return inputEditor;
     }
 

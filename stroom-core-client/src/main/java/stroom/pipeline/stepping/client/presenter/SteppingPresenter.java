@@ -505,7 +505,7 @@ public class SteppingPresenter
 
     private Layer getContent(final PipelineElement element) {
         if (PipelineModel.SOURCE_ELEMENT.getType().equals(element.getType())) {
-            currentElement = null;
+            setCurrentElement(null);
             updateToggleConsoleBtn(null);
             return sourcePresenter;
         } else {
@@ -522,35 +522,46 @@ public class SteppingPresenter
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                final SteppingElementController presenter = make(elementProvider);
-                presenter.setPipelineModel(pipelineModel);
-                presenter.setElement(element);
-                presenter.setProperties(properties);
-                presenter.setFeedName(meta == null
+                final SteppingElementController newElement = make(elementProvider);
+                newElement.setPipelineModel(pipelineModel);
+                newElement.setElement(element);
+                newElement.setProperties(properties);
+                newElement.setFeedName(meta == null
                         ? ""
                         : meta.getFeedName());
-                presenter.setPipelineName(pipelineDoc.getName());
-                presenter.setClassification(classification);
-                elementMap.put(elementId, presenter);
-                elementLayerMap.put(elementId, new ControllerLayer(presenter));
-                presenter.setOnChange(changeEditorHandler);
+                newElement.setPipelineName(pipelineDoc.getName());
+                newElement.setClassification(classification);
+                elementMap.put(elementId, newElement);
+                elementLayerMap.put(elementId, new ControllerLayer(newElement));
+                newElement.setOnChange(changeEditorHandler);
 
                 // Allow step refresh to be called from the editor
-                presenter.setStepRequestHandler(stepType -> {
+                newElement.setStepRequestHandler(stepType -> {
                     if (stepControl.isEnabled(stepType)) {
                         stepControl.step(stepType);
                     }
                 });
 
-                steppingElement = presenter;
+                steppingElement = newElement;
             }
-            currentElement = steppingElement;
+            setCurrentElement(steppingElement);
 
             // Refresh this editor if it needs it.
             refreshEditor(steppingElement, elementId);
 
             return elementLayerMap.get(elementId);
         }
+    }
+
+    // Shows an element's panes in place of the current one's, releasing the current one if it was
+    // dropped while it was shown
+    private void setCurrentElement(final SteppingElementController steppingElement) {
+        if (currentElement != null
+            && currentElement != steppingElement
+            && !elementMap.containsValue(currentElement)) {
+            release(currentElement);
+        }
+        currentElement = steppingElement;
     }
 
     private void refreshEditor(final SteppingElementController steppingElement,
@@ -796,7 +807,14 @@ public class SteppingPresenter
                     .map(Entry::getKey)
                     .collect(Collectors.toList());
 
-            elementsToRemove.forEach(elementMap::remove);
+            elementsToRemove.forEach(elementId -> {
+                final SteppingElementController removed = elementMap.remove(elementId);
+                elementLayerMap.remove(elementId);
+                // The one shown is released once another is shown in its place
+                if (removed != currentElement) {
+                    release(removed);
+                }
+            });
 
             if (selectedElement == null || !pipelineModel.hasElement(selectedElement)) {
                 pipelinePathBar.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
@@ -840,8 +858,8 @@ public class SteppingPresenter
     public void save(final List<DocRef> docsToSave, final Runnable onComplete) {
         // Tell editors to save if they are in the list.
         elementMap.values().stream()
-                .filter(ep -> docsToSave.contains(ep.getDocRef()))
-                .forEach(ep -> ep.save(onComplete));
+                .filter(steppingElement -> docsToSave.contains(steppingElement.getDocRef()))
+                .forEach(steppingElement -> steppingElement.save(onComplete));
     }
 
     public List<DocRef> getDirtyDocs() {
@@ -891,10 +909,10 @@ public class SteppingPresenter
 
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<>();
-            for (final SteppingElementController editorPresenter : elementMap.values()) {
-                if (editorPresenter.isDirty()) {
-                    final String elementId = editorPresenter.getElement().getId();
-                    final String code = editorPresenter.getCode();
+            for (final SteppingElementController steppingElement : elementMap.values()) {
+                if (steppingElement.isDirty()) {
+                    final String elementId = steppingElement.getElement().getId();
+                    final String code = steppingElement.getCode();
                     codeMap.put(elementId, code);
                 }
             }
