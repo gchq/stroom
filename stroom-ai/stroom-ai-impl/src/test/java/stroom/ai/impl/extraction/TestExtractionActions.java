@@ -269,12 +269,13 @@ class TestExtractionActions {
     }
 
     @Test
-    void aNewChildOfTheTablesPipelineGivesOnlyItsXsltElementANewXslt() {
+    void aNewPipelineForATableThatExtractsIsMadeFromTheTemplateWithTheChangedXslt() {
         existing(GENERATED);
         final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction 2", CHANGE, SESSION);
 
-        assertThat(create.getBase()).isEqualTo("a child of pipeline 'Logons pipeline', with this XSLT in place of "
-                                               + "XSLT 'Logons XSLT' (which is left as it is)");
+        assertThat(create.getBase()).isEqualTo("a child of the Search Extraction template ('Search Extraction'), "
+                                               + "setting only its XSLT, in place of pipeline 'Logons pipeline' "
+                                               + "(which is left as it is)");
         assertThat(create.getXslt()).isEqualTo(ExtractionXslt.xslt("event-logging:3", CHANGE.fields()));
         assertThat(create.getDashboardChanges()).containsExactly(
                 "Set table 'Events' to extract its values with the new pipeline in place of pipeline 'Logons "
@@ -285,25 +286,14 @@ class TestExtractionActions {
 
         final ArgumentCaptor<PipelineDoc> pipeline = ArgumentCaptor.forClass(PipelineDoc.class);
         Mockito.verify(pipelineStore).writeDocument(pipeline.capture());
-        assertThat(pipeline.getValue().getParentPipeline()).isEqualTo(TABLE_PIPELINE);
+        // Not a child of the table's pipeline: nothing of it is kept but its XSLT, changed.
+        assertThat(pipeline.getValue().getParentPipeline()).isEqualTo(TEMPLATE);
         assertThat(pipeline.getValue().getPipelineData().getAddedProperties()).singleElement().satisfies(property -> {
-            assertThat(property.getElement()).isEqualTo("extractXslt");
+            assertThat(property.getElement()).isEqualTo(ExtractionPipelines.XSLT_ELEMENT);
             assertThat(property.getValue().getEntity().getUuid()).isEqualTo("x1");
         });
         // The table's XSLT is left as it is.
         Mockito.verify(xsltStore, Mockito.never()).writeDocument(Mockito.argThat(doc -> "tx".equals(doc.getUuid())));
-    }
-
-    @Test
-    void aNewChildIsntMadeOfAPipelineChangedSinceItWasProposed() {
-        existing(GENERATED);
-        // Its records are now written by another element.
-        final ExtractionPlan elsewhere = new ExtractionPlan(CHANGE.component(), CHANGE.componentId(),
-                CHANGE.sample(), CHANGE.fields(), CHANGE.newColumns(), new ExtractionPlan.Existing(TABLE_PIPELINE,
-                "otherXslt", TABLE_XSLT, CHANGE.existing().codeHash()));
-
-        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", elsewhere, SESSION))
-                .hasMessageContaining("its records aren't written by element 'otherXslt' now");
     }
 
     @Test

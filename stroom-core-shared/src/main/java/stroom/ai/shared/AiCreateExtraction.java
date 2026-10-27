@@ -73,8 +73,8 @@ public class AiCreateExtraction {
     /// @param dashboardChanges Each change made to the table as the pipeline is made (unsaved), in words.
     /// @param xsltDescription     The description the XSLT is given.
     /// @param pipelineDescription The description the pipeline is given.
-    /// @param tablePipeline    The extraction pipeline the table had when this was proposed (which the new one is a
-    ///                         child of), or null for none: nothing is written if it has another now.
+    /// @param tablePipeline    The extraction pipeline the table had when this was proposed (whose XSLT, changed,
+    ///                         the new one takes), or null for none: nothing is written if it has another now.
     /// @param contentHash      The hash of what will be written, which the write must be given, so nothing else
     ///                         is written.
     @JsonCreator

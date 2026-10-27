@@ -252,49 +252,32 @@ public class ExtractionActions {
         // The events' namespace, as they are: not as the agent said.
         final String namespace = extractionEvents.namespace(plan.sample(), session);
         final Existing existing = plan.existing();
+        // A new pipeline is made from the Search Extraction template (or as it makes one, without it), whether
+        // the table has a pipeline or not: one it has is left as it is, for whatever else uses it.
+        final DocRef template = template();
+        final String element = ExtractionPipelines.XSLT_ELEMENT;
+        final String madeFrom = template != null
+                ? "a child of the Search Extraction template ('" + template.getName() + "'), setting only its XSLT"
+                : "a pipeline of its own, as the Search Extraction template makes (the template isn't one you can "
+                  + "use)";
         final String xslt;
-        final DocRef template;
-        final String element;
         final String base;
         final String xsltDescription;
         if (existing == null) {
             xslt = ExtractionXslt.xslt(namespace, plan.fields());
-            template = template();
-            element = ExtractionPipelines.XSLT_ELEMENT;
-            base = template != null
-                    ? "a child of the Search Extraction template ('" + template.getName() + "'), setting only its "
-                      + "XSLT"
-                    : "a pipeline of its own, as the Search Extraction template makes (the template isn't one you "
-                      + "can use)";
+            base = madeFrom;
             xsltDescription = "The search extraction of table '" + plan.component() + "' on dashboard '"
                               + dashboard.getName() + "', written by Stroom AI from its fields: " + fieldNames(plan)
                               + ".";
         } else {
-            // As it is now: a child gives its XSLT to the element that writes its records, which must still be the
-            // one it was proposed for, and find its XSLT by the XSLT it names.
-            final MergedPipeline parent = MergedPipeline.load(documentAccess, existing.pipeline().getUuid())
-                    .orElseThrow(() -> new IllegalStateException("Pipeline '" + name(existing.pipeline())
-                                                                 + "' no longer exists, or you can't see it, so a "
-                                                                 + "new pipeline can't inherit it."));
-            if (!ExtractionPipelines.outputXslt(parent).filter(existing.element()::equals).isPresent()) {
-                throw new IllegalStateException("Pipeline '" + name(existing.pipeline()) + "' has changed since "
-                                                + "this was proposed: its records aren't written by element '"
-                                                + existing.element() + "' now. Ask for the extraction again.");
-            }
-            final String unchangeable = ExtractionPipelines.unchangeable(parent, existing.element()).orElse(null);
-            if (unchangeable != null) {
-                throw new IllegalStateException(unchangeable);
-            }
+            // Its XSLT is the table's pipeline's, changed as proposed, if that is as it was then.
             final ExtractionChange.Changed changed = current(existing, plan, namespace).changed();
             xslt = changed.code();
-            template = existing.pipeline();
-            element = existing.element();
-            base = "a child of pipeline '" + name(existing.pipeline()) + "', with this XSLT in place of XSLT '"
-                   + name(existing.xslt()) + "' (which is left as it is)";
+            base = madeFrom + ", in place of pipeline '" + name(existing.pipeline()) + "' (which is left as it is)";
             xsltDescription = changed.generated()
                     ? "The search extraction of table '" + plan.component() + "' on dashboard '" + dashboard.getName()
                       + "', written by Stroom AI from its fields: " + fieldNames(plan) + "."
-                    : "XSLT '" + name(existing.xslt()) + "', with fields added by Stroom AI for table '"
+                    : "A copy of XSLT '" + name(existing.xslt()) + "', with fields added by Stroom AI for table '"
                       + plan.component() + "' on dashboard '" + dashboard.getName() + "': " + fieldNames(plan)
                       + ".";
         }
