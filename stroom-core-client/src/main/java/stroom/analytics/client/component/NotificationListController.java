@@ -17,7 +17,6 @@
 package stroom.analytics.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
@@ -28,9 +27,6 @@ import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -46,7 +42,7 @@ import java.util.List;
 public class NotificationListController extends Controller {
 
     private final NotificationList view;
-    private final Provider<AnalyticNotificationEditPresenter> editPresenterProvider;
+    private final Provider<AnalyticNotificationEditController> editProvider;
     private final ListDataProvider<NotificationConfig> dataProvider;
     private final List<NotificationConfig> list = new ArrayList<>();
     private boolean initialised;
@@ -61,10 +57,10 @@ public class NotificationListController extends Controller {
     @Inject
     public NotificationListController(final EventBus eventBus,
                                       final NotificationList view,
-                                      final Provider<AnalyticNotificationEditPresenter> editPresenterProvider) {
+                                      final Provider<AnalyticNotificationEditController> editProvider) {
         super(eventBus);
         this.view = view;
-        this.editPresenterProvider = editPresenterProvider;
+        this.editProvider = editProvider;
         initWidget(view);
         dataProvider = new ListDataProvider<>();
         dataProvider.setCompleteList(list);
@@ -90,49 +86,27 @@ public class NotificationListController extends Controller {
         if (view.isReadOnly()) {
             return;
         }
-        final AnalyticNotificationEditPresenter presenter = makeDialog(editPresenterProvider);
         // A new notification goes to a stream unless the user chooses otherwise; without a
         // destination type it would be added with none
-        presenter.read(docRef, analyticProcessType, NotificationConfig.builder()
+        final NotificationConfig newNotification = NotificationConfig.builder()
                 .destinationType(NotificationDestinationType.STREAM)
-                .build());
-        ShowPopupEvent
-                .builder(presenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(564, 564))
-                .caption("Add Notification")
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final NotificationConfig notification = presenter.write();
-                        list.add(notification);
-                        markChanged();
-                        refresh();
-                    }
-                    e.hide();
-                })
-                .fire();
+                .build();
+        editProvider.get().edit(this, docRef, analyticProcessType, newNotification, "Add Notification",
+                notification -> {
+                    list.add(notification);
+                    markChanged();
+                    refresh();
+                });
     }
 
     private void edit() {
         final NotificationConfig selected = view.getSelectionModel().getSelected();
         if (selected != null && !view.isReadOnly()) {
-            final AnalyticNotificationEditPresenter presenter = makeDialog(editPresenterProvider);
-            presenter.read(docRef, analyticProcessType, selected);
-            ShowPopupEvent
-                    .builder(presenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(PopupSize.resizable(564, 564))
-                    .caption("Edit Notification")
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            final NotificationConfig updated = presenter.write();
-                            replace(selected, updated);
-                            markChanged();
-                            refresh();
-                        }
-                        e.hide();
-                    })
-                    .fire();
+            editProvider.get().edit(this, docRef, analyticProcessType, selected, "Edit Notification", updated -> {
+                replace(selected, updated);
+                markChanged();
+                refresh();
+            });
         }
     }
 

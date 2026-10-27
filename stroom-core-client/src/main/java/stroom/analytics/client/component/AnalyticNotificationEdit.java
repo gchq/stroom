@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.view;
+package stroom.analytics.client.component;
 
-import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.shared.NotificationDestinationType;
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Component;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,13 +32,12 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-public class AnalyticNotificationEditViewImpl
-        extends ViewWithUiHandlers<ChangeUiHandlers>
-        implements AnalyticNotificationEditView {
+/// An analytic's notification: its destination type and destination, whether it is sent, and the
+/// limit on how many are sent.
+public class AnalyticNotificationEdit extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     TickBox enabled;
@@ -52,105 +50,110 @@ public class AnalyticNotificationEditViewImpl
     @UiField
     SelectionBox<NotificationDestinationType> destinationType;
     @UiField
-    SimplePanel destinationContainer;
+    SimplePanel destination;
 
-    @Inject
-    public AnalyticNotificationEditViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        enabled.setValue(true);
-        maxNotifications.setMin(1);
-        maxNotifications.setMax(1000);
+    private Runnable onChange = () -> {
+    };
+
+    /// Makes the form, enabled, sending at most one notification if limited, offering both
+    /// destination types.
+    public AnalyticNotificationEdit() {
+        initWidget(BINDER.createAndBindUi(this));
         maxNotifications.setValue(1);
         destinationType.addItem(NotificationDestinationType.STREAM);
         destinationType.addItem(NotificationDestinationType.EMAIL);
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    @Override
+    /// @return Whether the notification is sent.
     public boolean isEnabled() {
         return enabled.getValue();
     }
 
-    @Override
+    /// @param enabled Whether the notification is sent.
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
     }
 
-    @Override
+    /// @return Whether sending stops after the maximum.
     public boolean isLimitNotifications() {
-        return this.limitNotifications.getValue();
+        return limitNotifications.getValue();
     }
 
-    @Override
+    /// @param limitNotifications Whether sending stops after the maximum.
     public void setLimitNotifications(final boolean limitNotifications) {
         this.limitNotifications.setValue(limitNotifications);
     }
 
-    @Override
+    /// @return The most notifications sent before sending stops.
     public int getMaxNotifications() {
-        return this.maxNotifications.getIntValue();
+        return maxNotifications.getIntValue();
     }
 
-    @Override
+    /// @param maxNotifications The most notifications sent before sending stops.
     public void setMaxNotifications(final int maxNotifications) {
         this.maxNotifications.setValue(maxNotifications);
     }
 
-    @Override
+    /// @return How long after the last notification sending starts again.
     public SimpleDuration getResumeAfter() {
-        return this.resumeAfter.getValue();
+        return resumeAfter.getValue();
     }
 
-    @Override
+    /// @param resumeAfter How long after the last notification sending starts again.
     public void setResumeAfter(final SimpleDuration resumeAfter) {
         this.resumeAfter.setValue(resumeAfter);
     }
 
-    @Override
+    /// @return Where notifications are sent.
     public NotificationDestinationType getDestinationType() {
-        return this.destinationType.getValue();
+        return destinationType.getValue();
     }
 
-    @Override
+    /// @param destinationType Where notifications are sent.
     public void setDestinationType(final NotificationDestinationType destinationType) {
         this.destinationType.setValue(destinationType);
     }
 
-    @Override
-    public void setDestinationView(final IsWidget view) {
-        destinationContainer.setWidget(view);
+    /// @param destination The destination's settings, for the destination type chosen.
+    public void setDestination(final IsWidget destination) {
+        this.destination.setWidget(destination);
+    }
+
+    /// @param onChange Called when any setting changes.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     @UiHandler("enabled")
-    public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+    void onEnabled(final ValueChangeEvent<Boolean> event) {
+        onChange.run();
     }
 
     @UiHandler("limitNotifications")
-    public void onLimitNotifications(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+    void onLimitNotifications(final ValueChangeEvent<Boolean> event) {
+        onChange.run();
     }
 
     @UiHandler("maxNotifications")
-    public void onMaxNotifications(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+    void onMaxNotifications(final ValueChangeEvent<Long> event) {
+        onChange.run();
     }
 
     @UiHandler("resumeAfter")
-    public void onResumeAfter(final ValueChangeEvent<SimpleDuration> event) {
-        getUiHandlers().onChange();
+    void onResumeAfter(final ValueChangeEvent<SimpleDuration> event) {
+        onChange.run();
     }
 
     @UiHandler("destinationType")
-    public void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
-        getUiHandlers().onChange();
+    void onDestinationType(final ValueChangeEvent<NotificationDestinationType> event) {
+        onChange.run();
     }
 
-    public interface Binder extends UiBinder<Widget, AnalyticNotificationEditViewImpl> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, AnalyticNotificationEdit> {
 
     }
 }
