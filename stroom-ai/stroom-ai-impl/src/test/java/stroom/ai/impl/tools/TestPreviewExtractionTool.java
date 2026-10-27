@@ -27,6 +27,7 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -77,6 +78,19 @@ class TestPreviewExtractionTool {
             "Logons");
     private static final DocRef INDEX = new DocRef("Index", "index-uuid", "Windows events");
     private static final DocRef PLACEHOLDER = new DocRef(XsltDoc.TYPE, "xslt-uuid", "Any XSLT");
+    // A table's own extraction XSLT, written by hand.
+    private static final String HAND_WRITTEN = """
+            <xsl:stylesheet version="2.0" xmlns="records:2" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+              <xsl:template match="/*"><records><xsl:apply-templates select="*"/></records></xsl:template>
+              <xsl:template match="/*/*">
+                <record>
+                  <data name="StreamId" value="{@StreamId}"/>
+                  <data name="EventId" value="{@EventId}"/>
+                  <data name="UserId" value="{*:EventSource/*:User/*:Id}"/>
+                </record>
+              </xsl:template>
+            </xsl:stylesheet>
+            """;
     private static final String SNAPSHOT = """
             | User | StreamId | EventId |
             |---|---|---|
@@ -177,6 +191,41 @@ class TestPreviewExtractionTool {
     }
 
     @Test
+    void aTablesOwnXsltWrittenByHandIsTriedWithTheFieldsAddedToIt() {
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "p1", "Logon extraction");
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x1", "Logon extraction");
+        fixture.add(pipeline, PipelineDoc.builder().uuid("p1").name("Logon extraction")
+                .pipelineData(ExtractionPipelines.data(null, xslt)).build(), true);
+        fixture.add(xslt, XsltDoc.builder().uuid("x1").name("Logon extraction").data(HAND_WRITTEN).build(), true);
+        dashboard(TableSettings.builder()
+                .columns(List.of(Column.builder().id("c1").name("User").expression("${UserId}").build()))
+                .extractValues(true)
+                .extractionPipeline(pipeline)
+                .build());
+
+        // Only the field to add: the User column's UserId is given by the XSLT already.
+        final String result = run(List.of(Map.of("name", "Organisation", "xpath", "EventSource/User/Organisation")));
+
+        assertThat(result)
+                .contains("in the table's extraction pipeline 'Logon extraction'")
+                .contains("Its XSLT was written by hand, so the fields given were added to it; it gives StreamId, "
+                          + "EventId, UserId already.")
+                .contains("| 7 | 2 | Operations |")
+                .doesNotContain("can't be used as it is")
+                .contains("it offers to change the pipeline in place, or to save a new one");
+        final ArgumentCaptor<PipelineStepRequest> requests = ArgumentCaptor.forClass(PipelineStepRequest.class);
+        Mockito.verify(steppingService, Mockito.atLeastOnce()).step(requests.capture());
+        assertThat(requests.getAllValues().getLast().getCode().get(ExtractionPipelines.XSLT_ELEMENT))
+                .contains("<data name=\"UserId\" value=\"{*:EventSource/*:User/*:Id}\"/>")
+                .contains("<data name=\"Organisation\"");
+
+        // A field it gives already isn't added again.
+        assertThat(run(List.of(Map.of("name", "UserId", "xpath", "EventSource/User/Id"))))
+                .contains("gives UserId already")
+                .contains("Nothing was tried.");
+    }
+
+    @Test
     void steppingNeedsItsPermission() {
         Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION)).thenReturn(false);
 
@@ -205,12 +254,16 @@ class TestPreviewExtractionTool {
     }
 
     private void dashboard(final List<Column> columns) {
+        dashboard(TableSettings.builder().columns(columns).build());
+    }
+
+    private void dashboard(final TableSettings settings) {
         final DashboardTableContext live = new DashboardTableContext("Dashboard 'Logons'", null,
                 DashboardSearchRequest.builder()
                         .search(Search.builder().dataSourceRef(INDEX).build())
                         .componentResultRequests(List.of(TableResultRequest.builder()
                                 .componentId("table-1")
-                                .tableSettings(TableSettings.builder().columns(columns).build())
+                                .tableSettings(settings)
                                 .build()))
                         .build());
         final AiTabSearch table = new AiTabSearch("Events", "table-1", null, live, List.of("User"), 10L, false);

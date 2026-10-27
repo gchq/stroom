@@ -120,6 +120,16 @@ public class CodeChangeReviewViewImpl
     }
 
     @Override
+    public void setApplyText(final String text) {
+        apply.setText(text);
+    }
+
+    @Override
+    public void setRejectAvailable(final boolean available) {
+        rejectChange.setVisible(available);
+    }
+
+    @Override
     public void setPreviousEnabled(final boolean enabled) {
         previousChange.setEnabled(enabled);
     }

@@ -20,6 +20,7 @@ import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiApprovalScope;
+import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
@@ -101,6 +102,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.stepping.client.event.SteppingCodeChangeEvent;
+import stroom.pipeline.stepping.client.presenter.CodeChangeReviewPresenter;
 import stroom.pipeline.stepping.client.presenter.CodeDiffCardRenderer;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.client.event.QueryCodeChangeEvent;
@@ -170,6 +172,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -214,8 +217,12 @@ public class AskStroomAiPresenter
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String WORKING_MESSAGE_ID = AiConversationEntries.WORKING_MESSAGE_ID;
     private static final String WORKING_TEXT_ID = "ai-working-text";
-    // The question asked before a search extraction is written. Fixed and short, as the alert shows a long message
-    // in place of its detail (what would be written), so the user wouldn't see that.
+    // The questions asked before a search extraction is written, or changed. Fixed and short, as the alert shows a
+    // long message in place of its detail (what would be written), so the user wouldn't see that.
+    private static final String CHANGE_EXTRACTION_QUESTION = "Change this extraction pipeline in place? Below is "
+                                                             + "what changes, and the other documents that use it, "
+                                                             + "which change too. Next, you'll review the change to "
+                                                             + "its XSLT; nothing is written until you write it there.";
     private static final String EXTRACTION_QUESTION = "Write this search extraction's XSLT and pipeline? Below is "
                                                       + "exactly what would be written, and the changes to the "
                                                       + "table that follow. Nothing is written until you confirm.";
@@ -293,6 +300,7 @@ public class AskStroomAiPresenter
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider;
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
+    private final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider;
     private final ContentManager contentManager;
     private final LocationManager locationManager;
     private final DateTimeFormatter dateTimeFormatter;
@@ -456,6 +464,7 @@ public class AskStroomAiPresenter
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider,
                                 final Provider<DocSelectionPopup> docSelectionPopupProvider,
+                                final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider,
                                 final ContentManager contentManager,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter,
@@ -472,6 +481,7 @@ public class AskStroomAiPresenter
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.commandErrorPresenterProvider = commandErrorPresenterProvider;
         this.docSelectionPopupProvider = docSelectionPopupProvider;
+        this.codeChangeReviewPresenterProvider = codeChangeReviewPresenterProvider;
         this.contentManager = contentManager;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
@@ -3060,6 +3070,12 @@ public class AskStroomAiPresenter
                 createExtraction(messageId, actionId, result.getCreateExtraction());
                 return;
             }
+            if (result.isDone() && result.getChangeExtraction() != null) {
+                // Nothing is written yet, and the user may cancel, so the button can be used again.
+                button.removeAttribute("disabled");
+                changeExtraction(messageId, actionId, result.getChangeExtraction());
+                return;
+            }
             if (result.getOpenDocument() != null) {
                 OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
                 button.removeAttribute("disabled");
@@ -3217,29 +3233,128 @@ public class AskStroomAiPresenter
                 AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
                 return;
             }
-            final String written = "Wrote pipeline and XSLT '" + request.getName() + "'";
             showUserActionStatus(messageId, actionId, "DONE", result.getMessage());
-            final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
-                    create.getDashboard(),
-                    create.getComponentId(),
-                    create.getComponentName(),
-                    operations(result.getTableChanges()),
-                    onResult -> onResult.accept(null),
-                    this::pollAfterAnswer,
-                    message -> {
-                        if (message != null) {
-                            AlertEvent.fireWarn(this, written + ", but table '" + create.getComponentName()
-                                                      + "' couldn't be set up to use it: " + message + "\nSet "
-                                                      + "its extraction pipeline in the table's settings.", null);
-                        }
-                    },
-                    dashboardUndoKey(messageId, actionId));
-            if (!event.isHandled()) {
-                AlertEvent.fireWarn(this, written + ", but the dashboard can't be opened here to set table '"
-                                          + create.getComponentName() + "' up to use it. Set its extraction "
-                                          + "pipeline in the table's settings.", null);
-            }
+            setUpTable(messageId, actionId, create.getDashboard(), create.getComponentId(),
+                    create.getComponentName(), result.getTableChanges(),
+                    "Wrote pipeline and XSLT '" + request.getName() + "'",
+                    "Set its extraction pipeline in the table's settings.");
         }, getView());
+    }
+
+    // Makes the changes to a table that follow a search extraction written (its pipeline set, new columns),
+    // unsaved; says so if they can't be made.
+    private void setUpTable(final int messageId,
+                            final String actionId,
+                            final DocRef dashboard,
+                            final String componentId,
+                            final String componentName,
+                            final String tableChanges,
+                            final String written,
+                            final String instead) {
+        final List<TableChange> operations = operations(tableChanges);
+        if (operations.isEmpty()) {
+            return;
+        }
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                dashboard,
+                componentId,
+                componentName,
+                operations,
+                onResult -> onResult.accept(null),
+                this::pollAfterAnswer,
+                message -> {
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, written + ", but table '" + componentName + "' couldn't be set "
+                                                  + "up: " + message + "\n" + instead, null);
+                    }
+                },
+                dashboardUndoKey(messageId, actionId));
+        if (!event.isHandled()) {
+            AlertEvent.fireWarn(this, written + ", but the dashboard can't be opened here to set table '"
+                                      + componentName + "' up. " + instead, null);
+        }
+    }
+
+    /// Shows the user a change to a dashboard table's extraction pipeline in place: what changes and the other
+    /// documents that use it, to go on with, then the change to its XSLT as a diff, which they write (all of it, as
+    /// shown) or cancel. Only then does the server write it, if it is still what they were shown, and columns for
+    /// new fields are added to the table, unsaved.
+    private void changeExtraction(final int messageId, final String actionId, final AiChangeExtraction change) {
+        if (currentChat == null) {
+            return;
+        }
+        // The chat the button is in, should the user open another while reviewing.
+        final int chatId = currentChat.getId();
+        ConfirmEvent.fire(this, SafeHtmlUtils.fromString(CHANGE_EXTRACTION_QUESTION), changeExtractionDetail(change),
+                ok -> {
+                    if (!ok) {
+                        return;
+                    }
+                    codeChangeReviewPresenterProvider.get().showToConfirm(
+                            "Change Extraction XSLT - " + docName(change.getXslt()),
+                            NullSafe.string(change.getCurrentXslt()),
+                            NullSafe.string(change.getProposedXslt()),
+                            AceEditorMode.XML,
+                            "Write",
+                            (andStep, code, rejected, onResult) -> writeExtractionChange(chatId, messageId,
+                                    actionId, change, onResult));
+                });
+    }
+
+    // Has the server write a change to a table's extraction pipeline the user confirmed in the review, then adds
+    // columns for new fields to the table, unsaved. The review is told what happened.
+    private void writeExtractionChange(final int chatId,
+                                       final int messageId,
+                                       final String actionId,
+                                       final AiChangeExtraction change,
+                                       final Consumer<String> onResult) {
+        final AiWriteExtractionRequest request = new AiWriteExtractionRequest(null, null, null,
+                change.getContentHash());
+        askStroomAiClient.writeExtraction(chatId, messageId, actionId, request, result -> {
+            if (!result.isDone()) {
+                onResult.accept(NullSafe.nonBlankStringElse(result.getMessage(), "The change can't be written."));
+                return;
+            }
+            onResult.accept(null);
+            showUserActionStatus(messageId, actionId, "DONE", result.getMessage());
+            setUpTable(messageId, actionId, change.getDashboard(), change.getComponentId(),
+                    change.getComponentName(), result.getTableChanges(),
+                    "Changed XSLT '" + docName(change.getXslt()) + "'",
+                    "Add columns for the new fields in the table's settings.");
+        }, getView());
+    }
+
+    // What changing a table's extraction pipeline in place changes, and what else uses it, for the user to confirm.
+    private static SafeHtml changeExtractionDetail(final AiChangeExtraction change) {
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendEscaped("Pipeline '" + docName(change.getPipeline()) + "', the extraction pipeline of table '"
+                         + change.getComponentName() + "':");
+        sb.appendHtmlConstant("<ul><li>").appendEscaped(NullSafe.string(change.getChange()))
+                .appendHtmlConstant("</li></ul>");
+        final List<String> usedBy = NullSafe.list(change.getUsedBy());
+        if (usedBy.isEmpty()) {
+            sb.appendEscaped("Nothing else uses it.");
+        } else {
+            sb.appendEscaped("These use it too, and change with it:");
+            sb.appendHtmlConstant("<ul>");
+            usedBy.forEach(user -> sb.appendHtmlConstant("<li>").appendEscaped(user).appendHtmlConstant("</li>"));
+            sb.appendHtmlConstant("</ul>");
+        }
+        final List<String> dashboardChanges = NullSafe.list(change.getDashboardChanges());
+        if (!dashboardChanges.isEmpty()) {
+            sb.appendEscaped("Then, unsaved, on the dashboard:");
+            sb.appendHtmlConstant("<ul>");
+            dashboardChanges.forEach(item ->
+                    sb.appendHtmlConstant("<li>").appendEscaped(item).appendHtmlConstant("</li>"));
+            sb.appendHtmlConstant("</ul>");
+        }
+        return sb.toSafeHtml();
+    }
+
+    private static String docName(final DocRef docRef) {
+        return docRef == null
+                ? ""
+                : NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid());
     }
 
     /// Asks the user for one folder (the dashboard's, by default), creates a Visualisation there for each chart
