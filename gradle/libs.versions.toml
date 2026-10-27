@@ -93,7 +93,7 @@ jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 # and package names so can be used together.
 # -jdk8 and -jsr310 are now included in -databind in v3
 # https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
-jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.1.2" }
+jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.2.4" }
 # jackson-annotations is an exception as it still uses the old v2 maven coords
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by jackson-bom
 jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom
