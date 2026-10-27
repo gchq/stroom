@@ -22,6 +22,8 @@ import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.dashboard.client.component.ProcessorLimitsController;
+import stroom.dashboard.client.component.QueryFavouritesController;
+import stroom.dashboard.client.component.QueryHistoryController;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -102,8 +104,8 @@ public class QueryPresenter
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
 
     private final ExpressionTreeController expressionTree;
-    private final QueryHistoryPresenter historyPresenter;
-    private final QueryFavouritesPresenter favouritesPresenter;
+    private final QueryHistoryController history;
+    private final QueryFavouritesController favourites;
     private final Provider<ExplorerPopupController> pipelineSelection;
     private final Provider<ProcessorLimitsController> processorLimitsControllerProvider;
     private final RestFactory restFactory;
@@ -133,8 +135,8 @@ public class QueryPresenter
                           final QueryView view,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreeController expressionTree,
-                          final QueryHistoryPresenter historyPresenter,
-                          final QueryFavouritesPresenter favouritesPresenter,
+                          final QueryHistoryController history,
+                          final QueryFavouritesController favourites,
                           final Provider<ExplorerPopupController> pipelineSelection,
                           final Provider<ProcessorLimitsController> processorLimitsControllerProvider,
                           final IndexLoader indexLoader,
@@ -147,11 +149,11 @@ public class QueryPresenter
                           final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view, settingsPresenterProvider);
         own(expressionTree);
-        own(historyPresenter);
-        own(favouritesPresenter);
+        own(history);
+        own(favourites);
         this.expressionTree = expressionTree;
-        this.historyPresenter = historyPresenter;
-        this.favouritesPresenter = favouritesPresenter;
+        this.history = history;
+        this.favourites = favourites;
         this.pipelineSelection = pipelineSelection;
         this.processorLimitsControllerProvider = processorLimitsControllerProvider;
         this.indexLoader = indexLoader;
@@ -227,18 +229,19 @@ public class QueryPresenter
     }
 
     private void onHistory() {
-        historyPresenter.show(QueryPresenter.this,
-                getDashboardContext().getDashboardDocRef().getUuid());
+        history.show(getId(),
+                getDashboardContext().getDashboardDocRef().getUuid(),
+                this::setExpression);
     }
 
     private void onFavourite() {
         final ExpressionOperator root = expressionTree.write();
-        favouritesPresenter.show(
-                QueryPresenter.this,
+        favourites.show(
+                getId(),
                 getDashboardContext().getDashboardDocRef().getUuid(),
                 getQuerySettings().getDataSource(),
-                root);
-
+                root,
+                this::setExpression);
     }
 
     @Override

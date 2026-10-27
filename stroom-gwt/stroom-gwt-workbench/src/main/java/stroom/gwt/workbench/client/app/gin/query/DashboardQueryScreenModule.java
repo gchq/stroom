@@ -19,12 +19,6 @@ package stroom.gwt.workbench.client.app.gin.query;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
-import stroom.dashboard.client.query.QueryFavouritesPresenter;
-import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
-import stroom.dashboard.client.query.QueryFavouritesViewImpl;
-import stroom.dashboard.client.query.QueryHistoryPresenter;
-import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
-import stroom.dashboard.client.query.QueryHistoryViewImpl;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
@@ -43,12 +37,6 @@ public class DashboardQueryScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(QueryHistoryPresenter.class,
-                QueryHistoryView.class,
-                QueryHistoryViewImpl.class);
-        bindPresenterWidget(QueryFavouritesPresenter.class,
-                QueryFavouritesView.class,
-                QueryFavouritesViewImpl.class);
         bindPresenterWidget(QueryPresenter.class,
                 QueryView.class,
                 QueryViewImpl.class);
