@@ -57,7 +57,6 @@ import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
-import stroom.gwt.workbench.client.app.gin.content.ActivityScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.AnnotationScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.CacheScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ContentAppScreenModule;
@@ -138,7 +137,6 @@ import com.google.gwt.inject.client.GinModules;
         ImportExportScreenModule.class,
         AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ActivityScreenModule.class,
         ContentExtrasScreenModule.class,
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,

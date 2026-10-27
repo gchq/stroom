@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.activity.client;
+package stroom.activity.client.component;
 
-import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
+import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
-import stroom.widget.presenter.client.ViewWithUiHandlers;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,71 +29,72 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiHandlers> implements ManageActivityView {
+/// The content of the activity chooser: a filter above the user's activities.
+public class ManageActivity extends Component {
 
-    public interface Binder extends UiBinder<Widget, ManageActivityViewImpl> {
-
-    }
-
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel dataGrid;
+    SimplePanel list;
 
-    private Supplier<SafeHtml> tooltipContentSupplier;
+    private Supplier<SafeHtml> tooltipContentSupplier = () -> null;
+    private Consumer<String> onFilterChange = filter -> {
+    };
 
-    @Inject
-    public ManageActivityViewImpl(final EventBus eventBus, final Binder binder) {
-        widget = binder.createAndBindUi(this);
-        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
-        nameFilter.setAccessibleName("Filter activities");
-
-        nameFilter.registerPopupTextProvider(this::getTooltipContent);
+    /// Makes empty content.
+    public ManageActivity() {
+        initWidget(BINDER.createAndBindUi(this));
+        nameFilter.registerPopupTextProvider(() -> tooltipContentSupplier.get());
     }
 
-    @Override
+    /// Puts the focus on the filter.
     public void focus() {
         nameFilter.forceFocus();
     }
 
-    @UiHandler("nameFilter")
-    void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeNameFilter(nameFilter.getText());
+    /// @param list The activities, below the filter.
+    public void setList(final IsWidget list) {
+        this.list.setWidget(list);
     }
 
-    @Override
+    /// @param tooltipContentSupplier Gives the filter's help, when it is asked for.
     public void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipContentSupplier) {
         this.tooltipContentSupplier = tooltipContentSupplier;
     }
 
-    @Override
+    /// Shows why the server rejected the filter. See `ResultPage.filterError`.
+    ///
+    /// @param filterError Why, or `null` to clear it.
     public void setFilterError(final String filterError) {
         nameFilter.setFilterError(filterError);
     }
 
-    @Override
+    /// @param contextHandler Gives the filter's history and fields.
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         nameFilter.setContextHandler(contextHandler);
     }
 
-    private SafeHtml getTooltipContent() {
-        return tooltipContentSupplier.get();
+    /// @param onFilterChange Given the filter's text when it changes.
+    public void setOnFilterChange(final Consumer<String> onFilterChange) {
+        this.onFilterChange = onFilterChange;
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+    @UiHandler("nameFilter")
+    void onFilterChange(final ValueChangeEvent<String> event) {
+        onFilterChange.accept(nameFilter.getText());
     }
 
-    @Override
-    public void setListView(final IsWidget view) {
-        dataGrid.setWidget(view.asWidget());
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, ManageActivity> {
+
     }
 }

@@ -18,7 +18,7 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.client.ManageActivityPresenter;
+import stroom.activity.client.component.ManageActivityController;
 import stroom.annotation.client.AnnotationPresenter;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.AnnotationTagPresenter;
@@ -79,7 +79,6 @@ import com.google.gwt.inject.client.GinModules;
         ImportExportScreenModule.class,
         AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ActivityScreenModule.class,
         ContentExtrasScreenModule.class,
         ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
@@ -163,8 +162,9 @@ public interface ContentScreenGinjector extends ScreenGinjector {
 
     // Activities
 
-    /// @return The activity chooser ('Choose Activity'), shown by its `show` method.
-    ManageActivityPresenter getManageActivityPresenter();
+    /// @return The activity chooser ('Choose Activity'), made for one use and shown by its
+    ///         `show` method.
+    ManageActivityController getManageActivityController();
 
     /// @return The current activity (a singleton), which opens the activity chooser.
     CurrentActivity getCurrentActivity();

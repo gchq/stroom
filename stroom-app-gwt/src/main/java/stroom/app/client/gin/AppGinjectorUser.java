@@ -17,7 +17,6 @@
 package stroom.app.client.gin;
 
 import stroom.about.client.gin.AboutModule;
-import stroom.activity.client.ActivityModule;
 import stroom.ai.client.gin.AskStroomAIModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
@@ -89,7 +88,6 @@ import com.google.web.bindery.event.shared.EventBus;
 
 @GinModules({
         AboutModule.class,
-        ActivityModule.class,
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,

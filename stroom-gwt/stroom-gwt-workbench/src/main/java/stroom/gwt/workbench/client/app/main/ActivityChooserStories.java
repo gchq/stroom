@@ -39,7 +39,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/Activity Chooser`: the current activity's summary button and Stroom's real
-/// activity chooser (`ManageActivityPresenter`, opened by [CurrentActivity]) with fake REST
+/// activity chooser (`ManageActivityController`, opened by [CurrentActivity]) with fake REST
 /// replies.
 ///
 /// Stroom has no separate badge widget: the summary button is built by `NavigationPresenter`

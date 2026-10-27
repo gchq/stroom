@@ -16,6 +16,7 @@
 
 package stroom.activity.client;
 
+import stroom.activity.client.component.ManageActivityController;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.dispatch.client.RestFactory;
@@ -23,7 +24,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -39,7 +39,7 @@ public class CurrentActivity implements HasHandlers {
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
 
     private final EventBus eventBus;
-    private final Provider<ManageActivityPresenter> manageActivityPresenterProvider;
+    private final Provider<ManageActivityController> manageActivityProvider;
     private final RestFactory restFactory;
 
     private Activity currentActivity;
@@ -49,12 +49,12 @@ public class CurrentActivity implements HasHandlers {
 
     @Inject
     public CurrentActivity(final EventBus eventBus,
-                           final Provider<ManageActivityPresenter> manageActivityPresenterProvider,
+                           final Provider<ManageActivityController> manageActivityProvider,
                            final RestFactory restFactory,
                            final AppRoot appRoot) {
         this.appRoot = appRoot;
         this.eventBus = eventBus;
-        this.manageActivityPresenterProvider = manageActivityPresenterProvider;
+        this.manageActivityProvider = manageActivityProvider;
         this.restFactory = restFactory;
     }
 
@@ -89,18 +89,11 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
-        final ManageActivityPresenter chooser =
-                appRoot.makeDialog(manageActivityPresenterProvider);
-        chooser.showInitial(activity -> {
-            // Told whether or not the chooser was shown (it isn't if activities aren't chosen on
-            // startup), so released here too, once whatever is handling this is done
-            Scheduler.get().scheduleDeferred(chooser::dispose);
-            consumer.accept(activity);
-        });
+        manageActivityProvider.get().showInitial(appRoot, consumer);
     }
 
     public void showActivityChooser() {
-        appRoot.makeDialog(manageActivityPresenterProvider).show(a -> {
+        manageActivityProvider.get().show(appRoot, a -> {
         });
     }
 

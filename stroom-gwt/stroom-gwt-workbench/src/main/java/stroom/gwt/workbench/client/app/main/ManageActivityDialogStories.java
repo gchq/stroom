@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.activity.client.ManageActivityPresenter;
+import stroom.activity.client.component.ManageActivityController;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -33,7 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/ManageActivityDialog`, showing Stroom's real [ManageActivityPresenter] (the
+/// Stories of `App/Main/ManageActivityDialog`, showing Stroom's real [ManageActivityController] (the
 /// 'Choose Activity' dialog, with its `ActivityEditController`) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `ActivityResource` (`/activity/v1`, see [ActivityFixtures]): the
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// (`PUT /{id}`), removing (`DELETE /{id}`), validating (`POST /validate`, checking each property's
 /// regex as the server does) and the current activity (`GET`/`PUT /current`). The requests are
 /// checked on the request spy, and `onCommit` is a spy called by the consumer Stroom passes to
-/// `ManageActivityPresenter.show`, with the chosen activity's id. The editor's form is the UI config's
+/// `ManageActivityController.show`, with the chosen activity's id. The editor's form is the UI config's
 /// `activity.editorBody`.
 public final class ManageActivityDialogStories {
 
@@ -220,12 +220,11 @@ public final class ManageActivityDialogStories {
                 .realAlerts()
                 .build();
         harness.fn(ON_COMMIT);
-        harness.afterStartUp(() -> {
-            final ManageActivityPresenter presenter = injector.getManageActivityPresenter();
-            presenter.show(activity -> harness.spy(ON_COMMIT, activity == null
-                    ? "none"
-                    : String.valueOf(activity.getId())));
-        });
+        harness.afterStartUp(() -> injector.getManageActivityController().show(
+                harness.getAppRoot(),
+                activity -> harness.spy(ON_COMMIT, activity == null
+                        ? "none"
+                        : String.valueOf(activity.getId()))));
         return harness.asWidget();
     }
 }

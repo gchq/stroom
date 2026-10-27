@@ -17,7 +17,6 @@
 package stroom.dashboard.client.gin;
 
 import stroom.about.client.gin.AboutModule;
-import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.gin.AnnotationModule;
@@ -49,7 +48,6 @@ import com.google.web.bindery.event.shared.EventBus;
         DashboardAppModule.class,
         PopupModule.class,
         AboutModule.class,
-        ActivityModule.class,
         AnnotationModule.class,
         AlertModule.class,
         SecurityModule.class,
