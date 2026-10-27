@@ -172,11 +172,11 @@ public class QueryResultTablePresenter
                                      final Provider<ColumnFormatController> columnFormatProvider,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
                                      final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
-                                     final ColumnValuesFilterController columnValuesFilterPresenter,
+                                     final ColumnValuesFilterController columnValuesFilter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         own(downloadOptions);
-        own(columnValuesFilterPresenter);
+        own(columnValuesFilter);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -203,7 +203,7 @@ public class QueryResultTablePresenter
                 columnFormatProvider,
                 () -> makeDialog(rulesPresenterProvider),
                 columnFilterEditorProvider,
-                columnValuesFilterPresenter);
+                columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 

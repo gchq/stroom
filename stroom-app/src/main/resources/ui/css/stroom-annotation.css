@@ -369,13 +369,3 @@
     font-weight: 500;
 }
 
-.annotationTag-tagTextGroup {
-    flex: 1;
-    min-height: 0;
-}
-
-.annotationTag-tagTextGroup textarea {
-    flex: 1;
-    min-height: 0;
-    resize: none;
-}

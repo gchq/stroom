@@ -38,17 +38,17 @@ public class ChangePasswordPlugin extends Plugin {
 
     private final UiConfigCache clientPropertyCache;
     private final AppRoot appRoot;
-    private final Provider<CurrentPasswordController> currentPasswordPresenterProvider;
+    private final Provider<CurrentPasswordController> currentPasswordProvider;
 
     @Inject
     public ChangePasswordPlugin(final EventBus eventBus,
                                 final UiConfigCache clientPropertyCache,
                                 final AppRoot appRoot,
-                                final Provider<CurrentPasswordController> currentPasswordPresenterProvider) {
+                                final Provider<CurrentPasswordController> currentPasswordProvider) {
         super(eventBus);
         this.clientPropertyCache = clientPropertyCache;
         this.appRoot = appRoot;
-        this.currentPasswordPresenterProvider = currentPasswordPresenterProvider;
+        this.currentPasswordProvider = currentPasswordProvider;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ChangePasswordPlugin extends Plugin {
                         .iconColour(IconColour.GREY)
                         .text("Change Password")
                         .command(() -> {
-                            currentPasswordPresenterProvider.get().show(appRoot);
+                            currentPasswordProvider.get().show(appRoot);
                         })
                         .build();
 

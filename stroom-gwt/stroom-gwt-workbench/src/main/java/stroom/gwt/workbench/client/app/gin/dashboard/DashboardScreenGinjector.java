@@ -30,7 +30,6 @@ import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
@@ -67,7 +66,6 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         SecurityScreenModule.class,
         MonitoringScreenModule.class,
         TaskScreenModule.class,

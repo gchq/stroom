@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
+    <g:FlowPanel styleName="global-property-edit max form">
         <form:FormGroup identity="globalPropertyEditName"  label="Name"
                         helpText="The full name of the property, e.g. stroom.ui.namePattern. Use the copy button to copy it.">
             <g:FlowPanel addStyleNames="inline-label-icon">

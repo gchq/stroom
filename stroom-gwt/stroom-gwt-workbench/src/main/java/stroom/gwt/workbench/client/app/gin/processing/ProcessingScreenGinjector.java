@@ -28,7 +28,6 @@ import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.component.ExplorerPopupController;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
@@ -64,7 +63,6 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         MonitoringScreenModule.class,
         SecurityScreenModule.class,
         TaskScreenModule.class,

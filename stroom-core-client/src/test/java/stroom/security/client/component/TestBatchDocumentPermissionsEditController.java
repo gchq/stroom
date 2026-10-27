@@ -70,7 +70,7 @@ class TestBatchDocumentPermissionsEditController {
     void ok_noDocuments() {
         // Regression test: the message was fired as the Properties screen's ErrorEvent, which nothing
         // here handles, so OK did nothing and said nothing.
-        final HidePopupRequestEvent okPressed = showAndPressOk(0);
+        final HidePopupRequestEvent okPressed = pressOk(0);
 
         assertThat(alerts)
                 .extracting(AlertEvent::getLevel, alert -> alert.getMessage().asString())
@@ -86,7 +86,7 @@ class TestBatchDocumentPermissionsEditController {
 
     @Test
     void ok_documents() {
-        final HidePopupRequestEvent okPressed = showAndPressOk(3);
+        final HidePopupRequestEvent okPressed = pressOk(3);
 
         // Nothing is wrong, so OK asks for confirmation rather than warning
         assertThat(alerts)
@@ -96,7 +96,7 @@ class TestBatchDocumentPermissionsEditController {
     }
 
     // Presses OK in the dialog for a filter matching the given number of documents.
-    private HidePopupRequestEvent showAndPressOk(final long documentCount) {
+    private HidePopupRequestEvent pressOk(final long documentCount) {
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
         controller.onHideRequest(

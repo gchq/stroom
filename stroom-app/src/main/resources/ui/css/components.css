@@ -364,7 +364,6 @@
     height: 30px;
 }
 
-/* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
 .subStreamNavigator {
     position: relative;
     text-align: right;
@@ -1298,16 +1297,6 @@
     width: 650px;
 }
 
-/* Background and border on table */
-.credentials-manager-dialog {
-    display: flex;
-    flex-direction: column;
-}
-.credentials-manager-dialog .credentials-manager {
-    background-color: var(--content-box__background-color);
-    border: solid 1px var(--control__border-color);
-    border-radius: .25rem;
-}
 
 /* --- */
 .multiChooser .tick-box {

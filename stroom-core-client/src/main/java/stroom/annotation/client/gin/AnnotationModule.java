@@ -47,6 +47,5 @@ public class AnnotationModule extends PluginModule {
         bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindSharedView(FindView.class, FindPanel.class);
-
     }
 }

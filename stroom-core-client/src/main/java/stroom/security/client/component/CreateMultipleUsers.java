@@ -49,12 +49,6 @@ public class CreateMultipleUsers extends Component {
         Scheduler.get().scheduleDeferred(() -> userBatch.setFocus(true));
     }
 
-    /// Clears the users and any message about them being invalid.
-    public void clear() {
-        userBatch.setText(null);
-        userBatchGroup.clearFeedback();
-    }
-
     /// Shows why the users are invalid, under their field, and focuses the field.
     ///
     /// @param message What is wrong with the users.

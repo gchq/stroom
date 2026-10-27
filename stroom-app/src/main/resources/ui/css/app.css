@@ -170,5 +170,9 @@
 @import url("trace-histogram-chart.css");
 @import url("ask-stroom-ai.css");
 @import url("ai-chat-cell.css");
+@import url("advanced-quick-filter.css");
+@import url("credentials-manager-dialog.css");
+@import url("floor-map-cluster-dialog.css");
+@import url("annotation-tag-text.css");
 /* Last, so a scroll pane fills its parent whatever other classes it has */
 @import url("scroll-pane.css");

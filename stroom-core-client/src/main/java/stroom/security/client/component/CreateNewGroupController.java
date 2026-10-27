@@ -65,12 +65,6 @@ public class CreateNewGroupController extends Controller implements Focus {
         view.setOnEnter(() -> ControllerDialog.pressAction(this, DialogAction.OK));
     }
 
-    /// Empties the name, with no message about it.
-    public void clear() {
-        view.setName("");
-        view.setNameValid();
-    }
-
     /// @param onEnter What Enter in the name does, e.g. press OK on the dialog it is shown in.
     public void setOnEnter(final Runnable onEnter) {
         view.setOnEnter(onEnter);

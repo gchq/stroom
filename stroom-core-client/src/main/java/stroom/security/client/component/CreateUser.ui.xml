@@ -4,7 +4,7 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:sec="urn:import:stroom.security.client.component">
-    <g:FlowPanel styleName="form max dock-container-vertical">
+    <g:FlowPanel styleName="create-user form max dock-container-vertical">
         <form:FormGroup ui:field="createTypesFormGroup"
                         identity="createTypes"
                         label="Action"

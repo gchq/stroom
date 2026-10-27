@@ -79,8 +79,12 @@ public class ResultStoreSettingsEditorController extends Controller {
                 .fire();
     }
 
-    // OK saves the settings once every duration is set; a failed save says why and leaves the
-    // dialog open
+    /// OK saves the settings once every duration is set; a failed save says why and leaves the
+    /// dialog open. Package-private for the tests.
+    ///
+    /// @param resultStoreInfo The result store.
+    /// @param e               The request to hide the dialog.
+    /// @param onClosed        Told whether the settings were saved, once the dialog closes.
     void onHideRequest(final ResultStoreInfo resultStoreInfo,
                        final HidePopupRequestEvent e,
                        final Consumer<Boolean> onClosed) {

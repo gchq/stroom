@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
+/* The Advanced Query dialog's content: a message saying why the filter couldn't be made a tree
+   (describing the dialog), and the tree */
 
-package stroom.gwt.workbench.client.app.gin.content;
+.advanced-quick-filter__message {
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal);
+    margin-bottom: var(--control__padding--vertical);
+    color: var(--warning);
+    white-space: pre-wrap;
+}
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-
-/// The result store bindings of Stroom's `QueryModule` (`stroom/query/client/gin/QueryModule.java`):
-/// the 'Search Result Stores' dialog and its settings dialog, without the rest of the module (the
-/// query editor's graph).
-public class ResultStoreScreenModule extends AbstractPresenterModule {
-
-    /// Binds the presenters and views.
-    @Override
-    protected void configure() {
-    }
+.advanced-quick-filter__expression {
+    min-height: 200px;
 }

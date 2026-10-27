@@ -79,14 +79,6 @@ public class CreateExternalUser extends Component {
         return fullName.getText();
     }
 
-    /// Clears the fields and any message about them being invalid.
-    public void clear() {
-        subjectId.setText("");
-        displayName.setText("");
-        fullName.setText("");
-        subjectIdGroup.clearFeedback();
-    }
-
     /// Shows why the unique identity is invalid, under its field, and focuses the field.
     ///
     /// @param message What is wrong with the unique identity.

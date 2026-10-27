@@ -17,7 +17,6 @@
 package stroom.security.client.component;
 
 import stroom.item.client.SelectionBox;
-import stroom.security.client.component.EditApiKeyController.Mode;
 import stroom.security.shared.HashAlgorithm;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
@@ -44,7 +43,7 @@ import java.util.stream.Collectors;
 
 /// An API key: its owner, name, hash algorithm, prefix, the key itself just after it is made,
 /// whether it is enabled, comments and expiry. Which fields show and can be changed depends on
-/// the [Mode].
+/// the [EditApiKeyMode].
 public class EditApiKey extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -76,7 +75,7 @@ public class EditApiKey extends Component {
     @UiField
     Label copyToClipboardLabel;
 
-    private Mode mode;
+    private EditApiKeyMode mode;
     private Runnable onCopy = () -> {
     };
 
@@ -102,10 +101,10 @@ public class EditApiKey extends Component {
     /// Shows the fields the mode needs, and lets the user change only what the mode allows.
     ///
     /// @param mode Whether the key is being made, has just been made, or is being edited.
-    public void setMode(final Mode mode) {
+    public void setMode(final EditApiKeyMode mode) {
         this.mode = mode;
-        final boolean isPrefixVisible = !Mode.PRE_CREATE.equals(mode);
-        final boolean isApiKeyVisible = Mode.POST_CREATE.equals(mode);
+        final boolean isPrefixVisible = !EditApiKeyMode.PRE_CREATE.equals(mode);
+        final boolean isApiKeyVisible = EditApiKeyMode.POST_CREATE.equals(mode);
         prefixTextBox.setVisible(isPrefixVisible);
         prefixFormGroup.setVisible(isPrefixVisible);
         apiKeyTextArea.setVisible(isApiKeyVisible);
@@ -113,8 +112,8 @@ public class EditApiKey extends Component {
         apiKeyButtonPanel.setVisible(isApiKeyVisible);
 
         // POST_CREATE is just to view what has been created, so the user can't change anything
-        final boolean creating = Mode.PRE_CREATE.equals(mode);
-        final boolean editable = creating || Mode.EDIT.equals(mode);
+        final boolean creating = EditApiKeyMode.PRE_CREATE.equals(mode);
+        final boolean editable = creating || EditApiKeyMode.EDIT.equals(mode);
         expiresOnDateBox.setEnabled(creating);
         nameTextBox.setEnabled(editable);
         commentsTextArea.setEnabled(editable);
@@ -123,7 +122,7 @@ public class EditApiKey extends Component {
     }
 
     /// @return Whether the key is being made, has just been made, or is being edited.
-    public Mode getMode() {
+    public EditApiKeyMode getMode() {
         return mode;
     }
 

@@ -28,7 +28,7 @@
                     <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min">
                         <!-- Hidden while nothing is entered, never disabled -->
                         <b:ToolbarButton ui:field="clearInputButton" svg="CLEAR" title="Clear Entered Tags"
-                                         addStyleNames="clear" visible="false"/>
+                                         addStyleNames="explorer-node-edit-tags__clear" visible="false"/>
                     </b:Toolbar>
                 </g:FlowPanel>
                 <b:Toolbar name="Add tags" addStyleNames="align-center dock-min">

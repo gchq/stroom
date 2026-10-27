@@ -8,7 +8,7 @@
                         helpText="The tag's name, shown on annotations (for a comment, in the Choose Comment list). Required, and must be different from other tags of the same type.">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotationTag-tagTextGroup"
+        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotation-tag-text"
                         helpText="The text of this standard comment. Choosing it with Choose Comment on an annotation adds this text to the end of the comment being written.">
             <form:TextArea ui:field="tagText" addStyleNames="w-100"/>
         </form:FormGroup>

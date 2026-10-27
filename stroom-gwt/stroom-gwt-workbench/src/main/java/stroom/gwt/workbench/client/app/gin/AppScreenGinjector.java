@@ -53,7 +53,6 @@ import com.google.gwt.inject.client.GinModules;
         ScreenViewsModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         MonitoringScreenModule.class,
         SecurityScreenModule.class,
         TaskScreenModule.class,

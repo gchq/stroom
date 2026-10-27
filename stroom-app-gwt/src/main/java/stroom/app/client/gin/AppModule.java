@@ -92,7 +92,6 @@ public class AppModule extends AbstractPresenterModule {
 
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
-
         // Menu
         bind(MenuManager.class).asEagerSingleton();
         // Stroom's edit menu on text fields, in place of the browser's context menu

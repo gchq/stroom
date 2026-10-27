@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.gwt.workbench.client.app.gin;
+/* A tag's text, in the tag Create and Edit dialogs: it and its text area take the height left */
+.annotation-tag-text {
+    flex: 1;
+    min-height: 0;
+}
 
-import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-
-/// The explorer presenter and view bindings of Stroom's `AppModule`
-/// (`stroom-app-gwt/.../stroom/app/client/gin/AppModule.java`), without the app shell.
-/// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
-/// the event, as the screen's area plugin does in Stroom.
-public class ExplorerScreenModule extends AbstractPresenterModule {
-
-    /// Binds the presenters and views.
-    @Override
-    protected void configure() {
-    }
+.annotation-tag-text textarea {
+    flex: 1;
+    min-height: 0;
+    resize: none;
 }

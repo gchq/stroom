@@ -69,7 +69,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
     private final TableFilterPresenter tableFilterPresenter;
-    private final ColumnValuesFilterController columnValuesFilterPresenter;
+    private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
@@ -83,14 +83,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
                           final TableFilterPresenter tableFilterPresenter,
-                          final ColumnValuesFilterController columnValuesFilterPresenter) {
+                          final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
         this.tableFilterPresenter = tableFilterPresenter;
-        this.columnValuesFilterPresenter = columnValuesFilterPresenter;
+        this.columnValuesFilter = columnValuesFilter;
     }
 
     @Override
@@ -110,7 +110,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                                 .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
-                        columnValuesFilterPresenter.hide();
+                        columnValuesFilter.hide();
                     }
                 }
             }
@@ -158,7 +158,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
 
                             if (currentFilterColIndex == colIndex) {
-                                columnValuesFilterPresenter.hide();
+                                columnValuesFilter.hide();
 
                             } else if (isFilterButton) {
                                 showValuesFilter(column, colIndex, th, button);
@@ -201,15 +201,15 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                                   final Element th,
                                   final Element button) {
         currentFilterColIndex = colIndex;
-        columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
+        columnValuesFilter.setNameFilter(currentQuickFilters.get(column.getId()));
         final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
-        columnValuesFilterPresenter.show(
+        columnValuesFilter.show(
                 () -> button,
                 th,
                 column,
                 () -> dataSupplier,
                 hideEvent -> {
-                    currentQuickFilters.put(column.getId(), columnValuesFilterPresenter.getNameFilter());
+                    currentQuickFilters.put(column.getId(), columnValuesFilter.getNameFilter());
                     resetFilterColIndex();
                 },
                 column.getColumnValueSelection(),

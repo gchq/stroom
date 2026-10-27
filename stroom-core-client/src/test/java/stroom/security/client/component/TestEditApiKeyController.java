@@ -19,7 +19,6 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.component.EditApiKeyController.Mode;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.datepicker.client.DateTimeBoxController;
@@ -64,7 +63,7 @@ class TestEditApiKeyController {
             return null;
         }).when(uiConfigCache).get(any(), any());
         view = Mockito.mock(EditApiKey.class);
-        Mockito.when(view.getMode()).thenReturn(Mode.PRE_CREATE);
+        Mockito.when(view.getMode()).thenReturn(EditApiKeyMode.PRE_CREATE);
         Mockito.when(view.getName()).thenReturn("My key");
         final UserRefSelectionController owner = Mockito.mock(UserRefSelectionController.class);
         final DateTimeBoxController expiresOn = Mockito.mock(DateTimeBoxController.class);

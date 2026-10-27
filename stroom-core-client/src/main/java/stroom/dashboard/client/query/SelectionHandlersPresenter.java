@@ -23,7 +23,6 @@ import stroom.dashboard.client.component.SelectionHandlerList;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;

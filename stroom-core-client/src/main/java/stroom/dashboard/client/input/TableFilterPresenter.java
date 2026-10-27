@@ -60,18 +60,18 @@ public class TableFilterPresenter
                     "Table Filter",
                     ComponentUse.INPUT);
 
-    private final Provider<ColumnValuesFilterController> columnValuesFilterPresenterProvider;
+    private final Provider<ColumnValuesFilterController> columnValuesFilterProvider;
     private final List<HandlerRegistration> registrations = new ArrayList<>();
-    private final Map<String, ColumnValuesFilterController> columnFilterPresenters = new HashMap<>();
+    private final Map<String, ColumnValuesFilterController> columnFilters = new HashMap<>();
     private List<Column> currentColumns = Collections.emptyList();
 
     @Inject
     public TableFilterPresenter(final EventBus eventBus,
                                 final TableFilterView view,
                                 final Provider<TableFilterSettingsPresenter> settingsPresenterProvider,
-                                final Provider<ColumnValuesFilterController> columnValuesFilterPresenterProvider) {
+                                final Provider<ColumnValuesFilterController> columnValuesFilterProvider) {
         super(eventBus, view, settingsPresenterProvider);
-        this.columnValuesFilterPresenterProvider = columnValuesFilterPresenterProvider;
+        this.columnValuesFilterProvider = columnValuesFilterProvider;
         onDispose(this::removeTableListeners);
     }
 
@@ -88,8 +88,8 @@ public class TableFilterPresenter
     private void reset() {
         getView().getPanel().clear();
         // Made again for the new columns
-        columnFilterPresenters.values().forEach(this::release);
-        columnFilterPresenters.clear();
+        columnFilters.values().forEach(this::release);
+        columnFilters.clear();
         currentColumns = Collections.emptyList();
     }
 
@@ -110,7 +110,7 @@ public class TableFilterPresenter
                 updateColumns(settings, table);
                 registrations.add(table.addUpdateListener(() -> {
                     updateColumns(settings, table);
-                    columnFilterPresenters.values().forEach(ColumnValuesFilterController::refresh);
+                    columnFilters.values().forEach(ColumnValuesFilterController::refresh);
                 }));
             }
         }
@@ -135,19 +135,19 @@ public class TableFilterPresenter
                     final Label label = new Label(column.getName(), false);
                     label.addStyleName("table-filter-label");
 
-                    final ColumnValuesFilterController columnValuesFilterPresenter =
-                            make(columnValuesFilterPresenterProvider);
-                    columnFilterPresenters.put(column.getId(), columnValuesFilterPresenter);
+                    final ColumnValuesFilterController columnValuesFilter =
+                            make(columnValuesFilterProvider);
+                    columnFilters.put(column.getId(), columnValuesFilter);
 
                     final List<ConditionalFormattingRule> rules =
                             NullSafe.map(settings.getConditionalFormattingRules()).get(column.getId());
 
                     final Provider<Element> filterButtonProvider = () -> table.getFilterButton(column);
-                    columnValuesFilterPresenter.init(
+                    columnValuesFilter.init(
                             filterButtonProvider,
                             column,
                             () -> table.getDataSupplier(column, rules),
-                            () -> columnFilterPresenters
+                            () -> columnFilters
                                     .entrySet()
                                     .stream()
                                     .collect(Collectors.toMap(
@@ -160,10 +160,10 @@ public class TableFilterPresenter
                     final FlowPanel panel = new FlowPanel();
                     panel.addStyleName("table-filter-panel");
                     panel.add(label);
-                    panel.add(columnValuesFilterPresenter.asWidget());
+                    panel.add(columnValuesFilter.asWidget());
 
                     getView().getPanel().add(panel);
-                    columnValuesFilterPresenter.refresh();
+                    columnValuesFilter.refresh();
                 }
             }
         }

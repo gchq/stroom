@@ -104,20 +104,4 @@
     margin-bottom: 4px;
 }
 
-/*
-   The quick filter's syntax help is the shared help popup (help-popup.css).
-
-   The Advanced Query dialog's content (AdvancedQuickFilterViewImpl): the block advanced-query,
-   a message saying why the filter couldn't be made a tree (describing the dialog), and the tree.
-*/
-
-.advanced-query__message {
-	padding: var(--control__padding--vertical) var(--control__padding--horizontal);
-	margin-bottom: var(--control__padding--vertical);
-	color: var(--warning);
-	white-space: pre-wrap;
-}
-
-.advanced-query__expression {
-	min-height: 200px;
-}
+/* The quick filter's syntax help is the shared help popup (help-popup.css) */

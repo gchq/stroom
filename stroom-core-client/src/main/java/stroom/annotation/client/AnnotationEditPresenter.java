@@ -152,7 +152,7 @@ public class AnnotationEditPresenter
 
     private final AnnotationResourceClient annotationResourceClient;
     private final Provider<ChooserController<AnnotationTag>> chooserProvider;
-    private final UserRefPopupController assignedToPresenter;
+    private final UserRefPopupController assignedToPicker;
     private final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider;
     private final OpenChooser openChooser = new OpenChooser();
     private final ClientSecurityContext clientSecurityContext;
@@ -186,7 +186,7 @@ public class AnnotationEditPresenter
                                    final AnnotationEditView view,
                                    final AnnotationResourceClient annotationResourceClient,
                                    final Provider<ChooserController<AnnotationTag>> chooserProvider,
-                                   final UserRefPopupController assignedToPresenter,
+                                   final UserRefPopupController assignedToPicker,
                                    final Provider<MultiChooserController<AnnotationTag>> multiChooserProvider,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
@@ -194,10 +194,10 @@ public class AnnotationEditPresenter
                                    final DurationLabel durationLabel,
                                    final Provider<CommentEditController> commentEditProvider) {
         super(eventBus, view);
-        own(assignedToPresenter);
+        own(assignedToPicker);
         this.annotationResourceClient = annotationResourceClient;
         this.chooserProvider = chooserProvider;
-        this.assignedToPresenter = assignedToPresenter;
+        this.assignedToPicker = assignedToPicker;
         this.multiChooserProvider = multiChooserProvider;
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -206,7 +206,7 @@ public class AnnotationEditPresenter
         this.commentEditProvider = commentEditProvider;
 
         getView().setUiHandlers(this);
-        assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
+        assignedToPicker.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
 
     }
 
@@ -315,11 +315,11 @@ public class AnnotationEditPresenter
 
     private void setAssignedTo(final UserRef assignedTo) {
         currentAssignedTo = assignedTo;
-        assignedToPresenter.resolve(assignedTo, userRef -> {
+        assignedToPicker.resolve(assignedTo, userRef -> {
             currentAssignedTo = userRef;
             getView().setAssignedTo(userRef);
             getView().setAssignYourselfEnabled(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
-            assignedToPresenter.setSelected(currentAssignedTo);
+            assignedToPicker.setSelected(currentAssignedTo);
         });
     }
 
@@ -1419,8 +1419,8 @@ public class AnnotationEditPresenter
         if (isReadOnly()) {
             return;
         }
-        assignedToPresenter.setSelected(currentAssignedTo);
-        assignedToPresenter.show(this::changeAssignedTo);
+        assignedToPicker.setSelected(currentAssignedTo);
+        assignedToPicker.show(this::changeAssignedTo);
     }
 
     @Override

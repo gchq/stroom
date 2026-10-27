@@ -67,7 +67,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private final Provider<ColumnFormatController> columnFormatProvider;
     private final Provider<RulesPresenter> rulesPresenterProvider;
     private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
-    private final ColumnValuesFilterController columnValuesFilterPresenter;
+    private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
@@ -78,13 +78,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                     final Provider<ColumnFormatController> columnFormatProvider,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
-                                    final ColumnValuesFilterController columnValuesFilterPresenter) {
+                                    final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.columnFormatProvider = columnFormatProvider;
         this.rulesPresenterProvider = rulesPresenterProvider;
         this.columnFilterEditorProvider = columnFilterEditorProvider;
-        this.columnValuesFilterPresenter = columnValuesFilterPresenter;
+        this.columnValuesFilter = columnValuesFilter;
     }
 
     @Override
@@ -104,7 +104,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                 .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
-                        columnValuesFilterPresenter.hide();
+                        columnValuesFilter.hide();
                     }
                 }
             }
@@ -138,7 +138,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                             final boolean isDiableFilterButton = diableFilterButton.isOrHasChild(target);
 
                             if (currentFilterColIndex == colIndex) {
-                                columnValuesFilterPresenter.hide();
+                                columnValuesFilter.hide();
 
                             } else if (isFilterButton) {
                                 showValuesFilter(column, colIndex, th, button);
@@ -456,7 +456,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                   final Element button) {
         currentFilterColIndex = colIndex;
         final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
-        columnValuesFilterPresenter.show(
+        columnValuesFilter.show(
                 () -> button,
                 th,
                 column,

@@ -30,22 +30,22 @@
              The row layout is the feature's own class rather than the usual
              "dock-container-horizontal form" pair: .form sets
              flex-direction: column and, being on the same element, wins. -->
-        <g:FlowPanel styleName="dock-min form-padding stroom-floormap-cluster-filters">
+        <g:FlowPanel styleName="dock-min form-padding floor-map-cluster-dialog__filters">
             <form:FormGroup identity="clusterSearch" label="Search"
-                            addStyleNames="stroom-floormap-cluster-filters__search">
+                            addStyleNames="floor-map-cluster-dialog__search">
                 <view:QuickFilter ui:field="quickFilter"/>
             </form:FormGroup>
             <!-- Both dropdowns are hidden unless the cluster's members actually
                  differ; they start out hidden so a dialog whose first cluster
                  offers neither never flashes them. -->
             <form:FormGroup ui:field="areaFilterGroup" identity="clusterArea" label="Area"
-                            addStyleNames="stroom-floormap-cluster-filters__filter"
+                            addStyleNames="floor-map-cluster-dialog__filter"
                             visible="false"
                             helpText="Show only members inside this area, or those not inside any area. Only shown when the members are in at least two different areas, or some are in none. Works together with Search and Group.">
                 <l:SelectionBox ui:field="areaFilter" addStyleNames="w-100"/>
             </form:FormGroup>
             <form:FormGroup ui:field="groupFilterGroup" identity="clusterGroup" label="Group"
-                            addStyleNames="stroom-floormap-cluster-filters__filter"
+                            addStyleNames="floor-map-cluster-dialog__filter"
                             visible="false"
                             helpText="Show only members of this group, from the map's Groups panel, or those in no group. Only shown when the members are in at least two different groups, or some are in none. Works together with Search and Area.">
                 <l:SelectionBox ui:field="groupFilter" addStyleNames="w-100"/>

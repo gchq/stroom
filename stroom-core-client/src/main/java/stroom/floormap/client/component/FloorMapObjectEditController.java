@@ -31,7 +31,6 @@ import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapGeometry;
 import stroom.floormap.shared.FloorMapJsonKeys;
-import stroom.floormap.shared.FloorMapMeasurementUnits;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.component.client.Controller;

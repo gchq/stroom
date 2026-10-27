@@ -72,7 +72,7 @@ class TestBatchProcessorFilterEditController {
         // here handles, so OK did nothing and said nothing.
         Mockito.when(view.getChange()).thenReturn(null);
 
-        final HidePopupRequestEvent okPressed = showAndPressOk(10);
+        final HidePopupRequestEvent okPressed = pressOk(10);
 
         expectWarningThenUsable(okPressed, "No change selected.");
     }
@@ -82,7 +82,7 @@ class TestBatchProcessorFilterEditController {
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.SET_RUN_AS_USER);
         Mockito.when(userRefSelection.getSelected()).thenReturn(null);
 
-        final HidePopupRequestEvent okPressed = showAndPressOk(10);
+        final HidePopupRequestEvent okPressed = pressOk(10);
 
         expectWarningThenUsable(okPressed, "No user selected.");
     }
@@ -91,7 +91,7 @@ class TestBatchProcessorFilterEditController {
     void ok_noProcessors() {
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
 
-        final HidePopupRequestEvent okPressed = showAndPressOk(0);
+        final HidePopupRequestEvent okPressed = pressOk(0);
 
         expectWarningThenUsable(okPressed, "No processors are included in the current filter.");
     }
@@ -100,7 +100,7 @@ class TestBatchProcessorFilterEditController {
     void ok_processors() {
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
 
-        final HidePopupRequestEvent okPressed = showAndPressOk(2);
+        final HidePopupRequestEvent okPressed = pressOk(2);
 
         // Nothing is wrong, so OK asks for confirmation, with the server's count, rather than warning
         assertThat(alerts)
@@ -116,7 +116,7 @@ class TestBatchProcessorFilterEditController {
     void ok_oneProcessor() {
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
 
-        showAndPressOk(1);
+        pressOk(1);
 
         assertThat(confirms)
                 .extracting(confirm -> confirm.getMessage().asString())
@@ -128,7 +128,7 @@ class TestBatchProcessorFilterEditController {
         // The count has a failure handler, so if the server can't count the processors the error is
         // shown and the dialog can be used again, rather than being left with OK and Cancel disabled
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
-        final HidePopupRequestEvent okPressed = showAndPressOkWithoutCount();
+        final HidePopupRequestEvent okPressed = pressOkWithoutCount();
         assertThat(restFactory.getRequests())
                 .hasSize(1);
         assertThat(restFactory.getLastRequest().hasFailureHandler())
@@ -150,7 +150,7 @@ class TestBatchProcessorFilterEditController {
         // Regression test: the change had no failure handler, so when it failed (e.g. the server
         // refused it) the dialog was left with OK and Cancel disabled.
         Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
-        final HidePopupRequestEvent okPressed = showAndPressOk(2);
+        final HidePopupRequestEvent okPressed = pressOk(2);
         assertThat(confirms)
                 .hasSize(1);
         confirms.getFirst().getCallback().onResult(true);
@@ -165,10 +165,10 @@ class TestBatchProcessorFilterEditController {
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
 
-    // Shows the dialog for a filter, presses OK and, if the controller then asks the server how many
+    // Presses OK in the dialog for a filter and, if the controller then asks the server how many
     // processor filters the change would apply to, answers with the given count.
-    private HidePopupRequestEvent showAndPressOk(final int filterCount) {
-        final HidePopupRequestEvent okPressed = showAndPressOkWithoutCount();
+    private HidePopupRequestEvent pressOk(final int filterCount) {
+        final HidePopupRequestEvent okPressed = pressOkWithoutCount();
         if (!restFactory.getRequests().isEmpty()) {
             restFactory.getLastRequest().succeed(filterCount);
         }
@@ -176,7 +176,7 @@ class TestBatchProcessorFilterEditController {
     }
 
     // Presses OK in the dialog for a filter, leaving any request the controller makes pending.
-    private HidePopupRequestEvent showAndPressOkWithoutCount() {
+    private HidePopupRequestEvent pressOkWithoutCount() {
         final HidePopupRequestEvent okPressed = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(okPressed.isOk()).thenReturn(true);
         controller.onHideRequest(

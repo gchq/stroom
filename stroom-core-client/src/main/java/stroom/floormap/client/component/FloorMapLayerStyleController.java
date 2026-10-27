@@ -24,7 +24,6 @@ import stroom.floormap.client.component.FloorMapLayerStyle.GraphicMode;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.presenter.PopupType;

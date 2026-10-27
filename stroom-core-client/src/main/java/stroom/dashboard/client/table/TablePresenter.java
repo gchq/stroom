@@ -215,12 +215,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UserPreferencesManager userPreferencesManager,
                           final DynamicColumnSelectionListModel columnSelectionListModel,
                           final DataSourceClient dataSourceClient,
-                          final ColumnValuesFilterController columnValuesFilterPresenter,
+                          final ColumnValuesFilterController columnValuesFilter,
                           final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
         own(tableFilterPresenter);
         own(downloadOptions);
-        own(columnValuesFilterPresenter);
+        own(columnValuesFilter);
         this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;
@@ -281,7 +281,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 expressionProvider,
                 columnFormatProvider,
                 tableFilterPresenter,
-                columnValuesFilterPresenter);
+                columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {

@@ -27,7 +27,7 @@
     right: 50px;
 }
 
-.explorer-node-edit-tags__input-container .clear .toolbar-button__icon {
+.explorer-node-edit-tags__clear .toolbar-button__icon {
     color: var(--control__text-color);
 }
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.explorer.client.component.DocSelectionController;
@@ -26,7 +25,6 @@ import stroom.security.client.component.UserRefPopup;
 import stroom.security.client.component.UserRefPopupController;
 import stroom.security.client.component.UserRefSelectionController;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.DropDownBox;
 
 import com.google.gwt.core.client.GWT;

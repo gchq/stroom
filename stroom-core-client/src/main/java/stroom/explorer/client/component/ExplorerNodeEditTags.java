@@ -204,9 +204,7 @@ public class ExplorerNodeEditTags extends Component {
         }
     }
 
-    /**
-     * @return Trimmed and lower-cased tag.
-     */
+    // Trimmed and lower-cased
     private String cleanTag(final String tag) {
         return Objects.requireNonNull(tag, "")
                 .trim()
@@ -320,9 +318,7 @@ public class ExplorerNodeEditTags extends Component {
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * Handler to swallow various key presses to limit the chars the user can enter
-     */
+    // Swallows various key presses to limit the chars the user can enter
     private static class TagsKeyPressHandler implements KeyPressHandler {
 
         @Override

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:sl="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form flex-column">
+    <g:FlowPanel styleName="explorer-node-remove-tags max form flex-column">
         <g:FlowPanel styleName="explorer-node-remove-tags__lists form dock-max flex-row">
             <form:FormGroup identity="removeNodeTagsNodeTags"
                             addStyleNames="dock-max"

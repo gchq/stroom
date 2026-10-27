@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.component.ApiKeysListController;
 import stroom.security.client.component.EditApiKeyController;
-import stroom.security.client.component.EditApiKeyController.Mode;
+import stroom.security.client.component.EditApiKeyMode;
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.HashedApiKey;
@@ -132,14 +132,14 @@ public class ApiKeysPresenter
         final boolean allowOwnerSelection = owner == null;
         editApiKeyProvider.get().showCreateDialog(
                 this,
-                Mode.PRE_CREATE,
+                EditApiKeyMode.PRE_CREATE,
                 apiKeysList::refresh,
                 allowOwnerSelection);
     }
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = getSelectionModel().getSelected();
-        editApiKeyProvider.get().showEditDialog(this, apiKey, Mode.EDIT, apiKeysList::refresh);
+        editApiKeyProvider.get().showEditDialog(this, apiKey, EditApiKeyMode.EDIT, apiKeysList::refresh);
     }
 
     private void deleteSelectedKeys() {

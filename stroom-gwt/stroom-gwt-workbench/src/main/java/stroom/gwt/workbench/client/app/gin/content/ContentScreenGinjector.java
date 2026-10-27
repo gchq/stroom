@@ -37,7 +37,6 @@ import stroom.explorer.client.component.FindInContentController;
 import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
@@ -69,7 +68,6 @@ import com.google.gwt.inject.client.GinModules;
         QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         MonitoringScreenModule.class,
         SecurityScreenModule.class,
         TaskScreenModule.class,
@@ -79,7 +77,6 @@ import com.google.gwt.inject.client.GinModules;
         ImportExportScreenModule.class,
         AnnotationScreenModule.class,
         ContentAppScreenModule.class,
-        ResultStoreScreenModule.class,
         ContentStoreScreenModule.class,
         IndexVolumeScreenModule.class,
         PathwaysScreenModule.class,

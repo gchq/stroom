@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.gin.security;
 import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
@@ -55,7 +54,6 @@ import com.google.gwt.inject.client.GinModules;
         ScreenViewsModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         IdentityScreenModule.class,
         SecurityScreenModule.class,
 })

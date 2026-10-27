@@ -189,7 +189,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                   final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider,
                                   final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
                                   final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
-                                        final Provider<EditorPresenter> editorPresenterProvider) {
+                                  final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         addButton.setOpensMenu(true);
 

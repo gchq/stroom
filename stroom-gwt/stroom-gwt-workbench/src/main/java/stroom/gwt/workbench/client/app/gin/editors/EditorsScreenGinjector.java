@@ -31,7 +31,6 @@ import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
-import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
 import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
@@ -71,7 +70,6 @@ import com.google.gwt.inject.client.GinModules;
         QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
-        ExplorerScreenModule.class,
         MonitoringScreenModule.class,
         SecurityScreenModule.class,
         AlertScreenModule.class,

@@ -32,7 +32,6 @@ import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
-import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -43,7 +42,6 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
@@ -53,7 +51,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class UserAndGroupHelper {
-
 
     public static final String COL_NAME_DISPLAY_NAME = "Display Name";
     public static final String COL_NAME_FULL_NAME = "Full Name";
@@ -124,7 +121,6 @@ public class UserAndGroupHelper {
             userList.refresh();
         };
     }
-
 
     public static List<Item> buildUserActionMenu(final UserRef userRef,
                                                  final boolean isExternalIdp,

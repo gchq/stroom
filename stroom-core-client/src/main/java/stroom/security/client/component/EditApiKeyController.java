@@ -112,23 +112,23 @@ public class EditApiKeyController extends Controller {
     /// Shows the dialog that makes a key, owned by `opener` until it is closed.
     ///
     /// @param opener              What shows it.
-    /// @param mode                The mode to start in, [Mode#PRE_CREATE].
+    /// @param mode                The mode to start in, [EditApiKeyMode#PRE_CREATE].
     /// @param onChangeHandler     Called once a key is made, kept or deleted.
     /// @param allowOwnerSelection Whether the owner may be changed from the user.
     public void showCreateDialog(final HasControllerNode opener,
-                                 final Mode mode,
+                                 final EditApiKeyMode mode,
                                  final Runnable onChangeHandler,
                                  final boolean allowOwnerSelection) {
         this.onChangeHandler = onChangeHandler;
         setMode(mode);
 
         final String caption;
-        if (Mode.PRE_CREATE.equals(mode)) {
+        if (EditApiKeyMode.PRE_CREATE.equals(mode)) {
             caption = "Create new API key";
             // Default to current user
             owner.setSelected(securityContext.getUserRef());
             owner.setEnabled(allowOwnerSelection);
-        } else if (Mode.POST_CREATE.equals(mode)) {
+        } else if (EditApiKeyMode.POST_CREATE.equals(mode)) {
             caption = "View created API key";
         } else {
             caption = "Edit API key";
@@ -140,7 +140,7 @@ public class EditApiKeyController extends Controller {
                 dispose();
                 return;
             }
-            if (Mode.PRE_CREATE.equals(mode)) {
+            if (EditApiKeyMode.PRE_CREATE.equals(mode)) {
                 view.setHashAlgorithm(Objects.requireNonNullElse(
                         uiConfig.getDefaultApiKeyHashAlgorithm(),
                         HashAlgorithm.DEFAULT));
@@ -153,11 +153,11 @@ public class EditApiKeyController extends Controller {
     ///
     /// @param opener          What shows it.
     /// @param apiKey          The key.
-    /// @param mode            The mode, [Mode#EDIT].
+    /// @param mode            The mode, [EditApiKeyMode#EDIT].
     /// @param onChangeHandler Called once the key is saved.
     public void showEditDialog(final HasControllerNode opener,
                                final HashedApiKey apiKey,
-                               final Mode mode,
+                               final EditApiKeyMode mode,
                                final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
         this.apiKey = apiKey;
@@ -184,8 +184,8 @@ public class EditApiKeyController extends Controller {
                 .fire();
     }
 
-    private void setMode(final Mode mode) {
-        owner.setEnabled(Mode.PRE_CREATE.equals(mode)
+    private void setMode(final EditApiKeyMode mode) {
+        owner.setEnabled(EditApiKeyMode.PRE_CREATE.equals(mode)
                          && securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION));
         view.setMode(mode);
         reset();
@@ -198,15 +198,15 @@ public class EditApiKeyController extends Controller {
 
     // Package-private for the tests
     void onHideRequest(final HidePopupRequestEvent e) {
-        final Mode mode = view.getMode();
-        if (e.isOk() || Mode.POST_CREATE.equals(mode)) {
+        final EditApiKeyMode mode = view.getMode();
+        if (e.isOk() || EditApiKeyMode.POST_CREATE.equals(mode)) {
             uiConfigCache.get(guard(uiConfig -> {
                 if (uiConfig != null) {
-                    if (Mode.PRE_CREATE.equals(mode)) {
+                    if (EditApiKeyMode.PRE_CREATE.equals(mode)) {
                         handlePreCreateModeHide(e, uiConfig);
-                    } else if (Mode.POST_CREATE.equals(mode)) {
+                    } else if (EditApiKeyMode.POST_CREATE.equals(mode)) {
                         handlePostCreateModeHide(e);
-                    } else if (Mode.EDIT.equals(mode)) {
+                    } else if (EditApiKeyMode.EDIT.equals(mode)) {
                         handleEditModeHide(e);
                     }
                 } else {
@@ -319,7 +319,7 @@ public class EditApiKeyController extends Controller {
                         apiKey = response.getHashedApiKey();
                         // API Key created so change the mode and update the fields on the dialog
                         // so the user can see the actual API key
-                        setMode(Mode.POST_CREATE);
+                        setMode(EditApiKeyMode.POST_CREATE);
                         owner.setSelected(apiKey.getOwner());
                         view.setExpiresOn(apiKey.getExpireTimeMs());
                         view.setName(apiKey.getName());
@@ -344,21 +344,5 @@ public class EditApiKeyController extends Controller {
     private TaskMonitorFactory taskMonitor() {
         final TaskMonitorFactory provided = getProvidedTaskMonitor();
         return provided != null ? provided : new DefaultTaskMonitorFactory(this);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// What the dialog is doing with the key.
-    public enum Mode {
-        /// When the user is initially entering data to create the key.
-        PRE_CREATE,
-        /// Immediately after creation of the key, when the API key string is still in memory and
-        /// can be shown.
-        POST_CREATE,
-        /// Editing of the record at a later date when the API key string is no longer available to
-        /// show to the user.
-        EDIT
     }
 }

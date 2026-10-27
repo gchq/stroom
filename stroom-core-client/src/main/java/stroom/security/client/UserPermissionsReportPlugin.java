@@ -40,7 +40,7 @@ import javax.inject.Singleton;
 public class UserPermissionsReportPlugin extends Plugin {
 
     private final ContentManager contentManager;
-    private final Provider<UserRefPopupController> userRefPopupPresenterProvider;
+    private final Provider<UserRefPopupController> userRefPopupProvider;
     private final Provider<UserPermissionReportPresenter> userPermissionReportPresenterAsyncProvider;
     private final ClientSecurityContext securityContext;
 
@@ -49,11 +49,11 @@ public class UserPermissionsReportPlugin extends Plugin {
                                        final ContentManager contentManager,
                                        final Provider<UserPermissionReportPresenter>
                                                userPermissionReportPresenterAsyncProvider,
-                                       final Provider<UserRefPopupController> userRefPopupPresenterProvider,
+                                       final Provider<UserRefPopupController> userRefPopupProvider,
                                        final ClientSecurityContext securityContext) {
         super(eventBus);
         this.contentManager = contentManager;
-        this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
+        this.userRefPopupProvider = userRefPopupProvider;
         this.userPermissionReportPresenterAsyncProvider = userPermissionReportPresenterAsyncProvider;
         this.securityContext = securityContext;
 
@@ -102,7 +102,7 @@ public class UserPermissionsReportPlugin extends Plugin {
     }
 
     public void open() {
-//        userRefPopupPresenterProvider.get().show(userRef -> {
+//        userRefPopupProvider.get().show(userRef -> {
 //            final UserPermissionReportPresenter presenter = userPermissionReportPresenterAsyncProvider.get();
 //            presenter.setUserRef(userRef);
 //            final CloseContentEvent.Handler closeHandler = (event) -> {
