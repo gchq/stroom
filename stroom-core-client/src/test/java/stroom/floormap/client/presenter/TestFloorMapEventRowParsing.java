@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapLocationResolver;
 import stroom.floormap.client.model.FloorMapObject;
@@ -70,7 +71,7 @@ class TestFloorMapEventRowParsing {
         }
 
         // And the parse agrees, given a result shaped the way that query describes.
-        assertThat(FloorMapQueryPresenter.parseRows(
+        assertThat(FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", "1, 2", null)), DEFAULTS, null))
                 .hasSize(1);
     }
@@ -82,7 +83,7 @@ class TestFloorMapEventRowParsing {
     /// ISO-8601 times, the form Stroom emits with no pattern preference set.
     @Test
     void testLatestPerEntityKeepsTheNewestIsoTimeForEachEntity() {
-        final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
+        final List<Row> reduced = FloorMapEventQuery.latestPerEntity(
                 timedColumns(),
                 List.of(
                         timedRow("2026-09-01T10:00:00.000Z", "a@x.org", "1, 1"),
@@ -100,7 +101,7 @@ class TestFloorMapEventRowParsing {
     /// Out-of-order rows must not fool it - the newest wins wherever it sits in the result.
     @Test
     void testLatestPerEntityIgnoresRowOrderWhenTimesAreComparable() {
-        final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
+        final List<Row> reduced = FloorMapEventQuery.latestPerEntity(
                 timedColumns(),
                 List.of(
                         timedRow("2026-09-01T10:00:09.000Z", "a@x.org", "newest"),
@@ -115,7 +116,7 @@ class TestFloorMapEventRowParsing {
     /// Epoch milliseconds must compare numerically, not as text - "9" is not after "10".
     @Test
     void testLatestPerEntityComparesEpochMillisNumerically() {
-        final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
+        final List<Row> reduced = FloorMapEventQuery.latestPerEntity(
                 timedColumns(),
                 List.of(
                         timedRow("9", "a@x.org", "earlier"),
@@ -135,7 +136,7 @@ class TestFloorMapEventRowParsing {
         columns.add(Column.builder().id(ENTITY_COLUMN).name(ENTITY_COLUMN).build());
         columns.add(Column.builder().id(LOCATION_COLUMN).name(LOCATION_COLUMN).build());
 
-        final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
+        final List<Row> reduced = FloorMapEventQuery.latestPerEntity(
                 columns,
                 List.of(twoColumnRow("a@x.org", "first"), twoColumnRow("a@x.org", "last")),
                 ENTITY_COLUMN,
@@ -156,7 +157,7 @@ class TestFloorMapEventRowParsing {
                 timedRow("2026-09-01T10:00:00.000Z", "b@x.org", "two"),
                 timedRow("2026-09-01T10:00:00.000Z", "c@x.org", "three"));
 
-        final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
+        final List<Row> reduced = FloorMapEventQuery.latestPerEntity(
                 timedColumns(), rows, ENTITY_COLUMN, TIME_COLUMN);
 
         assertThat(reduced).containsExactlyElementsOf(rows);
@@ -178,7 +179,7 @@ class TestFloorMapEventRowParsing {
     /// Coordinates baked into the event, used as they stand.
     @Test
     void testCoordinateRowsAreParsedAndPassedThrough() {
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", "120.5, 340", null)), DEFAULTS, null);
 
         assertThat(parsed).hasSize(1);
@@ -194,7 +195,7 @@ class TestFloorMapEventRowParsing {
     /// the entity lands wherever that object currently is.
     @Test
     void testReferenceRowsAreParsedAndPlacedOnTheObject() {
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", null, "G-MAIN_ENTRANCE")), DEFAULTS, null);
 
         assertThat(parsed).hasSize(1);
@@ -210,7 +211,7 @@ class TestFloorMapEventRowParsing {
     /// An email entity id with no type column still reads as a person.
     @Test
     void testTypeFallsBackToPersonForAnEmailId() {
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", null, "G-MAIN_ENTRANCE")), DEFAULTS, null);
 
         assertThat(parsed.getFirst().getType()).isEqualTo("person");
@@ -218,14 +219,14 @@ class TestFloorMapEventRowParsing {
 
     /// Both location roles pointing at columns the query does not select yields nothing at all —
     /// the silent failure that looks like animation being switched off, and the reason
-    /// `FloorMapMapPresenter` logs this case.
+    /// `FloorMapMapController` logs this case.
     @Test
     void testBothLocationRolesUnmappedYieldsNoEntities() {
         final FloorMapEventColumns mapping = DEFAULTS
                 .with(FloorMapEventRole.LOCATION, "Nope")
                 .with(FloorMapEventRole.LOCATION_REF, "Also Nope");
 
-        assertThat(FloorMapQueryPresenter.parseRows(
+        assertThat(FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", null, "G-MAIN_ENTRANCE")), mapping, null))
                 .isEmpty();
     }
@@ -237,12 +238,12 @@ class TestFloorMapEventRowParsing {
     @Test
     void testOneLocationRoleIsEnough() {
         final FloorMapEventColumns refOnly = DEFAULTS.with(FloorMapEventRole.LOCATION, null);
-        assertThat(FloorMapQueryPresenter.parseRows(
+        assertThat(FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", null, "G-MAIN_ENTRANCE")), refOnly, null))
                 .hasSize(1);
 
         final FloorMapEventColumns coordsOnly = DEFAULTS.with(FloorMapEventRole.LOCATION_REF, null);
-        assertThat(FloorMapQueryPresenter.parseRows(
+        assertThat(FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", "1, 2", null)), coordsOnly, null))
                 .hasSize(1);
     }
@@ -250,7 +251,7 @@ class TestFloorMapEventRowParsing {
     /// A row with neither is skipped, not placed at the origin.
     @Test
     void testRowWithNoLocationAtAllIsSkipped() {
-        assertThat(FloorMapQueryPresenter.parseRows(
+        assertThat(FloorMapEventQuery.parseRows(
                 result(row("joe.blogs@example.org", null, null)), DEFAULTS, null))
                 .isEmpty();
     }
@@ -263,7 +264,7 @@ class TestFloorMapEventRowParsing {
     @Test
     void testCoordinatesWinOverAReferenceAndTheClashIsReportedOnce() {
         final List<String> warnings = new ArrayList<>();
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(
                         row("a@x.org", "1, 2", "G-MAIN_ENTRANCE"),
                         row("b@x.org", "3, 4", "G-MAIN_ENTRANCE")),
@@ -284,7 +285,7 @@ class TestFloorMapEventRowParsing {
     @Test
     void testMalformedCoordinatesAreReportedRatherThanTreatedAsAKey() {
         final List<String> warnings = new ArrayList<>();
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(row("a@x.org", "120.5 340", null)), DEFAULTS, warnings::add);
 
         assertThat(parsed).isEmpty();
@@ -295,7 +296,7 @@ class TestFloorMapEventRowParsing {
     /// A fact key that looks like coordinates works, which the single-column scheme made impossible.
     @Test
     void testAReferenceMayLookLikeCoordinates() {
-        final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
+        final List<FloorMapObject> parsed = FloorMapEventQuery.parseRows(
                 result(row("a@x.org", null, "100, 200")), DEFAULTS, null);
 
         assertThat(parsed).hasSize(1);
@@ -317,7 +318,7 @@ class TestFloorMapEventRowParsing {
                 null, 1L, null, null);
 
         final FloorMapEventColumns mapping = DEFAULTS.with(FloorMapEventRole.TYPE, "Kind");
-        assertThat(FloorMapQueryPresenter.parseRows(res, mapping, null).getFirst().getType())
+        assertThat(FloorMapEventQuery.parseRows(res, mapping, null).getFirst().getType())
                 .isEqualTo("vehicle");
     }
 

@@ -15,23 +15,20 @@
   ~ limitations under the License.
   -->
 
+<!-- A floor map's Map tab: the map beside the right-hand dock, above the timeline (a fixed-height
+     strip, as on the Editor tab) -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.widget.layout.client">
-    <g:DockLayoutPanel unit='PX' styleName="max stroom-border-top" ui:field="mainDockPanel">
-        <!-- Timeline strip: docked south at a fixed height with no splitter, so it is
-             not user-resizable — matches TIMELINE_HEIGHT in FloorMapEditorViewImpl -->
-        <g:south size="110">
-            <g:SimplePanel ui:field="timelinePanel" addStyleNames="max" />
-        </g:south>
+    <g:FlowPanel styleName="max stroom-border-top dock-container-vertical">
         <!-- The SVG map with the right-hand dock docked east -->
-        <g:center>
-            <l:SplitPane ui:field="topSplitPane" thin="true" sizes="*, 25%" names="Map, Controls"
-                         addStyleNames="max">
-                <g:SimplePanel ui:field="mapPanel" addStyleNames="max"/>
-                <g:SimplePanel ui:field="dockPanel"
-                               addStyleNames="max dashboard-panel overflow-hidden"/>
-            </l:SplitPane>
-        </g:center>
-    </g:DockLayoutPanel>
+        <l:SplitPane ui:field="topSplitPane" thin="true" sizes="*, 25%" names="Map, Controls"
+                     addStyleNames="max dock-max">
+            <g:SimplePanel ui:field="mapPanel" addStyleNames="max"/>
+            <g:SimplePanel ui:field="dockPanel"
+                           addStyleNames="max dashboard-panel overflow-hidden"/>
+        </l:SplitPane>
+        <!-- Timeline strip: a fixed height with no splitter, so it is not user-resizable -->
+        <g:SimplePanel ui:field="timelinePanel" addStyleNames="max floormap-timeline-strip"/>
+    </g:FlowPanel>
 </ui:UiBinder>

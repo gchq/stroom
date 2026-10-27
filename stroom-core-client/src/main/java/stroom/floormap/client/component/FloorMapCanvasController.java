@@ -575,7 +575,7 @@ public class FloorMapCanvasController extends Controller {
     }
 
     // =========================================================================
-    // Public API — called by FloorMapMapPresenter
+    // Public API — called by FloorMapMapController
     // =========================================================================
 
     /// Notifies the canvas that the timeline is playing or has been paused.
@@ -1112,7 +1112,7 @@ public class FloorMapCanvasController extends Controller {
                     selectedObjectIds.clear();
                     fireSelectionChanged();
                     // Repaint explicitly rather than relying on the selection handler:
-                    // only the Editor tab installs one (FloorMapEditorPresenter:293), so on
+                    // only the Editor tab installs one (FloorMapEditorController:293), so on
                     // the Map tab fireSelectionChanged() notifies nobody and the cleared
                     // highlight stayed painted until something unrelated redrew.
                     redraw();

@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.floormap.client.component.FloorMapCanvasController;
-import stroom.floormap.client.component.FloorMapClusterDialogController;
-import stroom.floormap.client.component.FloorMapDockController;
-import stroom.floormap.client.component.FloorMapGroupsController;
-import stroom.floormap.client.component.FloorMapLayers;
-import stroom.floormap.client.component.FloorMapTimelineController;
-import stroom.floormap.client.component.FloorMapTrackingController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
@@ -41,7 +33,8 @@ import stroom.floormap.client.playback.FloorMapEventsQuery;
 import stroom.floormap.client.playback.FloorMapEventsQueryOrder;
 import stroom.floormap.client.playback.FloorMapHistogramBuckets;
 import stroom.floormap.client.playback.FloorMapStageReporter;
-import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
+import stroom.floormap.client.presenter.FloorMapEventQuery;
+import stroom.floormap.client.presenter.FloorMapQueryBuilder;
 import stroom.floormap.client.value.FloorMapFactTableParser;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventColumns;
@@ -59,17 +52,18 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Controller;
 import stroom.widget.histogram.client.HistogramDataModel;
 import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.HistogramQueryHelper;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -107,12 +101,15 @@ import java.util.function.Consumer;
 /// Three [QueryModel]-based searches are maintained: the facts query playback,
 /// the events query playback (the entity overlay the canvas animates), and the histogram
 /// query that populates the timeline density bars.
-public class FloorMapMapPresenter
-        extends DocPresenter<FloorMapMapView, FloorMapDoc>
+public class FloorMapMapController
+        extends Controller
         implements HasToolbar {
 
     private static final int HISTOGRAM_BINS = 100;
 
+    private final FloorMapMap view;
+    // The document as it was read
+    private FloorMapDoc entity;
     private final FloorMapCanvasController canvas;
     private final FloorMapTimelineController floorMapTimeline;
     private final FloorMapTrackingController floorMapTracking;
@@ -121,7 +118,7 @@ public class FloorMapMapPresenter
 
     /// The Map tab's staged document-level edits — just the Groups panel's edits.
     /// The tab does not otherwise write the document, so a group edit is staged
-    /// here, merged in by [#onWrite], and dropped once a post-save re-read
+    /// here, merged in by [#write], and dropped once a post-save re-read
     /// shows it landed. The Editor tab has its own instance for schema/type-styles;
     /// the two stage disjoint fields and so cannot clobber each other.
     private final FloorMapDocSession docSession = new FloorMapDocSession();
@@ -276,7 +273,7 @@ public class FloorMapMapPresenter
     /// Runs the document's events query at the selected time, producing the entity overlay that
     /// [FloorMapCanvasController] animates.
     ///
-    /// The Map tab owns this query rather than [FloorMapQueryPresenter] (the Events Query
+    /// The Map tab owns this query rather than [FloorMapQueryController] (the Events Query
     /// tab): that presenter is created lazily, the first time its tab is opened, so a Map tab
     /// depending on it showed no live entities at all — and therefore no movement animation — until
     /// the user happened to visit another tab.
@@ -367,7 +364,7 @@ public class FloorMapMapPresenter
     /// @return the active [FloorMapFieldMapping] list; may be `null`
     ///         for legacy documents
     private List<FloorMapFieldMapping> valueSchema() {
-        return getEntity().getValueSchema();
+        return entity.getValueSchema();
     }
 
     /// Resolves the value path for a given [FloorMapFieldMapping.Role] by looking
@@ -385,19 +382,23 @@ public class FloorMapMapPresenter
     };
 
     @Inject
-    public FloorMapMapPresenter(final EventBus eventBus,
-                                final FloorMapMapView view,
-                                final RestFactory restFactory,
-                                final DateTimeSettingsFactory dateTimeSettingsFactory,
-                                final ResultStoreModel resultStoreModel,
-                                final Provider<FloorMapCanvasController> canvasProvider,
-                                final Provider<FloorMapTimelineController> floorMapTimelineProvider,
-                                final Provider<FloorMapTrackingController> floorMapTrackingProvider,
-                                final FloorMapLayers layersPanel,
-                                final Provider<FloorMapGroupsController> floorMapGroupsProvider,
-                                final Provider<FloorMapDockController> dockProvider,
-                                final Provider<FloorMapClusterDialogController> clusterDialogProvider) {
-        super(eventBus, view);
+    public FloorMapMapController(final EventBus eventBus,
+                                 final FloorMapMap view,
+                                 final RestFactory restFactory,
+                                 final DateTimeSettingsFactory dateTimeSettingsFactory,
+                                 final ResultStoreModel resultStoreModel,
+                                 final Provider<FloorMapCanvasController> canvasProvider,
+                                 final Provider<FloorMapTimelineController> floorMapTimelineProvider,
+                                 final Provider<FloorMapTrackingController> floorMapTrackingProvider,
+                                 final FloorMapLayers layersPanel,
+                                 final Provider<FloorMapGroupsController> floorMapGroupsProvider,
+                                 final Provider<FloorMapDockController> dockProvider,
+                                 final Provider<FloorMapClusterDialogController> clusterDialogProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        // Stops what runs in the background (e.g. the timeline's clock) when the document closes
+        onDispose(this::onClose);
 
         this.clusterDialogProvider = clusterDialogProvider;
         this.canvas = make(canvasProvider);
@@ -434,9 +435,9 @@ public class FloorMapMapPresenter
                 floorMapGroups::addMember,
                 floorMapGroups::createGroupWith);
 
-        getView().setMapView(canvas);
-        getView().setDockView(dock);
-        getView().setTimelineView(floorMapTimeline);
+        view.setMap(canvas);
+        view.setDock(dock);
+        view.setTimeline(floorMapTimeline);
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
@@ -456,7 +457,7 @@ public class FloorMapMapPresenter
 
         // Show/hide the right-hand dock
         dockToggleButton = mapToolbar.toggle(
-                SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
+                SvgImage.SHOW_MENU, "Toggle Controls", view::setDockVisible);
         dockToggleButton.setPressed(true);
         canvas.setClusterNearbyEntities(true);
         // Cluster tooltips name their members through the same resolver the
@@ -608,8 +609,12 @@ public class FloorMapMapPresenter
     /// triggers an initial time-change to load facts. The timeline range is only initialised on
     /// the first read; save-triggered re-reads preserve it. This tab no longer holds an
     /// object-edit presenter; that form belongs to the Editor tab.
-    @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc document) {
+    /// Shows a floor map.
+    ///
+    /// @param docRef   The floor map.
+    /// @param document The floor map.
+    public void read(final DocRef docRef, final FloorMapDoc document) {
+        this.entity = document;
         this.docUuid = docRef != null ? docRef.getUuid() : null;
         // Initialise and reset every query model BEFORE starting any searches, so that the histogram query
         // started inside updateTimelineRange() is not immediately cancelled by the reset() calls below.
@@ -707,28 +712,29 @@ public class FloorMapMapPresenter
     /// temporal store via REST calls rather than through the document save
     /// lifecycle, so with no group edit staged the document is returned
     /// unchanged.
-    @Override
-    protected FloorMapDoc onWrite(final FloorMapDoc document) {
+    /// @param document The floor map.
+    /// @return A copy of it with this tab's edits.
+    public FloorMapDoc write(final FloorMapDoc document) {
         return docSession.applyToWrite(document);
     }
 
     /// Always returns `false` — the Map tab has no *associated* dirty
     /// state (that flag is about pending temporal-store changes, which the Editor
     /// tab owns). A staged group edit is ordinary document dirt: it reaches the save
-    /// button through [#onChange()] and [#onWrite].
-    @Override
+    /// button through [#onChange()] and [#write].
+    /// @return False: the Map tab has no associated dirty state.
     public boolean hasAssociatedDirty() {
         return false;
     }
 
     /// Stages an edited group list for save and lights the save button.
     ///
-    /// `onChange()` re-runs [#onWrite] and diffs the result against
+    /// `onChange()` re-runs [#write] and diffs the result against
     /// the loaded document, so staging first is what makes the change visible to
     /// it.
     private void onGroupsEdited(final List<FloorMapGroup> groups) {
         docSession.stageGroups(groups);
-        onChange();
+        markChanged();
         // Recompute the live counts now rather than waiting for the next query
         // refresh: with the timeline paused there may not BE a next refresh, so a
         // member just added would sit at "0 of 1" until the user scrubbed.
@@ -760,7 +766,7 @@ public class FloorMapMapPresenter
         if (schema == null || schema.isEmpty()) {
             return null;
         }
-        return FloorMapQueryBuilder.buildFactsQuery(schema, getEntity().getValueFormat());
+        return FloorMapQueryBuilder.buildFactsQuery(schema, entity.getValueFormat());
     }
 
     /// Responds to a timeline time-change event. Runs both StroomQL queries at
@@ -860,12 +866,12 @@ public class FloorMapMapPresenter
     /// exactly the situation the status line exists for; leaving it to the console would mean the
     /// only explanation is somewhere they are not looking.
     ///
-    /// Reported once per read rather than per tick. The flag is cleared in [#onRead], so
+    /// Reported once per read rather than per tick. The flag is cleared in [#read], so
     /// saving a corrected store reference says it again if it is still wrong.
     private boolean eventsStoreIsReadable() {
-        final DocRef storeRef = getEntity() == null
+        final DocRef storeRef = entity == null
                 ? null
-                : getEntity().getEventsStoreRef();
+                : entity.getEventsStoreRef();
         if (storeRef == null || FloorMapEventStoreDoc.TYPE.equals(storeRef.getType())) {
             return true;
         }
@@ -895,7 +901,7 @@ public class FloorMapMapPresenter
     /// @return the params, or `null` when the document declares none
     private List<Param> queryParams() {
         final Map<String, String> vars =
-                FloorMapQueryPresenter.buildQueryVariables(getEntity());
+                FloorMapEventQuery.buildQueryVariables(entity);
         if (vars.isEmpty()) {
             return null;
         }
@@ -911,7 +917,7 @@ public class FloorMapMapPresenter
     ///
     /// @return the StroomQL query text, or `null` if none is configured
     private String getEventsQueryToUse() {
-        return getEntity() != null ? getEntity().getEventsQuery() : null;
+        return entity != null ? entity.getEventsQuery() : null;
     }
 
     /// Applies — or refuses — a finished events read.
@@ -931,7 +937,7 @@ public class FloorMapMapPresenter
     ///
     /// @param outcome the finished baseline
     private void applyEventsOutcome(final FloorMapFullReadQueryHelper.Outcome outcome) {
-        if (closed || getEntity() == null) {
+        if (closed || entity == null) {
             return;
         }
         if (outcome.failed()) {
@@ -1022,10 +1028,10 @@ public class FloorMapMapPresenter
     /// take [FloorMapEventsQueryOrder] with it, and should be sure no reachable events query
     /// can return an unreduced result first.
     private List<FloorMapObject> parseEventRows(final TableResult tableResult) {
-        final FloorMapEventColumns eventColumns = getEntity().getEventColumns();
-        return FloorMapQueryPresenter.parseRows(
+        final FloorMapEventColumns eventColumns = entity.getEventColumns();
+        return FloorMapEventQuery.parseRows(
                 tableResult.getColumns(),
-                FloorMapQueryPresenter.latestPerEntity(
+                FloorMapEventQuery.latestPerEntity(
                         tableResult.getColumns(),
                         tableResult.getRows(),
                         eventColumns.getColumn(FloorMapEventRole.ENTITY_ID),
@@ -1058,7 +1064,7 @@ public class FloorMapMapPresenter
             orderCheckedQuery = query;
             final boolean sorts = FloorMapEventsQueryOrder.hasSortClause(query);
             final boolean keyed = FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
-                    query, getEntity().getEventColumns().getColumn(FloorMapEventRole.ENTITY_ID));
+                    query, entity.getEventColumns().getColumn(FloorMapEventRole.ENTITY_ID));
             arrivalOrderTrusted = !sorts && keyed;
             if (!arrivalOrderTrusted && !orderNoteReported) {
                 orderNoteReported = true;
@@ -1068,7 +1074,7 @@ public class FloorMapMapPresenter
                              + (sorts
                                      ? "the events query sorts."
                                      : "its "
-                                       + getEntity().getEventColumns()
+                                       + entity.getEventColumns()
                                                .getColumn(FloorMapEventRole.ENTITY_ID)
                                        + " column is not the store Key.")
                              + " The query is unchanged; only the map's reduction differs. This is"
@@ -1086,7 +1092,7 @@ public class FloorMapMapPresenter
     /// once, while a paused timeline produces exactly one events read. Cheap enough at the
     /// heartbeat's cadence, and a no-op before the first read has landed.
     private void reassessEmptyStage() {
-        if (closed || getEntity() == null || lastRawEventObjects == null) {
+        if (closed || entity == null || lastRawEventObjects == null) {
             return;
         }
         reportEmptyStage(lastRawEventObjects.size(), placeEventEntities().size());
@@ -1167,7 +1173,7 @@ public class FloorMapMapPresenter
         // "(not set)", which is the difference between "pointing at the wrong column" and "not
         // pointing anywhere" - remedies that look identical in a message listing only values.
         final StringBuilder mapping = new StringBuilder();
-        final FloorMapEventColumns eventColumns = getEntity().getEventColumns();
+        final FloorMapEventColumns eventColumns = entity.getEventColumns();
         for (final FloorMapEventRole role : FloorMapEventRole.values()) {
             if (!mapping.isEmpty()) {
                 mapping.append(", ");
@@ -1208,14 +1214,14 @@ public class FloorMapMapPresenter
         // Same guard as publishEventEntities: a facts result already in flight when the
         // tab was closed has nothing left to update, and this presenter is not unbound
         // on close so the callback still arrives.
-        if (closed || getEntity() == null) {
+        if (closed || entity == null) {
             return;
         }
         // Column matching and row parsing live in FloorMapFactTableParser, on the JVM side
         // of the fence, so they can be tested. What stays here is the part that genuinely
         // needs the presenter: resolving aliases from the document's schema, and the side
         // effects below.
-        final ValueFormat vf = getEntity().getValueFormat();
+        final ValueFormat vf = entity.getValueFormat();
         final Map<Role, String> aliasByRole = new HashMap<>();
         for (final Role role : FACT_COLUMN_ROLES) {
             final String alias = columnAliasForRole(role, vf);
@@ -1232,7 +1238,7 @@ public class FloorMapMapPresenter
 
         // Facts paint in the configured type z-order (order backgrounds first on
         // the Settings tab so they sit behind); events draw on top.
-        canvas.setTypeStyles(getEntity().getTypeStyles());
+        canvas.setTypeStyles(entity.getTypeStyles());
         canvas.setFacts(facts);
 
         // Static facts (objects, backgrounds, areas) belong in the tracking
@@ -1257,7 +1263,7 @@ public class FloorMapMapPresenter
     /// method only asks. Two call sites ask it: [#onTimeChange], which covers playback and
     /// every timeline move, and the `factsCadenceTimer` heartbeat, which covers a visible but
     /// stationary timeline — where no tick fires and nothing else would ever ask.
-    /// [#refresh()] and [#onRead] reach it too, but transitively through
+    /// [#refresh()] and [#read] reach it too, but transitively through
     /// [#onTimeChange], so they are not separate paths to keep working.
     ///
     /// Skipped while one is in flight. Issuing again would destroy it and, if a read takes longer
@@ -1288,7 +1294,7 @@ public class FloorMapMapPresenter
     /// history is strictly better: stale beats empty, and the previous history is usually still
     /// right, since facts change weekly.
     private void applyFactsHistoryOutcome(final FloorMapFullReadQueryHelper.Outcome outcome) {
-        if (closed || getEntity() == null) {
+        if (closed || entity == null) {
             return;
         }
         if (outcome.failed()) {
@@ -1337,7 +1343,7 @@ public class FloorMapMapPresenter
     /// change rate the snapshot is identical on essentially every tick, so skipping is the normal
     /// path and doing the work is the exception.
     private void applyFactSnapshot(final long time) {
-        if (closed || getEntity() == null || !factHistory.isLoaded()) {
+        if (closed || entity == null || !factHistory.isLoaded()) {
             return;
         }
         final List<Row> snapshot = factHistory.snapshotAt(time);
@@ -1664,9 +1670,9 @@ public class FloorMapMapPresenter
 
     /// The document's histogram query, or the generated default where it sets none.
     private String histogramQuery() {
-        final String configured = getEntity() == null
+        final String configured = entity == null
                 ? null
-                : getEntity().getHistogramQuery();
+                : entity.getHistogramQuery();
         return configured == null || configured.trim().isEmpty()
                 ? FloorMapQueryBuilder.defaultHistogramQuery()
                 : configured;
@@ -1674,9 +1680,9 @@ public class FloorMapMapPresenter
 
     /// The document's extent query, or the generated default where it sets none.
     private String extentQuery() {
-        final String configured = getEntity() == null
+        final String configured = entity == null
                 ? null
-                : getEntity().getExtentQuery();
+                : entity.getExtentQuery();
         return configured == null || configured.trim().isEmpty()
                 ? FloorMapQueryBuilder.defaultExtentQuery()
                 : configured;
@@ -1712,9 +1718,7 @@ public class FloorMapMapPresenter
     /// accepts entity data for this document's UUID. A reopened copy of the
     /// document shares that UUID, so the dead tab's query results land on the live
     /// tab's canvas.
-    @Override
-    public void onClose() {
-        super.onClose();
+    private void onClose() {
         closed = true;
         floorMapTimeline.pause();
         factsCadenceTimer.cancel();
@@ -1738,7 +1742,7 @@ public class FloorMapMapPresenter
     /// state is corrected on a tick, and no tick fires while the tab is hidden and paused. So this
     /// is the catch-up, and it is why no timer is needed.
     public void refresh() {
-        if (getEntity() != null) {
+        if (entity != null) {
             // Becoming visible is the case the 60 s cadence deliberately does not try to serve:
             // someone who has just written a fact and wants to see it is, almost by definition,
             // about to look at the map. So re-read now rather than waiting out the interval.
@@ -1781,26 +1785,13 @@ public class FloorMapMapPresenter
         canvas.setInitialViewListener(listener);
     }
 
-    public interface FloorMapMapView extends View {
-
-        /// Shows the map canvas.
-        ///
-        /// @param view Its view.
-        void setMapView(IsWidget view);
-
-        /// Shows the right-hand dock beside the map.
-        ///
-        /// @param view Its view.
-        void setDockView(IsWidget view);
-
-        /// Shows the timeline below the map.
-        ///
-        /// @param view Its view.
-        void setTimelineView(IsWidget timeline);
-
-        /// Shows or hides the right-hand dock, preserving its dragged width.
-        ///
-        /// @param visible `true` to show the dock, `false` to hide it
-        void setDockVisible(boolean visible);
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 }

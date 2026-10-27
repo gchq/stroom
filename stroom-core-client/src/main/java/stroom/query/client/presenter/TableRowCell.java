@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.query.api.Column;
-import stroom.query.client.component.AnnotationMenuController;
 import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -27,14 +26,19 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
+/// A query result table's cell: a row's value for a column, with the context menu items its owner
+/// gives for the row (e.g. annotating it).
 public class TableRowCell extends AbstractCell<TableRow> implements HasContextMenus<TableRow> {
 
-    private final AnnotationMenuController annotationManager;
+    private final Function<List<TableRow>, List<Item>> menuItems;
     private final Column column;
 
-    public TableRowCell(final AnnotationMenuController annotationManager, final Column column) {
-        this.annotationManager = annotationManager;
+    /// @param menuItems Gives the context menu items for rows, e.g. the table's annotation menu's.
+    /// @param column    The column whose value the cell shows.
+    public TableRowCell(final Function<List<TableRow>, List<Item>> menuItems, final Column column) {
+        this.menuItems = menuItems;
         this.column = column;
     }
 
@@ -50,7 +54,7 @@ public class TableRowCell extends AbstractCell<TableRow> implements HasContextMe
     @Override
     public List<Item> getContextMenuItems(final Context context, final TableRow value) {
         if (value != null) {
-            return annotationManager.getMenuItems(Collections.singletonList(value));
+            return menuItems.apply(Collections.singletonList(value));
         }
         return Collections.emptyList();
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -68,7 +68,7 @@ import java.util.function.Consumer;
 ///   after both.
 ///
 /// So rows are held as they arrive and handed over only on the running→idle edge, together
-/// with whether the search reported an error. This is the pattern [FloorMapQueryPresenter]
+/// with whether the search reported an error. This is the pattern [FloorMapQueryController]
 /// already uses and documents, including its guard against acting on the "not searching" that the
 /// *start* of the next run also reports.
 class FloorMapFullReadQueryHelper {

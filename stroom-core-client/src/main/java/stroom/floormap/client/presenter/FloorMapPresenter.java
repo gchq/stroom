@@ -21,12 +21,13 @@ import stroom.docref.DocRef;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.document.asset.client.presenter.DocumentAssetsTabProvider;
 import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.ControllerTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownTabProvider;
+import stroom.floormap.client.component.FloorMapEditorController;
+import stroom.floormap.client.component.FloorMapMapController;
+import stroom.floormap.client.component.FloorMapQueryController;
 import stroom.floormap.client.component.FloorMapSettingsController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
@@ -60,10 +61,13 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
     private final DocumentAssetsTabController<FloorMapDoc> assetsTab;
     private final DocumentAssetsTabProvider<FloorMapDoc> assetsTabProvider;
-    private FloorMapMapPresenter floorMapMapPresenter;
-    private FloorMapEditorPresenter floorMapEditorPresenter;
+    private FloorMapMapController floorMapMapPresenter;
+    // The Map and Editor tabs, which tell whether a tab shown is theirs
+    private final ControllerTabProvider<FloorMapMapController, FloorMapDoc> mapTab;
+    private final ControllerTabProvider<FloorMapEditorController, FloorMapDoc> editorTab;
+    private FloorMapEditorController floorMapEditorPresenter;
     private FloorMapSettingsController floorMapSettings;
-    private FloorMapQueryPresenter eventsQueryPresenter;
+    private FloorMapQueryController eventsQueryPresenter;
 
     /// Tracks the presenter that was active before the most recent tab switch.
     /// Used to pause the timeline when the user navigates away from the Map or
@@ -89,19 +93,19 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     @Inject
     public FloorMapPresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final Provider<FloorMapMapPresenter> floorMapMapPresenterProvider,
-                             final Provider<FloorMapEditorPresenter> floorMapEditorPresenterProvider,
+                             final Provider<FloorMapMapController> floorMapMapPresenterProvider,
+                             final Provider<FloorMapEditorController> floorMapEditorPresenterProvider,
                              final Provider<FloorMapSettingsController> floorMapSettingsProvider,
                              final Provider<MarkdownEditController> markdownEditProvider,
-                             final Provider<FloorMapQueryPresenter> floorMapQueryPresenterProvider,
+                             final Provider<FloorMapQueryController> floorMapQueryPresenterProvider,
                              final DocumentUserPermissionsTabProvider<FloorMapDoc> documentUserPermissionsTabProvider,
                              final DocumentAssetsTabController<FloorMapDoc> assetsTab) {
         super(eventBus, view);
         this.assetsTab = own(assetsTab);
         this.assetsTabProvider = new DocumentAssetsTabProvider<>(eventBus, assetsTab);
 
-        addTab(MAP, new DocTabProvider<>(() -> {
-            floorMapMapPresenter = make(floorMapMapPresenterProvider);
+        mapTab = new ControllerTabProvider<>(getEventBus(), () -> {
+            floorMapMapPresenter = floorMapMapPresenterProvider.get();
             // Its events' types surface as provisional layers in the Editor's Layers panel
             floorMapMapPresenter.setOnEventData(objects -> {
                 if (floorMapEditorPresenter != null) {
@@ -117,10 +121,11 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 }
             });
             return floorMapMapPresenter;
-        }));
+        }, FloorMapMapController::read, FloorMapMapController::write);
+        addTab(MAP, mapTab);
 
-        addTab(EDITOR, new DocTabProvider<>(() -> {
-            floorMapEditorPresenter = make(floorMapEditorPresenterProvider);
+        editorTab = new ControllerTabProvider<>(getEventBus(), () -> {
+            floorMapEditorPresenter = floorMapEditorPresenterProvider.get();
             // Adopt the Map tab's initial zoom + translation, if it has fitted
             // already, so the Editor opens on the same view. If the Editor is
             // opened first this is null and it fits its own content locally.
@@ -148,48 +153,37 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             // via the Editor's own onWrite. The Settings tab does not manage them,
             // so no cross-tab sync is needed.
             return floorMapEditorPresenter;
+        }, FloorMapEditorController::read, FloorMapEditorController::write);
+        addTab(EDITOR, editorTab);
+
+        addTab(EVENTS_QUERY, new ControllerTabProvider<>(getEventBus(), () -> {
+            eventsQueryPresenter = floorMapQueryPresenterProvider.get();
+            // Only an edit on this tab (its query, or its column dropdowns) marks the floor map
+            // dirty; it once heard every ChangeEvent on the app-wide bus, some per keystroke
+            eventsQueryPresenter.setOnChange(FloorMapPresenter.this::onChange);
+            // Its results are drawn on the Map tab, and their types surface as provisional
+            // layers in the Editor's Layers panel
+            eventsQueryPresenter.setOnEventData(objects -> {
+                if (floorMapMapPresenter != null) {
+                    floorMapMapPresenter.showQueryEvents(objects);
+                }
+                if (floorMapEditorPresenter != null) {
+                    floorMapEditorPresenter.addEventTypes(objects);
+                }
+            });
+            return eventsQueryPresenter;
+        }, (presenter, docRef, document) -> {
+            presenter.read(docRef, document.getEventsQuery(), document.getEventsQueryTimeRange(),
+                    document.getEventsQueryTablePreferences(), document.getEventColumns(), true,
+                    FloorMapEventQuery.buildQueryVariables(document));
+        }, (presenter, document) -> {
+            return document.copy()
+                    .eventsQuery(presenter.getQuery())
+                    .eventsQueryTimeRange(presenter.getQueryTimeRange())
+                    .eventsQueryTablePreferences(presenter.getQueryTablePreferences())
+                    .eventColumns(presenter.getEventColumns())
+                    .build();
         }));
-
-        addTab(EVENTS_QUERY, new AbstractTabProvider<FloorMapDoc, FloorMapQueryPresenter>() {
-            @Override
-            protected FloorMapQueryPresenter createPresenter() {
-                eventsQueryPresenter = floorMapQueryPresenterProvider.get();
-                // Only an edit on this tab (its query, or its column dropdowns) marks the floor map
-                // dirty; it once heard every ChangeEvent on the app-wide bus, some per keystroke
-                eventsQueryPresenter.setOnChange(FloorMapPresenter.this::onChange);
-                // Its results are drawn on the Map tab, and their types surface as provisional
-                // layers in the Editor's Layers panel
-                eventsQueryPresenter.setOnEventData(objects -> {
-                    if (floorMapMapPresenter != null) {
-                        floorMapMapPresenter.showQueryEvents(objects);
-                    }
-                    if (floorMapEditorPresenter != null) {
-                        floorMapEditorPresenter.addEventTypes(objects);
-                    }
-                });
-                return eventsQueryPresenter;
-            }
-
-            @Override
-            public void onRead(final FloorMapQueryPresenter presenter,
-                               final DocRef docRef,
-                               final FloorMapDoc document) {
-                presenter.read(docRef, document.getEventsQuery(), document.getEventsQueryTimeRange(),
-                        document.getEventsQueryTablePreferences(), document.getEventColumns(), true,
-                        FloorMapQueryPresenter.buildQueryVariables(document));
-            }
-
-            @Override
-            public FloorMapDoc onWrite(final FloorMapQueryPresenter presenter,
-                                       final FloorMapDoc document) {
-                return document.copy()
-                        .eventsQuery(presenter.getQuery())
-                        .eventsQueryTimeRange(presenter.getQueryTimeRange())
-                        .eventsQueryTablePreferences(presenter.getQueryTablePreferences())
-                        .eventColumns(presenter.getEventColumns())
-                        .build();
-            }
-        });
 
         addTab(SETTINGS, new ControllerTabProvider<>(getEventBus(), () -> {
             floorMapSettings = floorMapSettingsProvider.get();
@@ -249,9 +243,9 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     }
 
     private void onContentTabVisible(final boolean visible) {
-        if (previousContent == floorMapMapPresenter && floorMapMapPresenter != null) {
+        if (mapTab.isPresenter(previousContent)) {
             floorMapMapPresenter.onContentTabVisible(visible);
-        } else if (previousContent == floorMapEditorPresenter && floorMapEditorPresenter != null
+        } else if (editorTab.isPresenter(previousContent)
                    && !visible) {
             // The Editor has a timeline to pause but no held state to catch up, so it is
             // deliberately one-sided - the same asymmetry afterSelectTab has.
@@ -266,18 +260,18 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     protected void afterSelectTab(final MyPresenterWidget<?> content) {
         // Pause whichever timeline-bearing tab the user just left.
         if (previousContent != content) {
-            if (previousContent == floorMapMapPresenter && floorMapMapPresenter != null) {
+            if (mapTab.isPresenter(previousContent)) {
                 // Not just pauseTimeline(): leaving the Map for a sibling tab hides it just as
                 // surely as leaving the document does, and its facts cadence should stop either way.
                 floorMapMapPresenter.onContentTabVisible(false);
-            } else if (previousContent == floorMapEditorPresenter && floorMapEditorPresenter != null) {
+            } else if (editorTab.isPresenter(previousContent)) {
                 floorMapEditorPresenter.pauseTimeline();
             }
 
             // Returning to the Map tab re-reads facts so edits saved from the
             // Editor tab (moved objects, new icons/backgrounds) are visible, and
             // restarts the cadence the branch above stopped.
-            if (content == floorMapMapPresenter && floorMapMapPresenter != null
+            if (mapTab.isPresenter(content)
                     && previousContent != null) {
                 floorMapMapPresenter.onContentTabVisible(true);
             }
@@ -320,7 +314,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     ///
     /// The returned [java.util.function.BiConsumer] first flushes any
     /// pending Editor-tab changes via
-    /// [FloorMapEditorPresenter#onSave(FloorMapDoc, Consumer)], then on
+    /// [FloorMapEditorController#onSave(FloorMapDoc, Consumer)], then on
     /// success delegates to [DocumentAssetsTabController#onSave]
     /// to persist any associated binary assets.
     ///

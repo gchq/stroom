@@ -901,7 +901,7 @@ public class TableController extends DashboardComponentController
     private void addColumn(final Column column) {
         final com.google.gwt.user.cellview.client.Column<TableRow, TableRow> col =
                 new com.google.gwt.user.cellview.client.IdentityColumn<TableRow>(
-                        new TableRowCell(annotationManager, column));
+                        new TableRowCell(annotationManager::getMenuItems, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         // A wrapping column's rows vary in height, which the grid must know (it then draws every

@@ -1310,3 +1310,9 @@
     font-size: 11px;
     color: var(--text-color--low-emphasis);
 }
+
+/* A floor map's timeline: a compact bar of a fixed height above (Editor) or below (Map) what fills
+   the rest of the tab, and not resizable */
+.floormap-timeline-strip {
+    flex: 0 0 110px;
+}

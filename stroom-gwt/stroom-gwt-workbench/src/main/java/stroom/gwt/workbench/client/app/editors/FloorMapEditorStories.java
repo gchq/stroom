@@ -17,7 +17,8 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.floormap.client.presenter.FloorMapEditorPresenter;
+import stroom.entity.client.presenter.ControllerTabProvider;
+import stroom.floormap.client.component.FloorMapEditorController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
@@ -39,7 +40,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The `App/Editors/FloorMapEditor` stories, showing Stroom's real [FloorMapEditorPresenter] (a
+/// The `App/Editors/FloorMapEditor` stories, showing Stroom's real [FloorMapEditorController] (a
 /// Floor Map's 'Editor' tab: the map canvas, its timeline and its Layers panel) with fake REST
 /// replies.
 ///
@@ -75,7 +76,7 @@ public final class FloorMapEditorStories {
 
     private static final String FIND = "/sqltemporalstore/v1/find";
 
-    // FloorMapEditorPresenter.DISCOVER_PAGE_SIZE
+    // FloorMapEditorController.DISCOVER_PAGE_SIZE
     private static final int DISCOVER_PAGE_SIZE = 10_000;
 
     // Discover's first page: two desks, and more to come (the page response isn't exact)
@@ -146,6 +147,15 @@ public final class FloorMapEditorStories {
                     play.click(play.getByRole("button", "Timeline help"));
                     play.expect(screen.findByText("Timeline", "h4")).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // The Fact List and Time List show below the timeline, filling the rest of the bottom
+                // strip (they were given no height when the strip was a DockLayoutPanel)
+                .story("FactAndTimeLists", FloorMapEditorStories::render)
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelector(CANVAS)).toHaveAttribute("role", "group"));
+                    play.expect(play.getByRole("grid", "Facts").height()).toBeGreaterThan(50.0);
+                    play.expect(play.getByRole("grid", "Fact Times").height()).toBeGreaterThan(50.0);
+                    DocEditors.expectNoProblems(play);
                 })
                 // Shift+F10 and the context menu key, the standard keys for a context menu, open the
                 // focused canvas's menu, as Enter and Space do. The menu is named for what it acts
@@ -361,7 +371,9 @@ public final class FloorMapEditorStories {
         return DocEditors.render(context, fixtures, false,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
-                        injector.getFloorMapEditorPresenter(),
+                        // Shown as the document shows its Editor tab
+                        new ControllerTabProvider<>(harness.getEventBus(), injector::getFloorMapEditor,
+                                FloorMapEditorController::read, FloorMapEditorController::write).getPresenter(),
                         DocResource.of(
                                 restFactory -> restFactory.create(resource)
                                         .method(res -> res.fetch(DOC_REF.getUuid())),

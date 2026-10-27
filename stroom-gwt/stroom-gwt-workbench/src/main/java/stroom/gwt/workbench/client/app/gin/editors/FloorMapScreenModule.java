@@ -16,17 +16,13 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.floormap.client.presenter.FloorMapEditorPresenter;
-import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.client.presenter.FloorMapMapPresenter;
-import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
-import stroom.floormap.client.view.FloorMapEditorViewImpl;
-import stroom.floormap.client.view.FloorMapMapViewImpl;
+import stroom.floormap.client.component.FloorMapEditorController;
+import stroom.floormap.client.component.FloorMapMapController;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FloorMapModule`
 /// (`stroom/floormap/client/gin/FloorMapModule.java`) that a floor map's Editor tab
-/// ([FloorMapEditorPresenter]), Map tab ([FloorMapMapPresenter], with its Tracking, Groups and
+/// ([FloorMapEditorController]), Map tab ([FloorMapMapController], with its Tracking, Groups and
 /// cluster member lists) need, and the dialog that initialises a new floor map
 /// (`FloorMapInitController`), without their plugins and app services.
 public class FloorMapScreenModule extends AbstractPresenterModule {
@@ -34,11 +30,5 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
     /// Binds the presenters and views.
     @Override
     protected void configure() {
-        bindPresenterWidget(FloorMapEditorPresenter.class,
-                FloorMapEditorView.class,
-                FloorMapEditorViewImpl.class);
-        bindPresenterWidget(FloorMapMapPresenter.class,
-                FloorMapMapView.class,
-                FloorMapMapViewImpl.class);
     }
 }

@@ -14,33 +14,22 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.presenter;
+package stroom.floormap.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.component.FactObject;
-import stroom.floormap.client.component.FloorMapCanvasController;
-import stroom.floormap.client.component.FloorMapDockController;
-import stroom.floormap.client.component.FloorMapFactListController;
-import stroom.floormap.client.component.FloorMapLayerStyleController;
-import stroom.floormap.client.component.FloorMapLayers;
-import stroom.floormap.client.component.FloorMapObjectEditController;
-import stroom.floormap.client.component.FloorMapSetScaleController;
-import stroom.floormap.client.component.FloorMapTimeListController;
-import stroom.floormap.client.component.FloorMapTimelineController;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.editor.FloorMapFactEndMessages;
 import stroom.floormap.client.editor.FloorMapPendingChanges;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapObject;
-import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
+import stroom.floormap.client.presenter.MapContextMenu;
 import stroom.floormap.client.value.FloorMapEntryParser;
 import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.client.value.ValueAccessor;
@@ -63,20 +52,21 @@ import stroom.sqlstore.shared.FetchAtTimeRequest;
 import stroom.sqlstore.shared.SqlTemporalStoreResource;
 import stroom.sqlstore.shared.TemporalStoreTimeRange;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -135,8 +125,8 @@ import java.util.function.Consumer;
 /// are reloaded. On failure a top-level error is shown and the staged changes are
 /// **kept** for a retry - the panels are deliberately not reloaded, as that would
 /// discard the user's in-progress edits. Replay is idempotent.
-public class FloorMapEditorPresenter
-        extends DocPresenter<FloorMapEditorView, FloorMapDoc>
+public class FloorMapEditorController
+        extends Controller
         implements HasToolbar {
 
     /// REST endpoint
@@ -155,6 +145,9 @@ public class FloorMapEditorPresenter
     // Child presenters
     // -----------------------------------------------------------------------
 
+    private final FloorMapEditor view;
+    // The document as it was read
+    private FloorMapDoc entity;
     private final RestFactory restFactory;
     private final FloorMapCanvasController canvas;
     private final FloorMapTimelineController floorMapTimeline;
@@ -219,19 +212,23 @@ public class FloorMapEditorPresenter
     // -----------------------------------------------------------------------
 
     @Inject
-    public FloorMapEditorPresenter(final EventBus eventBus,
-                                   final FloorMapEditorView view,
-                                   final RestFactory restFactory,
-                                   final Provider<FloorMapCanvasController> canvasProvider,
-                                   final Provider<FloorMapTimelineController> timelineProvider,
-                                   final Provider<FloorMapFactListController> factListProvider,
-                                   final Provider<FloorMapTimeListController> timeListProvider,
-                                   final Provider<FloorMapObjectEditController> propertiesProvider,
-                                   final Provider<FloorMapDockController> dockProvider,
-                                   final FloorMapLayers layersPanel,
-                                   final Provider<FloorMapLayerStyleController> layerStyleProvider,
-                                   final Provider<FloorMapSetScaleController> setScaleProvider) {
-        super(eventBus, view);
+    public FloorMapEditorController(final EventBus eventBus,
+                                    final FloorMapEditor view,
+                                    final RestFactory restFactory,
+                                    final Provider<FloorMapCanvasController> canvasProvider,
+                                    final Provider<FloorMapTimelineController> timelineProvider,
+                                    final Provider<FloorMapFactListController> factListProvider,
+                                    final Provider<FloorMapTimeListController> timeListProvider,
+                                    final Provider<FloorMapObjectEditController> propertiesProvider,
+                                    final Provider<FloorMapDockController> dockProvider,
+                                    final FloorMapLayers layersPanel,
+                                    final Provider<FloorMapLayerStyleController> layerStyleProvider,
+                                    final Provider<FloorMapSetScaleController> setScaleProvider) {
+        super(eventBus);
+        this.view = view;
+        initWidget(view);
+        // Stops what runs in the background (e.g. the timeline's clock) when the document closes
+        onDispose(this::onClose);
         this.restFactory = restFactory;
         this.model = new FloorMapEditorModel(
                 new java.util.Random(), Console::warn);
@@ -267,7 +264,7 @@ public class FloorMapEditorPresenter
         // Show/hide the right-hand dock (the Layers panel). On by default, to
         // match FloorMapEditorViewImpl, which starts the dock visible.
         dockToggleButton = editorToolbar.toggle(
-                SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
+                SvgImage.SHOW_MENU, "Toggle Controls", view::setDockVisible);
         dockToggleButton.setPressed(true);
         // Persist a drag as a single translate of the whole selection.
         canvas.setDragHandler(this::onFactsTransformed);
@@ -302,11 +299,11 @@ public class FloorMapEditorPresenter
         // Full facts-store type-discovery scan behind the panel's Discover action.
         layersPanel.setOnDiscover(this::onDiscoverTypes);
 
-        getView().setCanvasView(canvas);
-        getView().setDockView(dock);
-        getView().setTimelineView(floorMapTimeline);
-        getView().setFactListView(floorMapFactList);
-        getView().setTimeListView(floorMapTimeList);
+        view.setCanvas(canvas);
+        view.setDock(dock);
+        view.setTimeline(floorMapTimeline);
+        view.setFactList(floorMapFactList);
+        view.setTimeList(floorMapTimeList);
 
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List
@@ -349,7 +346,7 @@ public class FloorMapEditorPresenter
         final Toolbar toolbar = new Toolbar("Floor map editor help");
         // Float the toolbar to the right-hand end of the flex toolbar container,
         // past the save and grid buttons.
-        toolbar.getElement().getStyle().setProperty("marginLeft", "auto");
+        toolbar.addStyleName("toolbar--end");
         FloorMapEditorHelp.addHelpButton(
                 toolbar, "Floor Map Editor help", "Floor Map Editor", FloorMapEditorHelp.canvas());
         return toolbar;
@@ -381,8 +378,12 @@ public class FloorMapEditorPresenter
     ///
     /// Loads the time range from the server and initialises the timeline,
     /// then fetches facts at the initial time and populates all panels.
-    @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc document) {
+    /// Shows a floor map.
+    ///
+    /// @param docRef   The floor map.
+    /// @param document The floor map.
+    public void read(final DocRef docRef, final FloorMapDoc document) {
+        this.entity = document;
         this.docUuid = docRef != null ? docRef.getUuid() : null;
         // Drop any staged doc-level edits (area upgrade / Layers type-styles)
         // that this just-read document already carries (post-save re-read).
@@ -443,26 +444,27 @@ public class FloorMapEditorPresenter
     /// *incoming* document (rather than writing the stored lists
     /// verbatim) so it stays correct regardless of the order the tabs' onWrite
     /// methods run in.
-    @Override
-    protected FloorMapDoc onWrite(final FloorMapDoc document) {
+    /// @param document The floor map.
+    /// @return A copy of it with this tab's edits.
+    public FloorMapDoc write(final FloorMapDoc document) {
         return docSession.applyToWrite(document);
     }
 
     /// The value schema in effect for this editing session: the entity's persisted
     /// schema with any pending area- or status-support upgrade applied.
     private List<FloorMapFieldMapping> valueSchema() {
-        return docSession.valueSchema(getEntity().getValueSchema());
+        return docSession.valueSchema(entity.getValueSchema());
     }
 
     /// The value accessor for the document's value format.
     private ValueAccessor accessor() {
-        return ValueAccessorFactory.forFormat(getEntity().getValueFormat());
+        return ValueAccessorFactory.forFormat(entity.getValueFormat());
     }
 
     /// The type styles in effect for this editing session (see
     /// [#valueSchema()]).
     private List<TypeStyle> typeStyles() {
-        return docSession.typeStyles(getEntity().getTypeStyles());
+        return docSession.typeStyles(entity.getTypeStyles());
     }
 
     /// The document as this editing session sees it: the loaded entity with any
@@ -471,7 +473,7 @@ public class FloorMapEditorPresenter
     /// object-edit dialog), or fill/opacity/geometry would silently resolve
     /// against the pre-upgrade schema until the document is saved.
     private FloorMapDoc sessionEntity() {
-        return docSession.sessionEntity(getEntity());
+        return docSession.sessionEntity(entity);
     }
 
     /// Sets the callback notified when area support is enabled on this document
@@ -507,7 +509,7 @@ public class FloorMapEditorPresenter
         docSession.stageTypeStyles(newTypeStyles);
         canvas.setTypeStyles(newTypeStyles);
         floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-        setDirty(true);
+        markChanged();
     }
 
     /// Scans the whole facts store for every distinct type (all keys, all times),
@@ -516,8 +518,8 @@ public class FloorMapEditorPresenter
     /// the panel's Discover action.
     private void onDiscoverTypes() {
         final Set<String> discovered = new HashSet<>(observedTypes);
-        final DocRef store = getEntity() != null
-                ? getEntity().getFactsStoreRef()
+        final DocRef store = entity != null
+                ? entity.getFactsStoreRef()
                 : null;
         if (store == null || store.getName() == null || store.getName().isEmpty()) {
             // No facts store to scan — still commit anything already observed.
@@ -600,9 +602,7 @@ public class FloorMapEditorPresenter
     /// Closing a document tab does not unbind its presenters, so a timeline
     /// left playing keeps its animation loop — and the per-tick fetches it drives
     /// — running for the rest of the session.
-    @Override
-    public void onClose() {
-        super.onClose();
+    private void onClose() {
         floorMapTimeline.pause();
     }
 
@@ -660,7 +660,7 @@ public class FloorMapEditorPresenter
                             + "have been kept, please try saving again: "
                             + error.getMessage(), null);
                 })
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -1045,7 +1045,7 @@ public class FloorMapEditorPresenter
                     valueSchema(),
                     accessor());
             if (n > 0) {
-                setDirty(true);
+                markChanged();
             }
         } catch (final Exception ex) {
             AlertEvent.fireError(this,
@@ -1069,7 +1069,7 @@ public class FloorMapEditorPresenter
                     valueSchema(),
                     accessor());
             if (changed) {
-                setDirty(true);
+                markChanged();
             }
         } catch (final Exception ex) {
             AlertEvent.fireError(this,
@@ -1162,7 +1162,7 @@ public class FloorMapEditorPresenter
                     } else {
                         model.stageVersionMove(saved, entry.getEffectiveTimeMs());
                     }
-                    setDirty(true);
+                    markChanged();
                     refreshTimeListAtTime(saved.getEffectiveTimeMs());
                     refreshCanvas();
                     return true;
@@ -1211,7 +1211,7 @@ public class FloorMapEditorPresenter
                 newEntry,
                 saved -> {
                     model.stageCreation(saved);
-                    setDirty(true);
+                    markChanged();
                     loadAtTime(model.getSelectedTime());
                     refreshTimeListAtTime(model.getSelectedTime());
                 });
@@ -1292,7 +1292,7 @@ public class FloorMapEditorPresenter
                         anyStaged |= model.stageFactDeletionForAllShards(key, forKey);
                     }
                     if (anyStaged) {
-                        setDirty(true);
+                        markChanged();
                     }
                     applySelection(new ArrayList<>());
                     loadAtTime(model.getSelectedTime());
@@ -1300,7 +1300,7 @@ public class FloorMapEditorPresenter
                 .onFailure(error -> AlertEvent.fireError(this,
                         "Could not load all versions to delete the "
                         + keys.size() + " selected objects: " + error.getMessage(), null))
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -1321,7 +1321,7 @@ public class FloorMapEditorPresenter
                 .onSuccess(result -> {
                     if (model.stageFactDeletionForAllShards(
                             key, result != null ? result.getValues() : null)) {
-                        setDirty(true);
+                        markChanged();
                     }
                     onDone.run();
                 })
@@ -1333,7 +1333,7 @@ public class FloorMapEditorPresenter
                     // stall on a single failed key.
                     onDone.run();
                 })
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -1346,7 +1346,7 @@ public class FloorMapEditorPresenter
         // Stage the deletion and compute the row to select afterwards (the item
         // above the deleted one) so the user stays in context.
         final int selectIndex = model.stageTimeEntryDeletion(entry);
-        setDirty(true);
+        markChanged();
 
         // Rebuild the Time List optimistically from the same merged view.
         final List<TemporalEntry> merged = model.buildMergedTimeList();
@@ -1611,7 +1611,7 @@ public class FloorMapEditorPresenter
         final String newKey = generateObjectKey("new");
 
         try {
-            final ValueFormat format = getEntity().getValueFormat();
+            final ValueFormat format = entity.getValueFormat();
             final ValueAccessor accessor = ValueAccessorFactory.forFormat(format);
             final ParsedValue newValue = accessor.createEmpty("entry");
             accessor.setString(newValue, pathForRole(Role.TYPE), "");
@@ -1637,7 +1637,7 @@ public class FloorMapEditorPresenter
                     entry,
                     saved -> {
                         model.stageCreation(saved);
-                        setDirty(true);
+                        markChanged();
                         model.setSelectedFactKey(saved.getKey());
 
                         // Select the new object in the Fact List and canvas
@@ -1669,7 +1669,7 @@ public class FloorMapEditorPresenter
     /// missing defaults. The merge is role-based, so customised paths for those
     /// roles are left untouched; the upgrade is staged via
     /// [FloorMapDocSession#stageAreaUpgrade] and persisted by
-    /// [#onWrite] on the next document save.
+    /// [#write] on the next document save.
     ///
     /// @param onReady the action to run once area support is available
     private void ensureAreaSupport(final Runnable onReady) {
@@ -1689,14 +1689,14 @@ public class FloorMapEditorPresenter
                         return;
                     }
                     docSession.stageAreaUpgrade(valueSchema(),
-                            getEntity().getValueFormat(), typeStyles());
+                            entity.getValueFormat(), typeStyles());
                     // Apply the styles to the live canvas so the first drawn
                     // area z-orders correctly before the document is saved, and
                     // re-hand the upgraded document to the object-edit dialog
                     // so it resolves the new roles immediately.
                     canvas.setTypeStyles(typeStyles());
                     floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-                    setDirty(true);
+                    markChanged();
                     if (areaSupportEnabledListener != null) {
                         areaSupportEnabledListener.run();
                     }
@@ -1711,7 +1711,7 @@ public class FloorMapEditorPresenter
     /// the `STATUS` schema mapping, so there is nowhere to record that a fact has
     /// been deleted. As for [#ensureAreaSupport], this offers to add the default
     /// mapping rather than refusing; the upgrade is staged via
-    /// [FloorMapDocSession#stageStatusUpgrade] and persisted by [#onWrite] on
+    /// [FloorMapDocSession#stageStatusUpgrade] and persisted by [#write] on
     /// the next document save.
     ///
     /// @param onReady the action to run once status support is available
@@ -1729,11 +1729,11 @@ public class FloorMapEditorPresenter
                     if (!ok) {
                         return;
                     }
-                    docSession.stageStatusUpgrade(valueSchema(), getEntity().getValueFormat());
+                    docSession.stageStatusUpgrade(valueSchema(), entity.getValueFormat());
                     // Re-hand the upgraded document to the object-edit dialog so it
                     // resolves the new role immediately.
                     floorMapObjectEdit.setFloorMapDoc(sessionEntity());
-                    setDirty(true);
+                    markChanged();
                     if (statusSupportEnabledListener != null) {
                         statusSupportEnabledListener.run();
                     }
@@ -1759,7 +1759,7 @@ public class FloorMapEditorPresenter
                 units -> {
                     docSession.stageMeasurementUnits(units);
                     canvas.setMeasurementUnits(units);
-                    setDirty(true);
+                    markChanged();
                 });
     }
 
@@ -1800,7 +1800,7 @@ public class FloorMapEditorPresenter
                     entry,
                     saved -> {
                         model.stageCreation(saved);
-                        setDirty(true);
+                        markChanged();
                         model.setSelectedFactKey(saved.getKey());
 
                         canvas.setSelectedObjectId(model.getSelectedFactKey());
@@ -1873,7 +1873,7 @@ public class FloorMapEditorPresenter
                     accessor);
 
             model.stageCreation(newEntry);
-            setDirty(true);
+            markChanged();
             model.setSelectedFactKey(newKey);
             return newKey;
         } catch (final Exception ex) {
@@ -1974,7 +1974,7 @@ public class FloorMapEditorPresenter
                         accessor))
                 // Not knowing is no reason to refuse: the confirmation says so instead.
                 .onFailure(error -> confirmEndFacts(endable, skipped, null, schema, accessor))
-                .taskMonitorFactory(this)
+                .taskMonitorFactory(taskMonitor())
                 .exec();
     }
 
@@ -1998,7 +1998,7 @@ public class FloorMapEditorPresenter
                         final Map<String, FloorMapEditorModel.FactEndCheck> outcomes =
                                 model.stageFactEnd(endable, schema, accessor);
                         if (outcomes.containsValue(FloorMapEditorModel.FactEndCheck.OK)) {
-                            setDirty(true);
+                            markChanged();
                         }
                         // Ended facts leave the selection, as an erased one does, so the
                         // selection-driven panels are rebuilt from what is left.
@@ -2154,7 +2154,7 @@ public class FloorMapEditorPresenter
     ///
     /// @return the map name, or `null`
     private String getMapName() {
-        final FloorMapDoc doc = getEntity();
+        final FloorMapDoc doc = entity;
         if (doc == null
                 || doc.getFactsStoreRef() == null
                 || doc.getFactsStoreRef().getName() == null
@@ -2182,36 +2182,14 @@ public class FloorMapEditorPresenter
     // -----------------------------------------------------------------------
 
     /// View interface for the Editor tab.
-    public interface FloorMapEditorView extends View {
 
-        /// Shows the interactive map canvas, in the centre of the top area.
-        ///
-        /// @param view Its view.
-        void setCanvasView(IsWidget view);
-
-        /// Shows the right-hand dock, which holds the Layers panel, beside the canvas.
-        ///
-        /// @param view Its view.
-        void setDockView(IsWidget view);
-
-        /// Shows the timeline scrubber, a fixed-height strip above the lists.
-        ///
-        /// @param view Its view.
-        void setTimelineView(IsWidget timeline);
-
-        /// Shows the Fact List, the bottom-left column.
-        ///
-        /// @param view Its view.
-        void setFactListView(IsWidget view);
-
-        /// Shows the Time List, the bottom-right column, filling the remaining space.
-        ///
-        /// @param view Its view.
-        void setTimeListView(IsWidget view);
-
-        /// Shows or hides the right-hand dock, preserving its dragged width.
-        ///
-        /// @param visible `true` to show the dock, `false` to hide it
-        void setDockVisible(boolean visible);
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 }

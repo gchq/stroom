@@ -20,24 +20,25 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client">
     <!-- One dropdown per FloorMapEventRole. Declared rather than generated so each keeps the help
-         text a human wrote for it; the impl pairs them with their roles by field. -->
+         text a human wrote for it; the component pairs them with their roles by field. Each names its
+         inner input itself (ariaLabel), as the FormGroup's label can't reach it. -->
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel ui:field="columnMappingsContainer" styleName="dock-min dock-container-horizontal form-padding form align-center">
-            <form:FormGroup identity="entityColumn" label="Entity ID" addStyleNames="margin-right-10 flex-grow-1"
+            <form:FormGroup identity="entityColumn" label="Entity ID" addStyleNames="dock-max"
                             helpText="The column identifying each entity - a person, vehicle or asset. Events are grouped by it, so each distinct value becomes one thing drawn on the map. It must name a column this query selects, by the alias the query gives it; the default query aliases it 'Entity ID'. If it names nothing the query selects, no entity reaches the map at all, even though the query still returns rows - so the map looks as though playback is switched off.">
-                <l:SelectionBox ui:field="entityIdColumn" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="entityIdColumn" addStyleNames="w-100" ariaLabel="Entity ID Column"/>
             </form:FormGroup>
-            <form:FormGroup identity="locationColumn" label="Location" addStyleNames="margin-right-10 flex-grow-1"
+            <form:FormGroup identity="locationColumn" label="Location" addStyleNames="dock-max"
                             helpText="The column holding literal coordinates, in the form 'x, y'. These are fixed at ingest: an entity placed this way stays where the event said and will NOT follow the object if it is moved in the Editor. Leave unset if your events name objects rather than positions. If both this and Location Ref are set on the same event, this one is used - it needs no lookup - and the contradiction is reported once in the console.">
-                <l:SelectionBox ui:field="locationColumn" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="locationColumn" addStyleNames="w-100" ariaLabel="Location Column"/>
             </form:FormGroup>
-            <form:FormGroup identity="locationRefColumn" label="Location Ref" addStyleNames="margin-right-10 flex-grow-1"
+            <form:FormGroup identity="locationRefColumn" label="Location Ref" addStyleNames="dock-max"
                             helpText="The column holding the key of the object the event happened at - a desk, a gate, a camera. The entity is drawn wherever that object currently is, so moving the object in the Editor moves everyone recorded as being at it, retroactively. This is usually the one you want. Leave unset if your events carry coordinates instead.">
-                <l:SelectionBox ui:field="locationRefColumn" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="locationRefColumn" addStyleNames="w-100" ariaLabel="Location Ref Column"/>
             </form:FormGroup>
-            <form:FormGroup identity="typeColumn" label="Type" addStyleNames="flex-grow-1"
+            <form:FormGroup identity="typeColumn" label="Type" addStyleNames="dock-max"
                             helpText="The column holding what kind of thing each entity is - person, vehicle, asset. Type is the layer key: it selects the entity's style and its row in the Layers panel. Optional. Left unset, or absent from the data, an entity whose ID looks like an email address is treated as a person and everything else as an object - which means a vehicle cannot be styled as one until this is mapped.">
-                <l:SelectionBox ui:field="typeColumn" addStyleNames="w-100"/>
+                <l:SelectionBox ui:field="typeColumn" addStyleNames="w-100" ariaLabel="Type Column"/>
             </form:FormGroup>
             <!-- Shown until the query has been run: before then the lists hold only the mapped columns. -->
             <g:Label ui:field="columnsHint" styleName="floormap-query-columns-hint"

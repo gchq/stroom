@@ -17,7 +17,8 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
-import stroom.floormap.client.presenter.FloorMapMapPresenter;
+import stroom.entity.client.presenter.ControllerTabProvider;
+import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
@@ -38,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// The `App/Editors/FloorMapMap` stories, showing Stroom's real [FloorMapMapPresenter] (a Floor
+/// The `App/Editors/FloorMapMap` stories, showing Stroom's real [FloorMapMapController] (a Floor
 /// Map's read-only 'Map' tab: the map canvas, its timeline and its dock of Tracking, Layers and
 /// Groups panels) with fake REST replies, for its three lists: the Tracking panel's entities
 /// (`FloorMapTrackingController`), the Groups panel's groups (`FloorMapGroupsController`) and the
@@ -389,13 +390,15 @@ public final class FloorMapMapStories {
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
         return DocEditors.render(context, fixtures, false, (harness, injector) -> {
-            final FloorMapMapPresenter presenter = injector.getFloorMapMapPresenter();
+            final FloorMapMapController presenter = injector.getFloorMapMap();
             // The tab checks every 10 seconds whether its facts are due a re-read, from when it
             // reads the document until it is closed (which a story never does)
             harness.addTimer(factsCadenceTimer(presenter));
             DocEditors.open(harness,
                     DOC_REF,
-                    presenter,
+                    // Shown as the document shows its Map tab
+                    new ControllerTabProvider<>(harness.getEventBus(), () -> presenter,
+                            FloorMapMapController::read, FloorMapMapController::write).getPresenter(),
                     DocResource.of(
                             restFactory -> restFactory.create(resource)
                                     .method(res -> res.fetch(DOC_REF.getUuid())),
@@ -404,8 +407,8 @@ public final class FloorMapMapStories {
         });
     }
 
-    // FloorMapMapPresenter's private facts cadence timer
-    private static native Timer factsCadenceTimer(FloorMapMapPresenter presenter) /*-{
-        return presenter.@stroom.floormap.client.presenter.FloorMapMapPresenter::factsCadenceTimer;
+    // FloorMapMapController's private facts cadence timer
+    private static native Timer factsCadenceTimer(FloorMapMapController presenter) /*-{
+        return presenter.@stroom.floormap.client.component.FloorMapMapController::factsCadenceTimer;
     }-*/;
 }

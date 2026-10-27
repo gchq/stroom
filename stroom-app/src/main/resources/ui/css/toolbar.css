@@ -76,3 +76,8 @@
     margin: 2px 1px;
     background-color: var(--border-color);
 }
+
+/* A toolbar pushed to the end of its row, e.g. a floor map editor's help toolbar */
+.toolbar--end {
+    margin-left: auto;
+}

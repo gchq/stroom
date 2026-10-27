@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.value;
 
+import stroom.floormap.client.component.FloorMapMapController;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.query.api.Column;
@@ -33,7 +34,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Covers the Map tab's ingest path, which until this class was extracted from
-/// `FloorMapMapPresenter` could not be tested at all — it was a private method on a GWT
+/// `FloorMapMapController` could not be tested at all — it was a private method on a GWT
 /// presenter, so the largest single body of parsing logic in the feature had no coverage while
 /// its structured-value sibling [FloorMapEntryParser] had a full suite.
 class TestFloorMapFactTableParser {

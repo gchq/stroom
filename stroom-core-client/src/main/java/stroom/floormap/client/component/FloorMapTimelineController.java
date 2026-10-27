@@ -487,7 +487,7 @@ public class FloorMapTimelineController extends Controller {
     }
 
     /// Registers a callback to be invoked when the user changes the visible time range
-    /// via the settings popup. Used by `FloorMapMapPresenter` to re-run the histogram
+    /// via the settings popup. Used by `FloorMapMapController` to re-run the histogram
     /// query over the new range.
     ///
     /// @param handler Called whenever start or end time changes.
@@ -709,8 +709,8 @@ public class FloorMapTimelineController extends Controller {
     /// Records the earliest and latest event times in the data, which is the range "Show All"
     /// fits the timeline to, and enables the button.
     ///
-    /// Called by `FloorMapMapPresenter` when its extent query completes and by
-    /// `FloorMapEditorPresenter` from the facts store's range.
+    /// Called by `FloorMapMapController` when its extent query completes and by
+    /// `FloorMapEditorController` from the facts store's range.
     ///
     /// An extent Show All cannot fit to — a store whose events share one timestamp — is
     /// treated as no extent at all: the button is disabled rather than offered as a no-op.

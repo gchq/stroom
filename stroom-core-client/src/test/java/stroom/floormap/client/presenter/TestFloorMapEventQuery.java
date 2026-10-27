@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.floormap.client.component.FloorMapQueryController;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.query.api.Column;
@@ -31,10 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Covers what the Events Query column dropdowns offer.
 ///
 /// Before a run the dropdowns were empty, so no role could be changed. They are now seeded from
-/// the mapping's own column names, which is what [FloorMapQueryPresenter#mappedColumnNames] returns.
+/// the mapping's own column names, which is what [FloorMapQueryController#mappedColumnNames] returns.
 /// After a run they offered the result's hidden special columns too, such as `__event_id__`;
-/// [FloorMapQueryPresenter#selectableColumnNames] leaves those out.
-class TestFloorMapQueryPresenter {
+/// [FloorMapQueryController#selectableColumnNames] leaves those out.
+class TestFloorMapEventQuery {
 
     @Test
     void testFullMappingGivesEveryColumnInRoleOrder() {
@@ -44,7 +45,7 @@ class TestFloorMapQueryPresenter {
                 .with(FloorMapEventRole.LOCATION, "XY")
                 .with(FloorMapEventRole.ENTITY_ID, "UserId");
 
-        final List<String> names = FloorMapQueryPresenter.mappedColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.mappedColumnNames(columns);
 
         assertThat(names).containsExactly("UserId", "XY", "Desk", "Kind");
     }
@@ -56,7 +57,7 @@ class TestFloorMapQueryPresenter {
                 .with(FloorMapEventRole.LOCATION, null)
                 .with(FloorMapEventRole.LOCATION_REF, "Desk");
 
-        final List<String> names = FloorMapQueryPresenter.mappedColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.mappedColumnNames(columns);
 
         assertThat(names).containsExactly("UserId", "Desk");
     }
@@ -67,7 +68,7 @@ class TestFloorMapQueryPresenter {
                 .with(FloorMapEventRole.ENTITY_ID, "UserId")
                 .with(FloorMapEventRole.TYPE, "UserId");
 
-        final List<String> names = FloorMapQueryPresenter.mappedColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.mappedColumnNames(columns);
 
         assertThat(names).containsExactly("UserId");
     }
@@ -79,14 +80,14 @@ class TestFloorMapQueryPresenter {
                 .with(FloorMapEventRole.LOCATION, "")
                 .with(FloorMapEventRole.TYPE, "   ");
 
-        final List<String> names = FloorMapQueryPresenter.mappedColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.mappedColumnNames(columns);
 
         assertThat(names).containsExactly("UserId");
     }
 
     @Test
     void testDefaultsGiveEachRolesDefaultColumn() {
-        final List<String> names = FloorMapQueryPresenter.mappedColumnNames(FloorMapEventColumns.defaults());
+        final List<String> names = FloorMapEventQuery.mappedColumnNames(FloorMapEventColumns.defaults());
 
         assertThat(names).containsExactly(
                 FloorMapEventRole.ENTITY_ID.getDefaultColumn(),
@@ -97,14 +98,14 @@ class TestFloorMapQueryPresenter {
 
     @Test
     void testEmptyMappingGivesEmptyList() {
-        assertThat(FloorMapQueryPresenter.mappedColumnNames(new FloorMapEventColumns(null)))
+        assertThat(FloorMapEventQuery.mappedColumnNames(new FloorMapEventColumns(null)))
                 .isNotNull()
                 .isEmpty();
     }
 
     @Test
     void testNullMappingGivesEmptyList() {
-        assertThat(FloorMapQueryPresenter.mappedColumnNames(null))
+        assertThat(FloorMapEventQuery.mappedColumnNames(null))
                 .isNotNull()
                 .isEmpty();
     }
@@ -118,7 +119,7 @@ class TestFloorMapQueryPresenter {
         columns.add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
         columns.add(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
 
-        final List<String> names = FloorMapQueryPresenter.selectableColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.selectableColumnNames(columns);
 
         assertThat(names).containsExactly("UserId", "Desk");
     }
@@ -130,7 +131,7 @@ class TestFloorMapQueryPresenter {
         columns.add(column("UserId"));
         columns.add(Column.builder().id("Desk").name("Desk").special(false).build());
 
-        final List<String> names = FloorMapQueryPresenter.selectableColumnNames(columns);
+        final List<String> names = FloorMapEventQuery.selectableColumnNames(columns);
 
         assertThat(names).containsExactly("Type", "UserId", "Desk");
     }
@@ -141,7 +142,7 @@ class TestFloorMapQueryPresenter {
         columns.add(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
         columns.add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
 
-        assertThat(FloorMapQueryPresenter.selectableColumnNames(columns)).isEmpty();
+        assertThat(FloorMapEventQuery.selectableColumnNames(columns)).isEmpty();
     }
 
     @Test
@@ -149,8 +150,8 @@ class TestFloorMapQueryPresenter {
         final List<Column> columns = new ArrayList<>();
         columns.add(null);
 
-        assertThat(FloorMapQueryPresenter.selectableColumnNames(columns)).isEmpty();
-        assertThat(FloorMapQueryPresenter.selectableColumnNames(null))
+        assertThat(FloorMapEventQuery.selectableColumnNames(columns)).isEmpty();
+        assertThat(FloorMapEventQuery.selectableColumnNames(null))
                 .isNotNull()
                 .isEmpty();
     }

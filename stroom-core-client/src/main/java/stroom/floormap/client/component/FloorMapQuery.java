@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.view;
+package stroom.floormap.client.component;
 
-import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.item.client.SelectionBox;
-import stroom.util.client.Console;
-import stroom.widget.presenter.client.View;
-import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.component.client.Component;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -36,16 +33,12 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
 
-/// View implementation for the floor map query configuration panel.
-///
-/// Embeds the standard query editor and exposes column-mapping dropdowns that
-/// let the user select which result columns should be used as the entity ID and
-/// location ID when plotting facts on the floor map.
-public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView {
+/// A floor map's Events Query tab: the query (shown here by its controller), below the dropdowns
+/// that choose which of its result columns hold each entity's id, location, location ref and type.
+public class FloorMapQuery extends Component {
 
-    private final Widget widget;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// The dropdown for each role.
     ///
@@ -71,40 +64,32 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
     @UiField
     Label columnsHint;
 
-    @Inject
-    public FloorMapQueryViewImpl(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+    private Runnable onColumnChange = () -> {
+    };
+
+    /// Makes the tab, with no query and no columns.
+    public FloorMapQuery() {
+        initWidget(BINDER.createAndBindUi(this));
 
         boxesByRole.put(FloorMapEventRole.ENTITY_ID, entityIdColumn);
         boxesByRole.put(FloorMapEventRole.LOCATION, locationColumn);
         boxesByRole.put(FloorMapEventRole.LOCATION_REF, locationRefColumn);
         boxesByRole.put(FloorMapEventRole.TYPE, typeColumn);
 
-        // The FormGroups around these carry identity="..." and a visible label, but SelectionBox is
-        // a composite whose root is a wrapper div - so setIdentity() puts the id on the wrapper and
-        // the <label for> resolves to a non-labelable element, naming nothing. Every box announced
-        // as unnamed. Name the inner input directly instead; the label text is duplicated here
-        // deliberately, since the FormGroup's copy cannot reach it.
-        boxesByRole.forEach((role, box) -> {
-            final String label = role.getDisplayName() + " Column";
-            if (!FloorMapAria.labelInnerControl(box, label)) {
-                Console.error("Floor map: could not find the input inside the '" + label
-                              + "' selection box to give it an accessible name.");
-            }
-        });
+        boxesByRole.values().forEach(box -> box.addValueChangeHandler(e -> onColumnChange.run()));
     }
 
-    @Override
-    public void setQueryEditView(final IsWidget queryEdit) {
+    /// @param queryEdit The query.
+    public void setQueryEdit(final IsWidget queryEdit) {
         queryEditContainer.setWidget(queryEdit);
     }
 
-    @Override
+    /// @param visible Whether the column dropdowns show.
     public void setColumnMappingsVisible(final boolean visible) {
         columnMappingsContainer.setVisible(visible);
     }
 
-    @Override
+    /// @param visible Whether the hint to run the query, to list its columns, shows.
     public void setColumnsHintVisible(final boolean visible) {
         columnsHint.setVisible(visible);
     }
@@ -115,7 +100,8 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
     /// The empty entry is what makes a role *unmappable* as well as mappable, which
     /// matters for both location roles: a store whose events only carry fact keys has no coordinate
     /// column, and pointing the role at some other column would be worse than leaving it unset.
-    @Override
+    ///
+    /// @param columnNames The query's result columns.
     public void setAvailableColumns(final List<String> columnNames) {
         boxesByRole.values().forEach(box -> populateSelectionBox(box, columnNames));
     }
@@ -131,7 +117,7 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         }
     }
 
-    @Override
+    /// @param eventColumns Which columns hold each role, or null for none.
     public void setEventColumns(final FloorMapEventColumns eventColumns) {
         boxesByRole.forEach((role, box) -> {
             final String column = eventColumns == null ? null : eventColumns.getColumn(role);
@@ -140,26 +126,15 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         });
     }
 
-    /// Registers a handler notified whenever the user changes any role's dropdown.
+    /// Runs whenever the user changes any role's dropdown, so that the mapping marks the document
+    /// changed on its own, not only with an edit to the query.
     ///
-    /// Without this the mapping was **unsaveable on its own**: the tab marks the document
-    /// dirty from `addChangeHandler`, which only tracks the *query editor*, so changing
-    /// a dropdown left the save icon disabled and the edit was lost on the next tab switch. It
-    /// persisted only as a passenger on an unrelated query-text edit, which is worse than not
-    /// working — it worked sometimes.
-    ///
-    /// @param handler run on each change; `null` to remove
-    @Override
-    public void setColumnChangeHandler(final Runnable handler) {
-        //noinspection unused e
-        boxesByRole.values().forEach(box -> box.addValueChangeHandler(e -> {
-            if (handler != null) {
-                handler.run();
-            }
-        }));
+    /// @param onColumnChange What to run.
+    public void setOnColumnChange(final Runnable onColumnChange) {
+        this.onColumnChange = onColumnChange;
     }
 
-    @Override
+    /// @return Which columns hold each role.
     public FloorMapEventColumns getEventColumns() {
         FloorMapEventColumns columns = new FloorMapEventColumns(null);
         for (final Map.Entry<FloorMapEventRole, SelectionBox<String>> entry : boxesByRole.entrySet()) {
@@ -168,10 +143,12 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         return columns;
     }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
 
-    public interface Binder extends UiBinder<Widget, FloorMapQueryViewImpl> {}
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, FloorMapQuery> {
+
+    }
 }
