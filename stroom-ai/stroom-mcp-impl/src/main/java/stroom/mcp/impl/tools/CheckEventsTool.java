@@ -108,9 +108,10 @@ class CheckEventsTool extends AbstractBuiltInTool {
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(EVENTS_XML_ARG, "An <Events> document, e.g. step output. For what "
                                                            + "processing wrote, give stream_ids instead.")
-                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version to validate against, e.g. "
-                                                               + "'4.1.0'. Defaults to the version the document "
-                                                               + "declares in xsi:schemaLocation or its Version, "
+                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version to validate against, one "
+                                                               + "this Stroom holds. Defaults to the version the "
+                                                               + "document declares in xsi:schemaLocation or its "
+                                                               + "Version, "
                                                                + "else the newest this Stroom holds.")
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Events streams processing wrote "
                                                                        + "(wait_for_processing lists them): the "

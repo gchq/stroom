@@ -109,9 +109,10 @@ class CheckXsltTool extends AbstractBuiltInTool {
                              + "wrong call is found before stepping.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(XSLT_ARG, "Full XSLT document text.")
-                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the output must follow, e.g. "
-                                                               + "'4.1.0'. Defaults to the Version the XSLT writes "
-                                                               + "on Events, else the newest this Stroom holds.")
+                        .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the output must follow, "
+                                                               + "one this Stroom holds. Defaults to the Version the "
+                                                               + "XSLT writes on Events, else the newest this Stroom "
+                                                               + "holds.")
                         .addStringProperty(INPUT_NAMESPACE_ARG, "The namespace of the XSLT's input when known ('' "
                                                                 + "for a source's XML in no namespace, whose own "
                                                                 + "records/record elements are then not taken for "

@@ -235,6 +235,20 @@ public class BuildPlan {
                                                    + "'onboard-acme-door'). build_status shows a build's state."));
     }
 
+    /// @param context The call's context, or null.
+    /// @return The build the session last worked on; empty when none is known.
+    public Optional<String> currentBuild(final ToolCallContext context) {
+        return memory.current(context == null
+                ? null
+                : context.session());
+    }
+
+    /// @param step A step of the plan, as `next` names it, or null.
+    /// @return Whether it is a step of stage 1, the events pipeline.
+    public static boolean isEventsStep(final Object step) {
+        return step != null && STAGE_1.stream().anyMatch(item -> item.getFirst().equals(step));
+    }
+
     /// @param ref A document.
     /// @return The build a managed document belongs to: the build folder it is in. Empty for any other document,
     /// or if it can't be told.
@@ -261,10 +275,37 @@ public class BuildPlan {
 
     /// @param build A build.
     /// @return The profiled format of the build's newest raw sample stream (its head): `stream_id`, `feed`,
-    /// `format`, `namespace`, `root`, `suggested_parser` and `needs_text_converter`; empty without one.
+    /// `format`, `namespace`, `root`, `suggested_parser` and `needs_text_converter`; for a build on an existing
+    /// feed, with no sample stream of its own, the format its survey found; empty without either.
     public Optional<Map<String, Object>> sampleFormat(final String build) {
         final List<Map<String, Object>> docs = facts.buildDocs(build);
-        return sampleFormat(facts.sampleStreams(build, docs));
+        final Optional<Map<String, Object>> own = sampleFormat(facts.sampleStreams(build, docs));
+        if (own.isPresent()) {
+            return own;
+        }
+        // A build on an existing feed has no sample stream of its own: its survey read the feed. Seen in testing:
+        // survey_feed found XML fragments, create_pipeline took the XMLParser template with no replace_parser, and
+        // the parser kept only each record's <System> block, so no rule matched.
+        final List<String> sources = facts.sourceFeeds(build, docs);
+        final List<Map<String, Object>> surveys = docs.stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                .toList();
+        if (sources.isEmpty() || surveys.isEmpty()) {
+            return Optional.empty();
+        }
+        return facts.surveyState(surveys)
+                .filter(survey -> JsonValues.truthy(survey.get("sample"))
+                                  || JsonValues.truthy(survey.get("format")))
+                .map(survey -> {
+                    final Map<String, Object> format = new LinkedHashMap<>();
+                    format.put("stream_id", JsonValues.strings(survey.get("streams")).stream()
+                            .findFirst()
+                            .orElse("surveyed"));
+                    format.put("feed", sources.getFirst());
+                    format.putAll(formatFromSurvey(survey));
+                    return format;
+                });
     }
 
     /// @param build The build, or null.
