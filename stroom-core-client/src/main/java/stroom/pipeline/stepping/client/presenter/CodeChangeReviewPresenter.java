@@ -70,6 +70,8 @@ public class CodeChangeReviewPresenter
     public static final String NO_PERMISSION_MESSAGE =
             "You don't have permission to edit this element's document, so the change can't be applied.";
 
+    // The apply button's text, unless the caller gives another.
+    private static final String APPLY_TEXT = "Apply to editor";
     private static final String REMOVED_CLASS = "codeDiff-removed";
     private static final String ADDED_CLASS = "codeDiff-added";
     private static final String CHANGED_CLASS = "codeDiff-changed";
@@ -214,6 +216,35 @@ public class CodeChangeReviewPresenter
                      final AceEditorMode mode,
                      final boolean stepAvailable,
                      final ReviewHandler handler) {
+        show(caption, currentCode, proposedCode, mode, stepAvailable, APPLY_TEXT, true, handler);
+    }
+
+    /// Shows the dialog to confirm a change exactly as proposed, e.g. one the server writes only if it is what the
+    /// user was shown: none of its changes can be rejected, and the apply button says what applying does.
+    ///
+    /// @param caption      The dialog caption.
+    /// @param currentCode  The current code (shown on the left).
+    /// @param proposedCode The proposed code (shown on the right).
+    /// @param mode         The editor mode for the code's syntax highlighting.
+    /// @param applyText    The apply button's text, e.g. "Write".
+    /// @param handler      Applies the change when the user asks to; it is given the proposed code, whole.
+    public void showToConfirm(final String caption,
+                              final String currentCode,
+                              final String proposedCode,
+                              final AceEditorMode mode,
+                              final String applyText,
+                              final ReviewHandler handler) {
+        show(caption, currentCode, proposedCode, mode, false, applyText, false, handler);
+    }
+
+    private void show(final String caption,
+                      final String currentCode,
+                      final String proposedCode,
+                      final AceEditorMode mode,
+                      final boolean stepAvailable,
+                      final String applyText,
+                      final boolean rejectAvailable,
+                      final ReviewHandler handler) {
         this.handler = handler;
         this.currentCode = currentCode;
         this.proposedCode = proposedCode;
@@ -234,6 +265,8 @@ public class CodeChangeReviewPresenter
         final CodeChangeReviewView view = getView();
         view.setMessage(null);
         view.setStepAvailable(stepAvailable);
+        view.setApplyText(applyText);
+        view.setRejectAvailable(rejectAvailable);
         updateRejection();
         updateNavigation();
 
@@ -544,6 +577,12 @@ public class CodeChangeReviewPresenter
 
         /// @param available True to show "Apply and step".
         void setStepAvailable(boolean available);
+
+        /// @param text The apply button's text.
+        void setApplyText(String text);
+
+        /// @param available True to show the button that rejects (or keeps) the current change.
+        void setRejectAvailable(boolean available);
 
         /// @param enabled True to enable the Previous button.
         void setPreviousEnabled(boolean enabled);

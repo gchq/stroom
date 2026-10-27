@@ -55,13 +55,13 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `ls` | Lists the chat's workspace files | all | yes | | | | yes (workspace) | |
 | `memory` | Reads and changes the user's and the chat's memory | Agent | no | | | | yes (chat) | |
 | `pipeline` | Chains data tools over workspace files | all | yes | | | | yes (workspace) | |
-| `preview_extraction` | Tries a draft search extraction for the attached dashboard's table on some of its events, by stepping, to add values from the events | all | yes | Stepping, View Data | | View | yes (attached tab) | `step_records` (part) |
+| `preview_extraction` | Tries a draft search extraction (or a change to the table's own) for the attached dashboard's table on some of its events, by stepping, to add values from the events | all | yes | Stepping, View Data | | View | yes (attached tab) | `step_records` (part) |
 | `processor_tasks` | Processing failures and why, backlogs, task lists and counts across the cluster | all | yes | Manage Processors | View Data | | workspace | `processing_status`, `summarise_streams` (errors) |
 | `propose_code_change` | Proposes a change to the XSLT or converter being stepped, tried by stepping | all | yes | | | View | yes (stepping tab, button) | `summarise_fix`, `step_pipeline` (part) |
 | `propose_dashboard` | Offers a button to create a dashboard from StroomQL | all | yes | | | Use | yes (button) | `verify_index` (part: it creates a dashboard) |
 | `propose_dashboard_change` | Proposes changes to the attached dashboard's tables and components | all | yes | | | View | yes (attached tab, button) | |
 | `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | all | yes | | | View | yes (button) | `write_documentation` (part: it writes a pipeline's or an index's) |
-| `propose_extraction_pipeline` | Offers a button to create the search extraction tried with `preview_extraction` for the attached dashboard's table, written only once the user confirms it | all | yes | | | View | yes (attached tab, button) | |
+| `propose_extraction_pipeline` | Offers a button to create the search extraction tried with `preview_extraction` for the attached dashboard's table (or, for a table with one, to change its pipeline in place or save a new child), written only once the user confirms it | all | yes | | | View | yes (attached tab, button) | |
 | `propose_query` | Offers a button to create a StroomQL Query document | all | yes | | | Use | yes (button) | |
 | `propose_query_change` | Offers a button to change the query in the attached tab | all | yes | | | View, Use | yes (attached tab, button) | |
 | `propose_visualisation` | Plans a chart of the attached dashboard's (or query's) table, checks its rows can make it, and offers a button to create it there | all | yes | | | | yes (attached tab, button) | |
