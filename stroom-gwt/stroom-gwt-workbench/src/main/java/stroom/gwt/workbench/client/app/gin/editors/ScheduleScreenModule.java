@@ -16,11 +16,8 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
-import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
-import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -37,9 +34,6 @@ public class ScheduleScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ScheduledProcessingPresenter.class,
                 ScheduledProcessingView.class,
                 ScheduledProcessingViewImpl.class);
-        bindPresenterWidget(BatchExecutionScheduleEditPresenter.class,
-                BatchExecutionScheduleEditView.class,
-                BatchExecutionScheduleEditViewImpl.class);
     }
 }
 

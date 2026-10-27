@@ -69,7 +69,7 @@ public final class ExecutionSchedulesScreenStories {
     private static final String RUN_NOW_PATH = BASE + "/executeSchedulesNow";
     private static final String SET_CONFIG_PATH = "/config/v1/setConfigValue";
 
-    // The schedules have no scheduleBounds (BatchExecutionScheduleEditViewImpl once read them
+    // The schedules have no scheduleBounds (BatchExecutionScheduleEdit once read them
     // without a null check)
     private static final String HOURLY = """
             {"uuid": "s1", "name": "Hourly rollup", "enabled": true, "nodeName": "node1",

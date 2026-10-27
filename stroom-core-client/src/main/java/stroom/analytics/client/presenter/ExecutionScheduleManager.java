@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.analytics.client.component.BatchExecutionScheduleEditController;
 import stroom.analytics.client.component.ExecutionScheduleRunNow.RunNowAction;
 import stroom.analytics.client.component.ExecutionScheduleRunNowController;
 import stroom.analytics.client.component.ScheduledProcessEditController;
@@ -94,7 +95,7 @@ public class ExecutionScheduleManager
     private final RestFactory restFactory;
     private final ExecutionScheduleRequest request;
     private final ScheduledProcessEditController scheduledProcessEdit;
-    private final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter;
+    private final BatchExecutionScheduleEditController batchExecutionScheduleEdit;
     private final Provider<ExecutionScheduleRunNowController> runNowProvider;
     private final Provider<ExpressionDialogController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
@@ -116,7 +117,7 @@ public class ExecutionScheduleManager
                                     final DateTimeFormatter dateTimeFormatter,
                                     final RestFactory restFactory,
                                     final ScheduledProcessEditController scheduledProcessEdit,
-                                    final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter,
+                                    final BatchExecutionScheduleEditController batchExecutionScheduleEdit,
                                     final Provider<ExecutionScheduleRunNowController> runNowProvider,
                                     final Provider<ExpressionDialogController> filterDialogProvider,
                                     final ExpressionValidator expressionValidator,
@@ -124,11 +125,11 @@ public class ExecutionScheduleManager
         super(eventBus, view);
         this.refCells = own(refCells);
         own(scheduledProcessEdit);
-        own(batchExecutionScheduleEditPresenter);
+        own(batchExecutionScheduleEdit);
         this.restFactory = restFactory;
 
         this.scheduledProcessEdit = scheduledProcessEdit;
-        this.batchExecutionScheduleEditPresenter = batchExecutionScheduleEditPresenter;
+        this.batchExecutionScheduleEdit = batchExecutionScheduleEdit;
         this.runNowProvider = runNowProvider;
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
@@ -174,25 +175,18 @@ public class ExecutionScheduleManager
             }
         }));
 
-        batchExecutionScheduleEditPresenter.getView().getApplySelectionButton().addClickHandler(
-                clickEvent -> {
-                    batchExecutionScheduleEditPresenter.validate(valid -> {
-                        if (valid) {
-                            onBatchEdit(false);
-                        }
-                    });
-                }
-        );
-
-        batchExecutionScheduleEditPresenter.getView().getApplyFilteredButton().addClickHandler(
-                clickEvent -> {
-                    batchExecutionScheduleEditPresenter.validate(valid -> {
-                        if (valid) {
-                            onBatchEdit(true);
-                        }
-                    });
-                }
-        );
+        batchExecutionScheduleEdit.setOnApplySelection(() ->
+                batchExecutionScheduleEdit.validate(valid -> {
+                    if (valid) {
+                        onBatchEdit(false);
+                    }
+                }));
+        batchExecutionScheduleEdit.setOnApplyFiltered(() ->
+                batchExecutionScheduleEdit.validate(valid -> {
+                    if (valid) {
+                        onBatchEdit(true);
+                    }
+                }));
     }
 
 
@@ -203,7 +197,7 @@ public class ExecutionScheduleManager
         singleEditButton.setEnabled(false);
 
         batchEditButton = this.getView().getToolbar().button(SvgImage.GENERATE, "Batch Edit Schedules",
-                () -> batchExecutionScheduleEditPresenter.show());
+                batchExecutionScheduleEdit::show);
 
         filterButton = this.getView().getToolbar().button(SvgImage.FILTER, "Filter Schedules", this::onFilter);
 
@@ -511,7 +505,7 @@ public class ExecutionScheduleManager
             );
             return;
         }
-        if (!batchExecutionScheduleEditPresenter.getView().isAnyBoxEnabled()) {
+        if (!batchExecutionScheduleEdit.isAnyBoxEnabled()) {
             AlertEvent.fireWarn(
                     this,
                     "No changes selected.",
@@ -528,7 +522,7 @@ public class ExecutionScheduleManager
         sb.append(executionSchedules.size());
         sb.append(executionSchedules.size() > 1 ? " schedules.\n" : " schedule.\n");
         sb.append("\nSetting:\n");
-        sb.append(batchExecutionScheduleEditPresenter.getView().getEditSummary());
+        sb.append(batchExecutionScheduleEdit.getEditSummary());
         sb.append("\nAre you sure?");
 
         ConfirmEvent.fireWarn(
@@ -550,7 +544,7 @@ public class ExecutionScheduleManager
             restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(
-                            batchExecutionScheduleEditPresenter.getView().getUpdatedExecutionSchedule(executionSchedule)
+                            batchExecutionScheduleEdit.getUpdatedExecutionSchedule(executionSchedule)
                     ))
                     .onSuccess(result -> {
                         if (selectionModel.isSelected(executionSchedule)) {
