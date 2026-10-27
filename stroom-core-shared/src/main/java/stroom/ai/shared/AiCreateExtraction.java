@@ -29,8 +29,8 @@ import java.util.List;
 
 /// What the browser needs to make a dashboard table's search extraction the agent proposed, once the user clicks
 /// its `create_extraction_pipeline` button: the name and folder to suggest for the new pipeline and XSLT, and what
-/// will be written, for the user to confirm before anything is (see `AskStroomAiResource.writeExtraction`). Nothing
-/// is written yet.
+/// will be written once the user has chosen them (see `AskStroomAiResource.writeExtraction`). Nothing is written
+/// yet.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class AiCreateExtraction {
