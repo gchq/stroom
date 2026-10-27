@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.dashboard.VisSettingsStories;
 import stroom.gwt.workbench.client.app.dashboard.VisToolbarStories;
 import stroom.gwt.workbench.client.app.dashboard.VisTooltipStories;
 import stroom.gwt.workbench.client.app.data.DataUploadDialogStories;
+import stroom.gwt.workbench.client.app.data.DocRefSelectionDialogStories;
 import stroom.gwt.workbench.client.app.data.MetaBrowserStories;
 import stroom.gwt.workbench.client.app.data.ProcessChoiceDialogStories;
 import stroom.gwt.workbench.client.app.dictionary.DictionaryEditorStories;
@@ -391,6 +392,8 @@ public final class AppStories {
         DataUploadDialogStories.addTo(registry);
         // App/Data/MetaBrowser
         MetaBrowserStories.addTo(registry);
+        // App/Data/DocRefSelectionDialog
+        DocRefSelectionDialogStories.addTo(registry);
         // App/Data/ProcessChoiceDialog
         ProcessChoiceDialogStories.addTo(registry);
         // App/Dictionary/DictionaryEditor

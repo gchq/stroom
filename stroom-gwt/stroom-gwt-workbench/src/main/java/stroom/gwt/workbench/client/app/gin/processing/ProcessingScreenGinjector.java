@@ -38,6 +38,7 @@ import stroom.node.client.presenter.NodeGroupEditPresenter;
 import stroom.node.client.presenter.NodeGroupPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
+import stroom.pipeline.client.component.DocRefSelectionController;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
@@ -122,6 +123,9 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     /// @return The 'Create Processors' dialog, as the data browser's meta list shows it.
     ProcessChoiceDialogController getProcessChoiceDialogController();
+
+    /// @return The dialog that asks which changed documents to save, as `PipelinePlugin` shows it.
+    DocRefSelectionController getDocRefSelectionController();
 
     /// @return A feed's 'Upload' dialog, as the data browser shows it.
     DataUploadPresenter getDataUploadPresenter();
