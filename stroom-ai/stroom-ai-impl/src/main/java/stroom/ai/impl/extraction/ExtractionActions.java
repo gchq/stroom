@@ -255,9 +255,20 @@ public class ExtractionActions {
                               + dashboard.getName() + "', written by Stroom AI from its fields: " + fieldNames(plan)
                               + ".";
         } else {
-            if (documentAccess.read(existing.pipeline(), PipelineDoc.class).isEmpty()) {
-                throw new IllegalStateException("Pipeline '" + name(existing.pipeline()) + "' no longer exists, or "
-                                                + "you can't see it, so a new pipeline can't inherit it.");
+            // As it is now: a child gives its XSLT to the element that writes its records, which must still be the
+            // one it was proposed for, and find its XSLT by the XSLT it names.
+            final MergedPipeline parent = MergedPipeline.load(documentAccess, existing.pipeline().getUuid())
+                    .orElseThrow(() -> new IllegalStateException("Pipeline '" + name(existing.pipeline())
+                                                                 + "' no longer exists, or you can't see it, so a "
+                                                                 + "new pipeline can't inherit it."));
+            if (!ExtractionPipelines.outputXslt(parent).filter(existing.element()::equals).isPresent()) {
+                throw new IllegalStateException("Pipeline '" + name(existing.pipeline()) + "' has changed since "
+                                                + "this was proposed: its records aren't written by element '"
+                                                + existing.element() + "' now. Ask for the extraction again.");
+            }
+            final String unchangeable = ExtractionPipelines.unchangeable(parent, existing.element()).orElse(null);
+            if (unchangeable != null) {
+                throw new IllegalStateException(unchangeable);
             }
             final ExtractionChange.Changed changed = changed(existing, plan);
             xslt = changed.code();
@@ -324,7 +335,10 @@ public class ExtractionActions {
         final ExtractionChange.Changed changed = current.changed();
         final String change = changed.generated()
                 ? "XSLT '" + name(existing.xslt()) + "' written again by Stroom AI from the fields: "
-                  + fieldNames(plan)
+                  + fieldNames(plan) + (changed.removed().isEmpty()
+                        ? ""
+                        : ". It no longer gives " + String.join(", ", changed.removed())
+                          + ": anything else using it loses them")
                 : "The fields " + fieldNames(plan) + " added to XSLT '" + name(existing.xslt())
                   + "', written by hand (what it gives already is left as it is)";
         final List<String> usedBy = usedBy(existing, dashboard);

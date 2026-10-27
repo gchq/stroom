@@ -22,12 +22,19 @@ import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import net.sf.saxon.expr.Expression;
+import net.sf.saxon.expr.FunctionCall;
+import net.sf.saxon.expr.Operand;
+import net.sf.saxon.lib.NamespaceConstant;
+import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.s9api.XPathExecutable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,9 +81,11 @@ public record ExtractionField(@JsonProperty("name") String name,
             "data", "distinct-values", "format-number");
 
     private static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9 _.()-]*");
-    // A function call: a name (perhaps prefixed) followed by '(' or '#' (a function reference).
+    // A function call: a name (perhaps prefixed) followed by '(' or '#' (a function reference). Not the end of a
+    // longer name (e.g. before( in substring-before(), but a call after a minus sign is one (e.g. -doc(): the
+    // compiled expression's calls are checked too (see disallowedCall).
     private static final Pattern FUNCTION_CALL = Pattern.compile(
-            "(?<![\\w.@$-])([A-Za-z_][\\w.-]*(?::[A-Za-z_][\\w.-]*)?)\\s*[(#]");
+            "(?<![\\w.@$])(?<![\\w.]-)([A-Za-z_][\\w.-]*(?::[A-Za-z_][\\w.-]*)?)\\s*[(#]");
     // What a comment is made in an XPath's code (see code(String)): an empty comment, which no code can be.
     static final String COMMENT = "(::)";
     // The simple map operator, '!', not '!='.
@@ -187,13 +196,38 @@ public record ExtractionField(@JsonProperty("name") String name,
                        + String.join(", ", ALLOWED_FUNCTIONS.stream().sorted().toList()) + ".";
             }
         }
+        final XPathExecutable executable;
         try {
-            // Its functions are checked above, against those allowed, in its code alone.
-            SafeXPath.compileWithoutFunctionCheck(xpath, Map.of());
+            // Its functions are checked above, against those allowed, in its code alone; and below, as compiled.
+            executable = SafeXPath.compileWithoutFunctionCheck(xpath, Map.of());
         } catch (final WorkspaceException e) {
             return e.getMessage();
         }
-        return null;
+        return disallowedCall(executable.getUnderlyingExpression().getInternalExpression())
+                .map(function -> "its XPath uses " + function + "(), which an extraction may not: it may use only "
+                                 + String.join(", ", ALLOWED_FUNCTIONS.stream().sorted().toList()) + ".")
+                .orElse(null);
+    }
+
+    // A function an XPath calls, as Saxon compiled it, that isn't one of those allowed (or isn't one of XPath's own),
+    // so no call is missed by a reading of its text (e.g. one after a minus sign); empty if there is none.
+    private static Optional<String> disallowedCall(final Expression expression) {
+        if (expression instanceof final FunctionCall call) {
+            final StructuredQName name = call.getFunctionName();
+            if (name == null || !NamespaceConstant.FN.equals(name.getURI())
+                || !ALLOWED_FUNCTIONS.contains(name.getLocalPart())) {
+                return Optional.of(name == null
+                        ? "a function"
+                        : name.getDisplayName());
+            }
+        }
+        for (final Operand operand : expression.operands()) {
+            final Optional<String> found = disallowedCall(operand.getChildExpression());
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
     }
 
     /// The code of an XPath, as XPath reads it: each string literal (in either quote, a doubled quote standing for

@@ -289,6 +289,18 @@ class TestExtractionActions {
     }
 
     @Test
+    void aNewChildIsntMadeOfAPipelineChangedSinceItWasProposed() {
+        existing(GENERATED);
+        // Its records are now written by another element.
+        final ExtractionPlan elsewhere = new ExtractionPlan(CHANGE.component(), CHANGE.componentId(),
+                CHANGE.namespace(), CHANGE.fields(), CHANGE.newColumns(), new ExtractionPlan.Existing(TABLE_PIPELINE,
+                "otherXslt", TABLE_XSLT, CHANGE.existing().codeHash()));
+
+        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", elsewhere))
+                .hasMessageContaining("its records aren't written by element 'otherXslt' now");
+    }
+
+    @Test
     void aChangeToAnXsltChangedSinceItWasProposedIsntShown() {
         existing(GENERATED + "\n<!-- edited -->");
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
@@ -416,8 +428,16 @@ class TestExtractionActions {
 
     // The table's extraction pipeline and its XSLT, as the change was proposed for.
     private void existing(final String code) {
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        for (final String[] element : new String[][]{{"Source", "Source"}, {"extractXslt", "XSLTFilter"},
+                {"output", "SearchResultOutputFilter"}}) {
+            data.addElement(PipelineDataUtil.createElement(element[0], element[1], null, null));
+        }
+        data.addLink("Source", "extractXslt").addLink("extractXslt", "output");
+        data.addProperty(PipelineDataUtil.createProperty("extractXslt", "xslt", TABLE_XSLT));
+        Mockito.when(documentAccess.findDocRef("tp")).thenReturn(Optional.of(TABLE_PIPELINE));
         Mockito.when(documentAccess.read(TABLE_PIPELINE, PipelineDoc.class)).thenReturn(Optional.of(
-                PipelineDoc.builder().uuid("tp").name("Logons pipeline").build()));
+                PipelineDoc.builder().uuid("tp").name("Logons pipeline").pipelineData(data.build()).build()));
         Mockito.when(documentAccess.read(TABLE_XSLT, XsltDoc.class)).thenReturn(Optional.of(tableXslt(code)));
     }
 

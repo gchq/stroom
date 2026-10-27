@@ -226,6 +226,21 @@ class TestPreviewExtractionTool {
     }
 
     @Test
+    void aTablesOwnPipelineThatCantBeReadIsntReplacedWithANewOneInTheTrial() {
+        // As propose_extraction_pipeline would refuse it, it isn't tried as if the table had no pipeline.
+        dashboard(TableSettings.builder()
+                .columns(List.of(Column.builder().id("c1").name("User").expression("${UserId}").build()))
+                .extractValues(true)
+                .extractionPipeline(new DocRef(PipelineDoc.TYPE, "gone", "Gone"))
+                .build());
+
+        assertThat(run(List.of(Map.of("name", "UserId", "xpath", "EventSource/User/Id"))))
+                .isEqualTo("The extraction of the table's extraction pipeline 'Gone' can't be changed: it no longer "
+                           + "exists, or you can't see it.");
+        Mockito.verifyNoInteractions(steppingService);
+    }
+
+    @Test
     void steppingNeedsItsPermission() {
         Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION)).thenReturn(false);
 
