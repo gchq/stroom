@@ -17,7 +17,6 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.vis.DynamicSettingsPane;
 import stroom.dashboard.client.vis.VisFieldOption;
 import stroom.dashboard.client.vis.VisInputChoices;
@@ -115,7 +114,7 @@ public class BasicVisSettingsController extends BasicSettingsTabController<Basic
 
     private void updateFieldNames(final DashboardPane component) {
         final Map<String, VisFieldOption> optionsByName = new HashMap<>();
-        if (component instanceof final TablePresenter tablePresenter) {
+        if (component instanceof final TableController tablePresenter) {
             final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
             if (columns != null) {
                 for (final Column column : columns) {
@@ -204,7 +203,7 @@ public class BasicVisSettingsController extends BasicSettingsTabController<Basic
         super.read(componentConfig);
 
         final List<DashboardPane> list = getDashboardContext()
-                .getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
+                .getComponents().getSortedComponentsByType(TableController.TYPE.getId());
         getView().setTableList(list);
 
         final VisComponentSettings settings = (VisComponentSettings) componentConfig.getSettings();

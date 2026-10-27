@@ -42,7 +42,6 @@ import stroom.gwt.workbench.client.app.gin.query.PipelineScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryExtrasScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.StreamStoreScreenModule;
-import stroom.gwt.workbench.client.app.gin.query.TableScreenModule;
 import stroom.gwt.workbench.client.app.gin.query.VisScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
@@ -71,7 +70,6 @@ import com.google.gwt.inject.client.GinModules;
         TaskScreenModule.class,
         PipelineScreenModule.class,
         QueryScreenModule.class,
-        TableScreenModule.class,
         AnnotationScreenModule.class,
         StreamStoreScreenModule.class,
         DashboardQueryScreenModule.class,

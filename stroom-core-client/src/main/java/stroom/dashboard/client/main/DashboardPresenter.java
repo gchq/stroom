@@ -457,7 +457,7 @@ public class DashboardPresenter
                 // down2.add(tablayout);
                 //
                 // for (int k = 0; k < 2; k++) {
-                // final String type = TablePresenter.TYPE;
+                // final String type = TableController.TYPE;
                 // final String id = type + "_" +
                 // String.valueOf(System.currentTimeMillis());
                 //

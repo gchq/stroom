@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
 import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
@@ -32,7 +32,6 @@ import stroom.dashboard.client.component.DownloadSearchResultsController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.component.TableSettingsController;
 import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
@@ -42,7 +41,13 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
-import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
+import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.FilterCellManager;
+import stroom.dashboard.client.table.GroupLevelButtons;
+import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableColumnValuesDataSupplier;
+import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -98,6 +103,8 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UserPreferences;
@@ -113,7 +120,6 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -143,7 +149,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class TablePresenter extends AbstractComponentPresenter<TableView>
+/// A dashboard's table pane ([Table]): the results of its query as rows, grouped and expandable,
+/// with its columns' menus and filters, downloads, annotations and conditional formatting.
+public class TableController extends DashboardComponentController
         implements ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
 
     public static final String TAB_TYPE = "table-component";
@@ -198,33 +206,34 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     // Told when the table's columns or data change, e.g. a filter on it
     private final Listeners<Boolean> updateListeners = new Listeners<>();
 
+    /// Made by GIN, with its content, its parts and the dialogs it opens.
     @Inject
-    public TablePresenter(final EventBus eventBus,
-                          final TableView view,
-                          final PagerPanel pagerView,
-                          final ClientSecurityContext securityContext,
-                          final LocationManager locationManager,
-                          final Provider<RenameColumnController> renameColumnControllerProvider,
-                          final Provider<ColumnFunctionEditorController> expressionProvider,
-                          final Provider<ColumnFormatController> columnFormatProvider,
-                          final ColumnFilterDialogController columnFilterDialog,
-                          final Provider<TableSettingsController> settingsPresenterProvider,
-                          final DownloadSearchResultsController downloadOptions,
-                          final AnnotationManager annotationManager,
-                          final RestFactory restFactory,
-                          final UiConfigCache clientPropertyCache,
-                          final TimeZones timeZones,
-                          final UserPreferencesManager userPreferencesManager,
-                          final DynamicColumnSelectionListModel columnSelectionListModel,
-                          final DataSourceClient dataSourceClient,
-                          final ColumnValuesFilterController columnValuesFilter,
-                          final UiConfigCache uiConfigCache) {
-        super(eventBus, view, settingsPresenterProvider);
+    public TableController(final EventBus eventBus,
+                           final Table view,
+                           final ClientSecurityContext securityContext,
+                           final LocationManager locationManager,
+                           final Provider<RenameColumnController> renameColumnControllerProvider,
+                           final Provider<ColumnFunctionEditorController> expressionProvider,
+                           final Provider<ColumnFormatController> columnFormatProvider,
+                           final ColumnFilterDialogController columnFilterDialog,
+                           final Provider<TableSettingsController> settingsPresenterProvider,
+                           final DownloadSearchResultsController downloadOptions,
+                           final AnnotationManager annotationManager,
+                           final RestFactory restFactory,
+                           final UiConfigCache clientPropertyCache,
+                           final TimeZones timeZones,
+                           final UserPreferencesManager userPreferencesManager,
+                           final DynamicColumnSelectionListModel columnSelectionListModel,
+                           final DataSourceClient dataSourceClient,
+                           final ColumnValuesFilterController columnValuesFilter,
+                           final UiConfigCache uiConfigCache) {
+        super(eventBus, settingsPresenterProvider);
+        initWidget(view);
         own(columnFilterDialog);
         own(downloadOptions);
         own(columnValuesFilter);
         this.eventBus = eventBus;
-        this.pagerView = pagerView;
+        this.pagerView = view.getPager();
         this.locationManager = locationManager;
         this.downloadOptions = downloadOptions;
         this.annotationManager = annotationManager;
@@ -236,18 +245,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.uiConfigCache = uiConfigCache;
         rowStyles = new TableRowStyles(userPreferencesManager);
 
-        columnSelectionListModel.setTaskMonitorFactory(this);
-        annotationManager.setTaskMonitorFactory(this);
+        columnSelectionListModel.setTaskMonitorFactory(taskMonitor());
+        annotationManager.setTaskMonitorFactory(taskMonitor());
 
-        dataGrid = new DataGrid<>();
-        // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
-        dataGrid.setVirtual(true);
-        dataGrid.addStyleName("TablePresenter");
+        // Pages of up to 10,000 rows: only the rows in view are drawn (virtual), unless a column wraps
+        dataGrid = view.getDataGrid();
         dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        pagerView.setDataWidget(dataGrid);
-
-        view.setTableView(pagerView);
 
         // Add the 'add column' button.
         addColumnButton = pagerView.getToolbar().button(SvgImage.ADD, "Add Column", this::onAddColumn);
@@ -256,7 +260,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 pagerView.getToolbar(), () -> groupSelection, () -> maxDepth, this::setGroupSelection);
 
         // Download
-        pagerView.getToolbar().setName("Table actions");
         downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download Table Results",
                 this::onDownload);
         downloadButton.setEnabled(false);
@@ -367,7 +370,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void onDownload() {
         if (currentSearchModel != null) {
             if (currentSearchModel.isPolling()) {
-                ConfirmEvent.fire(TablePresenter.this,
+                ConfirmEvent.fire(TableController.this,
                         "Search still in progress. Do you want to download the current results? " +
                         "Note that these may be incomplete.",
                         ok -> {
@@ -384,7 +387,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void onAskAi() {
         if (currentSearchModel != null) {
             if (currentSearchModel.isPolling()) {
-                ConfirmEvent.fire(TablePresenter.this,
+                ConfirmEvent.fire(TableController.this,
                         "Search still in progress. AI response may be based on incomplete data. " +
                         "Do you wish to continue? ",
                         ok -> {
@@ -575,7 +578,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                     this,
                                     result))
-                            .taskMonitorFactory(this)
+                            .taskMonitorFactory(taskMonitor())
                             .exec();
                 });
             }
@@ -1016,7 +1019,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         builder.extractionPipeline(extractionPipeline).extractValues(true);
                     }
                     setSettings(builder.build());
-                }, this);
+                }, taskMonitor());
             }
         }
 
@@ -1448,11 +1451,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 Collections.emptyList());
     }
 
-    public interface TableView extends View {
-
-        void setTableView(View view);
-    }
-
     @Override
     public ColumnValuesDataSupplier getDataSupplier(final Column column,
                                                     final List<ConditionalFormattingRule> conditionalFormattingRules) {
@@ -1463,6 +1461,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 getDateTimeSettings(),
                 getTableName(getId()),
                 conditionalFormattingRules);
+    }
+
+    // Lazily, as it is first used after this is owned
+    private TaskMonitorFactory taskMonitor() {
+        return () -> {
+            final TaskMonitorFactory provided = getProvidedTaskMonitor();
+            return provided != null
+                    ? provided.createTaskMonitor()
+                    : new DefaultTaskMonitorFactory(this).createTaskMonitor();
+        };
     }
 
     private void fireColumnAndDataUpdate() {

@@ -19,7 +19,6 @@ package stroom.dashboard.client.component;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
@@ -112,7 +111,7 @@ public class BasicTextSettingsController extends BasicSettingsTabController<Basi
         super.read(componentConfig);
 
         final List<DashboardPane> list = getDashboardContext().getComponents().getSortedComponentsByType(
-                TablePresenter.TYPE.getId(),
+                TableController.TYPE.getId(),
                 EmbeddedQueryPresenter.TYPE.getId());
         setTableList(list);
 

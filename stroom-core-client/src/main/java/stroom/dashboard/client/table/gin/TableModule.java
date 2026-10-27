@@ -17,9 +17,6 @@
 package stroom.dashboard.client.table.gin;
 
 import stroom.dashboard.client.table.TablePlugin;
-import stroom.dashboard.client.table.TablePresenter;
-import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.dashboard.client.table.TableViewImpl;
 import stroom.query.client.presenter.TimeZones;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
@@ -31,6 +28,5 @@ public class TableModule extends AbstractPresenterModule {
 
         bind(TablePlugin.class).asEagerSingleton();
 
-        bindPresenterWidget(TablePresenter.class, TableView.class, TableViewImpl.class);
     }
 }

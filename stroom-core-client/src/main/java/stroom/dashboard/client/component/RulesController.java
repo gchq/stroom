@@ -19,7 +19,6 @@ package stroom.dashboard.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.component.Rules.RulesAction;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -245,7 +244,7 @@ public class RulesController extends SettingsTabController implements Focus {
         read(settings
                 .getColumns()
                 .stream()
-                .map(TablePresenter::buildDsField)
+                .map(TableController::buildDsField)
                 .collect(Collectors.toList()), settings.getConditionalFormattingRules());
     }
 
@@ -276,7 +275,7 @@ public class RulesController extends SettingsTabController implements Focus {
             // ids and mapping to col name for the ui.
             this.fields = NullSafe.list(queryTablePreferences.getColumns())
                     .stream()
-                    .map(TablePresenter::buildDsField)
+                    .map(TableController::buildDsField)
                     .collect(Collectors.toList());
 
             if (queryTablePreferences.getConditionalFormattingRules() != null) {

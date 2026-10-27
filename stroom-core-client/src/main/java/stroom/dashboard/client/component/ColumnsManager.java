@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFilterDialogController;
@@ -23,6 +23,8 @@ import stroom.dashboard.client.component.ColumnFunctionEditorController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
 import stroom.dashboard.client.component.RenameColumnController;
 import stroom.dashboard.client.main.UniqueUtil;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
@@ -65,7 +67,7 @@ import java.util.stream.Collectors;
 public class ColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
     private final EventBus eventBus;
-    private final TablePresenter tablePresenter;
+    private final TableController tablePresenter;
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
@@ -79,7 +81,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
 
     public ColumnsManager(final EventBus eventBus,
-                          final TablePresenter tablePresenter,
+                          final TableController tablePresenter,
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,

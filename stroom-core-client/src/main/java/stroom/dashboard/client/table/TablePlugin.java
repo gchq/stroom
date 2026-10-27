@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.component.TableController;
 import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
@@ -26,7 +27,7 @@ public class TablePlugin {
 
     @Inject
     public TablePlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-                       final Provider<TablePresenter> provider) {
-        componentRegistry.register(TablePresenter.TYPE, provider);
+                       final Provider<TableController> provider) {
+        componentRegistry.register(TableController.TYPE, provider);
     }
 }

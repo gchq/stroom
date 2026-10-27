@@ -275,13 +275,13 @@ public class QueryPresenter
 //            }
 
 //                if (getTextSettings().getTableId() == null) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
+//                    if (component instanceof TableController) {
+//                        currentTablePresenter = (TableController) component;
 //                        update(currentTablePresenter);
 //                    }
 //                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
+//                    if (component instanceof TableController) {
+//                        currentTablePresenter = (TableController) component;
 //                        update(currentTablePresenter);
 //                    }
 //                }

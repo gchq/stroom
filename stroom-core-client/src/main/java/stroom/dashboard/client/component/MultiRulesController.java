@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableFilterComponentSettings;
 import stroom.query.api.Column;
@@ -85,7 +84,7 @@ public class MultiRulesController extends SettingsTabController {
 
             final Column col = allColumns.get(column);
             if (col != null) {
-                final QueryField field = TablePresenter.buildDsField(col);
+                final QueryField field = TableController.buildDsField(col);
 
                 final RulesController columnRules = rulesByColumnId
                         .computeIfAbsent(column.getId(), k -> {

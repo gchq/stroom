@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A dashboard's table: its rows (only those in view are drawn), grouped and expandable, below
+     the table's actions -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <g:FlowPanel styleName="TableViewImpl max stroom-dashboard-table">
+        <dg:PagerPanel ui:field="pager" toolbarName="Table actions">
+            <dg:DataGrid ui:field="dataGrid" virtual="true" addStyleNames="TablePresenter"/>
+        </dg:PagerPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

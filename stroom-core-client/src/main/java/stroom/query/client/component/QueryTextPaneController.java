@@ -291,7 +291,7 @@ public class QueryTextPaneController extends Controller {
     }
 
 //
-//    private void update(final TablePresenter tablePresenter) {
+//    private void update(final TableController tablePresenter) {
 //        boolean updating = false;
 //        String message = "";
 //
@@ -446,7 +446,7 @@ public class QueryTextPaneController extends Controller {
 //        }
 //    }
 //
-//    private Field chooseBestField(final TablePresenter tablePresenter, final Field field) {
+//    private Field chooseBestField(final TableController tablePresenter, final Field field) {
 //        if (field != null) {
 //            final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
 //            final List<Field> fields = tableComponentSettings.getFields();
@@ -636,18 +636,18 @@ public class QueryTextPaneController extends Controller {
 //            if (textComponentSettings.getStreamIdField() == null
 //                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdField().getName()))
 //                    || (old && textComponentSettings.getStreamIdField().isSpecial())) {
-//                builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
+//                builder.streamIdField(TableController.buildSpecialField(IndexConstants.STREAM_ID));
 //            }
 //            if (textComponentSettings.getRecordNoField() == null
 //                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoField().getName()))
 //                    || (old && textComponentSettings.getRecordNoField().isSpecial())) {
-//                builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+//                builder.recordNoField(TableController.buildSpecialField(IndexConstants.EVENT_ID));
 //            }
 //
 //        } else {
 //            builder = TextComponentSettings.builder();
-//            builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
-//            builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+//            builder.streamIdField(TableController.buildSpecialField(IndexConstants.STREAM_ID));
+//            builder.recordNoField(TableController.buildSpecialField(IndexConstants.EVENT_ID));
 //        }
 //
 //        builder.modelVersion(CURRENT_MODEL_VERSION.toString());
@@ -661,7 +661,7 @@ public class QueryTextPaneController extends Controller {
 //    @Override
 //    public void link() {
 //        final String tableId = getTextSettings().getTableId();
-//        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+//        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
 //
 //        // If we can't get the same table id then set to null so that changes to any table can be listened to.
 //        if (!Objects.equals(tableId, newTableId)) {

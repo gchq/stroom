@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.component.TableController;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
@@ -210,7 +210,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     }
                 }
 
-                if (component instanceof final TablePresenter tablePresenter) {
+                if (component instanceof final TableController tablePresenter) {
                     final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
                     if (NullSafe.hasItems(columns)) {
                         for (final Column column : columns) {

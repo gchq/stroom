@@ -38,7 +38,6 @@ import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
-import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
@@ -65,7 +64,6 @@ import com.google.gwt.inject.client.GinModules;
 /// this package's mirrors of Stroom's modules.
 @GinModules({
         ScreenViewsModule.class,
-        QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
         MonitoringScreenModule.class,

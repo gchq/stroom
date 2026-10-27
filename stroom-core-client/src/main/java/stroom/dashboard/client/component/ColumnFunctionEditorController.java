@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -85,7 +84,7 @@ public class ColumnFunctionEditorController extends Controller {
     /// @param column               The column.
     /// @param columnChangeConsumer Given the column and the column with its new expression, once
     ///                             OK is pressed with a valid changed expression.
-    public void show(final TablePresenter tablePresenter,
+    public void show(final TableController tablePresenter,
                      final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
         editor.setText(column.getExpression() != null

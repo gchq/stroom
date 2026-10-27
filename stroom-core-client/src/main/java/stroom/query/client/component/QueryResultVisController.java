@@ -598,7 +598,7 @@ public class QueryResultVisController
     //    @Override
 //    public void link() {
 //        String tableId = getVisSettings().getTableId();
-//        tableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+//        tableId = getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
 //        updateTableId(tableId);
 //    }
 //

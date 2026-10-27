@@ -26,7 +26,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -279,7 +278,7 @@ public class VisController
         builder.tableId(tableId);
 
         final DashboardPane component = getDashboardContext().getComponents().get(tableId);
-        if (component instanceof final TablePresenter tablePresenter) {
+        if (component instanceof final TableController tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
             final String queryId = tableComponentSettings.getQueryId();
@@ -699,7 +698,7 @@ public class VisController
     public void link() {
         String tableId = getVisSettings().getTableId();
         tableId = getDashboardContext()
-                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+                .getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
         updateTableId(tableId);
     }
 

@@ -22,7 +22,6 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -692,7 +691,7 @@ public class TextPaneController extends DashboardComponentController {
     public void link() {
         final String tableId = getTextSettings().getTableId();
         String newTableId = getDashboardContext()
-                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+                .getComponents().validateOrGetLastComponentId(tableId, TableController.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
         if (!Objects.equals(tableId, newTableId)) {
