@@ -18,6 +18,7 @@ package stroom.ai.impl.extraction;
 
 import stroom.ai.impl.extraction.ExtractionActions.Written;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiCreateExtraction;
 import stroom.ai.shared.AiWriteExtractionRequest;
@@ -63,19 +64,21 @@ class TestExtractionActions {
     private static final DocRef FOLDER = new DocRef("Folder", "folder", "Reports");
     private static final DocRef TEMPLATE = new DocRef(PipelineDoc.TYPE,
             ExtractionPipelines.SEARCH_EXTRACTION_TEMPLATE_UUID, "Search Extraction");
+    private static final ExtractionPlan.Sample SAMPLE = new ExtractionPlan.Sample(7, 1);
+    private static final ToolSession SESSION = ToolSession.chat(3);
     private static final DocRef TABLE_PIPELINE = new DocRef(PipelineDoc.TYPE, "tp", "Logons pipeline");
     private static final DocRef TABLE_XSLT = new DocRef("XSLT", "tx", "Logons XSLT");
     // The table's XSLT, as Stroom AI wrote it.
     private static final String GENERATED = ExtractionXslt.xslt("event-logging:3",
             List.of(new ExtractionField("UserId", "EventSource/User/Id", null)));
     // A change to the table's extraction: Bytes added.
-    private static final ExtractionPlan CHANGE = new ExtractionPlan("Events", "table-1", "event-logging:3",
+    private static final ExtractionPlan CHANGE = new ExtractionPlan("Events", "table-1", SAMPLE,
             List.of(new ExtractionField("UserId", "EventSource/User/Id", null),
                     new ExtractionField("Bytes", "Data/@Size", "number")),
             List.of("Bytes"),
             new ExtractionPlan.Existing(TABLE_PIPELINE, "extractXslt", TABLE_XSLT,
                     ExtractionChange.sha256(GENERATED)));
-    private static final ExtractionPlan PLAN = new ExtractionPlan("Events", "table-1", "event-logging:3",
+    private static final ExtractionPlan PLAN = new ExtractionPlan("Events", "table-1", SAMPLE,
             List.of(new ExtractionField("UserId", "EventSource/User/Id", null),
                     new ExtractionField("Bytes", "Data/@Size", "number")),
             List.of("Bytes"));
@@ -87,6 +90,7 @@ class TestExtractionActions {
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final DocDependencyService docDependencyService = Mockito.mock(DocDependencyService.class);
+    private final ExtractionEvents extractionEvents = Mockito.mock(ExtractionEvents.class);
     private final ExplorerNode folder = ExplorerNode.builder().docRef(FOLDER).build();
     private final ExplorerNode xsltNode = ExplorerNode.builder().docRef(new DocRef(XsltDoc.TYPE, "x1", "Logons "
                                                                                                    + "extraction"))
@@ -98,6 +102,8 @@ class TestExtractionActions {
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
+        // The events' namespace, read from the event the extraction was tried on.
+        Mockito.when(extractionEvents.namespace(SAMPLE, SESSION)).thenReturn("event-logging:3");
         Mockito.when(securityContext.asProcessingUserResult(any())).thenAnswer(invocation ->
                 ((Supplier<Object>) invocation.getArgument(0)).get());
         Mockito.when(explorerNodeService.getParent(DASHBOARD)).thenReturn(Optional.of(folder));
@@ -111,12 +117,12 @@ class TestExtractionActions {
                 .uuid("p1").name("Logons extraction").build());
         template(true);
         actions = new ExtractionActions(() -> explorerService, () -> explorerNodeService, () -> xsltStore,
-                () -> pipelineStore, () -> docDependencyService, documentAccess, securityContext);
+                () -> pipelineStore, () -> docDependencyService, extractionEvents, documentAccess, securityContext);
     }
 
     @Test
     void whatWouldBeWrittenIsShownFirstAndNothingWritten() {
-        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction", PLAN);
+        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION);
 
         assertThat(create.getName()).isEqualTo("Logons extraction");
         assertThat(create.getFolder().getDocRef()).isEqualTo(FOLDER);
@@ -137,9 +143,9 @@ class TestExtractionActions {
 
     @Test
     void theConfirmedExtractionIsWrittenAsAChildOfTheTemplate() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
 
-        final Written written = actions.write(DASHBOARD, PLAN, request("Logons extraction", hash));
+        final Written written = actions.write(DASHBOARD, PLAN, request("Logons extraction", hash), SESSION);
 
         Mockito.verify(explorerService).create(XsltDoc.TYPE, "Logons extraction", folder,
                 PermissionInheritance.DESTINATION);
@@ -147,7 +153,7 @@ class TestExtractionActions {
         Mockito.verify(xsltStore).writeDocument(xslt.capture());
         assertThat(xslt.getValue().getData()).isEqualTo(ExtractionXslt.xslt("event-logging:3", PLAN.fields()));
         // Described as the user was shown.
-        final AiCreateExtraction shown = actions.prepare(DASHBOARD, "Logons extraction", PLAN);
+        final AiCreateExtraction shown = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION);
         assertThat(xslt.getValue().getDescription()).isEqualTo(shown.getXsltDescription());
         final ArgumentCaptor<PipelineDoc> pipeline = ArgumentCaptor.forClass(PipelineDoc.class);
         Mockito.verify(pipelineStore).writeDocument(pipeline.capture());
@@ -174,9 +180,9 @@ class TestExtractionActions {
     @Test
     void withoutTheTemplateThePipelineIsOneOfItsOwn() {
         template(false);
-        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction", PLAN);
+        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION);
 
-        actions.write(DASHBOARD, PLAN, request("Logons extraction", create.getContentHash()));
+        actions.write(DASHBOARD, PLAN, request("Logons extraction", create.getContentHash()), SESSION);
 
         assertThat(create.getBase()).startsWith("a pipeline of its own");
         final ArgumentCaptor<PipelineDoc> pipeline = ArgumentCaptor.forClass(PipelineDoc.class);
@@ -190,34 +196,34 @@ class TestExtractionActions {
     @Test
     void onlyWhatTheUserWasShownIsWritten() {
         // E.g. the template has since been deleted, so what would be written isn't what they confirmed.
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
         template(false);
 
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash), SESSION))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("has changed since you were shown it");
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", "bad")))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", "bad"), SESSION))
                 .hasMessageContaining("has changed since you were shown it");
         Mockito.verifyNoInteractions(explorerService);
     }
 
     @Test
     void theUserMustBeAbleToCreateInTheFolder() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
         Mockito.when(securityContext.hasDocumentCreatePermission(FOLDER, PipelineDoc.TYPE)).thenReturn(false);
 
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash), SESSION))
                 .hasMessageContaining("You can't create Pipeline documents in folder 'Reports'");
         Mockito.verifyNoInteractions(explorerService);
     }
 
     @Test
     void ifThePipelineCantBeWrittenTheXsltIsntKept() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
         Mockito.when(pipelineStore.writeDocument(any())).thenThrow(new RuntimeException("Document has been "
                                                                                           + "updated"));
 
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash), SESSION))
                 .hasMessageContaining("nothing was kept")
                 .hasMessageContaining("Document has been updated");
         Mockito.verify(explorerService).delete(List.of(xsltNode, pipelineNode));
@@ -225,13 +231,13 @@ class TestExtractionActions {
 
     @Test
     void whatCouldntBeRemovedIsSaid() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
         Mockito.when(pipelineStore.writeDocument(any())).thenThrow(new RuntimeException("No permission"));
         // Stroom's explorer says what it couldn't delete, rather than throwing.
         Mockito.when(explorerService.delete(any())).thenReturn(new BulkActionResult(List.of(),
                 "Unable to delete 'Logons extraction'"));
 
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons extraction", hash), SESSION))
                 .hasMessageContaining("couldn't all be removed: XSLT 'Logons extraction', Pipeline 'Logons "
                                       + "extraction'")
                 .hasMessageNotContaining("nothing was kept");
@@ -239,33 +245,33 @@ class TestExtractionActions {
 
     @Test
     void theFolderMustBeOneThereAndThePermissionsOnesTheDialogOffers() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
 
         assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, new AiWriteExtractionRequest("Logons extraction",
-                new DocRef("Folder", "gone"), PermissionInheritance.DESTINATION, hash)))
+                new DocRef("Folder", "gone"), PermissionInheritance.DESTINATION, hash), SESSION))
                 .hasMessageContaining("The folder chosen no longer exists");
         assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, new AiWriteExtractionRequest("Logons extraction",
-                FOLDER, PermissionInheritance.SOURCE, hash)))
+                FOLDER, PermissionInheritance.SOURCE, hash), SESSION))
                 .hasMessageContaining("take their permissions from their folder or from none");
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("a".repeat(101), hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("a".repeat(101), hash), SESSION))
                 .hasMessageContaining("a name of up to 100 characters");
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons\u0007", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request("Logons\u0007", hash), SESSION))
                 .hasMessageContaining("a name of up to 100 characters");
         Mockito.verifyNoInteractions(explorerService);
     }
 
     @Test
     void aNameIsNeeded() {
-        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN).getContentHash();
+        final String hash = actions.prepare(DASHBOARD, "Logons extraction", PLAN, SESSION).getContentHash();
 
-        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request(" ", hash)))
+        assertThatThrownBy(() -> actions.write(DASHBOARD, PLAN, request(" ", hash), SESSION))
                 .hasMessageContaining("Give the pipeline a name");
     }
 
     @Test
     void aNewChildOfTheTablesPipelineGivesOnlyItsXsltElementANewXslt() {
         existing(GENERATED);
-        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction 2", CHANGE);
+        final AiCreateExtraction create = actions.prepare(DASHBOARD, "Logons extraction 2", CHANGE, SESSION);
 
         assertThat(create.getBase()).isEqualTo("a child of pipeline 'Logons pipeline', with this XSLT in place of "
                                                + "XSLT 'Logons XSLT' (which is left as it is)");
@@ -275,7 +281,7 @@ class TestExtractionActions {
                 + "pipeline'",
                 "Add column 'Bytes' (${Bytes}, formatted as Number)");
 
-        actions.write(DASHBOARD, CHANGE, request("Logons extraction 2", create.getContentHash()));
+        actions.write(DASHBOARD, CHANGE, request("Logons extraction 2", create.getContentHash()), SESSION);
 
         final ArgumentCaptor<PipelineDoc> pipeline = ArgumentCaptor.forClass(PipelineDoc.class);
         Mockito.verify(pipelineStore).writeDocument(pipeline.capture());
@@ -293,10 +299,10 @@ class TestExtractionActions {
         existing(GENERATED);
         // Its records are now written by another element.
         final ExtractionPlan elsewhere = new ExtractionPlan(CHANGE.component(), CHANGE.componentId(),
-                CHANGE.namespace(), CHANGE.fields(), CHANGE.newColumns(), new ExtractionPlan.Existing(TABLE_PIPELINE,
+                CHANGE.sample(), CHANGE.fields(), CHANGE.newColumns(), new ExtractionPlan.Existing(TABLE_PIPELINE,
                 "otherXslt", TABLE_XSLT, CHANGE.existing().codeHash()));
 
-        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", elsewhere))
+        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", elsewhere, SESSION))
                 .hasMessageContaining("its records aren't written by element 'otherXslt' now");
     }
 
@@ -305,10 +311,10 @@ class TestExtractionActions {
         existing(GENERATED + "\n<!-- edited -->");
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
 
-        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", CHANGE))
+        assertThatThrownBy(() -> actions.prepare(DASHBOARD, "Logons extraction 2", CHANGE, SESSION))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("XSLT 'Logons XSLT' has changed since this was proposed");
-        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE))
+        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE, SESSION))
                 .hasMessageContaining("has changed since this was proposed");
     }
 
@@ -326,7 +332,7 @@ class TestExtractionActions {
         Mockito.when(documentAccess.canView(any())).thenAnswer(invocation -> !query.equals(invocation.getArgument(0)));
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
 
-        final AiChangeExtraction change = actions.prepareChange(DASHBOARD, CHANGE);
+        final AiChangeExtraction change = actions.prepareChange(DASHBOARD, CHANGE, SESSION);
 
         assertThat(change.getPipeline()).isEqualTo(TABLE_PIPELINE);
         assertThat(change.getXslt()).isEqualTo(TABLE_XSLT);
@@ -348,13 +354,13 @@ class TestExtractionActions {
     void aChangeInPlaceIsntShownIfWhatUsesItCantBeFoundOrTheUserCantEditIt() {
         existing(GENERATED);
 
-        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE))
+        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE, SESSION))
                 .hasMessageContaining("You can't edit XSLT 'Logons XSLT'");
 
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
         Mockito.when(docDependencyService.fetchDependencies(any(), any())).thenThrow(new RuntimeException("down"));
         // Not "nothing else uses it".
-        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE))
+        assertThatThrownBy(() -> actions.prepareChange(DASHBOARD, CHANGE, SESSION))
                 .hasMessageContaining("What else uses the XSLT can't be found");
     }
 
@@ -363,14 +369,14 @@ class TestExtractionActions {
         existing(GENERATED);
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
         uses(List.of(new Dependency(TABLE_PIPELINE, TABLE_XSLT, true)));
-        final String hash = actions.prepareChange(DASHBOARD, CHANGE).getContentHash();
+        final String hash = actions.prepareChange(DASHBOARD, CHANGE, SESSION).getContentHash();
 
         // A dashboard starts using it after the user was shown what does.
         uses(List.of(new Dependency(TABLE_PIPELINE, TABLE_XSLT, true),
                 new Dependency(new DocRef(DashboardDoc.TYPE, "new", "New"), TABLE_PIPELINE, true)));
         Mockito.when(documentAccess.canView(any())).thenReturn(true);
 
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash, SESSION))
                 .hasMessageContaining("or what uses it, has changed since you were shown it");
         Mockito.verify(xsltStore, Mockito.never()).writeDocument(any());
     }
@@ -380,9 +386,9 @@ class TestExtractionActions {
         existing(GENERATED);
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
         Mockito.when(xsltStore.readDocument(TABLE_XSLT)).thenReturn(tableXslt(GENERATED));
-        final AiChangeExtraction change = actions.prepareChange(DASHBOARD, CHANGE);
+        final AiChangeExtraction change = actions.prepareChange(DASHBOARD, CHANGE, SESSION);
 
-        final Written written = actions.writeChange(DASHBOARD, CHANGE, change.getContentHash());
+        final Written written = actions.writeChange(DASHBOARD, CHANGE, change.getContentHash(), SESSION);
 
         final ArgumentCaptor<XsltDoc> xslt = ArgumentCaptor.forClass(XsltDoc.class);
         Mockito.verify(xsltStore).writeDocument(xslt.capture());
@@ -401,28 +407,28 @@ class TestExtractionActions {
     void aChangeInPlaceIsntWrittenOverANewerVersionOrWithoutEdit() {
         existing(GENERATED);
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
-        final String hash = actions.prepareChange(DASHBOARD, CHANGE).getContentHash();
+        final String hash = actions.prepareChange(DASHBOARD, CHANGE, SESSION).getContentHash();
 
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, "bad"))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, "bad", SESSION))
                 .hasMessageContaining("has changed since you were shown it");
         // Edit taken away since.
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(false);
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash, SESSION))
                 .hasMessageContaining("You can't edit XSLT 'Logons XSLT'");
 
         // Saved by someone else as the user confirmed.
         Mockito.when(securityContext.hasDocumentPermission(TABLE_XSLT, DocumentPermission.EDIT)).thenReturn(true);
         Mockito.when(xsltStore.readDocument(TABLE_XSLT)).thenReturn(tableXslt(GENERATED + "<!-- newer -->"));
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash, SESSION))
                 .hasMessageContaining("has changed since this was proposed");
 
         // Or as it was written.
         Mockito.when(xsltStore.readDocument(TABLE_XSLT)).thenReturn(tableXslt(GENERATED));
         Mockito.when(xsltStore.writeDocument(any())).thenThrow(new RuntimeException("Document has been updated"));
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, CHANGE, hash, SESSION))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("couldn't be written, so nothing was changed: Document has been updated");
-        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, PLAN, hash))
+        assertThatThrownBy(() -> actions.writeChange(DASHBOARD, PLAN, hash, SESSION))
                 .hasMessageContaining("no extraction pipeline to change");
     }
 

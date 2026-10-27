@@ -204,7 +204,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("fetch_events", "{\"path\":\"/outputs/a.csv\"}"),
             Map.entry("preview_extraction", "{\"table\":\"Users\",\"path\":\"/outputs/a.csv\",\"fields\":"
                                             + "[{\"name\":\"Org\",\"xpath\":\"Org\"}]}"),
-            Map.entry("propose_extraction_pipeline", "{\"table\":\"Users\",\"namespace\":\"\",\"name\":\"Users "
+            Map.entry("propose_extraction_pipeline", "{\"table\":\"Users\",\"name\":\"Users "
                                                      + "extraction\",\"fields\":[{\"name\":\"Org\",\"xpath\":"
                                                      + "\"Org\"}]}"),
             Map.entry("search_events", "{\"path\":\"/outputs/a.xml\",\"text\":\"a\"}"),

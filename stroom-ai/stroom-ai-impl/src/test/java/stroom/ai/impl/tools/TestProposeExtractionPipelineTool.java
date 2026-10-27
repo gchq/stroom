@@ -24,6 +24,8 @@ import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPipelines;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.extraction.ExtractionXslt;
+import stroom.ai.impl.extraction.PreviewRecord;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.dashboard.shared.DashboardDoc;
@@ -40,12 +42,16 @@ import stroom.query.api.Column;
 import stroom.query.api.TableSettings;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -64,6 +70,7 @@ class TestProposeExtractionPipelineTool {
     private static final DocRef DASHBOARD = new DocRef(DashboardDoc.TYPE, "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
             "Logons");
     private static final DocRef INDEX = new DocRef("Index", "index-uuid", "Windows events");
+    private static final ExtractionPlan.Sample TRIED_ON = new ExtractionPlan.Sample(7, 2);
     private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "p1", "Logon extraction");
     private static final DocRef XSLT = new DocRef(XsltDoc.TYPE, "x1", "Logon extraction");
 
@@ -74,6 +81,10 @@ class TestProposeExtractionPipelineTool {
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
     private final ToolRunContext runContext = new ToolRunContext(null, null, () -> false);
     private final List<Map<String, Object>> offered = new ArrayList<>();
+    // The table's extraction pipeline's UUID, or null for none.
+    private String tablePipeline;
+    // The code of its XSLT, or null for none.
+    private String tableXslt;
     private ProposeExtractionPipelineTool tool;
 
     @BeforeEach
@@ -106,7 +117,8 @@ class TestProposeExtractionPipelineTool {
                     .containsEntry("summary", "Adds each user's organisation.");
             final ExtractionPlan plan = ExtractionPlan.fromJson((String) action.get("plan"));
             assertThat(plan.componentId()).isEqualTo("table-1");
-            assertThat(plan.namespace()).isEqualTo("event-logging:3");
+            // The event it was tried on, whose namespace its XSLT is written for.
+            assertThat(plan.sample()).isEqualTo(TRIED_ON);
             assertThat(plan.fields()).extracting(ExtractionField::name).containsExactly("UserId", "Organisation");
             // UserId has a column already.
             assertThat(plan.newColumns()).containsExactly("Organisation");
@@ -224,6 +236,48 @@ class TestProposeExtractionPipelineTool {
     }
 
     @Test
+    void onlyFieldsTriedOnTheTablesEventsAreOffered() {
+        final List<Map<String, String>> fields = List.of(Map.of("name", "UserId", "xpath", "EventSource/User/Id"));
+
+        // Never tried.
+        assertThat(runUntried(fields)).startsWith("Nothing was offered: the extraction hasn't been tried, usably, "
+                                                  + "on the events of table 'Events'");
+        // Tried, but with another XPath.
+        tried(List.of(Map.of("name", "UserId", "xpath", "EventSource/User/Name")), null, null);
+        assertThat(runUntried(fields)).contains("aren't as they were when the extraction was last tried");
+        // Tried when the table extracted with a pipeline it doesn't now.
+        tried(fields, "p9", null);
+        assertThat(runUntried(fields)).contains("aren't as they were when the extraction was last tried");
+        assertThat(offered).isEmpty();
+
+        // Its last preview couldn't be used.
+        final Path unusable = tempDir.resolve("unusable.json");
+        try {
+            Files.writeString(unusable, PreviewRecord.unusable(DASHBOARD.getUuid(), "table-1").toJson());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        Mockito.when(fixture.workspace.localFile(CHAT, PreviewRecord.path(DASHBOARD.getUuid(), "table-1")))
+                .thenReturn(unusable);
+        assertThat(runUntried(fields)).startsWith("Nothing was offered: the extraction hasn't been tried, usably");
+        assertThat(offered).isEmpty();
+
+        tried(fields, null, null);
+        assertThat(runUntried(fields)).startsWith("The user has been shown a 'Create extraction pipeline' button");
+    }
+
+    @Test
+    void aChangeToAnXsltChangedSinceItWasTriedIsntOffered() {
+        final List<Map<String, String>> fields = List.of(Map.of("name", "UserId", "xpath", "Id"));
+        final String code = ExtractionXslt.xslt("", List.of(new ExtractionField("UserId", "Id", null)));
+        extracting(code);
+        tried(fields, PIPELINE.getUuid(), code + "<!-- as it was -->");
+
+        assertThat(runUntried(fields)).contains("has changed since the extraction was tried");
+        assertThat(offered).isEmpty();
+    }
+
+    @Test
     void theDashboardMustBeOneTheUserCanView() {
         fixture.visible.remove(DASHBOARD.getUuid());
 
@@ -233,6 +287,7 @@ class TestProposeExtractionPipelineTool {
 
     // The table extracts its values with a pipeline whose XSLT has this code.
     private void extracting(final String code) {
+        tableXslt = code;
         fixture.add(PIPELINE, PipelineDoc.builder().uuid(PIPELINE.getUuid()).name(PIPELINE.getName())
                 .pipelineData(ExtractionPipelines.data(null, XSLT)).build(), true);
         fixture.add(XSLT, XsltDoc.builder().uuid(XSLT.getUuid()).name(XSLT.getName()).data(code).build(), true);
@@ -244,6 +299,9 @@ class TestProposeExtractionPipelineTool {
     }
 
     private void dashboard(final TableSettings settings) {
+        tablePipeline = settings.extractValues()
+                ? NullSafe.get(settings.getExtractionPipeline(), DocRef::getUuid)
+                : null;
         final DashboardTableContext live = new DashboardTableContext("Dashboard 'Logons'", null,
                 DashboardSearchRequest.builder()
                         .search(Search.builder().dataSourceRef(INDEX).build())
@@ -258,9 +316,30 @@ class TestProposeExtractionPipelineTool {
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot));
     }
 
+    // Proposes fields as last tried with preview_extraction on the table as it is.
     private String run(final List<Map<String, String>> fields) {
+        tried(fields, tablePipeline, tableXslt);
+        return runUntried(fields);
+    }
+
+    // Records that preview_extraction tried fields on the table's events, as it does in the chat's workspace.
+    private void tried(final List<Map<String, String>> fields, final String pipeline, final String xslt) {
+        final WorkspacePath path = PreviewRecord.path(DASHBOARD.getUuid(), "table-1");
+        final Path file = tempDir.resolve("preview-" + offered.size() + "-" + fields.hashCode() + ".json");
+        try {
+            Files.writeString(file, new PreviewRecord(DASHBOARD.getUuid(), "table-1", pipeline,
+                    NullSafe.get(xslt, ExtractionChange::sha256),
+                    PreviewRecord.fieldsHash(ExtractionField.parse(fields)), TRIED_ON).toJson());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        Mockito.when(fixture.workspace.find(CHAT, path)).thenReturn(Optional.of(1));
+        Mockito.when(fixture.workspace.localFile(CHAT, path)).thenReturn(file);
+    }
+
+    private String runUntried(final List<Map<String, String>> fields) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("table", "Events", "fields", fields,
-                "namespace", "event-logging:3", "name", "Logons extraction",
+                "name", "Logons extraction",
                 "summary", "Adds each user's organisation."));
         final ToolResult result = runContext.run(() -> tool.execute(new ToolCall("c1",
                 ProposeExtractionPipelineTool.NAME, arguments), ToolCalls.inChat(CHAT, fixture.workspace)));

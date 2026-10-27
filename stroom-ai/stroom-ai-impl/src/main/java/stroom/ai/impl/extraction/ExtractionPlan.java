@@ -32,7 +32,8 @@ import java.util.regex.Pattern;
 ///
 /// @param component   The table's name, as the user sees it.
 /// @param componentId The table's component id.
-/// @param namespace   The events' namespace, or blank for none.
+/// @param sample      An event of the table it was tried on with preview_extraction, whose namespace (the events')
+///                    the XSLT is written for, read when the button is used (see [ExtractionEvents]).
 /// @param fields      The fields it gives, besides StreamId and EventId; for a change to an XSLT written by hand,
 ///                    the fields added to it (see [ExtractionChange]).
 /// @param newColumns  The fields to add the table columns for: those it didn't give before that no column shows.
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
 ///                    null for a table with none.
 public record ExtractionPlan(@JsonProperty("component") String component,
                              @JsonProperty("componentId") String componentId,
-                             @JsonProperty("namespace") String namespace,
+                             @JsonProperty("sample") Sample sample,
                              @JsonProperty("fields") List<ExtractionField> fields,
                              @JsonProperty("newColumns") List<String> newColumns,
                              @JsonProperty("existing") Existing existing) {
@@ -49,7 +50,6 @@ public record ExtractionPlan(@JsonProperty("component") String component,
 
     @JsonCreator
     public ExtractionPlan {
-        namespace = NullSafe.string(namespace);
         fields = NullSafe.list(fields);
         newColumns = NullSafe.list(newColumns);
     }
@@ -58,15 +58,15 @@ public record ExtractionPlan(@JsonProperty("component") String component,
     ///
     /// @param component   The table's name, as the user sees it.
     /// @param componentId The table's component id.
-    /// @param namespace   The events' namespace, or blank for none.
+    /// @param sample      An event of the table it was tried on.
     /// @param fields      The fields it gives, besides StreamId and EventId.
     /// @param newColumns  The fields to add the table columns for.
     public ExtractionPlan(final String component,
                           final String componentId,
-                          final String namespace,
+                          final Sample sample,
                           final List<ExtractionField> fields,
                           final List<String> newColumns) {
-        this(component, componentId, namespace, fields, newColumns, null);
+        this(component, componentId, sample, fields, newColumns, null);
     }
 
     /// @param json A plan, as JSON.
@@ -83,9 +83,8 @@ public record ExtractionPlan(@JsonProperty("component") String component,
             || plan.fields().isEmpty()) {
             throw new IllegalArgumentException("The extraction has no table or no fields.");
         }
-        if (NullSafe.string(plan.namespace()).chars()
-                .anyMatch(c -> Character.isWhitespace(c) || Character.isISOControl(c))) {
-            throw new IllegalArgumentException("The extraction's namespace isn't one.");
+        if (plan.sample() == null || plan.sample().streamId() < 1 || plan.sample().eventId() < 1) {
+            throw new IllegalArgumentException("The extraction has no event it was tried on.");
         }
         final List<String> problems = ExtractionField.problems(plan.fields());
         if (!problems.isEmpty()) {
@@ -108,6 +107,23 @@ public record ExtractionPlan(@JsonProperty("component") String component,
     /// @return The plan, as JSON.
     public String toJson() {
         return JsonUtil.writeValueAsString(this, false);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An event a search extraction was tried on.
+    ///
+    /// @param streamId Its stream.
+    /// @param eventId  Its id in the stream, from 1.
+    public record Sample(@JsonProperty("streamId") long streamId,
+                         @JsonProperty("eventId") long eventId) {
+
+        @JsonCreator
+        public Sample {
+            // Nothing to normalise.
+        }
     }
 
 
