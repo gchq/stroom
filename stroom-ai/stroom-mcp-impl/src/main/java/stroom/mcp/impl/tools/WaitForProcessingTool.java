@@ -377,7 +377,9 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
             result.put("look_into", lookInto);
             result.put("look_into_hint", LOOK_INTO_HINT);
         }
-        result.put("hint", hint(finished, idle, pending, deadline));
+        // Nothing done for any stream asked about: the reason is more use than another wait.
+        final boolean nothingDone = !pending.isEmpty() && pending.size() == perStream.size();
+        result.put("hint", hint(finished, idle, nothingDone, pending, deadline));
         if ("pass".equals(result.get("gate")) && restoredBatch(request.pipelineUuid())) {
             // Indexing completed without errors: the small development batch was only to see Elasticsearch's
             // responses.
@@ -484,6 +486,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
 
     private static String hint(final boolean finished,
                                final boolean idle,
+                               final boolean nothingDone,
                                final List<Long> pending,
                                final Deadline deadline) {
         if (finished) {
@@ -491,13 +494,20 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         }
         if (idle) {
             return "Every task of the pipeline's filters has ended, but none for stream(s) "
-                   + PyText.repr(pending) + ": waiting again won't change that. processing_status shows "
-                   + "what each filter's tracker matched.";
+                   + PyText.repr(pending) + ": waiting again won't change that. explain_processing with "
+                   + "these stream_ids, one at a time, says why (which filter selects each, its tracker and "
+                   + "tasks).";
         }
         if (deadline.bySessionLimit() != null) {
             return "Stopped waiting, with tasks still running, before this session's time limit for a call ("
                    + deadline.bySessionLimit().toSeconds() + " s) ran out. Call again: each call has its own "
                    + "time, so there is nothing for the user to do.";
+        }
+        if (nothingDone) {
+            // Asked for by the user: hand over to the diagnosis rather than wait again.
+            return "Nothing was processed for these streams by the timeout. Rather than waiting again, "
+                   + "explain_processing with this pipeline_uuid says what is stopping it (the jobs and nodes, "
+                   + "each filter's tracker and profile, where its tasks wait, and the filters ahead of it).";
         }
         return "Tasks were still running at the timeout; call again.";
     }

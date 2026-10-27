@@ -30,6 +30,7 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.cluster.api.ClusterNodeManager;
 import stroom.config.global.api.GlobalConfigReader;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.impl.script.ScriptStore;
@@ -48,6 +49,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.feed.api.FeedProperties;
+import stroom.job.api.JobStates;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -55,6 +57,7 @@ import stroom.pipeline.cache.SchemaPool;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.processor.api.ProcessingDiagnostics;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -150,6 +153,7 @@ class TestAgentModeTools {
             Map.entry("propose_code_change", false),
             Map.entry("stream_meta", false),
             Map.entry("processor_tasks", false),
+            Map.entry("explain_processing", false),
             Map.entry("server_tasks", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
@@ -196,6 +200,9 @@ class TestAgentModeTools {
             bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
             bind(ProcessorFilterService.class).toInstance(Mockito.mock(ProcessorFilterService.class));
             bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
+            bind(ProcessingDiagnostics.class).toInstance(Mockito.mock(ProcessingDiagnostics.class));
+            bind(JobStates.class).toInstance(Mockito.mock(JobStates.class));
+            bind(ClusterNodeManager.class).toInstance(Mockito.mock(ClusterNodeManager.class));
             bind(TaskResource.class).toInstance(Mockito.mock(TaskResource.class));
             bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
             bind(NodeService.class).toInstance(Mockito.mock(NodeService.class));

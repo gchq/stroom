@@ -137,7 +137,14 @@ class ProcessingStatusTool extends AbstractBuiltInTool {
         return JsonResults.of(result);
     }
 
-    /// @return The status of the filters, as the Stroom MCP server gave it.
+    // Whether no filter has finished and none has a task processing: nothing is moving.
+    private static boolean noProgress(final List<Map<String, Object>> filters) {
+        return filters.stream().noneMatch(filter -> Boolean.TRUE.equals(filter.get("finished"))
+                                                    || filter.get("tasks") instanceof final Map<?, ?> tasks
+                                                       && tasks.containsKey(TaskStatus.PROCESSING.name()));
+    }
+
+        /// @return The status of the filters, as the Stroom MCP server gave it.
     Map<String, Object> status(final String pipelineUuid, final List<ProcessorFilter> filters) {
         final Map<Integer, Map<String, Integer>> byFilter = new HashMap<>();
         String tasksUnreadable = null;
@@ -206,7 +213,11 @@ class ProcessingStatusTool extends AbstractBuiltInTool {
         }
         out.put("hint", result.isEmpty()
                 ? "No processor filters for this pipeline."
-                : null);
+                : noProgress(result)
+                        ? "No filter has finished or has a task processing. If that doesn't change, "
+                          + "explain_processing pipeline_uuid=" + pipelineUuid + " says why (the jobs and nodes, "
+                          + "each filter's tracker and profile, where its tasks wait, and the filters ahead of it)."
+                        : null);
         return out;
     }
 }
