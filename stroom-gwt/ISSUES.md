@@ -1588,6 +1588,25 @@ old clipboard helpers are gone: `ClipboardUtil`, `DataGridDom.copyToClipboard` a
 editor's hidden copy box (and its `.annotationHistoryText` rule) use `Clipboard`; the workbench
 framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom dependency.
 
+### Some components wire their handlers with `@UiHandler`
+
+**Deferred** (agreed 27 October 2026; a clean-up pass after the waves). Every component wires its
+widgets' handlers in Java, in its constructor, rather than with `@UiHandler` methods, so that each
+handler is in one place and in one form, whether the widget is declared in the template or made in
+Java. `COMPONENT_MODEL_DESIGN.md` already wires buttons this way (`save.setOnClick(this::save)`);
+this extends it to every handler. When counted (wave 13), the converted components had 114
+`@UiHandler` methods against 446 handlers wired in Java.
+
+* Where the widget has a callback, use it: `setOnClick`, `setOnChange`, `setOnSelect` and the
+  like. `@UiHandler` can only bind GWT events (an `addXxxHandler` method), so it can't use these.
+* Where the widget only fires a GWT event (a plain `TextBox`'s key presses, a value widget that
+  hasn't got `setOnChange` yet), add the handler in the constructor, e.g.
+  `query.addKeyDownHandler(event -> ...)`.
+* Each converted component keeps its behaviour and its stories. Find the remaining ones with
+  `git grep -l "@UiHandler" -- '*/client/component/*.java'` (the presenters' views still being
+  converted are moved by their waves).
+* Until then, new and converted components already follow this.
+
 ## Smaller oddities
 
 **Reported.**
