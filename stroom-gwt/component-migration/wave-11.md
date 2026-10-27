@@ -82,7 +82,7 @@ Left, on purpose:
 
 ## Done (27 October 2026)
 
-All 81 of the plan's units (the 82nd, `FloorMapLayerStylePresenter`, was done in wave 7), in 64
+All 81 of the plan's units (the 82nd, `FloorMapLayerStylePresenter`, was done in wave 7), in 63
 commits: 58 for the units, 5 for the audit and this record. Each unit's commit ran its stories in a
 copy of the worktree with the leak check and the screenshot diff. The wave's targeted run, after the
 audit (700 stories: the main screens and app shell, the dashboard, query, floor map, pathway,
